@@ -14,9 +14,13 @@ sealed class Tk (val str: String, val lin: Int, val col: Int) {
     data class Id  (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
 }
 
+sealed class Expr (val tk: Tk) {
+    data class Var (val tk_: Tk.Id): Expr(tk_)
+}
+
 fun main () {
-    val reader = PushbackReader("{}".reader())
-    for (tk in lexer(reader)) {
+    val lexer = Lexer(PushbackReader("{}".reader(),2))
+    for (tk in lexer.lex()) {
         println(tk)
     }
 }
