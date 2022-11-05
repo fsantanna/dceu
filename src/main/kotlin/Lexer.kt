@@ -1,6 +1,6 @@
-import java.io.StringReader
+import java.io.PushbackReader
 
-fun lexer (s: StringReader): Sequence<Tk> = sequence {
+fun lexer (s: PushbackReader): Sequence<Tk> = sequence {
     var lin = 1
     var col = 1
 
@@ -17,7 +17,7 @@ fun lexer (s: StringReader): Sequence<Tk> = sequence {
                     lin += 1
                     col = 1
                 }
-                ' '  -> {
+                ' ' -> {
                     col += 1
                 }
                 else -> {
@@ -28,35 +28,37 @@ fun lexer (s: StringReader): Sequence<Tk> = sequence {
         }
     }
 
-    var (x1,l1,c1) = read()
-
-    while (x1 != null) {
-        var ok2 = false
+    while (true) {
+        var (x1,l1,c1) = read()
         when {
-            (x1 in listOf('{','}',')')) -> {
-                yield(Tk.Fix(x1.toString(), l1, c1))
-            }
-            (x1 == '(') -> {
-                val (x2,l2,c2) = read()
-                if (x2 == ')') {
-                    yield(Tk.Fix("()", l1, c1))
+            (x1 == null) -> break
+            (x1 in listOf('{','}','(',')')) -> yield(Tk.Fix(x1.toString(), l1, c1))
+            x1.isLetter() -> {
+                var pay = ""
+                var n1 = -1
+                while (true) {
+                    pay += x1
+                    n1 = s.read()
+                    x1 = n1.toChar()
+                    when {
+                        (n1 == -1) -> break
+                        (x1 == '_') -> {}
+                        (x1.isLetterOrDigit()) -> {}
+                        else -> {
+                            s.unread(n1)
+                            break
+                        }
+                    }
+                }
+                if (keywords.contains(pay)) {
+                    yield(Tk.Fix(pay, l1, c1))
                 } else {
-                    yield(Tk.Fix("(", l1, c1))
-                    ok2 = true
-                    x1 = x2
-                    l1 = l2
-                    c1 = c2
+                    yield(Tk.Id(pay, l1, c1))
                 }
             }
             else -> {
-                error("TODO")
+                TODO(x1.toString())
             }
-        }
-        if (!ok2) {
-            val (x2,l2,c2) = read()
-            x1 = x2
-            l1 = l2
-            c1 = c2
         }
     }
 }
