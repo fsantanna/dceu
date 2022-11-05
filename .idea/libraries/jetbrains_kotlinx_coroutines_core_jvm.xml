@@ -1,0 +1,22 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlinx.coroutines.core.jvm" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/kotlinx-coroutines-core-jvm-1.6.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-jdk8-1.6.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-1.6.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/annotations-13.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-jdk7-1.6.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-common-1.6.21.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/kotlinx-coroutines-core-jvm-1.6.4-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-jdk8-1.6.21-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-1.6.21-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/annotations-13.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-jdk7-1.6.21-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-stdlib-common-1.6.21-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
