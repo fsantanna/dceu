@@ -78,10 +78,11 @@ class TParser {
     }
     @Test
     fun a09_expr_call() {
-        val lexer = Lexer("anon", PushbackReader(" f(x)() ".reader(),2))
+        val lexer = Lexer("anon", PushbackReader(" f(x,8)() ".reader(),2))
         val parser = Parser(lexer)
         val e = parser.exprN()
         assert(e is Expr.ECall && e.f is Expr.ECall && e.args.size==0)
+        assert(e.tostr() == "f(x,8)()")
     }
     @Test
     fun a10_expr_call_err() {
