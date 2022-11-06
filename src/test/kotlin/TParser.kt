@@ -66,21 +66,21 @@ class TParser {
         val lexer = Lexer("anon", " f (1.5F, x) ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.ECall && e.tk.str=="f" && e.f is Expr.Var && e.args.size==2)
+        assert(e is Expr.Call && e.tk.str=="f" && e.f is Expr.Var && e.args.size==2)
     }
     @Test
     fun a08_expr_call() {
         val lexer = Lexer("anon", " f() ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.ECall && e.f.tk.str=="f" && e.f is Expr.Var && e.args.size==0)
+        assert(e is Expr.Call && e.f.tk.str=="f" && e.f is Expr.Var && e.args.size==0)
     }
     @Test
     fun a09_expr_call() {
         val lexer = Lexer("anon", " f(x,8)() ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.ECall && e.f is Expr.ECall && e.args.size==0)
+        assert(e is Expr.Call && e.f is Expr.Call && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
@@ -135,30 +135,38 @@ class TParser {
         assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected \"]\" : have end of file")
     }
 
-    // STMT.SCALL
+    // EXPRS
 
     @Test
-    fun b01_stmt_call() {
-        val lexer = Lexer("anon", "call f ()".reader())
+    fun b01_exprs_call() {
+        val lexer = Lexer("anon", "f ()".reader())
         val parser = Parser(lexer)
-        val s = parser.stmt()
-        assert(s is Stmt.SCall && s.e.tostr() == "f()")
-        assert(s.tostr() == "call f()\n")
+        val es = parser.exprs()
+        assert(es.size==1 && es[0] is Expr.Call && es[0].tostr() == "f()")
+        assert(es.tostr() == "f()\n")
     }
     @Test
-    fun b02_stmt_call_err() {
-        val lexer = Lexer("anon", "call f".reader())
+    fun b02_exprs_call_err() {
+        val lexer = Lexer("anon", "f".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.stmt() } == "anon: (ln 1, col 6): expected call expression : have \"f\"")
+        val es = parser.exprs()
+        assert(es.tostr() == "f\n")
     }
 
     // STMT.SEQ
 
     @Test
-    fun b03_stmt_seq() {
-        val lexer = Lexer("anon", ";; call f () call g () ; call h()\ncall i() ;\n;".reader())
+    fun b03_exprs_seq() {
+        val lexer = Lexer("anon", ";; f () ; g () h()\ni() ;\n;".reader())
         val parser = Parser(lexer)
-        val s = parser.stmts()
-        assert(s.tostr() == "call f()\ncall g()\ncall h()\ncall i()\n") { s.tostr() }
+        val es = parser.exprs()
+        assert(es.tostr() == "f()\ng()\nh()\ni()\n") { es.tostr() }
+    }
+    @Test
+    fun b04_exprs_seq() {
+        val lexer = Lexer("anon", ";; f () \n (1) ; h()\ni() ;\n;".reader())
+        val parser = Parser(lexer)
+        val es = parser.exprs()
+        assert(es.tostr() == "f()(1)\nh()\ni()\n") { es.tostr() }
     }
 }

@@ -107,7 +107,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.ECall(e.tk, e, list_expr_0(")"))
+                    e = Expr.Call(e.tk, e, list_expr_0(")"))
                 }
                 else -> break
             }
@@ -115,39 +115,13 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun stmt (): Stmt {
-        return when {
-            // SCALL
-            this.acceptFix("call")   -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val e = this.exprN()
-                if (e !is Expr.ECall) {
-                    this.err_expected_at(e.tk, "call expression")
-                }
-                Stmt.SCall(tk0, e as Expr.ECall)
-            }
-            else -> {
-                this.err_expected("statement")
-                error("unreachable")
-            }
-        }
-    }
-
-    fun stmts (): Stmt {
-        fun enseq(s1: Stmt, s2: Stmt): Stmt {
-            return when {
-                (s1 is Stmt.Nop) -> s2
-                (s2 is Stmt.Nop) -> s1
-                else -> Stmt.Seq(s1.tk, s1, s2)
-            }
-        }
-
-        var ret: Stmt = Stmt.Nop(this.tk0)
+    fun exprs (): List<Expr> {
+        val ret = mutableListOf<Expr>()
         while (this.acceptFix(";")) {}
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
-            val s = this.stmt()
+            val e = this.exprN()
             while (this.acceptFix(";")) {}
-            ret = enseq(ret, s)
+            ret.add(e)
         }
         return ret
     }

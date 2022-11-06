@@ -26,7 +26,7 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair(s1+s2+s, "$e1.tuple->buf[(int)$e2.number]")
         }
-        is Expr.ECall -> {
+        is Expr.Call -> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
             Pair(s+ss.joinToString(""), e + "(" + es.joinToString(",") + ")")
@@ -34,18 +34,11 @@ fun Expr.code (): Pair<String,String> {
     }
 }
 
-fun Stmt.code (): String {
-    return when (this) {
-        is Stmt.Nop   -> ""
-        is Stmt.Seq   -> this.s1.code() + ";\n" + this.s2.code() + ";\n"
-        is Stmt.SCall -> {
-            val (s,e) = this.e.code()
-            s + e + ";\n"
-        }
-    }
+fun List<Expr>.code (): String {
+    return this.map { it.code() }.map { it.first+"\n"+it.second+";\n" }.joinToString("")
 }
 
-fun Code (s: Stmt): String {
+fun Code (es: List<Expr>): String {
     return """
         #include <stdio.h>
         #include <stdlib.h>
@@ -103,7 +96,7 @@ fun Code (s: Stmt): String {
         }
         
         void main (void) {
-            ${s.code()}
+            ${es.code()}
         }
     """.trimIndent()
 }

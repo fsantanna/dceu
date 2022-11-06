@@ -1,7 +1,7 @@
 import java.util.*
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "call",
+    "if",
 )
 
 sealed class Tk (val str: String, val lin: Int, val col: Int) {
@@ -17,13 +17,7 @@ sealed class Expr (val tk: Tk) {
     data class Num   (val tk_: Tk.Num): Expr(tk_)
     data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(tk_)
     data class Index (val tk_: Tk, val col: Expr, val idx: Expr): Expr(tk_)
-    data class ECall (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(tk_)
-}
-
-sealed class Stmt (val tk: Tk) {
-    data class Nop   (val tk_: Tk) : Stmt(tk_)
-    data class Seq   (val tk_: Tk, val s1: Stmt, val s2: Stmt) : Stmt(tk_)
-    data class SCall (val tk_: Tk.Fix, val e: Expr.ECall): Stmt(tk_)
+    data class Call  (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {
