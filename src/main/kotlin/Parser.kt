@@ -46,12 +46,31 @@ class Parser (lexer_: Lexer)
             else  -> error("bug found")
         }
     }
+    fun checkEnu_err (str: String): Boolean {
+        val ret = this.checkEnu(str)
+        val err = when (str) {
+            "Eof" -> "end of file"
+            "Id"  -> "identifier"
+            "Num" -> "number"
+            else   -> TODO(this.toString())
+        }
+
+        if (!ret) {
+            this.err_expected(err)
+        }
+        return ret
+    }
     fun acceptEnu (enu: String): Boolean {
         val ret = this.checkEnu(enu)
         if (ret) {
             this.lex()
         }
         return ret
+    }
+    fun acceptEnu_err (str: String): Boolean {
+        this.checkEnu_err(str)
+        this.acceptEnu(str)
+        return true
     }
 
     fun err_expected (str: String) {
@@ -79,16 +98,18 @@ class Parser (lexer_: Lexer)
 
     fun expr1 (): Expr {
         return when {
+            this.acceptFix("var") -> {
+                this.acceptEnu_err("Id")
+                Expr.Dcl(this.tk0 as Tk.Id)
+            }
+            this.acceptEnu("Id")  -> Expr.Acc(this.tk0 as Tk.Id)
+            this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
+            this.acceptFix("[")    -> Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
             this.acceptFix("(") -> {
                 val e = this.expr1()
                 this.acceptFix_err(")")
                 e
             }
-            this.acceptFix("[") -> {
-                Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
-            }
-            this.acceptEnu("Id")  -> Expr.Var(this.tk0 as Tk.Id)
-            this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
             else -> {
                 this.err_expected("expression")
                 error("unreachable")

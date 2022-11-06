@@ -1,7 +1,7 @@
 import java.util.*
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "if",
+    "if", "var"
 )
 
 sealed class Tk (val str: String, val lin: Int, val col: Int) {
@@ -13,7 +13,8 @@ sealed class Tk (val str: String, val lin: Int, val col: Int) {
 }
 
 sealed class Expr (val tk: Tk) {
-    data class Var   (val tk_: Tk.Id):  Expr(tk_)
+    data class Dcl   (val tk_: Tk.Id):  Expr(tk_)
+    data class Acc   (val tk_: Tk.Id):  Expr(tk_)
     data class Num   (val tk_: Tk.Num): Expr(tk_)
     data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(tk_)
     data class Index (val tk_: Tk, val col: Expr, val idx: Expr): Expr(tk_)

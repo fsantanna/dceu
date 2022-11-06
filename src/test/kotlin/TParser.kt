@@ -14,20 +14,20 @@ class TParser {
     // EXPR.VAR
 
     @Test
-    fun a01_expr_var () {
+    fun expr_var () {
         val lexer = Lexer("anon", " x ".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Var && e.tk.str == "x")
+        assert(e is Expr.Acc && e.tk.str == "x")
     }
     @Test
-    fun a02_expr_var_err () {
+    fun expr_var_err1 () {
         val lexer = Lexer("anon", " { ".reader())
         val parser = Parser(lexer)
         assert(trap { parser.expr1() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
     }
     @Test
-    fun a03_expr_var_err () {
+    fun expr_var_err2 () {
         val lexer = Lexer("anon", "  ".reader())
         val parser = Parser(lexer)
         assert(trap { parser.expr1() } == "anon: (ln 1, col 3): expected expression : have end of file")
@@ -36,14 +36,14 @@ class TParser {
     // EXPR.PARENS
 
     @Test
-    fun a04_expr_parens() {
+    fun expr_parens() {
         val lexer = Lexer("anon", " ( a ) ".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Var && e.tk.str == "a")
+        assert(e is Expr.Acc && e.tk.str == "a")
     }
     @Test
-    fun a05_expr_parens_err() {
+    fun expr_parens_err() {
         val lexer = Lexer("anon", " ( a  ".reader())
         val parser = Parser(lexer)
         assert(trap { parser.expr1() } == "anon: (ln 1, col 7): expected \")\" : have end of file")
@@ -52,7 +52,7 @@ class TParser {
     // EXPR.NUM
 
     @Test
-    fun a06_expr_num() {
+    fun expr_num() {
         val lexer = Lexer("anon", " 1.5F ".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
@@ -62,21 +62,21 @@ class TParser {
     // EXPR.ECALL
 
     @Test
-    fun a07_expr_call() {
+    fun expr_call1() {
         val lexer = Lexer("anon", " f (1.5F, x) ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.Call && e.tk.str=="f" && e.f is Expr.Var && e.args.size==2)
+        assert(e is Expr.Call && e.tk.str=="f" && e.f is Expr.Acc && e.args.size==2)
     }
     @Test
-    fun a08_expr_call() {
+    fun expr_call2() {
         val lexer = Lexer("anon", " f() ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.Call && e.f.tk.str=="f" && e.f is Expr.Var && e.args.size==0)
+        assert(e is Expr.Call && e.f.tk.str=="f" && e.f is Expr.Acc && e.args.size==0)
     }
     @Test
-    fun a09_expr_call() {
+    fun expr_call3() {
         val lexer = Lexer("anon", " f(x,8)() ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
@@ -84,13 +84,13 @@ class TParser {
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
-    fun a10_expr_call_err() {
+    fun expr_call_err1() {
         val lexer = Lexer("anon", "f (999 ".reader())
         val parser = Parser(lexer)
         assert(trap { parser.exprN() } == "anon: (ln 1, col 8): expected \")\" : have end of file")
     }
     @Test
-    fun a11_expr_call_err() {
+    fun expr_call_err2() {
         val lexer = Lexer("anon", " f ({ ".reader())
         val parser = Parser(lexer)
         assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected expression : have \"{\"")
@@ -99,21 +99,21 @@ class TParser {
     // EXPR.TUPLE
 
     @Test
-    fun a12_expr_tuple() {
+    fun expr_tuple1() {
         val lexer = Lexer("anon", " [ 1.5F, x] ".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
         assert(e is Expr.Tuple && e.args.size==2)
     }
     @Test
-    fun a13_expr_tuple() {
+    fun expr_tuple2() {
         val lexer = Lexer("anon", "[[],[1,2,3]]".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
         assert(e.tostr() == "[[],[1,2,3]]")
     }
     @Test
-    fun a14_expr_tuple_err() {
+    fun expr_tuple_err() {
         val lexer = Lexer("anon", "[{".reader())
         val parser = Parser(lexer)
         assert(trap { parser.exprN() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
@@ -122,14 +122,14 @@ class TParser {
     // EXPR.INDEX
 
     @Test
-    fun a15_expr_index() {
+    fun expr_index() {
         val lexer = Lexer("anon", "x[10]".reader())
         val parser = Parser(lexer)
         val e = parser.exprN()
-        assert(e is Expr.Index && e.col is Expr.Var && e.idx is Expr.Num)
+        assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Num)
     }
     @Test
-    fun a16_expr_index_err() {
+    fun expr_index_err() {
         val lexer = Lexer("anon", "x[10".reader())
         val parser = Parser(lexer)
         assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected \"]\" : have end of file")
@@ -138,7 +138,7 @@ class TParser {
     // EXPRS
 
     @Test
-    fun b01_exprs_call() {
+    fun exprs_call() {
         val lexer = Lexer("anon", "f ()".reader())
         val parser = Parser(lexer)
         val es = parser.exprs()
@@ -146,27 +146,44 @@ class TParser {
         assert(es.tostr() == "f()\n")
     }
     @Test
-    fun b02_exprs_call_err() {
+    fun exprs_call_err() {
         val lexer = Lexer("anon", "f".reader())
         val parser = Parser(lexer)
         val es = parser.exprs()
         assert(es.tostr() == "f\n")
     }
 
-    // STMT.SEQ
+    // EXPRS
 
     @Test
-    fun b03_exprs_seq() {
+    fun exprs_seq1() {
         val lexer = Lexer("anon", ";; f () ; g () h()\ni() ;\n;".reader())
         val parser = Parser(lexer)
         val es = parser.exprs()
         assert(es.tostr() == "f()\ng()\nh()\ni()\n") { es.tostr() }
     }
     @Test
-    fun b04_exprs_seq() {
+    fun exprs_seq2() {
         val lexer = Lexer("anon", ";; f () \n (1) ; h()\ni() ;\n;".reader())
         val parser = Parser(lexer)
         val es = parser.exprs()
         assert(es.tostr() == "f()(1)\nh()\ni()\n") { es.tostr() }
+    }
+
+    // EXPR.DCL
+
+    @Test
+    fun expr_dcl() {
+        val lexer = Lexer("anon", "var x".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Dcl && e.tk.str == "x")
+        assert(e.tostr() == "var x")
+    }
+    @Test
+    fun expr_dcl_err() {
+        val lexer = Lexer("anon", "var [10]".reader())
+        val parser = Parser(lexer)
+        assert(trap { parser.expr1() } == "anon: (ln 1, col 5): expected identifier : have \"[\"")
     }
 }

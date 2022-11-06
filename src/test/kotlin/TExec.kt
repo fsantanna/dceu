@@ -21,7 +21,7 @@ class TExec {
     // PRINT
 
     @Test
-    fun a01_print() {
+    fun print1() {
         val out = all("""
             print([10])
         """.trimIndent()
@@ -29,7 +29,7 @@ class TExec {
         assert(out == "10.000000") { out }
     }
     @Test
-    fun a02_print() {
+    fun print2() {
         val out = all("""
             print([10])
             println([20])
@@ -38,7 +38,7 @@ class TExec {
         assert(out == "10.00000020.000000\n") { out }
     }
     @Test
-    fun a03_print() {
+    fun print3() {
         val out = all("""
             println([])
             println([[],[1,2,3]])
@@ -47,7 +47,7 @@ class TExec {
         assert(out == "\n[]\t[1.000000,2.000000,3.000000]\n") { out }
     }
     @Test
-    fun a04_print_err() {
+    fun print_err1() {
         val out = all("""
             println(1)
         """.trimIndent()
@@ -55,7 +55,7 @@ class TExec {
         assert(out.contains("cannot print : expected tuple argument")) { out }
     }
     @Test
-    fun a05_print_err() {
+    fun print_err2() {
         val out = all("""
             println()
         """.trimIndent()
@@ -66,7 +66,7 @@ class TExec {
     // INDEX
 
     @Test
-    fun a06_index() {
+    fun index() {
         val out = all("""
             println([[1,2,3][1]])
         """.trimIndent()
@@ -74,7 +74,7 @@ class TExec {
         assert(out == "2.000000\n") { out }
     }
     @Test
-    fun a07_index_err() {
+    fun index_err1() {
         val out = all("""
             println(1[1])
         """.trimIndent()
@@ -82,7 +82,7 @@ class TExec {
         assert(out.contains("index error : expected tuple")) { out }
     }
     @Test
-    fun a08_index_err() {
+    fun index_err2() {
         val out = all("""
             println([1][[]])
         """.trimIndent()
@@ -90,11 +90,23 @@ class TExec {
         assert(out.contains("index error : expected number")) { out }
     }
     @Test
-    fun a09_index_err() {
+    fun index_err3() {
         val out = all("""
             println([1][2])
         """.trimIndent()
         )
         assert(out.contains("index error : out of bounds")) { out }
+    }
+
+    // DCL
+
+    @Test
+    fun dcl() {
+        val out = all("""
+            var x
+            println([x])
+        """.trimIndent()
+        )
+        assert(out == "nil\n") { out }
     }
 }

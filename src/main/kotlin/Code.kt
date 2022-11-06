@@ -1,7 +1,8 @@
 fun Expr.code (): Pair<String,String> {
     return when (this) {
         is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
-        is Expr.Var -> Pair("", this.tk.str)
+        is Expr.Dcl -> Pair("ceu_value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
+        is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
             val n = this.hashCode()
@@ -45,6 +46,7 @@ fun Code (es: List<Expr>): String {
         #include <assert.h>
 
         typedef enum CEU_VALUE {
+            CEU_VALUE_NIL,
             CEU_VALUE_NUMBER,
             CEU_VALUE_TUPLE
         } CEU_VALUE;
@@ -57,6 +59,7 @@ fun Code (es: List<Expr>): String {
         typedef struct ceu_value {
             int tag;
             union {
+                //void nil;
                 float number;
                 ceu_value_tuple* tuple;
             };
@@ -64,6 +67,9 @@ fun Code (es: List<Expr>): String {
         
         void print_aux (ceu_value v) {
             switch (v.tag) {
+                case CEU_VALUE_NIL:
+                    printf("nil");
+                    break;
                 case CEU_VALUE_NUMBER:
                     printf("%f", v.number);
                     break;
