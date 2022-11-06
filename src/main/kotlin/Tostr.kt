@@ -1,5 +1,6 @@
 fun Expr.tostr (): String {
     return when (this) {
+        is Expr.Do    -> "do {\n" + this.es.tostr() + "}\n"
         is Expr.Dcl   -> "var " + this.tk.str
         is Expr.Set   -> "set " + this.dst.tostr() + " = " + this.src.tostr()
         is Expr.Acc   -> this.tk.str

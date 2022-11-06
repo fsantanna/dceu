@@ -150,4 +150,51 @@ class TExec {
         )
         assert(out == "TODO: cannot assign to [1]\n") { out }
     }
+    @Test
+    fun set_index() {
+        val out = all("""
+            var i
+            set i = 1
+            println([[1,2,3][i]])
+        """.trimIndent()
+        )
+        assert(out == "2.000000\n") { out }
+    }
+
+    // DO
+
+    @Test
+    fun expr_do1() {  // set whole tuple?
+        val out = all("""
+            do {}
+        """.trimIndent()
+        )
+        assert(out == "") { out }
+    }
+    @Test
+    fun expr_do2() {
+        val out = all("""
+            do {
+                var a
+                set a = 1
+                println([a])
+            }
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
+    @Test
+    fun expr_do3() {
+        val out = all("""
+            var x
+            set x = do {
+                var a
+                set a = 10
+                a
+            }
+            print([x])
+        """.trimIndent()
+        )
+        assert(out == "10.000000") { out }
+    }
 }

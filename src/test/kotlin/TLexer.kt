@@ -21,7 +21,7 @@ class TLexer {
     }
     @Test
     fun ids () {
-        val lexer = Lexer("anon", " if aaa XXX set y10 var".reader())
+        val lexer = Lexer("anon", " if aaa XXX set y10 var do".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str=="if" })
         assert(tks.next().str == "aaa")
@@ -29,6 +29,7 @@ class TLexer {
         assert(tks.next().str == "set")
         assert(tks.next().str == "y10")
         assert(tks.next().str == "var")
+        assert(tks.next().str == "do")
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }

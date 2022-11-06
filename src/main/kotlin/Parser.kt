@@ -98,6 +98,13 @@ class Parser (lexer_: Lexer)
 
     fun expr1 (): Expr {
         return when {
+            this.acceptFix("do") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("{")
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                Expr.Do(tk0, es)
+            }
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
                 Expr.Dcl(this.tk0 as Tk.Id)

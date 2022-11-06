@@ -1,5 +1,17 @@
 fun Expr.code (): Pair<String,String> {
     return when (this) {
+        is Expr.Do -> {
+            val (ss,e) = this.es.code()
+            val s = """
+                ceu_value do_${this.n} = { CEU_VALUE_NIL };
+                {
+                    $ss
+                    do_${this.n} = $e;
+                }
+                
+            """.trimIndent()
+            Pair(s, "do_"+this.n)
+        }
         is Expr.Dcl -> Pair("ceu_value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
         is Expr.Set -> {
             val (s1, e1) = this.dst.code()
@@ -39,13 +51,18 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Call -> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
-            Pair(s+ss.joinToString(""), e + "(" + es.joinToString(",") + ")")
+            val call = """
+                ceu_value call_${this.n} = $e(${es.joinToString(",")});
+                
+            """.trimIndent()
+            Pair(s+ss.joinToString("")+call, "call_"+this.n)
         }
     }
 }
 
-fun List<Expr>.code (): String {
-    return this.map { it.code() }.map { it.first+"\n"+it.second+";\n" }.joinToString("")
+fun List<Expr>.code (): Pair<String,String> {
+    val (ss,es) = this.map { it.code() }.unzip()
+    return Pair(ss.joinToString("\n")+"\n", es.lastOrNull() ?: "((ceu_value) { CEU_VALUE_NIL })")
 }
 
 fun Code (es: List<Expr>): String {
@@ -96,7 +113,7 @@ fun Code (es: List<Expr>): String {
                     assert(0 && "bug found");
             }
         }
-        void print (ceu_value v) {
+        ceu_value print (ceu_value v) {
             assert(v.tag==CEU_VALUE_TUPLE && "cannot print : expected tuple argument");
             for (int i=0; i<v.tuple->n; i++) {
                 if (i > 0) {
@@ -104,14 +121,16 @@ fun Code (es: List<Expr>): String {
                 }
                 print_aux(v.tuple->buf[i]);
             }
+            return (ceu_value) { CEU_VALUE_NIL };
         }
-        void println (ceu_value v) {
+        ceu_value println (ceu_value v) {
             print(v);
             printf("\n");
+            return (ceu_value) { CEU_VALUE_NIL };
         }
         
         void main (void) {
-            ${es.code()}
+            ${es.code().first}
         }
     """.trimIndent()
 }
