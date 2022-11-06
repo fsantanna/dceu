@@ -21,7 +21,7 @@ class TExec {
     @Test
     fun a01_print() {
         val out = all("""
-            call print(10)
+            call print([10])
         """.trimIndent()
         )
         assert(out == "10.000000") { out }
@@ -29,10 +29,19 @@ class TExec {
     @Test
     fun a02_print() {
         val out = all("""
-            call print(10)
-            call println(20)
+            call print([10])
+            call println([20])
         """.trimIndent()
         )
         assert(out == "10.00000020.000000\n") { out }
+    }
+    @Test
+    fun a03_print() {
+        val out = all("""
+            call println([])
+            call println([[],[1,2,3]])
+        """.trimIndent()
+        )
+        assert(out == "\n[]\t[1.000000,2.000000,3.000000]\n") { out }
     }
 }

@@ -96,6 +96,29 @@ class TParser {
         assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected expression : have \"{\"")
     }
 
+    // EXPR.TUPLE
+
+    @Test
+    fun a12_expr_tuple() {
+        val lexer = Lexer("anon", " [ 1.5F, x] ".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e is Expr.Tuple && e.args.size==2)
+    }
+    @Test
+    fun a13_expr_tuple() {
+        val lexer = Lexer("anon", "[[],[1,2,3]]".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e.tostr() == "[[],[1,2,3]]")
+    }
+    @Test
+    fun a14_expr_tuple_err() {
+        val lexer = Lexer("anon", "[{".reader())
+        val parser = Parser(lexer)
+        assert(trap { parser.exprN() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
+    }
+
     // STMT.SCALL
 
     @Test

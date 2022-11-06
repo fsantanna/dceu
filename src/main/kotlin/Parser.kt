@@ -65,12 +65,27 @@ class Parser (lexer_: Lexer)
         error(this.lexer.name + ": (ln ${tk.lin}, col ${tk.col}): expected $str : have $have")
     }
 
+    fun list_expr_0 (close: String): List<Expr> {
+        val l = mutableListOf<Expr>()
+        if (!this.checkFix(close)) {
+            l.add(this.exprN())
+            while (this.acceptFix(",")) {
+                l.add(this.exprN())
+            }
+        }
+        this.acceptFix_err(close)
+        return l
+    }
+
     fun expr1 (): Expr {
         return when {
             this.acceptFix("(") -> {
                 val e = this.expr1()
                 this.acceptFix_err(")")
                 e
+            }
+            this.acceptFix("[") -> {
+                Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
             }
             this.acceptEnu("Id")  -> Expr.Var(this.tk0 as Tk.Id)
             this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
@@ -86,15 +101,7 @@ class Parser (lexer_: Lexer)
         while (true) {
             // ECALL
             if (this.acceptFix("(")) {
-                val l = mutableListOf<Expr>()
-                if (!this.checkFix(")")) {
-                    l.add(this.exprN())
-                    while (this.acceptFix(",")) {
-                        l.add(this.exprN())
-                    }
-                }
-                this.acceptFix_err(")")
-                e = Expr.ECall(e.tk, e, l)
+                e = Expr.ECall(e.tk, e, list_expr_0(")"))
             } else {
                 break
             }

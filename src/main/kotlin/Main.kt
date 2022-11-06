@@ -15,11 +15,8 @@ sealed class Tk (val str: String, val lin: Int, val col: Int) {
 sealed class Expr (val tk: Tk) {
     data class Var   (val tk_: Tk.Id):  Expr(tk_)
     data class Num   (val tk_: Tk.Num): Expr(tk_)
-    data class ECall (
-        val tk_:   Tk,
-        val f:     Expr,        // f
-        val args:  List<Expr>,  // [_1,_2]
-    ): Expr(tk_)
+    data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(tk_)
+    data class ECall (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(tk_)
 }
 
 sealed class Stmt (val tk: Tk) {

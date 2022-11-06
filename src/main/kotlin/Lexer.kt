@@ -38,7 +38,7 @@ class Lexer (name_: String, reader_: StringReader) {
             var (x1, l1, c1) = read()
             when {
                 (x1 == null) -> break
-                (x1 in listOf('{','}', '(',')', ',',';')) -> yield(Tk.Fix(x1.toString(), l1, c1))
+                (x1 in listOf('{','}', '(',')', '[',']', ',',';')) -> yield(Tk.Fix(x1.toString(), l1, c1))
                 x1.isLetter() -> {
                     var pay = ""
                     var n1 = -1

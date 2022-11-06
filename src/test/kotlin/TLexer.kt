@@ -3,7 +3,7 @@ import org.junit.Test
 class TLexer {
     @Test
     fun a01_syms () {
-        val lexer = Lexer("anon", "{ } ( ; ( ) ) , ".reader())
+        val lexer = Lexer("anon", "{ } ( ; ( ) ) , ][".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
@@ -13,6 +13,8 @@ class TLexer {
         assert(tks.next().str == ")")
         assert(tks.next().str == ")")
         assert(tks.next().str == ",")
+        assert(tks.next().str == "]")
+        assert(tks.next().str == "[")
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
