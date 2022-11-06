@@ -1,7 +1,9 @@
 import java.util.*
 
+var N = 1
+
 val keywords: SortedSet<String> = sortedSetOf (
-    "if", "var"
+    "if", "set", "var"
 )
 
 sealed class Tk (val str: String, val lin: Int, val col: Int) {
@@ -12,13 +14,14 @@ sealed class Tk (val str: String, val lin: Int, val col: Int) {
     data class Num (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
 }
 
-sealed class Expr (val tk: Tk) {
-    data class Dcl   (val tk_: Tk.Id):  Expr(tk_)
-    data class Acc   (val tk_: Tk.Id):  Expr(tk_)
-    data class Num   (val tk_: Tk.Num): Expr(tk_)
-    data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(tk_)
-    data class Index (val tk_: Tk, val col: Expr, val idx: Expr): Expr(tk_)
-    data class Call  (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(tk_)
+sealed class Expr (val n: Int, val tk: Tk) {
+    data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
+    data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr):  Expr(N++, tk_)
+    data class Acc   (val tk_: Tk.Id):  Expr(N++, tk_)
+    data class Num   (val tk_: Tk.Num): Expr(N++, tk_)
+    data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
+    data class Index (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
+    data class Call  (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {

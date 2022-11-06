@@ -186,4 +186,29 @@ class TParser {
         val parser = Parser(lexer)
         assert(trap { parser.expr1() } == "anon: (ln 1, col 5): expected identifier : have \"[\"")
     }
+
+    // EXPR.SET
+
+    @Test
+    fun expr_set() {
+        val lexer = Lexer("anon", "set x = [10]".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e is Expr.Set && e.tk.str == "set")
+        assert(e.tostr() == "set x = [10]")
+    }
+    @Test
+    fun todo_expr_err1() {  // set number?
+        val lexer = Lexer("anon", "set 1 = 1".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e.tostr() == "set 1 = 1")
+    }
+    @Test
+    fun todo_expr_err2() {  // set whole tuple?
+        val lexer = Lexer("anon", "set [1] = 1".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e.tostr() == "set [1] = 1")
+    }
 }

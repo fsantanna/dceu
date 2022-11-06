@@ -1,6 +1,7 @@
 fun Expr.tostr (): String {
     return when (this) {
         is Expr.Dcl   -> "var " + this.tk.str
+        is Expr.Set   -> "set " + this.dst.tostr() + " = " + this.src.tostr()
         is Expr.Acc   -> this.tk.str
         is Expr.Num   -> this.tk.str
         is Expr.Tuple -> "[" + this.args.map { it.tostr() }.joinToString(",") + "]"

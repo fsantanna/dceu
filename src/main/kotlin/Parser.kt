@@ -102,6 +102,13 @@ class Parser (lexer_: Lexer)
                 this.acceptEnu_err("Id")
                 Expr.Dcl(this.tk0 as Tk.Id)
             }
+            this.acceptFix("set") -> {
+                val tk0 = this.tk0
+                val dst = this.exprN()
+                this.acceptFix_err("=")
+                val src = this.exprN()
+                Expr.Set(tk0 as Tk.Fix, dst, src)
+            }
             this.acceptEnu("Id")  -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")    -> Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
@@ -116,7 +123,6 @@ class Parser (lexer_: Lexer)
             }
         }
     }
-
     fun exprN (): Expr {
         var e = this.expr1()
         while (true) {

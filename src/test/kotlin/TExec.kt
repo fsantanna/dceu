@@ -109,4 +109,45 @@ class TExec {
         )
         assert(out == "nil\n") { out }
     }
+
+    // SET
+
+    @Test
+    fun set1() {
+        val out = all("""
+            var x
+            set x = [10]
+            println([x])
+        """.trimIndent()
+        )
+        assert(out == "[10.000000]\n") { out }
+    }
+    @Test
+    fun set2() {
+        val out = all("""
+            var x
+            set x = [10,20,[30]]
+            set x[1] = 22
+            set x[2][0] = 33
+            println([x])
+        """.trimIndent()
+        )
+        assert(out == "[10.000000,22.000000,[33.000000]]\n") { out }
+    }
+    @Test
+    fun todo_set_err1() {
+        val out = all("""
+            set 1 = 1
+        """.trimIndent()
+        )
+        assert(out == "TODO: cannot assign to 1") { out }
+    }
+    @Test
+    fun todo_set_err2() {
+        val out = all("""
+            set [1] = 1
+        """.trimIndent()
+        )
+        assert(out == "TODO: cannot assign to [1]\n") { out }
+    }
 }

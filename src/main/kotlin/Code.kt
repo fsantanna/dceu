@@ -1,14 +1,23 @@
 fun Expr.code (): Pair<String,String> {
     return when (this) {
-        is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Dcl -> Pair("ceu_value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
+        is Expr.Set -> {
+            val (s1, e1) = this.dst.code()
+            val (s2, e2) = this.src.code()
+            val set = """
+                ceu_value src_${this.n} = $e2;
+                $e1 = src_${this.n};
+                
+            """.trimIndent()
+            Pair(s1+s2+set, "src_${this.n}")
+        }
         is Expr.Acc -> Pair("", this.tk.str)
+        is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
-            val n = this.hashCode()
             val tup = """
-                ceu_value buf_$n[${es.size}] = { ${es.joinToString(",")} };
-                ceu_value_tuple tup_$n = { ${es.size}, buf_$n };
+                ceu_value buf_${this.n}[${es.size}] = { ${es.joinToString(",")} };
+                ceu_value_tuple tup_${this.n} = { ${es.size}, buf_${this.n} };
                 
             """.trimIndent()
             Pair (
