@@ -26,6 +26,21 @@ sealed class Stmt (val tk: Tk) {
     data class SCall (val tk_: Tk.Fix, val e: Expr.ECall): Stmt(tk_)
 }
 
+fun exec (cmds: List<String>): Pair<Boolean,String> {
+    //System.err.println(cmds.joinToString(" "))
+    val p = ProcessBuilder(cmds)
+        //.redirectOutput(ProcessBuilder.Redirect.PIPE)
+        .redirectErrorStream(true)
+        .start()
+    val ret = p.waitFor()
+    val str = p.inputStream.bufferedReader().readText()
+    return Pair(ret==0, str)
+}
+
+fun exec (cmd: String): Pair<Boolean,String> {
+    return exec(cmd.split(' '))
+}
+
 fun main () {
     val lexer = Lexer("anon", "{}".reader())
     for (tk in lexer.lex()) {
