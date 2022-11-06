@@ -38,26 +38,38 @@ class TParser {
     // EXPR.PARENS
 
     @Test
-    fun b01_expr_parens() {
+    fun a04_expr_parens() {
         val lexer = Lexer("anon", PushbackReader(" ( a ) ".reader(),2))
         val parser = Parser(lexer)
         val e = parser.expr()
         assert(e is Expr.Var && e.tk.str == "a")
     }
     @Test
-    fun b02_expr_parens_err() {
+    fun a05_expr_parens_err() {
         val lexer = Lexer("anon", PushbackReader(" ( a  ".reader(),2))
         val parser = Parser(lexer)
         assert(trap { parser.expr() } == "anon: (ln 1, col 7): expected \")\" : have end of file")
     }
 
-    // EXPR.NUMBER
+    // EXPR.NUM
 
     @Test
-    fun c01_expr_num() {
+    fun a06_expr_num() {
         val lexer = Lexer("anon", PushbackReader(" 1.5F ".reader(),2))
         val parser = Parser(lexer)
         val e = parser.expr()
         assert(e is Expr.Num && e.tk.str == "1.5F")
     }
+
+    // EXPR.ECALL
+
+    @Test
+    fun a07_expr_call() {
+        val lexer = Lexer("anon", PushbackReader(" f (1.5F, x) ".reader(),2))
+        val parser = Parser(lexer)
+        val e = parser.expr()
+        assert(e is Expr.Num && e.tk.str == "1.5F")
+    }
+
+    // STMT
 }

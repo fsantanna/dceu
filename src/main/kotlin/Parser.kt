@@ -76,4 +76,13 @@ class Parser (lexer_: Lexer)
             }
         }
     }
+
+    fun stmt (): Stmt {
+        return when {
+            else -> {
+                this.err_expected("statement")
+                error("unreachable")
+            }
+        }
+    }
 }
