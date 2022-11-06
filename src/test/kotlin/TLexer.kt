@@ -1,7 +1,5 @@
 import org.junit.Test
-import java.io.BufferedReader
 import java.io.PushbackReader
-import java.io.StringReader
 
 class TLexer {
     @Test
@@ -14,6 +12,7 @@ class TLexer {
         assert(tks.next().str == "(")
         assert(tks.next().str == ")")
         assert(tks.next().str == ")")
+        assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
     @Test
@@ -24,6 +23,7 @@ class TLexer {
         assert(tks.next().str == "aaa")
         assert(tks.next().str == "XXX")
         assert(tks.next().str == "y10")
+        assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
 }
