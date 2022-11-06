@@ -41,6 +41,7 @@ class Parser (lexer_: Lexer)
     fun checkEnu (enu: String): Boolean {
         return when (enu) {
             "Id"  -> this.tk1 is Tk.Id
+            "Num" -> this.tk1 is Tk.Num
             else  -> error("bug found")
         }
     }
@@ -67,7 +68,8 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err(")")
                 e
             }
-            this.acceptEnu("Id") -> Expr.Var(this.tk0 as Tk.Id)
+            this.acceptEnu("Id")  -> Expr.Var(this.tk0 as Tk.Id)
+            this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
             else -> {
                 this.err_expected("expression")
                 error("unreachable")

@@ -61,6 +61,25 @@ class Lexer (name_: String, reader_: PushbackReader) {
                         yield(Tk.Id(pay, l1, c1))
                     }
                 }
+                x1.isDigit() -> {
+                    var pay = ""
+                    var n1 = -1
+                    while (true) {
+                        pay += x1
+                        n1 = reader.read()
+                        x1 = n1.toChar()
+                        when {
+                            (n1 == -1) -> break
+                            (x1 == '.') -> {}
+                            (x1.isLetterOrDigit()) -> {}
+                            else -> {
+                                reader.unread(n1)
+                                break
+                            }
+                        }
+                    }
+                    yield(Tk.Num(pay, l1, c1))
+                }
 
                 else -> {
                     TODO(x1.toString())

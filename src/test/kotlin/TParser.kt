@@ -51,4 +51,13 @@ class TParser {
         assert(trap { parser.expr() } == "anon: (ln 1, col 7): expected \")\" : have end of file")
     }
 
+    // EXPR.NUMBER
+
+    @Test
+    fun c01_expr_num() {
+        val lexer = Lexer("anon", PushbackReader(" 1.5F ".reader(),2))
+        val parser = Parser(lexer)
+        val e = parser.expr()
+        assert(e is Expr.Num && e.tk.str == "1.5F")
+    }
 }
