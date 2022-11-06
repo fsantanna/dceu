@@ -61,10 +61,10 @@ class Parser (lexer_: Lexer)
         error(this.lexer.name + ": (ln ${this.tk1.lin}, col ${this.tk1.col}): expected $str : have $tk")
     }
 
-    fun expr (): Expr {
+    fun expr1 (): Expr {
         return when {
             this.acceptFix("(") -> {
-                val e = this.expr()
+                val e = this.expr1()
                 this.acceptFix_err(")")
                 e
             }
@@ -75,6 +75,27 @@ class Parser (lexer_: Lexer)
                 error("unreachable")
             }
         }
+    }
+
+    fun exprN (): Expr {
+        var e = this.expr1()
+        while (true) {
+            // ECALL
+            if (this.acceptFix("(")) {
+                val l = mutableListOf<Expr>()
+                if (!this.checkFix(")")) {
+                    l.add(this.exprN())
+                    while (this.acceptFix(",")) {
+                        l.add(this.exprN())
+                    }
+                }
+                this.acceptFix_err(")")
+                e = Expr.ECall(e.tk, e, l)
+            } else {
+                break
+            }
+        }
+        return e
     }
 
     fun stmt (): Stmt {
