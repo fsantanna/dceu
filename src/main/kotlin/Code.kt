@@ -28,8 +28,11 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
             val tup = """
-                ceu_value buf_${this.n}[${es.size}] = { ${es.joinToString(",")} };
-                ceu_value_tuple tup_${this.n} = { ${es.size}, buf_${this.n} };
+                assert(${es.size} < UINT8_MAX);
+                ceu_value _buf_${this.n}[${es.size}] = { ${es.joinToString(",")} };
+                ceu_value* buf_${this.n} = malloc(${es.size} * sizeof(ceu_value));
+                memcpy(buf_${this.n}, _buf_${this.n}, ${es.size} * sizeof(ceu_value));
+                ceu_value_tuple tup_${this.n} = { CEU_SCOPE, ${es.size}, buf_${this.n} };
                 
             """.trimIndent()
             Pair (
@@ -69,6 +72,8 @@ fun Code (es: List<Expr>): String {
     return """
         #include <stdio.h>
         #include <stdlib.h>
+        #include <stdint.h>
+        #include <string.h>
         #include <assert.h>
 
         typedef enum CEU_VALUE {
@@ -91,7 +96,7 @@ fun Code (es: List<Expr>): String {
             };
         } ceu_value;
         
-        void print_aux (ceu_value v) {
+        ceu_value print (ceu_value v) {
             switch (v.tag) {
                 case CEU_VALUE_NIL:
                     printf("nil");
@@ -105,21 +110,12 @@ fun Code (es: List<Expr>): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        print_aux(v.tuple->buf[i]);
+                        print(v.tuple->buf[i]);
                     }                    
                     printf("]");
                     break;
                 default:
                     assert(0 && "bug found");
-            }
-        }
-        ceu_value print (ceu_value v) {
-            assert(v.tag==CEU_VALUE_TUPLE && "cannot print : expected tuple argument");
-            for (int i=0; i<v.tuple->n; i++) {
-                if (i > 0) {
-                    printf("\t");
-                }
-                print_aux(v.tuple->buf[i]);
             }
             return (ceu_value) { CEU_VALUE_NIL };
         }

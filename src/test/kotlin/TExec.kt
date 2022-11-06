@@ -26,13 +26,13 @@ class TExec {
             print([10])
         """.trimIndent()
         )
-        assert(out == "10.000000") { out }
+        assert(out == "[10.000000]") { out }
     }
     @Test
     fun print2() {
         val out = all("""
-            print([10])
-            println([20])
+            print(10)
+            println(20)
         """.trimIndent()
         )
         assert(out == "10.00000020.000000\n") { out }
@@ -40,11 +40,10 @@ class TExec {
     @Test
     fun print3() {
         val out = all("""
-            println([])
             println([[],[1,2,3]])
         """.trimIndent()
         )
-        assert(out == "\n[]\t[1.000000,2.000000,3.000000]\n") { out }
+        assert(out == "[[],[1.000000,2.000000,3.000000]]\n") { out }
     }
     @Test
     fun print_err1() {
@@ -52,7 +51,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out.contains("cannot print : expected tuple argument")) { out }
+        assert(out.contains("1")) { out }
     }
     @Test
     fun print_err2() {
@@ -68,7 +67,7 @@ class TExec {
     @Test
     fun index() {
         val out = all("""
-            println([[1,2,3][1]])
+            println([1,2,3][1])
         """.trimIndent()
         )
         assert(out == "2.000000\n") { out }
@@ -104,7 +103,7 @@ class TExec {
     fun dcl() {
         val out = all("""
             var x
-            println([x])
+            println(x)
         """.trimIndent()
         )
         assert(out == "nil\n") { out }
@@ -117,7 +116,7 @@ class TExec {
         val out = all("""
             var x
             set x = [10]
-            println([x])
+            println(x)
         """.trimIndent()
         )
         assert(out == "[10.000000]\n") { out }
@@ -129,7 +128,7 @@ class TExec {
             set x = [10,20,[30]]
             set x[1] = 22
             set x[2][0] = 33
-            println([x])
+            println(x)
         """.trimIndent()
         )
         assert(out == "[10.000000,22.000000,[33.000000]]\n") { out }
@@ -155,7 +154,7 @@ class TExec {
         val out = all("""
             var i
             set i = 1
-            println([[1,2,3][i]])
+            println([1,2,3][i])
         """.trimIndent()
         )
         assert(out == "2.000000\n") { out }
@@ -164,7 +163,7 @@ class TExec {
     // DO
 
     @Test
-    fun expr_do1() {  // set whole tuple?
+    fun do1() {  // set whole tuple?
         val out = all("""
             do {}
         """.trimIndent()
@@ -172,19 +171,19 @@ class TExec {
         assert(out == "") { out }
     }
     @Test
-    fun expr_do2() {
+    fun do2() {
         val out = all("""
             do {
                 var a
                 set a = 1
-                println([a])
+                println(a)
             }
         """.trimIndent()
         )
         assert(out == "1.000000\n") { out }
     }
     @Test
-    fun expr_do3() {
+    fun do3() {
         val out = all("""
             var x
             set x = do {
@@ -192,9 +191,52 @@ class TExec {
                 set a = 10
                 a
             }
-            print([x])
+            print(x)
         """.trimIndent()
         )
         assert(out == "10.000000") { out }
     }
+
+    // SCOPE
+
+    @Test
+    fun scope1() {
+        val out = all("""
+            var x
+            do {
+                set x = [1,2,3]
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "10.000000") { out }
+    }
+    @Test
+    fun scope_err2() {
+        val out = all("""
+            var x
+            do {
+                var a
+                set a = [1,2,3]
+                set x = a
+            }
+        """.trimIndent()
+        )
+        assert(out == "ERROR") { out }
+    }
+    @Test
+    fun scope3() {
+        val out = all("""
+            var x
+            do {
+                var a
+                set a = [1,2,3] @x
+                set x = a
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "[1.000000,2.000000,3.000000]") { out }
+    }
+
 }
