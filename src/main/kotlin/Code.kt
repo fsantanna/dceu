@@ -3,25 +3,32 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Do -> {
             val (ss,e) = this.es.code()
             val s = """
-                ceu_value do_${this.n} = { CEU_VALUE_NIL };
+                ceu_value do_$n = { CEU_VALUE_NIL };
                 {
+                    ceu_value_tuple* ceu_tofree = NULL;
                     $ss
-                    do_${this.n} = $e;
+                    do_$n = $e;
+                    while (ceu_tofree != NULL) {
+                        ceu_value_tuple* cur = ceu_tofree;
+                        ceu_tofree = ceu_tofree->nxt;
+                        free(cur->buf);
+                        free(cur);
+                    }
                 }
                 
             """.trimIndent()
-            Pair(s, "do_"+this.n)
+            Pair(s, "do_$n")
         }
         is Expr.Dcl -> Pair("ceu_value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
         is Expr.Set -> {
             val (s1, e1) = this.dst.code()
             val (s2, e2) = this.src.code()
             val set = """
-                ceu_value src_${this.n} = $e2;
-                $e1 = src_${this.n};
+                ceu_value src_$n = $e2;
+                $e1 = src_$n;
                 
             """.trimIndent()
-            Pair(s1+s2+set, "src_${this.n}")
+            Pair(s1+s2+set, "src_$n")
         }
         is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
@@ -29,15 +36,17 @@ fun Expr.code (): Pair<String,String> {
             val (ss, es) = this.args.map { it.code() }.unzip()
             val tup = """
                 assert(${es.size} < UINT8_MAX);
-                ceu_value _buf_${this.n}[${es.size}] = { ${es.joinToString(",")} };
-                ceu_value* buf_${this.n} = malloc(${es.size} * sizeof(ceu_value));
-                memcpy(buf_${this.n}, _buf_${this.n}, ${es.size} * sizeof(ceu_value));
-                ceu_value_tuple tup_${this.n} = { CEU_SCOPE, NULL, buf_${this.n}, ${es.size} };
+                ceu_value _buf_$n[${es.size}] = { ${es.joinToString(",")} };
+                ceu_value* buf_$n = malloc(${es.size} * sizeof(ceu_value));
+                memcpy(buf_$n, _buf_$n, ${es.size} * sizeof(ceu_value));
+                ceu_value_tuple* tup_$n = malloc(sizeof(ceu_value_tuple));
+                *tup_$n = (ceu_value_tuple) { CEU_SCOPE, ceu_tofree, buf_$n, ${es.size} };
+                ceu_tofree = tup_$n;
                 
             """.trimIndent()
             Pair (
                 ss.joinToString("") + tup,
-                "((ceu_value) { CEU_VALUE_TUPLE, {.tuple=&tup_$n} })"
+                "((ceu_value) { CEU_VALUE_TUPLE, {.tuple=tup_$n} })"
             )
         }
         is Expr.Index -> {
@@ -55,10 +64,10 @@ fun Expr.code (): Pair<String,String> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
             val call = """
-                ceu_value call_${this.n} = $e(${es.joinToString(",")});
+                ceu_value call_$n = $e(${es.joinToString(",")});
                 
             """.trimIndent()
-            Pair(s+ss.joinToString("")+call, "call_"+this.n)
+            Pair(s+ss.joinToString("")+call, "call_$n")
         }
     }
 }
@@ -130,7 +139,14 @@ fun Code (es: List<Expr>): String {
         uint8_t CEU_SCOPE = 0;
         
         void main (void) {
+            ceu_value_tuple* ceu_tofree = NULL;
             ${es.code().first}
+            while (ceu_tofree != NULL) {
+                ceu_value_tuple* cur = ceu_tofree;
+                ceu_tofree = ceu_tofree->nxt;
+                free(cur->buf);
+                free(cur);
+            }
         }
     """.trimIndent()
 }
