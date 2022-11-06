@@ -104,6 +104,7 @@ class TParser {
         val parser = Parser(lexer)
         val s = parser.stmt()
         assert(s is Stmt.SCall && s.e.tostr() == "f()")
+        assert(s.tostr() == "call f()\n")
     }
     @Test
     fun b02_stmt_call_err() {

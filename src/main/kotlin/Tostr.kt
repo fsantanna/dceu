@@ -7,3 +7,9 @@ fun Expr.tostr (): String {
         }
     }
 }
+
+fun Stmt.tostr (): String {
+    return when (this) {
+        is Stmt.SCall -> "call " + this.e.tostr() + "\n"
+    }
+}
