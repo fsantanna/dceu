@@ -21,7 +21,7 @@ sealed class Expr (val tk: Tk) {
 }
 
 fun main () {
-    val lexer = Lexer(PushbackReader("{}".reader(),2))
+    val lexer = Lexer("anon", PushbackReader("{}".reader(),2))
     for (tk in lexer.lex()) {
         println(tk)
     }

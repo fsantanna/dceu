@@ -1,13 +1,14 @@
 import java.io.PushbackReader
 
-class Lexer (s: PushbackReader) {
-    val str = s
+class Lexer (name_: String, reader_: PushbackReader) {
+    val name = name_
+    val reader = reader_
     var lin = 1
     var col = 1
 
     fun read (): Triple<Char?, Int, Int> {
         while (true) {
-            val n1 = this.str.read()
+            val n1 = this.reader.read()
             if (n1 == -1) {
                 return Triple(null, this.lin, this.col)
             }
@@ -42,14 +43,14 @@ class Lexer (s: PushbackReader) {
                     var n1 = -1
                     while (true) {
                         pay += x1
-                        n1 = str.read()
+                        n1 = reader.read()
                         x1 = n1.toChar()
                         when {
                             (n1 == -1) -> break
                             (x1 == '_') -> {}
                             (x1.isLetterOrDigit()) -> {}
                             else -> {
-                                str.unread(n1)
+                                reader.unread(n1)
                                 break
                             }
                         }
