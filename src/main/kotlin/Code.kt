@@ -32,7 +32,7 @@ fun Expr.code (): Pair<String,String> {
                 ceu_value _buf_${this.n}[${es.size}] = { ${es.joinToString(",")} };
                 ceu_value* buf_${this.n} = malloc(${es.size} * sizeof(ceu_value));
                 memcpy(buf_${this.n}, _buf_${this.n}, ${es.size} * sizeof(ceu_value));
-                ceu_value_tuple tup_${this.n} = { CEU_SCOPE, ${es.size}, buf_${this.n} };
+                ceu_value_tuple tup_${this.n} = { CEU_SCOPE, NULL, buf_${this.n}, ${es.size} };
                 
             """.trimIndent()
             Pair (
@@ -84,8 +84,10 @@ fun Code (es: List<Expr>): String {
         
         struct ceu_value;
         typedef struct ceu_value_tuple {
-            int n;
+            uint8_t scope;
+            struct ceu_value_tuple* nxt;
             struct ceu_value* buf;
+            uint8_t n;
         } ceu_value_tuple;
         typedef struct ceu_value {
             int tag;
@@ -124,6 +126,8 @@ fun Code (es: List<Expr>): String {
             printf("\n");
             return (ceu_value) { CEU_VALUE_NIL };
         }
+        
+        uint8_t CEU_SCOPE = 0;
         
         void main (void) {
             ${es.code().first}
