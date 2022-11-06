@@ -1,4 +1,3 @@
-import java.io.PushbackReader
 import java.util.*
 
 val keywords: SortedSet<String> = sortedSetOf (
@@ -28,7 +27,7 @@ sealed class Stmt (val tk: Tk) {
 }
 
 fun main () {
-    val lexer = Lexer("anon", PushbackReader("{}".reader(),2))
+    val lexer = Lexer("anon", "{}".reader())
     for (tk in lexer.lex()) {
         println(tk)
     }

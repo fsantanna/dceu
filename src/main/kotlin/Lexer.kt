@@ -1,8 +1,9 @@
 import java.io.PushbackReader
+import java.io.StringReader
 
-class Lexer (name_: String, reader_: PushbackReader) {
+class Lexer (name_: String, reader_: StringReader) {
     val name = name_
-    val reader = reader_
+    val reader = PushbackReader(reader_,2)
     var lin = 1
     var col = 1
 

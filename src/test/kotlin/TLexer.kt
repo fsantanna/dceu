@@ -1,10 +1,9 @@
 import org.junit.Test
-import java.io.PushbackReader
 
 class TLexer {
     @Test
     fun a01_syms () {
-        val lexer = Lexer("anon", PushbackReader("{ } ( ( ) ) , ".reader(),2))
+        val lexer = Lexer("anon", "{ } ( ( ) ) , ".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
@@ -18,7 +17,7 @@ class TLexer {
     }
     @Test
     fun a02_ids () {
-        val lexer = Lexer("anon", PushbackReader(" call aaa XXX y10".reader(),2))
+        val lexer = Lexer("anon", " call aaa XXX y10".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str=="call" })
         assert(tks.next().str == "aaa")
