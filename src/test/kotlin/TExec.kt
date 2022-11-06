@@ -209,7 +209,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "10.000000") { out }
+        assert(out == "[1.000000,2.000000,3.000000]\n") { out }
     }
     @Test
     fun scope_err2() {
