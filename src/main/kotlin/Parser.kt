@@ -53,12 +53,15 @@ class Parser (lexer_: Lexer)
         return ret
     }
 
-    fun err_expected (str: String): Boolean {
-        val tk = when {
-            (this.tk1 is Tk.Eof) -> "end of file"
-            else -> '"' + this.tk1.str + '"'
+    fun err_expected (str: String) {
+        this.err_expected_at(this.tk1, str)
+    }
+    fun err_expected_at (tk: Tk, str: String) {
+        val have = when {
+            (tk is Tk.Eof) -> "end of file"
+            else -> '"' + tk.str + '"'
         }
-        error(this.lexer.name + ": (ln ${this.tk1.lin}, col ${this.tk1.col}): expected $str : have $tk")
+        error(this.lexer.name + ": (ln ${tk.lin}, col ${tk.col}): expected $str : have $have")
     }
 
     fun expr1 (): Expr {
@@ -100,6 +103,15 @@ class Parser (lexer_: Lexer)
 
     fun stmt (): Stmt {
         return when {
+            // SCALL
+            this.acceptFix("call")   -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val e = this.exprN()
+                if (e !is Expr.ECall) {
+                    this.err_expected_at(e.tk, "call expression")
+                }
+                Stmt.SCall(tk0, e as Expr.ECall)
+            }
             else -> {
                 this.err_expected("statement")
                 error("unreachable")

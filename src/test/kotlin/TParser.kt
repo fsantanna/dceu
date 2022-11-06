@@ -98,4 +98,17 @@ class TParser {
     }
 
     // STMT
+    @Test
+    fun b01_stmt_call() {
+        val lexer = Lexer("anon", PushbackReader("call f ()".reader(),2))
+        val parser = Parser(lexer)
+        val s = parser.stmt()
+        assert(s is Stmt.SCall && s.e.tostr() == "f()")
+    }
+    @Test
+    fun b02_stmt_call_err() {
+        val lexer = Lexer("anon", PushbackReader("call f".reader(),2))
+        val parser = Parser(lexer)
+        assert(trap { parser.stmt() } == "anon: (ln 1, col 6): expected call expression : have \"f\"")
+    }
 }

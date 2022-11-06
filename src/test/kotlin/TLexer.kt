@@ -18,9 +18,9 @@ class TLexer {
     }
     @Test
     fun a02_ids () {
-        val lexer = Lexer("anon", PushbackReader(" if aaa XXX y10".reader(),2))
+        val lexer = Lexer("anon", PushbackReader(" call aaa XXX y10".reader(),2))
         val tks = lexer.lex().iterator()
-        assert(tks.next().let { it is Tk.Fix && it.str=="if" })
+        assert(tks.next().let { it is Tk.Fix && it.str=="call" })
         assert(tks.next().str == "aaa")
         assert(tks.next().str == "XXX")
         assert(tks.next().str == "y10")
