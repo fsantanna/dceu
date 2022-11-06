@@ -96,7 +96,8 @@ class TParser {
         assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected expression : have \"{\"")
     }
 
-    // STMT
+    // STMT.SCALL
+
     @Test
     fun b01_stmt_call() {
         val lexer = Lexer("anon", "call f ()".reader())
@@ -110,5 +111,15 @@ class TParser {
         val lexer = Lexer("anon", "call f".reader())
         val parser = Parser(lexer)
         assert(trap { parser.stmt() } == "anon: (ln 1, col 6): expected call expression : have \"f\"")
+    }
+
+    // STMT.SEQ
+
+    @Test
+    fun b03_stmt_seq() {
+        val lexer = Lexer("anon", "call f () call g ()".reader())
+        val parser = Parser(lexer)
+        val s = parser.stmts()
+        assert(s.tostr() == "call f()\ncall g()\n") { s.tostr() }
     }
 }

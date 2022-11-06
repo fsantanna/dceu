@@ -40,6 +40,7 @@ class Parser (lexer_: Lexer)
 
     fun checkEnu (enu: String): Boolean {
         return when (enu) {
+            "Eof" -> this.tk1 is Tk.Eof
             "Id"  -> this.tk1 is Tk.Id
             "Num" -> this.tk1 is Tk.Num
             else  -> error("bug found")
@@ -117,5 +118,22 @@ class Parser (lexer_: Lexer)
                 error("unreachable")
             }
         }
+    }
+
+    fun stmts (): Stmt {
+        fun enseq(s1: Stmt, s2: Stmt): Stmt {
+            return when {
+                (s1 is Stmt.Nop) -> s2
+                (s2 is Stmt.Nop) -> s1
+                else -> Stmt.Seq(s1.tk, s1, s2)
+            }
+        }
+
+        var ret: Stmt = Stmt.Nop(this.tk0)
+        while (!this.checkFix("}") && !this.checkEnu("Eof")) {
+            val s = this.stmt()
+            ret = enseq(ret, s)
+        }
+        return ret
     }
 }

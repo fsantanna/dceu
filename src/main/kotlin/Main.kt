@@ -23,6 +23,8 @@ sealed class Expr (val tk: Tk) {
 }
 
 sealed class Stmt (val tk: Tk) {
+    data class Nop   (val tk_: Tk) : Stmt(tk_)
+    data class Seq   (val tk_: Tk, val s1: Stmt, val s2: Stmt) : Stmt(tk_)
     data class SCall (val tk_: Tk.Fix, val e: Expr.ECall): Stmt(tk_)
 }
 

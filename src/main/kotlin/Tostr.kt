@@ -10,6 +10,8 @@ fun Expr.tostr (): String {
 
 fun Stmt.tostr (): String {
     return when (this) {
+        is Stmt.Nop   -> ""
+        is Stmt.Seq   -> this.s1.tostr() + this.s2.tostr()
         is Stmt.SCall -> "call " + this.e.tostr() + "\n"
     }
 }

@@ -6,7 +6,7 @@ class TExec {
     fun all(inp: String): String {
         val lexer = Lexer("anon", inp.reader())
         val parser = Parser(lexer)
-        val s = parser.stmt()
+        val s = parser.stmts()
         val c = Code(s)
         File("out.c").writeText(c)
         val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
@@ -24,6 +24,15 @@ class TExec {
             call print(10)
         """.trimIndent()
         )
-        assert(out == "10.000000\n") { out }
+        assert(out == "10.000000") { out }
+    }
+    @Test
+    fun a02_print() {
+        val out = all("""
+            call print(10)
+            call println(20)
+        """.trimIndent()
+        )
+        assert(out == "10.00000020.000000\n") { out }
     }
 }

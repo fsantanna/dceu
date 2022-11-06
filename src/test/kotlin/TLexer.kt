@@ -3,11 +3,12 @@ import org.junit.Test
 class TLexer {
     @Test
     fun a01_syms () {
-        val lexer = Lexer("anon", "{ } ( ( ) ) , ".reader())
+        val lexer = Lexer("anon", "{ } ( ; ( ) ) , ".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
         assert(tks.next().str == "(")
+        assert(tks.next().str == ";")
         assert(tks.next().str == "(")
         assert(tks.next().str == ")")
         assert(tks.next().str == ")")

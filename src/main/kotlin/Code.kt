@@ -8,6 +8,8 @@ fun Expr.code (): String {
 
 fun Stmt.code (): String {
     return when (this) {
+        is Stmt.Nop   -> ""
+        is Stmt.Seq   -> this.s1.code() + ";\n" + this.s2.code() + ";\n"
         is Stmt.SCall -> this.e.code() + ";\n"
     }
 }
@@ -31,11 +33,15 @@ fun Code (s: Stmt): String {
         void print (ceu_value v) {
             switch (v.tag) {
                 case CEU_NUMBER:
-                    printf("%f\n", v.number);
+                    printf("%f", v.number);
                     break;
                 default:
                     assert(0 && "bug found");
             }
+        }
+        void println (ceu_value v) {
+            print(v);
+            printf("\n");
         }
         
         void main (void) {
