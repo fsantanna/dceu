@@ -99,11 +99,17 @@ class Parser (lexer_: Lexer)
     fun exprN (): Expr {
         var e = this.expr1()
         while (true) {
-            // ECALL
-            if (this.acceptFix("(")) {
-                e = Expr.ECall(e.tk, e, list_expr_0(")"))
-            } else {
-                break
+            when {
+                // INDEX
+                this.acceptFix("[") -> {
+                    e = Expr.Index(e.tk, e, this.exprN())
+                    this.acceptFix_err("]")
+                }
+                // ECALL
+                this.acceptFix("(") -> {
+                    e = Expr.ECall(e.tk, e, list_expr_0(")"))
+                }
+                else -> break
             }
         }
         return e

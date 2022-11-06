@@ -1,6 +1,6 @@
 fun Expr.code (): Pair<String,String> {
     return when (this) {
-        is Expr.Num -> Pair("", "(ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} }")
+        is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Var -> Pair("", this.tk.str)
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
@@ -12,8 +12,19 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair (
                 ss.joinToString("") + tup,
-                "(ceu_value) { CEU_VALUE_TUPLE, {.tuple=&tup_$n} }"
+                "((ceu_value) { CEU_VALUE_TUPLE, {.tuple=&tup_$n} })"
             )
+        }
+        is Expr.Index -> {
+            val (s1, e1) = this.col.code()
+            val (s2, e2) = this.idx.code()
+            val s = """
+                assert($e1.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
+                assert($e2.tag == CEU_VALUE_NUMBER && "index error : expected number");
+                assert($e1.tuple->n > $e2.number && "index error : out of bounds");
+                
+            """.trimIndent()
+            Pair(s1+s2+s, "$e1.tuple->buf[(int)$e2.number]")
         }
         is Expr.ECall -> {
             val (s, e) = this.f.code()
@@ -78,7 +89,7 @@ fun Code (s: Stmt): String {
             }
         }
         void print (ceu_value v) {
-            assert(v.tag == CEU_VALUE_TUPLE);
+            assert(v.tag==CEU_VALUE_TUPLE && "cannot print : expected tuple argument");
             for (int i=0; i<v.tuple->n; i++) {
                 if (i > 0) {
                     printf("\t");

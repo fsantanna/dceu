@@ -18,6 +18,8 @@ class TExec {
         return out3
     }
 
+    // PRINT
+
     @Test
     fun a01_print() {
         val out = all("""
@@ -43,5 +45,56 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "\n[]\t[1.000000,2.000000,3.000000]\n") { out }
+    }
+    @Test
+    fun a04_print_err() {
+        val out = all("""
+            call println(1)
+        """.trimIndent()
+        )
+        assert(out.contains("cannot print : expected tuple argument")) { out }
+    }
+    @Test
+    fun a05_print_err() {
+        val out = all("""
+            call println()
+        """.trimIndent()
+        )
+        assert(out.contains("error: too few arguments to function ‘println’")) { out }
+    }
+
+    // INDEX
+
+    @Test
+    fun a06_index() {
+        val out = all("""
+            call println([[1,2,3][1]])
+        """.trimIndent()
+        )
+        assert(out == "2.000000\n") { out }
+    }
+    @Test
+    fun a07_index_err() {
+        val out = all("""
+            call println(1[1])
+        """.trimIndent()
+        )
+        assert(out.contains("index error : expected tuple")) { out }
+    }
+    @Test
+    fun a08_index_err() {
+        val out = all("""
+            call println([1][[]])
+        """.trimIndent()
+        )
+        assert(out.contains("index error : expected number")) { out }
+    }
+    @Test
+    fun a09_index_err() {
+        val out = all("""
+            call println([1][2])
+        """.trimIndent()
+        )
+        assert(out.contains("index error : out of bounds")) { out }
     }
 }

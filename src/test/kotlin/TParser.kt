@@ -119,6 +119,22 @@ class TParser {
         assert(trap { parser.exprN() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
     }
 
+    // EXPR.INDEX
+
+    @Test
+    fun a15_expr_index() {
+        val lexer = Lexer("anon", "x[10]".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprN()
+        assert(e is Expr.Index && e.col is Expr.Var && e.idx is Expr.Num)
+    }
+    @Test
+    fun a16_expr_index_err() {
+        val lexer = Lexer("anon", "x[10".reader())
+        val parser = Parser(lexer)
+        assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected \"]\" : have end of file")
+    }
+
     // STMT.SCALL
 
     @Test
