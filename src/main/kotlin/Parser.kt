@@ -15,14 +15,37 @@ class Parser (lexer_: Lexer)
         this.tk1 = tks.next()
     }
 
-    fun check (enu: String): Boolean {
+    fun checkFix (str: String): Boolean {
+        return (this.tk1 is Tk.Fix && this.tk1.str == str)
+    }
+    fun checkFix_err (str: String): Boolean {
+        val ret = this.checkFix(str)
+        if (!ret) {
+            this.err_expected('"'+str+'"')
+        }
+        return ret
+    }
+    fun acceptFix (str: String): Boolean {
+        val ret = this.checkFix(str)
+        if (ret) {
+            this.lex()
+        }
+        return ret
+    }
+    fun acceptFix_err (str: String): Boolean {
+        this.checkFix_err(str)
+        this.acceptFix(str)
+        return true
+    }
+
+    fun checkEnu (enu: String): Boolean {
         return when (enu) {
             "Id"  -> this.tk1 is Tk.Id
             else  -> error("bug found")
         }
     }
-    fun accept (enu: String): Boolean {
-        val ret = this.check(enu)
+    fun acceptEnu (enu: String): Boolean {
+        val ret = this.checkEnu(enu)
         if (ret) {
             this.lex()
         }
@@ -30,12 +53,21 @@ class Parser (lexer_: Lexer)
     }
 
     fun err_expected (str: String): Boolean {
-        error(this.lexer.name + ": (ln ${this.tk1.lin}, col ${this.tk1.col}): expected $str : have ${this.tk1.str}")
+        val tk = when {
+            (this.tk1 is Tk.Eof) -> "end of file"
+            else -> '"' + this.tk1.str + '"'
+        }
+        error(this.lexer.name + ": (ln ${this.tk1.lin}, col ${this.tk1.col}): expected $str : have $tk")
     }
 
     fun expr (): Expr {
         return when {
-            (this.accept("Id")) -> Expr.Var(this.tk0 as Tk.Id)
+            this.acceptFix("(") -> {
+                val e = this.expr()
+                this.acceptFix_err(")")
+                e
+            }
+            this.acceptEnu("Id") -> Expr.Var(this.tk0 as Tk.Id)
             else -> {
                 this.err_expected("expression")
                 error("unreachable")
