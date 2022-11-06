@@ -130,8 +130,10 @@ class Parser (lexer_: Lexer)
         }
 
         var ret: Stmt = Stmt.Nop(this.tk0)
+        while (this.acceptFix(";")) {}
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             val s = this.stmt()
+            while (this.acceptFix(";")) {}
             ret = enseq(ret, s)
         }
         return ret

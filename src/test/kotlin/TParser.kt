@@ -117,9 +117,9 @@ class TParser {
 
     @Test
     fun b03_stmt_seq() {
-        val lexer = Lexer("anon", "call f () call g ()".reader())
+        val lexer = Lexer("anon", ";; call f () call g () ; call h()\ncall i() ;\n;".reader())
         val parser = Parser(lexer)
         val s = parser.stmts()
-        assert(s.tostr() == "call f()\ncall g()\n") { s.tostr() }
+        assert(s.tostr() == "call f()\ncall g()\ncall h()\ncall i()\n") { s.tostr() }
     }
 }
