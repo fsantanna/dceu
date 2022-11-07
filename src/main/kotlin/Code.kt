@@ -1,4 +1,13 @@
 fun Expr.code (): Pair<String,String> {
+    fun set (n: Int, e: String): String {
+        return """
+            ceu_$n = $e;
+            if (ceu_$n.tag == CEU_VALUE_TUPLE) {
+                assert(ceu_$n.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
+            }
+
+        """.trimIndent()
+    }
     return when (this) {
         is Expr.Do -> {
             val (ss,e) = this.es.code()
@@ -12,11 +21,8 @@ fun Expr.code (): Pair<String,String> {
                     CEU_Block ceu_block = { CEU_DEPTH, NULL, ceu_up };
                     ceu_scope = &ceu_block;
                     $ss
-                    ceu_$n = $e;
-                    if (ceu_$n.tag == CEU_VALUE_TUPLE) {
-                        assert(ceu_$n.tuple->block->depth < ceu_block.depth && "set error : incompatible scopes");
-                    }
                     ceu_scope = ceu_up;
+                    ${set(n,e)}
                     ceu_block_free(&ceu_block);
                     CEU_DEPTH--;
                 }
@@ -48,11 +54,9 @@ fun Expr.code (): Pair<String,String> {
                 
             """.trimIndent()
             val pos = """
-                CEU_Value ceu_$n = $e2;
+                CEU_Value ceu_$n;
                 {
-                    if (ceu_$n.tag == CEU_VALUE_TUPLE) {
-                        assert(ceu_$n.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
-                    }
+                    ${set(n,e2)}
                     $e1 = ceu_$n;
                 }
                 
@@ -77,10 +81,10 @@ fun Expr.code (): Pair<String,String> {
                     }
                     if (ceu2_$n) {
                         $st
-                        ceu_$n = $et;
+                        ${set(n,et)}
                     } else {
                         $sf
-                        ceu_$n = $ef;
+                        ${set(n,ef)}
                     }
                 }
                 
@@ -110,7 +114,7 @@ fun Expr.code (): Pair<String,String> {
                 }
     
             """.trimIndent()
-            Pair(ret, "{ CEU_VALUE_FUNC, {.func=ceu_func_$n} }")
+            Pair(ret, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")
         }
         is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Nil -> Pair("", "((CEU_Value) { CEU_VALUE_NIL })")
