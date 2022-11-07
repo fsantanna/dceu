@@ -11,7 +11,7 @@ class TExec {
         } catch (e: Throwable) {
             return e.message!!
         }
-        val c = Code(es)
+        val c = Code(Expr.Do(Tk.Fix("",0,0),es))
         File("out.c").writeText(c)
         val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
         if (!ok2) {
@@ -64,6 +64,21 @@ class TExec {
         """.trimIndent()
         )
         assert(out.contains("error: too few arguments to function ‘println’")) { out }
+    }
+    @Test
+    fun print4() {
+        val out = all("print(nil)")
+        assert(out == "nil") { out }
+    }
+    @Test
+    fun print5() {
+        val out = all("print(true)")
+        assert(out == "true") { out }
+    }
+    @Test
+    fun print6() {
+        val out = all("println(false)")
+        assert(out == "false\n") { out }
     }
 
     // INDEX
@@ -229,7 +244,7 @@ class TExec {
         assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
-    fun scope3() {
+    fun todo_scope_scope3() {
         val out = all("""
             var x
             do {
@@ -290,5 +305,133 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "[1.000000,2.000000,30.000000]\n") { out }
+    }
+
+    // IF
+
+    @Test
+    fun if1() {
+        val out = all("""
+            var x
+            set x = if (true) { 1 }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
+    @Test
+    fun if2() {
+        val out = all("""
+            var x
+            set x = 10
+            set x = if false { 1 }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun if3() {
+        val out = all("""
+            var x
+            set x = 10
+            set x = if (nil) {} else { 1 }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
+    @Test
+    fun if_err() {
+        val out = all("""
+            if [] {}
+        """.trimIndent()
+        )
+        assert(out.contains("if error : invalid condition")) { out }
+    }
+
+    // FUNC
+
+    @Test
+    fun func1() {
+        val out = all("""
+            var f
+            set f = func () {}
+            var x
+            set x = f()
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun func2() {
+        val out = all("""
+            var f
+            set f = func () {
+                return 1
+            }
+            var x
+            set x = f()
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
+    @Test
+    fun func3() {
+        val out = all("""
+            var f
+            set f = func (x) {
+                return x
+            }
+            var x
+            set x = f(10)
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "10.000000\n") { out }
+    }
+    @Test
+    fun func4_err() {
+        val out = all("""
+            var f
+            set f = func (x) {
+                return x
+            }
+            var x
+            set x = f()
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "10.000000\n") { out }
+    }
+    @Test
+    fun func5_err() {
+        val out = all("""
+            var f
+            set f = func (x) {
+                return [x]
+            }
+            var x
+            set x = f(10)
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "ERROR: scope") { out }
+    }
+    @Test
+    fun todo_scope_func6() {
+        val out = all("""
+            var f
+            set f = func (x,s) {
+                return [x]@s
+            }
+            var x
+            set x = f(10)
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "[10.000000]\n") { out }
     }
 }

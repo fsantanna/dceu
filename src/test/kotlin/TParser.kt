@@ -49,7 +49,7 @@ class TParser {
         assert(trap { parser.expr1() } == "anon: (ln 1, col 7): expected \")\" : have end of file")
     }
 
-    // EXPR.NUM
+    // EXPR.NUM / EXPR.NIL / EXPR.BOOL
 
     @Test
     fun expr_num() {
@@ -57,6 +57,27 @@ class TParser {
         val parser = Parser(lexer)
         val e = parser.expr1()
         assert(e is Expr.Num && e.tk.str == "1.5F")
+    }
+    @Test
+    fun expr_nil() {
+        val lexer = Lexer("anon", "nil".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Nil && e.tk.str == "nil")
+    }
+    @Test
+    fun expr_true() {
+        val lexer = Lexer("anon", "true".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Bool && e.tk.str == "true")
+    }
+    @Test
+    fun expr_false() {
+        val lexer = Lexer("anon", "false".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Bool && e.tk.str == "false")
     }
 
     // EXPR.ECALL
@@ -212,6 +233,25 @@ class TParser {
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
         assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
+    }
+
+    // IF
+
+    @Test
+    fun expr_if1() {  // set whole tuple?
+        val lexer = Lexer("anon", "if true { 1 } else { 0 }".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true {\n1\n}\nelse {\n0\n}\n") { e.tostr() }
+    }
+    @Test
+    fun expr_if2() {  // set whole tuple?
+        val lexer = Lexer("anon", "if true { 1 }".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
     }
 
     // DO

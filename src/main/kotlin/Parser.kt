@@ -96,32 +96,48 @@ class Parser (lexer_: Lexer)
         return l
     }
 
+    fun block (): Expr.Do {
+        val tk0 = this.tk0 as Tk.Fix
+        this.acceptFix_err("{")
+        val es = this.exprs()
+        this.acceptFix_err("}")
+        return Expr.Do(tk0, es)
+    }
+
     fun expr1 (): Expr {
         return when {
-            this.acceptFix("do") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("{")
-                val es = this.exprs()
-                this.acceptFix_err("}")
-                Expr.Do(tk0, es)
-            }
+            this.acceptFix("do") -> this.block()
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
                 Expr.Dcl(this.tk0 as Tk.Id)
             }
             this.acceptFix("set") -> {
-                val tk0 = this.tk0
+                val tk0 = this.tk0 as Tk.Fix
                 val dst = this.exprN()
                 this.acceptFix_err("=")
                 val src = this.exprN()
                 if (dst !is Expr.Acc && dst !is Expr.Index) {
                     err(tk0, "invalid set : invalid destination")
                 }
-                Expr.Set(tk0 as Tk.Fix, dst, src)
+                Expr.Set(tk0, dst, src)
             }
-            this.acceptEnu("Id")  -> Expr.Acc(this.tk0 as Tk.Id)
-            this.acceptEnu("Num") -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")    -> Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
+            this.acceptFix("if") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val cnd = this.exprN()
+                val t = this.block()
+                val f = if (this.acceptFix("else")) {
+                    this.block()
+                } else {
+                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))))
+                }
+                Expr.If(tk0, cnd, t, f)
+            }
+            this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
+            this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
+            this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)
+            this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
+            this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
             this.acceptFix("(") -> {
                 val e = this.expr1()
                 this.acceptFix_err(")")

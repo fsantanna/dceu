@@ -2,15 +2,18 @@ fun Expr.code (): Pair<String,String> {
     return when (this) {
         is Expr.Do -> {
             val (ss,e) = this.es.code()
+            val up = if (this.tk.str=="") "NULL" else "&ceu_block"
             val s = """
                 CEU_Value ceu_$n = { CEU_VALUE_NIL };
                 {
                     assert(CEU_DEPTH < UINT8_MAX);
                     CEU_DEPTH++;
-                    CEU_Block* ceu_up = &ceu_block;
+                    CEU_Block* ceu_up = $up;
                     CEU_Block ceu_block = { CEU_DEPTH, NULL, ceu_up };
+                    ceu_scope = &ceu_block;
                     $ss
                     ceu_$n = $e;
+                    ceu_scope = ceu_up;
                     ceu_block_free(&ceu_block);
                     CEU_DEPTH--;
                 }
@@ -53,7 +56,37 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair(s1+pre+s2+pos, "ceu_$n")
         }
+        is Expr.If -> {
+            val (sc, ec) = this.cnd.code()
+            val (st, et) = this.t.code()
+            val (sf, ef) = this.f.code()
+            val s = """
+                CEU_Value ceu_$n;
+                {
+                    CEU_Value ceu1_$n = $ec;
+                    int ceu2_$n; {
+                        switch (ceu1_$n.tag) {
+                            case CEU_VALUE_NIL:  { ceu2_$n=0; break; }
+                            case CEU_VALUE_BOOL: { ceu2_$n=ceu1_$n.bool; break; }
+                            default:
+                                assert(0 && "if error : invalid condition");
+                        }
+                    }
+                    if (ceu2_$n) {
+                        $st
+                        ceu_$n = $et;
+                    } else {
+                        $sf
+                        ceu_$n = $ef;
+                    }
+                }
+                
+            """.trimIndent()
+            Pair(sc+s, "ceu_$n")
+        }
         is Expr.Acc -> Pair("", this.tk.str)
+        is Expr.Nil -> Pair("", "((CEU_Value) { CEU_VALUE_NIL })")
+        is Expr.Bool -> Pair("", "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
         is Expr.Num -> Pair("", "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
@@ -104,7 +137,7 @@ fun List<Expr>.code (): Pair<String,String> {
     return Pair(ss.joinToString("\n")+"\n", es.lastOrNull() ?: "((CEU_Value) { CEU_VALUE_NIL })")
 }
 
-fun Code (es: List<Expr>): String {
+fun Code (es: Expr.Do): String {
     return """
         #include <stdio.h>
         #include <stdlib.h>
@@ -114,6 +147,7 @@ fun Code (es: List<Expr>): String {
 
         typedef enum CEU_VALUE {
             CEU_VALUE_NIL,
+            CEU_VALUE_BOOL,
             CEU_VALUE_NUMBER,
             CEU_VALUE_TUPLE
         } CEU_VALUE;
@@ -131,6 +165,7 @@ fun Code (es: List<Expr>): String {
             int tag;
             union {
                 //void nil;
+                int bool;
                 float number;
                 CEU_Value_Tuple* tuple;
             };
@@ -154,6 +189,13 @@ fun Code (es: List<Expr>): String {
             switch (v.tag) {
                 case CEU_VALUE_NIL:
                     printf("nil");
+                    break;
+                case CEU_VALUE_BOOL:
+                    if (v.bool) {
+                        printf("true");
+                    } else {
+                        printf("false");
+                    }
                     break;
                 case CEU_VALUE_NUMBER:
                     printf("%f", v.number);
@@ -184,9 +226,7 @@ fun Code (es: List<Expr>): String {
         uint8_t CEU_DEPTH = 0;
         
         void main (void) {
-            CEU_Block ceu_block = { CEU_DEPTH, NULL, NULL };
             ${es.code().first}
-            ceu_block_free(&ceu_block);
         }
     """.trimIndent()
 }
