@@ -13,6 +13,9 @@ fun Expr.code (): Pair<String,String> {
                     ceu_scope = &ceu_block;
                     $ss
                     ceu_$n = $e;
+                    if (ceu_$n.tag == CEU_VALUE_TUPLE) {
+                        assert(ceu_$n.tuple->block->depth < ceu_block.depth && "set error : incompatible scopes");
+                    }
                     ceu_scope = ceu_up;
                     ceu_block_free(&ceu_block);
                     CEU_DEPTH--;
@@ -23,8 +26,8 @@ fun Expr.code (): Pair<String,String> {
         }
         is Expr.Dcl -> Pair (
             """
-                CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
-                CEU_Block* _${this.tk.str}_ = &ceu_block; // enclosing block
+            CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
+            CEU_Block* _${this.tk.str}_ = &ceu_block; // enclosing block
                 
             """.trimIndent(),
             this.tk.str
@@ -84,7 +87,31 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair(sc+s, "ceu_$n")
         }
-        is Expr.Func -> TODO()
+        is Expr.Func -> {
+            val (s, e) = this.body.code()
+            val args = this.args.map {
+                """
+                CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                if (ceu_i < ceu_n) {
+                    ${it.str} = va_arg(ceu_args, CEU_Value);
+                }
+                ceu_i++;
+                """.trimIndent()
+            }.joinToString("")
+            val ret = """
+                CEU_Value ceu_func_$n (int ceu_n, ...) {
+                    int ceu_i = 0;
+                    va_list ceu_args;
+                    va_start(ceu_args, ceu_n);
+                    $args
+                    va_end(ceu_args);
+                    $s
+                    return $e;
+                }
+    
+            """.trimIndent()
+            Pair(ret, "{ CEU_VALUE_FUNC, {.func=ceu_func_$n} }")
+        }
         is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Nil -> Pair("", "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Bool -> Pair("", "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
@@ -127,7 +154,11 @@ fun Expr.code (): Pair<String,String> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
             val pre = "ceu_scope = &ceu_block;\n" // allocate in current block
-            val pos = "CEU_Value ceu_$n = $e(${es.size}${if (es.size>0) "," else ""}${es.joinToString(",")});\n"
+            val pos = """
+                assert($e.tag==CEU_VALUE_FUNC && "call error : expected function");
+                CEU_Value ceu_$n = $e.func(${es.size}${if (es.size>0) "," else ""}${es.joinToString(",")});
+
+            """.trimIndent()
             Pair(s+pre+ss.joinToString("")+pos, "ceu_$n")
         }
     }
@@ -151,7 +182,8 @@ fun Code (es: Expr.Do): String {
             CEU_VALUE_NIL,
             CEU_VALUE_BOOL,
             CEU_VALUE_NUMBER,
-            CEU_VALUE_TUPLE
+            CEU_VALUE_TUPLE,
+            CEU_VALUE_FUNC
         } CEU_VALUE;
         
         struct CEU_Value;
@@ -170,6 +202,7 @@ fun Code (es: Expr.Do): String {
                 int bool;
                 float number;
                 CEU_Value_Tuple* tuple;
+                struct CEU_Value (*func) (int ceu_n, ...);
             };
         } CEU_Value;
         
@@ -187,7 +220,7 @@ fun Code (es: Expr.Do): String {
             }
         }
 
-        void print1 (CEU_Value v) {
+        void ceu_print1 (CEU_Value v) {
             switch (v.tag) {
                 case CEU_VALUE_NIL:
                     printf("nil");
@@ -208,7 +241,7 @@ fun Code (es: Expr.Do): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        print1(v.tuple->buf[i]);
+                        ceu_print1(v.tuple->buf[i]);
                     }                    
                     printf("]");
                     break;
@@ -216,31 +249,33 @@ fun Code (es: Expr.Do): String {
                     assert(0 && "bug found");
             }
         }
-        CEU_Value vprint (int n, va_list args) {
+        CEU_Value ceu_vprint (int n, va_list args) {
             if (n > 0) {
                 for (int i=0; i<n; i++) {
-                    print1(va_arg(args, CEU_Value));
+                    ceu_print1(va_arg(args, CEU_Value));
                 }
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value print (int n, ...) {
+        CEU_Value ceu_print (int n, ...) {
             if (n > 0) {
                 va_list args;
                 va_start(args, n);
-                vprint(n, args);
+                ceu_vprint(n, args);
                 va_end(args);
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value println (int n, ...) {
+        CEU_Value ceu_println (int n, ...) {
             va_list args;
             va_start(args, n);
-            vprint(n, args);
+            ceu_vprint(n, args);
             va_end(args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
+        CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
+        CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
         
         CEU_Block* ceu_scope;
         CEU_Value_Tuple* ceu_col;

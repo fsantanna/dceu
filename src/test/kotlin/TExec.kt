@@ -310,6 +310,18 @@ class TExec {
         )
         assert(out == "[1.000000,2.000000,30.000000]\n") { out }
     }
+    @Test
+    fun scope7_err() {
+        val out = all("""
+            var xs
+            set xs = do {
+                [10]
+            }
+            println(xs)
+        """.trimIndent()
+        )
+        assert(out.contains("set error : incompatible scopes")) { out }
+    }
 
     // IF
 
@@ -354,7 +366,7 @@ class TExec {
         assert(out.contains("if error : invalid condition")) { out }
     }
 
-    // FUNC
+    // FUNC / CALL
 
     @Test
     fun func1() {
@@ -397,7 +409,7 @@ class TExec {
         assert(out == "10.000000\n") { out }
     }
     @Test
-    fun func4_err() {
+    fun func4() {
         val out = all("""
             var f
             set f = func (x) {
@@ -408,7 +420,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "10.000000\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun func5_err() {
@@ -422,7 +434,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "ERROR: scope") { out }
+        assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
     fun todo_scope_func6() {
@@ -437,5 +449,10 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "[10.000000]\n") { out }
+    }
+    @Test
+    fun func7_err() {
+        val out = all("1(1)")
+        assert(out.contains("call error : expected function")) { out }
     }
 }
