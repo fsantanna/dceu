@@ -475,7 +475,7 @@ class TExec {
         assert(out == "1.000000\n") { out }
     }
     @Test
-    fun loop3() {
+    fun todo_leak_loop3() {
         val out = all("""
             println(loop { break [1] })
         """.trimIndent()

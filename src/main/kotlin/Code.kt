@@ -1,122 +1,100 @@
-fun Expr.code (): Pair<String,String> {
-    fun set (dst: String, src: String): String {
-        return """
-            $dst = $src;
-            if ($dst.tag == CEU_VALUE_TUPLE) {
-                assert($dst.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
-            }
+fun fset (set: Pair<String,String>?, src: String): String {
+    return if (set == null) "" else fset(set.first, set.second, src)
+}
+fun fset (scope: String, dst: String, src: String): String {
+    return """
+        if ($src.tag == CEU_VALUE_TUPLE) {
+            assert($src.tuple->block->depth <= $scope->depth && "set error : incompatible scopes");
+        }
+        $dst = $src;
 
-        """.trimIndent()
-    }
+    """.trimIndent()
+}
+
+// block: String -> current enclosing block for normal allocation
+// set: Pair<block,dst> -> enclosing assignment with block and destination
+
+fun Expr.code (block: String, set: Pair<String,String>?): String {
     return when (this) {
         is Expr.Do -> {
-            val (s,e) = this.es.code()
-            val up = if (this.tk.str=="") "NULL" else "&ceu_block"
-            val ss = """
-                CEU_Value ceu_$n = { CEU_VALUE_NIL };
-                {
-                    assert(CEU_DEPTH < UINT8_MAX);
-                    CEU_DEPTH++;
-                    CEU_Block* ceu_up = $up;
-                    CEU_Block ceu_block = { CEU_DEPTH, NULL };
-                    ceu_scope = &ceu_block;
-                    $s
-                    ceu_scope = ceu_up;
-                    ${set("ceu_$n",e)}
-                    ceu_block_free(&ceu_block);
-                    CEU_DEPTH--;
-                }
-                
-            """.trimIndent()
-            Pair(ss, "ceu_$n")
-        }
-        is Expr.Dcl -> Pair (
+            val depth = if (block == "") 0 else "$block->depth+1"
             """
+            { // DO
+                assert($depth < UINT8_MAX);
+                CEU_Block ceu_block_$n = { $depth, NULL };
+                ${this.es.code("(&ceu_block_$n)", set)}
+                ceu_block_free(&ceu_block_$n);
+            }
+            
+        """.trimIndent()
+        }
+        is Expr.Dcl -> """
+            // DCL
             CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
-            CEU_Block* _${this.tk.str}_ = &ceu_block; // enclosing block
+            CEU_Block* _${this.tk.str}_ = $block;   // TODO: remove (pass symtable to code())
+            ${fset(set,this.tk.str)}            
                 
-            """.trimIndent(),
-            this.tk.str
-        )
+        """.trimIndent()
         is Expr.Set -> {
-            val (s1, e1) = this.dst.code()
-            val (s2, e2) = this.src.code()
-            val isidx = if (this.dst is Expr.Index) 1 else 0
-            assert(isidx==1 || this.dst is Expr.Acc) { "bug found" }
-            val pre = """
-                {
-                    if ($isidx) {                           // x[i] = src
-                        ceu_scope = ceu_col->block;         // scope of x
-                    } else {                                // x = src
-                        ceu_scope = _${this.dst.tk.str}_;   // scope of x
-                    }
-                }
-                
-            """.trimIndent()
-            val pos = """
+            val dst = if (this.dst is Expr.Index) {
+                this.dst.col
+                1 // x[i] = src / scope of x
+            } else {
+                val xxx = this.dst.code(block, null)
+                assert(this.dst is Expr.Acc) { "bug found" }
+                """
+                $xxx
+                ceu_scope_$n = _${this.dst.tk.str}_;    // x = src / scope of _x_
+                    
+                """.trimIndent()
+            }
+            """
+            { // SET
+                CEU_Block* ceu_scope_$n;
+                $dst
                 CEU_Value ceu_$n;
-                {
-                    ${set("ceu_$n",e2)}
-                    $e1 = ceu_$n;
-                    ceu_scope = &ceu_block;
-                }
+                ${this.src.code(block, Pair("ceu_scope_$n","ceu_$n"))}
+                ${fset(set,"ceu_$n")}
+            }
                 
             """.trimIndent()
-            Pair(s1+pre+s2+pos, "ceu_$n")
+            //Pair(s1+pre+s2+pos, "ceu_$n")
         }
-        is Expr.If -> {
-            val (sc, ec) = this.cnd.code()
-            val (st, et) = this.t.code()
-            val (sf, ef) = this.f.code()
-            val s = """
-                CEU_Value ceu_$n;
-                {
-                    CEU_Value ceu1_$n = $ec;
-                    int ceu2_$n; {
-                        switch (ceu1_$n.tag) {
-                            case CEU_VALUE_NIL:  { ceu2_$n=0; break; }
-                            case CEU_VALUE_BOOL: { ceu2_$n=ceu1_$n.bool; break; }
-                            default:
-                                assert(0 && "if error : invalid condition");
-                        }
-                    }
-                    if (ceu2_$n) {
-                        $st
-                        ${set("ceu_$n",et)}
-                    } else {
-                        $sf
-                        ${set("ceu_$n",ef)}
+        is Expr.If -> """
+            { // IF
+                CEU_Value ceu_cnd_$n;
+                ${this.cnd.code(block, Pair(block,"ceu_cnd_$n"))}
+                int ceu_ret_$n; {
+                    switch (ceu_cnd_$n.tag) {
+                        case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
+                        case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                        default:
+                            assert(0 && "if error : invalid condition");
                     }
                 }
-                
-            """.trimIndent()
-            Pair(sc+s, "ceu_$n")
-        }
-        is Expr.Loop -> {
-            val (s, e) = this.body.code()
-            val loop = """
-                CEU_Value ceu_loop;
-                while (1) { // LOOP
-                    $s
+                if (ceu_ret_$n) {
+                    ${this.t.code(block, set)}
+                } else {
+                    ${this.f.code(block, set)}
                 }
+            }
+            
+        """.trimIndent()
+        is Expr.Loop -> """
+            while (1) { // LOOP
+                ${this.body.code(block, set)}
+            }
                 
-            """.trimIndent()
-            Pair(loop, "ceu_loop")
-        }
-        is Expr.Break -> {
-            val (s, e) = this.arg.code()
-            val brk = """
-                { // BREAK
-                    $s
-                    ${set("ceu_loop",e)}
-                    break;
-                }
+        """.trimIndent()
+        is Expr.Break -> """
+            { // BREAK
+                ${this.arg.code(block, set)}
+                break;
+            }
                 
-            """.trimIndent()
-            Pair(brk, "ceu_loop")
-        }
+        """.trimIndent()
         is Expr.Func -> {
-            val (s, e) = this.body.code()
+            val body = this.body.code(block, Pair("TODO","ceu_$n"))
             val args = this.args.map {
                 """
                 CEU_Value ${it.str} = { CEU_VALUE_NIL };
@@ -126,74 +104,92 @@ fun Expr.code (): Pair<String,String> {
                 ceu_i++;
                 """.trimIndent()
             }.joinToString("")
-            val ret = """
-                CEU_Value ceu_func_$n (int ceu_n, ...) {
-                    int ceu_i = 0;
-                    va_list ceu_args;
-                    va_start(ceu_args, ceu_n);
-                    $args
-                    va_end(ceu_args);
-                    $s
-                    return $e;
-                }
-    
-            """.trimIndent()
-            Pair(ret, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")
-        }
-        is Expr.Acc -> Pair("", this.tk.str)
-        is Expr.Nil -> Pair("", "((CEU_Value) { CEU_VALUE_NIL })")
-        is Expr.Bool -> Pair("", "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
-        is Expr.Num -> Pair("", "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
-        is Expr.Tuple -> {
-            val (ss, es) = this.args.map { it.code() }.unzip()
-            val tup = """
-                CEU_Value_Tuple* ceut_$n = malloc(sizeof(CEU_Value_Tuple));
-                {
-                    assert(${es.size} < UINT8_MAX);
-                    CEU_Value ceu1_$n[${es.size}] = { ${es.joinToString(",")} };
-                    CEU_Value* ceu2_$n = malloc(${es.size} * sizeof(CEU_Value));
-                    memcpy(ceu2_$n, ceu1_$n, ${es.size} * sizeof(CEU_Value));
-                    *ceut_$n = (CEU_Value_Tuple) { ceu_scope, ceu_scope->tofree, ceu2_$n, ${es.size} };
-                    ceu_scope->tofree = ceut_$n;
-                }
-                
-            """.trimIndent()
-            Pair (
-                ss.joinToString("") + tup,
-                "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceut_$n} })"
-            )
-        }
-        is Expr.Index -> {
-            val (s1, e1) = this.col.code()
-            val (s2, e2) = this.idx.code()
-            val s = """
-                int ceu_$n = (int) $e2.number;
-                {
-                    assert($e1.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
-                    assert($e2.tag == CEU_VALUE_NUMBER && "index error : expected number");
-                    assert($e1.tuple->n > ceu_$n && "index error : out of bounds");
-                    ceu_col = $e1.tuple;
-                }
-                
-            """.trimIndent()
-            Pair(s1+s2+s, "$e1.tuple->buf[ceu_$n]")
-        }
-        is Expr.Call -> {
-            val (s, e) = this.f.code()
-            val (ss, es) = this.args.map { it.code() }.unzip()
-            val pos = """
-                assert($e.tag==CEU_VALUE_FUNC && "call error : expected function");
-                CEU_Value ceu_$n = $e.func(${es.size}${if (es.size>0) "," else ""}${es.joinToString(",")});
+            """
+            CEU_Value ceu_func_$n (int ceu_n, ...) {
+                int ceu_i = 0;
+                va_list ceu_args;
+                va_start(ceu_args, ceu_n);
+                $args
+                va_end(ceu_args);
+                CEU_Value ceu_$n;
+                $body
+                return ceu_$n;
+            }
+            ${fset(set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
 
             """.trimIndent()
-            Pair(s+ss.joinToString("")+pos, "ceu_$n")
         }
+        is Expr.Acc -> fset(set, this.tk.str)
+        is Expr.Nil -> fset(set, "((CEU_Value) { CEU_VALUE_NIL })")
+        is Expr.Bool -> fset(set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
+        is Expr.Num -> fset(set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
+        is Expr.Tuple -> {
+            assert(this.args.size <= 256) { "bug found" }
+            val args = this.args.mapIndexed { i,it ->
+                // allocate in the same scope of set (set.first) or use default block
+                it.code(block, Pair(if (set==null) block else set.first, "ceu_${i}_$n"))
+            }.joinToString("")
+            """
+            { // TUPLE
+                ${this.args.mapIndexed { i,_->"CEU_Value ceu_${i}_$n;\n" }.joinToString("")}
+                $args
+                CEU_Value ceu_sta_$n[${this.args.size}] = {
+                    ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
+                };
+                CEU_Value* ceu_dyn_$n = malloc(${this.args.size} * sizeof(CEU_Value));
+                assert(ceu_dyn_$n != NULL);
+                memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
+                CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
+                assert(ceu_$n != NULL);
+                *ceu_$n = (CEU_Value_Tuple) { $block, $block->tofree, ceu_dyn_$n, ${this.args.size} };
+                $block->tofree = ceu_$n;
+                ${fset(set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
+            }
+                
+            """.trimIndent()
+        }
+        is Expr.Index -> """
+            { // INDEX
+                CEU_Value ceu_col_$n;
+                ${this.col.code(block, Pair(block,"ceu_col_$n"))}
+                assert(ceu_col_$n.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
+                
+                CEU_Value ceu_idx_$n;
+                ${this.idx.code(block, Pair(block,"ceu_idx_$n"))}
+                assert(ceu_idx_$n.tag == CEU_VALUE_NUMBER && "index error : expected number");
+                
+                assert(ceu_col_$n.tuple->n > ceu_idx_$n && "index error : out of bounds");
+                ${fset(set, "ceu_col_$n.tuple->buf[ceu_idx\$$n]")}
+            }
+            
+        """.trimIndent()
+        is Expr.Call -> """
+            { // CALL
+                CEU_Value ceu_f_$n;
+                ${this.f.code(block, Pair(block,"ceu_f_$n"))}
+                assert(ceu_f_$n.tag==CEU_VALUE_FUNC && "call error : expected function");
+                ${this.args.mapIndexed { i,_ ->
+                    "CEU_Value ceu_${i}_$n;\n"
+                }.joinToString("")}
+                ${this.args.mapIndexed { i,it ->
+                    it.code(block, Pair(block, "ceu_${i}_$n"))
+                }.joinToString("")}
+                CEU_Value ceu_$n = ceu_f_$n.func(
+                    ${this.args.size}
+                    ${(if (this.args.size>0) "," else "")}
+                    ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
+                );
+                ${fset(set, "ceu_$n")}
+            }
+
+        """.trimIndent()
     }
 }
 
-fun List<Expr>.code (): Pair<String,String> {
-    val (ss,es) = this.map { it.code() }.unzip()
-    return Pair(ss.joinToString("\n")+"\n", es.lastOrNull() ?: "((CEU_Value) { CEU_VALUE_NIL })")
+fun List<Expr>.code (block: String, set: Pair<String,String>?): String {
+    return this.mapIndexed { i,it ->
+        it.code(block, if (i==this.size-1) set else null) + "\n"
+    }.joinToString("")
 }
 
 fun Code (es: Expr.Do): String {
@@ -303,12 +299,8 @@ fun Code (es: Expr.Do): String {
         CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
         CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
         
-        CEU_Block* ceu_scope;
-        CEU_Value_Tuple* ceu_col;
-        uint8_t CEU_DEPTH = 0;
-        
         void main (void) {
-            ${es.code().first}
+            ${es.code("", null)}
         }
     """.trimIndent()
 }
