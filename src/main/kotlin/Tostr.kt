@@ -4,6 +4,8 @@ fun Expr.tostr (): String {
         is Expr.Dcl   -> "var " + this.tk.str
         is Expr.Set   -> "set " + this.dst.tostr() + " = " + this.src.tostr()
         is Expr.If    -> "if " + this.cnd.tostr() + " " + this.t.tostr() + "else " + this.f.tostr()
+        is Expr.Loop  -> "loop " + this.body.tostr()
+        is Expr.Break -> "break " + this.arg.tostr()
         is Expr.Func  -> "func (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
         is Expr.Acc   -> this.tk.str
         is Expr.Nil   -> this.tk.str

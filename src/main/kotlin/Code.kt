@@ -91,6 +91,8 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair(sc+s, "ceu_$n")
         }
+        is Expr.Loop -> TODO()
+        is Expr.Break -> TODO()
         is Expr.Func -> {
             val (s, e) = this.body.code()
             val args = this.args.map {
@@ -194,8 +196,8 @@ fun Code (es: Expr.Do): String {
         struct CEU_Block;
         
         typedef struct CEU_Value_Tuple {
-            struct CEU_Block* block;
-            struct CEU_Value_Tuple* nxt;
+            struct CEU_Block* block;        // compare on set
+            struct CEU_Value_Tuple* nxt;    // next in block->tofree
             struct CEU_Value* buf;
             uint8_t n;
         } CEU_Value_Tuple;
@@ -211,7 +213,7 @@ fun Code (es: Expr.Do): String {
         } CEU_Value;
         
         typedef struct CEU_Block {
-            uint8_t depth;
+            uint8_t depth;              // compare on set
             CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {

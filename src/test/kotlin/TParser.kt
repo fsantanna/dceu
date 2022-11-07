@@ -291,4 +291,24 @@ class TParser {
         assert(e is Expr.Func && e.args.size==2)
         assert(e.tostr() == "func (a,b) {\n10\n}\n") { e.tostr() }
     }
+
+    // LOOP / BREAK
+
+    @Test
+    fun expr_loop1() {
+        val lexer = Lexer("anon", "loop { break 1 }".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Loop)
+        assert(e.tostr() == "loop {\nbreak 1\n}\n") { e.tostr() }
+    }
+    @Test
+    fun expr_loop2() {
+        val lexer = Lexer("anon", "loop { break }".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Loop)
+        assert(e.tostr() == "loop {\nbreak nil\n}\n") { e.tostr() }
+    }
+
 }

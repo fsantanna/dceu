@@ -455,4 +455,15 @@ class TExec {
         val out = all("1(1)")
         assert(out.contains("call error : expected function")) { out }
     }
+
+    // LOOP / BREAK
+
+    @Test
+    fun loop1() {
+        val out = all("""
+            println(loop { break 1 })
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
 }

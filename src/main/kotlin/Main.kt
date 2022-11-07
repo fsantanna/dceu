@@ -3,7 +3,7 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "do", "else", "false", "func", "if", "nil", "set", "true", "var"
+    "break", "do", "else", "false", "func", "if", "loop", "nil", "set", "true", "var"
 )
 
 sealed class Tk (val str: String, val lin: Int, val col: Int) {
@@ -19,6 +19,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
     data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If    (val tk_: Tk, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
+    data class Loop  (val tk_: Tk, val body: Expr.Do): Expr(N++, tk_)
+    data class Break (val tk_: Tk, val arg: Expr): Expr(N++, tk_)
     data class Func  (val tk_: Tk, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
 
     data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)
