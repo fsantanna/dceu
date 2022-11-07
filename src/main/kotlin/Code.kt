@@ -10,9 +10,9 @@ fun Expr.code (): Pair<String,String> {
     }
     return when (this) {
         is Expr.Do -> {
-            val (ss,e) = this.es.code()
+            val (s,e) = this.es.code()
             val up = if (this.tk.str=="") "NULL" else "&ceu_block"
-            val s = """
+            val ss = """
                 CEU_Value ceu_$n = { CEU_VALUE_NIL };
                 {
                     assert(CEU_DEPTH < UINT8_MAX);
@@ -20,7 +20,7 @@ fun Expr.code (): Pair<String,String> {
                     CEU_Block* ceu_up = $up;
                     CEU_Block ceu_block = { CEU_DEPTH, NULL };
                     ceu_scope = &ceu_block;
-                    $ss
+                    $s
                     ceu_scope = ceu_up;
                     ${set("ceu_$n",e)}
                     ceu_block_free(&ceu_block);
@@ -28,7 +28,7 @@ fun Expr.code (): Pair<String,String> {
                 }
                 
             """.trimIndent()
-            Pair(s, "ceu_$n")
+            Pair(ss, "ceu_$n")
         }
         is Expr.Dcl -> Pair (
             """
@@ -58,6 +58,7 @@ fun Expr.code (): Pair<String,String> {
                 {
                     ${set("ceu_$n",e2)}
                     $e1 = ceu_$n;
+                    ceu_scope = &ceu_block;
                 }
                 
             """.trimIndent()
@@ -95,20 +96,24 @@ fun Expr.code (): Pair<String,String> {
             val (s, e) = this.body.code()
             val loop = """
                 CEU_Value ceu_loop;
-                while (1) {
+                while (1) { // LOOP
                     $s
                 }
+                
             """.trimIndent()
             Pair(loop, "ceu_loop")
         }
         is Expr.Break -> {
             val (s, e) = this.arg.code()
             val brk = """
-                ${set("ceu_loop",e)}
-                break;
+                { // BREAK
+                    $s
+                    ${set("ceu_loop",e)}
+                    break;
+                }
                 
             """.trimIndent()
-            Pair(s+brk,e)
+            Pair(brk, "ceu_loop")
         }
         is Expr.Func -> {
             val (s, e) = this.body.code()
@@ -176,13 +181,12 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Call -> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
-            val pre = "ceu_scope = &ceu_block;\n" // allocate in current block
             val pos = """
                 assert($e.tag==CEU_VALUE_FUNC && "call error : expected function");
                 CEU_Value ceu_$n = $e.func(${es.size}${if (es.size>0) "," else ""}${es.joinToString(",")});
 
             """.trimIndent()
-            Pair(s+pre+ss.joinToString("")+pos, "ceu_$n")
+            Pair(s+ss.joinToString("")+pos, "ceu_$n")
         }
     }
 }

@@ -466,4 +466,20 @@ class TExec {
         )
         assert(out == "1.000000\n") { out }
     }
+    @Test
+    fun loop2() {
+        val out = all("""
+            println(loop { []; break 1 })
+        """.trimIndent()
+        )
+        assert(out == "1.000000\n") { out }
+    }
+    @Test
+    fun loop3() {
+        val out = all("""
+            println(loop { break [1] })
+        """.trimIndent()
+        )
+        assert(out == "[1.000000]\n") { out }
+    }
 }
