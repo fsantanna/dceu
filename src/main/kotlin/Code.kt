@@ -3,78 +3,90 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Do -> {
             val (ss,e) = this.es.code()
             val s = """
-                ceu_value do_$n = { CEU_VALUE_NIL };
+                CEU_Value ceu_$n = { CEU_VALUE_NIL };
                 {
-                    ceu_value_tuple* ceu_tofree = NULL;
+                    assert(CEU_SCOPE < UINT8_MAX);
+                    CEU_SCOPE++;
+                    CEU_Block* ceu_up = &ceu_block;
+                    CEU_Block ceu_block = { NULL, ceu_up };
                     $ss
-                    do_$n = $e;
-                    while (ceu_tofree != NULL) {
-                        ceu_value_tuple* cur = ceu_tofree;
-                        ceu_tofree = ceu_tofree->nxt;
-                        free(cur->buf);
-                        free(cur);
-                    }
+                    ceu_$n = $e;
+                    ceu_block_free(&ceu_block);
+                    CEU_SCOPE--;
                 }
                 
             """.trimIndent()
-            Pair(s, "do_$n")
+            Pair(s, "ceu_$n")
         }
-        is Expr.Dcl -> Pair("ceu_value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
+        is Expr.Dcl -> Pair("CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
         is Expr.Set -> {
             val (s1, e1) = this.dst.code()
             val (s2, e2) = this.src.code()
             val set = """
-                ceu_value src_$n = $e2;
-                $e1 = src_$n;
+                CEU_Value ceu_$n = $e2;
+                /*
+                if (ceu_$n.tag == CEU_VALUE_TUPLE) {
+                    // need to check scope vs dst
+                    if (
+                    if (ceu_$n.tuple.scope == 0) {
+                        // unset: set from dst
+                    } else {
+                        // set: ensure compatibility with dst
+                        assert(
+                    }
+                }
+                */
+                $e1 = ceu_$n;
                 
             """.trimIndent()
-            Pair(s1+s2+set, "src_$n")
+            Pair(s1+s2+set, "ceu_$n")
         }
         is Expr.Acc -> Pair("", this.tk.str)
-        is Expr.Num -> Pair("", "((ceu_value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
+        is Expr.Num -> Pair("", "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
             val tup = """
                 assert(${es.size} < UINT8_MAX);
-                ceu_value _buf_$n[${es.size}] = { ${es.joinToString(",")} };
-                ceu_value* buf_$n = malloc(${es.size} * sizeof(ceu_value));
-                memcpy(buf_$n, _buf_$n, ${es.size} * sizeof(ceu_value));
-                ceu_value_tuple* tup_$n = malloc(sizeof(ceu_value_tuple));
-                *tup_$n = (ceu_value_tuple) { CEU_SCOPE, ceu_tofree, buf_$n, ${es.size} };
-                ceu_tofree = tup_$n;
+                CEU_Value ceu1_$n[${es.size}] = { ${es.joinToString(",")} };
+                CEU_Value* ceu2_$n = malloc(${es.size} * sizeof(CEU_Value));
+                memcpy(ceu2_$n, ceu1_$n, ${es.size} * sizeof(CEU_Value));
+                CEU_Value_Tuple* ceut_$n = malloc(sizeof(CEU_Value_Tuple));
+                *ceut_$n = (CEU_Value_Tuple) { 0, ceu_block.tofree, ceu2_$n, ${es.size} };
+                ceu_block.tofree = ceut_$n;
                 
             """.trimIndent()
             Pair (
                 ss.joinToString("") + tup,
-                "((ceu_value) { CEU_VALUE_TUPLE, {.tuple=tup_$n} })"
+                "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceut_$n} })"
             )
         }
         is Expr.Index -> {
             val (s1, e1) = this.col.code()
             val (s2, e2) = this.idx.code()
             val s = """
+                int ceu_$n = (int) $e2.number;
                 assert($e1.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
                 assert($e2.tag == CEU_VALUE_NUMBER && "index error : expected number");
-                assert($e1.tuple->n > $e2.number && "index error : out of bounds");
+                assert($e1.tuple->n > ceu_$n && "index error : out of bounds");
                 
             """.trimIndent()
-            Pair(s1+s2+s, "$e1.tuple->buf[(int)$e2.number]")
+            Pair(s1+s2+s, "$e1.tuple->buf[ceu_$n]")
         }
         is Expr.Call -> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
             val call = """
-                ceu_value call_$n = $e(${es.joinToString(",")});
+                CEU_Value ceu_$n = $e(${es.joinToString(",")});
                 
             """.trimIndent()
-            Pair(s+ss.joinToString("")+call, "call_$n")
+            Pair(s+ss.joinToString("")+call, "ceu_$n")
         }
     }
 }
 
 fun List<Expr>.code (): Pair<String,String> {
     val (ss,es) = this.map { it.code() }.unzip()
-    return Pair(ss.joinToString("\n")+"\n", es.lastOrNull() ?: "((ceu_value) { CEU_VALUE_NIL })")
+    return Pair(ss.joinToString("\n")+"\n", es.lastOrNull() ?: "((CEU_Value) { CEU_VALUE_NIL })")
 }
 
 fun Code (es: List<Expr>): String {
@@ -91,23 +103,36 @@ fun Code (es: List<Expr>): String {
             CEU_VALUE_TUPLE
         } CEU_VALUE;
         
-        struct ceu_value;
-        typedef struct ceu_value_tuple {
+        struct CEU_Value;
+        typedef struct CEU_Value_Tuple {
             uint8_t scope;
-            struct ceu_value_tuple* nxt;
-            struct ceu_value* buf;
+            struct CEU_Value_Tuple* nxt;
+            struct CEU_Value* buf;
             uint8_t n;
-        } ceu_value_tuple;
-        typedef struct ceu_value {
+        } CEU_Value_Tuple;
+        typedef struct CEU_Value {
             int tag;
             union {
                 //void nil;
                 float number;
-                ceu_value_tuple* tuple;
+                CEU_Value_Tuple* tuple;
             };
-        } ceu_value;
+        } CEU_Value;
         
-        ceu_value print (ceu_value v) {
+        typedef struct CEU_Block {
+            CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
+            struct CEU_Block* up;           // up link to find allocation scope 
+        } CEU_Block;
+        void ceu_block_free (CEU_Block* block) {
+            while (block->tofree != NULL) {
+                CEU_Value_Tuple* cur = block->tofree;
+                block->tofree = block->tofree->nxt;
+                free(cur->buf);
+                free(cur);
+            }
+        }
+
+        CEU_Value print (CEU_Value v) {
             switch (v.tag) {
                 case CEU_VALUE_NIL:
                     printf("nil");
@@ -128,25 +153,20 @@ fun Code (es: List<Expr>): String {
                 default:
                     assert(0 && "bug found");
             }
-            return (ceu_value) { CEU_VALUE_NIL };
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
-        ceu_value println (ceu_value v) {
+        CEU_Value println (CEU_Value v) {
             print(v);
             printf("\n");
-            return (ceu_value) { CEU_VALUE_NIL };
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
         
-        uint8_t CEU_SCOPE = 0;
+        uint8_t CEU_SCOPE = 1;  // 0 is reserved for unset
         
         void main (void) {
-            ceu_value_tuple* ceu_tofree = NULL;
+            CEU_Block ceu_block = { NULL, NULL };
             ${es.code().first}
-            while (ceu_tofree != NULL) {
-                ceu_value_tuple* cur = ceu_tofree;
-                ceu_tofree = ceu_tofree->nxt;
-                free(cur->buf);
-                free(cur);
-            }
+            ceu_block_free(&ceu_block);
         }
     """.trimIndent()
 }
