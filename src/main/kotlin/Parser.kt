@@ -21,7 +21,7 @@ class Parser (lexer_: Lexer)
     fun checkFix_err (str: String): Boolean {
         val ret = this.checkFix(str)
         if (!ret) {
-            this.err_expected('"'+str+'"')
+            this.err_expected(this.tk1, '"'+str+'"')
         }
         return ret
     }
@@ -56,7 +56,7 @@ class Parser (lexer_: Lexer)
         }
 
         if (!ret) {
-            this.err_expected(err)
+            this.err_expected(this.tk1, err)
         }
         return ret
     }
@@ -73,15 +73,15 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun err_expected (str: String) {
-        this.err_expected_at(this.tk1, str)
+    fun err (tk: Tk, str: String) {
+        error(this.lexer.name + ": (ln ${tk.lin}, col ${tk.col}): $str")
     }
-    fun err_expected_at (tk: Tk, str: String) {
+    fun err_expected (tk: Tk, str: String) {
         val have = when {
             (tk is Tk.Eof) -> "end of file"
             else -> '"' + tk.str + '"'
         }
-        error(this.lexer.name + ": (ln ${tk.lin}, col ${tk.col}): expected $str : have $have")
+        this.err(tk, "expected $str : have $have")
     }
 
     fun list_expr_0 (close: String): List<Expr> {
@@ -114,6 +114,9 @@ class Parser (lexer_: Lexer)
                 val dst = this.exprN()
                 this.acceptFix_err("=")
                 val src = this.exprN()
+                if (dst !is Expr.Acc && dst !is Expr.Index) {
+                    err(tk0, "invalid set : invalid destination")
+                }
                 Expr.Set(tk0 as Tk.Fix, dst, src)
             }
             this.acceptEnu("Id")  -> Expr.Acc(this.tk0 as Tk.Id)
@@ -125,7 +128,7 @@ class Parser (lexer_: Lexer)
                 e
             }
             else -> {
-                this.err_expected("expression")
+                this.err_expected(this.tk1, "expression")
                 error("unreachable")
             }
         }

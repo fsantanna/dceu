@@ -5,54 +5,68 @@ fun Expr.code (): Pair<String,String> {
             val s = """
                 CEU_Value ceu_$n = { CEU_VALUE_NIL };
                 {
-                    assert(CEU_SCOPE < UINT8_MAX);
-                    CEU_SCOPE++;
+                    assert(CEU_DEPTH < UINT8_MAX);
+                    CEU_DEPTH++;
                     CEU_Block* ceu_up = &ceu_block;
-                    CEU_Block ceu_block = { NULL, ceu_up };
+                    CEU_Block ceu_block = { CEU_DEPTH, NULL, ceu_up };
                     $ss
                     ceu_$n = $e;
                     ceu_block_free(&ceu_block);
-                    CEU_SCOPE--;
+                    CEU_DEPTH--;
                 }
                 
             """.trimIndent()
             Pair(s, "ceu_$n")
         }
-        is Expr.Dcl -> Pair("CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };", this.tk.str)
+        is Expr.Dcl -> Pair (
+            """
+                CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
+                CEU_Block* _${this.tk.str}_ = &ceu_block; // enclosing block
+                
+            """.trimIndent(),
+            this.tk.str
+        )
         is Expr.Set -> {
             val (s1, e1) = this.dst.code()
             val (s2, e2) = this.src.code()
-            val set = """
-                CEU_Value ceu_$n = $e2;
-                /*
-                if (ceu_$n.tag == CEU_VALUE_TUPLE) {
-                    // need to check scope vs dst
-                    if (
-                    if (ceu_$n.tuple.scope == 0) {
-                        // unset: set from dst
-                    } else {
-                        // set: ensure compatibility with dst
-                        assert(
+            val isidx = if (this.dst is Expr.Index) 1 else 0
+            assert(isidx==1 || this.dst is Expr.Acc) { "bug found" }
+            val pre = """
+                {
+                    if ($isidx) {                           // x[i] = src
+                        ceu_scope = ceu_col->block;         // scope of x
+                    } else {                                // x = src
+                        ceu_scope = _${this.dst.tk.str}_;   // scope of x
                     }
                 }
-                */
-                $e1 = ceu_$n;
                 
             """.trimIndent()
-            Pair(s1+s2+set, "ceu_$n")
+            val pos = """
+                CEU_Value ceu_$n = $e2;
+                {
+                    if (ceu_$n.tag == CEU_VALUE_TUPLE) {
+                        assert(ceu_$n.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
+                    }
+                    $e1 = ceu_$n;
+                }
+                
+            """.trimIndent()
+            Pair(s1+pre+s2+pos, "ceu_$n")
         }
         is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Num -> Pair("", "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             val (ss, es) = this.args.map { it.code() }.unzip()
             val tup = """
-                assert(${es.size} < UINT8_MAX);
-                CEU_Value ceu1_$n[${es.size}] = { ${es.joinToString(",")} };
-                CEU_Value* ceu2_$n = malloc(${es.size} * sizeof(CEU_Value));
-                memcpy(ceu2_$n, ceu1_$n, ${es.size} * sizeof(CEU_Value));
                 CEU_Value_Tuple* ceut_$n = malloc(sizeof(CEU_Value_Tuple));
-                *ceut_$n = (CEU_Value_Tuple) { 0, ceu_block.tofree, ceu2_$n, ${es.size} };
-                ceu_block.tofree = ceut_$n;
+                {
+                    assert(${es.size} < UINT8_MAX);
+                    CEU_Value ceu1_$n[${es.size}] = { ${es.joinToString(",")} };
+                    CEU_Value* ceu2_$n = malloc(${es.size} * sizeof(CEU_Value));
+                    memcpy(ceu2_$n, ceu1_$n, ${es.size} * sizeof(CEU_Value));
+                    *ceut_$n = (CEU_Value_Tuple) { ceu_scope, ceu_block.tofree, ceu2_$n, ${es.size} };
+                    ceu_block.tofree = ceut_$n;
+                }
                 
             """.trimIndent()
             Pair (
@@ -65,9 +79,12 @@ fun Expr.code (): Pair<String,String> {
             val (s2, e2) = this.idx.code()
             val s = """
                 int ceu_$n = (int) $e2.number;
-                assert($e1.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
-                assert($e2.tag == CEU_VALUE_NUMBER && "index error : expected number");
-                assert($e1.tuple->n > ceu_$n && "index error : out of bounds");
+                {
+                    assert($e1.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
+                    assert($e2.tag == CEU_VALUE_NUMBER && "index error : expected number");
+                    assert($e1.tuple->n > ceu_$n && "index error : out of bounds");
+                    ceu_col = $e1.tuple;
+                }
                 
             """.trimIndent()
             Pair(s1+s2+s, "$e1.tuple->buf[ceu_$n]")
@@ -75,11 +92,9 @@ fun Expr.code (): Pair<String,String> {
         is Expr.Call -> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
-            val call = """
-                CEU_Value ceu_$n = $e(${es.joinToString(",")});
-                
-            """.trimIndent()
-            Pair(s+ss.joinToString("")+call, "ceu_$n")
+            val pre = "ceu_scope = &ceu_block;\n" // allocate in current block
+            val pos = "CEU_Value ceu_$n = $e(${es.joinToString(",")});\n"
+            Pair(s+pre+ss.joinToString("")+pos, "ceu_$n")
         }
     }
 }
@@ -104,8 +119,10 @@ fun Code (es: List<Expr>): String {
         } CEU_VALUE;
         
         struct CEU_Value;
+        struct CEU_Block;
+        
         typedef struct CEU_Value_Tuple {
-            uint8_t scope;
+            struct CEU_Block* block;
             struct CEU_Value_Tuple* nxt;
             struct CEU_Value* buf;
             uint8_t n;
@@ -120,6 +137,7 @@ fun Code (es: List<Expr>): String {
         } CEU_Value;
         
         typedef struct CEU_Block {
+            uint8_t depth;
             CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
             struct CEU_Block* up;           // up link to find allocation scope 
         } CEU_Block;
@@ -161,10 +179,12 @@ fun Code (es: List<Expr>): String {
             return (CEU_Value) { CEU_VALUE_NIL };
         }
         
-        uint8_t CEU_SCOPE = 1;  // 0 is reserved for unset
+        CEU_Block* ceu_scope;
+        CEU_Value_Tuple* ceu_col;
+        uint8_t CEU_DEPTH = 0;
         
         void main (void) {
-            CEU_Block ceu_block = { NULL, NULL };
+            CEU_Block ceu_block = { CEU_DEPTH, NULL, NULL };
             ${es.code().first}
             ceu_block_free(&ceu_block);
         }

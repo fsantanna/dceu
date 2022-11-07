@@ -201,15 +201,17 @@ class TParser {
     fun todo_expr_err1() {  // set number?
         val lexer = Lexer("anon", "set 1 = 1".reader())
         val parser = Parser(lexer)
-        val e = parser.exprN()
-        assert(e.tostr() == "set 1 = 1")
+        //val e = parser.exprN()
+        //assert(e.tostr() == "set 1 = 1")
+        assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
     }
     @Test
     fun todo_expr_err2() {  // set whole tuple?
         val lexer = Lexer("anon", "set [1] = 1".reader())
         val parser = Parser(lexer)
-        val e = parser.exprN()
-        assert(e.tostr() == "set [1] = 1")
+        //val e = parser.exprN()
+        //assert(e.tostr() == "set [1] = 1")
+        assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
     }
 
     // DO

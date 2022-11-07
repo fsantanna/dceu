@@ -6,7 +6,11 @@ class TExec {
     fun all(inp: String): String {
         val lexer = Lexer("anon", inp.reader())
         val parser = Parser(lexer)
-        val es = parser.exprs()
+        val es = try {
+            parser.exprs()
+        } catch (e: Throwable) {
+            return e.message!!
+        }
         val c = Code(es)
         File("out.c").writeText(c)
         val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
@@ -134,20 +138,20 @@ class TExec {
         assert(out == "[10.000000,22.000000,[33.000000]]\n") { out }
     }
     @Test
-    fun todo_set_err1() {
+    fun set_err1() {
         val out = all("""
             set 1 = 1
         """.trimIndent()
         )
-        assert(out == "TODO: cannot assign to 1") { out }
+        assert(out == "anon: (ln 1, col 1): invalid set : invalid destination") { out }
     }
     @Test
-    fun todo_set_err2() {
+    fun set_err2() {
         val out = all("""
             set [1] = 1
         """.trimIndent()
         )
-        assert(out == "TODO: cannot assign to [1]\n") { out }
+        assert(out == "anon: (ln 1, col 1): invalid set : invalid destination") { out }
     }
     @Test
     fun set_index() {
