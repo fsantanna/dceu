@@ -124,9 +124,10 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
         is Expr.Num -> fset(set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             assert(this.args.size <= 256) { "bug found" }
+            val scp = if (set==null) block else set.first
             val args = this.args.mapIndexed { i,it ->
                 // allocate in the same scope of set (set.first) or use default block
-                it.code(block, Pair(if (set==null) block else set.first, "ceu_${i}_$n"))
+                it.code(block, Pair(scp, "ceu_${i}_$n"))
             }.joinToString("")
             """
             { // TUPLE
@@ -140,8 +141,8 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
                 CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
                 assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Tuple) { $block, $block->tofree, ceu_dyn_$n, ${this.args.size} };
-                $block->tofree = ceu_$n;
+                *ceu_$n = (CEU_Value_Tuple) { $scp, $block->tofree, ceu_dyn_$n, ${this.args.size} };
+                $scp->tofree = ceu_$n;
                 ${fset(set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
                 

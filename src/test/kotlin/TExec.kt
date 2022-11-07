@@ -311,7 +311,7 @@ class TExec {
         assert(out == "[1.000000,2.000000,30.000000]\n") { out }
     }
     @Test
-    fun scope7_err() {
+    fun scope7() {
         val out = all("""
             var xs
             set xs = do {
@@ -320,7 +320,7 @@ class TExec {
             println(xs)
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out.contains("[10.000000]")) { out }
     }
 
     // IF
