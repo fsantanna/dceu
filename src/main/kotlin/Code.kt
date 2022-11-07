@@ -18,7 +18,7 @@ fun Expr.code (): Pair<String,String> {
                     assert(CEU_DEPTH < UINT8_MAX);
                     CEU_DEPTH++;
                     CEU_Block* ceu_up = $up;
-                    CEU_Block ceu_block = { CEU_DEPTH, NULL, ceu_up };
+                    CEU_Block ceu_block = { CEU_DEPTH, NULL };
                     ceu_scope = &ceu_block;
                     $ss
                     ceu_scope = ceu_up;
@@ -213,7 +213,6 @@ fun Code (es: Expr.Do): String {
         typedef struct CEU_Block {
             uint8_t depth;
             CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
-            struct CEU_Block* up;           // up link to find allocation scope 
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
