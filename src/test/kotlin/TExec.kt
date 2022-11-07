@@ -242,5 +242,53 @@ class TExec {
         )
         assert(out == "[1.000000,2.000000,3.000000]") { out }
     }
-
+    @Test
+    fun scope4() {
+        val out = all("""
+            var x
+            do {
+                set x = [1,2,3]
+                set x[1] = [4,5,6]
+                do {
+                    var y
+                    set y = [10,20,30]
+                    set y[1] = x[1]
+                    set x[2] = y[1]
+                }
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "[1.000000,[4.000000,5.000000,6.000000],[4.000000,5.000000,6.000000]]\n") { out }
+    }
+    @Test
+    fun scope5_err() {
+        val out = all("""
+            var x
+            do {
+                set x = [1,2,3]
+                var y
+                set y = [10,20,30]
+                set x[2] = y
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out.contains("set error : incompatible scopes")) { out }
+    }
+    @Test
+    fun scope6() {
+        val out = all("""
+            var x
+            do {
+                set x = [1,2,3]
+                var y
+                set y = 30
+                set x[2] = y
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "[1.000000,2.000000,30.000000]\n") { out }
+    }
 }
