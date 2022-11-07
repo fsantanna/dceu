@@ -64,8 +64,8 @@ fun Expr.code (): Pair<String,String> {
                     CEU_Value ceu1_$n[${es.size}] = { ${es.joinToString(",")} };
                     CEU_Value* ceu2_$n = malloc(${es.size} * sizeof(CEU_Value));
                     memcpy(ceu2_$n, ceu1_$n, ${es.size} * sizeof(CEU_Value));
-                    *ceut_$n = (CEU_Value_Tuple) { ceu_scope, ceu_block.tofree, ceu2_$n, ${es.size} };
-                    ceu_block.tofree = ceut_$n;
+                    *ceut_$n = (CEU_Value_Tuple) { ceu_scope, ceu_scope->tofree, ceu2_$n, ${es.size} };
+                    ceu_scope->tofree = ceut_$n;
                 }
                 
             """.trimIndent()

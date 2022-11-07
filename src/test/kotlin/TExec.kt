@@ -226,7 +226,7 @@ class TExec {
             }
         """.trimIndent()
         )
-        assert(out == "ERROR") { out }
+        assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
     fun scope3() {
