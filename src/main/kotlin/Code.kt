@@ -127,7 +127,7 @@ fun Expr.code (): Pair<String,String> {
             val (s, e) = this.f.code()
             val (ss, es) = this.args.map { it.code() }.unzip()
             val pre = "ceu_scope = &ceu_block;\n" // allocate in current block
-            val pos = "CEU_Value ceu_$n = $e(${es.joinToString(",")});\n"
+            val pos = "CEU_Value ceu_$n = $e(${es.size}${if (es.size>0) "," else ""}${es.joinToString(",")});\n"
             Pair(s+pre+ss.joinToString("")+pos, "ceu_$n")
         }
     }
@@ -145,6 +145,7 @@ fun Code (es: Expr.Do): String {
         #include <stdint.h>
         #include <string.h>
         #include <assert.h>
+        #include <stdarg.h>
 
         typedef enum CEU_VALUE {
             CEU_VALUE_NIL,
@@ -186,7 +187,7 @@ fun Code (es: Expr.Do): String {
             }
         }
 
-        CEU_Value print (CEU_Value v) {
+        void print1 (CEU_Value v) {
             switch (v.tag) {
                 case CEU_VALUE_NIL:
                     printf("nil");
@@ -207,17 +208,36 @@ fun Code (es: Expr.Do): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        print(v.tuple->buf[i]);
+                        print1(v.tuple->buf[i]);
                     }                    
                     printf("]");
                     break;
                 default:
                     assert(0 && "bug found");
             }
+        }
+        CEU_Value vprint (int n, va_list args) {
+            if (n > 0) {
+                for (int i=0; i<n; i++) {
+                    print1(va_arg(args, CEU_Value));
+                }
+            }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value println (CEU_Value v) {
-            print(v);
+        CEU_Value print (int n, ...) {
+            if (n > 0) {
+                va_list args;
+                va_start(args, n);
+                vprint(n, args);
+                va_end(args);
+            }
+            return (CEU_Value) { CEU_VALUE_NIL };
+        }
+        CEU_Value println (int n, ...) {
+            va_list args;
+            va_start(args, n);
+            vprint(n, args);
+            va_end(args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }

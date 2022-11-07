@@ -60,10 +60,14 @@ class TExec {
     @Test
     fun print_err2() {
         val out = all("""
+            print(1)
+            print()
+            print(2)
             println()
+            println(3)
         """.trimIndent()
         )
-        assert(out.contains("error: too few arguments to function ‘println’")) { out }
+        assert(out.contains("1.0000002.000000\n3.000000\n")) { out }
     }
     @Test
     fun print4() {
