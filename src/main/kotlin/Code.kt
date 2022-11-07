@@ -31,7 +31,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
         is Expr.Dcl -> """
             // DCL
             CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
-            CEU_Block* _${this.tk.str}_ = $block;   // TODO: remove (pass symtable to code())
+            CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
             ${fset(set,this.tk.str)}            
                 
         """.trimIndent()
