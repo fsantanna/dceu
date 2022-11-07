@@ -84,12 +84,12 @@ class Parser (lexer_: Lexer)
         this.err(tk, "expected $str : have $have")
     }
 
-    fun list_expr_0 (close: String): List<Expr> {
-        val l = mutableListOf<Expr>()
+    fun <T> list0 (close: String, func: ()->T): List<T> {
+        val l = mutableListOf<T>()
         if (!this.checkFix(close)) {
-            l.add(this.exprN())
+            l.add(func())
             while (this.acceptFix(",")) {
-                l.add(this.exprN())
+                l.add(func())
             }
         }
         this.acceptFix_err(close)
@@ -132,12 +132,19 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.If(tk0, cnd, t, f)
             }
+            this.acceptFix("func") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
+                val body = this.block()
+                Expr.Func(tk0, args, body)
+            }
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list_expr_0("]"))
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.exprN() })
             this.acceptFix("(") -> {
                 val e = this.expr1()
                 this.acceptFix_err(")")
@@ -160,7 +167,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, list_expr_0(")"))
+                    e = Expr.Call(e.tk, e, list0(")") { this.exprN() })
                 }
                 else -> break
             }

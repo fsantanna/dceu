@@ -84,6 +84,7 @@ fun Expr.code (): Pair<String,String> {
             """.trimIndent()
             Pair(sc+s, "ceu_$n")
         }
+        is Expr.Func -> TODO()
         is Expr.Acc -> Pair("", this.tk.str)
         is Expr.Nil -> Pair("", "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Bool -> Pair("", "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")

@@ -272,4 +272,23 @@ class TParser {
         assert(e is Expr.Do && e.es.size==3)
         assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}\n") { e.tostr() }
     }
+
+    // FUNC
+
+    @Test
+    fun expr_func1() {
+        val lexer = Lexer("anon", "func () {}".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Func && e.args.size==0)
+        assert(e.tostr() == "func () {\n\n}\n") { e.tostr() }
+    }
+    @Test
+    fun expr_func2() {
+        val lexer = Lexer("anon", "func (a,b) { 10 }".reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Func && e.args.size==2)
+        assert(e.tostr() == "func (a,b) {\n10\n}\n") { e.tostr() }
+    }
 }

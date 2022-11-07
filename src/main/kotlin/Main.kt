@@ -19,6 +19,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
     data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If    (val tk_: Tk, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
+    data class Func  (val tk_: Tk, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
 
     data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)
     data class Nil   (val tk_: Tk.Fix): Expr(N++, tk_)

@@ -369,7 +369,7 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                return 1
+                1
             }
             var x
             set x = f()
@@ -383,7 +383,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (x) {
-                return x
+                x
             }
             var x
             set x = f(10)
@@ -397,7 +397,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (x) {
-                return x
+                x
             }
             var x
             set x = f()
@@ -411,7 +411,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (x) {
-                return [x]
+                [x]
             }
             var x
             set x = f(10)
@@ -425,7 +425,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (x,s) {
-                return [x]@s
+                [x]@s
             }
             var x
             set x = f(10)
