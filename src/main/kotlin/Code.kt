@@ -1,9 +1,9 @@
 fun Expr.code (): Pair<String,String> {
-    fun set (n: Int, e: String): String {
+    fun set (dst: String, src: String): String {
         return """
-            ceu_$n = $e;
-            if (ceu_$n.tag == CEU_VALUE_TUPLE) {
-                assert(ceu_$n.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
+            $dst = $src;
+            if ($dst.tag == CEU_VALUE_TUPLE) {
+                assert($dst.tuple->block->depth <= ceu_scope->depth && "set error : incompatible scopes");
             }
 
         """.trimIndent()
@@ -22,7 +22,7 @@ fun Expr.code (): Pair<String,String> {
                     ceu_scope = &ceu_block;
                     $ss
                     ceu_scope = ceu_up;
-                    ${set(n,e)}
+                    ${set("ceu_$n",e)}
                     ceu_block_free(&ceu_block);
                     CEU_DEPTH--;
                 }
@@ -56,7 +56,7 @@ fun Expr.code (): Pair<String,String> {
             val pos = """
                 CEU_Value ceu_$n;
                 {
-                    ${set(n,e2)}
+                    ${set("ceu_$n",e2)}
                     $e1 = ceu_$n;
                 }
                 
@@ -81,18 +81,35 @@ fun Expr.code (): Pair<String,String> {
                     }
                     if (ceu2_$n) {
                         $st
-                        ${set(n,et)}
+                        ${set("ceu_$n",et)}
                     } else {
                         $sf
-                        ${set(n,ef)}
+                        ${set("ceu_$n",ef)}
                     }
                 }
                 
             """.trimIndent()
             Pair(sc+s, "ceu_$n")
         }
-        is Expr.Loop -> TODO()
-        is Expr.Break -> TODO()
+        is Expr.Loop -> {
+            val (s, e) = this.body.code()
+            val loop = """
+                CEU_Value ceu_loop;
+                while (1) {
+                    $s
+                }
+            """.trimIndent()
+            Pair(loop, "ceu_loop")
+        }
+        is Expr.Break -> {
+            val (s, e) = this.arg.code()
+            val brk = """
+                ${set("ceu_loop",e)}
+                break;
+                
+            """.trimIndent()
+            Pair(s+brk,e)
+        }
         is Expr.Func -> {
             val (s, e) = this.body.code()
             val args = this.args.map {
