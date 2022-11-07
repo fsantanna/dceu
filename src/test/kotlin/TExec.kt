@@ -219,6 +219,16 @@ class TExec {
         )
         assert(out == "10.000000") { out }
     }
+    @Test
+    fun do4() {
+        val out = all("""
+            var x
+            set x = do {}
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "nil\n") { out }
+    }
 
     // SCOPE
 
@@ -372,7 +382,7 @@ class TExec {
     fun func1() {
         val out = all("""
             var f
-            set f = func () {}
+            set f = func () { }
             var x
             set x = f()
             println(x)
@@ -434,7 +444,8 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "[10.000000]\n") { out }
+        //assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
     fun todo_scope_func6() {

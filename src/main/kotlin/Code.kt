@@ -12,7 +12,7 @@ fun fset (scope: String, dst: String, src: String): String {
 }
 
 // block: String -> current enclosing block for normal allocation
-// set: Pair<block,dst> -> enclosing assignment with block and destination
+// set: Pair<scope,dst> -> enclosing assignment with block and destination
 
 fun Expr.code (block: String, set: Pair<String,String>?): String {
     return when (this) {
@@ -92,9 +92,12 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }
                 
         """.trimIndent()
-        is Expr.Func -> {
-            val body = this.body.code(block, Pair("TODO","ceu_$n"))
-            val args = this.args.map {
+        is Expr.Func -> """
+            CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, ...) {
+                int ceu_i = 0;
+                va_list ceu_args;
+                va_start(ceu_args, ceu_n);
+                ${this.args.map {
                 """
                 CEU_Value ${it.str} = { CEU_VALUE_NIL };
                 if (ceu_i < ceu_n) {
@@ -102,22 +105,15 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 }
                 ceu_i++;
                 """.trimIndent()
-            }.joinToString("")
-            """
-            CEU_Value ceu_func_$n (int ceu_n, ...) {
-                int ceu_i = 0;
-                va_list ceu_args;
-                va_start(ceu_args, ceu_n);
-                $args
+            }.joinToString("")}
                 va_end(ceu_args);
                 CEU_Value ceu_$n;
-                $body
+                ${this.body.code("ceu_block", Pair("ceu_scope","ceu_$n"))}
                 return ceu_$n;
             }
             ${fset(set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
 
-            """.trimIndent()
-        }
+        """.trimIndent()
         is Expr.Acc -> fset(set, this.tk.str)
         is Expr.Nil -> fset(set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Bool -> fset(set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
@@ -145,7 +141,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 $scp->tofree = ceu_$n;
                 ${fset(set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
-                
+
             """.trimIndent()
         }
         is Expr.Index -> """
@@ -175,6 +171,8 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                     it.code(block, Pair(block, "ceu_${i}_$n"))
                 }.joinToString("")}
                 CEU_Value ceu_$n = ceu_f_$n.func(
+                    $block,
+                    ${if (set == null) block else set.first},
                     ${this.args.size}
                     ${(if (this.args.size>0) "," else "")}
                     ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
@@ -225,7 +223,7 @@ fun Code (es: Expr.Do): String {
                 int bool;
                 float number;
                 CEU_Value_Tuple* tuple;
-                struct CEU_Value (*func) (int ceu_n, ...);
+                struct CEU_Value (*func) (struct CEU_Block* block, struct CEU_Block* scope, int ceu_n, ...);
             };
         } CEU_Value;
         
@@ -279,7 +277,7 @@ fun Code (es: Expr.Do): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value ceu_print (int n, ...) {
+        CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, ...) {
             if (n > 0) {
                 va_list args;
                 va_start(args, n);
@@ -288,7 +286,7 @@ fun Code (es: Expr.Do): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value ceu_println (int n, ...) {
+        CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, ...) {
             va_list args;
             va_start(args, n);
             ceu_vprint(n, args);

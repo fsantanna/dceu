@@ -261,8 +261,8 @@ class TParser {
         val lexer = Lexer("anon", "do{}".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Do && e.es.size==0)
-        assert(e.tostr() == "do {\n\n}\n") { e.tostr() }
+        assert(e is Expr.Do && e.es.size==1)
+        assert(e.tostr() == "do {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun expr_do2() {  // set whole tuple?
@@ -281,7 +281,7 @@ class TParser {
         val parser = Parser(lexer)
         val e = parser.expr1()
         assert(e is Expr.Func && e.args.size==0)
-        assert(e.tostr() == "func () {\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "func () {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun expr_func2() {

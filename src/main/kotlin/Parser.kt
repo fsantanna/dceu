@@ -193,6 +193,9 @@ class Parser (lexer_: Lexer)
             while (this.acceptFix(";")) {}
             ret.add(e)
         }
+        if (ret.size == 0) {
+            ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.lin, this.tk0.col)))
+        }
         return ret
     }
 }
