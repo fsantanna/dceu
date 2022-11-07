@@ -36,24 +36,23 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 
         """.trimIndent()
         is Expr.Set -> {
-            val dst = if (this.dst is Expr.Index) {
-                this.dst.col
-                1 // x[i] = src / scope of x
-            } else {
-                val xxx = this.dst.code(block, null)
-                assert(this.dst is Expr.Acc) { "bug found" }
-                """
-                $xxx
-                ceu_scope_$n = _${this.dst.tk.str}_;    // x = src / scope of _x_
-                    
-                """.trimIndent()
+            val (scp,dst) = when (this.dst) {
+                is Expr.Index -> Pair (
+                    "ceu_col_${this.dst.n}.tuple->block",
+                    "ceu_col_${this.dst.n}.tuple->buf[(int) ceu_idx_${this.dst.n}.number]"
+                )
+                is Expr.Acc -> Pair (
+                    "_${this.dst.tk.str}_",  // x = src / scope of _x_
+                    this.dst.tk.str
+                )
+                else -> error("bug found")
             }
             """
             { // SET
-                CEU_Block* ceu_scope_$n;
-                $dst
                 CEU_Value ceu_$n;
-                ${this.src.code(block, Pair("ceu_scope_$n","ceu_$n"))}
+                ${this.dst.code(block, null)}
+                ${this.src.code(block, Pair(scp,"ceu_$n"))}
+                $dst = ceu_$n;
                 ${fset(set,"ceu_$n")}
             }
                 
@@ -149,7 +148,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             """.trimIndent()
         }
         is Expr.Index -> """
-            { // INDEX
+            //{ // INDEX    // (removed {} b/c set uses col[idx])
                 CEU_Value ceu_col_$n;
                 ${this.col.code(block, Pair(block,"ceu_col_$n"))}
                 assert(ceu_col_$n.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
@@ -158,9 +157,9 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 ${this.idx.code(block, Pair(block,"ceu_idx_$n"))}
                 assert(ceu_idx_$n.tag == CEU_VALUE_NUMBER && "index error : expected number");
                 
-                assert(ceu_col_$n.tuple->n > ceu_idx_$n && "index error : out of bounds");
-                ${fset(set, "ceu_col_$n.tuple->buf[ceu_idx\$$n]")}
-            }
+                assert(ceu_col_$n.tuple->n > ceu_idx_$n.number && "index error : out of bounds");
+                ${fset(set, "ceu_col_$n.tuple->buf[(int) ceu_idx_$n.number]")}
+            //}
             
         """.trimIndent()
         is Expr.Call -> """
