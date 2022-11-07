@@ -486,11 +486,23 @@ class TExec {
         assert(out == "1.000000\n") { out }
     }
     @Test
-    fun todo_leak_loop3() {
+    fun loop3() {
         val out = all("""
             println(loop { break [1] })
         """.trimIndent()
         )
         assert(out == "[1.000000]\n") { out }
+    }
+    @Test
+    fun todo_leak_loop4() {
+        val out = all("""
+            println(loop {
+                var x
+                set x = [1]
+                break
+            })
+        """.trimIndent()
+        )
+        assert(out == "TODO: nil\n") { out }
     }
 }

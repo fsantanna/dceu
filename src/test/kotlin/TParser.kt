@@ -219,7 +219,7 @@ class TParser {
         assert(e.tostr() == "set x = [10]")
     }
     @Test
-    fun todo_expr_err1() {  // set number?
+    fun expr_err1() {  // set number?
         val lexer = Lexer("anon", "set 1 = 1".reader())
         val parser = Parser(lexer)
         //val e = parser.exprN()
@@ -227,7 +227,7 @@ class TParser {
         assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
     }
     @Test
-    fun todo_expr_err2() {  // set whole tuple?
+    fun expr_err2() {  // set whole tuple?
         val lexer = Lexer("anon", "set [1] = 1".reader())
         val parser = Parser(lexer)
         //val e = parser.exprN()
