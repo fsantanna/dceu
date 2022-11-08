@@ -325,8 +325,7 @@ class TParser {
         """.trimIndent().reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Do)
-        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1)\n}\n") { e.tostr() }
+        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
 
 }
