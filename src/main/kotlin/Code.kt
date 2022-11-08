@@ -114,6 +114,8 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             ${fset(set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
 
         """.trimIndent()
+        is Expr.Throw -> TODO()
+
         is Expr.Acc -> fset(set, this.tk.str)
         is Expr.Nil -> fset(set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Bool -> fset(set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")

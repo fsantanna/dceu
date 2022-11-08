@@ -101,7 +101,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk0, es)
+        return Expr.Do(tk0, null, es)
     }
 
     fun expr1 (): Expr {
@@ -128,7 +128,7 @@ class Parser (lexer_: Lexer)
                 val f = if (this.acceptFix("else")) {
                     this.block()
                 } else {
-                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))))
+                    Expr.Do(tk0, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))))
                 }
                 Expr.If(tk0, cnd, t, f)
             }

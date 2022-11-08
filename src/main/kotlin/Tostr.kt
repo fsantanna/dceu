@@ -7,6 +7,7 @@ fun Expr.tostr (): String {
         is Expr.Loop  -> "loop " + this.body.tostr()
         is Expr.Break -> "break " + this.arg.tostr()
         is Expr.Func  -> "func (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
+        is Expr.Throw -> "throw (" + this.ex.tostr() + "," + this.arg.tostr() + ")"
         is Expr.Acc   -> this.tk.str
         is Expr.Nil   -> this.tk.str
         is Expr.Bool  -> this.tk.str

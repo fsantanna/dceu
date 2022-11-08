@@ -11,7 +11,7 @@ class TExec {
         } catch (e: Throwable) {
             return e.message!!
         }
-        val c = Code(Expr.Do(Tk.Fix("",0,0),es))
+        val c = Code(Expr.Do(Tk.Fix("",0,0),null,es))
         File("out.c").writeText(c)
         val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
         if (!ok2) {
@@ -505,4 +505,71 @@ class TExec {
         )
         assert(out == "TODO: nil\n") { out }
     }
+
+    // THROW / CATCH
+
+    @Test
+    fun catch1() {
+        val out = all("""
+            catch 1 {
+                throw 1
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun catch2_err() {
+        val out = all("""
+            catch 0 {
+                throw 1
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "TODO: uncaught throw\n") { out }
+    }
+    @Test
+    fun catch3() {
+        val out = all("""
+            var x
+            set x = catch 1 {
+                catch 0 {
+                    throw (1,10)
+                    println(9)
+                }
+                println(9)
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "10.000000\n") { out }
+    }
+    @Test
+    fun catch4() {
+        val out = all("""
+            var f
+            set f = func () {
+                catch 0 {
+                    throw 1
+                    println(9)
+                }
+                println(9)
+            }
+            catch 1 {
+                catch 0 {
+                    f()
+                    println(9)
+                }
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
+    }
+
 }
