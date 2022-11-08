@@ -310,4 +310,23 @@ class TParser {
         assert(e is Expr.Loop)
         assert(e.tostr() == "loop {\nbreak nil\n}\n") { e.tostr() }
     }
+
+    // THROW / CATCH
+
+    @Test
+    fun catch1() {
+        val lexer = Lexer("anon", """
+            set x = catch 1 {
+                throw 1
+                throw (1,10)
+                throw (1)
+            }
+            
+        """.trimIndent().reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Do)
+        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1)\n}\n") { e.tostr() }
+    }
+
 }
