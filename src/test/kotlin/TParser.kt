@@ -299,16 +299,16 @@ class TParser {
         val lexer = Lexer("anon", "loop { break 1 }".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Loop)
-        assert(e.tostr() == "loop {\nbreak 1\n}\n") { e.tostr() }
+        assert(e is Expr.Do && e.es[0] is Expr.Loop)
+        assert(e.tostr() == "catch 0 {\nloop {\nthrow (0,1)\n}\n\n}\n") { e.tostr() }
     }
     @Test
     fun expr_loop2() {
         val lexer = Lexer("anon", "loop { break }".reader())
         val parser = Parser(lexer)
         val e = parser.expr1()
-        assert(e is Expr.Loop)
-        assert(e.tostr() == "loop {\nbreak nil\n}\n") { e.tostr() }
+        assert(e is Expr.Do && e.es[0] is Expr.Loop)
+        assert(e.tostr() == "catch 0 {\nloop {\nthrow (0,nil)\n}\n\n}\n") { e.tostr() }
     }
 
     // THROW / CATCH

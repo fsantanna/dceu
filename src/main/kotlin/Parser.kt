@@ -142,7 +142,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("loop") -> {
                 val tk = Tk.Fix("catch",this.tk0.lin,this.tk0.col)
                 val num = Expr.Num(Tk.Num("0",tk.lin,tk.col))
-                // loop -> catch (0) { loop { ... } }   // 0: same code as break
+                // loop -> catch (1) { loop { ... } }   // 1: same code as break
                 Expr.Do(tk, num, listOf(Expr.Loop(this.tk0 as Tk.Fix, this.block(null, null))))
             }
             this.acceptFix("break") -> {
@@ -152,7 +152,7 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.exprN()
                 }
-                // break x -> throw (0,x)               // 0: same code as loop
+                // break x -> throw (1,x)               // 1: same code as loop
                 Expr.Throw(tk0, Expr.Num(Tk.Num("0", tk0.lin, tk0.col)), arg)
             }
             this.acceptFix("func") -> {

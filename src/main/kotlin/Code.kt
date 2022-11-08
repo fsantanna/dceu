@@ -22,11 +22,24 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             { // DO
                 assert($depth < UINT8_MAX);
                 CEU_Block ceu_block_$n = { $depth, NULL };
-                CEU_Stack ceu_stack_$n = { ceu_stack, &ceu_block_$n };
+
+                int ceu_catch_n_$n; {
+                    ${if (this.catch == null) "ceu_catch_n_$n = 0;" else {
+                        """
+                            CEU_Value ceu_catch_$n;
+                            ${this.catch.code(block, Pair(block,"ceu_catch_$n"))}
+                            assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
+                            ceu_catch_n_$n = ceu_catch_$n.number;
+                        """.trimIndent()
+                    } }
+                }
+                CEU_Stack ceu_stack_$n = { ceu_stack, &ceu_block_$n, ceu_catch_n_$n };
                 ceu_stack = &ceu_stack_$n;
+
                 ${this.es.code("(&ceu_block_$n)", set)}
-                ceu_stack_clear(ceu_stack, &ceu_stack_$n);
+
                 ceu_stack = ceu_stack_$n.up;
+                ceu_block_free(&ceu_block_$n);
             }
             
         """.trimIndent()
@@ -112,11 +125,12 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
         """.trimIndent()
         is Expr.Throw -> """
             { // THROW
-                ${this.arg.code(block, set)}
-                CEU_Stack stk = { stack, TODO, TODO };
-                block_throw(&stk, TODO, task0, TODO);
-                assert(stk.block == NULL);
-                return;
+                CEU_Value ceu_ex_$n, ceu_arg_$n;
+                ${this.ex.code(block, Pair(block,"ceu_ex_$n"))}
+                ${this.arg.code(block, Pair(block,"ceu_arg_$n"))}
+                assert(ceu_ex_$n.tag == CEU_VALUE_NUMBER && "throw error : invalid exception : expected number");
+                ceu_stack_clear(ceu_stack, ceu_ex_$n.number);
+                break;
             }
     
         """.trimIndent()
@@ -251,6 +265,7 @@ fun Code (es: Expr.Do): String {
         typedef struct CEU_Stack {
             struct CEU_Stack* up;
             struct CEU_Block* block;
+            int catch;                  // catch condition to stop traversing the stack (0=skip)
         } CEU_Stack;
         typedef struct CEU_Block {
             uint8_t depth;              // compare on set
@@ -264,13 +279,12 @@ fun Code (es: Expr.Do): String {
                 free(cur);
             }
         }
-        void ceu_stack_clear (CEU_Stack* stack, CEU_Stack* me) {
-            while (stack != me) {
-                assert(stack != NULL);
+        void ceu_stack_clear (CEU_Stack* stack, int ex) {
+            while (stack!=NULL && stack->catch!=ex) {
                 ceu_block_free(stack->block);
                 stack = stack->up;
             }
-            ceu_block_free(me->block);
+            assert(0 && "error: uncaught exception");
         }
         void ceu_stack_dump (CEU_Stack* stack) {
             while (stack != NULL) {

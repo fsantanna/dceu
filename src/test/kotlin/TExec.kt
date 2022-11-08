@@ -571,5 +571,17 @@ class TExec {
         )
         assert(out == "1\n") { out }
     }
+    @Test
+    fun catch5_err() {
+        val out = all("""
+            catch 1 {
+                throw []
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "TODO: err\n") { out }
+    }
 
 }
