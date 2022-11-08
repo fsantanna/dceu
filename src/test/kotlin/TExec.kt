@@ -518,7 +518,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "1\n") { out }
+        assert(out == "1.000000\n") { out }
     }
     @Test
     fun catch2_err() {

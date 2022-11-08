@@ -33,13 +33,14 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                         """.trimIndent()
                     } }
                 }
-                CEU_Stack ceu_stack_$n = { ceu_stack, &ceu_block_$n, ceu_catch_n_$n };
-                ceu_stack = &ceu_stack_$n;
 
-                ${this.es.code("(&ceu_block_$n)", set)}
-
-                ceu_stack = ceu_stack_$n.up;
+                do {
+                    ${this.es.code("(&ceu_block_$n)", set)}
+                } while (0);
                 ceu_block_free(&ceu_block_$n);
+                if (ceu_throw!=0 && ceu_throw!=ceu_catch_n_$n) {
+                    break;
+                }
             }
             
         """.trimIndent()
@@ -117,7 +118,9 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }.joinToString("")}
                 va_end(ceu_args);
                 CEU_Value ceu_$n;
-                ${this.body.code("ceu_block", Pair("ceu_scope","ceu_$n"))}
+                do {
+                    ${this.body.code("ceu_block", Pair("ceu_scope","ceu_$n"))}
+                } while (0);
                 return ceu_$n;
             }
             ${fset(set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
@@ -125,11 +128,12 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
         """.trimIndent()
         is Expr.Throw -> """
             { // THROW
+                assert(ceu_throw == 0 && "throw error : double throw");
                 CEU_Value ceu_ex_$n, ceu_arg_$n;
                 ${this.ex.code(block, Pair(block,"ceu_ex_$n"))}
                 ${this.arg.code(block, Pair(block,"ceu_arg_$n"))}
                 assert(ceu_ex_$n.tag == CEU_VALUE_NUMBER && "throw error : invalid exception : expected number");
-                ceu_stack_clear(ceu_stack, ceu_ex_$n.number);
+                ceu_throw = ceu_ex_$n.number;
                 break;
             }
     
@@ -249,24 +253,6 @@ fun Code (es: Expr.Do): String {
             };
         } CEU_Value;
         
-        // { B1
-        //      { B2
-        //          loop { B3
-        //              { B4
-        //                  break
-        //                      // stack=B1<-B2<-B3<-B4
-        //                      // must escape B3
-        //                      // traverses the stack and clears B4->B3, but not B2->B1
-        //                      // needs to do it now, otherwise memory in B4/B3 becomes dangling
-        //              }
-        //          }
-        //      }
-        // }
-        typedef struct CEU_Stack {
-            struct CEU_Stack* up;
-            struct CEU_Block* block;
-            int catch;                  // catch condition to stop traversing the stack (0=skip)
-        } CEU_Stack;
         typedef struct CEU_Block {
             uint8_t depth;              // compare on set
             CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
@@ -277,19 +263,6 @@ fun Code (es: Expr.Do): String {
                 block->tofree = block->tofree->nxt;
                 free(cur->buf);
                 free(cur);
-            }
-        }
-        void ceu_stack_clear (CEU_Stack* stack, int ex) {
-            while (stack!=NULL && stack->catch!=ex) {
-                ceu_block_free(stack->block);
-                stack = stack->up;
-            }
-            assert(0 && "error: uncaught exception");
-        }
-        void ceu_stack_dump (CEU_Stack* stack) {
-            while (stack != NULL) {
-                printf("me=%p up=%p blk=%p\n", stack, stack->up, stack->block);
-                stack = stack->up;
             }
         }
 
@@ -350,9 +323,11 @@ fun Code (es: Expr.Do): String {
         CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
         CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
         
-        CEU_Stack* ceu_stack = NULL;
+        int ceu_throw = 0;
         void main (void) {
-            ${es.code("", null)}
+            do {
+                ${es.code("", null)}
+            } while (0);
         }
     """.trimIndent()
 }
