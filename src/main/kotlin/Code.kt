@@ -22,6 +22,9 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             { // DO
                 assert($depth < UINT8_MAX);
                 CEU_Block ceu_block_$n = { $depth, NULL };
+                if (ceu_block_global == NULL) {
+                    ceu_block_global = &ceu_block_$n;
+                }
 
                 int ceu_catch_n_$n; {
                     ${if (this.catch == null) "ceu_catch_n_$n = 0;" else {
@@ -39,6 +42,8 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 } while (0);
                 ceu_block_free(&ceu_block_$n);
                 if (ceu_throw!=0 && ceu_throw!=ceu_catch_n_$n) {
+                    ${fset(set,"ceu_throw_arg")}
+                    // TODO: assign ceu_throw_arg to set.first (if not set, otherwise compare)
                     break;
                 }
             }
@@ -129,9 +134,9 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
         is Expr.Throw -> """
             { // THROW
                 assert(ceu_throw == 0 && "throw error : double throw");
-                CEU_Value ceu_ex_$n, ceu_arg_$n;
+                CEU_Value ceu_ex_$n;
                 ${this.ex.code(block, Pair(block,"ceu_ex_$n"))}
-                ${this.arg.code(block, Pair(block,"ceu_arg_$n"))}
+                ${this.arg.code(block, Pair("ceu_block_global","ceu_throw_arg"))}  // arg scope to be set in catch set
                 assert(ceu_ex_$n.tag == CEU_VALUE_NUMBER && "throw error : invalid exception : expected number");
                 ceu_throw = ceu_ex_$n.number;
                 break;
@@ -162,7 +167,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
                 CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
                 assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Tuple) { $scp, $block->tofree, ceu_dyn_$n, ${this.args.size} };
+                *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
                 $scp->tofree = ceu_$n;
                 ${fset(set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
@@ -324,6 +329,9 @@ fun Code (es: Expr.Do): String {
         CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
         
         int ceu_throw = 0;
+        CEU_Value ceu_throw_arg;
+        CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
+
         void main (void) {
             do {
                 ${es.code("", null)}

@@ -537,7 +537,7 @@ class TExec {
         val out = all("""
             var x
             set x = catch 1 {
-                catch 0 {
+                catch 2 {
                     throw (1,10)
                     println(9)
                 }
@@ -555,21 +555,21 @@ class TExec {
             set f = func () {
                 catch 0 {
                     throw 1
-                    println(9)
+                    println(91)
                 }
                 println(9)
             }
             catch 1 {
                 catch 0 {
                     f()
-                    println(9)
+                    println(92)
                 }
-                println(9)
+                println(93)
             }
             println(1)
         """.trimIndent()
         )
-        assert(out == "1\n") { out }
+        assert(out == "1.000000\n") { out }
     }
     @Test
     fun catch5_err() {
@@ -581,7 +581,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "TODO: err\n") { out }
+        assert(out.contains("throw error : invalid exception : expected number")) { out }
     }
 
 }

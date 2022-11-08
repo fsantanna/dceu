@@ -300,7 +300,7 @@ class TParser {
         val parser = Parser(lexer)
         val e = parser.expr1()
         assert(e is Expr.Do && e.es[0] is Expr.Loop)
-        assert(e.tostr() == "catch 0 {\nloop {\nthrow (0,1)\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,1)\n}\n\n}\n") { e.tostr() }
     }
     @Test
     fun expr_loop2() {
@@ -308,7 +308,7 @@ class TParser {
         val parser = Parser(lexer)
         val e = parser.expr1()
         assert(e is Expr.Do && e.es[0] is Expr.Loop)
-        assert(e.tostr() == "catch 0 {\nloop {\nthrow (0,nil)\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,nil)\n}\n\n}\n") { e.tostr() }
     }
 
     // THROW / CATCH
