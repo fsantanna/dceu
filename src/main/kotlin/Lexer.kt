@@ -12,7 +12,7 @@ class Lexer (name_: String, reader_: StringReader) {
         return (n==-1 || n==65535)
     }
 
-    fun PushbackReader.read2 (): Int {
+    fun PushbackReader.read2 (): Pair<Int,Char> {
         val n = this.read()
         val x = n.toChar()
         if (x == '\n') {
@@ -20,7 +20,7 @@ class Lexer (name_: String, reader_: StringReader) {
         } else if (!iseof(n)) {
             col++
         }
-        return n
+        return Pair(n,x)
     }
     fun PushbackReader.unread2 (n: Int) {
         val x = n.toChar()
@@ -35,22 +35,19 @@ class Lexer (name_: String, reader_: StringReader) {
     fun next (): Triple<Char?, Int, Int> {
         while (true) {
             val (l, c) = Pair(this.lin, this.col)
-            val n1 = this.reader.read2()
-            val x1 = n1.toChar()
+            val (n1,x1) = this.reader.read2()
             //println("$l + $c: $x1")
             when (x1) {
                 ' ', '\n' -> {}
                 '-' -> {
-                    val n2 = this.reader.read2()
-                    val x2 = n2.toChar()
+                    val (n2,x2) = this.reader.read2()
                     if (iseof(n2) || x2!='-') {
                         this.reader.unread2(n2)
                         return Triple('-', l, c)
                     }
                     // found comment '--': ignore everything up to \n or EOF
                     while (true) {
-                        val n3 = this.reader.read2()
-                        val x3 = n3.toChar()
+                        val (n3,x3) = this.reader.read2()
                         when {
                             (x3 == '\n') -> break   // LN stops comment
                             iseof(n3) -> {         // EOF stops comment
@@ -82,8 +79,9 @@ class Lexer (name_: String, reader_: StringReader) {
                     var n1 = -1
                     while (true) {
                         pay += x1
-                        n1 = reader.read2()
-                        x1 = n1.toChar()
+                        val nx = reader.read2()
+                        n1 = nx.first
+                        x1 = nx.second
                         when {
                             iseof(n1) -> break
                             (x1 == '_') -> {}
@@ -105,8 +103,9 @@ class Lexer (name_: String, reader_: StringReader) {
                     var n1 = -1
                     while (true) {
                         pay += x1
-                        n1 = reader.read2()
-                        x1 = n1.toChar()
+                        val nx = reader.read2()
+                        n1 = nx.first
+                        x1 = nx.second
                         when {
                             iseof(n1) -> break
                             (x1 == '.') -> {}
