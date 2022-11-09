@@ -405,28 +405,28 @@ class Coder (parser_: Parser) {
                 }
             }
     
-            void ceu_print1 (CEU_Value v) {
-                switch (v.tag) {
+            void ceu_print1 (CEU_Value* v) {
+                switch (v->tag) {
                     case CEU_VALUE_NIL:
                         printf("nil");
                         break;
                     case CEU_VALUE_BOOL:
-                        if (v.bool) {
+                        if (v->bool) {
                             printf("true");
                         } else {
                             printf("false");
                         }
                         break;
                     case CEU_VALUE_NUMBER:
-                        printf("%g", v.number);
+                        printf("%g", v->number);
                         break;
                     case CEU_VALUE_TUPLE:
                         printf("[");
-                        for (int i=0; i<v.tuple->n; i++) {
+                        for (int i=0; i<v->tuple->n; i++) {
                             if (i > 0) {
                                 printf(",");
                             }
-                            ceu_print1(v.tuple->buf[i]);
+                            ceu_print1(&v->tuple->buf[i]);
                         }                    
                         printf("]");
                         break;
@@ -436,7 +436,7 @@ class Coder (parser_: Parser) {
             }
             CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 for (int i=0; i<n; i++) {
-                    ceu_print1(*args[i]);
+                    ceu_print1(args[i]);
                 }
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
@@ -448,6 +448,50 @@ class Coder (parser_: Parser) {
             CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
             CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
             
+            CEU_Value ceu_op_umn (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 1);
+                CEU_Value* e = args[0];
+                assert(e->tag == CEU_VALUE_NUMBER);
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(-e->number)} };
+            }
+            CEU_Value ceu_op_plus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 2);
+                CEU_Value* e1 = args[0];
+                CEU_Value* e2 = args[1];
+                assert(e1->tag == CEU_VALUE_NUMBER);
+                assert(e2->tag == CEU_VALUE_NUMBER);
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number+e2->number)} };
+            }
+            CEU_Value ceu_op_minus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 2);
+                CEU_Value* e1 = args[0];
+                CEU_Value* e2 = args[1];
+                assert(e1->tag == CEU_VALUE_NUMBER);
+                assert(e2->tag == CEU_VALUE_NUMBER);
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number-e2->number)} };
+            }
+            CEU_Value ceu_op_mult (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 2);
+                CEU_Value* e1 = args[0];
+                CEU_Value* e2 = args[1];
+                assert(e1->tag == CEU_VALUE_NUMBER);
+                assert(e2->tag == CEU_VALUE_NUMBER);
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number*e2->number)} };
+            }
+            CEU_Value ceu_op_div (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 2);
+                CEU_Value* e1 = args[0];
+                CEU_Value* e2 = args[1];
+                assert(e1->tag == CEU_VALUE_NUMBER);
+                assert(e2->tag == CEU_VALUE_NUMBER);
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number/e2->number)} };
+            }
+            CEU_Value op_umn   = { CEU_VALUE_FUNC, {.func=ceu_op_umn}   };
+            CEU_Value op_plus  = { CEU_VALUE_FUNC, {.func=ceu_op_plus}  };
+            CEU_Value op_minus = { CEU_VALUE_FUNC, {.func=ceu_op_minus} };
+            CEU_Value op_mult  = { CEU_VALUE_FUNC, {.func=ceu_op_mult}  };
+            CEU_Value op_div   = { CEU_VALUE_FUNC, {.func=ceu_op_div}   };
+
             int ceu_throw = 0;
             CEU_Value ceu_throw_arg;
             CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it

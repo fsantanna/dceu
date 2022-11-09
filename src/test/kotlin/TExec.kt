@@ -775,10 +775,10 @@ class TExec {
     @Test
     fun op_id1() {
         val out = all("""
-            println((-)(10))
+            println((-)(10,4))
         """.trimIndent()
         )
-        assert(out == "-6\n") { out }
+        assert(out == "6\n") { out }
     }
     @Test
     fun op_arithX() {

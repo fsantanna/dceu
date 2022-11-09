@@ -217,7 +217,7 @@ class Parser (lexer_: Lexer)
         if (this.tk1.str in listOf("+","-","/","*")) {
             this.acceptEnu_err("Fix")
             val tk0 = this.tk0
-            val e2 = this.exprFixs()
+            val e2 = this.expr()
             e = Expr.Call(tk0, Expr.Acc(Tk.Id(op2f(tk0.str),tk0.lin,tk0.col)), listOf(e,e2))
         }
         return e
