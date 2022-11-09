@@ -664,4 +664,17 @@ class TExec {
         )
         assert(out == "1\n2\n3\n") { out }
     }
+
+    // NATIVE
+
+    @Test
+    fun native1() {
+        val out = all("""
+            native {
+                printf("xxx\n");
+            }
+        """.trimIndent()
+        )
+        assert(out == "xxx\n") { out }
+    }
 }

@@ -103,7 +103,7 @@ class Lexer (name_: String, reader_: StringReader) {
                             var close = if (x == '(') ')' else '}'
                             var open_close = 1
 
-                            var nat = ""
+                            var nat = x.toString()
                             while (true) {
                                 val (n,x) = reader.read2()
                                 when {
@@ -115,6 +115,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                     (x == close) -> {
                                         open_close--
                                         if (open_close == 0) {
+                                            nat += x
                                             break
                                         }
                                     }

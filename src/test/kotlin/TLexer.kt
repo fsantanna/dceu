@@ -74,20 +74,21 @@ class TLexer {
         assert(tks.next().let { it is Tk.Eof && it.lin==6 && it.col==2 })
     }
 
+    val D = "\$"
     @Test
     fun native() {
         val lexer = Lexer(
             "anon", """
             native { abc }
             native {{ijk}}
-            native ( {ijk} )
+            native ( {i${D}jk} )
             native ( {ijk}
         """.trimIndent().reader()
         )
         val tks = lexer.lex().iterator()
-        assert(tks.next().let { it is Tk.Nat && it.lin==1 && it.col==1 && it.str==" abc " })
-        assert(tks.next().let { it is Tk.Nat && it.lin==2 && it.col==1 && it.str=="{ijk}" })
-        assert(tks.next().let { it is Tk.Nat && it.lin==3 && it.col==1 && it.str==" {ijk} " })
+        assert(tks.next().let { it is Tk.Nat && it.lin==1 && it.col==1 && it.str=="{ abc }" })
+        assert(tks.next().let { it is Tk.Nat && it.lin==2 && it.col==1 && it.str=="{{ijk}}" })
+        assert(tks.next().let { it is Tk.Nat && it.lin==3 && it.col==1 && it.str=="( {i\$jk} )" })
         assert(tks.next().let { it is Tk.Err && it.lin==4 && it.col==1 && it.str=="unterminated native token" })
     }
 

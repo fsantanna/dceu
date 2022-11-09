@@ -166,6 +166,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
     
         """.trimIndent()
 
+        is Expr.Nat -> TODO()
         is Expr.Acc -> fset(this.tk, set, this.tk.str)
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Bool -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")

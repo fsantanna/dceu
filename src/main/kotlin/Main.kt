@@ -25,6 +25,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Func  (val tk_: Tk, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
     data class Throw (val tk_: Tk, val ex: Expr, val arg: Expr): Expr(N++, tk_)
 
+    data class Nat   (val tk_: Tk): Expr(N++, tk_)
     data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)
     data class Nil   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Bool  (val tk_: Tk.Fix): Expr(N++, tk_)

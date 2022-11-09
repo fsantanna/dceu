@@ -43,6 +43,7 @@ class Parser (lexer_: Lexer)
             "Eof" -> this.tk1 is Tk.Eof
             "Id"  -> this.tk1 is Tk.Id
             "Num" -> this.tk1 is Tk.Num
+            "Nat" -> this.tk1 is Tk.Nat
             else  -> error("bug found")
         }
     }
@@ -179,6 +180,7 @@ class Parser (lexer_: Lexer)
                 Expr.Throw(tk0, ex, arg)
             }
 
+            this.acceptEnu("Nat") -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)

@@ -328,4 +328,19 @@ class TParser {
         assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
 
+    // NATIVE
+
+    @Test
+    fun native1() {
+        val lexer = Lexer("anon", """
+            native {
+                printf("xxx\n");
+            }
+            
+        """.trimIndent().reader())
+        val parser = Parser(lexer)
+        val e = parser.expr1()
+        assert(e is Expr.Nat)
+        assert(e.tostr() == "native {\n    printf(\"xxx\\n\");\n}") { "."+e.tostr()+"." }
+    }
 }
