@@ -75,7 +75,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun err (tk: Tk, str: String) {
-        error(this.lexer.name + ": (ln ${tk.lin}, col ${tk.col}): $str")
+        error(this.lexer.name + " : (lin ${tk.lin}, col ${tk.col}) : $str")
     }
     fun err_expected (tk: Tk, str: String) {
         val have = when {

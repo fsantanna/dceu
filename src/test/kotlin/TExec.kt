@@ -106,7 +106,7 @@ class TExec {
             println(1[1])
         """.trimIndent()
         )
-        assert(out == "anon : (ln 1, col 9) : index error : expected tuple\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : expected tuple\n") { out }
     }
     @Test
     fun index_err2() {
@@ -114,7 +114,7 @@ class TExec {
             println([1][[]])
         """.trimIndent()
         )
-        assert(out == "anon : (ln 1, col 13) : index error : expected number\n") { out }
+        assert(out == "anon : (lin 1, col 13) : index error : expected number\n") { out }
     }
     @Test
     fun index_err3() {
@@ -122,7 +122,7 @@ class TExec {
             println([1][2])
         """.trimIndent()
         )
-        assert(out == "anon : (ln 1, col 13) : index error : out of bounds\n") { out }
+        assert(out == "anon : (lin 1, col 13) : index error : out of bounds\n") { out }
     }
 
     // DCL
@@ -167,7 +167,7 @@ class TExec {
             set 1 = 1
         """.trimIndent()
         )
-        assert(out == "anon: (ln 1, col 1): invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
     fun set_err2() {
@@ -175,7 +175,7 @@ class TExec {
             set [1] = 1
         """.trimIndent()
         )
-        assert(out == "anon: (ln 1, col 1): invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
     fun set_index() {
@@ -260,7 +260,7 @@ class TExec {
             }
         """.trimIndent()
         )
-        assert(out == "anon : (ln 5, col 13) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun todo_scope_scope3() {
@@ -308,7 +308,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 6, col 16) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope6() {
@@ -378,7 +378,7 @@ class TExec {
             if [] {}
         """.trimIndent()
         )
-        assert(out == "anon : (ln 1, col 4) : if error : invalid condition\n") { out }
+        assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
     }
 
     // FUNC / CALL
@@ -469,7 +469,7 @@ class TExec {
     @Test
     fun func7_err() {
         val out = all("1(1)")
-        assert(out == "anon : (ln 1, col 1) : call error : expected function\n") { out }
+        assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
     }
 
     // LOOP / BREAK
@@ -520,7 +520,7 @@ class TExec {
             })
         """.trimIndent()
         )
-        assert(out == "anon : (ln 4, col 11) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 11) : set error : incompatible scopes\n") { out }
     }
 
     // THROW / CATCH
@@ -547,7 +547,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 2, col 5) : throw error : uncaught exception\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun catch3() {
@@ -598,7 +598,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 2, col 5) : throw error : invalid exception : expected number\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw error : invalid exception : expected number\n") { out }
     }
     @Test
     fun catch6_err() {
@@ -612,7 +612,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 4, col 15) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch7() {
@@ -643,7 +643,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 9, col 5) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {
@@ -739,7 +739,7 @@ class TExec {
              }
         """.trimIndent()
         )
-        assert(out == "anon: (ln 1, col 1): native error : (ln 2, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
     @Test
     fun native7_err() {
@@ -751,7 +751,7 @@ class TExec {
              }
         """.trimIndent()
         )
-        assert(out == "anon: (ln 1, col 1): native error : (ln 3, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier") { out }
     }
     @Test
     fun native8_err() {
@@ -759,6 +759,6 @@ class TExec {
             native (${D})
         """.trimIndent()
         )
-        assert(out == "anon: (ln 1, col 1): native error : (ln 1, col 2) : unterminated token") { '.'+out+'.' }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
 }

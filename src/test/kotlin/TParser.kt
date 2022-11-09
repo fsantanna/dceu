@@ -24,13 +24,13 @@ class TParser {
     fun expr_var_err1 () {
         val lexer = Lexer("anon", " { ".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.expr1() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
+        assert(trap { parser.expr1() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
     fun expr_var_err2 () {
         val lexer = Lexer("anon", "  ".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.expr1() } == "anon: (ln 1, col 3): expected expression : have end of file")
+        assert(trap { parser.expr1() } == "anon : (lin 1, col 3) : expected expression : have end of file")
     }
 
     // EXPR.PARENS
@@ -46,7 +46,7 @@ class TParser {
     fun expr_parens_err() {
         val lexer = Lexer("anon", " ( a  ".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.expr1() } == "anon: (ln 1, col 7): expected \")\" : have end of file")
+        assert(trap { parser.expr1() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
     }
 
     // EXPR.NUM / EXPR.NIL / EXPR.BOOL
@@ -108,13 +108,13 @@ class TParser {
     fun expr_call_err1() {
         val lexer = Lexer("anon", "f (999 ".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 8): expected \")\" : have end of file")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
     }
     @Test
     fun expr_call_err2() {
         val lexer = Lexer("anon", " f ({ ".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected expression : have \"{\"")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
     }
 
     // EXPR.TUPLE
@@ -137,7 +137,7 @@ class TParser {
     fun expr_tuple_err() {
         val lexer = Lexer("anon", "[{".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 2): expected expression : have \"{\"")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
 
     // EXPR.INDEX
@@ -153,7 +153,7 @@ class TParser {
     fun expr_index_err() {
         val lexer = Lexer("anon", "x[10".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 5): expected \"]\" : have end of file")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
     }
 
     // EXPRS
@@ -205,7 +205,7 @@ class TParser {
     fun expr_dcl_err() {
         val lexer = Lexer("anon", "var [10]".reader())
         val parser = Parser(lexer)
-        assert(trap { parser.expr1() } == "anon: (ln 1, col 5): expected identifier : have \"[\"")
+        assert(trap { parser.expr1() } == "anon : (lin 1, col 5) : expected identifier : have \"[\"")
     }
 
     // EXPR.SET
@@ -224,7 +224,7 @@ class TParser {
         val parser = Parser(lexer)
         //val e = parser.exprN()
         //assert(e.tostr() == "set 1 = 1")
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
     }
     @Test
     fun expr_err2() {  // set whole tuple?
@@ -232,7 +232,7 @@ class TParser {
         val parser = Parser(lexer)
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
-        assert(trap { parser.exprN() } == "anon: (ln 1, col 1): invalid set : invalid destination")
+        assert(trap { parser.exprN() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
     }
 
     // IF
