@@ -1,5 +1,7 @@
 import org.junit.Test
 
+val D = "\$"
+
 class TLexer {
     @Test
     fun syms() {
@@ -74,7 +76,6 @@ class TLexer {
         assert(tks.next().let { it is Tk.Eof && it.lin==6 && it.col==2 })
     }
 
-    val D = "\$"
     @Test
     fun native() {
         val lexer = Lexer(

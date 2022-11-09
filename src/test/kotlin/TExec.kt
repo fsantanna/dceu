@@ -11,7 +11,12 @@ class TExec {
         } catch (e: Throwable) {
             return e.message!!
         }
-        val c = Code(Expr.Do(Tk.Fix("",0,0),null,es))
+        val coder = Coder(parser)
+        val c = try {
+            coder.expr(Expr.Do(Tk.Fix("",0,0),null,es))
+        } catch (e: Throwable) {
+            return e.message!!
+        }
         File("out.c").writeText(c)
         val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
         if (!ok2) {
@@ -676,5 +681,84 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "xxx\n") { out }
+    }
+    @Test
+    fun native2() {
+        val out = all("""
+            var x
+            set x = native {
+                return 1;
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun native3() {
+        val out = all("""
+            var x
+            set x = native {}
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "0\n") { out }
+    }
+    @Test
+    fun native4() {
+        val out = all("""
+            var x
+            set x = 10
+            set x = native {
+                printf(">>> %g\n", ${D}x);
+                return ${D}x*2;
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == ">>> 10\n20\n") { out }
+    }
+    @Test
+    fun native5() {
+        val out = all("""
+            var x
+            set x = 10
+             native {
+                ${D}x = 20;
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun native6_err() {
+        val out = all("""
+             native {
+                ${D} 
+             }
+        """.trimIndent()
+        )
+        assert(out == "anon: (ln 1, col 1): native error : (ln 2, col 4) : invalid identifier") { out }
+    }
+    @Test
+    fun native7_err() {
+        val out = all("""
+             native {
+             
+                ${D}{x.y}
+                
+             }
+        """.trimIndent()
+        )
+        assert(out == "anon: (ln 1, col 1): native error : (ln 3, col 4) : invalid identifier") { out }
+    }
+    @Test
+    fun native8_err() {
+        val out = all("""
+            native (${D})
+        """.trimIndent()
+        )
+        assert(out == "anon: (ln 1, col 1): native error : (ln 1, col 2) : unterminated token") { '.'+out+'.' }
     }
 }

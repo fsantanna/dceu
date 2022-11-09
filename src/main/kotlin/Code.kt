@@ -1,29 +1,31 @@
-fun fset (tk: Tk, set: Pair<String,String>?, src: String): String {
-    return if (set == null) "" else fset(tk, set.first, set.second, src)
-}
-fun fset (tk: Tk, scope: String, dst: String, src: String): String {
-    return """
-        if ($src.tag == CEU_VALUE_TUPLE) {
-                if ($src.tuple->block->depth > $scope->depth) {                
-                    ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : set error : incompatible scopes", ${tk.lin}, ${tk.col});
-                    break;
-                }
-        }
-        $dst = $src;
+class Coder (parser_: Parser) {
+    val parser = parser_
 
-    """.trimIndent()
-}
+    // block: String -> current enclosing block for normal allocation
+    // set: Pair<scope,dst> -> enclosing assignment with block and destination
+    fun fset(tk: Tk, set: Pair<String, String>?, src: String): String {
+        return if (set == null) "" else fset(tk, set.first, set.second, src)
+    }
+    fun fset(tk: Tk, scope: String, dst: String, src: String): String {
+        return """
+            if ($src.tag == CEU_VALUE_TUPLE) {
+                    if ($src.tuple->block->depth > $scope->depth) {                
+                        ceu_throw = 2;
+                        snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : set error : incompatible scopes", ${tk.lin}, ${tk.col});
+                        break;
+                    }
+            }
+            $dst = $src;
+    
+        """.trimIndent()
+    }
 
-// block: String -> current enclosing block for normal allocation
-// set: Pair<scope,dst> -> enclosing assignment with block and destination
-
-fun Expr.code (block: String, set: Pair<String,String>?): String {
-    return when (this) {
-        is Expr.Do -> {
-            val depth = if (block == "") 0 else "$block->depth+1"
-            val scp = if (set != null) set.first else "(&ceu_block_$n)"
-            """
+    fun Expr.code(block: String, set: Pair<String, String>?): String {
+        return when (this) {
+            is Expr.Do -> {
+                val depth = if (block == "") 0 else "$block->depth+1"
+                val scp = if (set != null) set.first else "(&ceu_block_$n)"
+                """
             { // DO
                 assert($depth < UINT8_MAX);
                 CEU_Block ceu_block_$n = { $depth, NULL };
@@ -32,14 +34,16 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 }
 
                 int ceu_catch_n_$n; {
-                    ${if (this.catch == null) "ceu_catch_n_$n = 0;" else {
+                    ${
+                    if (this.catch == null) "ceu_catch_n_$n = 0;" else {
                         """
                             CEU_Value ceu_catch_$n;
-                            ${this.catch.code(block, Pair(block,"ceu_catch_$n"))}
+                            ${this.catch.code(block, Pair(block, "ceu_catch_$n"))}
                             assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
                             ceu_catch_n_$n = ceu_catch_$n.number;
                         """.trimIndent()
-                    } }
+                    }
+                }
                 }
 
                 do {
@@ -48,7 +52,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 ceu_block_free(&ceu_block_$n);
                 if (ceu_throw != 0) {                       // pending throw
                     if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
-                        ${fset(this.tk, set,"ceu_throw_arg")}
+                        ${fset(this.tk, set, "ceu_throw_arg")}
                         if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
                             // assign ceu_throw_arg to set.first
                             ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
@@ -61,42 +65,44 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }
             
         """.trimIndent()
-        }
-        is Expr.Dcl -> """
+            }
+            is Expr.Dcl -> """
             // DCL
             CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
             CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
-            ${fset(this.tk, set,this.tk.str)}            
+            ${fset(this.tk, set, this.tk.str)}            
                 
         """.trimIndent()
-        is Expr.Set -> {
-            val (scp,dst) = when (this.dst) {
-                is Expr.Index -> Pair (
-                    "ceu_col_${this.dst.n}.tuple->block",
-                    "ceu_col_${this.dst.n}.tuple->buf[(int) ceu_idx_${this.dst.n}.number]"
-                )
-                is Expr.Acc -> Pair (
-                    "_${this.dst.tk.str}_",  // x = src / scope of _x_
-                    this.dst.tk.str
-                )
-                else -> error("bug found")
-            }
-            """
+            is Expr.Set -> {
+                val (scp, dst) = when (this.dst) {
+                    is Expr.Index -> Pair(
+                        "ceu_col_${this.dst.n}.tuple->block",
+                        "ceu_col_${this.dst.n}.tuple->buf[(int) ceu_idx_${this.dst.n}.number]"
+                    )
+
+                    is Expr.Acc -> Pair(
+                        "_${this.dst.tk.str}_",  // x = src / scope of _x_
+                        this.dst.tk.str
+                    )
+
+                    else -> error("bug found")
+                }
+                """
             { // SET
                 CEU_Value ceu_$n;
                 ${this.dst.code(block, null)}
-                ${this.src.code(block, Pair(scp,"ceu_$n"))}
+                ${this.src.code(block, Pair(scp, "ceu_$n"))}
                 $dst = ceu_$n;
-                ${fset(this.tk, set,"ceu_$n")}
+                ${fset(this.tk, set, "ceu_$n")}
             }
                 
             """.trimIndent()
-            //Pair(s1+pre+s2+pos, "ceu_$n")
-        }
-        is Expr.If -> """
+                //Pair(s1+pre+s2+pos, "ceu_$n")
+            }
+            is Expr.If -> """
             { // IF
                 CEU_Value ceu_cnd_$n;
-                ${this.cnd.code(block, Pair(block,"ceu_cnd_$n"))}
+                ${this.cnd.code(block, Pair(block, "ceu_cnd_$n"))}
                 int ceu_ret_$n; {
                     switch (ceu_cnd_$n.tag) {
                         case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
@@ -119,41 +125,43 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }
             
         """.trimIndent()
-        is Expr.Loop -> """
+            is Expr.Loop -> """
             while (1) { // LOOP
                 ${this.body.code(block, set)}
             }
                 
         """.trimIndent()
-        is Expr.Func -> """
+            is Expr.Func -> """
             CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, ...) {
                 int ceu_i = 0;
                 va_list ceu_args;
                 va_start(ceu_args, ceu_n);
-                ${this.args.map {
-                """
+                ${
+                this.args.map {
+                    """
                 CEU_Value ${it.str} = { CEU_VALUE_NIL };
                 if (ceu_i < ceu_n) {
                     ${it.str} = va_arg(ceu_args, CEU_Value);
                 }
                 ceu_i++;
                 """.trimIndent()
-            }.joinToString("")}
+                }.joinToString("")
+            }
                 va_end(ceu_args);
                 CEU_Value ceu_$n;
                 do {
-                    ${this.body.code("ceu_block", Pair("ceu_scope","ceu_$n"))}
+                    ${this.body.code("ceu_block", Pair("ceu_scope", "ceu_$n"))}
                 } while (0);
                 return ceu_$n;
             }
-            ${fset(this.tk, set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
+            ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
 
         """.trimIndent()
-        is Expr.Throw -> """
+            is Expr.Throw -> """
             { // THROW
                 CEU_Value ceu_ex_$n;
-                ${this.ex.code(block, Pair(block,"ceu_ex_$n"))}
-                ${this.arg.code(block, Pair("ceu_block_global","ceu_throw_arg"))}  // arg scope to be set in catch set
+                ${this.ex.code(block, Pair(block, "ceu_ex_$n"))}
+                ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
                 if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
                     ceu_throw = ceu_ex_$n.number;
                     snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : throw error : uncaught exception", ${this.tk.lin}, ${this.tk.col});
@@ -166,24 +174,80 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
     
         """.trimIndent()
 
-        is Expr.Nat -> TODO()
-        is Expr.Acc -> fset(this.tk, set, this.tk.str)
-        is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
-        is Expr.Bool -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
-        is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
-        is Expr.Tuple -> {
-            assert(this.args.size <= 256) { "bug found" }
-            val scp = if (set==null) block else set.first
-            val args = this.args.mapIndexed { i,it ->
-                // allocate in the same scope of set (set.first) or use default block
-                it.code(block, Pair(scp, "ceu_${i}_$n"))
-            }.joinToString("")
-            """
+            is Expr.Nat -> {
+                val body = this.tk.str.drop(1).dropLast(1).let {
+                    var ret = ""
+                    var i = 0
+
+                    var lin = 1
+                    var col = 1
+                    fun read (): Char {
+                        //assert(i < it.length) { "bug found" }
+                        if (i >= it.length) {
+                            parser.err(tk, "native error : (ln $lin, col $col) : unterminated token")
+                        }
+                        val x = it[i++]
+                        if (x == '\n') {
+                            lin++; col=0
+                        } else {
+                            col++
+                        }
+                        return x
+                    }
+
+                    while (i < it.length) {
+                        ret += if (it[i] != '$') read() else {
+                            read()
+                            val (l,c) = Pair(lin,col)
+                            var id = ""
+                            var x = read()
+                            while (x.isLetterOrDigit() || x=='_') {
+                                id += x
+                                x = read()
+                            }
+                            if (id.length == 0) {
+                                parser.err(tk, "native error : (ln $l, col $c) : invalid identifier")
+                            }
+                            "($id.number)$x"
+                        }
+                    }
+                    ret
+                }
+                """
+            {
+                int ceu_f_$n (void) {
+                    $body
+                    return 0;
+                }
+                CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.number=ceu_f_$n()} };
+                if (ceu_throw != 0) {
+                    break;
+                }
+                ${fset(this.tk, set, "ceu_$n")}
+            }
+            """.trimIndent()
+            }
+            is Expr.Acc -> fset(this.tk, set, this.tk.str)
+            is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
+            is Expr.Bool -> fset(
+                this.tk,
+                set,
+                "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str == "true") 1 else 0}} })"
+            )
+            is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
+            is Expr.Tuple -> {
+                assert(this.args.size <= 256) { "bug found" }
+                val scp = if (set == null) block else set.first
+                val args = this.args.mapIndexed { i, it ->
+                    // allocate in the same scope of set (set.first) or use default block
+                    it.code(block, Pair(scp, "ceu_${i}_$n"))
+                }.joinToString("")
+                """
             { // TUPLE
-                ${this.args.mapIndexed { i,_->"CEU_Value ceu_${i}_$n;\n" }.joinToString("")}
+                ${this.args.mapIndexed { i, _ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString("")}
                 $args
                 CEU_Value ceu_sta_$n[${this.args.size}] = {
-                    ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
+                    ${this.args.mapIndexed { i, _ -> "ceu_${i}_$n" }.joinToString(",")}
                 };
                 CEU_Value* ceu_dyn_$n = malloc(${this.args.size} * sizeof(CEU_Value));
                 assert(ceu_dyn_$n != NULL);
@@ -196,11 +260,11 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }
 
             """.trimIndent()
-        }
-        is Expr.Index -> """
+            }
+            is Expr.Index -> """
             //{ // INDEX    // (removed {} b/c set uses col[idx])
                 CEU_Value ceu_col_$n;
-                ${this.col.code(block, Pair(block,"ceu_col_$n"))}
+                ${this.col.code(block, Pair(block, "ceu_col_$n"))}
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
                     ceu_throw = 2;
                     snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : expected tuple", ${this.col.tk.lin}, ${this.col.tk.col});
@@ -208,7 +272,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 }
                                 
                 CEU_Value ceu_idx_$n;
-                ${this.idx.code(block, Pair(block,"ceu_idx_$n"))}
+                ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
                 if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
                     ceu_throw = 2;
                     snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : expected number", ${this.idx.tk.lin}, ${this.idx.tk.col});
@@ -231,27 +295,31 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             //}
             
         """.trimIndent()
-        is Expr.Call -> """
+            is Expr.Call -> """
             { // CALL
                 CEU_Value ceu_f_$n;
-                ${this.f.code(block, Pair(block,"ceu_f_$n"))}
+                ${this.f.code(block, Pair(block, "ceu_f_$n"))}
                 if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
                     ceu_throw = 2;
                     snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : call error : expected function", ${this.f.tk.lin}, ${this.f.tk.col});
                     break;
                 }
-                ${this.args.mapIndexed { i,_ ->
+                ${
+                this.args.mapIndexed { i, _ ->
                     "CEU_Value ceu_${i}_$n;\n"
-                }.joinToString("")}
-                ${this.args.mapIndexed { i,it ->
+                }.joinToString("")
+            }
+                ${
+                this.args.mapIndexed { i, it ->
                     it.code(block, Pair(block, "ceu_${i}_$n"))
-                }.joinToString("")}
+                }.joinToString("")
+            }
                 CEU_Value ceu_$n = ceu_f_$n.func(
                     $block,
                     ${if (set == null) block else set.first},
                     ${this.args.size}
-                    ${(if (this.args.size>0) "," else "")}
-                    ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
+                    ${(if (this.args.size > 0) "," else "")}
+                    ${this.args.mapIndexed { i, _ -> "ceu_${i}_$n" }.joinToString(",")}
                 );
                 if (ceu_throw != 0) {
                     break;
@@ -260,155 +328,156 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             }
 
         """.trimIndent()
+        }
     }
-}
 
-fun List<Expr>.code (block: String, set: Pair<String,String>?): String {
-    return this.mapIndexed { i,it ->
-        it.code(block, if (i==this.size-1) set else null) + "\n"
-    }.joinToString("")
-}
+    fun List<Expr>.code(block: String, set: Pair<String, String>?): String {
+        return this.mapIndexed { i, it ->
+            it.code(block, if (i == this.size - 1) set else null) + "\n"
+        }.joinToString("")
+    }
 
-fun Code (es: Expr.Do): String {
-    return """
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <stdint.h>
-        #include <string.h>
-        #include <assert.h>
-        #include <stdarg.h>
-
-        typedef enum CEU_VALUE {
-            CEU_VALUE_NIL,
-            CEU_VALUE_BOOL,
-            CEU_VALUE_NUMBER,
-            CEU_VALUE_TUPLE,
-            CEU_VALUE_FUNC
-        } CEU_VALUE;
-        
-        struct CEU_Value;
-        struct CEU_Block;
-        struct CEU_Stack;
-        
-        typedef struct CEU_Value_Tuple {
-            struct CEU_Block* block;        // compare on set
-            struct CEU_Value_Tuple* nxt;    // next in block->tofree
-            struct CEU_Value* buf;
-            uint8_t n;
-        } CEU_Value_Tuple;
-        typedef struct CEU_Value {
-            int tag;
-            union {
-                //void nil;
-                int bool;
-                float number;
-                CEU_Value_Tuple* tuple;
-                struct CEU_Value (*func) (struct CEU_Block* block, struct CEU_Block* scope, int ceu_n, ...);
-            };
-        } CEU_Value;
-        
-        typedef struct CEU_Block {
-            uint8_t depth;              // compare on set
-            CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
-        } CEU_Block;
-        void ceu_block_free (CEU_Block* block) {
-            while (block->tofree != NULL) {
-                CEU_Value_Tuple* cur = block->tofree;
-                block->tofree = block->tofree->nxt;
-                free(cur->buf);
-                free(cur);
-            }
-        }
-        void ceu_block_move (CEU_Value_Tuple* V, CEU_Block* FR, CEU_Block* TO) {
-            CEU_Value_Tuple* prv = NULL;
-            CEU_Value_Tuple* cur = FR->tofree;
-            while (cur != NULL) {
-                if (cur == V) {
-                    if (prv == NULL) {
-                        FR->tofree = NULL;
-                    } else {
-                        prv->nxt = cur->nxt;
-                    }              
-                    //assert(0 && "OK");
-                    cur->block = TO;
-                    cur->nxt = TO->tofree;
-                    TO->tofree = cur;
-                    break;
+    fun expr (es: Expr.Do): String {
+        return """
+            #include <stdio.h>
+            #include <stdlib.h>
+            #include <stdint.h>
+            #include <string.h>
+            #include <assert.h>
+            #include <stdarg.h>
+    
+            typedef enum CEU_VALUE {
+                CEU_VALUE_NIL,
+                CEU_VALUE_BOOL,
+                CEU_VALUE_NUMBER,
+                CEU_VALUE_TUPLE,
+                CEU_VALUE_FUNC
+            } CEU_VALUE;
+            
+            struct CEU_Value;
+            struct CEU_Block;
+            struct CEU_Stack;
+            
+            typedef struct CEU_Value_Tuple {
+                struct CEU_Block* block;        // compare on set
+                struct CEU_Value_Tuple* nxt;    // next in block->tofree
+                struct CEU_Value* buf;
+                uint8_t n;
+            } CEU_Value_Tuple;
+            typedef struct CEU_Value {
+                int tag;
+                union {
+                    //void nil;
+                    int bool;
+                    float number;
+                    CEU_Value_Tuple* tuple;
+                    struct CEU_Value (*func) (struct CEU_Block* block, struct CEU_Block* scope, int ceu_n, ...);
+                };
+            } CEU_Value;
+            
+            typedef struct CEU_Block {
+                uint8_t depth;              // compare on set
+                CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
+            } CEU_Block;
+            void ceu_block_free (CEU_Block* block) {
+                while (block->tofree != NULL) {
+                    CEU_Value_Tuple* cur = block->tofree;
+                    block->tofree = block->tofree->nxt;
+                    free(cur->buf);
+                    free(cur);
                 }
-                prv = cur;
-                cur = cur->nxt;
             }
-        }
-
-        void ceu_print1 (CEU_Value v) {
-            switch (v.tag) {
-                case CEU_VALUE_NIL:
-                    printf("nil");
-                    break;
-                case CEU_VALUE_BOOL:
-                    if (v.bool) {
-                        printf("true");
-                    } else {
-                        printf("false");
+            void ceu_block_move (CEU_Value_Tuple* V, CEU_Block* FR, CEU_Block* TO) {
+                CEU_Value_Tuple* prv = NULL;
+                CEU_Value_Tuple* cur = FR->tofree;
+                while (cur != NULL) {
+                    if (cur == V) {
+                        if (prv == NULL) {
+                            FR->tofree = NULL;
+                        } else {
+                            prv->nxt = cur->nxt;
+                        }              
+                        //assert(0 && "OK");
+                        cur->block = TO;
+                        cur->nxt = TO->tofree;
+                        TO->tofree = cur;
+                        break;
                     }
-                    break;
-                case CEU_VALUE_NUMBER:
-                    printf("%g", v.number);
-                    break;
-                case CEU_VALUE_TUPLE:
-                    printf("[");
-                    for (int i=0; i<v.tuple->n; i++) {
-                        if (i > 0) {
-                            printf(",");
-                        }
-                        ceu_print1(v.tuple->buf[i]);
-                    }                    
-                    printf("]");
-                    break;
-                default:
-                    assert(0 && "bug found");
-            }
-        }
-        CEU_Value ceu_vprint (int n, va_list args) {
-            if (n > 0) {
-                for (int i=0; i<n; i++) {
-                    ceu_print1(va_arg(args, CEU_Value));
+                    prv = cur;
+                    cur = cur->nxt;
                 }
             }
-            return (CEU_Value) { CEU_VALUE_NIL };
-        }
-        CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, ...) {
-            if (n > 0) {
+    
+            void ceu_print1 (CEU_Value v) {
+                switch (v.tag) {
+                    case CEU_VALUE_NIL:
+                        printf("nil");
+                        break;
+                    case CEU_VALUE_BOOL:
+                        if (v.bool) {
+                            printf("true");
+                        } else {
+                            printf("false");
+                        }
+                        break;
+                    case CEU_VALUE_NUMBER:
+                        printf("%g", v.number);
+                        break;
+                    case CEU_VALUE_TUPLE:
+                        printf("[");
+                        for (int i=0; i<v.tuple->n; i++) {
+                            if (i > 0) {
+                                printf(",");
+                            }
+                            ceu_print1(v.tuple->buf[i]);
+                        }                    
+                        printf("]");
+                        break;
+                    default:
+                        assert(0 && "bug found");
+                }
+            }
+            CEU_Value ceu_vprint (int n, va_list args) {
+                if (n > 0) {
+                    for (int i=0; i<n; i++) {
+                        ceu_print1(va_arg(args, CEU_Value));
+                    }
+                }
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
+            CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, ...) {
+                if (n > 0) {
+                    va_list args;
+                    va_start(args, n);
+                    ceu_vprint(n, args);
+                    va_end(args);
+                }
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
+            CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, ...) {
                 va_list args;
                 va_start(args, n);
                 ceu_vprint(n, args);
                 va_end(args);
+                printf("\n");
+                return (CEU_Value) { CEU_VALUE_NIL };
             }
-            return (CEU_Value) { CEU_VALUE_NIL };
-        }
-        CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, ...) {
-            va_list args;
-            va_start(args, n);
-            ceu_vprint(n, args);
-            va_end(args);
-            printf("\n");
-            return (CEU_Value) { CEU_VALUE_NIL };
-        }
-        CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
-        CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
-        
-        int ceu_throw = 0;
-        CEU_Value ceu_throw_arg;
-        CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
-        char ceu_throw_msg[256];
-
-        int main (void) {
-            do {
-                ${es.code("", null)}
-                return 0;
-            } while (0);
-            fprintf(stderr, "%s\n", ceu_throw_msg);
-            return 1;
-        }
-    """.trimIndent()
+            CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
+            CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
+            
+            int ceu_throw = 0;
+            CEU_Value ceu_throw_arg;
+            CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
+            char ceu_throw_msg[256];
+    
+            int main (void) {
+                do {
+                    ${es.code("", null)}
+                    return 0;
+                } while (0);
+                fprintf(stderr, "%s\n", ceu_throw_msg);
+                return 1;
+            }
+        """.trimIndent()
+    }
 }
