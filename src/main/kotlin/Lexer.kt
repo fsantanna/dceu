@@ -70,27 +70,24 @@ class Lexer (name_: String, reader_: StringReader) {
 
     fun lex (): Sequence<Tk> = sequence {
         while (true) {
-            var (x1, l1, c1) = next()
+            val (x,l,c) = next()
             when {
-                (x1 == null) -> break
-                (x1 in listOf('{','}', '(',')', '[',']', ',',';','=','-')) -> yield(Tk.Fix(x1.toString(), l1, c1))
-                (x1=='_' || x1.isLetter()) -> {
-                    var pay = ""
-                    var n1 = -1
+                (x == null) -> break
+                (x in listOf('{','}', '(',')', '[',']', ',',';','=','-')) -> yield(Tk.Fix(x.toString(), l, c))
+                (x=='_' || x.isLetter()) -> {
+                    var pay = x.toString()
                     while (true) {
-                        pay += x1
-                        val nx = reader.read2()
-                        n1 = nx.first
-                        x1 = nx.second
+                        val (n,x) = reader.read2()
                         when {
-                            iseof(n1) -> break
-                            (x1 == '_') -> {}
-                            (x1.isLetterOrDigit()) -> {}
+                            iseof(n) -> break
+                            (x == '_') -> {}
+                            (x.isLetterOrDigit()) -> {}
                             else -> {
-                                reader.unread2(n1)
+                                reader.unread2(n)
                                 break
                             }
                         }
+                        pay += x
                     }
                     if (keywords.contains(pay)) {
                         yield(Tk.Fix(pay, l1, c1))
@@ -98,29 +95,26 @@ class Lexer (name_: String, reader_: StringReader) {
                         yield(Tk.Id(pay, l1, c1))
                     }
                 }
-                x1.isDigit() -> {
-                    var pay = ""
-                    var n1 = -1
+                x.isDigit() -> {
+                    var pay = x.toString()
                     while (true) {
-                        pay += x1
-                        val nx = reader.read2()
-                        n1 = nx.first
-                        x1 = nx.second
+                        val (n,x) = reader.read2()
                         when {
-                            iseof(n1) -> break
-                            (x1 == '.') -> {}
-                            (x1.isLetterOrDigit()) -> {}
+                            iseof(n) -> break
+                            (x == '.') -> {}
+                            (x.isLetterOrDigit()) -> {}
                             else -> {
-                                reader.unread2(n1)
+                                reader.unread2(n)
                                 break
                             }
                         }
+                        pay += x
                     }
-                    yield(Tk.Num(pay, l1, c1))
+                    yield(Tk.Num(pay, l, c))
                 }
 
                 else -> {
-                    TODO("$x1 - $l1 - $c1")
+                    TODO("$x - $l - $c")
                 }
             }
         }
