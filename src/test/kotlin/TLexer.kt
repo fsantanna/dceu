@@ -25,7 +25,7 @@ class TLexer {
     fun ids() {
         val lexer = Lexer(
             "anon",
-            " if aaa throw nil XXX set loop vary10 catch else var do ado true func b10 false break".reader()
+            " if aaa throw nil XXX set loop vary10 catch else var do _do_ true func b10 false break".reader()
         )
         val tks = lexer.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
@@ -40,7 +40,7 @@ class TLexer {
         assert(tks.next().str == "else")
         assert(tks.next().str == "var")
         assert(tks.next().str == "do")
-        assert(tks.next().str == "ado")
+        assert(tks.next().str == "_do_")
         assert(tks.next().str == "true")
         assert(tks.next().str == "func")
         assert(tks.next().str == "b10")
