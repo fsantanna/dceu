@@ -215,6 +215,9 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                     ${(if (this.args.size>0) "," else "")}
                     ${this.args.mapIndexed { i,_->"ceu_${i}_$n" }.joinToString(",")}
                 );
+                if (ceu_throw != 0) {
+                    break;
+                }
                 ${fset(set, "ceu_$n")}
             }
 

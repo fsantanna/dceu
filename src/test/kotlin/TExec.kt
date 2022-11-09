@@ -565,14 +565,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch 0 {
-                    throw 1
+                catch 1 {
+                    throw 2
                     println(91)
                 }
                 println(9)
             }
-            catch 1 {
-                catch 0 {
+            catch 2 {
+                catch 1 {
                     f()
                     println(92)
                 }
@@ -639,5 +639,29 @@ class TExec {
         """.trimIndent()
         )
         assert(out.contains("set error : incompatible scopes")) { out }
+    }
+    @Test
+    fun catch9() {
+        val out = all("""
+            catch 1 {
+                catch 2 {
+                    catch 3 {
+                        catch 4 {
+                            println(1)
+                            throw 3
+                            println(99)
+                        }
+                        println(99)
+                    }
+                    println(2)
+                    throw 1
+                    println(99)
+                }
+                println(99)
+            }
+            println(3)
+        """.trimIndent()
+        )
+        assert(out == "1\n2\n3\n") { out }
     }
 }
