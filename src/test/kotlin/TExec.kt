@@ -515,7 +515,7 @@ class TExec {
             })
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes\n")) { out }
+        assert(out.contains("set error : incompatible scopes")) { out }
     }
 
     // THROW / CATCH
@@ -535,14 +535,14 @@ class TExec {
     @Test
     fun catch2_err() {
         val out = all("""
-            catch 0 {
-                throw 1
+            catch 1 {
+                throw 5
                 println(9)
             }
             println(1)
         """.trimIndent()
         )
-        assert(out == "TODO: uncaught throw\n") { out }
+        assert(out.contains("uncaught throw")) { out }
     }
     @Test
     fun catch3() {
@@ -595,5 +595,49 @@ class TExec {
         )
         assert(out.contains("throw error : invalid exception : expected number")) { out }
     }
-
+    @Test
+    fun catch6_err() {
+        val out = all("""
+            catch 1 {
+                var x
+                set x = []
+                throw (1, x)
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out.contains("set error : incompatible scopes")) { out }
+    }
+    @Test
+    fun catch7() {
+        val out = all("""
+            do {
+                println(catch 2 {
+                    throw (2,[10])
+                    println(9)
+                })
+            }
+        """.trimIndent()
+        )
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun catch8() {
+        val out = all("""
+            var x
+            set x = catch 1 {
+                var y
+                set y = catch 2 {
+                    throw (2,[10])
+                    println(9)
+                }
+                println(1)
+                y
+            }
+            println(x)
+        """.trimIndent()
+        )
+        assert(out == "1\n[10]\n") { out }
+    }
 }

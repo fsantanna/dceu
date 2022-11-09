@@ -18,6 +18,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
     return when (this) {
         is Expr.Do -> {
             val depth = if (block == "") 0 else "$block->depth+1"
+            val scp = if (set != null) set.first else "(&ceu_block_$n)"
             """
             { // DO
                 assert($depth < UINT8_MAX);
@@ -41,10 +42,17 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                     ${this.es.code("(&ceu_block_$n)", set)}
                 } while (0);
                 ceu_block_free(&ceu_block_$n);
-                if (ceu_throw!=0 && ceu_throw!=ceu_catch_n_$n) {
-                    ${fset(set,"ceu_throw_arg")}
-                    // TODO: assign ceu_throw_arg to set.first (if not set, otherwise compare)
-                    break;
+                if (ceu_throw != 0) {                       // pending throw
+                    if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
+                        ${fset(set,"ceu_throw_arg")}
+                        if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
+                            // assign ceu_throw_arg to set.first
+                            ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
+                        }
+                        ceu_throw = 0;
+                    } else {                                // UNCAUGHT: escape to outer
+                        break;
+                    }
                 }
             }
             
@@ -270,6 +278,25 @@ fun Code (es: Expr.Do): String {
                 free(cur);
             }
         }
+        void ceu_block_move (CEU_Value_Tuple* V, CEU_Block* FR, CEU_Block* TO) {
+            CEU_Value_Tuple* prv = NULL;
+            CEU_Value_Tuple* cur = FR->tofree;
+            while (cur != NULL) {
+                if (cur == V) {
+                    if (prv == NULL) {
+                        FR->tofree = NULL;
+                    } else {
+                        prv->nxt = cur->nxt;
+                    }              
+                    //assert(0 && "OK");
+                    cur->nxt = TO->tofree;
+                    TO->tofree = cur;
+                    break;
+                }
+                prv = cur;
+                cur = cur->nxt;
+            }
+        }
 
         void ceu_print1 (CEU_Value v) {
             switch (v.tag) {
@@ -332,10 +359,12 @@ fun Code (es: Expr.Do): String {
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
 
-        void main (void) {
+        int main (void) {
             do {
                 ${es.code("", null)}
+                return 0;
             } while (0);
+            assert(0 && "uncaught throw");
         }
     """.trimIndent()
 }
