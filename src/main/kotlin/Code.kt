@@ -284,7 +284,7 @@ fun Code (es: Expr.Do): String {
                     }
                     break;
                 case CEU_VALUE_NUMBER:
-                    printf("%f", v.number);
+                    printf("%g", v.number);
                     break;
                 case CEU_VALUE_TUPLE:
                     printf("[");

@@ -30,7 +30,7 @@ class TExec {
             print([10])
         """.trimIndent()
         )
-        assert(out == "[10.000000]") { out }
+        assert(out == "[10]") { out }
     }
     @Test
     fun print2() {
@@ -39,7 +39,7 @@ class TExec {
             println(20)
         """.trimIndent()
         )
-        assert(out == "10.00000020.000000\n") { out }
+        assert(out == "1020\n") { out }
     }
     @Test
     fun print3() {
@@ -47,7 +47,7 @@ class TExec {
             println([[],[1,2,3]])
         """.trimIndent()
         )
-        assert(out == "[[],[1.000000,2.000000,3.000000]]\n") { out }
+        assert(out == "[[],[1,2,3]]\n") { out }
     }
     @Test
     fun print_err1() {
@@ -67,7 +67,7 @@ class TExec {
             println(3)
         """.trimIndent()
         )
-        assert(out.contains("1.0000002.000000\n3.000000\n")) { out }
+        assert(out.contains("12\n3\n")) { out }
     }
     @Test
     fun print4() {
@@ -93,7 +93,7 @@ class TExec {
             println([1,2,3][1])
         """.trimIndent()
         )
-        assert(out == "2.000000\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
     fun index_err1() {
@@ -142,7 +142,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[10.000000]\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun set2() {
@@ -154,7 +154,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[10.000000,22.000000,[33.000000]]\n") { out }
+        assert(out == "[10,22,[33]]\n") { out }
     }
     @Test
     fun set_err1() {
@@ -180,7 +180,7 @@ class TExec {
             println([1,2,3][i])
         """.trimIndent()
         )
-        assert(out == "2.000000\n") { out }
+        assert(out == "2\n") { out }
     }
 
     // DO
@@ -203,7 +203,7 @@ class TExec {
             }
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun do3() {
@@ -217,7 +217,7 @@ class TExec {
             print(x)
         """.trimIndent()
         )
-        assert(out == "10.000000") { out }
+        assert(out == "10") { out }
     }
     @Test
     fun do4() {
@@ -242,7 +242,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[1.000000,2.000000,3.000000]\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun scope_err2() {
@@ -269,7 +269,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[1.000000,2.000000,3.000000]") { out }
+        assert(out == "[1,2,3]") { out }
     }
     @Test
     fun scope4() {
@@ -288,7 +288,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[1.000000,[4.000000,5.000000,6.000000],[4.000000,5.000000,6.000000]]\n") { out }
+        assert(out == "[1,[4,5,6],[4,5,6]]\n") { out }
     }
     @Test
     fun scope5_err() {
@@ -318,7 +318,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[1.000000,2.000000,30.000000]\n") { out }
+        assert(out == "[1,2,30]\n") { out }
     }
     @Test
     fun scope7() {
@@ -330,7 +330,7 @@ class TExec {
             println(xs)
         """.trimIndent()
         )
-        assert(out.contains("[10.000000]")) { out }
+        assert(out.contains("[10]")) { out }
     }
 
     // IF
@@ -343,7 +343,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun if2() {
@@ -365,7 +365,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun if_err() {
@@ -402,7 +402,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun func3() {
@@ -416,7 +416,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "10.000000\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun func4() {
@@ -444,7 +444,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[10.000000]\n") { out }
+        assert(out == "[10]\n") { out }
         //assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
@@ -459,7 +459,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "[10.000000]\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun func7_err() {
@@ -475,7 +475,7 @@ class TExec {
             println(loop { break 1 })
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun loop2() {
@@ -483,7 +483,7 @@ class TExec {
             println(loop { []; break 1 })
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun loop3() {
@@ -491,19 +491,31 @@ class TExec {
             println(loop { break [1] })
         """.trimIndent()
         )
-        assert(out == "[1.000000]\n") { out }
+        assert(out == "[1]\n") { out }
     }
     @Test
-    fun todo_leak_loop4() {
+    fun loop4() {
+        val out = all("""
+            println(loop {
+                var x
+                set x = [1] -- memory released
+                break 1
+            })
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun loop5_err() {
         val out = all("""
             println(loop {
                 var x
                 set x = [1]
-                break
+                break x
             })
         """.trimIndent()
         )
-        assert(out == "TODO: nil\n") { out }
+        assert(out.contains("set error : incompatible scopes\n")) { out }
     }
 
     // THROW / CATCH
@@ -518,7 +530,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun catch2_err() {
@@ -546,7 +558,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "10.000000\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun catch4() {
@@ -569,7 +581,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "1.000000\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun catch5_err() {
