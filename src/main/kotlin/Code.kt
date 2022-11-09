@@ -289,6 +289,7 @@ fun Code (es: Expr.Do): String {
                         prv->nxt = cur->nxt;
                     }              
                     //assert(0 && "OK");
+                    cur->block = TO;
                     cur->nxt = TO->tofree;
                     TO->tofree = cur;
                     break;

@@ -638,6 +638,6 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "1\n[10]\n") { out }
+        assert(out.contains("set error : incompatible scopes")) { out }
     }
 }
