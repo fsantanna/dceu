@@ -184,7 +184,7 @@ class Coder (parser_: Parser) {
                     fun read (): Char {
                         //assert(i < it.length) { "bug found" }
                         if (i >= it.length) {
-                            parser.err(tk, "native error : (lin $lin, col $col) : unterminated token")
+                            parser.lexer.err(tk, "native error : (lin $lin, col $col) : unterminated token")
                         }
                         val x = it[i++]
                         if (x == '\n') {
@@ -206,7 +206,7 @@ class Coder (parser_: Parser) {
                                 x = read()
                             }
                             if (id.length == 0) {
-                                parser.err(tk, "native error : (lin $l, col $c) : invalid identifier")
+                                parser.lexer.err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             "($id.number)$x"
                         }

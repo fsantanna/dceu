@@ -7,6 +7,17 @@ class Lexer (name_: String, reader_: StringReader) {
     var lin = 1
     var col = 1
 
+    fun err (tk: Tk, str: String) {
+        error(this.name + " : (lin ${tk.lin}, col ${tk.col}) : $str")
+    }
+    fun err_expected (tk: Tk, str: String) {
+        val have = when {
+            (tk is Tk.Eof) -> "end of file"
+            else -> '"' + tk.str + '"'
+        }
+        this.err(tk, "expected $str : have $have")
+    }
+
     // TODO: reads 65535 after unreading -1
     fun iseof (n: Int): Boolean {
         return (n==-1 || n==65535)
@@ -93,50 +104,50 @@ class Lexer (name_: String, reader_: StringReader) {
                 (x=='_' || x.isLetter()) -> {
                     var pay = x.toString()
                     while (true) {
-                        val (n,x) = reader.read2()
+                        val (n1,x1) = reader.read2()
                         when {
-                            iseof(n) -> break
-                            (x == '_') -> {}
-                            (x.isLetterOrDigit()) -> {}
+                            iseof(n1) -> break
+                            (x1 == '_') -> {}
+                            (x1.isLetterOrDigit()) -> {}
                             else -> {
-                                reader.unread2(n)
+                                reader.unread2(n1)
                                 break
                             }
                         }
-                        pay += x
+                        pay += x1
                     }
                     when {
                         keywords.contains(pay) -> yield(Tk.Fix(pay, l, c))
                         (pay != "native") -> yield(Tk.Id(pay, l, c))
                         else -> {
-                            val (x,_,_) = next()
-                            if (x!='(' && x!='{') {
+                            val (x1,_,_) = next()
+                            if (x1!='(' && x1!='{') {
                                 yield(Tk.Err("unterminated native token", l, c))
                                 return@sequence
                             }
 
-                            var open = x
-                            var close = if (x == '(') ')' else '}'
+                            var open = x1
+                            var close = if (x1 == '(') ')' else '}'
                             var open_close = 1
 
-                            var nat = x.toString()
+                            var nat = x1.toString()
                             while (true) {
-                                val (n,x) = reader.read2()
+                                val (n2,x2) = reader.read2()
                                 when {
-                                    iseof(n) -> {
+                                    iseof(n2) -> {
                                         yield(Tk.Err("unterminated native token", l, c))
                                         return@sequence
                                     }
-                                    (x == open) -> open_close++
-                                    (x == close) -> {
+                                    (x2 == open) -> open_close++
+                                    (x2 == close) -> {
                                         open_close--
                                         if (open_close == 0) {
-                                            nat += x
+                                            nat += x2
                                             break
                                         }
                                     }
                                 }
-                                nat += x
+                                nat += x2
                             }
                             //println("#$pay#")
                             yield(Tk.Nat(nat, l, c))
@@ -146,17 +157,17 @@ class Lexer (name_: String, reader_: StringReader) {
                 x.isDigit() -> {
                     var pay = x.toString()
                     while (true) {
-                        val (n,x) = reader.read2()
+                        val (n1,x1) = reader.read2()
                         when {
-                            iseof(n) -> break
-                            (x == '.') -> {}
-                            (x.isLetterOrDigit()) -> {}
+                            iseof(n1) -> break
+                            (x1 == '.') -> {}
+                            (x1.isLetterOrDigit()) -> {}
                             else -> {
-                                reader.unread2(n)
+                                reader.unread2(n1)
                                 break
                             }
                         }
-                        pay += x
+                        pay += x1
                     }
                     yield(Tk.Num(pay, l, c))
                 }
