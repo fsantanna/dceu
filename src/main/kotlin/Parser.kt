@@ -41,6 +41,7 @@ class Parser (lexer_: Lexer)
     fun checkEnu (enu: String): Boolean {
         return when (enu) {
             "Eof" -> this.tk1 is Tk.Eof
+            "Fix" -> this.tk1 is Tk.Fix
             "Id"  -> this.tk1 is Tk.Id
             "Num" -> this.tk1 is Tk.Num
             "Nat" -> this.tk1 is Tk.Nat
@@ -51,6 +52,7 @@ class Parser (lexer_: Lexer)
         val ret = this.checkEnu(str)
         val err = when (str) {
             "Eof" -> "end of file"
+            "Fix" -> "TODO"
             "Id"  -> "identifier"
             "Num" -> "number"
             else   -> TODO(this.toString())
@@ -177,7 +179,7 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("(") -> {
-                val e = this.exprPrim()
+                val e = this.expr()
                 this.acceptFix_err(")")
                 e
             }
@@ -206,12 +208,19 @@ class Parser (lexer_: Lexer)
             }
         }
         if (umn) {
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("-",tk0.lin,tk0.col)), listOf(e))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("op_umn",tk0.lin,tk0.col)), listOf(e))
         }
         return e
     }
     fun exprBins (): Expr {
-        return this.exprFixs()
+        var e = this.exprFixs()
+        if (this.tk1.str in listOf("+","-","/","*")) {
+            this.acceptEnu_err("Fix")
+            val tk0 = this.tk0
+            val e2 = this.exprFixs()
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id(op2f(tk0.str),tk0.lin,tk0.col)), listOf(e,e2))
+        }
+        return e
     }
     fun expr (): Expr {
         return this.exprBins()

@@ -1,6 +1,16 @@
 import java.io.PushbackReader
 import java.io.StringReader
 
+fun op2f (op: String): String {
+    return when (op) {
+        "+" -> "op_plus"
+        "-" -> "op_minus"
+        "*" -> "op_mult"
+        "/" -> "op_div"
+        else -> TODO(op)
+    }
+}
+
 class Lexer (name_: String, reader_: StringReader) {
     val name = name_
     val reader = PushbackReader(reader_,2)
@@ -93,7 +103,7 @@ class Lexer (name_: String, reader_: StringReader) {
                     if (x1 in listOf('-','+','*','/')) {
                         val (n2,x2) = reader.read2()
                         if (x2 == ')') {
-                            yield(Tk.Id(x1.toString(), l, c))
+                            yield(Tk.Id(op2f(x1.toString()), l, c))
                         } else {
                             reader.unread2(n2)
                             yield(Tk.Fix("(", l, c))

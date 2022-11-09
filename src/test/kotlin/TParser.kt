@@ -334,4 +334,22 @@ class TParser {
         assert(e is Expr.Nat)
         assert(e.tostr() == "native {\n    printf(\"xxx\\n\");\n}") { "."+e.tostr()+"." }
     }
+
+    // BINARY
+
+    @Test
+    fun bin1_err() {
+        val lexer = Lexer("anon", "(10+)".reader())
+        val parser = Parser(lexer)
+        assert(trap { parser.exprBins() } == "anon : (lin 1, col 5) : expected expression : have \")\"")
+    }
+    @Test
+    fun bin2() {
+        val lexer = Lexer("anon", "10+1".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprBins()
+        assert(e is Expr.Call)
+        assert(e.tostr() == "op_plus(10,1)") { e.tostr() }
+    }
+
 }
