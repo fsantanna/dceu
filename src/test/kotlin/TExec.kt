@@ -542,7 +542,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (ln 2, col 5) : throw error : uncaught exception") { out }
+        assert(out == "anon : (ln 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun catch3() {
@@ -632,13 +632,13 @@ class TExec {
                     throw (2,[10])
                     println(9)
                 }
-                println(1)
+                --println(1)
                 y
             }
             println(x)
         """.trimIndent()
         )
-        assert(out == "1\nanon : (ln 9, col 5) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (ln 9, col 5) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {
