@@ -55,7 +55,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out.contains("1")) { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun print_err2() {
@@ -67,7 +67,7 @@ class TExec {
             println(3)
         """.trimIndent()
         )
-        assert(out.contains("12\n3\n")) { out }
+        assert(out == "12\n3\n") { out }
     }
     @Test
     fun print4() {
@@ -101,7 +101,7 @@ class TExec {
             println(1[1])
         """.trimIndent()
         )
-        assert(out.contains("index error : expected tuple")) { out }
+        assert(out == "anon : (ln 1, col 9) : index error : expected tuple\n") { out }
     }
     @Test
     fun index_err2() {
@@ -109,7 +109,7 @@ class TExec {
             println([1][[]])
         """.trimIndent()
         )
-        assert(out.contains("index error : expected number")) { out }
+        assert(out == "anon : (ln 1, col 13) : index error : expected number\n") { out }
     }
     @Test
     fun index_err3() {
@@ -117,7 +117,7 @@ class TExec {
             println([1][2])
         """.trimIndent()
         )
-        assert(out.contains("index error : out of bounds")) { out }
+        assert(out == "anon : (ln 1, col 13) : index error : out of bounds\n") { out }
     }
 
     // DCL
@@ -255,7 +255,7 @@ class TExec {
             }
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "anon : (ln 5, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun todo_scope_scope3() {
@@ -303,7 +303,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "anon : (ln 6, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope6() {
@@ -330,7 +330,7 @@ class TExec {
             println(xs)
         """.trimIndent()
         )
-        assert(out.contains("[10]")) { out }
+        assert(out == "[10]\n") { out }
     }
 
     // IF
@@ -373,7 +373,7 @@ class TExec {
             if [] {}
         """.trimIndent()
         )
-        assert(out.contains("if error : invalid condition")) { out }
+        assert(out == "anon : (ln 1, col 4) : if error : invalid condition\n") { out }
     }
 
     // FUNC / CALL
@@ -464,7 +464,7 @@ class TExec {
     @Test
     fun func7_err() {
         val out = all("1(1)")
-        assert(out.contains("call error : expected function")) { out }
+        assert(out == "anon : (ln 1, col 1) : call error : expected function\n") { out }
     }
 
     // LOOP / BREAK
@@ -515,7 +515,7 @@ class TExec {
             })
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "anon : (ln 4, col 11) : set error : incompatible scopes\n") { out }
     }
 
     // THROW / CATCH
@@ -542,7 +542,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out.contains("uncaught throw")) { out }
+        assert(out == "anon : (ln 2, col 5) : throw error : uncaught exception") { out }
     }
     @Test
     fun catch3() {
@@ -593,7 +593,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out.contains("throw error : invalid exception : expected number")) { out }
+        assert(out == "anon : (ln 2, col 5) : throw error : invalid exception : expected number\n") { out }
     }
     @Test
     fun catch6_err() {
@@ -607,7 +607,7 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "anon : (ln 4, col 15) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch7() {
@@ -638,7 +638,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out.contains("set error : incompatible scopes")) { out }
+        assert(out == "1\nanon : (ln 9, col 5) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {

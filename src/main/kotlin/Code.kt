@@ -1,10 +1,14 @@
-fun fset (set: Pair<String,String>?, src: String): String {
-    return if (set == null) "" else fset(set.first, set.second, src)
+fun fset (tk: Tk, set: Pair<String,String>?, src: String): String {
+    return if (set == null) "" else fset(tk, set.first, set.second, src)
 }
-fun fset (scope: String, dst: String, src: String): String {
+fun fset (tk: Tk, scope: String, dst: String, src: String): String {
     return """
         if ($src.tag == CEU_VALUE_TUPLE) {
-            assert($src.tuple->block->depth <= $scope->depth && "set error : incompatible scopes");
+                if ($src.tuple->block->depth > $scope->depth) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : set error : incompatible scopes", ${tk.lin}, ${tk.col});
+                    break;
+                }
         }
         $dst = $src;
 
@@ -44,7 +48,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 ceu_block_free(&ceu_block_$n);
                 if (ceu_throw != 0) {                       // pending throw
                     if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
-                        ${fset(set,"ceu_throw_arg")}
+                        ${fset(this.tk, set,"ceu_throw_arg")}
                         if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
                             // assign ceu_throw_arg to set.first
                             ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
@@ -62,7 +66,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             // DCL
             CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
             CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
-            ${fset(set,this.tk.str)}            
+            ${fset(this.tk, set,this.tk.str)}            
                 
         """.trimIndent()
         is Expr.Set -> {
@@ -83,7 +87,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 ${this.dst.code(block, null)}
                 ${this.src.code(block, Pair(scp,"ceu_$n"))}
                 $dst = ceu_$n;
-                ${fset(set,"ceu_$n")}
+                ${fset(this.tk, set,"ceu_$n")}
             }
                 
             """.trimIndent()
@@ -97,8 +101,14 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                     switch (ceu_cnd_$n.tag) {
                         case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
                         case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
-                        default:
-                            assert(0 && "if error : invalid condition");
+                        default: {                
+                            ceu_throw = 2;
+                            snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : if error : invalid condition", ${this.cnd.tk.lin}, ${this.cnd.tk.col});
+                            break; // need to break again below
+                        }
+                    }
+                    if (ceu_throw != 0) {
+                        break;  // break in switch above wont escape
                     }
                 }
                 if (ceu_ret_$n) {
@@ -136,26 +146,30 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 } while (0);
                 return ceu_$n;
             }
-            ${fset(set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
+            ${fset(this.tk, set,"((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
 
         """.trimIndent()
         is Expr.Throw -> """
             { // THROW
-                assert(ceu_throw == 0 && "throw error : double throw");
                 CEU_Value ceu_ex_$n;
                 ${this.ex.code(block, Pair(block,"ceu_ex_$n"))}
                 ${this.arg.code(block, Pair("ceu_block_global","ceu_throw_arg"))}  // arg scope to be set in catch set
-                assert(ceu_ex_$n.tag == CEU_VALUE_NUMBER && "throw error : invalid exception : expected number");
-                ceu_throw = ceu_ex_$n.number;
+                if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
+                    ceu_throw = ceu_ex_$n.number;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : throw error : uncaught exception", ${this.tk.lin}, ${this.tk.col});
+                } else {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : throw error : invalid exception : expected number", ${this.tk.lin}, ${this.tk.col});
+                }
                 break;
             }
     
         """.trimIndent()
 
-        is Expr.Acc -> fset(set, this.tk.str)
-        is Expr.Nil -> fset(set, "((CEU_Value) { CEU_VALUE_NIL })")
-        is Expr.Bool -> fset(set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
-        is Expr.Num -> fset(set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
+        is Expr.Acc -> fset(this.tk, set, this.tk.str)
+        is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
+        is Expr.Bool -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str=="true") 1 else 0}} })")
+        is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
         is Expr.Tuple -> {
             assert(this.args.size <= 256) { "bug found" }
             val scp = if (set==null) block else set.first
@@ -177,7 +191,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 assert(ceu_$n != NULL);
                 *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
                 $scp->tofree = ceu_$n;
-                ${fset(set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
+                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
 
             """.trimIndent()
@@ -186,14 +200,33 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             //{ // INDEX    // (removed {} b/c set uses col[idx])
                 CEU_Value ceu_col_$n;
                 ${this.col.code(block, Pair(block,"ceu_col_$n"))}
-                assert(ceu_col_$n.tag == CEU_VALUE_TUPLE && "index error : expected tuple");
-                
+                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : expected tuple", ${this.col.tk.lin}, ${this.col.tk.col});
+                    break;
+                }
+                                
                 CEU_Value ceu_idx_$n;
                 ${this.idx.code(block, Pair(block,"ceu_idx_$n"))}
-                assert(ceu_idx_$n.tag == CEU_VALUE_NUMBER && "index error : expected number");
+                if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : expected number", ${this.idx.tk.lin}, ${this.idx.tk.col});
+                    break;
+                }
                 
-                assert(ceu_col_$n.tuple->n > ceu_idx_$n.number && "index error : out of bounds");
-                ${fset(set, "ceu_col_$n.tuple->buf[(int) ceu_idx_$n.number]")}
+                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : expected tuple", ${this.col.tk.lin}, ${this.col.tk.col});
+                    break;
+                }
+                
+                if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : index error : out of bounds", ${this.idx.tk.lin}, ${this.idx.tk.col});
+                    break;
+                }
+
+                ${fset(this.tk, set, "ceu_col_$n.tuple->buf[(int) ceu_idx_$n.number]")}
             //}
             
         """.trimIndent()
@@ -201,7 +234,11 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
             { // CALL
                 CEU_Value ceu_f_$n;
                 ${this.f.code(block, Pair(block,"ceu_f_$n"))}
-                assert(ceu_f_$n.tag==CEU_VALUE_FUNC && "call error : expected function");
+                if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (ln %d, col %d) : call error : expected function", ${this.f.tk.lin}, ${this.f.tk.col});
+                    break;
+                }
                 ${this.args.mapIndexed { i,_ ->
                     "CEU_Value ceu_${i}_$n;\n"
                 }.joinToString("")}
@@ -218,7 +255,7 @@ fun Expr.code (block: String, set: Pair<String,String>?): String {
                 if (ceu_throw != 0) {
                     break;
                 }
-                ${fset(set, "ceu_$n")}
+                ${fset(this.tk, set, "ceu_$n")}
             }
 
         """.trimIndent()
@@ -362,13 +399,15 @@ fun Code (es: Expr.Do): String {
         int ceu_throw = 0;
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
+        char ceu_throw_msg[256];
 
         int main (void) {
             do {
                 ${es.code("", null)}
                 return 0;
             } while (0);
-            assert(0 && "uncaught throw");
+            fprintf(stderr, "%s\n", ceu_throw_msg);
+            return 1;
         }
     """.trimIndent()
 }
