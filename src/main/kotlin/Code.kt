@@ -215,7 +215,7 @@ class Coder (parser_: Parser) {
                 }
                 """
             {
-                int ceu_f_$n (void) {
+                float ceu_f_$n (void) {
                     $body
                     return 0;
                 }

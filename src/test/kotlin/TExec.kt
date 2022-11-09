@@ -687,12 +687,12 @@ class TExec {
         val out = all("""
             var x
             set x = native {
-                return 1;
+                return 1.5;
             }
             println(x)
         """.trimIndent()
         )
-        assert(out == "1\n") { out }
+        assert(out == "1.5\n") { out }
     }
     @Test
     fun native3() {
