@@ -89,10 +89,41 @@ class Lexer (name_: String, reader_: StringReader) {
                         }
                         pay += x
                     }
-                    if (keywords.contains(pay)) {
-                        yield(Tk.Fix(pay, l1, c1))
-                    } else {
-                        yield(Tk.Id(pay, l1, c1))
+                    when {
+                        keywords.contains(pay) -> yield(Tk.Fix(pay, l, c))
+                        (pay != "native") -> yield(Tk.Id(pay, l, c))
+                        else -> {
+                            val (x,_,_) = next()
+                            if (x!='(' && x!='{') {
+                                yield(Tk.Err("unterminated native token", l, c))
+                                return@sequence
+                            }
+
+                            var open = x
+                            var close = if (x == '(') ')' else '}'
+                            var open_close = 1
+
+                            var nat = ""
+                            while (true) {
+                                val (n,x) = reader.read2()
+                                when {
+                                    iseof(n) -> {
+                                        yield(Tk.Err("unterminated native token", l, c))
+                                        return@sequence
+                                    }
+                                    (x == open) -> open_close++
+                                    (x == close) -> {
+                                        open_close--
+                                        if (open_close == 0) {
+                                            break
+                                        }
+                                    }
+                                }
+                                nat += x
+                            }
+                            //println("#$pay#")
+                            yield(Tk.Nat(nat, l, c))
+                        }
                     }
                 }
                 x.isDigit() -> {

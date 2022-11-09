@@ -13,6 +13,7 @@ sealed class Tk (val str: String, val lin: Int, val col: Int) {
     data class Fix (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
     data class Id  (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
     data class Num (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
+    data class Nat (val str_: String, val lin_: Int, val col_: Int): Tk(str_, lin_, col_)
 }
 
 sealed class Expr (val n: Int, val tk: Tk) {
