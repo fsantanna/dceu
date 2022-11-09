@@ -2,6 +2,15 @@ import org.junit.Test
 
 val D = "\$"
 
+fun trap (f: ()->Unit): String {
+    try {
+        f()
+        error("impossible case")
+    } catch (e: Throwable) {
+        return e.message!!
+    }
+}
+
 class TLexer {
     @Test
     fun syms() {
@@ -93,7 +102,8 @@ class TLexer {
         assert(tks.next().let { it is Tk.Nat && it.lin==1 && it.col==1 && it.str=="{ abc }" })
         assert(tks.next().let { it is Tk.Nat && it.lin==2 && it.col==1 && it.str=="{{ijk}}" })
         assert(tks.next().let { it is Tk.Nat && it.lin==3 && it.col==1 && it.str=="( {i\$jk} )" })
-        assert(tks.next().let { it is Tk.Err && it.lin==4 && it.col==1 && it.str=="unterminated native token" })
+        //println(tks.next())
+        assert(trap { tks.next() } == "anon : (lin 4, col 1) : unterminated native token")
     }
 
     @Test

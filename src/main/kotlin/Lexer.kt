@@ -7,8 +7,11 @@ class Lexer (name_: String, reader_: StringReader) {
     var lin = 1
     var col = 1
 
+    fun err (lin: Int, col: Int, str: String) {
+        error(this.name + " : (lin $lin, col $col) : $str")
+    }
     fun err (tk: Tk, str: String) {
-        error(this.name + " : (lin ${tk.lin}, col ${tk.col}) : $str")
+        err(tk.lin, tk.col, str)
     }
     fun err_expected (tk: Tk, str: String) {
         val have = when {
@@ -122,8 +125,7 @@ class Lexer (name_: String, reader_: StringReader) {
                         else -> {
                             val (x1,_,_) = next()
                             if (x1!='(' && x1!='{') {
-                                yield(Tk.Err("unterminated native token", l, c))
-                                return@sequence
+                                err(l,c,"unterminated native token")
                             }
 
                             var open = x1
@@ -135,8 +137,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                 val (n2,x2) = reader.read2()
                                 when {
                                     iseof(n2) -> {
-                                        yield(Tk.Err("unterminated native token", l, c))
-                                        return@sequence
+                                        err(l,c, "unterminated native token")
                                     }
                                     (x2 == open) -> open_close++
                                     (x2 == close) -> {

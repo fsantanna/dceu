@@ -1,14 +1,5 @@
 import org.junit.Test
 
-fun trap (f: ()->Unit): String {
-    try {
-        f()
-        error("impossible case")
-    } catch (e: Throwable) {
-        return e.message!!
-    }
-
-}
 class TParser {
 
     // EXPR.VAR
