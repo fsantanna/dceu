@@ -132,22 +132,19 @@ class Coder (parser_: Parser) {
                 
         """.trimIndent()
             is Expr.Func -> """
-            CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, ...) {
+            CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
                 int ceu_i = 0;
-                va_list ceu_args;
-                va_start(ceu_args, ceu_n);
                 ${
-                this.args.map {
-                    """
-                CEU_Value ${it.str} = { CEU_VALUE_NIL };
-                if (ceu_i < ceu_n) {
-                    ${it.str} = va_arg(ceu_args, CEU_Value);
+                    this.args.map {
+                        """
+                        CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                        if (ceu_i < ceu_n) {
+                            ${it.str} = *ceu_args[ceu_i];
+                        }
+                        ceu_i++;
+                        """.trimIndent()
+                    }.joinToString("")
                 }
-                ceu_i++;
-                """.trimIndent()
-                }.joinToString("")
-            }
-                va_end(ceu_args);
                 CEU_Value ceu_$n;
                 do {
                     ${this.body.code("ceu_block", Pair("ceu_scope", "ceu_$n"))}
@@ -305,21 +302,21 @@ class Coder (parser_: Parser) {
                     break;
                 }
                 ${
-                this.args.mapIndexed { i, _ ->
-                    "CEU_Value ceu_${i}_$n;\n"
-                }.joinToString("")
-            }
+                    this.args.mapIndexed { i, _ ->
+                        "CEU_Value ceu_${i}_$n;\n"
+                    }.joinToString("")
+                }
                 ${
-                this.args.mapIndexed { i, it ->
-                    it.code(block, Pair(block, "ceu_${i}_$n"))
-                }.joinToString("")
-            }
+                    this.args.mapIndexed { i, it ->
+                        it.code(block, Pair(block, "ceu_${i}_$n"))
+                    }.joinToString("")
+                }
+                CEU_Value* ceu_args_$n[] = { ${this.args.mapIndexed { i, _ -> "&ceu_${i}_$n" }.joinToString(",")} };
                 CEU_Value ceu_$n = ceu_f_$n.func(
                     $block,
                     ${if (set == null) block else set.first},
-                    ${this.args.size}
-                    ${(if (this.args.size > 0) "," else "")}
-                    ${this.args.mapIndexed { i, _ -> "ceu_${i}_$n" }.joinToString(",")}
+                    ${this.args.size},
+                    ceu_args_$n
                 );
                 if (ceu_throw != 0) {
                     break;
@@ -371,7 +368,7 @@ class Coder (parser_: Parser) {
                     int bool;
                     float number;
                     CEU_Value_Tuple* tuple;
-                    struct CEU_Value (*func) (struct CEU_Block* block, struct CEU_Block* scope, int ceu_n, ...);
+                    struct CEU_Value (*func) (struct CEU_Block* block, struct CEU_Block* scope, int n, struct CEU_Value* args[]);
                 };
             } CEU_Value;
             
@@ -437,28 +434,14 @@ class Coder (parser_: Parser) {
                         assert(0 && "bug found");
                 }
             }
-            CEU_Value ceu_vprint (int n, va_list args) {
-                if (n > 0) {
-                    for (int i=0; i<n; i++) {
-                        ceu_print1(va_arg(args, CEU_Value));
-                    }
+            CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                for (int i=0; i<n; i++) {
+                    ceu_print1(*args[i]);
                 }
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
-            CEU_Value ceu_print (CEU_Block* block, CEU_Block* scope, int n, ...) {
-                if (n > 0) {
-                    va_list args;
-                    va_start(args, n);
-                    ceu_vprint(n, args);
-                    va_end(args);
-                }
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-            CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, ...) {
-                va_list args;
-                va_start(args, n);
-                ceu_vprint(n, args);
-                va_end(args);
+            CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                ceu_print(block, scope, n, args);
                 printf("\n");
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
