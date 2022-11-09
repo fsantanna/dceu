@@ -77,12 +77,14 @@ class Lexer (name_: String, reader_: StringReader) {
                 (x == '(') -> {
                     val (n1,x1) = reader.read2()
                     if (x1 in listOf('-','+','*','/')) {
-                        val (_,x2) = reader.read2()
-                        if (x2 != ')') {
-                            yield(Tk.Err("unterminated operator token", l, c))
-                            return@sequence
+                        val (n2,x2) = reader.read2()
+                        if (x2 == ')') {
+                            yield(Tk.Id(x1.toString(), l, c))
+                        } else {
+                            reader.unread2(n2)
+                            yield(Tk.Fix("(", l, c))
+                            yield(Tk.Fix(x1.toString(), l, c))
                         }
-                        yield(Tk.Id(x1.toString(), l, c))
                     } else {
                         reader.unread2(n1)
                         yield(Tk.Fix("(", l, c))

@@ -97,10 +97,10 @@ class TLexer {
     }
 
     @Test
-    fun ops1() {
+    fun ops() {
         val lexer = Lexer(
             "anon",
-            "(-) (+) (x) (++)".reader()
+            "(-) (+) (x) (*/) (+".reader()
         )
         val tks = lexer.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "-" })
@@ -108,17 +108,13 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
         assert(tks.next().let { it is Tk.Id  && it.str == "x" })
         assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "*" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "/" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "+" })
         //println(tks.next())
-        assert(tks.next().let { it is Tk.Err && it.str == "unterminated operator token" })
+        assert(tks.next().let { it is Tk.Eof && it.lin==1 && it.col==20 })
     }
-    @Test
-    fun ops2() {
-        val lexer = Lexer(
-            "anon",
-            "(+".reader()
-        )
-        val tks = lexer.lex().iterator()
-        assert(tks.next().let { it is Tk.Err && it.str == "unterminated operator token" })
-    }
-
 }
