@@ -73,7 +73,21 @@ class Lexer (name_: String, reader_: StringReader) {
             val (x,l,c) = next()
             when {
                 (x == null) -> break
-                (x in listOf('{','}', '(',')', '[',']', ',',';','=','-')) -> yield(Tk.Fix(x.toString(), l, c))
+                (x in listOf('{','}',')','[',']', ',',';','=', '-','+','*','/')) -> yield(Tk.Fix(x.toString(), l, c))
+                (x == '(') -> {
+                    val (n1,x1) = reader.read2()
+                    if (x1 in listOf('-','+','*','/')) {
+                        val (_,x2) = reader.read2()
+                        if (x2 != ')') {
+                            yield(Tk.Err("unterminated operator token", l, c))
+                            return@sequence
+                        }
+                        yield(Tk.Id(x1.toString(), l, c))
+                    } else {
+                        reader.unread2(n1)
+                        yield(Tk.Fix("(", l, c))
+                    }
+                }
                 (x=='_' || x.isLetter()) -> {
                     var pay = x.toString()
                     while (true) {

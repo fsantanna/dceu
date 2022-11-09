@@ -105,12 +105,12 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk0_, catch, es)
     }
 
-    fun expr1 (): Expr {
+    fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") || this.acceptFix("catch") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val catch = if (this.tk0.str != "catch") null else {
-                    this.exprN()
+                    this.expr()
                 }
                 this.block(tk0, catch)
             }
@@ -120,9 +120,9 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val dst = this.exprN()
+                val dst = this.expr()
                 this.acceptFix_err("=")
-                val src = this.exprN()
+                val src = this.expr()
                 if (dst !is Expr.Acc && dst !is Expr.Index) {
                     err(tk0, "invalid set : invalid destination")
                 }
@@ -130,7 +130,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val cnd = this.exprN()
+                val cnd = this.expr()
                 val t = this.block(null, null)
                 val f = if (this.acceptFix("else")) {
                     this.block(null, null)
@@ -151,7 +151,7 @@ class Parser (lexer_: Lexer)
                 val arg = if (this.checkFix("}") || this.checkEnu("Eof")) {
                     Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))
                 } else {
-                    this.exprN()
+                    this.expr()
                 }
                 // break x -> throw (1,x)               // 1: same code as loop
                 Expr.Throw(tk0, Expr.Num(Tk.Num("1", tk0.lin, tk0.col)), arg)
@@ -166,16 +166,16 @@ class Parser (lexer_: Lexer)
             this.acceptFix("throw") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val (ex,arg) = if (this.acceptFix("(")) {
-                    val ex = this.exprN()
+                    val ex = this.expr()
                     val arg = if (this.acceptFix(",")) {
-                        this.exprN()
+                        this.expr()
                     } else {
                         Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))
                     }
                     this.acceptFix_err(")")
                     Pair(ex, arg)
                 } else {
-                    Pair(this.exprN(), Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col)))
+                    Pair(this.expr(), Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col)))
                 }
                 Expr.Throw(tk0, ex, arg)
             }
@@ -186,9 +186,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.exprN() })
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("(") -> {
-                val e = this.expr1()
+                val e = this.exprPrim()
                 this.acceptFix_err(")")
                 e
             }
@@ -198,30 +198,41 @@ class Parser (lexer_: Lexer)
             }
         }
     }
-    fun exprN (): Expr {
-        var e = this.expr1()
+    fun exprFixs (): Expr {
+        val umn = this.acceptFix("-")
+        val tk0 = this.tk0
+        var e = this.exprPrim()
         while (true) {
             when {
                 // INDEX
                 this.acceptFix("[") -> {
-                    e = Expr.Index(e.tk, e, this.exprN())
+                    e = Expr.Index(e.tk, e, this.expr())
                     this.acceptFix_err("]")
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, list0(")") { this.exprN() })
+                    e = Expr.Call(e.tk, e, list0(")") { this.expr() })
                 }
                 else -> break
             }
         }
+        if (umn) {
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("-",tk0.lin,tk0.col)), listOf(e))
+        }
         return e
+    }
+    fun exprBins (): Expr {
+        return this.exprFixs()
+    }
+    fun expr (): Expr {
+        return this.exprBins()
     }
 
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
         while (this.acceptFix(";")) {}
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
-            val e = this.exprN()
+            val e = this.expr()
             while (this.acceptFix(";")) {}
             ret.add(e)
         }

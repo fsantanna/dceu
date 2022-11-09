@@ -761,4 +761,31 @@ class TExec {
         )
         assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
+
+    // OPERATORS
+
+    @Test
+    fun op_umn() {
+        val out = all("""
+            println(-10)
+        """.trimIndent()
+        )
+        assert(out == "-10\n") { out }
+    }
+    @Test
+    fun op_id1() {
+        val out = all("""
+            println((-)(10))
+        """.trimIndent()
+        )
+        assert(out == "-6\n") { out }
+    }
+    @Test
+    fun op_arithX() {
+        val out = all("""
+            println((10+-20*2)/5)
+        """.trimIndent()
+        )
+        assert(out == "-6\n") { out }
+    }
 }

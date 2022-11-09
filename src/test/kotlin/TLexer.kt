@@ -5,7 +5,7 @@ val D = "\$"
 class TLexer {
     @Test
     fun syms() {
-        val lexer = Lexer("anon", "{ } ( ; ( = ) ) - , ][".reader())
+        val lexer = Lexer("anon", "{ } ( ; ( = ) ) - , ][ / * +".reader())
         val tks = lexer.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
@@ -19,6 +19,9 @@ class TLexer {
         assert(tks.next().str == ",")
         assert(tks.next().str == "]")
         assert(tks.next().str == "[")
+        assert(tks.next().str == "/")
+        assert(tks.next().str == "*")
+        assert(tks.next().str == "+")
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -91,6 +94,31 @@ class TLexer {
         assert(tks.next().let { it is Tk.Nat && it.lin==2 && it.col==1 && it.str=="{{ijk}}" })
         assert(tks.next().let { it is Tk.Nat && it.lin==3 && it.col==1 && it.str=="( {i\$jk} )" })
         assert(tks.next().let { it is Tk.Err && it.lin==4 && it.col==1 && it.str=="unterminated native token" })
+    }
+
+    @Test
+    fun ops1() {
+        val lexer = Lexer(
+            "anon",
+            "(-) (+) (x) (++)".reader()
+        )
+        val tks = lexer.lex().iterator()
+        assert(tks.next().let { it is Tk.Id  && it.str == "-" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "+" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        //println(tks.next())
+        assert(tks.next().let { it is Tk.Err && it.str == "unterminated operator token" })
+    }
+    @Test
+    fun ops2() {
+        val lexer = Lexer(
+            "anon",
+            "(+".reader()
+        )
+        val tks = lexer.lex().iterator()
+        assert(tks.next().let { it is Tk.Err && it.str == "unterminated operator token" })
     }
 
 }
