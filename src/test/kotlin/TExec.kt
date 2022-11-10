@@ -1,6 +1,15 @@
 import org.junit.Test
 import java.io.File
 
+// search in tests output for
+//  definitely|Invalid read|uninitialized
+//  - definitely lost
+//  - Invalid read of size
+//  - uninitialised value
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
+
+
 class TExec {
 
     fun all(inp: String): String {
@@ -22,7 +31,7 @@ class TExec {
         if (!ok2) {
             return out2
         }
-        val (_, out3) = exec("./out.exe")
+        val (_, out3) = exec("${VALGRIND}./out.exe")
         //println(out3)
         return out3
     }
