@@ -102,8 +102,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str=="{ abc }" })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{{ijk}}" })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str=="( {i\$jk} )" })
-        //println(tks.next())
-        assert(trap { tks.next() } == "anon : (lin 4, col 1) : unterminated native token")
+        assert(trap { tks.next() } == "anon : (lin 4, col 1) : native token error : expected \")\"")
     }
 
     @Test
@@ -136,69 +135,75 @@ class TLexer {
             "anon",
             """
                 before
-                ^\"test.ceu\"
+                ^["test.ceu"]
                 after
-                ^[1,1]
+                ^[5]
                 first
-                ^["xxx.ceu",10,10]
+                ^["xxx.ceu",7,9]
                 xxx
             """.trimIndent().reader()
         )
         val tks = lexer.lex().iterator()
-        //assert(tks.next().let { it.it is Tk.Id  && it.str == "op_minus" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "op_plus" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
-        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "*" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "/" })
-        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "+" })
-        //println(tks.next())
-        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==1 && it.pos.col==1 && it.str == "before" })
+        assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==1 && it.pos.col==1 && it.str == "1" })
+        assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==2 && it.pos.col==1 && it.str == "2" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==3 && it.pos.col==1 && it.str == "after" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==5 && it.pos.col==1 && it.str == "first" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="xxx.ceu"  && it.pos.lin==7 && it.pos.col==9 && it.str == "xxx" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==7 && it.pos.col==12 })
     }
     @Test
     fun inc2_err() {
         val lexer = Lexer("anon", "^[".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
     fun inc3_err() {
         val lexer = Lexer("anon", "^[]".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
     fun inc4_err() {
         val lexer = Lexer("anon", "^[jkj]".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
     fun inc5_err() {
         val lexer = Lexer("anon", "^[1,]".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected number")
     }
     @Test
     fun inc6_err() {
         val lexer = Lexer("anon", "^[1,1,1]".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"]\"")
     }
     @Test
     fun inc7_err() {
         val lexer = Lexer("anon", "^[\"".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : unterminated \"")
     }
     @Test
     fun inc8_err() {
         val lexer = Lexer("anon", "^[\"xxx\"]".reader())
         val tks = lexer.lex().iterator()
-        assert(trap { tks.next() } == "TODO")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : file not found : xxx")
+    }
+    @Test
+    fun inc9_err() {
+        val lexer = Lexer("anon", "^".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"[\"")
+    }
+    @Test
+    fun inc10_err() {
+        val lexer = Lexer("anon", "^[1]x".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected end of line")
     }
 }

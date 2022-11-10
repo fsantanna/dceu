@@ -67,7 +67,10 @@ class Lexer (name_: String, reader_: StringReader) {
         while (true) {
             val (n,x) = read2()
             when {
-                iseof(n) -> return null
+                iseof(n) -> {
+                    unread2(n)
+                    return null
+                }
                 f(x) -> break
                 else -> ret += x
             }
@@ -76,6 +79,23 @@ class Lexer (name_: String, reader_: StringReader) {
     }
     fun read2Until (x: Char): String? {
         return read2Until { it == x }
+    }
+    fun read2While (f: (x: Char)->Boolean): String? {
+        var ret = ""
+        while (true) {
+            val (n,x) = read2()
+            when {
+                f(x) -> ret += x
+                else -> {
+                    unread2(n)
+                    break
+                }
+            }
+        }
+        return ret
+    }
+    fun read2While (x: Char): String? {
+        return read2While { it == x }
     }
 
     fun next (): Pair<Char?, Pos> {
@@ -159,7 +179,7 @@ class Lexer (name_: String, reader_: StringReader) {
                         else -> {
                             val (x1,_) = next()
                             if (x1!='(' && x1!='{') {
-                                err(pos,"lexer error : unterminated native token")
+                                err(pos,"native token error : expected \"(\" or \"{\"")
                             }
 
                             var open = x1
@@ -171,7 +191,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                 val (n2,x2) = read2()
                                 when {
                                     iseof(n2) -> {
-                                        err(pos, "lexer error : unterminated native token")
+                                        err(pos, "native token error : expected \"$close\"")
                                     }
                                     (x2 == open) -> open_close++
                                     (x2 == close) -> {
@@ -209,50 +229,83 @@ class Lexer (name_: String, reader_: StringReader) {
                 (x == '^') -> {
                     val (_,x2) = read2()
                     if (x2 != '[') {
-                        err(pos, "lexer error : expected \"[\"")
+                        err(pos, "token ^ error : expected \"[\"")
                     }
 
                     val (n3,x3) = read2()
-                    if (iseof(n3)) {
-                        err(pos, "lexer error : unterminated ^ token")
-                    }
-                    val file: String? = if (x3 != '"') null else {
+                    val file: String? = if (x3 == '"') {
                         val f = read2Until('"')
                         if (f == null) {
-                            err(pos, "lexer error : unterminated ^ token")
+                            err(pos, "token ^ error : unterminated \"")
                         }
                         f
+                    } else {
+                        unread2(n3)
+                        null
                     }
 
-                    val (_,x4) = read2()
-                    val lin: Int? = if (x4 != ',') null else {
-                        read2Until { !it.isDigit() }?.toIntOrNull()
+                    val lin: Int? = if (file == null) {
+                        read2While { it.isDigit() }?.toIntOrNull()
+                    } else {
+                        val (n4,x4) = read2()
+                        if (x4 == ',') {
+                            read2While { it.isDigit() }.let {
+                                if (it.isNullOrEmpty()) {
+                                    err(pos, "invalid ^ token : expected number")
+                                }
+                                it!!.toInt()
+                            }
+                        } else {
+                            unread2(n4)
+                            null
+                        }
                     }
-                    val col: Int? = if (lin == null) null else {
-                        val (_,x5) = read2()
-                        if (x5 != ',') null else {
-                            read2Until { !it.isDigit() }?.toIntOrNull()
+                    val col: Int? = if (lin == null) {
+                        null
+                    } else {
+                        val (n5,x5) = read2()
+                        if (x5 == ',') {
+                            read2While { it.isDigit() }.let {
+                                if (it.isNullOrEmpty()) {
+                                    err(pos, "invalid ^ token : expected number")
+                                }
+                                it!!.toInt()
+                            }
+                        } else {
+                            unread2(n5)
+                            null
                         }
                     }
 
-                    val (_,x5) = read2()
-                    if (x5 != ']') {
-                        err(pos, "lexer error : unterminated ^ token")
+                    if (file==null && lin==null) {
+                        err(pos, "token ^ error")
+                    }
+
+                    val (_,x6) = read2()
+                    if (x6 != ']') {
+                        err(pos, "token ^ error : expected \"]\"")
+                    }
+                    val (n7,x7) = read2()
+                    when {
+                        iseof(n7) -> unread2(n7)
+                        (x7 == '\n') -> {}  // skip leading \n
+                        else -> err(pos, "token ^ error : expected end of line")
                     }
 
                     when {
                         (file!=null && lin==null && col==null) -> {
                             val f = File(file)
                             if (!f.exists()) {
-                                err(pos, "lexer error : file not found : $file")
+                                err(pos, "token ^ error : file not found : $file")
                             }
                             stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
                         }
-                        (file!=null && lin!=null && col!=null) -> stack.first().let {
-                            it.lin = lin
-                            it.col = col
+                        (lin != null) -> stack.first().let {
+                            it.file = if (file==null) it.file else file
+                            it.lin  = lin
+                            it.col  = if (col==null) it.col else col
                         }
-                        else -> err(pos, "lexer error : invalid ^ token")
+                        else -> error("bug found")
                     }
                 }
 
