@@ -1,3 +1,4 @@
+import java.io.File
 import java.io.PushbackReader
 import java.io.StringReader
 
@@ -14,7 +15,7 @@ fun op2f (op: String): String {
 data class Pos (val file: String, var lin: Int, var col: Int)
 
 class Lexer (name_: String, reader_: StringReader) {
-    val pos = ArrayDeque(listOf(Pos(name_,1,1)))
+    val stack = ArrayDeque(listOf(Pos(name_,1,1)))
     val reader = PushbackReader(reader_,2)
 
     fun err (pos: Pos, str: String) {
@@ -40,9 +41,9 @@ class Lexer (name_: String, reader_: StringReader) {
         val n = this.read()
         val x = n.toChar()
         if (x == '\n') {
-            pos.first().lin++; pos.first().col=1
+            stack.first().lin++; stack.first().col=1
         } else if (!iseof(n)) {
-            pos.first().col++
+            stack.first().col++
         }
         return Pair(n,x)
     }
@@ -51,14 +52,14 @@ class Lexer (name_: String, reader_: StringReader) {
         this.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { pos.first().lin--; pos.first().col=0 }
-            else -> pos.first().col--
+            (x == '\n') -> { stack.first().lin--; stack.first().col=0 }
+            else -> stack.first().col--
         }
     }
 
     fun next (): Pair<Char?, Pos> {
         while (true) {
-            val pos = this.pos.first().copy()
+            val pos = this.stack.first().copy()
             val (n1,x1) = this.reader.read2()
             //println("$l + $c: $x1")
             when (x1) {
@@ -135,7 +136,7 @@ class Lexer (name_: String, reader_: StringReader) {
                         else -> {
                             val (x1,_) = next()
                             if (x1!='(' && x1!='{') {
-                                err(pos,"unterminated native token")
+                                err(pos,"lexer error : unterminated native token")
                             }
 
                             var open = x1
@@ -147,7 +148,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                 val (n2,x2) = reader.read2()
                                 when {
                                     iseof(n2) -> {
-                                        err(pos, "unterminated native token")
+                                        err(pos, "lexer error : unterminated native token")
                                     }
                                     (x2 == open) -> open_close++
                                     (x2 == close) -> {
@@ -182,12 +183,79 @@ class Lexer (name_: String, reader_: StringReader) {
                     }
                     yield(Tk.Num(pay, pos))
                 }
+                (x == '^') -> {
+                    val (_,x2) = reader.read2()
+                    if (x2 != '[') {
+                        err(pos, "lexer error : expected \"[\"")
+                    }
+                    var file: String?
+                    var lin: Int?
+                    var col: Int?
+                    while (true) {
+                        val (n3,x3) = reader.read2()
+                        when {
+                            iseof(n3) -> err(pos, "lexer error : unterminated ^ token")
+                            (x3 == '"') -> {
+                                var file = ""
+                                val (lin,col) = all().let { Pair(it.lin,it.col) }
+                                while (true) {
+                                    x3 = all().read().second
+                                    if (x3 == '"') {
+                                        break
+                                    }
+                                    file += x3
+                                }
+                                assert(x3 == '"')
+                                val f = File(file)
+                                All_assert_tk(all().let{Tk.Err("",lin,col)}, f.exists()) {
+                                    "file not found : $file"
+                                }
+                                alls.stack.addFirst(All(file, PushbackReader(StringReader(f.readText()), 2), true))
+
+                            }
+                            x3.isDigit() -> {
+                                fun digits (): Int {
+                                    assert(x3.isDigit())
+                                    var pay = ""
+                                    var n4 = 0
+                                    var x4 = x3
+                                    do {
+                                        pay += x4
+                                        reader.read2().let {
+                                            n4 = it.first
+                                            x4 = it.second
+                                        }
+                                    } while (x4.isDigit())
+                                    reader.unread2(n4)
+                                    return pay.toInt()
+                                }
+
+                                val lin = digits()
+                                x4 = all().read().second
+                                if (x4 != ',')  TODO()
+                                x4 = all().read().second
+                                if (!x4.isDigit()) TODO()
+                                val col = digits()
+                                x4 = all().read().second
+                                if (x4 != ']') TODO()
+                                stack.addFirst(Pos(lin, col))
+
+                            }
+                        }
+                    }
+                    when {
+                        (file!=null && lin==null && col==null) -> {}
+                        (file!=null && lin!=null && col!=null) -> {}
+                        (file==null && lin==null && col==null) -> {}
+                        else -> err(pos, "lexer error : invalid ^ token")
+                    }
+                }
 
                 else -> {
                     TODO("$x - $pos")
                 }
             }
         }
-        yield(Tk.Eof(pos.first()))
+        yield(Tk.Eof(stack.first()))
     }
 }

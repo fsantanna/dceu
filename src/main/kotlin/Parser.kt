@@ -1,8 +1,8 @@
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
-    var tk0: Tk = Tk.Eof(lexer.pos.first())
-    var tk1: Tk = Tk.Eof(lexer.pos.first())
+    var tk0: Tk = Tk.Eof(lexer.stack.first())
+    var tk1: Tk = Tk.Eof(lexer.stack.first())
     val tks: Iterator<Tk>
 
     init {

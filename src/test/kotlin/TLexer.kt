@@ -138,6 +138,10 @@ class TLexer {
                 before
                 ^\"test.ceu\"
                 after
+                ^[1,1]
+                first
+                ^["xxx.ceu",10,10]
+                xxx
             """.trimIndent().reader()
         )
         val tks = lexer.lex().iterator()
@@ -154,5 +158,41 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "+" })
         //println(tks.next())
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
+    }
+    @Test
+    fun inc2_err() {
+        val lexer = Lexer("anon", "^[".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
+    @Test
+    fun inc3_err() {
+        val lexer = Lexer("anon", "^[]".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
+    @Test
+    fun inc4_err() {
+        val lexer = Lexer("anon", "^[jkj]".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
+    @Test
+    fun inc5_err() {
+        val lexer = Lexer("anon", "^[1,]".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
+    @Test
+    fun inc6_err() {
+        val lexer = Lexer("anon", "^[1,1,1]".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
+    @Test
+    fun inc7_err() {
+        val lexer = Lexer("anon", "^[\"".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
     }
 }
