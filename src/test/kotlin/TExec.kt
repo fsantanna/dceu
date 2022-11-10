@@ -477,7 +477,7 @@ class TExec {
     @Test
     fun loop1() {
         val out = all("""
-            println(loop { break 1 })
+            println(catch 2 { loop { throw (2,1) }})
         """.trimIndent()
         )
         assert(out == "1\n") { out }
@@ -485,7 +485,7 @@ class TExec {
     @Test
     fun loop2() {
         val out = all("""
-            println(loop { []; break 1 })
+            println(catch 2 { loop { []; throw (2,1) }})
         """.trimIndent()
         )
         assert(out == "1\n") { out }
@@ -493,7 +493,7 @@ class TExec {
     @Test
     fun loop3() {
         val out = all("""
-            println(loop { break [1] })
+            println(catch 2 { loop { throw (2,[1]) }})
         """.trimIndent()
         )
         assert(out == "[1]\n") { out }
@@ -501,11 +501,11 @@ class TExec {
     @Test
     fun loop4() {
         val out = all("""
-            println(loop {
+            println(catch 2 { loop {
                 var x
                 set x = [1] -- memory released
-                break 1
-            })
+                throw (2,1)
+            }})
         """.trimIndent()
         )
         assert(out == "1\n") { out }
@@ -513,14 +513,14 @@ class TExec {
     @Test
     fun loop5_err() {
         val out = all("""
-            println(loop {
+            println(catch 2 { loop {
                 var x
                 set x = [1]
-                break x
-            })
+                throw (2,x)
+            }})
         """.trimIndent()
         )
-        assert(out == "anon : (lin 4, col 11) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
     }
 
     // THROW / CATCH

@@ -3,7 +3,7 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "break", "catch", "do", "else", "false", "func",
+    "catch", "do", "else", "false", "func",
     "if", "loop", "nil", "set", "throw", "true", "var"
 )
 
