@@ -13,7 +13,7 @@ class TExec {
         }
         val coder = Coder(parser)
         val c = try {
-            coder.expr(Expr.Do(Tk.Fix("",0,0),null,es))
+            coder.expr(Expr.Do(Tk.Fix("",Pos("anon",0,0)),null,es))
         } catch (e: Throwable) {
             return e.message!!
         }
@@ -787,5 +787,14 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "-6\n") { out }
+    }
+    @Test
+    fun todo_scope_op_id2() {
+        val out = all("""
+            set (+) = (-)
+            println((+)(10,4))
+        """.trimIndent()
+        )
+        assert(out == "6\n") { out }
     }
 }

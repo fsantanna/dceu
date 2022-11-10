@@ -9,11 +9,11 @@ class Coder (parser_: Parser) {
     fun fset(tk: Tk, scope: String, dst: String, src: String): String {
         return """
             if ($src.tag == CEU_VALUE_TUPLE) {
-                    if ($src.tuple->block->depth > $scope->depth) {                
-                        ceu_throw = 2;
-                        snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : set error : incompatible scopes", ${tk.lin}, ${tk.col});
-                        break;
-                    }
+                if ($src.tuple->block->depth > $scope->depth) {                
+                    ceu_throw = 2;
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : set error : incompatible scopes", ${tk.pos.lin}, ${tk.pos.col});
+                    break;
+                }
             }
             $dst = $src;
     
@@ -88,15 +88,15 @@ class Coder (parser_: Parser) {
                     else -> error("bug found")
                 }
                 """
-            { // SET
-                CEU_Value ceu_$n;
-                ${this.dst.code(block, null)}
-                ${this.src.code(block, Pair(scp, "ceu_$n"))}
-                $dst = ceu_$n;
-                ${fset(this.tk, set, "ceu_$n")}
-            }
-                
-            """.trimIndent()
+                { // SET
+                    CEU_Value ceu_$n;
+                    ${this.dst.code(block, null)}
+                    ${this.src.code(block, Pair(scp, "ceu_$n"))}
+                    $dst = ceu_$n;
+                    ${fset(this.tk, set, "ceu_$n")}
+                }
+                    
+                """.trimIndent()
                 //Pair(s1+pre+s2+pos, "ceu_$n")
             }
             is Expr.If -> """
@@ -109,7 +109,7 @@ class Coder (parser_: Parser) {
                         case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                         default: {                
                             ceu_throw = 2;
-                            snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.lin}, ${this.cnd.tk.col});
+                            snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
                             break; // need to break again below
                         }
                     }
@@ -132,28 +132,28 @@ class Coder (parser_: Parser) {
                 
         """.trimIndent()
             is Expr.Func -> """
-            CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
-                int ceu_i = 0;
-                ${
-                    this.args.map {
-                        """
-                        CEU_Value ${it.str} = { CEU_VALUE_NIL };
-                        if (ceu_i < ceu_n) {
-                            ${it.str} = *ceu_args[ceu_i];
-                        }
-                        ceu_i++;
-                        """.trimIndent()
-                    }.joinToString("")
+                CEU_Value ceu_func_$n (CEU_Block* ceu_block, CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
+                    int ceu_i = 0;
+                    ${
+                        this.args.map {
+                            """
+                            CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                            if (ceu_i < ceu_n) {
+                                ${it.str} = *ceu_args[ceu_i];
+                            }
+                            ceu_i++;
+                            """.trimIndent()
+                        }.joinToString("")
+                    }
+                    CEU_Value ceu_$n;
+                    do {
+                        ${this.body.code("ceu_block", Pair("ceu_scope", "ceu_$n"))}
+                    } while (0);
+                    return ceu_$n;
                 }
-                CEU_Value ceu_$n;
-                do {
-                    ${this.body.code("ceu_block", Pair("ceu_scope", "ceu_$n"))}
-                } while (0);
-                return ceu_$n;
-            }
-            ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
-
-        """.trimIndent()
+                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
+    
+            """.trimIndent()
             is Expr.Throw -> """
             { // THROW
                 CEU_Value ceu_ex_$n;
@@ -161,10 +161,10 @@ class Coder (parser_: Parser) {
                 ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
                 if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
                     ceu_throw = ceu_ex_$n.number;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.lin}, ${this.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
                 } else {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.lin}, ${this.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.pos.lin}, ${this.tk.pos.col});
                 }
                 break;
             }
@@ -240,23 +240,23 @@ class Coder (parser_: Parser) {
                     it.code(block, Pair(scp, "ceu_${i}_$n"))
                 }.joinToString("")
                 """
-            { // TUPLE
-                ${this.args.mapIndexed { i, _ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString("")}
-                $args
-                CEU_Value ceu_sta_$n[${this.args.size}] = {
-                    ${this.args.mapIndexed { i, _ -> "ceu_${i}_$n" }.joinToString(",")}
-                };
-                CEU_Value* ceu_dyn_$n = malloc(${this.args.size} * sizeof(CEU_Value));
-                assert(ceu_dyn_$n != NULL);
-                memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
-                CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
-                assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
-                $scp->tofree = ceu_$n;
-                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
-            }
-
-            """.trimIndent()
+                { // TUPLE
+                    ${this.args.mapIndexed { i, _ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString("")}
+                    $args
+                    CEU_Value ceu_sta_$n[${this.args.size}] = {
+                        ${this.args.mapIndexed { i, _ -> "ceu_${i}_$n" }.joinToString(",")}
+                    };
+                    CEU_Value* ceu_dyn_$n = malloc(${this.args.size} * sizeof(CEU_Value));
+                    assert(ceu_dyn_$n != NULL);
+                    memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
+                    CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
+                    assert(ceu_$n != NULL);
+                    *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
+                    $scp->tofree = ceu_$n;
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
+                }
+    
+                """.trimIndent()
             }
             is Expr.Index -> """
             //{ // INDEX    // (removed {} b/c set uses col[idx])
@@ -264,7 +264,7 @@ class Coder (parser_: Parser) {
                 ${this.col.code(block, Pair(block, "ceu_col_$n"))}
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.lin}, ${this.col.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
                 }
                                 
@@ -272,19 +272,19 @@ class Coder (parser_: Parser) {
                 ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
                 if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected number", ${this.idx.tk.lin}, ${this.idx.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected number", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
                     break;
                 }
                 
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.lin}, ${this.col.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
                 }
                 
                 if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : out of bounds", ${this.idx.tk.lin}, ${this.idx.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : out of bounds", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
                     break;
                 }
 
@@ -298,7 +298,7 @@ class Coder (parser_: Parser) {
                 ${this.f.code(block, Pair(block, "ceu_f_$n"))}
                 if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
                     ceu_throw = 2;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : call error : expected function", ${this.f.tk.lin}, ${this.f.tk.col});
+                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : call error : expected function", ${this.f.tk.pos.lin}, ${this.f.tk.pos.col});
                     break;
                 }
                 ${

@@ -11,17 +11,17 @@ fun op2f (op: String): String {
     }
 }
 
-class Lexer (name_: String, reader_: StringReader) {
-    val name = name_
-    val reader = PushbackReader(reader_,2)
-    var lin = 1
-    var col = 1
+data class Pos (val file: String, var lin: Int, var col: Int)
 
-    fun err (lin: Int, col: Int, str: String) {
-        error(this.name + " : (lin $lin, col $col) : $str")
+class Lexer (name_: String, reader_: StringReader) {
+    val pos = ArrayDeque(listOf(Pos(name_,1,1)))
+    val reader = PushbackReader(reader_,2)
+
+    fun err (pos: Pos, str: String) {
+        error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")
     }
     fun err (tk: Tk, str: String) {
-        err(tk.lin, tk.col, str)
+        err(tk.pos, str)
     }
     fun err_expected (tk: Tk, str: String) {
         val have = when {
@@ -40,9 +40,9 @@ class Lexer (name_: String, reader_: StringReader) {
         val n = this.read()
         val x = n.toChar()
         if (x == '\n') {
-            lin++; col=1
+            pos.first().lin++; pos.first().col=1
         } else if (!iseof(n)) {
-            col++
+            pos.first().col++
         }
         return Pair(n,x)
     }
@@ -51,14 +51,14 @@ class Lexer (name_: String, reader_: StringReader) {
         this.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { lin--; col=0 }
-            else -> col--
+            (x == '\n') -> { pos.first().lin--; pos.first().col=0 }
+            else -> pos.first().col--
         }
     }
 
-    fun next (): Triple<Char?, Int, Int> {
+    fun next (): Pair<Char?, Pos> {
         while (true) {
-            val (l, c) = Pair(this.lin, this.col)
+            val pos = this.pos.first().copy()
             val (n1,x1) = this.reader.read2()
             //println("$l + $c: $x1")
             when (x1) {
@@ -67,7 +67,7 @@ class Lexer (name_: String, reader_: StringReader) {
                     val (n2,x2) = this.reader.read2()
                     if (iseof(n2) || x2!='-') {
                         this.reader.unread2(n2)
-                        return Triple('-', l, c)
+                        return Pair('-', pos)
                     }
                     // found comment '--': ignore everything up to \n or EOF
                     while (true) {
@@ -83,9 +83,9 @@ class Lexer (name_: String, reader_: StringReader) {
                 }
                 else -> {
                     return if (iseof(n1)) {
-                        Triple(null, l, c)
+                        Pair(null, pos)
                     } else {
-                        Triple(x1, l, c)
+                        Pair(x1, pos)
                     }
                 }
             }
@@ -94,24 +94,24 @@ class Lexer (name_: String, reader_: StringReader) {
 
     fun lex (): Sequence<Tk> = sequence {
         while (true) {
-            val (x,l,c) = next()
+            val (x,pos) = next()
             when {
                 (x == null) -> break
-                (x in listOf('{','}',')','[',']', ',',';','=', '-','+','*','/')) -> yield(Tk.Fix(x.toString(), l, c))
+                (x in listOf('{','}',')','[',']', ',',';','=', '-','+','*','/')) -> yield(Tk.Fix(x.toString(), pos))
                 (x == '(') -> {
                     val (n1,x1) = reader.read2()
                     if (x1 in listOf('-','+','*','/')) {
                         val (n2,x2) = reader.read2()
                         if (x2 == ')') {
-                            yield(Tk.Id(op2f(x1.toString()), l, c))
+                            yield(Tk.Id(op2f(x1.toString()), pos))
                         } else {
                             reader.unread2(n2)
-                            yield(Tk.Fix("(", l, c))
-                            yield(Tk.Fix(x1.toString(), l, c))
+                            yield(Tk.Fix("(", pos))
+                            yield(Tk.Fix(x1.toString(), pos))
                         }
                     } else {
                         reader.unread2(n1)
-                        yield(Tk.Fix("(", l, c))
+                        yield(Tk.Fix("(", pos))
                     }
                 }
                 (x=='_' || x.isLetter()) -> {
@@ -130,12 +130,12 @@ class Lexer (name_: String, reader_: StringReader) {
                         pay += x1
                     }
                     when {
-                        keywords.contains(pay) -> yield(Tk.Fix(pay, l, c))
-                        (pay != "native") -> yield(Tk.Id(pay, l, c))
+                        keywords.contains(pay) -> yield(Tk.Fix(pay, pos))
+                        (pay != "native") -> yield(Tk.Id(pay, pos))
                         else -> {
-                            val (x1,_,_) = next()
+                            val (x1,_) = next()
                             if (x1!='(' && x1!='{') {
-                                err(l,c,"unterminated native token")
+                                err(pos,"unterminated native token")
                             }
 
                             var open = x1
@@ -147,7 +147,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                 val (n2,x2) = reader.read2()
                                 when {
                                     iseof(n2) -> {
-                                        err(l,c, "unterminated native token")
+                                        err(pos, "unterminated native token")
                                     }
                                     (x2 == open) -> open_close++
                                     (x2 == close) -> {
@@ -161,7 +161,7 @@ class Lexer (name_: String, reader_: StringReader) {
                                 nat += x2
                             }
                             //println("#$pay#")
-                            yield(Tk.Nat(nat, l, c))
+                            yield(Tk.Nat(nat, pos))
                         }
                     }
                 }
@@ -180,14 +180,14 @@ class Lexer (name_: String, reader_: StringReader) {
                         }
                         pay += x1
                     }
-                    yield(Tk.Num(pay, l, c))
+                    yield(Tk.Num(pay, pos))
                 }
 
                 else -> {
-                    TODO("$x - $l - $c")
+                    TODO("$x - $pos")
                 }
             }
         }
-        yield(Tk.Eof(lin, col))
+        yield(Tk.Eof(pos.first()))
     }
 }

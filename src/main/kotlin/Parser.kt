@@ -1,8 +1,8 @@
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
-    var tk0: Tk = Tk.Eof(1, 1)
-    var tk1: Tk = Tk.Eof(1, 1)
+    var tk0: Tk = Tk.Eof(lexer.pos.first())
+    var tk1: Tk = Tk.Eof(lexer.pos.first())
     val tks: Iterator<Tk>
 
     init {
@@ -126,26 +126,26 @@ class Parser (lexer_: Lexer)
                 val f = if (this.acceptFix("else")) {
                     this.block(null, null)
                 } else {
-                    val tk = Tk.Fix("{",this.tk0.lin,this.tk0.col)
-                    Expr.Do(tk, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))))
+                    val tk = Tk.Fix("{",this.tk0.pos.copy())
+                    Expr.Do(tk, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                 }
                 Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("loop") -> {
-                val tk = Tk.Fix("catch",this.tk0.lin,this.tk0.col)
-                val num = Expr.Num(Tk.Num("1",tk.lin,tk.col))
+                val tk = Tk.Fix("catch",this.tk0.pos.copy())
+                val num = Expr.Num(Tk.Num("1",tk.pos.copy()))
                 // loop -> catch (1) { loop { ... } }   // 1: same code as break
                 Expr.Do(tk, num, listOf(Expr.Loop(this.tk0 as Tk.Fix, this.block(null, null))))
             }
             this.acceptFix("break") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val arg = if (this.checkFix("}") || this.checkEnu("Eof")) {
-                    Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))
+                    Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))
                 } else {
                     this.expr()
                 }
                 // break x -> throw (1,x)               // 1: same code as loop
-                Expr.Throw(tk0, Expr.Num(Tk.Num("1", tk0.lin, tk0.col)), arg)
+                Expr.Throw(tk0, Expr.Num(Tk.Num("1", tk0.pos.copy())), arg)
             }
             this.acceptFix("func") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -161,12 +161,12 @@ class Parser (lexer_: Lexer)
                     val arg = if (this.acceptFix(",")) {
                         this.expr()
                     } else {
-                        Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col))
+                        Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))
                     }
                     this.acceptFix_err(")")
                     Pair(ex, arg)
                 } else {
-                    Pair(this.expr(), Expr.Nil(Tk.Fix("nil", tk0.lin, tk0.col)))
+                    Pair(this.expr(), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))
                 }
                 Expr.Throw(tk0, ex, arg)
             }
@@ -208,7 +208,7 @@ class Parser (lexer_: Lexer)
             }
         }
         if (umn) {
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("op_umn",tk0.lin,tk0.col)), listOf(e))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("op_umn",tk0.pos.copy())), listOf(e))
         }
         return e
     }
@@ -218,7 +218,7 @@ class Parser (lexer_: Lexer)
             this.acceptEnu_err("Fix")
             val tk0 = this.tk0
             val e2 = this.expr()
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id(op2f(tk0.str),tk0.lin,tk0.col)), listOf(e,e2))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id(op2f(tk0.str),tk0.pos.copy())), listOf(e,e2))
         }
         return e
     }
@@ -235,7 +235,7 @@ class Parser (lexer_: Lexer)
             ret.add(e)
         }
         if (ret.size == 0) {
-            ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.lin, this.tk0.col)))
+            ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
         }
         return ret
     }

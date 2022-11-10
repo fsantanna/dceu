@@ -77,15 +77,15 @@ class TLexer {
         """.trimIndent().reader()
         )
         val tks = lexer.lex().iterator()
-        assert(tks.next().let { it is Tk.Id  && it.lin==1 && it.col==1 && it.str == "x" })
-        assert(tks.next().let { it is Tk.Fix && it.lin==1 && it.col==3 && it.str == "-" })
-        assert(tks.next().let { it is Tk.Id  && it.lin==1 && it.col==5 && it.str == "y" })
-        assert(tks.next().let { it is Tk.Fix && it.lin==1 && it.col==7 && it.str == "-" })
-        assert(tks.next().let { it is Tk.Id  && it.lin==1 && it.col==9 && it.str == "z" })
-        assert(tks.next().let { it is Tk.Fix && it.lin==2 && it.col==1 && it.str == "var" })
-        assert(tks.next().let { it is Tk.Id  && it.lin==4 && it.col==1 && it.str == "val" })
-        assert(tks.next().let { it is Tk.Fix && it.lin==6 && it.col==1 && it.str == "-" })
-        assert(tks.next().let { it is Tk.Eof && it.lin==6 && it.col==2 })
+        assert(tks.next().let { it is Tk.Id  && it.pos.lin==1 && it.pos.col==1 && it.str == "x" })
+        assert(tks.next().let { it is Tk.Fix && it.pos.lin==1 && it.pos.col==3 && it.str == "-" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.lin==1 && it.pos.col==5 && it.str == "y" })
+        assert(tks.next().let { it is Tk.Fix && it.pos.lin==1 && it.pos.col==7 && it.str == "-" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.lin==1 && it.pos.col==9 && it.str == "z" })
+        assert(tks.next().let { it is Tk.Fix && it.pos.lin==2 && it.pos.col==1 && it.str == "var" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.lin==4 && it.pos.col==1 && it.str == "val" })
+        assert(tks.next().let { it is Tk.Fix && it.pos.lin==6 && it.pos.col==1 && it.str == "-" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==6 && it.pos.col==2 })
     }
 
     @Test
@@ -99,9 +99,9 @@ class TLexer {
         """.trimIndent().reader()
         )
         val tks = lexer.lex().iterator()
-        assert(tks.next().let { it is Tk.Nat && it.lin==1 && it.col==1 && it.str=="{ abc }" })
-        assert(tks.next().let { it is Tk.Nat && it.lin==2 && it.col==1 && it.str=="{{ijk}}" })
-        assert(tks.next().let { it is Tk.Nat && it.lin==3 && it.col==1 && it.str=="( {i\$jk} )" })
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str=="{ abc }" })
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{{ijk}}" })
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str=="( {i\$jk} )" })
         //println(tks.next())
         assert(trap { tks.next() } == "anon : (lin 4, col 1) : unterminated native token")
     }
@@ -125,6 +125,34 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
         assert(tks.next().let { it is Tk.Fix && it.str == "+" })
         //println(tks.next())
-        assert(tks.next().let { it is Tk.Eof && it.lin==1 && it.col==20 })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
+    }
+
+    // INCLUDE
+
+    @Test
+    fun inc1() {
+        val lexer = Lexer(
+            "anon",
+            """
+                before
+                ^\"test.ceu\"
+                after
+            """.trimIndent().reader()
+        )
+        val tks = lexer.lex().iterator()
+        //assert(tks.next().let { it.it is Tk.Id  && it.str == "op_minus" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "op_plus" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "*" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "/" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "+" })
+        //println(tks.next())
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
     }
 }
