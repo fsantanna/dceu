@@ -252,7 +252,7 @@ class TParser {
         val lexer = Lexer("anon", "do{}".reader())
         val parser = Parser(lexer)
         val e = parser.exprPrim()
-        assert(e is Expr.Do && e.es.size==1)
+        assert(e is Expr.Block && e.es.size==1)
         assert(e.tostr() == "do {\nnil\n}\n") { e.tostr() }
     }
     @Test
@@ -260,7 +260,7 @@ class TParser {
         val lexer = Lexer("anon", "do { var a; set a=1; print(a) }".reader())
         val parser = Parser(lexer)
         val e = parser.exprPrim()
-        assert(e is Expr.Do && e.es.size==3)
+        assert(e is Expr.Block && e.es.size==3)
         assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}\n") { e.tostr() }
     }
 
@@ -298,7 +298,7 @@ class TParser {
         val lexer = Lexer("anon", "loop x=10 while x<1 { break }".reader())
         val parser = Parser(lexer)
         val e = parser.exprPrim()
-        assert(e is Expr.Do && e.es[0] is Expr.Loop)
+        assert(e is Expr.Block && e.es[0] is Expr.Loop)
         assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,nil)\n}\n\n}\n") { e.tostr() }
     }
 

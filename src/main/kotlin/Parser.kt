@@ -88,23 +88,17 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (tk0: Tk.Fix?, catch: Expr?): Expr.Do {
+    fun block (tk0: Tk.Fix?): Expr.Block {
         this.acceptFix_err("{")
         val tk0_ = tk0 ?: this.tk0 as Tk.Fix
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk0_, catch, es)
+        return Expr.Block(tk0_, es)
     }
 
     fun exprPrim (): Expr {
         return when {
-            this.acceptFix("do") || this.acceptFix("catch") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val catch = if (this.tk0.str != "catch") null else {
-                    this.expr()
-                }
-                this.block(tk0, catch)
-            }
+            this.acceptFix("do") -> this.block(this.tk0 as Tk.Fix)
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
                 Expr.Dcl(this.tk0 as Tk.Id)
@@ -122,23 +116,24 @@ class Parser (lexer_: Lexer)
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
-                val t = this.block(null, null)
+                val t = this.block(null)
                 val f = if (this.acceptFix("else")) {
-                    this.block(null, null)
+                    this.block(null)
                 } else {
                     val tk = Tk.Fix("{",this.tk0.pos.copy())
-                    Expr.Do(tk, null, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                    Expr.Block(tk, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                 }
                 Expr.If(tk0, cnd, t, f)
             }
-            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, this.block(null, null))
+            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, this.block(null))
             this.acceptFix("func") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
-                val body = this.block(null, null)
+                val body = this.block(null)
                 Expr.Func(tk0, args, body)
             }
+            this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block(null))
             this.acceptFix("throw") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val (ex,arg) = if (this.acceptFix("(")) {

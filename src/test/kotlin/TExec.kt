@@ -13,7 +13,7 @@ class TExec {
         }
         val coder = Coder(parser)
         val c = try {
-            coder.expr(Expr.Do(Tk.Fix("",Pos("anon",0,0)),null,es))
+            coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
         } catch (e: Throwable) {
             return e.message!!
         }

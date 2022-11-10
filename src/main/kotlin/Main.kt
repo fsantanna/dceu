@@ -16,13 +16,14 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Do    (val tk_: Tk.Fix, val catch: Expr?, val es: List<Expr>) : Expr(N++, tk_)
+    data class Block (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
     data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
-    data class If    (val tk_: Tk, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
-    data class Loop  (val tk_: Tk, val body: Expr.Do): Expr(N++, tk_)
-    data class Func  (val tk_: Tk, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
-    data class Throw (val tk_: Tk, val ex: Expr, val arg: Expr): Expr(N++, tk_)
+    data class If    (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
+    data class Loop  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
+    data class Func  (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
+    data class Catch (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class Throw (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)
 
     data class Nat   (val tk_: Tk): Expr(N++, tk_)
     data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)

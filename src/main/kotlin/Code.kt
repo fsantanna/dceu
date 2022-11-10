@@ -22,57 +22,33 @@ class Coder (parser_: Parser) {
 
     fun Expr.code(block: String, set: Pair<String, String>?): String {
         return when (this) {
-            is Expr.Do -> {
+            is Expr.Block -> {
                 val depth = if (block == "") 0 else "$block->depth+1"
-                val scp = if (set != null) set.first else "(&ceu_block_$n)"
                 """
-            { // DO
-                assert($depth < UINT8_MAX);
-                CEU_Block ceu_block_$n = { $depth, NULL };
-                if (ceu_block_global == NULL) {
-                    ceu_block_global = &ceu_block_$n;
-                }
-
-                CEU_Throw ceu_catch_n_$n; {
-                    ${
-                    if (this.catch == null) "ceu_catch_n_$n = CEU_THROW_NONE;" else {
-                        """
-                            CEU_Value ceu_catch_$n;
-                            ${this.catch.code(block, Pair(block, "ceu_catch_$n"))}
-                            assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
-                            ceu_catch_n_$n = ceu_catch_$n.number;
-                        """.trimIndent()
-                    }
-                }
-                }
-
-                do {
-                    ${this.es.code("(&ceu_block_$n)", set)}
-                } while (0);
-                ceu_block_free(&ceu_block_$n);
-                if (ceu_throw != CEU_THROW_NONE) {          // pending throw
-                    if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
-                        ${fset(this.tk, set, "ceu_throw_arg")}
-                        if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
-                            // assign ceu_throw_arg to set.first
-                            ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
-                        }
-                        ceu_throw = CEU_THROW_NONE;
-                    } else {                                // UNCAUGHT: escape to outer
+                { // BLOCK
+                    assert($depth < UINT8_MAX);
+                    CEU_Block ceu_block_$n = { $depth, NULL };
+                    if (ceu_block_global == NULL) {
+                        ceu_block_global = &ceu_block_$n;
+                    }    
+                    do {
+                        ${this.es.code("(&ceu_block_$n)", set)}
+                    } while (0);
+                    ceu_block_free(&ceu_block_$n);
+                    if (ceu_throw != CEU_THROW_NONE) {
                         break;
                     }
                 }
-            }
-            
-        """.trimIndent()
+                
+                """.trimIndent()
             }
             is Expr.Dcl -> """
-            // DCL
-            CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
-            CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
-            ${fset(this.tk, set, this.tk.str)}            
-                
-        """.trimIndent()
+                // DCL
+                CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
+                CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
+                ${fset(this.tk, set, this.tk.str)}            
+                    
+            """.trimIndent()
             is Expr.Set -> {
                 val (scp, dst) = when (this.dst) {
                     is Expr.Index -> Pair(
@@ -155,21 +131,47 @@ class Coder (parser_: Parser) {
     
             """.trimIndent()
             is Expr.Throw -> """
-            { // THROW
-                CEU_Value ceu_ex_$n;
-                ${this.ex.code(block, Pair(block, "ceu_ex_$n"))}
-                ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
-                if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
-                    ceu_throw = ceu_ex_$n.number;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
-                } else {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.pos.lin}, ${this.tk.pos.col});
+                { // THROW
+                    CEU_Value ceu_ex_$n;
+                    ${this.ex.code(block, Pair(block, "ceu_ex_$n"))}
+                    ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
+                    if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
+                        ceu_throw = ceu_ex_$n.number;
+                        snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
+                    } else {                
+                        ceu_throw = CEU_THROW_RUNTIME;
+                        snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.pos.lin}, ${this.tk.pos.col});
+                    }
+                    break;
                 }
-                break;
+        
+            """.trimIndent()
+            is Expr.Catch -> {
+                val scp = if (set != null) set.first else block
+                """
+                CEU_Throw ceu_catch_n_$n; {
+                    CEU_Value ceu_catch_$n;
+                    ${this.catch.code(block, Pair(block, "ceu_catch_$n"))}
+                    assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
+                    ceu_catch_n_$n = ceu_catch_$n.number;
+                }
+                do {
+                    ${this.body.code(block, set)}
+                } while (0);
+                if (ceu_throw != CEU_THROW_NONE) {          // pending throw
+                    if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
+                        ${fset(this.tk, set, "ceu_throw_arg")}
+                        if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
+                            // assign ceu_throw_arg to set.first
+                            ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
+                        }
+                        ceu_throw = CEU_THROW_NONE;
+                    } else {                                // UNCAUGHT: escape to outer
+                        break;
+                    }
+                }
+                """.trimIndent()
             }
-    
-        """.trimIndent()
 
             is Expr.Nat -> {
                 val body = this.tk.str.drop(1).dropLast(1).let {
@@ -334,7 +336,7 @@ class Coder (parser_: Parser) {
         }.joinToString("")
     }
 
-    fun expr (es: Expr.Do): String {
+    fun expr (es: Expr.Block): String {
         return """
             #include <stdio.h>
             #include <stdlib.h>
