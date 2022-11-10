@@ -195,4 +195,10 @@ class TLexer {
         val tks = lexer.lex().iterator()
         assert(trap { tks.next() } == "TODO")
     }
+    @Test
+    fun inc8_err() {
+        val lexer = Lexer("anon", "^[\"xxx\"]".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "TODO")
+    }
 }

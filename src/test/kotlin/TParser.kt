@@ -301,6 +301,14 @@ class TParser {
         assert(e is Expr.Do && e.es[0] is Expr.Loop)
         assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,nil)\n}\n\n}\n") { e.tostr() }
     }
+    @Test
+    fun expr_loop3() {
+        val lexer = Lexer("anon", "loop x=10 while x<1 { break }".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprPrim()
+        assert(e is Expr.Do && e.es[0] is Expr.Loop)
+        assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,nil)\n}\n\n}\n") { e.tostr() }
+    }
 
     // THROW / CATCH
 
