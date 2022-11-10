@@ -125,7 +125,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.If(tk0, cnd, t, f)
             }
-            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, this.block(null))
+            this.acceptFix("while") -> Expr.While(this.tk0 as Tk.Fix, this.expr(), this.block(null))
             this.acceptFix("func") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")

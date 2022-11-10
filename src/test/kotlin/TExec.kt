@@ -481,36 +481,36 @@ class TExec {
         assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
     }
 
-    // LOOP / BREAK
+    // WHILE
 
     @Test
-    fun loop1() {
+    fun while1() {
         val out = all("""
-            println(catch 2 { loop { throw (2,1) }})
+            println(catch 2 { while true { throw (2,1) }})
         """.trimIndent()
         )
         assert(out == "1\n") { out }
     }
     @Test
-    fun loop2() {
+    fun while2() {
         val out = all("""
-            println(catch 2 { loop { []; throw (2,1) }})
+            println(catch 2 { while true { []; throw (2,1) }})
         """.trimIndent()
         )
         assert(out == "1\n") { out }
     }
     @Test
-    fun loop3() {
+    fun while3() {
         val out = all("""
-            println(catch 2 { loop { throw (2,[1]) }})
+            println(catch 2 { while true { throw (2,[1]) }})
         """.trimIndent()
         )
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun loop4() {
+    fun while4() {
         val out = all("""
-            println(catch 2 { loop {
+            println(catch 2 { while true {
                 var x
                 set x = [1] -- memory released
                 throw (2,1)
@@ -520,9 +520,9 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun loop5_err() {
+    fun while5_err() {
         val out = all("""
-            println(catch 2 { loop {
+            println(catch 2 { while true {
                 var x
                 set x = [1]
                 throw (2,x)
@@ -530,6 +530,21 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun while6() {
+        val out = all("""
+            var x
+            set x = true
+            var r
+            set r = while x {
+                set x = false
+                10
+            }
+            println(r)
+        """.trimIndent()
+        )
+        assert(out == "10\n") { out }
     }
 
     // THROW / CATCH

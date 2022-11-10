@@ -283,23 +283,21 @@ class TParser {
         assert(e.tostr() == "func (a,b) {\n10\n}\n") { e.tostr() }
     }
 
-    // LOOP / BREAK
+    // WHILE
 
     @Test
-    fun expr_loop1() {
-        val lexer = Lexer("anon", "loop { }".reader())
+    fun expr_while1() {
+        val lexer = Lexer("anon", "while true { }".reader())
         val parser = Parser(lexer)
         val e = parser.exprPrim()
-        assert(e is Expr.Loop && e.body.es[0] is Expr.Nil)
-        assert(e.tostr() == "loop {\nnil\n}\n") { e.tostr() }
+        assert(e is Expr.While && e.body.es[0] is Expr.Nil)
+        assert(e.tostr() == "while true {\nnil\n}\n") { e.tostr() }
     }
     @Test
-    fun expr_loop3() {
-        val lexer = Lexer("anon", "loop x=10 while x<1 { break }".reader())
+    fun expr_while2_err() {
+        val lexer = Lexer("anon", "while {".reader())
         val parser = Parser(lexer)
-        val e = parser.exprPrim()
-        assert(e is Expr.Block && e.es[0] is Expr.Loop)
-        assert(e.tostr() == "catch 1 {\nloop {\nthrow (1,nil)\n}\n\n}\n") { e.tostr() }
+        assert(trap { parser.exprBins() } == "anon : (lin 1, col 7) : expected expression : have \"{\"")
     }
 
     // THROW / CATCH

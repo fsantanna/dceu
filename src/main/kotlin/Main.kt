@@ -3,8 +3,8 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "catch", "do", "else", "false", "func",
-    "if", "loop", "nil", "set", "throw", "true", "var"
+    "catch", "do", "else", "false", "func", "if",
+    "nil", "set", "throw", "true", "var", "while"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -20,7 +20,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
     data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If    (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
-    data class Loop  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
+    data class While (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Func  (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Catch (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Throw (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)

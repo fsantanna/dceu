@@ -101,9 +101,34 @@ class Coder (parser_: Parser) {
             }
             
         """.trimIndent()
-            is Expr.Loop -> """
-            while (1) { // LOOP
-                ${this.body.code(block, set)}
+            is Expr.While -> """
+            { // WHILE
+                CEU_Value ceu_ret_$n;
+                while (1) {
+                    {
+                        CEU_Value ceu_cnd_$n;
+                        ${this.cnd.code(block, Pair(block, "ceu_cnd_$n"))}
+                        int ceu_ret_$n; {
+                            switch (ceu_cnd_$n.tag) {
+                                case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
+                                case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                                default: {                
+                                    ceu_throw = CEU_THROW_RUNTIME;
+                                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
+                                    break; // need to break again below
+                                }
+                            }
+                            if (ceu_throw != CEU_THROW_NONE) {
+                                break;  // break in switch above wont escape
+                            }
+                        }
+                        if (!ceu_ret_$n) {
+                            break;
+                        }
+                    }
+                    ${this.body.code(block, Pair(block, "ceu_ret_$n"))}
+                }
+                ${fset(this.tk, set, "ceu_ret_$n")}            
             }
                 
         """.trimIndent()
