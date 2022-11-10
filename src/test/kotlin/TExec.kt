@@ -591,7 +591,7 @@ class TExec {
     @Test
     fun catch5_err() {
         val out = all("""
-            catch 1 {
+            catch 2 {
                 throw []
                 println(9)
             }
@@ -603,7 +603,7 @@ class TExec {
     @Test
     fun catch6_err() {
         val out = all("""
-            catch 1 {
+            catch 2 {
                 var x
                 set x = []
                 throw (1, x)
@@ -631,10 +631,10 @@ class TExec {
     fun catch8() {
         val out = all("""
             var x
-            set x = catch 1 {
+            set x = catch 2 {
                 var y
-                set y = catch 2 {
-                    throw (2,[10])
+                set y = catch 3 {
+                    throw (3,[10])
                     println(9)
                 }
                 --println(1)
@@ -668,6 +668,18 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun catch10() {
+        val out = all("""
+            catch 1 {
+                throw []
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
     }
 
     // NATIVE

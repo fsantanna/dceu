@@ -10,7 +10,7 @@ class Coder (parser_: Parser) {
         return """
             if ($src.tag == CEU_VALUE_TUPLE) {
                 if ($src.tuple->block->depth > $scope->depth) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : set error : incompatible scopes", ${tk.pos.lin}, ${tk.pos.col});
                     break;
                 }
@@ -33,9 +33,9 @@ class Coder (parser_: Parser) {
                     ceu_block_global = &ceu_block_$n;
                 }
 
-                int ceu_catch_n_$n; {
+                CEU_Throw ceu_catch_n_$n; {
                     ${
-                    if (this.catch == null) "ceu_catch_n_$n = 0;" else {
+                    if (this.catch == null) "ceu_catch_n_$n = CEU_THROW_NONE;" else {
                         """
                             CEU_Value ceu_catch_$n;
                             ${this.catch.code(block, Pair(block, "ceu_catch_$n"))}
@@ -50,14 +50,14 @@ class Coder (parser_: Parser) {
                     ${this.es.code("(&ceu_block_$n)", set)}
                 } while (0);
                 ceu_block_free(&ceu_block_$n);
-                if (ceu_throw != 0) {                       // pending throw
+                if (ceu_throw != CEU_THROW_NONE) {          // pending throw
                     if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
                         ${fset(this.tk, set, "ceu_throw_arg")}
                         if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
                             // assign ceu_throw_arg to set.first
                             ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
                         }
-                        ceu_throw = 0;
+                        ceu_throw = CEU_THROW_NONE;
                     } else {                                // UNCAUGHT: escape to outer
                         break;
                     }
@@ -108,12 +108,12 @@ class Coder (parser_: Parser) {
                         case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
                         case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                         default: {                
-                            ceu_throw = 2;
+                            ceu_throw = CEU_THROW_RUNTIME;
                             snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
                             break; // need to break again below
                         }
                     }
-                    if (ceu_throw != 0) {
+                    if (ceu_throw != CEU_THROW_NONE) {
                         break;  // break in switch above wont escape
                     }
                 }
@@ -163,7 +163,7 @@ class Coder (parser_: Parser) {
                     ceu_throw = ceu_ex_$n.number;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
                 } else {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.pos.lin}, ${this.tk.pos.col});
                 }
                 break;
@@ -217,7 +217,7 @@ class Coder (parser_: Parser) {
                     return 0;
                 }
                 CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.number=ceu_f_$n()} };
-                if (ceu_throw != 0) {
+                if (ceu_throw != CEU_THROW_NONE) {
                     break;
                 }
                 ${fset(this.tk, set, "ceu_$n")}
@@ -263,7 +263,7 @@ class Coder (parser_: Parser) {
                 CEU_Value ceu_col_$n;
                 ${this.col.code(block, Pair(block, "ceu_col_$n"))}
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
                 }
@@ -271,19 +271,19 @@ class Coder (parser_: Parser) {
                 CEU_Value ceu_idx_$n;
                 ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
                 if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected number", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
                     break;
                 }
                 
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
                 }
                 
                 if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : out of bounds", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
                     break;
                 }
@@ -297,7 +297,7 @@ class Coder (parser_: Parser) {
                 CEU_Value ceu_f_$n;
                 ${this.f.code(block, Pair(block, "ceu_f_$n"))}
                 if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
-                    ceu_throw = 2;
+                    ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : call error : expected function", ${this.f.tk.pos.lin}, ${this.f.tk.pos.col});
                     break;
                 }
@@ -318,7 +318,7 @@ class Coder (parser_: Parser) {
                     ${this.args.size},
                     ceu_args_$n
                 );
-                if (ceu_throw != 0) {
+                if (ceu_throw != CEU_THROW_NONE) {
                     break;
                 }
                 ${fset(this.tk, set, "ceu_$n")}
@@ -492,7 +492,11 @@ class Coder (parser_: Parser) {
             CEU_Value op_mult  = { CEU_VALUE_FUNC, {.func=ceu_op_mult}  };
             CEU_Value op_div   = { CEU_VALUE_FUNC, {.func=ceu_op_div}   };
 
-            int ceu_throw = 0;
+            typedef enum {
+                CEU_THROW_NONE = 0,
+                CEU_THROW_RUNTIME
+            } CEU_Throw;
+            CEU_Throw ceu_throw = CEU_THROW_NONE;
             CEU_Value ceu_throw_arg;
             CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
             char ceu_throw_msg[256];
