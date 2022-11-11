@@ -20,6 +20,24 @@ class Coder (parser_: Parser) {
         """.trimIndent()
     }
 
+    fun Tk.Id.fromOp (): String {
+        val MAP = mapOf(
+            Pair('+', "plus"),
+            Pair('-', "minus"),
+            Pair('*', "mul"),
+            Pair('/', "div"),
+            Pair('>', "gt"),
+            Pair('<', "lt"),
+            Pair('=', "eq"),
+            Pair('!', "not"),
+            Pair('|', "or"),
+            Pair('&', "and"),
+        )
+        return if (this.str[0] != '(') this.str else {
+            "op_" + this.str.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
+        }
+    }
+
     fun Expr.code(block: String, set: Pair<String, String>?): String {
         return when (this) {
             is Expr.Block -> {
@@ -251,7 +269,7 @@ class Coder (parser_: Parser) {
             }
             """.trimIndent()
             }
-            is Expr.Acc -> fset(this.tk, set, this.tk.str)
+            is Expr.Acc -> fset(this.tk, set, this.tk_.fromOp())
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_TYPE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)

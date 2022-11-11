@@ -3,18 +3,6 @@ import java.io.PushbackReader
 import java.io.Reader
 import java.io.StringReader
 
-fun op2f (op: String): String {
-    return when (op) {
-        "==" -> "op_eq"
-        "!=" -> "op_neq"
-        "+"  -> "op_plus"
-        "-"  -> "op_minus"
-        "*"  -> "op_mult"
-        "/"  -> "op_div"
-        else -> TODO(op)
-    }
-}
-
 data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
 data class Pos (val file: String, val lin: Int, val col: Int)
 
@@ -115,16 +103,12 @@ class Lexer (inps: List<Pair<String,Reader>>) {
             //println("$l + $c: $x1")
             when (x1) {
                 ' ', '\n' -> {}
-                '-' -> {
+                ';' -> {
                     val (n2,x2) = read2()
-                    if (iseof(n2) || x2!='-') {
+                    if (x2 == ';') {
+                        read2Until('\n')
+                    } else {
                         unread2(n2)
-                        return Pair('-', pos)
-                    }
-                    // found comment '--': ignore everything up to \n or EOF
-                    val end = read2Until('\n')
-                    if (end == null) {
-                        unread2(-1)     // unread EOF
                     }
                 }
                 else -> {
@@ -138,7 +122,6 @@ class Lexer (inps: List<Pair<String,Reader>>) {
         }
     }
 
-    val ops = operators.map { it[0] }
     fun lex (): Sequence<Tk> = sequence {
         while (true) {
             val (x,pos) = next()
@@ -151,33 +134,24 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                         break
                     }
                 }
-                (x in listOf('{','}',')','[',']', ',',';')) -> yield(Tk.Fix(x.toString(), pos))
-                (x in ops) -> {
-                    val (n1,x1) = read2()
-                    val op = x+x1.toString()
-                    if (op in operators) {
+                (x in listOf('{','}',')','[',']', ',')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in operators) -> {
+                    val op = x + read2While { it in operators }
+                    if (op == "=") {
                         yield(Tk.Fix(op, pos))
                     } else {
-                        unread2(n1)
-                        yield(Tk.Fix(x.toString(), pos))
+                        yield(Tk.Op(op, pos))
                     }
                 }
                 (x == '(') -> {
                     val (n1,x1) = read2()
-                    if (x1 in ops) {
-                        val (n2,x2) = read2()
-                        val _op_ = x1+x2.toString()
-                        val (op,cl) = if (_op_ !in operators) Pair(x1.toString(),x2) else {
-                            val (_, x3) = read2()
-                            Pair(_op_, x3)
+                    if (x1 in operators) {
+                        val op = x1 + read2While { it in operators }
+                        val (_,x2) = read2()
+                        if (x2 != ')') {
+                            err(pos, "operator error : expected \")\"")
                         }
-                        if (cl == ')') {
-                            yield(Tk.Id(op2f(op), pos))
-                        } else {
-                            unread2(n2)
-                            yield(Tk.Fix("(", pos))
-                            yield(Tk.Fix(op, pos))
-                        }
+                        yield(Tk.Id("($op)", pos))
                     } else {
                         unread2(n1)
                         yield(Tk.Fix("(", pos))

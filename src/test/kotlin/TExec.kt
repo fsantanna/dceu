@@ -513,7 +513,7 @@ class TExec {
         val out = all("""
             println(catch 2 { while true {
                 var x
-                set x = [1] -- memory released
+                set x = [1] ;; memory released
                 throw (2,1)
             }})
         """.trimIndent()
@@ -662,7 +662,7 @@ class TExec {
                     throw (3,[10])
                     println(9)
                 }
-                --println(1)
+                ;;println(1)
                 y
             }
             println(x)

@@ -169,14 +169,14 @@ class TParser {
 
     @Test
     fun exprs_seq1() {
-        val l = lexer(";; f () ; g () h()\ni() ;\n;")
+        val l = lexer("; f () ; g () h()\ni() ;\n;")
         val parser = Parser(l)
         val es = parser.exprs()
         assert(es.tostr() == "f()\ng()\nh()\ni()\n") { es.tostr() }
     }
     @Test
     fun exprs_seq2() {
-        val l = lexer(";; f () \n (1) ; h()\ni() ;\n;")
+        val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
         val es = parser.exprs()
         assert(es.tostr() == "f()(1)\nh()\ni()\n") { es.tostr() }
@@ -347,7 +347,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "op_plus(10,1)") { e.tostr() }
+        assert(e.tostr() == "(+)(10,1)") { e.tostr() }
     }
     @Test
     fun bin3() {
@@ -355,7 +355,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "op_neq(10,1)") { e.tostr() }
+        assert(e.tostr() == "(!=)(10,1)") { e.tostr() }
     }
 
 }

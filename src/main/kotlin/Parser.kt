@@ -43,6 +43,7 @@ class Parser (lexer_: Lexer)
             "Eof" -> this.tk1 is Tk.Eof
             "Fix" -> this.tk1 is Tk.Fix
             "Tag" -> this.tk1 is Tk.Tag
+            "Op"  -> this.tk1 is Tk.Op
             "Id"  -> this.tk1 is Tk.Id
             "Num" -> this.tk1 is Tk.Num
             "Nat" -> this.tk1 is Tk.Nat
@@ -172,7 +173,7 @@ class Parser (lexer_: Lexer)
         }
     }
     fun exprFixs (): Expr {
-        val umn = this.acceptFix("-")
+        val isop = this.acceptEnu("Op")
         val tk0 = this.tk0
         var e = this.exprPrim()
         while (true) {
@@ -189,18 +190,17 @@ class Parser (lexer_: Lexer)
                 else -> break
             }
         }
-        if (umn) {
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("op_umn",tk0.pos.copy())), listOf(e))
+        if (isop) {
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("(${tk0.str})",tk0.pos)), listOf(e))
         }
         return e
     }
     fun exprBins (): Expr {
         var e = this.exprFixs()
-        if (this.tk1.str in operators) {
-            this.acceptEnu_err("Fix")
+        if (this.acceptEnu("Op")) {
             val tk0 = this.tk0
             val e2 = this.expr()
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id(op2f(tk0.str),tk0.pos.copy())), listOf(e,e2))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("(${tk0.str})",tk0.pos)), listOf(e,e2))
         }
         return e
     }
@@ -210,10 +210,8 @@ class Parser (lexer_: Lexer)
 
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
-        while (this.acceptFix(";")) {}
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             val e = this.expr()
-            while (this.acceptFix(";")) {}
             ret.add(e)
         }
         if (ret.size == 0) {

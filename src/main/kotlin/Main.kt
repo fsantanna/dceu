@@ -9,17 +9,13 @@ val keywords: SortedSet<String> = sortedSetOf (
     "nil", "set", "throw", "true", "var", "while"
 )
 
-val operators: Set<String> = setOf(
-    "+", "-", "*", "/",
-    ">", "<", ">=", "<=",
-    "==", "!=",
-    "!"
-)
+val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Tag (val str_: String, val pos_: Pos): Tk(str_, pos_)
+    data class Op  (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Id  (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Num (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos): Tk(str_, pos_)
@@ -62,7 +58,11 @@ fun exec (cmd: String): Pair<Boolean,String> {
 }
 
 fun all (name: String, reader: Reader, args: List<String>): String {
-    val lexer = Lexer(listOf(Pair(name, reader)))
+    val inps = listOf(
+        Pair(name, reader),
+        Pair("prelude.ceu", File("prelude.ceu").reader())
+    )
+    val lexer = Lexer(inps)
     val parser = Parser(lexer)
     val es = try {
         parser.exprs()
