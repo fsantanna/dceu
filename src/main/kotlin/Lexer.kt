@@ -1,5 +1,6 @@
 import java.io.File
 import java.io.PushbackReader
+import java.io.Reader
 import java.io.StringReader
 
 fun op2f (op: String): String {
@@ -19,7 +20,7 @@ fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }
 
-class Lexer (name_: String, reader_: StringReader) {
+class Lexer (name_: String, reader_: Reader) {
     val stack = ArrayDeque(listOf(Lex(name_, 1, 1, PushbackReader(reader_,2))))
 
     fun err (pos: Pos, str: String) {

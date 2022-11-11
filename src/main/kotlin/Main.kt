@@ -1,3 +1,5 @@
+import java.io.File
+import java.io.Reader
 import java.util.*
 
 var N = 1
@@ -50,9 +52,40 @@ fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
 
-fun main () {
-    val lexer = Lexer("anon", "{}".reader())
-    for (tk in lexer.lex()) {
-        println(tk)
+fun all (name: String, reader: Reader, args: List<String>): String {
+    val lexer = Lexer(name, reader)
+    val parser = Parser(lexer)
+    val es = try {
+        parser.exprs()
+    } catch (e: Throwable) {
+        return e.message!!
     }
+    val coder = Coder(parser)
+    val c = try {
+        coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+    } catch (e: Throwable) {
+        return e.message!!
+    }
+    File("out.c").writeText(c)
+    val (ok2, out2) = exec(listOf("gcc", "out.c", "-o", "out.exe") + args)
+    if (!ok2) {
+        return out2
+    }
+    val (_, out3) = exec("./out.exe")
+    //println(out3)
+    return out3
+}
+
+fun main (args: Array<String>) {
+    var xinp: String? = null
+    var xccs = emptyList<String>()
+    var i = 0
+    while (i < args.size) {
+        when {
+            (args[i] == "-cc") -> { i++ ; xccs=args[i].split(" ") }
+            else               -> xinp = args[i]
+        }
+        i++
+    }
+    print(all(xinp!!, File(xinp).reader(), xccs))
 }
