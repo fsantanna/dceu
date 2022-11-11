@@ -2,20 +2,20 @@ class Coder (parser_: Parser) {
     val parser = parser_
 
     // block: String -> current enclosing block for normal allocation
-    // set: Pair<scope,dst> -> enclosing assignment with block and destination
-    fun fset(tk: Tk, set: Pair<String, String>?, src: String): String {
-        return if (set == null) "" else fset(tk, set.first, set.second, src)
+    // ret: Pair<block,var> -> enclosing assignment with destination block and variable
+    fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
+        return if (ret == null) "" else fset(tk, ret.first, ret.second, src)
     }
-    fun fset(tk: Tk, scope: String, dst: String, src: String): String {
+    fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
         return """
             if ($src.tag == CEU_TYPE_TUPLE) {
-                if ($src.tuple->block->depth > $scope->depth) {                
+                if ($src.tuple->block->depth > $ret_block->depth) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
                     break;
                 }
             }
-            $dst = $src;
+            $ret_var = $src;
     
         """.trimIndent()
     }
@@ -79,7 +79,7 @@ class Coder (parser_: Parser) {
 
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp()
-                        Pair("_${id}_", id)     // x = src / scope of _x_
+                        Pair("_${id}_", id)     // x = src / block of _x_
                     }
 
                     else -> error("bug found")
@@ -435,7 +435,7 @@ class Coder (parser_: Parser) {
                     int bool;
                     float number;
                     CEU_Value_Tuple* tuple;
-                    struct CEU_Value (*func) (struct CEU_Block* scope, int n, struct CEU_Value* args[]);
+                    struct CEU_Value (*func) (struct CEU_Block* ret, int n, struct CEU_Value* args[]);
                 };
             } CEU_Value;
             
@@ -494,7 +494,7 @@ class Coder (parser_: Parser) {
                 }
                 return CEU_TAGS_MAX-1-ret;
             }
-            CEU_Value ceu_tags (CEU_Block* scope, int n, CEU_Value* args[]) {
+            CEU_Value ceu_tags (CEU_Block* ret, int n, CEU_Value* args[]) {
                 assert(n == 1 && "bug found");
                 return (CEU_Value) { CEU_TYPE_TAG, {._tag_=args[0]->tag} };
             }
@@ -534,53 +534,53 @@ class Coder (parser_: Parser) {
                         assert(0 && "bug found");
                 }
             }
-            CEU_Value ceu_print (CEU_Block* scope, int n, CEU_Value* args[]) {
+            CEU_Value ceu_print (CEU_Block* ret, int n, CEU_Value* args[]) {
                 for (int i=0; i<n; i++) {
                     ceu_print1(args[i]);
                 }
                 return (CEU_Value) { CEU_TYPE_NIL };
             }
-            CEU_Value ceu_println (CEU_Block* scope, int n, CEU_Value* args[]) {
-                ceu_print(scope, n, args);
+            CEU_Value ceu_println (CEU_Block* ret, int n, CEU_Value* args[]) {
+                ceu_print(ret, n, args);
                 printf("\n");
                 return (CEU_Value) { CEU_TYPE_NIL };
             }
             
-            CEU_Value ceu_op_eq_eq (CEU_Block* scope, int n, CEU_Value* args[]) {
+            CEU_Value ceu_op_eq_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
-                int ret = (e1->tag == e2->tag);
-                if (ret) {
+                int v = (e1->tag == e2->tag);
+                if (v) {
                     switch (e1->tag) {
                         case CEU_TYPE_NIL:
-                            ret = 1;
+                            v = 1;
                             break;
                         case CEU_TYPE_TAG:
-                            ret = (e1->_tag_ == e2->_tag_);
+                            v = (e1->_tag_ == e2->_tag_);
                             break;
                         case CEU_TYPE_BOOL:
-                            ret = (e1->bool == e2->bool);
+                            v = (e1->bool == e2->bool);
                             break;
                         case CEU_TYPE_NUMBER:
-                            ret = (e1->number == e2->number);
+                            v = (e1->number == e2->number);
                             break;
                         case CEU_TYPE_TUPLE:
-                            ret = (e1->tuple == e2->tuple);
+                            v = (e1->tuple == e2->tuple);
                             break;
                         case CEU_TYPE_FUNC:
-                            ret = (e1->func == e2->func);
+                            v = (e1->func == e2->func);
                             break;
                         default:
                             assert(0 && "bug found");
                     }
                 }
-                return (CEU_Value) { CEU_TYPE_BOOL, {.bool=ret} };
+                return (CEU_Value) { CEU_TYPE_BOOL, {.bool=v} };
             }
-            CEU_Value ceu_op_not_eq (CEU_Block* scope, int n, CEU_Value* args[]) {
-                CEU_Value ret = ceu_op_eq_eq(scope, n, args);
-                ret.bool = !ret.bool;
-                return ret;
+            CEU_Value ceu_op_not_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
+                CEU_Value v = ceu_op_eq_eq(ret, n, args);
+                v.bool = !v.bool;
+                return v;
             }
 
             CEU_Value tags      = { CEU_TYPE_FUNC, {.func=ceu_tags}      };
