@@ -396,34 +396,6 @@ class TParser {
         """.trimIndent())
     }
     @Test
-    fun taskX() {
-        val l = lexer("""
-            var t
-            set t = task (v) {
-                println(v)          ;; 1
-                set v = yield (v+1) 
-                println(v)          ;; 2
-                set v = yield (v+1) 
-                println(v)          ;; 3
-                v+1
-            }
-            var a
-            set a = spawn t
-            var v
-            set v = resume a(1)
-            println(v)              ;; 2
-            set v = resume a(v)
-            println(v)              ;; 3
-            set v = resume a(v)
-            println(v)              ;; 4
-            set v = resume a(v)
-            println(v)              ;; nil
-        """.trimIndent())
-        val parser = Parser(l)
-        val e = parser.exprs()
-        println(e.tostr())
-    }
-    @Test
     fun task2_err() {
         val l = lexer("""
             resume a
