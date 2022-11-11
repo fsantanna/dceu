@@ -540,7 +540,7 @@ class Coder (parser_: Parser) {
                 return (CEU_Value) { CEU_TYPE_NIL };
             }
             
-            CEU_Value ceu_op_eq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+            CEU_Value ceu_op_eq_eq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
@@ -571,8 +571,8 @@ class Coder (parser_: Parser) {
                 }
                 return (CEU_Value) { CEU_TYPE_BOOL, {.bool=ret} };
             }
-            CEU_Value ceu_op_neq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                CEU_Value ret = ceu_op_eq(block, scope, n, args);
+            CEU_Value ceu_op_not_eq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                CEU_Value ret = ceu_op_eq_eq(block, scope, n, args);
                 ret.bool = !ret.bool;
                 return ret;
             }
@@ -615,16 +615,16 @@ class Coder (parser_: Parser) {
                 return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number/e2->number)} };
             }
 
-            CEU_Value tags     = { CEU_TYPE_FUNC, {.func=ceu_tags}     };
-            CEU_Value print    = { CEU_TYPE_FUNC, {.func=ceu_print}    };
-            CEU_Value println  = { CEU_TYPE_FUNC, {.func=ceu_println}  };            
-            CEU_Value op_eq    = { CEU_TYPE_FUNC, {.func=ceu_op_eq}    };
-            CEU_Value op_neq   = { CEU_TYPE_FUNC, {.func=ceu_op_neq}   };
-            CEU_Value op_umn   = { CEU_TYPE_FUNC, {.func=ceu_op_umn}   };
-            CEU_Value op_plus  = { CEU_TYPE_FUNC, {.func=ceu_op_plus}  };
-            CEU_Value op_minus = { CEU_TYPE_FUNC, {.func=ceu_op_minus} };
-            CEU_Value op_mult  = { CEU_TYPE_FUNC, {.func=ceu_op_mult}  };
-            CEU_Value op_div   = { CEU_TYPE_FUNC, {.func=ceu_op_div}   };
+            CEU_Value tags      = { CEU_TYPE_FUNC, {.func=ceu_tags}      };
+            CEU_Value print     = { CEU_TYPE_FUNC, {.func=ceu_print}     };
+            CEU_Value println   = { CEU_TYPE_FUNC, {.func=ceu_println}   };            
+            CEU_Value op_eq_eq  = { CEU_TYPE_FUNC, {.func=ceu_op_eq_eq}  };
+            CEU_Value op_not_eq = { CEU_TYPE_FUNC, {.func=ceu_op_not_eq} };
+            CEU_Value op_umn    = { CEU_TYPE_FUNC, {.func=ceu_op_umn}    };
+            CEU_Value op_plus   = { CEU_TYPE_FUNC, {.func=ceu_op_plus}   };
+            CEU_Value op_minus  = { CEU_TYPE_FUNC, {.func=ceu_op_minus}  };
+            CEU_Value op_mult   = { CEU_TYPE_FUNC, {.func=ceu_op_mult}   };
+            CEU_Value op_div    = { CEU_TYPE_FUNC, {.func=ceu_op_div}    };
 
             typedef enum {
                 CEU_THROW_NONE = 0,
