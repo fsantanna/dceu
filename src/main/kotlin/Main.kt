@@ -62,7 +62,7 @@ fun exec (cmd: String): Pair<Boolean,String> {
 }
 
 fun all (name: String, reader: Reader, args: List<String>): String {
-    val lexer = Lexer(name, reader)
+    val lexer = Lexer(listOf(Pair(name, reader)))
     val parser = Parser(lexer)
     val es = try {
         parser.exprs()

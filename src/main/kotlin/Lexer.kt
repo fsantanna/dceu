@@ -22,8 +22,14 @@ fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }
 
-class Lexer (name_: String, reader_: Reader) {
-    val stack = ArrayDeque(listOf(Lex(name_, 1, 1, PushbackReader(reader_,2))))
+class Lexer (inps: List<Pair<String,Reader>>) {
+    val stack = ArrayDeque<Lex>()
+
+    init {
+        for (inp in inps) {
+            stack.addFirst(Lex(inp.first, 1, 1, PushbackReader(inp.second,2)))
+        }
+    }
 
     fun err (pos: Pos, str: String) {
         error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")

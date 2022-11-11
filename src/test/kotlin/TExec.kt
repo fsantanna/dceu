@@ -13,7 +13,7 @@ val VALGRIND = ""
 class TExec {
 
     fun all(inp: String): String {
-        val lexer = Lexer("anon", inp.reader())
+        val lexer = Lexer(listOf(Pair("anon", inp.reader())))
         val parser = Parser(lexer)
         val es = try {
             parser.exprs()
