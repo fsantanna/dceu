@@ -12,6 +12,7 @@ fun Expr.tostr (): String {
 
         is Expr.Acc   -> this.tk.str
         is Expr.Nil   -> this.tk.str
+        is Expr.Tag   -> this.tk.str
         is Expr.Bool  -> this.tk.str
         is Expr.Num   -> this.tk.str
         is Expr.Tuple -> "[" + this.args.map { it.tostr() }.joinToString(",") + "]"

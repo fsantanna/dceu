@@ -887,4 +887,16 @@ class TExec {
         )
         assert(out == "-10\n") { out }
     }
+    @Test
+    fun tag2() {
+        val out = all("""
+            println(@xxx)
+            println(@xxx == @yyy)
+            println(@xxx != @yyy)
+            println(@xxx == @xxx)
+            println(@xxx != @xxx)
+        """.trimIndent()
+        )
+        assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
+    }
 }

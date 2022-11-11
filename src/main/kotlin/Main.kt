@@ -38,6 +38,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Nat   (val tk_: Tk): Expr(N++, tk_)
     data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)
     data class Nil   (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Tag   (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Num   (val tk_: Tk.Num): Expr(N++, tk_)
     data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)

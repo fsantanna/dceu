@@ -253,6 +253,20 @@ class Coder (parser_: Parser) {
             }
             is Expr.Acc -> fset(this.tk, set, this.tk.str)
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_TYPE_NIL })")
+            is Expr.Tag -> {
+                val tag = this.tk.str.drop(1)
+                """
+                    #ifndef CEU_TAG_$tag
+                    #define CEU_TAG_$tag //__COUNTER__
+                    static CEU_Tags ceu_tag_$tag = { "@$tag", NULL };
+                    ceu_tag_$tag.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_$tag;
+                    CEU_TAGS_MAX++;
+                    #endif
+                    //{fset(this.tk, set, "((CEU_Value) { CEU_TYPE_TAG, {._tag_=CEU_TAG_$tag} })")}
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_TYPE_TAG, {._tag_=ceu_tag_from_string(\"@$tag\")} })")}
+                """.trimIndent()
+            }
             is Expr.Bool -> fset(
                 this.tk,
                 set,
@@ -447,6 +461,15 @@ class Coder (parser_: Parser) {
                 }
                 return cur->name;
             }
+            int ceu_tag_from_string (char* name) {
+                int ret = 0;
+                CEU_Tags* cur = CEU_TAGS;
+                while (cur!=NULL && strcmp(cur->name,name)) {
+                    cur = cur->next;
+                    ret++;
+                }
+                return CEU_TAGS_MAX-1-ret;
+            }
             CEU_Value ceu_tags (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 1 && "bug found");
                 return (CEU_Value) { CEU_TYPE_TAG, {._tag_=args[0]->tag} };
@@ -596,43 +619,43 @@ class Coder (parser_: Parser) {
     
             int main (void) {
                 {             
-                    #define CEU_TAG_TYPE_NIL __COUNTER__
-                    static CEU_Tags ceu_tag_type_nil = { "@nil", NULL };
-                    ceu_tag_type_nil.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_nil;
+                    #define CEU_TAG_nil //__COUNTER__
+                    static CEU_Tags ceu_tag_nil = { "@nil", NULL };
+                    ceu_tag_nil.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_nil;
                     CEU_TAGS_MAX++;
         
-                    #define CEU_TAG_TYPE_TAG __COUNTER__
-                    static CEU_Tags ceu_tag_type_tag = { "@tag", NULL };
-                    ceu_tag_type_tag.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_tag;
+                    #define CEU_TAG_tag //__COUNTER__
+                    static CEU_Tags ceu_tag_tag = { "@tag", NULL };
+                    ceu_tag_tag.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_tag;
                     CEU_TAGS_MAX++;
                 
-                    #define CEU_TAG_TYPE_BOOL __COUNTER__
-                    static CEU_Tags ceu_tag_type_bool = { "@bool", NULL };
-                    ceu_tag_type_bool.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_bool;
+                    #define CEU_TAG_bool //__COUNTER__
+                    static CEU_Tags ceu_tag_bool = { "@bool", NULL };
+                    ceu_tag_bool.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_bool;
                     CEU_TAGS_MAX++;
     
-                    #define CEU_TAG_TYPE_NUMBER __COUNTER__
-                    static CEU_Tags ceu_tag_type_number = { "@number", NULL };
-                    ceu_tag_type_number.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_number;
+                    #define CEU_TAG_number //__COUNTER__
+                    static CEU_Tags ceu_tag_number = { "@number", NULL };
+                    ceu_tag_number.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_number;
                     CEU_TAGS_MAX++;
     
-                    #define CEU_TAG_TYPE_TUPLE __COUNTER__
-                    static CEU_Tags ceu_tag_type_tuple = { "@tuple", NULL };
-                    ceu_tag_type_tuple.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_tuple;
+                    #define CEU_TAG_tuple //__COUNTER__
+                    static CEU_Tags ceu_tag_tuple = { "@tuple", NULL };
+                    ceu_tag_tuple.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_tuple;
                     CEU_TAGS_MAX++;
     
-                    #define CEU_TAG_TYPE_FUNC __COUNTER__
-                    static CEU_Tags ceu_tag_type_func = { "@func", NULL };
-                    ceu_tag_type_func.next = CEU_TAGS;
-                    CEU_TAGS = &ceu_tag_type_func;
+                    #define CEU_TAG_func //__COUNTER__
+                    static CEU_Tags ceu_tag_func = { "@func", NULL };
+                    ceu_tag_func.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_func;
                     CEU_TAGS_MAX++;
                 }
-                assert(CEU_TAG_TYPE_NIL == CEU_TYPE_NIL);
+                //assert(CEU_TAG_nil == CEU_TYPE_NIL);
 
                 do {
                     ${es.code("", null)}
