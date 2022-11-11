@@ -494,6 +494,21 @@ class TExec {
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
         assert(out == "") { out }
     }
+    @Test
+    fun func9() {
+        val out = all("""
+            var f
+            set f = func (a,b) {
+                [a,b]
+            }
+            println(f())
+            println(f(1))
+            println(f(1,2))
+            println(f(1,2,3))
+        """.trimIndent()
+        )
+        assert(out == "[nil,nil]\n[1,nil]\n[1,2]\n[1,2]\n") { out }
+    }
 
     // WHILE
 
