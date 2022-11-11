@@ -833,4 +833,48 @@ class TExec {
         )
         assert(out == "6\n") { out }
     }
+    @Test
+    fun op_cmp() {
+        val out = all("""
+            println(1 > 2)
+            println(1 < 2)
+            println(1 == 1)
+            println(1 != 1)
+            println(2 >= 1)
+            println(2 <= 1)
+        """.trimIndent()
+        )
+        assert(out == "-10\n") { out }
+    }
+
+    // TAGS
+
+    @Test
+    fun tag1() {
+        val out = all("""
+            var t
+            set t = tags(1)
+            println(t)
+            println(tags(t))
+            println(tags(tags(t)))
+        """.trimIndent()
+        )
+        assert(out == "number\ntag\ntag\n") { out }
+    }
+    @Test
+    fun todo_tag2_err() {
+        val out = all("""
+            tags()
+        """.trimIndent()
+        )
+        assert(out == "-10\n") { out }
+    }
+    @Test
+    fun todo_tag3_err() {
+        val out = all("""
+            tags(1,2)
+        """.trimIndent()
+        )
+        assert(out == "-10\n") { out }
+    }
 }

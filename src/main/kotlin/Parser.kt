@@ -194,7 +194,7 @@ class Parser (lexer_: Lexer)
     }
     fun exprBins (): Expr {
         var e = this.exprFixs()
-        if (this.tk1.str in listOf("+","-","/","*")) {
+        if (this.tk1.str in operators) {
             this.acceptEnu_err("Fix")
             val tk0 = this.tk0
             val e2 = this.expr()

@@ -8,7 +8,7 @@ class Coder (parser_: Parser) {
     }
     fun fset(tk: Tk, scope: String, dst: String, src: String): String {
         return """
-            if ($src.tag == CEU_VALUE_TUPLE) {
+            if ($src.tag == CEU_TYPE_TUPLE) {
                 if ($src.tuple->block->depth > $scope->depth) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : set error : incompatible scopes", ${tk.pos.lin}, ${tk.pos.col});
@@ -44,7 +44,7 @@ class Coder (parser_: Parser) {
             }
             is Expr.Dcl -> """
                 // DCL
-                CEU_Value ${this.tk.str} = { CEU_VALUE_NIL };
+                CEU_Value ${this.tk.str} = { CEU_TYPE_NIL };
                 CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
                 ${fset(this.tk, set, this.tk.str)}            
                     
@@ -81,8 +81,8 @@ class Coder (parser_: Parser) {
                 ${this.cnd.code(block, Pair(block, "ceu_cnd_$n"))}
                 int ceu_ret_$n; {
                     switch (ceu_cnd_$n.tag) {
-                        case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
-                        case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                        case CEU_TYPE_NIL:  { ceu_ret_$n=0; break; }
+                        case CEU_TYPE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                         default: {                
                             ceu_throw = CEU_THROW_RUNTIME;
                             snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
@@ -110,8 +110,8 @@ class Coder (parser_: Parser) {
                         ${this.cnd.code(block, Pair(block, "ceu_cnd_$n"))}
                         int ceu_ret_$n; {
                             switch (ceu_cnd_$n.tag) {
-                                case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
-                                case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                                case CEU_TYPE_NIL:  { ceu_ret_$n=0; break; }
+                                case CEU_TYPE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                                 default: {                
                                     ceu_throw = CEU_THROW_RUNTIME;
                                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
@@ -138,7 +138,7 @@ class Coder (parser_: Parser) {
                     ${
                         this.args.map {
                             """
-                            CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                            CEU_Value ${it.str} = { CEU_TYPE_NIL };
                             if (ceu_i < ceu_n) {
                                 ${it.str} = *ceu_args[ceu_i];
                             }
@@ -152,7 +152,7 @@ class Coder (parser_: Parser) {
                     } while (0);
                     return ceu_$n;
                 }
-                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })")}            
+                ${fset(this.tk, set, "((CEU_Value) { CEU_TYPE_FUNC, {.func=ceu_func_$n} })")}            
     
             """.trimIndent()
             is Expr.Throw -> """
@@ -160,7 +160,7 @@ class Coder (parser_: Parser) {
                     CEU_Value ceu_ex_$n;
                     ${this.ex.code(block, Pair(block, "ceu_ex_$n"))}
                     ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
-                    if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
+                    if (ceu_ex_$n.tag == CEU_TYPE_NUMBER) {
                         ceu_throw = ceu_ex_$n.number;
                         snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
                     } else {                
@@ -177,7 +177,7 @@ class Coder (parser_: Parser) {
                 CEU_Throw ceu_catch_n_$n; {
                     CEU_Value ceu_catch_$n;
                     ${this.catch.code(block, Pair(block, "ceu_catch_$n"))}
-                    assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
+                    assert(ceu_catch_$n.tag == CEU_TYPE_NUMBER && "catch error : invalid exception : expected number");
                     ceu_catch_n_$n = ceu_catch_$n.number;
                 }
                 do {
@@ -186,7 +186,7 @@ class Coder (parser_: Parser) {
                 if (ceu_throw != CEU_THROW_NONE) {          // pending throw
                     if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
                         ${fset(this.tk, set, "ceu_throw_arg")}
-                        if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
+                        if (ceu_throw_arg.tag==CEU_TYPE_TUPLE && ceu_block_global!=$scp) {
                             // assign ceu_throw_arg to set.first
                             ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
                         }
@@ -243,7 +243,7 @@ class Coder (parser_: Parser) {
                     $body
                     return 0;
                 }
-                CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.number=ceu_f_$n()} };
+                CEU_Value ceu_$n = { CEU_TYPE_NUMBER, {.number=ceu_f_$n()} };
                 if (ceu_throw != CEU_THROW_NONE) {
                     break;
                 }
@@ -252,13 +252,13 @@ class Coder (parser_: Parser) {
             """.trimIndent()
             }
             is Expr.Acc -> fset(this.tk, set, this.tk.str)
-            is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
+            is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_TYPE_NIL })")
             is Expr.Bool -> fset(
                 this.tk,
                 set,
-                "((CEU_Value) { CEU_VALUE_BOOL, {.bool=${if (this.tk.str == "true") 1 else 0}} })"
+                "((CEU_Value) { CEU_TYPE_BOOL, {.bool=${if (this.tk.str == "true") 1 else 0}} })"
             )
-            is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.number=${this.tk.str}} })")
+            is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_TYPE_NUMBER, {.number=${this.tk.str}} })")
             is Expr.Tuple -> {
                 assert(this.args.size <= 256) { "bug found" }
                 val scp = if (set == null) block else set.first
@@ -280,7 +280,7 @@ class Coder (parser_: Parser) {
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
                     $scp->tofree = ceu_$n;
-                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_TYPE_TUPLE, {.tuple=ceu_$n} })")}
                 }
     
                 """.trimIndent()
@@ -289,7 +289,7 @@ class Coder (parser_: Parser) {
             //{ // INDEX    // (removed {} b/c set uses col[idx])
                 CEU_Value ceu_col_$n;
                 ${this.col.code(block, Pair(block, "ceu_col_$n"))}
-                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                if (ceu_col_$n.tag != CEU_TYPE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
@@ -297,13 +297,13 @@ class Coder (parser_: Parser) {
                                 
                 CEU_Value ceu_idx_$n;
                 ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
-                if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
+                if (ceu_idx_$n.tag != CEU_TYPE_NUMBER) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected number", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
                     break;
                 }
                 
-                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                if (ceu_col_$n.tag != CEU_TYPE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
                     break;
@@ -323,7 +323,7 @@ class Coder (parser_: Parser) {
             { // CALL
                 CEU_Value ceu_f_$n;
                 ${this.f.code(block, Pair(block, "ceu_f_$n"))}
-                if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
+                if (ceu_f_$n.tag != CEU_TYPE_FUNC) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : call error : expected function", ${this.f.tk.pos.lin}, ${this.f.tk.pos.col});
                     break;
@@ -370,13 +370,17 @@ class Coder (parser_: Parser) {
             #include <assert.h>
             #include <stdarg.h>
     
-            typedef enum CEU_VALUE {
-                CEU_VALUE_NIL,
-                CEU_VALUE_BOOL,
-                CEU_VALUE_NUMBER,
-                CEU_VALUE_TUPLE,
-                CEU_VALUE_FUNC
-            } CEU_VALUE;
+            typedef enum CEU_TYPE {
+                CEU_TYPE_NIL,
+                CEU_TYPE_TAG,
+                CEU_TYPE_BOOL,
+                CEU_TYPE_NUMBER,
+                CEU_TYPE_TUPLE,
+                CEU_TYPE_FUNC
+            } CEU_TYPE;
+            char CEU_TYPE_STRING[][16] = {
+                "nil", "tag", "boolean", "number", "tuple", "function"
+            };
             
             struct CEU_Value;
             struct CEU_Block;
@@ -392,6 +396,7 @@ class Coder (parser_: Parser) {
                 int tag;
                 union {
                     //void nil;
+                    int _tag_;
                     int bool;
                     float number;
                     CEU_Value_Tuple* tuple;
@@ -432,22 +437,29 @@ class Coder (parser_: Parser) {
                 }
             }
     
+            CEU_Value ceu_tags (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 1 && "bug found");
+                return (CEU_Value) { CEU_TYPE_TAG, {._tag_=args[0]->tag} };
+            }
             void ceu_print1 (CEU_Value* v) {
                 switch (v->tag) {
-                    case CEU_VALUE_NIL:
+                    case CEU_TYPE_NIL:
                         printf("nil");
                         break;
-                    case CEU_VALUE_BOOL:
+                    case CEU_TYPE_TAG:
+                        printf("%s", CEU_TYPE_STRING[v->_tag_]);
+                        break;
+                    case CEU_TYPE_BOOL:
                         if (v->bool) {
                             printf("true");
                         } else {
                             printf("false");
                         }
                         break;
-                    case CEU_VALUE_NUMBER:
+                    case CEU_TYPE_NUMBER:
                         printf("%g", v->number);
                         break;
-                    case CEU_VALUE_TUPLE:
+                    case CEU_TYPE_TUPLE:
                         printf("[");
                         for (int i=0; i<v->tuple->n; i++) {
                             if (i > 0) {
@@ -465,59 +477,61 @@ class Coder (parser_: Parser) {
                 for (int i=0; i<n; i++) {
                     ceu_print1(args[i]);
                 }
-                return (CEU_Value) { CEU_VALUE_NIL };
+                return (CEU_Value) { CEU_TYPE_NIL };
             }
             CEU_Value ceu_println (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 ceu_print(block, scope, n, args);
                 printf("\n");
-                return (CEU_Value) { CEU_VALUE_NIL };
+                return (CEU_Value) { CEU_TYPE_NIL };
             }
-            CEU_Value print   = { CEU_VALUE_FUNC, {.func=ceu_print}   };
-            CEU_Value println = { CEU_VALUE_FUNC, {.func=ceu_println} };
             
             CEU_Value ceu_op_umn (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 1);
                 CEU_Value* e = args[0];
-                assert(e->tag == CEU_VALUE_NUMBER);
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(-e->number)} };
+                assert(e->tag == CEU_TYPE_NUMBER);
+                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(-e->number)} };
             }
             CEU_Value ceu_op_plus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_VALUE_NUMBER);
-                assert(e2->tag == CEU_VALUE_NUMBER);
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number+e2->number)} };
+                assert(e1->tag == CEU_TYPE_NUMBER);
+                assert(e2->tag == CEU_TYPE_NUMBER);
+                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number+e2->number)} };
             }
             CEU_Value ceu_op_minus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_VALUE_NUMBER);
-                assert(e2->tag == CEU_VALUE_NUMBER);
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number-e2->number)} };
+                assert(e1->tag == CEU_TYPE_NUMBER);
+                assert(e2->tag == CEU_TYPE_NUMBER);
+                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number-e2->number)} };
             }
             CEU_Value ceu_op_mult (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_VALUE_NUMBER);
-                assert(e2->tag == CEU_VALUE_NUMBER);
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number*e2->number)} };
+                assert(e1->tag == CEU_TYPE_NUMBER);
+                assert(e2->tag == CEU_TYPE_NUMBER);
+                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number*e2->number)} };
             }
             CEU_Value ceu_op_div (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 2);
                 CEU_Value* e1 = args[0];
                 CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_VALUE_NUMBER);
-                assert(e2->tag == CEU_VALUE_NUMBER);
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.number=(e1->number/e2->number)} };
+                assert(e1->tag == CEU_TYPE_NUMBER);
+                assert(e2->tag == CEU_TYPE_NUMBER);
+                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number/e2->number)} };
             }
-            CEU_Value op_umn   = { CEU_VALUE_FUNC, {.func=ceu_op_umn}   };
-            CEU_Value op_plus  = { CEU_VALUE_FUNC, {.func=ceu_op_plus}  };
-            CEU_Value op_minus = { CEU_VALUE_FUNC, {.func=ceu_op_minus} };
-            CEU_Value op_mult  = { CEU_VALUE_FUNC, {.func=ceu_op_mult}  };
-            CEU_Value op_div   = { CEU_VALUE_FUNC, {.func=ceu_op_div}   };
+
+            CEU_Value tags     = { CEU_TYPE_FUNC, {.func=ceu_tags}     };
+            CEU_Value print    = { CEU_TYPE_FUNC, {.func=ceu_print}    };
+            CEU_Value println  = { CEU_TYPE_FUNC, {.func=ceu_println}  };            
+            CEU_Value op_umn   = { CEU_TYPE_FUNC, {.func=ceu_op_umn}   };
+            CEU_Value op_plus  = { CEU_TYPE_FUNC, {.func=ceu_op_plus}  };
+            CEU_Value op_minus = { CEU_TYPE_FUNC, {.func=ceu_op_minus} };
+            CEU_Value op_mult  = { CEU_TYPE_FUNC, {.func=ceu_op_mult}  };
+            CEU_Value op_div   = { CEU_TYPE_FUNC, {.func=ceu_op_div}   };
 
             typedef enum {
                 CEU_THROW_NONE = 0,
