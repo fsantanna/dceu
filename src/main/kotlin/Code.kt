@@ -378,9 +378,6 @@ class Coder (parser_: Parser) {
                 CEU_TYPE_TUPLE,
                 CEU_TYPE_FUNC
             } CEU_TYPE;
-            char CEU_TYPE_STRING[][16] = {
-                "nil", "tag", "boolean", "number", "tuple", "function"
-            };
             
             struct CEU_Value;
             struct CEU_Block;
@@ -437,17 +434,31 @@ class Coder (parser_: Parser) {
                 }
             }
     
+            typedef struct CEU_Tags {
+                char* name;
+                struct CEU_Tags* next;
+            } CEU_Tags;
+            static CEU_Tags* CEU_TAGS = NULL;
+            int CEU_TAGS_MAX = 0;
+            char* ceu_tag_to_string (int tag) {
+                CEU_Tags* cur = CEU_TAGS;
+                for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
+                    cur = cur->next;
+                }
+                return cur->name;
+            }
             CEU_Value ceu_tags (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 1 && "bug found");
                 return (CEU_Value) { CEU_TYPE_TAG, {._tag_=args[0]->tag} };
             }
+            
             void ceu_print1 (CEU_Value* v) {
                 switch (v->tag) {
                     case CEU_TYPE_NIL:
                         printf("nil");
                         break;
                     case CEU_TYPE_TAG:
-                        printf("%s", CEU_TYPE_STRING[v->_tag_]);
+                        printf("%s", ceu_tag_to_string(v->_tag_));
                         break;
                     case CEU_TYPE_BOOL:
                         if (v->bool) {
@@ -470,7 +481,7 @@ class Coder (parser_: Parser) {
                         printf("]");
                         break;
                     case CEU_TYPE_FUNC:
-                        printf("function: %p", v->func);
+                        printf("func: %p", v->func);
                         break;
                     default:
                         assert(0 && "bug found");
@@ -584,6 +595,45 @@ class Coder (parser_: Parser) {
             char ceu_throw_msg[256];
     
             int main (void) {
+                {             
+                    #define CEU_TAG_TYPE_NIL __COUNTER__
+                    static CEU_Tags ceu_tag_type_nil = { "@nil", NULL };
+                    ceu_tag_type_nil.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_nil;
+                    CEU_TAGS_MAX++;
+        
+                    #define CEU_TAG_TYPE_TAG __COUNTER__
+                    static CEU_Tags ceu_tag_type_tag = { "@tag", NULL };
+                    ceu_tag_type_tag.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_tag;
+                    CEU_TAGS_MAX++;
+                
+                    #define CEU_TAG_TYPE_BOOL __COUNTER__
+                    static CEU_Tags ceu_tag_type_bool = { "@bool", NULL };
+                    ceu_tag_type_bool.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_bool;
+                    CEU_TAGS_MAX++;
+    
+                    #define CEU_TAG_TYPE_NUMBER __COUNTER__
+                    static CEU_Tags ceu_tag_type_number = { "@number", NULL };
+                    ceu_tag_type_number.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_number;
+                    CEU_TAGS_MAX++;
+    
+                    #define CEU_TAG_TYPE_TUPLE __COUNTER__
+                    static CEU_Tags ceu_tag_type_tuple = { "@tuple", NULL };
+                    ceu_tag_type_tuple.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_tuple;
+                    CEU_TAGS_MAX++;
+    
+                    #define CEU_TAG_TYPE_FUNC __COUNTER__
+                    static CEU_Tags ceu_tag_type_func = { "@func", NULL };
+                    ceu_tag_type_func.next = CEU_TAGS;
+                    CEU_TAGS = &ceu_tag_type_func;
+                    CEU_TAGS_MAX++;
+                }
+                assert(CEU_TAG_TYPE_NIL == CEU_TYPE_NIL);
+
                 do {
                     ${es.code("", null)}
                     return 0;

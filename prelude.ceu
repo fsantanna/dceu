@@ -1,0 +1,16 @@
+var (>)
+set (>) = func (v1,v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if t1 != t2 {
+        false
+    } else {
+        if t1 != @number {
+            false
+        } else {
+            native { $v1 > $v2 }
+        }
+    }
+}

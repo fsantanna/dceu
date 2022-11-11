@@ -62,7 +62,7 @@ class TExec {
             println(func () {})
         """.trimIndent()
         )
-        assert(out.contains("[[],[1,2,3]]\nfunction: 0x")) { out }
+        assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
     @Test
     fun print_err1() {
@@ -869,7 +869,7 @@ class TExec {
             println(tags(tags(t)))
         """.trimIndent()
         )
-        assert(out == "number\ntag\ntag\n") { out }
+        assert(out == "@number\n@tag\n@tag\n") { out }
     }
     @Test
     fun todo_tag2_err() {
