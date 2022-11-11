@@ -178,8 +178,10 @@ class TParser {
     fun exprs_seq2() {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
-        val es = parser.exprs()
-        assert(es.tostr() == "f()(1)\nh()\ni()\n") { es.tostr() }
+        // TODO: ambiguous
+        //val es = parser.exprs()
+        //assert(es.tostr() == "f()\n(1)\nh()\ni()\n") { es.tostr() }
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
     }
 
     // EXPR.DCL

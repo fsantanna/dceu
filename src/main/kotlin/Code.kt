@@ -221,7 +221,7 @@ class Coder (parser_: Parser) {
             }
 
             is Expr.Nat -> {
-                val body = this.tk.str.drop(1).dropLast(1).let {
+                val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
                     var ret = ""
                     var i = 0
 
@@ -241,6 +241,7 @@ class Coder (parser_: Parser) {
                         return x
                     }
 
+                    val ids = mutableListOf<String>()
                     while (i < it.length) {
                         ret += if (it[i] != '$') read() else {
                             read()
@@ -254,24 +255,26 @@ class Coder (parser_: Parser) {
                             if (id.length == 0) {
                                 parser.lexer.err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
+                            ids.add(id)
                             "($id.number)$x"
                         }
                     }
-                    ret
+                    Pair(ids,ret)
                 }
                 """
-            {
-                float ceu_f_$n (void) {
-                    $body
-                    return 0;
+                {
+                    float ceu_f_$n (void) {
+                        ${ids.map { "$it.tag = CEU_TYPE_NUMBER;\n" }.joinToString("") }
+                        $body
+                        return 0;
+                    }
+                    CEU_Value ceu_$n = { CEU_TYPE_NUMBER, {.number=ceu_f_$n()} };
+                    if (ceu_throw != CEU_THROW_NONE) {
+                        break;
+                    }
+                    ${fset(this.tk, set, "ceu_$n")}
                 }
-                CEU_Value ceu_$n = { CEU_TYPE_NUMBER, {.number=ceu_f_$n()} };
-                if (ceu_throw != CEU_THROW_NONE) {
-                    break;
-                }
-                ${fset(this.tk, set, "ceu_$n")}
-            }
-            """.trimIndent()
+                """.trimIndent()
             }
             is Expr.Acc -> fset(this.tk, set, this.tk_.fromOp())
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_TYPE_NIL })")

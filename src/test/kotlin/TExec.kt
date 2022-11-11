@@ -771,8 +771,7 @@ class TExec {
     fun native5() {
         val out = all("""
             var x
-            set x = 10
-             native {
+            native {
                 ${D}x = 20;
             }
             println(x)

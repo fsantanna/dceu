@@ -67,13 +67,13 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     val es = try {
         parser.exprs()
     } catch (e: Throwable) {
-        return e.message!!
+        return e.message!! + "\n"
     }
     val coder = Coder(parser)
     val c = try {
         coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
     } catch (e: Throwable) {
-        return e.message!!
+        return e.message!! + "\n"
     }
     File("out.c").writeText(c)
     val (ok2, out2) = exec(listOf("gcc", "out.c", "-o", "out.exe") + args)
