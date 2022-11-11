@@ -6,6 +6,10 @@ import java.io.StringReader
 data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
 data class Pos (val file: String, val lin: Int, val col: Int)
 
+fun Pos.isSameLine (oth: Pos): Boolean {
+    return (this.file==oth.file && this.lin==oth.lin)
+}
+
 fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }

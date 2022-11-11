@@ -128,7 +128,7 @@ class Parser (lexer_: Lexer)
                 Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("while") -> Expr.While(this.tk0 as Tk.Fix, this.expr(), this.block(null))
-            this.acceptFix("func") -> {
+            this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
@@ -151,6 +151,23 @@ class Parser (lexer_: Lexer)
                     Pair(this.expr(), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))
                 }
                 Expr.Throw(tk0, ex, arg)
+            }
+            this.acceptFix("spawn") -> Expr.Spawn(this.tk0 as Tk.Fix, this.expr())
+            this.acceptFix("resume") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val call = this.expr()
+                if (call !is Expr.Call) {
+                    this.lexer.err_expected(tk1, "invalid resume : expected call")
+
+                }
+                Expr.Resume(tk0, call as Expr.Call)
+            }
+            this.acceptFix("yield") -> {
+                this.checkFix_err("(")
+                if (!this.tk0.pos.isSameLine(this.tk1.pos)) {
+                    this.lexer.err(this.tk1, "yield error : line break before expression")
+                }
+                Expr.Yield(this.tk0 as Tk.Fix, this.expr())
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
@@ -178,7 +195,7 @@ class Parser (lexer_: Lexer)
         var e = this.exprPrim()
 
         // only accept sufix in the same line
-        while (this.tk0.pos.file==this.tk1.pos.file && this.tk0.pos.lin==this.tk1.pos.lin) {
+        while (this.tk0.pos.isSameLine(this.tk1.pos)) {
             when {
                 // INDEX
                 this.acceptFix("[") -> {

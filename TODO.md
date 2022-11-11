@@ -1,4 +1,3 @@
 - throw
     0. no error
-    1. loop
-    2. internal asserts
+    1. internal asserts

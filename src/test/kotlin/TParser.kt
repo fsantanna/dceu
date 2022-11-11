@@ -368,18 +368,93 @@ class TParser {
         assert(e.tostr() == "{!=}(10,1)") { e.tostr() }
     }
 
+    // TASK / YIELD / RESUME
+
+    @Test
+    fun task1() {
+        val l = lexer("""
+            set t = task (v) {
+                set v = yield (1) 
+                yield (2) 
+            }
+            spawn t
+            set v = resume a(1)
+            resume a(2)
+        """.trimIndent())
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == """
+            set t = task (v) {
+            set v = yield (1)
+            yield (2)
+            }
+            
+            spawn t
+            set v = resume a(1)
+            resume a(2)
+            
+        """.trimIndent())
+    }
+    @Test
+    fun taskX() {
+        val l = lexer("""
+            var t
+            set t = task (v) {
+                println(v)          ;; 1
+                set v = yield (v+1) 
+                println(v)          ;; 2
+                set v = yield (v+1) 
+                println(v)          ;; 3
+                v+1
+            }
+            var a
+            set a = spawn t
+            var v
+            set v = resume a(1)
+            println(v)              ;; 2
+            set v = resume a(v)
+            println(v)              ;; 3
+            set v = resume a(v)
+            println(v)              ;; 4
+            set v = resume a(v)
+            println(v)              ;; nil
+        """.trimIndent())
+        val parser = Parser(l)
+        val e = parser.exprs()
+        println(e.tostr())
+    }
+    @Test
+    fun task2_err() {
+        val l = lexer("""
+            resume a
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected invalid resume : expected call : have end of file")
+    }
+    @Test
+    fun task3_err() {
+        val l = lexer("""
+            yield
+            1
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
+    }
+    @Test
+    fun task4_err() {
+        val l = lexer("""
+            yield
+            (1)
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 1) : yield error : line break before expression")
+    }
+
     // MISC
 
     @Test
     fun misc1() {
         val l = lexer("""
-var ceu_input_event
-set ceu_input_event = func (type) {
-    var tp
-    var v1
-    var v2
-    [tp,v1,v2]
-}
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.exprs()

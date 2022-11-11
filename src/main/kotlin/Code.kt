@@ -219,6 +219,9 @@ class Coder (parser_: Parser) {
                 }
                 """.trimIndent()
             }
+            is Expr.Spawn -> TODO()
+            is Expr.Resume -> TODO()
+            is Expr.Yield -> TODO()
 
             is Expr.Nat -> {
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {

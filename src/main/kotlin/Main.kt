@@ -5,8 +5,8 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "catch", "do", "else", "false", "func", "if",
-    "nil", "set", "throw", "true", "var", "while"
+    "catch", "do", "else", "false", "func", "if", "nil", "resume",
+    "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 )
 
 val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
@@ -21,25 +21,32 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Nat (val str_: String, val pos_: Pos): Tk(str_, pos_)
 }
 
-sealed class Expr (val n: Int, val tk: Tk) {
-    data class Block (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl   (val tk_: Tk.Id):  Expr(N++, tk_)
-    data class Set   (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
-    data class If    (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
-    data class While (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
-    data class Func  (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
-    data class Catch (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
-    data class Throw (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)
+fun Expr.Func.isTask (): Boolean {
+    return (this.tk.str == "task")
+}
 
-    data class Nat   (val tk_: Tk): Expr(N++, tk_)
-    data class Acc   (val tk_: Tk.Id): Expr(N++, tk_)
-    data class Nil   (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Tag   (val tk_: Tk.Tag): Expr(N++, tk_)
-    data class Bool  (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Num   (val tk_: Tk.Num): Expr(N++, tk_)
-    data class Tuple (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
-    data class Index (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call  (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
+sealed class Expr (val n: Int, val tk: Tk) {
+    data class Block  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
+    data class Dcl    (val tk_: Tk.Id):  Expr(N++, tk_)
+    data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
+    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr, val f: Expr): Expr(N++, tk_)
+    data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class Throw  (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk, val task: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk, val call: Expr.Call): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk, val arg: Expr): Expr(N++, tk_)
+
+    data class Nat    (val tk_: Tk): Expr(N++, tk_)
+    data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
+    data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
+    data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
+    data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
+    data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
+    data class Call   (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {
