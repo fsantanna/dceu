@@ -130,6 +130,7 @@ class Lexer (name_: String, reader_: Reader) {
         }
     }
 
+    val ops = operators.map { it[0] }
     fun lex (): Sequence<Tk> = sequence {
         while (true) {
             val (x,pos) = next()
@@ -142,7 +143,17 @@ class Lexer (name_: String, reader_: Reader) {
                         break
                     }
                 }
-                (x in listOf('{','}',')','[',']', ',',';','=', '-','+','*','/')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in listOf('{','}',')','[',']', ',',';')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in ops) -> {
+                    val (n1,x1) = read2()
+                    val op = x+x1.toString()
+                    if (op in operators) {
+                        yield(Tk.Fix(op, pos))
+                    } else {
+                        unread2(n1)
+                        yield(Tk.Fix(x.toString(), pos))
+                    }
+                }
                 (x == '(') -> {
                     val (n1,x1) = read2()
                     if (x1 in listOf('-','+','*','/')) {
