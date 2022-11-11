@@ -179,9 +179,17 @@ class TParser {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
         // TODO: ambiguous
-        //val es = parser.exprs()
-        //assert(es.tostr() == "f()\n(1)\nh()\ni()\n") { es.tostr() }
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
+        val es = parser.exprs()
+        assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
+    }
+    @Test
+    fun exprs_seq3() {
+        val l = lexer("var v2\n[tp,v1,v2]")
+        val parser = Parser(l)
+        // TODO: ambiguous
+        val es = parser.exprs()
+        assert(es.tostr() == "var v2\n[tp,v1,v2]\n") { es.tostr() }
     }
 
     // EXPR.DCL
@@ -365,12 +373,16 @@ class TParser {
     @Test
     fun misc1() {
         val l = lexer("""
-            if (t1 != t2) || (t1 != @number) {
-                throw 1
-            }
+var ceu_input_event
+set ceu_input_event = func (type) {
+    var tp
+    var v1
+    var v2
+    [tp,v1,v2]
+}
         """.trimIndent())
         val parser = Parser(l)
-        val e = parser.exprBins()
-        assert(e.tostr() == "if {||}({!=}(t1,t2),{!=}(t1,@number)) {\nthrow (1,nil)\n}\nelse {\nnil\n}\n") { e.tostr() }
+        val e = parser.exprs()
+        println(e.tostr())
     }
 }

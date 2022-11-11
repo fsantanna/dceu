@@ -491,7 +491,8 @@ class TExec {
             (1)
         """.trimIndent()
         )
-        assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
+        //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
+        assert(out == "") { out }
     }
 
     // WHILE

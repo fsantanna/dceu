@@ -176,7 +176,9 @@ class Parser (lexer_: Lexer)
         val isop = this.acceptEnu("Op")
         val tk0 = this.tk0
         var e = this.exprPrim()
-        while (true) {
+
+        // only accept sufix in the same line
+        while (this.tk0.pos.file==this.tk1.pos.file && this.tk0.pos.lin==this.tk1.pos.lin) {
             when {
                 // INDEX
                 this.acceptFix("[") -> {
@@ -185,14 +187,12 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    if (e.tk.pos.lin < this.tk0.pos.lin) {
-                        this.lexer.err(this.tk1, "call error : \"(\" in the next line")
-                    }
                     e = Expr.Call(e.tk, e, list0(")") { this.expr() })
                 }
                 else -> break
             }
         }
+
         if (isop) {
             e = Expr.Call(tk0, Expr.Acc(Tk.Id("{${tk0.str}}",tk0.pos)), listOf(e))
         }
