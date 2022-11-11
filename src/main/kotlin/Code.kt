@@ -154,29 +154,38 @@ class Coder (parser_: Parser) {
                 
         """.trimIndent()
             is Expr.Func -> {
-                val tag = if (this.isTask()) "CEU_VALUE_TASK" else "CEU_VALUE_FUNC"
+                val (fld,tag) = if (this.isTask()) {
+                    Pair("task", "CEU_VALUE_TASK")
+                } else {
+                    Pair("func", "CEU_VALUE_FUNC")
+                }
+                fun tsk (v: String): String {
+                    return if (this.isTask()) v else ""
+                }
                 """
-                CEU_Value ceu_func_$n (CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
+                CEU_Value ceu_func_$n (${tsk("CEU_Coro* ceu_coro,")} CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
                     int ceu_i = 0;
                     ${
-                    this.args.map {
-                        """
-                            CEU_Value ${it.str} = { CEU_VALUE_NIL };
-                            if (ceu_i < ceu_n) {
-                                ${it.str} = *ceu_args[ceu_i];
-                            }
-                            ceu_i++;
-                            
-                            """.trimIndent()
-                    }.joinToString("")
-                }
+                        this.args.map {
+                            """
+                                CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                                if (ceu_i < ceu_n) {
+                                    ${it.str} = *ceu_args[ceu_i];
+                                }
+                                ceu_i++;
+                                
+                                """.trimIndent()
+                        }.joinToString("")
+                    }
                     CEU_Value ceu_$n;
+                    ${tsk("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
                     do {
                         ${this.body.code(null, Pair("ceu_scope", "ceu_$n"))}
                     } while (0);
+                    ${tsk("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
                     return ceu_$n;
                 }
-                ${fset(this.tk, set, "((CEU_Value) { $tag, {.func=ceu_func_$n} })")}            
+                ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}            
     
                 """.trimIndent()
             }
