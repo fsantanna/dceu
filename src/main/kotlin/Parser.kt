@@ -185,6 +185,9 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
+                    if (e.tk.pos.lin < this.tk0.pos.lin) {
+                        this.lexer.err(this.tk1, "call error : \"(\" in the next line")
+                    }
                     e = Expr.Call(e.tk, e, list0(")") { this.expr() })
                 }
                 else -> break

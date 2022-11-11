@@ -484,6 +484,15 @@ class TExec {
         val out = all("1(1)")
         assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
     }
+    @Test
+    fun func8() {
+        val out = all("""
+            1
+            (1)
+        """.trimIndent()
+        )
+        assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
+    }
 
     // WHILE
 
