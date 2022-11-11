@@ -19,6 +19,7 @@ val operators: Set<String> = setOf(
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos): Tk(str_, pos_)
+    data class Tag (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Id  (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Num (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos): Tk(str_, pos_)

@@ -83,7 +83,7 @@ class Lexer (name_: String, reader_: Reader) {
     fun read2Until (x: Char): String? {
         return read2Until { it == x }
     }
-    fun read2While (f: (x: Char)->Boolean): String? {
+    fun read2While (f: (x: Char)->Boolean): String {
         var ret = ""
         while (true) {
             val (n,x) = read2()
@@ -97,7 +97,7 @@ class Lexer (name_: String, reader_: Reader) {
         }
         return ret
     }
-    fun read2While (x: Char): String? {
+    fun read2While (x: Char): String {
         return read2While { it == x }
     }
 
@@ -177,28 +177,22 @@ class Lexer (name_: String, reader_: Reader) {
                         yield(Tk.Fix("(", pos))
                     }
                 }
-                (x=='_' || x.isLetter()) -> {
-                    var pay = x.toString()
-                    while (true) {
-                        val (n1,x1) = read2()
-                        when {
-                            iseof(n1) -> break
-                            (x1 == '_') -> {}
-                            (x1.isLetterOrDigit()) -> {}
-                            else -> {
-                                unread2(n1)
-                                break
-                            }
-                        }
-                        pay += x1
+                (x == '@') -> {
+                    val tag = x + read2While { it=='_' || it.isLetterOrDigit() }
+                    if (tag.length < 2) {
+                        err(pos, "tag error : expected identifier")
                     }
+                    yield(Tk.Tag(tag, pos))
+                }
+                (x=='_' || x.isLetter()) -> {
+                    val id = x + read2While { it=='_' || it.isLetterOrDigit() }
                     when {
-                        keywords.contains(pay) -> yield(Tk.Fix(pay, pos))
-                        (pay != "native") -> yield(Tk.Id(pay, pos))
+                        keywords.contains(id) -> yield(Tk.Fix(id, pos))
+                        (id != "native") -> yield(Tk.Id(id, pos))
                         else -> {
                             val (x1,_) = next()
                             if (x1!='(' && x1!='{') {
-                                err(pos,"native token error : expected \"(\" or \"{\"")
+                                err(pos,"native error : expected \"(\" or \"{\"")
                             }
 
                             var open = x1
@@ -210,7 +204,7 @@ class Lexer (name_: String, reader_: Reader) {
                                 val (n2,x2) = read2()
                                 when {
                                     iseof(n2) -> {
-                                        err(pos, "native token error : expected \"$close\"")
+                                        err(pos, "native error : expected \"$close\"")
                                     }
                                     (x2 == open) -> open_close++
                                     (x2 == close) -> {
@@ -229,21 +223,8 @@ class Lexer (name_: String, reader_: Reader) {
                     }
                 }
                 x.isDigit() -> {
-                    var pay = x.toString()
-                    while (true) {
-                        val (n1,x1) = read2()
-                        when {
-                            iseof(n1) -> break
-                            (x1 == '.') -> {}
-                            (x1.isLetterOrDigit()) -> {}
-                            else -> {
-                                unread2(n1)
-                                break
-                            }
-                        }
-                        pay += x1
-                    }
-                    yield(Tk.Num(pay, pos))
+                    var num = x + read2While { it=='.' || it.isLetterOrDigit() }
+                    yield(Tk.Num(num, pos))
                 }
                 (x == '^') -> {
                     val (_,x2) = read2()

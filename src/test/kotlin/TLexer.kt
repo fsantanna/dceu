@@ -102,7 +102,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str=="{ abc }" })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{{ijk}}" })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str=="( {i\$jk} )" })
-        assert(trap { tks.next() } == "anon : (lin 4, col 1) : native token error : expected \")\"")
+        assert(trap { tks.next() } == "anon : (lin 4, col 1) : native error : expected \")\"")
     }
 
     @Test
@@ -230,5 +230,27 @@ class TLexer {
         val lexer = Lexer("anon", "^[1]x".reader())
         val tks = lexer.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected end of line")
+    }
+
+    // TAGS
+
+    @Test
+    fun tags1() {
+        val lexer = Lexer("anon", "@tag".reader())
+        val tks = lexer.lex().iterator()
+        assert(tks.next().str == "@tag")
+        assert(tks.next() is Tk.Eof)
+    }
+    @Test
+    fun tags2_err() {
+        val lexer = Lexer("anon", "@(".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
+    }
+    @Test
+    fun tags3_err() {
+        val lexer = Lexer("anon", "@".reader())
+        val tks = lexer.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
     }
 }
