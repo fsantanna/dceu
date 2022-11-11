@@ -238,6 +238,13 @@ class Coder (parser_: Parser) {
             """.trimIndent()
             is Expr.Resume -> {
                 assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
+                val (dcls,sets,args) = this.call.args.let {
+                    Triple(
+                        it.mapIndexed { i,_ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString(""),
+                        it.mapIndexed { i,x -> it.code(block!!, Pair(block, "ceu_${i}_$n")) }.joinToString(""),
+                        it.mapIndexed { i,_ -> "&ceu_${i}_$n" }.joinToString(",")
+                    )
+                }
                 """
                 { // RESUME
                     CEU_Value ceu_coro_$n;
@@ -247,7 +254,9 @@ class Coder (parser_: Parser) {
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected spawned task", 256);
                         break;
                     }
-                    CEU_Value* ceu_args_$n[] = { ${this.call.args.mapIndexed { i, _ -> "&ceu_${i}_$n" }.joinToString(",")} };
+                    $dcls
+                    $sets
+                    CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_$n = ceu_coro_$n.coro->task(
                         ceu_coro_$n.coro,
                         ${if (set == null) block else set.first},
@@ -401,7 +410,15 @@ class Coder (parser_: Parser) {
             //}
             
         """.trimIndent()
-            is Expr.Call -> """
+            is Expr.Call -> {
+                val (dcls,sets,args) = this.args.let {
+                    Triple(
+                        it.mapIndexed { i,_ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString(""),
+                        it.mapIndexed { i,x -> x.code(block, Pair(block!!, "ceu_${i}_$n")) }.joinToString(""),
+                        it.mapIndexed { i,_ -> "&ceu_${i}_$n" }.joinToString(",")
+                    )
+                }
+                """
                 { // CALL
                     CEU_Value ceu_f_$n;
                     ${this.f.code(block, Pair(block!!, "ceu_f_$n"))}
@@ -410,17 +427,9 @@ class Coder (parser_: Parser) {
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
                         break;
                     }
-                    ${
-                        this.args.mapIndexed { i, _ ->
-                            "CEU_Value ceu_${i}_$n;\n"
-                        }.joinToString("")
-                    }
-                    ${
-                        this.args.mapIndexed { i, it ->
-                            it.code(block, Pair(block, "ceu_${i}_$n"))
-                        }.joinToString("")
-                    }
-                    CEU_Value* ceu_args_$n[] = { ${this.args.mapIndexed { i, _ -> "&ceu_${i}_$n" }.joinToString(",")} };
+                    $dcls
+                    $sets
+                    CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_$n = ceu_f_$n.func(
                         ${if (set == null) block else set.first},
                         ${this.args.size},
@@ -433,6 +442,7 @@ class Coder (parser_: Parser) {
                 }
     
             """.trimIndent()
+            }
         }
     }
 
