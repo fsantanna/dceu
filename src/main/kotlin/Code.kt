@@ -33,7 +33,7 @@ class Coder (parser_: Parser) {
             Pair('|', "or"),
             Pair('&', "and"),
         )
-        return if (this.str[0] != '(') this.str else {
+        return if (this.str[0] != '{') this.str else {
             "op_" + this.str.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
         }
     }

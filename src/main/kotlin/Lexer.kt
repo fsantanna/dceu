@@ -134,7 +134,7 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                         break
                     }
                 }
-                (x in listOf('{','}',')','[',']', ',')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in listOf('}','(',')','[',']', ',')) -> yield(Tk.Fix(x.toString(), pos))
                 (x in operators) -> {
                     val op = x + read2While { it in operators }
                     if (op == "=") {
@@ -143,18 +143,23 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                         yield(Tk.Op(op, pos))
                     }
                 }
-                (x == '(') -> {
+                (x == '{') -> {
                     val (n1,x1) = read2()
-                    if (x1 in operators) {
+                    if (x1 !in operators) {
+                        unread2(n1)
+                        yield(Tk.Fix("{", pos))
+                    } else {
                         val op = x1 + read2While { it in operators }
                         val (_,x2) = read2()
-                        if (x2 != ')') {
-                            err(pos, "operator error : expected \")\"")
+                        if (x2 != '}') {
+                            if (op.length == 1) {
+                                yield(Tk.Id("{$op}", pos))
+                                unread2(1)
+                            } else {
+                                err(pos, "operator error : expected \"}\"")
+                            }
                         }
-                        yield(Tk.Id("($op)", pos))
-                    } else {
-                        unread2(n1)
-                        yield(Tk.Fix("(", pos))
+                        yield(Tk.Id("{$op}", pos))
                     }
                 }
                 (x == '@') -> {
@@ -203,7 +208,7 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                     }
                 }
                 x.isDigit() -> {
-                    var num = x + read2While { it=='.' || it.isLetterOrDigit() }
+                    val num = x + read2While { it=='.' || it.isLetterOrDigit() }
                     yield(Tk.Num(num, pos))
                 }
                 (x == '^') -> {

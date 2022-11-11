@@ -191,7 +191,7 @@ class Parser (lexer_: Lexer)
             }
         }
         if (isop) {
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("(${tk0.str})",tk0.pos)), listOf(e))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("{${tk0.str}}",tk0.pos)), listOf(e))
         }
         return e
     }
@@ -200,7 +200,7 @@ class Parser (lexer_: Lexer)
         if (this.acceptEnu("Op")) {
             val tk0 = this.tk0
             val e2 = this.expr()
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("(${tk0.str})",tk0.pos)), listOf(e,e2))
+            e = Expr.Call(tk0, Expr.Acc(Tk.Id("{${tk0.str}}",tk0.pos)), listOf(e,e2))
         }
         return e
     }

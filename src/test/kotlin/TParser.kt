@@ -347,7 +347,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "(+)(10,1)") { e.tostr() }
+        assert(e.tostr() == "{+}(10,1)") { e.tostr() }
     }
     @Test
     fun bin3() {
@@ -355,7 +355,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "(!=)(10,1)") { e.tostr() }
+        assert(e.tostr() == "{!=}(10,1)") { e.tostr() }
     }
 
 }
