@@ -349,5 +349,13 @@ class TParser {
         assert(e is Expr.Call)
         assert(e.tostr() == "op_plus(10,1)") { e.tostr() }
     }
+    @Test
+    fun bin3() {
+        val lexer = Lexer("anon", "10!=1".reader())
+        val parser = Parser(lexer)
+        val e = parser.exprBins()
+        assert(e is Expr.Call)
+        assert(e.tostr() == "op_neq(10,1)") { e.tostr() }
+    }
 
 }

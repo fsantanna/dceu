@@ -126,7 +126,16 @@ class TLexer {
         //println(tks.next())
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
     }
-
+    @Test
+    fun ops3() {
+        val lexer = Lexer(
+            "anon",
+            "(==)".reader()
+        )
+        val tks = lexer.lex().iterator()
+        assert(tks.next().str == "op_eq")
+        assert(tks.next() is Tk.Eof)
+    }
     @Test
     fun ops2() {
         val lexer = Lexer(

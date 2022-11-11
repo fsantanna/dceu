@@ -469,6 +469,9 @@ class Coder (parser_: Parser) {
                         }                    
                         printf("]");
                         break;
+                    case CEU_TYPE_FUNC:
+                        printf("function: %p", v->func);
+                        break;
                     default:
                         assert(0 && "bug found");
                 }
@@ -485,6 +488,42 @@ class Coder (parser_: Parser) {
                 return (CEU_Value) { CEU_TYPE_NIL };
             }
             
+            CEU_Value ceu_op_eq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                assert(n == 2);
+                CEU_Value* e1 = args[0];
+                CEU_Value* e2 = args[1];
+                int ret = (e1->tag == e2->tag);
+                if (ret) {
+                    switch (e1->tag) {
+                        case CEU_TYPE_NIL:
+                            ret = 1;
+                            break;
+                        case CEU_TYPE_TAG:
+                            ret = (e1->_tag_ == e2->_tag_);
+                            break;
+                        case CEU_TYPE_BOOL:
+                            ret = (e1->bool == e2->bool);
+                            break;
+                        case CEU_TYPE_NUMBER:
+                            ret = (e1->number == e2->number);
+                            break;
+                        case CEU_TYPE_TUPLE:
+                            ret = (e1->tuple == e2->tuple);
+                            break;
+                        case CEU_TYPE_FUNC:
+                            ret = (e1->func == e2->func);
+                            break;
+                        default:
+                            assert(0 && "bug found");
+                    }
+                }
+                return (CEU_Value) { CEU_TYPE_BOOL, {.bool=ret} };
+            }
+            CEU_Value ceu_op_neq (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
+                CEU_Value ret = ceu_op_eq(block, scope, n, args);
+                ret.bool = !ret.bool;
+                return ret;
+            }
             CEU_Value ceu_op_umn (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
                 assert(n == 1);
                 CEU_Value* e = args[0];
@@ -527,6 +566,8 @@ class Coder (parser_: Parser) {
             CEU_Value tags     = { CEU_TYPE_FUNC, {.func=ceu_tags}     };
             CEU_Value print    = { CEU_TYPE_FUNC, {.func=ceu_print}    };
             CEU_Value println  = { CEU_TYPE_FUNC, {.func=ceu_println}  };            
+            CEU_Value op_eq    = { CEU_TYPE_FUNC, {.func=ceu_op_eq}    };
+            CEU_Value op_neq   = { CEU_TYPE_FUNC, {.func=ceu_op_neq}   };
             CEU_Value op_umn   = { CEU_TYPE_FUNC, {.func=ceu_op_umn}   };
             CEU_Value op_plus  = { CEU_TYPE_FUNC, {.func=ceu_op_plus}  };
             CEU_Value op_minus = { CEU_TYPE_FUNC, {.func=ceu_op_minus} };

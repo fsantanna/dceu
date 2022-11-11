@@ -59,9 +59,10 @@ class TExec {
     fun print3() {
         val out = all("""
             println([[],[1,2,3]])
+            println(func () {})
         """.trimIndent()
         )
-        assert(out == "[[],[1,2,3]]\n") { out }
+        assert(out.contains("[[],[1,2,3]]\nfunction: 0x")) { out }
     }
     @Test
     fun print_err1() {
@@ -845,6 +846,15 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "-10\n") { out }
+    }
+    @Test
+    fun op_eq() {
+        val out = all("""
+            println(1 == 1)
+            println(1 != 1)
+        """.trimIndent()
+        )
+        assert(out == "true\nfalse\n") { out }
     }
 
     // TAGS

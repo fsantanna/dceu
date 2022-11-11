@@ -5,10 +5,12 @@ import java.io.StringReader
 
 fun op2f (op: String): String {
     return when (op) {
-        "+" -> "op_plus"
-        "-" -> "op_minus"
-        "*" -> "op_mult"
-        "/" -> "op_div"
+        "==" -> "op_eq"
+        "!=" -> "op_neq"
+        "+"  -> "op_plus"
+        "-"  -> "op_minus"
+        "*"  -> "op_mult"
+        "/"  -> "op_div"
         else -> TODO(op)
     }
 }
@@ -156,14 +158,19 @@ class Lexer (name_: String, reader_: Reader) {
                 }
                 (x == '(') -> {
                     val (n1,x1) = read2()
-                    if (x1 in listOf('-','+','*','/')) {
+                    if (x1 in ops) {
                         val (n2,x2) = read2()
-                        if (x2 == ')') {
-                            yield(Tk.Id(op2f(x1.toString()), pos))
+                        val _op_ = x1+x2.toString()
+                        val (op,cl) = if (_op_ !in operators) Pair(x1.toString(),x2) else {
+                            val (_, x3) = read2()
+                            Pair(_op_, x3)
+                        }
+                        if (cl == ')') {
+                            yield(Tk.Id(op2f(op), pos))
                         } else {
                             unread2(n2)
                             yield(Tk.Fix("(", pos))
-                            yield(Tk.Fix(x1.toString(), pos))
+                            yield(Tk.Fix(op, pos))
                         }
                     } else {
                         unread2(n1)
