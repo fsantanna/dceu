@@ -358,4 +358,17 @@ class TParser {
         assert(e.tostr() == "{!=}(10,1)") { e.tostr() }
     }
 
+    // MISC
+
+    @Test
+    fun misc1() {
+        val l = lexer("""
+            if (t1 != t2) || (t1 != @number) {
+                throw 1
+            }
+        """.trimIndent())
+        val parser = Parser(l)
+        val e = parser.exprBins()
+        assert(e.tostr() == "if {||}({!=}(t1,t2),{!=}(t1,@number)) {\nthrow (1,nil)\n}\nelse {\nnil\n}\n") { e.tostr() }
+    }
 }

@@ -12,8 +12,11 @@ val VALGRIND = ""
 
 class TExec {
 
-    fun all(inp: String): String {
-        val lexer = Lexer(listOf(Pair("anon", inp.reader())))
+    fun all (inp: String, pre: Boolean=false): String {
+        val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
+            listOf(Pair("prelude.ceu", File("prelude.ceu").reader()))
+        }
+        val lexer = Lexer(inps)
         val parser = Parser(lexer)
         val es = try {
             parser.exprs()
@@ -805,15 +808,14 @@ class TExec {
     fun op_umn() {
         val out = all("""
             println(-10)
-        """.trimIndent()
-        )
+        """.trimIndent(), true)
         assert(out == "-10\n") { out }
     }
     @Test
     fun op_id1() {
         val out = all("""
             println({-}(10,4))
-        """.trimIndent()
+        """.trimIndent(), true
         )
         assert(out == "6\n") { out }
     }
@@ -821,8 +823,7 @@ class TExec {
     fun op_arithX() {
         val out = all("""
             println((10 + -20*2)/5)
-        """.trimIndent()
-        )
+        """.trimIndent(), true)
         assert(out == "-6\n") { out }
     }
     @Test
@@ -843,9 +844,8 @@ class TExec {
             println(1 != 1)
             println(2 >= 1)
             println(2 <= 1)
-        """.trimIndent()
-        )
-        assert(out == "-10\n") { out }
+        """.trimIndent(), true)
+        assert(out == "false\ntrue\ntrue\nfalse\ntrue\nfalse\n") { out }
     }
     @Test
     fun op_eq() {
@@ -899,4 +899,7 @@ class TExec {
         )
         assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
+
+    // MISC
+
 }

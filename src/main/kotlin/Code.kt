@@ -11,7 +11,7 @@ class Coder (parser_: Parser) {
             if ($src.tag == CEU_TYPE_TUPLE) {
                 if ($src.tuple->block->depth > $scope->depth) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : set error : incompatible scopes", ${tk.pos.lin}, ${tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
                     break;
                 }
             }
@@ -60,13 +60,16 @@ class Coder (parser_: Parser) {
                 
                 """.trimIndent()
             }
-            is Expr.Dcl -> """
+            is Expr.Dcl -> {
+                val id = this.tk_.fromOp()
+                """
                 // DCL
-                CEU_Value ${this.tk.str} = { CEU_TYPE_NIL };
-                CEU_Block* _${this.tk.str}_ = $block;   // can't be static b/c recursion
-                ${fset(this.tk, set, this.tk.str)}            
+                CEU_Value $id = { CEU_TYPE_NIL };
+                CEU_Block* _${id}_ = $block;   // can't be static b/c recursion
+                ${fset(this.tk, set, id)}            
                     
             """.trimIndent()
+            }
             is Expr.Set -> {
                 val (scp, dst) = when (this.dst) {
                     is Expr.Index -> Pair(
@@ -74,10 +77,10 @@ class Coder (parser_: Parser) {
                         "ceu_col_${this.dst.n}.tuple->buf[(int) ceu_idx_${this.dst.n}.number]"
                     )
 
-                    is Expr.Acc -> Pair(
-                        "_${this.dst.tk.str}_",  // x = src / scope of _x_
-                        this.dst.tk.str
-                    )
+                    is Expr.Acc -> {
+                        val id = this.dst.tk_.fromOp()
+                        Pair("_${id}_", id)     // x = src / scope of _x_
+                    }
 
                     else -> error("bug found")
                 }
@@ -103,7 +106,7 @@ class Coder (parser_: Parser) {
                         case CEU_TYPE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                         default: {                
                             ceu_throw = CEU_THROW_RUNTIME;
-                            snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
+                            strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
                             break; // need to break again below
                         }
                     }
@@ -132,7 +135,7 @@ class Coder (parser_: Parser) {
                                 case CEU_TYPE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
                                 default: {                
                                     ceu_throw = CEU_THROW_RUNTIME;
-                                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : if error : invalid condition", ${this.cnd.tk.pos.lin}, ${this.cnd.tk.pos.col});
+                                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
                                     break; // need to break again below
                                 }
                             }
@@ -161,6 +164,7 @@ class Coder (parser_: Parser) {
                                 ${it.str} = *ceu_args[ceu_i];
                             }
                             ceu_i++;
+                            
                             """.trimIndent()
                         }.joinToString("")
                     }
@@ -180,10 +184,10 @@ class Coder (parser_: Parser) {
                     ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
                     if (ceu_ex_$n.tag == CEU_TYPE_NUMBER) {
                         ceu_throw = ceu_ex_$n.number;
-                        snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : uncaught exception", ${this.tk.pos.lin}, ${this.tk.pos.col});
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
                     } else {                
                         ceu_throw = CEU_THROW_RUNTIME;
-                        snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : throw error : invalid exception : expected number", ${this.tk.pos.lin}, ${this.tk.pos.col});
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : invalid exception : expected number", 256);
                     }
                     break;
                 }
@@ -323,7 +327,7 @@ class Coder (parser_: Parser) {
                 ${this.col.code(block, Pair(block, "ceu_col_$n"))}
                 if (ceu_col_$n.tag != CEU_TYPE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
                     break;
                 }
                                 
@@ -331,19 +335,19 @@ class Coder (parser_: Parser) {
                 ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
                 if (ceu_idx_$n.tag != CEU_TYPE_NUMBER) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected number", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
                     break;
                 }
                 
                 if (ceu_col_$n.tag != CEU_TYPE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : expected tuple", ${this.col.tk.pos.lin}, ${this.col.tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
                     break;
                 }
                 
                 if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : index error : out of bounds", ${this.idx.tk.pos.lin}, ${this.idx.tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
                     break;
                 }
 
@@ -357,7 +361,7 @@ class Coder (parser_: Parser) {
                 ${this.f.code(block, Pair(block, "ceu_f_$n"))}
                 if (ceu_f_$n.tag != CEU_TYPE_FUNC) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    snprintf(ceu_throw_msg, 256, "anon : (lin %d, col %d) : call error : expected function", ${this.f.tk.pos.lin}, ${this.f.tk.pos.col});
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
                     break;
                 }
                 ${
@@ -576,55 +580,12 @@ class Coder (parser_: Parser) {
                 ret.bool = !ret.bool;
                 return ret;
             }
-            CEU_Value ceu_op_umn (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                assert(n == 1);
-                CEU_Value* e = args[0];
-                assert(e->tag == CEU_TYPE_NUMBER);
-                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(-e->number)} };
-            }
-            CEU_Value ceu_op_plus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                assert(n == 2);
-                CEU_Value* e1 = args[0];
-                CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_TYPE_NUMBER);
-                assert(e2->tag == CEU_TYPE_NUMBER);
-                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number+e2->number)} };
-            }
-            CEU_Value ceu_op_minus (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                assert(n == 2);
-                CEU_Value* e1 = args[0];
-                CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_TYPE_NUMBER);
-                assert(e2->tag == CEU_TYPE_NUMBER);
-                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number-e2->number)} };
-            }
-            CEU_Value ceu_op_mult (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                assert(n == 2);
-                CEU_Value* e1 = args[0];
-                CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_TYPE_NUMBER);
-                assert(e2->tag == CEU_TYPE_NUMBER);
-                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number*e2->number)} };
-            }
-            CEU_Value ceu_op_div (CEU_Block* block, CEU_Block* scope, int n, CEU_Value* args[]) {
-                assert(n == 2);
-                CEU_Value* e1 = args[0];
-                CEU_Value* e2 = args[1];
-                assert(e1->tag == CEU_TYPE_NUMBER);
-                assert(e2->tag == CEU_TYPE_NUMBER);
-                return (CEU_Value) { CEU_TYPE_NUMBER, {.number=(e1->number/e2->number)} };
-            }
 
             CEU_Value tags      = { CEU_TYPE_FUNC, {.func=ceu_tags}      };
             CEU_Value print     = { CEU_TYPE_FUNC, {.func=ceu_print}     };
             CEU_Value println   = { CEU_TYPE_FUNC, {.func=ceu_println}   };            
             CEU_Value op_eq_eq  = { CEU_TYPE_FUNC, {.func=ceu_op_eq_eq}  };
             CEU_Value op_not_eq = { CEU_TYPE_FUNC, {.func=ceu_op_not_eq} };
-            CEU_Value op_umn    = { CEU_TYPE_FUNC, {.func=ceu_op_umn}    };
-            CEU_Value op_plus   = { CEU_TYPE_FUNC, {.func=ceu_op_plus}   };
-            CEU_Value op_minus  = { CEU_TYPE_FUNC, {.func=ceu_op_minus}  };
-            CEU_Value op_mult   = { CEU_TYPE_FUNC, {.func=ceu_op_mult}   };
-            CEU_Value op_div    = { CEU_TYPE_FUNC, {.func=ceu_op_div}    };
 
             typedef enum {
                 CEU_THROW_NONE = 0,

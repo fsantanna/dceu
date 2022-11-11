@@ -1,16 +1,132 @@
-var (>)
-set (>) = func (v1,v2) {
+;; LOGICAL:  !  &&  ||
+
+var {!}
+set {!} = func (v) {
+    if v {
+        false
+    } else {
+        true
+    }
+}
+
+var {&&}
+set {&&} = func (v1, v2) {
+    if v1 {
+        v2
+    } else {
+        false
+    }
+}
+
+var {||}
+set {||} = func (v1, v2) {
+    if v1 {
+        true
+    } else {
+        v2
+    }
+}
+
+;; ARITHMETIC:  +  -  *  /
+
+var {+}
+set {+} = func (v1, v2) {
     var t1
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if t1 != t2 {
-        false
-    } else {
-        if t1 != @number {
-            false
-        } else {
-            native { $v1 > $v2 }
-        }
+    if (t1 != @number) || (t2 != @number) {
+        throw 1
     }
+    native { return $v1+$v2; }
+}
+
+var {-}
+set {-} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 == @number) && (t2 == @nil) {
+        native { return -$v1; }
+    } else {
+        if (t1 != @number) || (t2 != @number) {
+            throw 1
+        }
+        native { return $v1-$v2; }
+    }
+}
+
+var {*}
+set {*} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != @number) || (t2 != @number) {
+        throw 1
+    }
+    native { return $v1*$v2; }
+}
+
+var {/}
+set {/} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != @number) || (t2 != @number) {
+        throw 1
+    }
+    native { return $v1/$v2; }
+}
+
+;; RELATIONAL:  >=  >  <=  <
+
+var {>=}
+set {>=} = func (v1,v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != t2) || (t1 != @number) {
+        throw 1
+    }
+    native { return $v1 >= $v2; } == 1
+}
+
+var {>}
+set {>} = func (v1,v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != t2) || (t1 != @number) {
+        throw 1
+    }
+    native { return $v1 > $v2; } == 1
+}
+
+var {<=}
+set {<=} = func (v1,v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != t2) || (t1 != @number) {
+        throw 1
+    }
+    native { return $v1 <= $v2; } == 1
+}
+
+var {<}
+set {<} = func (v1,v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 != t2) || (t1 != @number) {
+        throw 1
+    }
+    native { return $v1 < $v2; } == 1
 }
