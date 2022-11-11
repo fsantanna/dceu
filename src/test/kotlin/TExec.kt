@@ -9,35 +9,34 @@ import java.io.File
 val VALGRIND = ""
 //val VALGRIND = "valgrind "
 
+fun all (inp: String, pre: Boolean=false): String {
+    val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
+        listOf(Pair("prelude.ceu", File("prelude.ceu").reader()))
+    }
+    val lexer = Lexer(inps)
+    val parser = Parser(lexer)
+    val es = try {
+        parser.exprs()
+    } catch (e: Throwable) {
+        return e.message!!
+    }
+    val coder = Coder(parser)
+    val c = try {
+        coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+    } catch (e: Throwable) {
+        return e.message!!
+    }
+    File("out.c").writeText(c)
+    val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
+    if (!ok2) {
+        return out2
+    }
+    val (_, out3) = exec("${VALGRIND}./out.exe")
+    //println(out3)
+    return out3
+}
 
 class TExec {
-
-    fun all (inp: String, pre: Boolean=false): String {
-        val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
-            listOf(Pair("prelude.ceu", File("prelude.ceu").reader()))
-        }
-        val lexer = Lexer(inps)
-        val parser = Parser(lexer)
-        val es = try {
-            parser.exprs()
-        } catch (e: Throwable) {
-            return e.message!!
-        }
-        val coder = Coder(parser)
-        val c = try {
-            coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
-        } catch (e: Throwable) {
-            return e.message!!
-        }
-        File("out.c").writeText(c)
-        val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
-        if (!ok2) {
-            return out2
-        }
-        val (_, out3) = exec("${VALGRIND}./out.exe")
-        //println(out3)
-        return out3
-    }
 
     // PRINT
 
@@ -930,74 +929,6 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
-    }
-
-    // TASK / SPAWN / RESUME / YIELD
-
-    @Test
-    fun task1() {
-        val out = all("""
-            var t
-            set t = task (v) {
-                println(v)          ;; 1
-                set v = yield (v+1) 
-                println(v)          ;; 2
-                set v = yield (v+1) 
-                println(v)          ;; 3
-                v+1
-            }
-            var a
-            set a = spawn t
-            var v
-            set v = resume a(1)
-            println(v)              ;; 2
-            set v = resume a(v)
-            println(v)              ;; 3
-            set v = resume a(v)
-            println(v)              ;; 4
-            set v = resume a(v)
-            println(v)              ;; nil
-        """.trimIndent(), true
-        )
-        assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
-    }
-    @Test
-    fun task2_err() {
-        val out = all("""
-            spawn func () {}
-        """.trimIndent()
-        )
-        assert(out == "anon : (lin 1, col 7) : spawn error : expected task\n") { out }
-    }
-    @Test
-    fun task3_err() {
-        val out = all("""
-            var f
-            resume f()
-        """.trimIndent()
-        )
-        assert(out == "anon : (lin 1, col 8) : resume error : expected spawned task\n") { out }
-    }
-    @Test
-    fun task4_err() {
-        val out = all("""
-            var co
-            set co = spawn task () {}
-            resume co()
-            resume co()
-        """.trimIndent()
-        )
-        assert(out == "anon : (lin 4, col 8) : resume error : expected spawned task\n") { out }
-    }
-    @Test
-    fun task5_err() {
-        val out = all("""
-            var co
-            set co = spawn task () {}
-            resume co(1,2)
-        """.trimIndent()
-        )
-        assert(out == "bug found : not implemented : multiple arguments to resume") { out }
     }
 
     // MISC
