@@ -68,9 +68,8 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     } catch (e: Throwable) {
         return e.message!! + "\n"
     }
-    val coder = Coder(parser)
     val c = try {
-        coder.expr(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+        Expr.Block(Tk.Fix("",Pos("anon",0,0)),es).main()
     } catch (e: Throwable) {
         return e.message!! + "\n"
     }
