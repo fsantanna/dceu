@@ -314,17 +314,16 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                         if (id.length == 0) {
                             err(tk, "native error : (lin $l, col $c) : invalid identifier")
                         }
-                        val idx = "ceu_mem->"
-                        ids.add(idx)
-                        "($idx.number)$x"
+                        ids.add(id)
+                        "(ceu_mem->$id.number)$x"
                     }
                 }
                 Pair(ids,ret)
             }
             """
-            {
+            { // NATIVE
                 float ceu_f_$n (void) {
-                    ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
+                    ${ids.map { "ceu_mem->$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
                     $body
                     return 0;
                 }
