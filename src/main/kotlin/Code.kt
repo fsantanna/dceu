@@ -167,6 +167,8 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                             ceu_mem->_${it.str}_ = NULL; // TODO: create Block at Func top-level
                             if (ceu_i < ceu_n) {
                                 ${it.str.id2mem(it,syms)} = *ceu_args[ceu_i];
+                            } else {
+                                ${it.str.id2mem(it,syms)} = (CEU_Value) { CEU_VALUE_NIL };
                             }
                             ceu_i++;
                             
