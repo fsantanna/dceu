@@ -236,14 +236,6 @@ fun Expr.Block.main (): String {
         }
     """ +
     """
-        // PRIM
-        CEU_Value tags      = { CEU_VALUE_FUNC, {.func=ceu_tags}      };
-        CEU_Value print     = { CEU_VALUE_FUNC, {.func=ceu_print}     };
-        CEU_Value println   = { CEU_VALUE_FUNC, {.func=ceu_println}   };            
-        CEU_Value op_eq_eq  = { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
-        CEU_Value op_not_eq = { CEU_VALUE_FUNC, {.func=ceu_op_not_eq} };
-    """ +
-    """
         // THROW
         typedef enum {
             CEU_THROW_NONE = 0,
@@ -299,6 +291,23 @@ fun Expr.Block.main (): String {
             int ceu_brk = 0;
             while (!ceu_brk) {
                 ceu_brk = 1;
+                typedef struct {
+                    CEU_Value tags;
+                    CEU_Value print;
+                    CEU_Value println;            
+                    CEU_Value op_eq_eq;
+                    CEU_Value op_not_eq;
+                    ${this.mem()}
+                } CEU_Func_$n;
+                CEU_Func_$n _ceu_mem_;
+                CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                {
+                    ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_tags}      };
+                    ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_print}     };
+                    ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_println}   };            
+                    ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
+                    ceu_mem->op_not_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_not_eq} };
+                }
                 ${this.code(null, null)}
                 return 0;
             }
