@@ -349,7 +349,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 it.code(block, Pair(scp, "ceu_mem->arg_${i}_$n"))
             }.joinToString("")
             """
-            { // TUPLE
+            { // TUPLE /* ${this.tostr()} */
                 $args
                 CEU_Value ceu_sta_$n[${this.args.size}] = {
                     ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
@@ -367,35 +367,32 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             """.trimIndent()
         }
         is Expr.Index -> """
-            //{ // INDEX    // (removed {} b/c set uses col[idx])
-                ${this.col.code(block, Pair(block!!, "ceu_mem->col_$n"))}
-                if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                    continue;
+            { // INDEX /* ${this.tostr()} */
+                { // COL
+                    ${this.col.code(block, Pair(block!!, "ceu_mem->col_$n"))}
+                    if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
+                        ceu_throw = CEU_THROW_RUNTIME;
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
+                        continue;
+                    }
                 }
-                                
-                ${this.idx.code(block, Pair(block, "ceu_mem->idx_$n"))}
-                if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
-                    continue;
+                { // IDX        
+                    ${this.idx.code(block, Pair(block, "ceu_mem->idx_$n"))}
+                    if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
+                        ceu_throw = CEU_THROW_RUNTIME;
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
+                        continue;
+                    }
                 }
-                
-                if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                    continue;
+                { // OK
+                    if (ceu_mem->col_$n.tuple->n <= ceu_mem->idx_$n.number) {                
+                        ceu_throw = CEU_THROW_RUNTIME;
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
+                        break;
+                    }    
+                    ${fset(this.tk, set, "ceu_mem->col_$n.tuple->buf[(int) ceu_mem->idx_$n.number]")}
                 }
-                
-                if (ceu_mem->col_$n.tuple->n <= ceu_mem->idx_$n.number) {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                    break;
-                }
-    
-                ${fset(this.tk, set, "ceu_mem->col_$n.tuple->buf[(int) ceu_mem->idx_$n.number]")}
-            //}
+            }
             
         """.trimIndent()
         is Expr.Call -> {

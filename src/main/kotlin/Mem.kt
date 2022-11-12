@@ -32,10 +32,8 @@ fun Expr.mem (): String {
         is Expr.Set -> """
             struct {
                 CEU_Value set_$n;
-                union { // SET
-                    ${this.dst.mem()}
-                    ${this.src.mem()}
-                };
+                ${this.dst.mem()}
+                ${this.src.mem()}
             };
             """
         is Expr.If -> """
