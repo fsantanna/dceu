@@ -12,26 +12,26 @@ class TTask {
             set t = task (v) {
                 println(v)          ;; 1
                 set v = yield (v+1) 
-                println(v)          ;; 2
-                set v = yield (v+1) 
                 println(v)          ;; 3
+                set v = yield (v+1) 
+                println(v)          ;; 5
                 v+1
             }
             var a
             set a = spawn t
             var v
             set v = resume a(1)
-            throw (5)
             println(v)              ;; 2
-            set v = resume a(v)
-            println(v)              ;; 3
-            set v = resume a(v)
+            set v = resume a(v+1)
             println(v)              ;; 4
-            set v = resume a(v)
+            set v = resume a(v+1)
+            throw (5)
+            println(v)              ;; 6
+            set v = resume a(v+1)
             println(v)              ;; nil
         """.trimIndent(), true
         )
-        assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
+        assert(out == "1\n2\n3\n4\n5\n6\nnil\n") { out }
     }
     @Test
     fun task2_err() {
@@ -73,6 +73,20 @@ class TTask {
     }
     @Test
     fun task6() {
+        val out = all("""
+            var co
+            set co = spawn task (v) {
+                set v = yield (nil) 
+                println(v)
+            }
+            resume co(1)
+            resume co(2)
+        """.trimIndent()
+        )
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun task7() {
         val out = all("""
             var co
             set co = spawn task (v) {

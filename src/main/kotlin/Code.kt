@@ -164,28 +164,27 @@ class Coder (parser_: Parser) {
                     return if (this.isTask()) v else ""
                 }
                 """
-                CEU_Value ceu_func_$n (${tsk("CEU_Coro* ceu_coro,")} CEU_Block* ceu_scope, int ceu_n, CEU_Value* ceu_args[]) {
-                    int ceu_i = 0;
-                    ${
-                        this.args.map {
-                            """
-                                CEU_Value ${it.str} = { CEU_VALUE_NIL };
-                                if (ceu_i < ceu_n) {
-                                    ${it.str} = *ceu_args[ceu_i];
-                                }
-                                ceu_i++;
-                                
-                                """.trimIndent()
-                        }.joinToString("")
-                    }
+                CEU_Value ceu_func_$n (${tsk("CEU_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
                     CEU_Value ceu_$n;
                     ${tsk("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
                     int ceu_brk_$n = 0;
                     while (!ceu_brk_$n) {
                         ceu_brk_$n = 1;
-                        ${tsk("switch (ceu_coro->pc) {\ncase 0:\n")}
-                        ${this.body.code(null, Pair("ceu_scope", "ceu_$n"))}
-                        ${tsk("}\n")}
+                        ${tsk("switch (ceu_coro->pc) {\ncase 0: {\n")}
+                        // ARGS
+                        int ceu_i = 0;
+                        ${this.args.map {"""
+                            CEU_Value ${it.str} = { CEU_VALUE_NIL };
+                            CEU_Block* _${it.str}_ = $block;   // TODO: should be the upcoming block
+                            if (ceu_i < ceu_n) {
+                                ${it.str} = *ceu_args[ceu_i];
+                            }
+                            ceu_i++;
+                            
+                            """.trimIndent()
+                        }.joinToString("")}
+                        ${this.body.code(null, Pair("ceu_ret", "ceu_$n"))}
+                        ${tsk("}\n}\n")}
                     }
                     ${tsk("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
                     return ceu_$n;
@@ -286,17 +285,20 @@ class Coder (parser_: Parser) {
                 }
             """.trimIndent()
             }
-            is Expr.Yield -> """
+            is Expr.Yield -> {
+                """
                 { // YIELD
                     CEU_Value ceu_$n;
-                    ${fset(this.tk, set, "ceu_$n")}
+                    ${this.arg.code(block, Pair("ceu_ret","ceu_$n"))}
                     ceu_coro->pc = $n;      // next resume
-                    ceu_coro->status = TASK_YIELDED;
+                    ceu_coro->status = CEU_CORO_STATUS_YIELDED;
                     return ceu_$n;          // yield
                 case $n:                    // resume here
-                    ceu_coro->status = TASK_RESUMED;
+                    ceu_coro->status = CEU_CORO_STATUS_RESUMED;
+                    ${fset(this.tk, set, "(*ceu_args[0])")}
                 }
             """.trimIndent()
+            }
 
             is Expr.Nat -> {
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
