@@ -305,7 +305,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     ret += if (it[i] != '$') read() else {
                         read()
                         val (l,c) = Pair(lin,col)
-                        var id = "ceu_mem->"
+                        var id = ""
                         var x = read()
                         while (x.isLetterOrDigit() || x=='_') {
                             id += x
@@ -314,8 +314,9 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                         if (id.length == 0) {
                             err(tk, "native error : (lin $l, col $c) : invalid identifier")
                         }
-                        ids.add(id)
-                        "($id.number)$x"
+                        val idx = "ceu_mem->"
+                        ids.add(idx)
+                        "($idx.number)$x"
                     }
                 }
                 Pair(ids,ret)

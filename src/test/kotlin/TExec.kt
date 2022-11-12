@@ -113,21 +113,21 @@ class TExec {
     fun index_err1() {
         val out = all("""
             println(1[1])
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 9) : index error : expected tuple\n") { out }
     }
     @Test
     fun index_err2() {
         val out = all("""
             println([1][[]])
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 13) : index error : expected number\n") { out }
     }
     @Test
     fun index_err3() {
         val out = all("""
             println([1][2])
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 13) : index error : out of bounds\n") { out }
     }
 
@@ -168,14 +168,14 @@ class TExec {
     fun set_err1() {
         val out = all("""
             set 1 = 1
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
     fun set_err2() {
         val out = all("""
             set [1] = 1
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
@@ -253,7 +253,7 @@ class TExec {
                 set a = [1,2,3]
                 set x = a
             }
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -298,7 +298,7 @@ class TExec {
                 set x[2] = y
             }
             println(x)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 6, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -349,20 +349,20 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if3() {
+    fun if3_err() {
         val out = all("""
             var x
             set x = 10
             set x = if (nil) {} else { 1 }
             println(x)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
     }
     @Test
     fun if_err() {
         val out = all("""
             if [] {}
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
     }
 
@@ -477,8 +477,8 @@ class TExec {
     fun func10_err() {
         val out = all("""
             f()
-        """)
-        assert(out == "anon : (lin 1, col 1) : access error : variable is not declared")
+        """.trimIndent())
+        assert(out == "anon : (lin 1, col 1) : access error : variable is not declared") { out }
     }
 
     // WHILE
@@ -523,7 +523,7 @@ class TExec {
                 set x = [1]
                 throw (2,x)
             }})
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -560,7 +560,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -608,7 +608,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 2, col 5) : throw error : invalid exception : expected number\n") { out }
     }
     @Test
@@ -621,7 +621,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -650,7 +650,7 @@ class TExec {
                 y
             }
             println(x)
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -749,7 +749,7 @@ class TExec {
              native {
                 ${D} 
              }
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
     @Test
@@ -760,14 +760,14 @@ class TExec {
                 ${D}{x.y}
                 
              }
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier") { out }
     }
     @Test
     fun native8_err() {
         val out = all("""
             native (${D})
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
 
