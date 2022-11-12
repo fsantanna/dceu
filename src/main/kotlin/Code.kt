@@ -287,7 +287,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                     ret += if (it[i] != '$') read() else {
                         read()
                         val (l,c) = Pair(lin,col)
-                        var id = ""
+                        var id = "ceu_mem->"
                         var x = read()
                         while (x.isLetterOrDigit() || x=='_') {
                             id += x

@@ -381,7 +381,7 @@ class TExec {
             println(x)
         """.trimIndent()
         )
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
     }
     @Test
     fun if_err() {
