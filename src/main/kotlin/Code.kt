@@ -21,6 +21,9 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
     return when (this) {
         is Expr.Block -> {
             val depth = if (block == null) 0 else "$block->depth+1"
+            val es = this.es.mapIndexed { i, it ->
+                it.code("(&ceu_block_$n)", if (i == this.es.size - 1) set else null) + "\n"
+            }.joinToString("")
             """
             { // BLOCK
                 assert($depth < UINT8_MAX);
@@ -31,7 +34,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 int ceu_brk_$n = 0;
                 while (!ceu_brk_$n) {
                     ceu_brk_$n = 1;
-                    ${this.es.code("(&ceu_block_$n)", set)}
+                    $es
                 }
                 ceu_block_free(&ceu_block_$n);
                 if (ceu_throw != CEU_THROW_NONE) {
@@ -46,10 +49,10 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             """
             // DCL
             CEU_Value $id = { CEU_VALUE_NIL };
-            CEU_Block* _${id}_ = $block;   // can't be static b/c recursion
+            CEU_Block* _${id}_ = ${block!!};   // can't be static b/c recursion
             ${fset(this.tk, set, id)}            
                 
-        """.trimIndent()
+            """.trimIndent()
         }
         is Expr.Set -> {
             val (scp, dst) = when (this.dst) {
@@ -78,61 +81,61 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             //Pair(s1+pre+s2+pos, "ceu_$n")
         }
         is Expr.If -> """
-        { // IF
-            CEU_Value ceu_cnd_$n;
-            ${this.cnd.code(block, Pair(block!!, "ceu_cnd_$n"))}
-            int ceu_ret_$n; {
-                switch (ceu_cnd_$n.tag) {
-                    case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
-                    case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
-                    default: {                
-                        ceu_throw = CEU_THROW_RUNTIME;
-                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
-                        continue;
-                    }
-                }
-            }
-            if (ceu_ret_$n) {
-                ${this.t.code(block, set)}
-            } else {
-                ${this.f.code(block, set)}
-            }
-        }
-        
-    """.trimIndent()
-        is Expr.While -> """
-        { // WHILE
-            CEU_Value ceu_ret_$n;
-            int ceu_brk_$n = 0;
-            while (!ceu_brk_$n) {
-                ceu_brk_$n = 1;
-                {
-                    CEU_Value ceu_cnd_$n;
-                    ${this.cnd.code(block, Pair(block!!, "ceu_cnd_$n"))}
-                    int ceu_ret_$n; {
-                        switch (ceu_cnd_$n.tag) {
-                            case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
-                            case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
-                            default: {                
-                                ceu_throw = CEU_THROW_RUNTIME;
-                                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
-                                continue;
-                            }
+            { // IF
+                CEU_Value ceu_cnd_$n;
+                ${this.cnd.code(block, Pair(block!!, "ceu_cnd_$n"))}
+                int ceu_ret_$n; {
+                    switch (ceu_cnd_$n.tag) {
+                        case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
+                        case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                        default: {                
+                            ceu_throw = CEU_THROW_RUNTIME;
+                            strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
+                            continue;
                         }
                     }
-                    if (!ceu_ret_$n) {
-                        continue;
-                    }
                 }
-                ${this.body.code(block, Pair(block, "ceu_ret_$n"))}
-                ceu_brk_$n = 0;
+                if (ceu_ret_$n) {
+                    ${this.t.code(block, set)}
+                } else {
+                    ${this.f.code(block, set)}
+                }
             }
-            if (ceu_throw != 0) {
-                continue;
-            }
-        }
             
-    """.trimIndent()
+        """.trimIndent()
+        is Expr.While -> """
+            { // WHILE
+                CEU_Value ceu_ret_$n;
+                int ceu_brk_$n = 0;
+                while (!ceu_brk_$n) {
+                    ceu_brk_$n = 1;
+                    {
+                        CEU_Value ceu_cnd_$n;
+                        ${this.cnd.code(block, Pair(block!!, "ceu_cnd_$n"))}
+                        int ceu_ret_$n; {
+                            switch (ceu_cnd_$n.tag) {
+                                case CEU_VALUE_NIL:  { ceu_ret_$n=0; break; }
+                                case CEU_VALUE_BOOL: { ceu_ret_$n=ceu_cnd_$n.bool; break; }
+                                default: {                
+                                    ceu_throw = CEU_THROW_RUNTIME;
+                                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
+                                    continue;
+                                }
+                            }
+                        }
+                        if (!ceu_ret_$n) {
+                            continue;
+                        }
+                    }
+                    ${this.body.code(block, Pair(block, "ceu_ret_$n"))}
+                    ceu_brk_$n = 0;
+                }
+                if (ceu_throw != 0) {
+                    continue;
+                }
+            }
+                
+        """.trimIndent()
         is Expr.Func -> {
             val (fld,tag) = if (this.isTask()) {
                 Pair("task", "CEU_VALUE_TASK")
@@ -187,7 +190,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 continue;
             }
     
-        """.trimIndent()
+            """.trimIndent()
         is Expr.Catch -> {
             val scp = if (set != null) set.first else block!!
             """
@@ -229,13 +232,13 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 *ceu_coro_$n = (CEU_Coro) { CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_coro_$n} })")}            
             }
-        """.trimIndent()
+            """.trimIndent()
         is Expr.Resume -> {
             assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
             val (dcls,sets,args) = this.call.args.let {
                 Triple(
                     it.mapIndexed { i,_ -> "CEU_Value ceu_${i}_$n;\n" }.joinToString(""),
-                    it.mapIndexed { i,x -> it.code(block!!, Pair(block, "ceu_${i}_$n")) }.joinToString(""),
+                    it.mapIndexed { i,x -> x.code(block!!, Pair(block, "ceu_${i}_$n")) }.joinToString(""),
                     it.mapIndexed { i,_ -> "&ceu_${i}_$n" }.joinToString(",")
                 )
             }
@@ -262,10 +265,9 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 }
                 ${fset(this.tk, set, "ceu_$n")}
             }
-        """.trimIndent()
+            """.trimIndent()
         }
-        is Expr.Yield -> {
-            """
+        is Expr.Yield -> """
             { // YIELD
                 CEU_Value ceu_$n;
                 ${this.arg.code(block, Pair("ceu_ret","ceu_$n"))}
@@ -276,8 +278,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                 ${fset(this.tk, set, "(*ceu_args[0])")}
             }
-        """.trimIndent()
-        }
+            """.trimIndent()
 
         is Expr.Nat -> {
             val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
@@ -384,39 +385,39 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             """.trimIndent()
         }
         is Expr.Index -> """
-        //{ // INDEX    // (removed {} b/c set uses col[idx])
-            CEU_Value ceu_col_$n;
-            ${this.col.code(block, Pair(block!!, "ceu_col_$n"))}
-            if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
-                ceu_throw = CEU_THROW_RUNTIME;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                continue;
-            }
-                            
-            CEU_Value ceu_idx_$n;
-            ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
-            if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
-                ceu_throw = CEU_THROW_RUNTIME;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
-                continue;
-            }
+            //{ // INDEX    // (removed {} b/c set uses col[idx])
+                CEU_Value ceu_col_$n;
+                ${this.col.code(block, Pair(block!!, "ceu_col_$n"))}
+                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                    ceu_throw = CEU_THROW_RUNTIME;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
+                    continue;
+                }
+                                
+                CEU_Value ceu_idx_$n;
+                ${this.idx.code(block, Pair(block, "ceu_idx_$n"))}
+                if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
+                    ceu_throw = CEU_THROW_RUNTIME;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
+                    continue;
+                }
+                
+                if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
+                    ceu_throw = CEU_THROW_RUNTIME;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
+                    continue;
+                }
+                
+                if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
+                    ceu_throw = CEU_THROW_RUNTIME;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
+                    break;
+                }
+    
+                ${fset(this.tk, set, "ceu_col_$n.tuple->buf[(int) ceu_idx_$n.number]")}
+            //}
             
-            if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
-                ceu_throw = CEU_THROW_RUNTIME;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                continue;
-            }
-            
-            if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
-                ceu_throw = CEU_THROW_RUNTIME;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                break;
-            }
-
-            ${fset(this.tk, set, "ceu_col_$n.tuple->buf[(int) ceu_idx_$n.number]")}
-        //}
-        
-    """.trimIndent()
+        """.trimIndent()
         is Expr.Call -> {
             val (dcls,sets,args) = this.args.let {
                 Triple(
@@ -448,13 +449,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 ${fset(this.tk, set, "ceu_$n")}
             }
 
-        """.trimIndent()
+            """.trimIndent()
         }
     }
-}
-
-fun List<Expr>.code(block: String, set: Pair<String, String>?): String {
-    return this.mapIndexed { i, it ->
-        it.code(block, if (i == this.size - 1) set else null) + "\n"
-    }.joinToString("")
 }
