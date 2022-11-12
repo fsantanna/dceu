@@ -8,6 +8,7 @@ import java.io.File
 //  - uninitialised value
 val VALGRIND = ""
 //val VALGRIND = "valgrind "
+val THROW = false
 
 fun all (inp: String, pre: Boolean=false): String {
     val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
@@ -23,6 +24,9 @@ fun all (inp: String, pre: Boolean=false): String {
     val c = try {
         Expr.Block(Tk.Fix("",Pos("anon",0,0)),es).main()
     } catch (e: Throwable) {
+        if (THROW) {
+            throw e
+        }
         return e.message!!
     }
     File("out.c").writeText(c)
@@ -513,7 +517,7 @@ class TExec {
             f()
         """.trimIndent(),
         )
-        assert(out.contains("error: ‘f’ undeclared (first use in this function)"))
+        assert(out == "anon : (lin 1, col 1) : access error : variable is not declared")
     }
 
     // WHILE

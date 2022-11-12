@@ -301,6 +301,7 @@ fun Expr.Block.main (): String {
                 } CEU_Func_$n;
                 CEU_Func_$n _ceu_mem_;
                 CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                CEU_Func_$n* ceu_mem_$n = &_ceu_mem_;
                 {
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_print}     };
@@ -308,7 +309,13 @@ fun Expr.Block.main (): String {
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
                     ceu_mem->op_not_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_not_eq} };
                 }
-                ${this.code(null, null)}
+                ${this.code (
+                    ArrayDeque (
+                        listOf(Pair(n, mutableSetOf("tags", "print", "println", "op_eq_eq", "op_not_eq")))
+                    ),
+                    null,
+                    null
+                )}
                 return 0;
             }
             fprintf(stderr, "%s\n", ceu_throw_msg);

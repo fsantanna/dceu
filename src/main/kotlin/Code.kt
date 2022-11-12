@@ -17,12 +17,23 @@ fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     """.trimIndent()
 }
 
-fun Expr.code(block: String?, set: Pair<String, String>?): String {
+fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>): String {
+    //println(this)
+    //println(syms.first())
+    val sym = syms.find { (_,vars) -> vars.contains(this) }
+    if (sym == null) {
+        err(tk, "access error : variable is not declared")
+    }
+    val n = sym!!.first
+    return "(ceu_mem_$n->$this)"
+}
+
+fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, set: Pair<String, String>?): String {
     return when (this) {
         is Expr.Block -> {
             val depth = if (block == null) 0 else "$block->depth+1"
             val es = this.es.mapIndexed { i, it ->
-                it.code("(&ceu_mem->block_$n)", if (i == this.es.size - 1) set else null) + "\n"
+                it.code(syms, "(&ceu_mem->block_$n)", if (i == this.es.size - 1) set else null) + "\n"
             }.joinToString("")
             """
             { // BLOCK
@@ -46,10 +57,13 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         }
         is Expr.Dcl -> {
             val id = this.tk_.fromOp()
+            syms.first().second.add(id)
+            syms.first().second.add("_${id}_")
+            val (x,_x_) = this.tk_.fromOp().let { Pair(it.id2mem(this.tk,syms),"_${it}_".id2mem(this.tk,syms)) }
             """
             // DCL
-            ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
-            ceu_mem->_${id}_ = ${block!!};   // can't be static b/c recursion
+            $x = (CEU_Value) { CEU_VALUE_NIL };
+            $_x_ = ${block!!};   // can't be static b/c recursion
             ${fset(this.tk, set, id)}            
                 
             """.trimIndent()
@@ -70,8 +84,8 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             }
             """
             { // SET
-                ${this.dst.code(block, null)}
-                ${this.src.code(block, Pair(scp, "ceu_mem->set_$n"))}
+                ${this.dst.code(syms, block, null)}
+                ${this.src.code(syms, block, Pair(scp, "ceu_mem->set_$n"))}
                 $dst = ceu_mem->set_$n;
                 ${fset(this.tk, set, "ceu_mem->set_$n")}
             }
@@ -80,16 +94,16 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         }
         is Expr.If -> """
             { // IF
-                ${this.cnd.code(block, Pair(block!!, "ceu_mem->cnd_$n"))}
+                ${this.cnd.code(syms, block, Pair(block!!, "ceu_mem->cnd_$n"))}
                 if (ceu_mem->cnd_$n.tag != CEU_VALUE_BOOL) {
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
                     continue;
                 }
                 if (ceu_mem->cnd_$n.bool) {
-                    ${this.t.code(block, set)}
+                    ${this.t.code(syms, block, set)}
                 } else {
-                    ${this.f.code(block, set)}
+                    ${this.f.code(syms, block, set)}
                 }
             }
             
@@ -99,7 +113,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 ceu_mem->brk_$n = 0;
                 while (!ceu_mem->brk_$n) {
                     ceu_mem->brk_$n = 1;
-                    ${this.cnd.code(block, Pair(block!!, "ceu_mem->cnd_$n"))}
+                    ${this.cnd.code(syms, block, Pair(block!!, "ceu_mem->cnd_$n"))}
                     if (ceu_mem->cnd_$n.tag != CEU_VALUE_BOOL) {
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : while error : invalid condition", 256);
@@ -108,7 +122,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                     if (!ceu_mem->cnd_$n.bool) {
                         continue;
                     }
-                    ${this.body.code(block, null)}
+                    ${this.body.code(syms, block, null)}
                     ceu_mem->brk_$n = 0;
                 }
                 if (ceu_throw != 0) {
@@ -118,6 +132,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                 
             """.trimIndent()
         is Expr.Func -> {
+            syms.addFirst(Pair(n, this.args.map { it.str }.toMutableSet()))
             val (fld,tag) = if (this.isTask()) {
                 Pair("task", "CEU_VALUE_TASK")
             } else {
@@ -126,32 +141,40 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             fun tsk (v: String): String {
                 return if (this.isTask()) v else ""
             }
-            """
+            val ret = """
             CEU_Value ceu_func_$n (${tsk("CEU_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
                 typedef struct {
-                    ${this.mem()}
+                    ${this.args.map {
+                        """
+                            CEU_Value ${it.str};
+                            CEU_Block* _${it.str}_;
+                        """
+                    }.joinToString("")}
+                    ${this.body.mem()}
                 } CEU_Func_$n;
                 CEU_Func_$n _ceu_mem_;
                 CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                CEU_Func_$n* ceu_mem_$n = &_ceu_mem_;
                 CEU_Value ceu_$n;
                 ${tsk("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
                 int ceu_brk_$n = 0;
-                while (!ceu_brk_$n) {
+                while (!ceu_brk_$n) {  // FUNC
                     ceu_brk_$n = 1;
                     ${tsk("switch (ceu_coro->pc) {\ncase 0: {\n")}
-                    // ARGS
-                    int ceu_i = 0;
-                    ${this.args.map {"""
-                        CEU_Value ${it.str} = { CEU_VALUE_NIL };
-                        CEU_Block* _${it.str}_ = $block;   // TODO: should be the upcoming block
-                        if (ceu_i < ceu_n) {
-                            ${it.str} = *ceu_args[ceu_i];
-                        }
-                        ceu_i++;
-                        
-                        """.trimIndent()
-                    }.joinToString("")}
-                    ${this.body.code(null, Pair("ceu_ret", "ceu_$n"))}
+                    { // ARGS
+                        int ceu_i = 0;
+                        ${this.args.map {"""
+                            ceu_mem->_${it.str}_ = NULL; // TODO: create Block at Func top-level
+                            if (ceu_i < ceu_n) {
+                                ${it.str.id2mem(it,syms)} = *ceu_args[ceu_i];
+                            }
+                            ceu_i++;
+                            
+                            """.trimIndent()
+                        }.joinToString("")}
+                    }
+                    // BODY
+                    ${this.body.code(syms, null, Pair("ceu_ret", "ceu_$n"))}
                     ${tsk("}\n}\n")}
                 }
                 ${tsk("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
@@ -160,11 +183,13 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}
 
             """.trimIndent()
+            syms.removeFirst()
+            ret
         }
         is Expr.Throw -> """
             { // THROW
-                ${this.ex.code(block, Pair(block!!, "ceu_mem->ex_$n"))}
-                ${this.arg.code(block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
+                ${this.ex.code(syms, block, Pair(block!!, "ceu_mem->ex_$n"))}
+                ${this.arg.code(syms, block, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
                 if (ceu_mem->ex_$n.tag == CEU_VALUE_NUMBER) {
                     ceu_throw = ceu_mem->ex_$n.number;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
@@ -180,12 +205,12 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             val scp = if (set != null) set.first else block!!
             """
             { // CATCH
-                ${this.catch.code(block, Pair(block!!, "ceu_mem->catch_$n"))}
+                ${this.catch.code(syms, block, Pair(block!!, "ceu_mem->catch_$n"))}
                 assert(ceu_mem->catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
                 ceu_mem->brk_$n = 0;
                 while (!ceu_mem->brk_$n) {
                     ceu_mem->brk_$n = 1;
-                    ${this.body.code(block, set)}
+                    ${this.body.code(syms, block, set)}
                 }
                 if (ceu_throw != CEU_THROW_NONE) {          // pending throw
                     if (ceu_throw == ceu_mem->catch_$n.number) { // CAUGHT: reset throw, set arg
@@ -205,7 +230,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         is Expr.Spawn -> """
             { // SPAWN
                 CEU_Value ceu_mem->task_$n;
-                ${this.task.code(block, Pair(block!!, "ceu_mem->task_$n"))}
+                ${this.task.code(syms, block, Pair(block!!, "ceu_mem->task_$n"))}
                 if (ceu_mem->task_$n.tag != CEU_VALUE_TASK) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
@@ -220,14 +245,14 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
             val (sets,args) = this.call.args.let {
                 Pair(
-                    it.mapIndexed { i,x -> x.code(block!!, Pair(block, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                    it.mapIndexed { i,x -> x.code(syms, block!!, Pair(block, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                     it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                 )
             }
             """
             { // RESUME
                 CEU_Value ceu_mem->coro_$n;
-                ${this.call.f.code(block, Pair(block!!, "ceu_mem->coro_$n"))}
+                ${this.call.f.code(syms, block, Pair(block!!, "ceu_mem->coro_$n"))}
                 if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO || ceu_mem->coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected spawned task", 256);
@@ -251,7 +276,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         is Expr.Yield -> """
             { // YIELD
                 CEU_Value ceu_mem->ret_$n;
-                ${this.arg.code(block, Pair("ceu_ret","ceu_mem->ret_$n"))}
+                ${this.arg.code(syms, block, Pair("ceu_ret","ceu_mem->ret_$n"))}
                 ceu_coro->pc = $n;      // next resume
                 ceu_coro->status = CEU_CORO_STATUS_YIELDED;
                 return ceu_mem->ret_$n; // yield
@@ -317,7 +342,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             }
             """.trimIndent()
         }
-        is Expr.Acc -> fset(this.tk, set, "(ceu_mem->"+this.tk_.fromOp()+")")
+        is Expr.Acc -> fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Tag -> {
             val tag = this.tk.str.drop(1)
@@ -346,7 +371,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
             val scp = if (set == null) block!! else set.first
             val args = this.args.mapIndexed { i, it ->
                 // allocate in the same scope of set (set.first) or use default block
-                it.code(block, Pair(scp, "ceu_mem->arg_${i}_$n"))
+                it.code(syms, block, Pair(scp, "ceu_mem->arg_${i}_$n"))
             }.joinToString("")
             """
             { // TUPLE /* ${this.tostr()} */
@@ -369,7 +394,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         is Expr.Index -> """
             { // INDEX /* ${this.tostr()} */
                 { // COL
-                    ${this.col.code(block, Pair(block!!, "ceu_mem->col_$n"))}
+                    ${this.col.code(syms, block, Pair(block!!, "ceu_mem->col_$n"))}
                     if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
@@ -377,7 +402,7 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
                     }
                 }
                 { // IDX        
-                    ${this.idx.code(block, Pair(block, "ceu_mem->idx_$n"))}
+                    ${this.idx.code(syms, block, Pair(block, "ceu_mem->idx_$n"))}
                     if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
@@ -398,13 +423,13 @@ fun Expr.code(block: String?, set: Pair<String, String>?): String {
         is Expr.Call -> {
             val (sets,args) = this.args.let {
                 Pair (
-                    it.mapIndexed { i,x -> x.code(block, Pair(block!!, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                    it.mapIndexed { i,x -> x.code(syms, block, Pair(block!!, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                     it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                 )
             }
             """
             { // CALL
-                ${this.f.code(block, Pair(block!!, "ceu_mem->f_$n"))}
+                ${this.f.code(syms, block, Pair(block!!, "ceu_mem->f_$n"))}
                 if (ceu_mem->f_$n.tag != CEU_VALUE_FUNC) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
