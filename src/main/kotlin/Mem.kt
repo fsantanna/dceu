@@ -88,8 +88,10 @@ fun Expr.mem (): String {
                 CEU_Value ret_$n;
                 CEU_Value coro_$n;
                 union {
+                    // FUNC
                     ${this.call.f.mem()}
-                    struct {
+                    struct { // ARGS
+                        ${this.call.args.map { it.mem() }.joinToString("")}
                         ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                     };
                 };

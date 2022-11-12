@@ -27,6 +27,10 @@ fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>): String {
     return "(ceu_mem_$n->$this)"
 }
 
+fun Tk.dump (pre: String = ""): String {
+    return "// $pre (${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
+}
+
 fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, set: Pair<String, String>?): String {
     return when (this) {
         is Expr.Block -> {
@@ -334,7 +338,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             }
             """
         }
-        is Expr.Acc -> "// ACC\n" + fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
+        is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Tag -> {
             val tag = this.tk.str.drop(1)
@@ -425,7 +429,9 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
                     break;
                 }
-                $sets
+                { // SETS
+                    $sets
+                }
                 CEU_Value* ceu_args_$n[] = { $args };
                 ceu_mem->ret_$n = ceu_mem->f_$n.func(
                     ${if (set == null) block else set.first},

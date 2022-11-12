@@ -25,7 +25,7 @@ class TTask {
             set v = resume a(v+1)
             println(v)              ;; 4
             set v = resume a(v+1)
-            throw (5)
+            //throw (5)
             println(v)              ;; 6
             set v = resume a(v+1)
             println(v)              ;; nil
@@ -91,6 +91,14 @@ class TTask {
             println(2)
         """)
         assert(out == "1\n99\n2\n") { out }
+    }
+    @Test
+    fun tak8_err() {
+        val out = all("""
+            var xxx
+            resume xxx(xxx(1))
+        """)
+        assert(out == "anon : (lin 3, col 20) : resume error : expected spawned task\n") { out }
     }
 
     // MISC
