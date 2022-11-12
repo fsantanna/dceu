@@ -13,8 +13,7 @@ fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
             }
         }
         $ret_var = $src;
-
-    """.trimIndent()
+    """
 }
 
 fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>): String {
@@ -52,8 +51,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     continue;
                 }
             }
-            
-            """.trimIndent()
+            """
         }
         is Expr.Dcl -> {
             val id = this.tk_.fromOp()
@@ -64,9 +62,8 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             // DCL
             $x = (CEU_Value) { CEU_VALUE_NIL };
             $_x_ = ${block!!};   // can't be static b/c recursion
-            ${fset(this.tk, set, id)}            
-                
-            """.trimIndent()
+            ${fset(this.tk, set, id)}                
+            """
         }
         is Expr.Set -> {
             val (scp, dst) = when (this.dst) {
@@ -89,8 +86,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 $dst = ceu_mem->set_$n;
                 ${fset(this.tk, set, "ceu_mem->set_$n")}
             }
-                
-            """.trimIndent()
+            """
         }
         is Expr.If -> """
             { // IF
@@ -106,8 +102,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     ${this.f.code(syms, block, set)}
                 }
             }
-            
-        """.trimIndent()
+            """
         is Expr.While -> """
             { // WHILE
                 ceu_mem->brk_$n = 0;
@@ -129,8 +124,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     continue;
                 }
             }
-                
-            """.trimIndent()
+            """
         is Expr.Func -> {
             syms.addFirst(Pair(n, this.args.map { it.str }.toMutableSet()))
             val (fld,tag) = if (this.isTask()) {
@@ -171,8 +165,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                                 ${it.str.id2mem(it,syms)} = (CEU_Value) { CEU_VALUE_NIL };
                             }
                             ceu_i++;
-                            
-                            """.trimIndent()
+                            """
                         }.joinToString("")}
                     }
                     // BODY
@@ -183,8 +176,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 return ceu_$n;
             }
             ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}
-
-            """.trimIndent()
+            """
             syms.removeFirst()
             ret
         }
@@ -201,8 +193,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 }
                 continue;
             }
-    
-            """.trimIndent()
+            """
         is Expr.Catch -> {
             val scp = if (set != null) set.first else block!!
             """
@@ -227,7 +218,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     }
                 }
             }
-            """.trimIndent()
+            """
         }
         is Expr.Spawn -> """
             { // SPAWN
@@ -242,7 +233,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 *ceu_mem->coro_$n = (CEU_Coro) { CEU_CORO_STATUS_YIELDED, ceu_mem->task_$n.task, 0 };
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_mem->coro_$n} })")}            
             }
-            """.trimIndent()
+            """
         is Expr.Resume -> {
             assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
             val (sets,args) = this.call.args.let {
@@ -273,7 +264,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 }
                 ${fset(this.tk, set, "ceu_mem->ret_$n")}
             }
-            """.trimIndent()
+            """
         }
         is Expr.Yield -> """
             { // YIELD
@@ -286,7 +277,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                 ${fset(this.tk, set, "(*ceu_args[0])")}
             }
-            """.trimIndent()
+            """
 
         is Expr.Nat -> {
             val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
@@ -342,7 +333,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 }
                 ${fset(this.tk, set, "ceu_$n")}
             }
-            """.trimIndent()
+            """
         }
         is Expr.Acc -> fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
@@ -358,7 +349,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 #endif
                 //{fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TAG, {._tag_=CEU_TAG_$tag} })")}
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TAG, {._tag_=ceu_tag_from_string(\"@$tag\")} })")}
-            """.trimIndent()
+            """
         }
         is Expr.Bool -> {
             fset(
@@ -390,8 +381,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 $scp->tofree = ceu_$n;
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
-
-            """.trimIndent()
+            """
         }
         is Expr.Index -> """
             { // INDEX /* ${this.tostr()} */
@@ -420,8 +410,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     ${fset(this.tk, set, "ceu_mem->col_$n.tuple->buf[(int) ceu_mem->idx_$n.number]")}
                 }
             }
-            
-        """.trimIndent()
+            """
         is Expr.Call -> {
             val (sets,args) = this.args.let {
                 Pair (
@@ -449,8 +438,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 }
                 ${fset(this.tk, set, "ceu_mem->ret_$n")}
             }
-
-            """.trimIndent()
+            """
         }
     }
 }

@@ -321,7 +321,7 @@ class TParser {
                 throw (1)
             }
             
-        """.trimIndent())
+        """)
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
@@ -335,7 +335,6 @@ class TParser {
             native {
                 printf("xxx\n");
             }
-            
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.exprPrim()
@@ -380,7 +379,7 @@ class TParser {
             spawn t
             set v = resume a(1)
             resume a(2)
-        """.trimIndent())
+        """)
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == """
@@ -388,12 +387,12 @@ class TParser {
             set v = yield (1)
             yield (2)
             }
-            
+
             spawn t
             set v = resume a(1)
             resume a(2)
             
-        """.trimIndent())
+        """.trimIndent()) { e.tostr() }
     }
     @Test
     fun task2_err() {
@@ -427,9 +426,9 @@ class TParser {
     @Test
     fun misc1() {
         val l = lexer("""
-        """.trimIndent())
+        """)
         val parser = Parser(l)
         val e = parser.exprs()
-        println(e.tostr())
+        //println(e.tostr())
     }
 }

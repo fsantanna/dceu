@@ -29,16 +29,14 @@ class TTask {
             println(v)              ;; 6
             set v = resume a(v+1)
             println(v)              ;; nil
-        """.trimIndent(), true
-        )
+        """)
         assert(out == "1\n2\n3\n4\n5\n6\nnil\n") { out }
     }
     @Test
     fun task2_err() {
         val out = all("""
             spawn func () {}
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 7) : spawn error : expected task\n") { out }
     }
     @Test
@@ -46,8 +44,7 @@ class TTask {
         val out = all("""
             var f
             resume f()
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 2, col 8) : resume error : expected spawned task\n") { out }
     }
     @Test
@@ -57,8 +54,7 @@ class TTask {
             set co = spawn task () {}
             resume co()
             resume co()
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 4, col 8) : resume error : expected spawned task\n") { out }
     }
     @Test
@@ -67,8 +63,7 @@ class TTask {
             var co
             set co = spawn task () {}
             resume co(1,2)
-        """.trimIndent()
-        )
+        """)
         assert(out == "bug found : not implemented : multiple arguments to resume") { out }
     }
     @Test
@@ -81,8 +76,7 @@ class TTask {
             }
             resume co(1)
             resume co(2)
-        """.trimIndent()
-        )
+        """)
         assert(out == "2\n") { out }
     }
     @Test
@@ -95,8 +89,7 @@ class TTask {
             println(1)
             resume co(99)
             println(2)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n99\n2\n") { out }
     }
 

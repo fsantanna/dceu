@@ -47,8 +47,7 @@ class TExec {
     fun print1() {
         val out = all("""
             print([10])
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]") { out }
     }
     @Test
@@ -56,8 +55,7 @@ class TExec {
         val out = all("""
             print(10)
             println(20)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1020\n") { out }
     }
     @Test
@@ -65,16 +63,14 @@ class TExec {
         val out = all("""
             println([[],[1,2,3]])
             println(func () {})
-        """.trimIndent()
-        )
+        """)
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
     @Test
     fun print_err1() {
         val out = all("""
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -85,8 +81,7 @@ class TExec {
             print(2)
             println()
             println(3)
-        """.trimIndent()
-        )
+        """)
         assert(out == "12\n3\n") { out }
     }
     @Test
@@ -111,32 +106,28 @@ class TExec {
     fun index() {
         val out = all("""
             println([1,2,3][1])
-        """.trimIndent()
-        )
+        """)
         assert(out == "2\n") { out }
     }
     @Test
     fun index_err1() {
         val out = all("""
             println(1[1])
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 9) : index error : expected tuple\n") { out }
     }
     @Test
     fun index_err2() {
         val out = all("""
             println([1][[]])
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 13) : index error : expected number\n") { out }
     }
     @Test
     fun index_err3() {
         val out = all("""
             println([1][2])
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 13) : index error : out of bounds\n") { out }
     }
 
@@ -147,8 +138,7 @@ class TExec {
         val out = all("""
             var x
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "nil\n") { out }
     }
 
@@ -160,8 +150,7 @@ class TExec {
             var x
             set x = [10]
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]\n") { out }
     }
     @Test
@@ -172,24 +161,21 @@ class TExec {
             set x[1] = 22
             set x[2][0] = 33
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10,22,[33]]\n") { out }
     }
     @Test
     fun set_err1() {
         val out = all("""
             set 1 = 1
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
     fun set_err2() {
         val out = all("""
             set [1] = 1
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
     }
     @Test
@@ -198,8 +184,7 @@ class TExec {
             var i
             set i = 1
             println([1,2,3][i])
-        """.trimIndent()
-        )
+        """)
         assert(out == "2\n") { out }
     }
 
@@ -209,8 +194,7 @@ class TExec {
     fun do1() {  // set whole tuple?
         val out = all("""
             do {}
-        """.trimIndent()
-        )
+        """)
         assert(out == "") { out }
     }
     @Test
@@ -221,8 +205,7 @@ class TExec {
                 set a = 1
                 println(a)
             }
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -235,8 +218,7 @@ class TExec {
                 a
             }
             print(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "10") { out }
     }
     @Test
@@ -245,8 +227,7 @@ class TExec {
             var x
             set x = do {}
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "nil\n") { out }
     }
 
@@ -260,8 +241,7 @@ class TExec {
                 set x = [1,2,3]
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -273,8 +253,7 @@ class TExec {
                 set a = [1,2,3]
                 set x = a
             }
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -287,8 +266,7 @@ class TExec {
                 set x = a
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[1,2,3]") { out }
     }
     @Test
@@ -306,8 +284,7 @@ class TExec {
                 }
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[1,[4,5,6],[4,5,6]]\n") { out }
     }
     @Test
@@ -321,8 +298,7 @@ class TExec {
                 set x[2] = y
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 6, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -336,8 +312,7 @@ class TExec {
                 set x[2] = y
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[1,2,30]\n") { out }
     }
     @Test
@@ -348,8 +323,7 @@ class TExec {
                 [10]
             }
             println(xs)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]\n") { out }
     }
 
@@ -361,8 +335,7 @@ class TExec {
             var x
             set x = if (true) { 1 }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -372,8 +345,7 @@ class TExec {
             set x = 10
             set x = if false { 1 }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "nil\n") { out }
     }
     @Test
@@ -383,16 +355,14 @@ class TExec {
             set x = 10
             set x = if (nil) {} else { 1 }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
     }
     @Test
     fun if_err() {
         val out = all("""
             if [] {}
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
     }
 
@@ -406,8 +376,7 @@ class TExec {
             var x
             set x = f()
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "nil\n") { out }
     }
     @Test
@@ -420,8 +389,7 @@ class TExec {
             var x
             set x = f()
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -434,8 +402,7 @@ class TExec {
             var x
             set x = f(10)
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "10\n") { out }
     }
     @Test
@@ -448,8 +415,7 @@ class TExec {
             var x
             set x = f()
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "nil\n") { out }
     }
     @Test
@@ -462,8 +428,7 @@ class TExec {
             var x
             set x = f(10)
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]\n") { out }
         //assert(out.contains("set error : incompatible scopes")) { out }
     }
@@ -477,8 +442,7 @@ class TExec {
             var x
             set x = f(10)
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]\n") { out }
     }
     @Test
@@ -491,8 +455,7 @@ class TExec {
         val out = all("""
             1
             (1)
-        """.trimIndent()
-        )
+        """)
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
         assert(out == "") { out }
     }
@@ -507,16 +470,14 @@ class TExec {
             println(f(1))
             println(f(1,2))
             println(f(1,2,3))
-        """.trimIndent()
-        )
+        """)
         assert(out == "[nil,nil]\n[1,nil]\n[1,2]\n[1,2]\n") { out }
     }
     @Test
     fun func10_err() {
         val out = all("""
             f()
-        """.trimIndent(),
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : access error : variable is not declared")
     }
 
@@ -526,24 +487,21 @@ class TExec {
     fun while1() {
         val out = all("""
             println(catch 2 { while true { throw (2,1) }})
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
     fun while2() {
         val out = all("""
             println(catch 2 { while true { []; throw (2,1) }})
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
     fun while3() {
         val out = all("""
             println(catch 2 { while true { throw (2,[1]) }})
-        """.trimIndent()
-        )
+        """)
         assert(out == "[1]\n") { out }
     }
     @Test
@@ -554,8 +512,7 @@ class TExec {
                 set x = [1] ;; memory released
                 throw (2,1)
             }})
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -566,8 +523,7 @@ class TExec {
                 set x = [1]
                 throw (2,x)
             }})
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -579,8 +535,7 @@ class TExec {
                 set x = false
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "false\n") { out }
     }
 
@@ -594,8 +549,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -606,8 +560,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -622,8 +575,7 @@ class TExec {
                 println(9)
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "10\n") { out }
     }
     @Test
@@ -645,8 +597,7 @@ class TExec {
                 println(93)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -657,8 +608,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 2, col 5) : throw error : invalid exception : expected number\n") { out }
     }
     @Test
@@ -671,8 +621,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -684,8 +633,7 @@ class TExec {
                     println(9)
                 })
             }
-        """.trimIndent()
-        )
+        """)
         assert(out == "[10]\n") { out }
     }
     @Test
@@ -702,8 +650,7 @@ class TExec {
                 y
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -726,8 +673,7 @@ class TExec {
                 println(99)
             }
             println(3)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
@@ -738,8 +684,7 @@ class TExec {
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
 
@@ -751,8 +696,7 @@ class TExec {
             native {
                 printf("xxx\n");
             }
-        """.trimIndent()
-        )
+        """)
         assert(out == "xxx\n") { out }
     }
     @Test
@@ -763,8 +707,7 @@ class TExec {
                 return 1.5;
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1.5\n") { out }
     }
     @Test
@@ -773,8 +716,7 @@ class TExec {
             var x
             set x = native {}
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "0\n") { out }
     }
     @Test
@@ -787,8 +729,7 @@ class TExec {
                 return ${D}x*2;
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == ">>> 10\n20\n") { out }
     }
     @Test
@@ -799,8 +740,7 @@ class TExec {
                 ${D}x = 20;
             }
             println(x)
-        """.trimIndent()
-        )
+        """)
         assert(out == "20\n") { out }
     }
     @Test
@@ -809,8 +749,7 @@ class TExec {
              native {
                 ${D} 
              }
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
     @Test
@@ -821,16 +760,14 @@ class TExec {
                 ${D}{x.y}
                 
              }
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier") { out }
     }
     @Test
     fun native8_err() {
         val out = all("""
             native (${D})
-        """.trimIndent()
-        )
+        """)
         assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
 
@@ -840,22 +777,21 @@ class TExec {
     fun op_umn() {
         val out = all("""
             println(-10)
-        """.trimIndent(), true)
+        """, true)
         assert(out == "-10\n") { out }
     }
     @Test
     fun op_id1() {
         val out = all("""
             println({-}(10,4))
-        """.trimIndent(), true
-        )
+        """, true)
         assert(out == "6\n") { out }
     }
     @Test
     fun op_arithX() {
         val out = all("""
             println((10 + -20*2)/5)
-        """.trimIndent(), true)
+        """, true)
         assert(out == "-6\n") { out }
     }
     @Test
@@ -863,8 +799,7 @@ class TExec {
         val out = all("""
             set (+) = (-)
             println((+)(10,4))
-        """.trimIndent()
-        )
+        """)
         assert(out == "6\n") { out }
     }
     @Test
@@ -876,7 +811,7 @@ class TExec {
             println(1 != 1)
             println(2 >= 1)
             println(2 <= 1)
-        """.trimIndent(), true)
+        """, true)
         assert(out == "false\ntrue\ntrue\nfalse\ntrue\nfalse\n") { out }
     }
     @Test
@@ -884,8 +819,7 @@ class TExec {
         val out = all("""
             println(1 == 1)
             println(1 != 1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "true\nfalse\n") { out }
     }
 
@@ -899,24 +833,21 @@ class TExec {
             println(t)
             println(tags(t))
             println(tags(tags(t)))
-        """.trimIndent()
-        )
+        """)
         assert(out == "@number\n@tag\n@tag\n") { out }
     }
     @Test
     fun todo_tag2_err() {
         val out = all("""
             tags()
-        """.trimIndent()
-        )
+        """)
         assert(out == "-10\n") { out }
     }
     @Test
     fun todo_tag3_err() {
         val out = all("""
             tags(1,2)
-        """.trimIndent()
-        )
+        """)
         assert(out == "-10\n") { out }
     }
     @Test
@@ -927,8 +858,7 @@ class TExec {
             println(@xxx != @yyy)
             println(@xxx == @xxx)
             println(@xxx != @xxx)
-        """.trimIndent()
-        )
+        """)
         assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
 

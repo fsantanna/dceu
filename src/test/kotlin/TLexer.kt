@@ -159,14 +159,14 @@ class TLexer {
     @Test
     fun inc1() {
         val l = lexer("""
-                before
-                ^["test.ceu"]
-                after
-                ^[5]
-                first
-                ^["xxx.ceu",7,9]
-                xxx
-            """.trimIndent())
+            before
+            ^["test.ceu"]
+            after
+            ^[5]
+            first
+            ^["xxx.ceu",7,9]
+            xxx
+        """.trimIndent())
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==1 && it.pos.col==1 && it.str == "before" })
         assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==1 && it.pos.col==1 && it.str == "1" })

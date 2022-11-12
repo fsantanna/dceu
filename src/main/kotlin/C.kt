@@ -321,5 +321,5 @@ fun Expr.Block.main (): String {
             fprintf(stderr, "%s\n", ceu_throw_msg);
             return 1;
         }
-    """).trimIndent()
+    """)
 }
