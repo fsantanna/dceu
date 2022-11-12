@@ -29,14 +29,14 @@ class TTask {
             println(v)              ;; 6
             set v = resume a(v+1)
             println(v)              ;; nil
-        """)
+        """, true)
         assert(out == "1\n2\n3\n4\n5\n6\nnil\n") { out }
     }
     @Test
     fun task2_err() {
         val out = all("""
             spawn func () {}
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 7) : spawn error : expected task\n") { out }
     }
     @Test
@@ -44,7 +44,7 @@ class TTask {
         val out = all("""
             var f
             resume f()
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 2, col 8) : resume error : expected spawned task\n") { out }
     }
     @Test
@@ -54,7 +54,7 @@ class TTask {
             set co = spawn task () {}
             resume co()
             resume co()
-        """)
+        """.trimIndent())
         assert(out == "anon : (lin 4, col 8) : resume error : expected spawned task\n") { out }
     }
     @Test

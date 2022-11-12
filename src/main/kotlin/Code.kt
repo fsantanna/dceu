@@ -222,14 +222,13 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
         }
         is Expr.Spawn -> """
             { // SPAWN
-                CEU_Value ceu_mem->task_$n;
                 ${this.task.code(syms, block, Pair(block!!, "ceu_mem->task_$n"))}
                 if (ceu_mem->task_$n.tag != CEU_VALUE_TASK) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
                     continue;
                 }
-                CEU_Coro* ceu_mem->coro_$n = malloc(sizeof(CEU_Coro));
+                ceu_mem->coro_$n = malloc(sizeof(CEU_Coro));
                 *ceu_mem->coro_$n = (CEU_Coro) { CEU_CORO_STATUS_YIELDED, ceu_mem->task_$n.task, 0 };
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_mem->coro_$n} })")}            
             }
@@ -244,16 +243,17 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             }
             """
             { // RESUME
-                CEU_Value ceu_mem->coro_$n;
                 ${this.call.f.code(syms, block, Pair(block!!, "ceu_mem->coro_$n"))}
                 if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO || ceu_mem->coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected spawned task", 256);
                     continue;
                 }
-                $sets
+                { // SETS
+                    $sets
+                }
                 CEU_Value* ceu_args_$n[] = { $args };
-                CEU_Value ceu_mem->ret_$n = ceu_mem->coro_$n.coro->task(
+                ceu_mem->ret_$n = ceu_mem->coro_$n.coro->task(
                     ceu_mem->coro_$n.coro,
                     ${if (set == null) block else set.first},
                     ${this.call.args.size},
@@ -268,7 +268,6 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
         }
         is Expr.Yield -> """
             { // YIELD
-                CEU_Value ceu_mem->ret_$n;
                 ${this.arg.code(syms, block, Pair("ceu_ret","ceu_mem->ret_$n"))}
                 ceu_coro->pc = $n;      // next resume
                 ceu_coro->status = CEU_CORO_STATUS_YIELDED;
@@ -335,7 +334,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             }
             """
         }
-        is Expr.Acc -> fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
+        is Expr.Acc -> "// ACC\n" + fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Tag -> {
             val tag = this.tk.str.drop(1)

@@ -86,7 +86,7 @@ fun Expr.mem (): String {
         is Expr.Resume -> """
             struct { // RESUME
                 CEU_Value ret_$n;
-                CEU_Coro* coro_$n;
+                CEU_Value coro_$n;
                 union {
                     ${this.call.f.mem()}
                     struct {
