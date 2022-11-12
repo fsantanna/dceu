@@ -1,5 +1,6 @@
 fun Expr.Block.main (): String {
-    return """
+    return ("" +
+    """
         #include <stdio.h>
         #include <stdlib.h>
         #include <stdint.h>
@@ -11,7 +12,8 @@ fun Expr.Block.main (): String {
         struct CEU_Block;
         struct CEU_Stack;
         struct CEU_Coro;
-        
+    """ +
+    """
         /* VALUE */
 
         typedef enum CEU_VALUE {
@@ -47,7 +49,8 @@ fun Expr.Block.main (): String {
                 struct CEU_Coro* coro;
             };
         } CEU_Value;
-        
+    """ +
+    """
         /* BLOCK */
 
         typedef struct CEU_Block {
@@ -82,7 +85,8 @@ fun Expr.Block.main (): String {
                 cur = cur->nxt;
             }
         }
-
+    """ +
+    """
         /* CORO */
 
         typedef enum CEU_CORO_STATUS {
@@ -100,7 +104,8 @@ fun Expr.Block.main (): String {
             CEU_Task task; // (Stack* stack, CUE_Coro* coro, void* evt);
             int pc;
         } CEU_Coro;
-    
+    """ +
+    """
         /* TAGS */
 
         typedef struct CEU_Tags {
@@ -129,7 +134,9 @@ fun Expr.Block.main (): String {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {._tag_=args[0]->tag} };
         }
-        
+    """ +
+    """
+        /* PRINT */
         void ceu_print1 (CEU_Value* v) {
             switch (v->tag) {
                 case CEU_VALUE_NIL:
@@ -182,7 +189,9 @@ fun Expr.Block.main (): String {
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        
+    """ +
+    """
+        // ==  !=
         CEU_Value ceu_op_eq_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
@@ -225,13 +234,17 @@ fun Expr.Block.main (): String {
             v.bool = !v.bool;
             return v;
         }
-
+    """ +
+    """
+        // PRIM
         CEU_Value tags      = { CEU_VALUE_FUNC, {.func=ceu_tags}      };
         CEU_Value print     = { CEU_VALUE_FUNC, {.func=ceu_print}     };
         CEU_Value println   = { CEU_VALUE_FUNC, {.func=ceu_println}   };            
         CEU_Value op_eq_eq  = { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
         CEU_Value op_not_eq = { CEU_VALUE_FUNC, {.func=ceu_op_not_eq} };
-
+    """ +
+    """
+        // THROW
         typedef enum {
             CEU_THROW_NONE = 0,
             CEU_THROW_RUNTIME
@@ -240,9 +253,11 @@ fun Expr.Block.main (): String {
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
-
+    """ +
+    """
+        // MAIN
         int main (void) {
-            {             
+            {        
                 #define CEU_TAG_nil //__COUNTER__
                 static CEU_Tags ceu_tag_nil = { "@nil", NULL };
                 ceu_tag_nil.next = CEU_TAGS;
@@ -290,5 +305,5 @@ fun Expr.Block.main (): String {
             fprintf(stderr, "%s\n", ceu_throw_msg);
             return 1;
         }
-    """.trimIndent()
+    """).trimIndent()
 }
