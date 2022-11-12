@@ -6,10 +6,6 @@ import java.io.StringReader
 data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
 data class Pos (val file: String, val lin: Int, val col: Int)
 
-fun Pos.isSameLine (oth: Pos): Boolean {
-    return (this.file==oth.file && this.lin==oth.lin)
-}
-
 fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }
@@ -21,20 +17,6 @@ class Lexer (inps: List<Pair<String,Reader>>) {
         for (inp in inps) {
             stack.addFirst(Lex(inp.first, 1, 1, PushbackReader(inp.second,2)))
         }
-    }
-
-    fun err (pos: Pos, str: String) {
-        error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")
-    }
-    fun err (tk: Tk, str: String) {
-        err(tk.pos, str)
-    }
-    fun err_expected (tk: Tk, str: String) {
-        val have = when {
-            (tk is Tk.Eof) -> "end of file"
-            else -> '"' + tk.str + '"'
-        }
-        this.err(tk, "expected $str : have $have")
     }
 
     // TODO: reads 65535 after unreading -1

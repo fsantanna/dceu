@@ -21,7 +21,7 @@ class Parser (lexer_: Lexer)
     fun checkFix_err (str: String): Boolean {
         val ret = this.checkFix(str)
         if (!ret) {
-            this.lexer.err_expected(this.tk1, '"'+str+'"')
+            err_expected(this.tk1, '"'+str+'"')
         }
         return ret
     }
@@ -61,7 +61,7 @@ class Parser (lexer_: Lexer)
         }
 
         if (!ret) {
-            this.lexer.err_expected(this.tk1, err)
+            err_expected(this.tk1, err)
         }
         return ret
     }
@@ -111,7 +111,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (dst !is Expr.Acc && dst !is Expr.Index) {
-                    this.lexer.err(tk0, "invalid set : invalid destination")
+                    err(tk0, "invalid set : invalid destination")
                 }
                 Expr.Set(tk0, dst, src)
             }
@@ -157,7 +157,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
                 if (call !is Expr.Call) {
-                    this.lexer.err_expected(tk1, "invalid resume : expected call")
+                    err_expected(tk1, "invalid resume : expected call")
 
                 }
                 Expr.Resume(tk0, call as Expr.Call)
@@ -165,7 +165,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("yield") -> {
                 this.checkFix_err("(")
                 if (!this.tk0.pos.isSameLine(this.tk1.pos)) {
-                    this.lexer.err(this.tk1, "yield error : line break before expression")
+                    err(this.tk1, "yield error : line break before expression")
                 }
                 Expr.Yield(this.tk0 as Tk.Fix, this.expr())
             }
@@ -184,7 +184,7 @@ class Parser (lexer_: Lexer)
                 e
             }
             else -> {
-                this.lexer.err_expected(this.tk1, "expression")
+                err_expected(this.tk1, "expression")
                 error("unreachable")
             }
         }

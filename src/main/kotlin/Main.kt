@@ -8,7 +8,6 @@ val keywords: SortedSet<String> = sortedSetOf (
     "catch", "do", "else", "false", "func", "if", "nil", "resume",
     "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 )
-
 val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -20,11 +19,6 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Num (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos): Tk(str_, pos_)
 }
-
-fun Expr.Func.isTask (): Boolean {
-    return (this.tk.str == "task")
-}
-
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Block  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id):  Expr(N++, tk_)
@@ -59,11 +53,9 @@ fun exec (cmds: List<String>): Pair<Boolean,String> {
     val str = p.inputStream.bufferedReader().readText()
     return Pair(ret==0, str)
 }
-
 fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
-
 fun all (name: String, reader: Reader, args: List<String>): String {
     val inps = listOf(
         Pair(name, reader),

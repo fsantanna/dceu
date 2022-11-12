@@ -20,24 +20,6 @@ class Coder (parser_: Parser) {
         """.trimIndent()
     }
 
-    fun Tk.Id.fromOp (): String {
-        val MAP = mapOf(
-            Pair('+', "plus"),
-            Pair('-', "minus"),
-            Pair('*', "mul"),
-            Pair('/', "div"),
-            Pair('>', "gt"),
-            Pair('<', "lt"),
-            Pair('=', "eq"),
-            Pair('!', "not"),
-            Pair('|', "or"),
-            Pair('&', "and"),
-        )
-        return if (this.str[0] != '{') this.str else {
-            "op_" + this.str.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
-        }
-    }
-
     fun Expr.code(block: String?, set: Pair<String, String>?): String {
         return when (this) {
             is Expr.Block -> {
@@ -310,7 +292,7 @@ class Coder (parser_: Parser) {
                     fun read (): Char {
                         //assert(i < it.length) { "bug found" }
                         if (i >= it.length) {
-                            parser.lexer.err(tk, "native error : (lin $lin, col $col) : unterminated token")
+                            err(tk, "native error : (lin $lin, col $col) : unterminated token")
                         }
                         val x = it[i++]
                         if (x == '\n') {
@@ -333,7 +315,7 @@ class Coder (parser_: Parser) {
                                 x = read()
                             }
                             if (id.length == 0) {
-                                parser.lexer.err(tk, "native error : (lin $l, col $c) : invalid identifier")
+                                err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             ids.add(id)
                             "($id.number)$x"
