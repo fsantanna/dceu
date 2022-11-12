@@ -572,15 +572,13 @@ class TExec {
         val out = all("""
             var x
             set x = true
-            var r
-            set r = while x {
+            while x {
                 set x = false
-                10
             }
-            println(r)
+            println(x)
         """.trimIndent()
         )
-        assert(out == "10\n") { out }
+        assert(out == "false\n") { out }
     }
 
     // THROW / CATCH

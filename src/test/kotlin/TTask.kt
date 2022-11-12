@@ -10,7 +10,6 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
-                println(99)
                 println(v)          ;; 1
                 set v = yield (v+1) 
                 println(v)          ;; 2

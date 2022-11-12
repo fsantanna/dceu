@@ -12,7 +12,7 @@ class Coder (parser_: Parser) {
                 if ($src.tuple->block->depth > $ret_block->depth) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
-                    break;
+                    continue;
                 }
             }
             $ret_var = $src;
@@ -49,12 +49,14 @@ class Coder (parser_: Parser) {
                     if (ceu_block_global == NULL) {
                         ceu_block_global = &ceu_block_$n;
                     }    
-                    do {
+                    int ceu_brk_$n = 0;
+                    while (!ceu_brk_$n) {
+                        ceu_brk_$n = 1;
                         ${this.es.code("(&ceu_block_$n)", set)}
-                    } while (0);
+                    }
                     ceu_block_free(&ceu_block_$n);
                     if (ceu_throw != CEU_THROW_NONE) {
-                        break;
+                        continue;
                     }
                 }
                 
@@ -107,11 +109,8 @@ class Coder (parser_: Parser) {
                         default: {                
                             ceu_throw = CEU_THROW_RUNTIME;
                             strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
-                            break; // need to break again below
+                            continue;
                         }
-                    }
-                    if (ceu_throw != CEU_THROW_NONE) {
-                        break;  // break in switch above wont escape
                     }
                 }
                 if (ceu_ret_$n) {
@@ -125,7 +124,9 @@ class Coder (parser_: Parser) {
             is Expr.While -> """
             { // WHILE
                 CEU_Value ceu_ret_$n;
-                while (1) {
+                int ceu_brk_$n = 0;
+                while (!ceu_brk_$n) {
+                    ceu_brk_$n = 1;
                     {
                         CEU_Value ceu_cnd_$n;
                         ${this.cnd.code(block, Pair(block!!, "ceu_cnd_$n"))}
@@ -136,20 +137,20 @@ class Coder (parser_: Parser) {
                                 default: {                
                                     ceu_throw = CEU_THROW_RUNTIME;
                                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
-                                    break; // need to break again below
+                                    continue;
                                 }
-                            }
-                            if (ceu_throw != CEU_THROW_NONE) {
-                                break;  // break in switch above wont escape
                             }
                         }
                         if (!ceu_ret_$n) {
-                            break;
+                            continue;
                         }
                     }
                     ${this.body.code(block, Pair(block, "ceu_ret_$n"))}
+                    ceu_brk_$n = 0;
                 }
-                ${fset(this.tk, set, "ceu_ret_$n")}            
+                if (ceu_throw != 0) {
+                    continue;
+                }
             }
                 
         """.trimIndent()
@@ -179,14 +180,18 @@ class Coder (parser_: Parser) {
                     }
                     CEU_Value ceu_$n;
                     ${tsk("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
-                    do {
+                    int ceu_brk_$n = 0;
+                    while (!ceu_brk_$n) {
+                        ceu_brk_$n = 1;
+                        ${tsk("switch (ceu_coro->pc) {\ncase 0:\n")}
                         ${this.body.code(null, Pair("ceu_scope", "ceu_$n"))}
-                    } while (0);
+                        ${tsk("}\n")}
+                    }
                     ${tsk("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
                     return ceu_$n;
                 }
-                ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}            
-    
+                ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}
+
                 """.trimIndent()
             }
             is Expr.Throw -> """
@@ -201,7 +206,7 @@ class Coder (parser_: Parser) {
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : invalid exception : expected number", 256);
                     }
-                    break;
+                    continue;
                 }
         
             """.trimIndent()
@@ -214,9 +219,11 @@ class Coder (parser_: Parser) {
                     assert(ceu_catch_$n.tag == CEU_VALUE_NUMBER && "catch error : invalid exception : expected number");
                     ceu_catch_n_$n = ceu_catch_$n.number;
                 }
-                do {
+                int ceu_brk_$n = 0;
+                while (!ceu_brk_$n) {
+                    ceu_brk_$n = 1;
                     ${this.body.code(block, set)}
-                } while (0);
+                }
                 if (ceu_throw != CEU_THROW_NONE) {          // pending throw
                     if (ceu_throw == ceu_catch_n_$n) {      // CAUGHT: reset throw, set arg
                         ${fset(this.tk, set, "ceu_throw_arg")}
@@ -226,7 +233,7 @@ class Coder (parser_: Parser) {
                         }
                         ceu_throw = CEU_THROW_NONE;
                     } else {                                // UNCAUGHT: escape to outer
-                        break;
+                        continue;
                     }
                 }
                 """.trimIndent()
@@ -238,7 +245,7 @@ class Coder (parser_: Parser) {
                     if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
-                        break;
+                        continue;
                     }
                     CEU_Coro* ceu_coro_$n = malloc(sizeof(CEU_Coro));
                     *ceu_coro_$n = (CEU_Coro) { CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
@@ -261,7 +268,7 @@ class Coder (parser_: Parser) {
                     if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                         ceu_throw = CEU_THROW_RUNTIME;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected spawned task", 256);
-                        break;
+                        continue;
                     }
                     $dcls
                     $sets
@@ -273,13 +280,23 @@ class Coder (parser_: Parser) {
                         ceu_args_$n
                     );
                     if (ceu_throw != CEU_THROW_NONE) {
-                        break;
+                        continue;
                     }
                     ${fset(this.tk, set, "ceu_$n")}
                 }
             """.trimIndent()
             }
-            is Expr.Yield -> ""
+            is Expr.Yield -> """
+                { // YIELD
+                    CEU_Value ceu_$n;
+                    ${fset(this.tk, set, "ceu_$n")}
+                    ceu_coro->pc = $n;      // next resume
+                    ceu_coro->status = TASK_YIELDED;
+                    return ceu_$n;          // yield
+                case $n:                    // resume here
+                    ceu_coro->status = TASK_RESUMED;
+                }
+            """.trimIndent()
 
             is Expr.Nat -> {
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
@@ -331,7 +348,7 @@ class Coder (parser_: Parser) {
                     }
                     CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.number=ceu_f_$n()} };
                     if (ceu_throw != CEU_THROW_NONE) {
-                        break;
+                        continue;
                     }
                     ${fset(this.tk, set, "ceu_$n")}
                 }
@@ -392,7 +409,7 @@ class Coder (parser_: Parser) {
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                    break;
+                    continue;
                 }
                                 
                 CEU_Value ceu_idx_$n;
@@ -400,13 +417,13 @@ class Coder (parser_: Parser) {
                 if (ceu_idx_$n.tag != CEU_VALUE_NUMBER) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
-                    break;
+                    continue;
                 }
                 
                 if (ceu_col_$n.tag != CEU_VALUE_TUPLE) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                    break;
+                    continue;
                 }
                 
                 if (ceu_col_$n.tuple->n <= ceu_idx_$n.number) {                
@@ -744,10 +761,12 @@ class Coder (parser_: Parser) {
                 }
                 //assert(CEU_TAG_nil == CEU_VALUE_NIL);
 
-                do {
+                int ceu_brk = 0;
+                while (!ceu_brk) {
+                    ceu_brk = 1;
                     ${es.code(null, null)}
                     return 0;
-                } while (0);
+                }
                 fprintf(stderr, "%s\n", ceu_throw_msg);
                 return 1;
             }
