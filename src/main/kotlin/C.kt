@@ -11,7 +11,14 @@ fun Expr.Block.main (): String {
         struct CEU_Value;
         struct CEU_Block;
         struct CEU_Stack;
-        struct CEU_Coro;
+        struct CEU_Value_Coro;
+        
+        // all dynamic data must start with this struct
+        // CEU_Tuple, CEU_Value_Coro
+        typedef struct CEU_Dynamic {
+            struct CEU_Dynamic* next;   // next in block->tofree
+            struct CEU_Block* block;    // compare on set, compare on move
+        } CEU_Dynamic;
     """ +
     """
         /* VALUE */
@@ -27,14 +34,16 @@ fun Expr.Block.main (): String {
             CEU_VALUE_CORO      // spawned task
         } CEU_VALUE;
         
-        typedef struct CEU_Value (*CEU_Func) (struct CEU_Block* ret, int n, struct CEU_Value* args[]);
-        typedef struct CEU_Value (*CEU_Task) (struct CEU_Coro* coro, struct CEU_Block* ret, int n, struct CEU_Value* args[]);
+        typedef struct CEU_Value (*CEU_Value_Func) (struct CEU_Block* ret, int n, struct CEU_Value* args[]);
+        typedef struct CEU_Value_Task {
+            struct CEU_Value (*func) (struct CEU_Value_Coro* coro, struct CEU_Block* ret, int n, struct CEU_Value* args[]);
+            int size;   // buffer w/ locals
+        } CEU_Value_Task;
 
         typedef struct CEU_Value_Tuple {
-            struct CEU_Block* block;        // compare on set
-            struct CEU_Value_Tuple* nxt;    // next in block->tofree
-            struct CEU_Value* buf;
-            uint8_t n;
+            CEU_Dynamic dyn;    // tuple is dynamic
+            uint8_t n;          // number of items
+            char mem[0];        // beginning of CEU_Value[n]
         } CEU_Value_Tuple;
         typedef struct CEU_Value {
             int tag;
@@ -44,9 +53,9 @@ fun Expr.Block.main (): String {
                 int bool;
                 float number;
                 CEU_Value_Tuple* tuple;
-                CEU_Func func;
-                CEU_Task task;
-                struct CEU_Coro* coro;
+                CEU_Value_Func func;
+                CEU_Value_Task* task;
+                struct CEU_Value_Coro* coro;
             };
         } CEU_Value;
     """ +
@@ -54,35 +63,34 @@ fun Expr.Block.main (): String {
         /* BLOCK */
 
         typedef struct CEU_Block {
-            uint8_t depth;              // compare on set
-            CEU_Value_Tuple* tofree;    // list of allocated tuples to free on exit
+            uint8_t depth;          // compare on set
+            CEU_Dynamic* tofree;    // list of allocated data to free on exit
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
-                CEU_Value_Tuple* cur = block->tofree;
-                block->tofree = block->tofree->nxt;
-                free(cur->buf);
+                CEU_Dynamic* cur = block->tofree;
+                block->tofree = block->tofree->next;
                 free(cur);
             }
         }
-        void ceu_block_move (CEU_Value_Tuple* V, CEU_Block* FR, CEU_Block* TO) {
-            CEU_Value_Tuple* prv = NULL;
-            CEU_Value_Tuple* cur = FR->tofree;
+        void ceu_block_move (CEU_Dynamic* V, CEU_Block* FR, CEU_Block* TO) {
+            CEU_Dynamic* prv = NULL;
+            CEU_Dynamic* cur = FR->tofree;
             while (cur != NULL) {
                 if (cur == V) {
                     if (prv == NULL) {
                         FR->tofree = NULL;
                     } else {
-                        prv->nxt = cur->nxt;
+                        prv->next = cur->next;
                     }              
                     //assert(0 && "OK");
                     cur->block = TO;
-                    cur->nxt = TO->tofree;
+                    cur->next = TO->tofree;
                     TO->tofree = cur;
                     break;
                 }
                 prv = cur;
-                cur = cur->nxt;
+                cur = cur->next;
             }
         }
     """ +
@@ -99,11 +107,13 @@ fun Expr.Block.main (): String {
             CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;
         
-        typedef struct CEU_Coro {
+        typedef struct CEU_Value_Coro {
+            CEU_Dynamic dyn;            // coro is dynamic
             CEU_CORO_STATUS status;
-            CEU_Task task; // (Stack* stack, CUE_Coro* coro, void* evt);
-            int pc;
-        } CEU_Coro;
+            CEU_Value_Task* task;             // (Stack* stack, CUE_Coro* coro, void* evt);
+            int pc;                     // next line to execute
+            char mem[];                 // beginning of locals
+        } CEU_Value_Coro;
     """ +
     """
         /* TAGS */
@@ -161,7 +171,7 @@ fun Expr.Block.main (): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        ceu_print1(&v->tuple->buf[i]);
+                        ceu_print1(&((CEU_Value*)v->tuple->mem)[i]);
                     }                    
                     printf("]");
                     break;

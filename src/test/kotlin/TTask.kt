@@ -25,12 +25,9 @@ class TTask {
             set v = resume a(v+1)
             println(v)              ;; 4
             set v = resume a(v+1)
-            //throw (5)
             println(v)              ;; 6
-            set v = resume a(v+1)
-            println(v)              ;; nil
         """, true)
-        assert(out == "1\n2\n3\n4\n5\n6\nnil\n") { out }
+        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
     @Test
     fun task2_err() {

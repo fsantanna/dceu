@@ -79,7 +79,6 @@ fun Expr.mem (): String {
         is Expr.Spawn -> """
             struct { // SPAWN
                 CEU_Value task_$n;
-                CEU_Coro* coro_$n;
                 ${this.task.mem()}
             };
             """

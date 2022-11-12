@@ -6,7 +6,7 @@ fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
 fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     return """
         if ($src.tag == CEU_VALUE_TUPLE) {
-            if ($src.tuple->block->depth > $ret_block->depth) {                
+            if ($src.tuple->dyn.block->depth > $ret_block->depth) {                
                 ceu_throw = CEU_THROW_RUNTIME;
                 strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
                 continue;
@@ -72,8 +72,8 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
         is Expr.Set -> {
             val (scp, dst) = when (this.dst) {
                 is Expr.Index -> Pair(
-                    "ceu_mem->col_${this.dst.n}.tuple->block",
-                    "ceu_mem->col_${this.dst.n}.tuple->buf[(int) ceu_mem->idx_${this.dst.n}.number]"
+                    "ceu_mem->col_${this.dst.n}.tuple->dyn.block",
+                    "((CEU_Value*)ceu_mem->col_${this.dst.n}.tuple->mem)[(int) ceu_mem->idx_${this.dst.n}.number]"
                 )
 
                 is Expr.Acc -> {
@@ -131,34 +131,37 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             """
         is Expr.Func -> {
             syms.addFirst(Pair(n, this.args.map { it.str }.toMutableSet()))
-            val (fld,tag) = if (this.isTask()) {
-                Pair("task", "CEU_VALUE_TASK")
-            } else {
-                Pair("func", "CEU_VALUE_FUNC")
-            }
-            fun tsk (v: String): String {
+            fun xtask (v: String): String {
                 return if (this.isTask()) v else ""
             }
+            fun xfunc (v: String): String {
+                return if (!this.isTask()) v else ""
+            }
             val ret = """
-            CEU_Value ceu_func_$n (${tsk("CEU_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
-                typedef struct {
-                    ${this.args.map {
-                        """
-                            CEU_Value ${it.str};
-                            CEU_Block* _${it.str}_;
-                        """
-                    }.joinToString("")}
-                    ${this.body.mem()}
-                } CEU_Func_$n;
-                CEU_Func_$n _ceu_mem_;
-                CEU_Func_$n* ceu_mem = &_ceu_mem_;
-                CEU_Func_$n* ceu_mem_$n = &_ceu_mem_;
+            typedef struct {
+                ${this.args.map {
+                    """
+                    CEU_Value ${it.str};
+                    CEU_Block* _${it.str}_;
+                    """
+                }.joinToString("")}
+                ${this.body.mem()}
+            } CEU_Func_$n;
+            CEU_Value ceu_func_$n (${xtask("CEU_Value_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
+                ${xfunc("""
+                    CEU_Func_$n _ceu_mem_;
+                    CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                """)}
+                ${xtask("""
+                    CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
+                """)}
+                CEU_Func_$n* ceu_mem_$n = ceu_mem;
                 CEU_Value ceu_$n;
-                ${tsk("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
+                ${xtask("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
                 int ceu_brk_$n = 0;
                 while (!ceu_brk_$n) {  // FUNC
                     ceu_brk_$n = 1;
-                    ${tsk("switch (ceu_coro->pc) {\ncase 0: {\n")}
+                    ${xtask("switch (ceu_coro->pc) {\ncase 0: {\n")}
                     { // ARGS
                         int ceu_i = 0;
                         ${this.args.map {"""
@@ -174,12 +177,17 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     }
                     // BODY
                     ${this.body.code(syms, null, Pair("ceu_ret", "ceu_$n"))}
-                    ${tsk("}\n}\n")}
+                    ${xtask("}\n}\n")}
                 }
-                ${tsk("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
+                ${xtask("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
                 return ceu_$n;
             }
-            ${fset(this.tk, set, "((CEU_Value) { $tag, {.$fld=ceu_func_$n} })")}
+            ${xfunc(fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })"))}
+            ${xtask("""
+                static CEU_Value_Task ceu_task_$n;
+                ceu_task_$n = (CEU_Value_Task) { ceu_func_$n, sizeof(CEU_Func_$n) };
+                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
+            """)}
             """
             syms.removeFirst()
             ret
@@ -212,9 +220,16 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 if (ceu_throw != CEU_THROW_NONE) {          // pending throw
                     if (ceu_throw == ceu_mem->catch_$n.number) { // CAUGHT: reset throw, set arg
                         ${fset(this.tk, set, "ceu_throw_arg")}
-                        if (ceu_throw_arg.tag==CEU_VALUE_TUPLE && ceu_block_global!=$scp) {
+                        if (ceu_block_global != $scp) {
                             // assign ceu_throw_arg to set.first
-                            ceu_block_move(ceu_throw_arg.tuple, ceu_block_global, $scp);
+                            switch (ceu_throw_arg.tag) {
+                                case CEU_VALUE_TUPLE:
+                                    ceu_block_move((CEU_Dynamic*)ceu_throw_arg.tuple, ceu_block_global, $scp);
+                                    break;
+                                case CEU_VALUE_CORO:
+                                    ceu_block_move((CEU_Dynamic*)ceu_throw_arg.coro, ceu_block_global, $scp);
+                                    break;
+                            }
                         }
                         ceu_throw = CEU_THROW_NONE;
                     } else {                                // UNCAUGHT: escape to outer
@@ -224,7 +239,9 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             }
             """
         }
-        is Expr.Spawn -> """
+        is Expr.Spawn -> {
+            val scp = if (set == null) block!! else set.first
+            """
             { // SPAWN
                 ${this.task.code(syms, block, Pair(block!!, "ceu_mem->task_$n"))}
                 if (ceu_mem->task_$n.tag != CEU_VALUE_TASK) {                
@@ -232,11 +249,14 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
                     continue;
                 }
-                ceu_mem->coro_$n = malloc(sizeof(CEU_Coro));
-                *ceu_mem->coro_$n = (CEU_Coro) { CEU_CORO_STATUS_YIELDED, ceu_mem->task_$n.task, 0 };
-                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_mem->coro_$n} })")}            
+                CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_mem->task_$n.task->size));
+                assert(ceu_$n != NULL);
+                *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, CEU_CORO_STATUS_YIELDED, ceu_mem->task_$n.task, 0 };
+                $scp->tofree = (CEU_Dynamic*) ceu_$n;
+                ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_$n} })")}            
             }
             """
+        }
         is Expr.Resume -> {
             assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
             val (sets,args) = this.call.args.let {
@@ -257,7 +277,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                     $sets
                 }
                 CEU_Value* ceu_args_$n[] = { $args };
-                ceu_mem->ret_$n = ceu_mem->coro_$n.coro->task(
+                ceu_mem->ret_$n = ceu_mem->coro_$n.coro->task->func(
                     ceu_mem->coro_$n.coro,
                     ${if (set == null) block else set.first},
                     ${this.call.args.size},
@@ -375,13 +395,11 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 CEU_Value ceu_sta_$n[${this.args.size}] = {
                     ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
                 };
-                CEU_Value* ceu_dyn_$n = malloc(${this.args.size} * sizeof(CEU_Value));
-                assert(ceu_dyn_$n != NULL);
-                memcpy(ceu_dyn_$n, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
-                CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple));
+                CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple) + ${this.args.size} * sizeof(CEU_Value));
                 assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Tuple) { $scp, $scp->tofree, ceu_dyn_$n, ${this.args.size} };
-                $scp->tofree = ceu_$n;
+                *ceu_$n = (CEU_Value_Tuple) { {$scp->tofree,$scp}, ${this.args.size} };
+                memcpy(ceu_$n->mem, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
+                $scp->tofree = (CEU_Dynamic*) ceu_$n;
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
             }
             """
@@ -410,7 +428,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
                         break;
                     }    
-                    ${fset(this.tk, set, "ceu_mem->col_$n.tuple->buf[(int) ceu_mem->idx_$n.number]")}
+                    ${fset(this.tk, set, "((CEU_Value*)ceu_mem->col_$n.tuple->mem)[(int) ceu_mem->idx_$n.number]")}
                 }
             }
             """
