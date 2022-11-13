@@ -258,7 +258,6 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             """
         }
         is Expr.Resume -> {
-            assert(this.call.args.size <= 1) { "bug found : not implemented : multiple arguments to resume" }
             val (sets,args) = this.call.args.let {
                 Pair(
                     it.mapIndexed { i,x -> x.code(syms, block!!, Pair(block, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
@@ -270,7 +269,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 ${this.call.f.code(syms, block, Pair(block!!, "ceu_mem->coro_$n"))}
                 if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO || ceu_mem->coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                     ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected spawned task", 256);
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
                     continue;
                 }
                 { // SETS
@@ -297,6 +296,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 ceu_coro->status = CEU_CORO_STATUS_YIELDED;
                 return ceu_mem->ret_$n; // yield
             case $n:                    // resume here
+                assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                 ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                 ${fset(this.tk, set, "(*ceu_args[0])")}
             }

@@ -42,7 +42,7 @@ class TTask {
             var f
             resume f()
         """.trimIndent())
-        assert(out == "anon : (lin 2, col 8) : resume error : expected spawned task\n") { out }
+        assert(out == "anon : (lin 2, col 8) : resume error : expected yielded task\n") { out }
     }
     @Test
     fun task4_err() {
@@ -52,23 +52,25 @@ class TTask {
             resume co()
             resume co()
         """.trimIndent())
-        assert(out == "anon : (lin 4, col 8) : resume error : expected spawned task\n") { out }
+        assert(out == "anon : (lin 4, col 8) : resume error : expected yielded task\n") { out }
     }
     @Test
     fun task5_err() {
         val out = all("""
             var co
-            set co = spawn task () {}
+            set co = spawn task () {
+            }
+            resume co()
             resume co(1,2)
         """)
-        assert(out == "bug found : not implemented : multiple arguments to resume") { out }
+        assert(out == "anon : (lin 6, col 20) : resume error : expected yielded task\n") { out }
     }
     @Test
     fun task6() {
         val out = all("""
             var co
             set co = spawn task (v) {
-                set v = yield (nil) 
+                set v = yield () 
                 println(v)
             }
             resume co(1)
@@ -95,7 +97,30 @@ class TTask {
             var xxx
             resume xxx(xxx(1))
         """)
-        assert(out == "anon : (lin 3, col 20) : resume error : expected spawned task\n") { out }
+        assert(out == "anon : (lin 3, col 20) : resume error : expected yielded task\n") { out }
+    }
+    @Test
+    fun task9_mult() {
+        val out = all("""
+            var co
+            set co = spawn task (x,y) {
+                println(x,y)
+            }
+            resume co(1,2)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun task10_err() {
+        val out = all("""
+            var co
+            set co = spawn task () {
+                yield ()
+            }
+            resume co()
+            resume co(1,2)
+        """)
+        assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
 
     // MISC

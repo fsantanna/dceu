@@ -190,6 +190,9 @@ fun Expr.Block.main (): String {
         }
         CEU_Value ceu_print (CEU_Block* ret, int n, CEU_Value* args[]) {
             for (int i=0; i<n; i++) {
+                if (i > 0) {
+                    printf("\t");
+                }
                 ceu_print1(args[i]);
             }
             return (CEU_Value) { CEU_VALUE_NIL };
