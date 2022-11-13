@@ -972,4 +972,17 @@ class TExec {
 
     // MISC
 
+    @Test
+    fun todo_closure() {    // TODO: solution
+        val out = all("""
+            var smallerc
+            set smallerc = func (x) {
+                func (y) {  // TODO: cannot return func that uses x in this block
+                    if x { x } else { y }
+                }
+            }
+            println(smallerc(3)(1))
+        """)
+        assert(out == "3\n") { out }
+    }
 }
