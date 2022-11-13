@@ -370,21 +370,23 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if3_err() {
+    fun if3() {
         val out = all("""
             var x
             set x = 10
             set x = if (nil) {} else { 1 }
             println(x)
         """.trimIndent())
-        assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun if4_err() {
         val out = all("""
-            if [] {}
+            println(if [] {})
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun todo_if5_noblk() {
@@ -863,14 +865,14 @@ class TExec {
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun todo_op_assoc() {
+    fun op_assoc() {
         val out = all("""
             println(2 * 3 - 1)
         """, true)
         assert(out == "5\n") { out }
     }
     @Test
-    fun todo_op_or_and() {
+    fun op_or_and() {
         val out = all("""
             println(true or println(1))
             println(false and println(1))
@@ -878,11 +880,21 @@ class TExec {
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun todo_op_not() {
+    fun op_not() {
         val out = all("""
             println(not false and not false)
         """, true)
         assert(out == "true\n") { out }
+    }
+    @Test
+    fun op2_or_and() {
+        val out = all("""
+            println(1 or throw 5))
+            println(1 and 2)
+            println(nil and 2)
+            println(nil or 2)
+        """, true)
+        assert(out == "1\n2\nnil\n2\n") { out }
     }
 
     // TAGS

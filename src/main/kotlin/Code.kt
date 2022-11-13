@@ -101,12 +101,8 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
         is Expr.If -> """
             { // IF
                 ${this.cnd.code(syms, block, Pair(block!!, "ceu_mem->cnd_$n"))}
-                if (ceu_mem->cnd_$n.tag != CEU_VALUE_BOOL) {
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : if error : invalid condition", 256);
-                    continue;
-                }
-                if (ceu_mem->cnd_$n.bool) {
+                int nok = (ceu_mem->cnd_$n.tag==CEU_VALUE_NIL || (ceu_mem->cnd_$n.tag==CEU_VALUE_BOOL && !ceu_mem->cnd_$n.bool));
+                if (!nok) {
                     ${this.t.code(syms, block, set)}
                 } else {
                     ${this.f.code(syms, block, set)}
