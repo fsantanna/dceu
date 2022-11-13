@@ -16,14 +16,19 @@ fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     """
 }
 
-fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>): String {
+fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>, isDcl: Boolean): Int? {
     //println(this)
     //println(syms.first())
     val sym = syms.find { (_,vars) -> vars.contains(this) }
-    if (sym == null) {
-        err(tk, "access error : variable is not declared")
+    when {
+        (!isDcl && sym==null) -> err(tk, "access error : variable \"$this\" is not declared")
+        ( isDcl && sym!=null) -> err(tk, "declaration error : variable \"$this\" is already declared")
     }
-    val n = sym!!.first
+    return sym?.first
+}
+
+fun String.id2mem (tk: Tk, syms: List<Pair<Int,Set<String>>>): String {
+    val n = this.id2mem(tk, syms, false)
     return "(ceu_mem_$n->$this)"
 }
 
@@ -59,6 +64,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
         }
         is Expr.Dcl -> {
             val id = this.tk_.fromOp()
+            id.id2mem(this.tk,syms,true)
             syms.first().second.add(id)
             syms.first().second.add("_${id}_")
             val (x,_x_) = this.tk_.fromOp().let { Pair(it.id2mem(this.tk,syms),"_${it}_".id2mem(this.tk,syms)) }

@@ -142,6 +142,26 @@ class TExec {
         """)
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun todo_dcl_chars() {
+        val out = all("""
+            var x'
+            var f!
+            var even?
+            println(x')
+            println(f!)
+            println(even?)
+        """)
+        assert(out == "nil\nnil\nnil\n") { out }
+    }
+    @Test
+    fun dcl_redeclaration_err() {
+        val out = all("""
+            var x
+            var x
+        """)
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared") { out }
+    }
 
     // SET
 
@@ -479,7 +499,7 @@ class TExec {
         val out = all("""
             f()
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : access error : variable is not declared") { out }
+        assert(out == "anon : (lin 1, col 1) : access error : variable \"f\" is not declared") { out }
     }
 
     // WHILE
