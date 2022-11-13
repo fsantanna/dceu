@@ -143,7 +143,7 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun todo_dcl_chars() {
+    fun dcl_chars() {
         val out = all("""
             var x'
             var f!

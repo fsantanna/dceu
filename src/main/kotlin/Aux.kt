@@ -20,6 +20,15 @@ fun Tk.Id.fromOp (): String {
     }
 }
 
+fun String.noSpecial (): String {
+    val MAP = mapOf(
+        Pair('\'', "_plic"),
+        Pair('?', "_question"),
+        Pair('!', "_bang"),
+    )
+    return this.toList().map { MAP[it] ?: it }.joinToString("")
+}
+
 fun Expr.Func.isTask (): Boolean {
     return (this.tk.str == "task")
 }

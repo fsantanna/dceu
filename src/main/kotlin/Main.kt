@@ -5,8 +5,8 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "catch", "do", "else", "false", "func", "if", "nil", "resume",
-    "set", "spawn", "task", "throw", "true", "var", "yield", "while"
+    "and", "catch", "do", "else", "false", "func", "if", "nil", "not", "or",
+    "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 )
 val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
 

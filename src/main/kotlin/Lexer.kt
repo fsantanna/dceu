@@ -149,14 +149,14 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                     }
                 }
                 (x == '@') -> {
-                    val tag = x + read2While { it=='_' || it.isLetterOrDigit() }
+                    val tag = x + read2While { it.isLetterOrDigit() }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
                     yield(Tk.Tag(tag, pos))
                 }
-                (x=='_' || x.isLetter()) -> {
-                    val id = x + read2While { it=='_' || it.isLetterOrDigit() }
+                (x.isLetter() || x in listOf('_','\'','?','!')) -> {
+                    val id = x + read2While { (it.isLetterOrDigit() || it in listOf('_','\'','?','!')) }
                     when {
                         keywords.contains(id) -> yield(Tk.Fix(id, pos))
                         (id != "native") -> yield(Tk.Id(id, pos))

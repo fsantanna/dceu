@@ -63,11 +63,11 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             """
         }
         is Expr.Dcl -> {
-            val id = this.tk_.fromOp()
+            val id = this.tk_.fromOp().noSpecial()
             id.id2mem(this.tk,syms,true)
             syms.first().second.add(id)
             syms.first().second.add("_${id}_")
-            val (x,_x_) = this.tk_.fromOp().let { Pair(it.id2mem(this.tk,syms),"_${it}_".id2mem(this.tk,syms)) }
+            val (x,_x_) = Pair(id.id2mem(this.tk,syms),"_${id}_".id2mem(this.tk,syms))
             """
             // DCL
             $x = (CEU_Value) { CEU_VALUE_NIL };
@@ -83,7 +83,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
                 )
 
                 is Expr.Acc -> {
-                    val id = this.dst.tk_.fromOp()
+                    val id = this.dst.tk_.fromOp().noSpecial()
                     Pair("(ceu_mem->_${id}_)", "(ceu_mem->${id})")     // x = src / block of _x_
                 }
 
@@ -364,7 +364,7 @@ fun Expr.code(syms: ArrayDeque<Pair<Int,MutableSet<String>>>, block: String?, se
             }
             """
         }
-        is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.tk_.fromOp().id2mem(this.tk,syms))
+        is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.tk_.fromOp().noSpecial().id2mem(this.tk,syms))
         is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
         is Expr.Tag -> {
             val tag = this.tk.str.drop(1)
