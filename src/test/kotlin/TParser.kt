@@ -399,7 +399,7 @@ class TParser {
         assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
     }
     @Test
-    fun bin5_not_or_and() {
+    fun todo_bin5_not_or_and() {    // blk->dcl->set->if
         val l = lexer("not true and false or true")
         val parser = Parser(l)
         val e = parser.expr()
