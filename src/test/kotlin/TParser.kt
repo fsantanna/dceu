@@ -461,6 +461,16 @@ class TParser {
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
 
+    // DEFER
+
+    @Test
+    fun defer() {
+        val l = lexer("defer {}")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "defer {\nnil\n}\n\n") { e.tostr() }
+    }
+
     // MISC
 
     @Test

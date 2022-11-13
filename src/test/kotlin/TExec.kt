@@ -936,6 +936,40 @@ class TExec {
         assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
 
+    // DEFER
+
+    @Test
+    fun defer1() {
+        val out = all("""
+            var f
+            set f = func () {
+                println(11)
+                defer { println(22) }
+                println(33)
+            }
+            defer { println(1) }
+            do {
+                println(2)
+                defer { println(3) }
+                println(4)
+                do {
+                    println(5)
+                    f()
+                    defer { println(6) }
+                    println(7)
+                }
+                println(8)
+                defer { println(9) }
+                println(10)
+            }
+            println(11)
+            defer { println(12) }
+            println(13)
+        """)
+        assert(out == "3\n4\n2\n5\n1\n") { out }
+    }
+
+
     // MISC
 
 }

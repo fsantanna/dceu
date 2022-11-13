@@ -323,10 +323,9 @@ fun Expr.Block.main (): String {
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_div_eq} };
                 }
                 ${this.code (
-                    ArrayDeque (
-                        listOf(Pair(n, mutableSetOf("tags", "print", "println", "op_eq_eq", "op_div_eq")))
+                    CBlock(null, Pair(n,null),
+                        mutableSetOf("tags", "print", "println", "op_eq_eq", "op_div_eq")
                     ),
-                    null,
                     null
                 )}
                 return 0;
