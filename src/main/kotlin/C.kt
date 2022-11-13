@@ -64,8 +64,9 @@ fun Expr.Block.main (): String {
         /* BLOCK */
 
         typedef struct CEU_Block {
-            uint8_t depth;          // compare on set
-            CEU_Dynamic* tofree;    // list of allocated data to free on exit
+            uint8_t depth;                  // compare on set
+            CEU_Dynamic* tofree;            // list of allocated data to free on exit
+            struct CEU_Value_Coro* bcast;   // next coroutine in the inner block
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
@@ -110,8 +111,12 @@ fun Expr.Block.main (): String {
         
         typedef struct CEU_Value_Coro {
             CEU_Dynamic dyn;            // coro is dynamic
+            struct {
+                struct CEU_Block* inner;        // next coroutine in the inner block
+                struct CEU_Value_Coro* outer;   // next coroutine in the outer block
+            } bcast;
             CEU_CORO_STATUS status;
-            CEU_Value_Task* task;             // (Stack* stack, CUE_Coro* coro, void* evt);
+            CEU_Value_Task* task;       // (Stack* stack, CUE_Coro* coro, void* evt);
             int pc;                     // next line to execute
             char mem[];                 // beginning of locals
         } CEU_Value_Coro;
@@ -259,6 +264,25 @@ fun Expr.Block.main (): String {
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
+    """ +
+    """
+        /* BCAST */
+
+        void ceu_bcast (CEU_Block* block, CEU_Value* arg) {
+            CEU_Value_Coro* cur = block->bcast;
+            while (cur != NULL) {
+                CEU_Value* args[] = { arg };
+                ceu_bcast(cur->bcast.inner, arg);
+                if (ceu_throw != CEU_THROW_NONE) {
+                    break;
+                }
+                cur->task->func(cur, NULL, 1, args);
+                if (ceu_throw != CEU_THROW_NONE) {
+                    break;
+                }
+                cur = cur->bcast.outer;
+            }
+        }
     """ +
     """
         // MAIN

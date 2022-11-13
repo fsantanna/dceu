@@ -61,7 +61,7 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             """
             { // BLOCK
                 assert($depth <= UINT8_MAX);
-                ceu_mem->block_$n = (CEU_Block) { $depth, NULL };
+                ceu_mem->block_$n = (CEU_Block) { $depth, NULL, NULL };
                 if (ceu_block_global == NULL) {
                     ceu_block_global = &ceu_mem->block_$n;
                 }    
@@ -270,7 +270,7 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 }
                 CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
                 assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
+                *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
                 $scp->tofree = (CEU_Dynamic*) ceu_$n;
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_$n} })")}            
             }
@@ -278,8 +278,9 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
         }
         is Expr.Bcast -> """
             { // BCAST
-                CEU_Value ceu_$n;
-                ${this.arg.code(cblock, Pair(cblock.block(), "ceu_$n"))}
+                CEU_Value ceu_arg_$n;
+                ${this.arg.code(cblock, Pair(cblock.block(), "ceu_arg_$n"))}
+                ceu_bcast(${cblock.block()}, &ceu_arg_$n);
             }
             """
         is Expr.Resume -> {
