@@ -1,3 +1,4 @@
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -278,6 +279,7 @@ class TExec {
         assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
+    @Ignore
     fun todo_scope_scope3() {
         val out = all("""
             var x
@@ -389,6 +391,7 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
+    @Ignore
     fun todo_if5_noblk() {
         val out = all("""
             var x
@@ -399,6 +402,7 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
+    @Ignore
     fun todo_if6_noblk() {
         val out = all("""
             var x
@@ -475,6 +479,7 @@ class TExec {
         //assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
+    @Ignore
     fun todo_scope_func6() {
         val out = all("""
             var f
@@ -837,6 +842,7 @@ class TExec {
         assert(out == "-4\n") { out }
     }
     @Test
+    @Ignore
     fun todo_scope_op_id2() {
         val out = all("""
             set (+) = (-)
@@ -911,6 +917,7 @@ class TExec {
         assert(out == "@number\n@tag\n@tag\n") { out }
     }
     @Test
+    @Ignore
     fun todo_tag2_err() {
         val out = all("""
             tags()
@@ -918,6 +925,7 @@ class TExec {
         assert(out == "-10\n") { out }
     }
     @Test
+    @Ignore
     fun todo_tag3_err() {
         val out = all("""
             tags(1,2)
@@ -973,6 +981,7 @@ class TExec {
     // MISC
 
     @Test
+    @Ignore
     fun todo_closure() {    // TODO: solution
         val out = all("""
             var smallerc

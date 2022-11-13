@@ -1,3 +1,4 @@
+import org.junit.Ignore
 import org.junit.Test
 
 class TParser {
@@ -255,6 +256,7 @@ class TParser {
         assert(e.tostr() == "if true {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
     }
     @Test
+    @Ignore
     fun todo_expr_if3_noblk() {
         val l = lexer("if true 1")
         val parser = Parser(l)
@@ -263,6 +265,7 @@ class TParser {
         assert(e.tostr() == "if true 1 else nil\n") { e.tostr() }
     }
     @Test
+    @Ignore
     fun todo_expr_if4_noblk() {
         val l = lexer("if true 1 else 2")
         val parser = Parser(l)
@@ -399,6 +402,7 @@ class TParser {
         assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
     }
     @Test
+    @Ignore
     fun todo_bin5_not_or_and() {    // blk->dcl->set->if
         val l = lexer("not true and false or true")
         val parser = Parser(l)

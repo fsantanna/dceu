@@ -109,17 +109,19 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             }
             """
             { // SET
+                CEU_Value ceu_$n;
                 ${this.dst.code(cblock, null)}
-                ${this.src.code(cblock, Pair(scp, "ceu_mem->set_$n"))}
-                $dst = ceu_mem->set_$n;
-                ${fset(this.tk, set, "ceu_mem->set_$n")}
+                ${this.src.code(cblock, Pair(scp, "ceu_$n"))}
+                $dst = ceu_$n;
+                ${fset(this.tk, set, "ceu_$n")}
             }
             """
         }
         is Expr.If -> """
             { // IF
-                ${this.cnd.code(cblock, Pair(cblock.block(), "ceu_mem->cnd_$n"))}
-                int nok = (ceu_mem->cnd_$n.tag==CEU_VALUE_NIL || (ceu_mem->cnd_$n.tag==CEU_VALUE_BOOL && !ceu_mem->cnd_$n.bool));
+                CEU_Value ceu_cnd_$n;
+                ${this.cnd.code(cblock, Pair(cblock.block(), "ceu_cnd_$n"))}
+                int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
                 if (!nok) {
                     ${this.t.code(cblock, set)}
                 } else {
@@ -132,13 +134,10 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 ceu_mem->brk_$n = 0;
                 while (!ceu_mem->brk_$n) {
                     ceu_mem->brk_$n = 1;
-                    ${this.cnd.code(cblock, Pair(cblock.block(), "ceu_mem->cnd_$n"))}
-                    if (ceu_mem->cnd_$n.tag != CEU_VALUE_BOOL) {
-                        ceu_throw = CEU_THROW_RUNTIME;
-                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.cnd.tk.pos.lin}, col ${this.cnd.tk.pos.col}) : while error : invalid condition", 256);
-                        continue;
-                    }
-                    if (!ceu_mem->cnd_$n.bool) {
+                    CEU_Value ceu_cnd_$n;
+                    ${this.cnd.code(cblock, Pair(cblock.block(), "ceu_cnd_$n"))}
+                    int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
+                    if (nok) {
                         continue;
                     }
                     ${this.body.code(cblock, null)}
@@ -210,20 +209,6 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             """)}
             """
         }
-        is Expr.Throw -> """
-            { // THROW
-                ${this.ex.code(cblock, Pair(cblock.block(), "ceu_mem->ex_$n"))}
-                ${this.arg.code(cblock, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
-                if (ceu_mem->ex_$n.tag == CEU_VALUE_NUMBER) {
-                    ceu_throw = ceu_mem->ex_$n.number;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
-                } else {                
-                    ceu_throw = CEU_THROW_RUNTIME;
-                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : invalid exception : expected number", 256);
-                }
-                continue;
-            }
-            """
         is Expr.Catch -> {
             val scp = if (set != null) set.first else cblock.block()
             """
@@ -257,19 +242,35 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             }
             """
         }
+        is Expr.Throw -> """
+            { // THROW
+                CEU_Value ceu_ex_$n;
+                ${this.ex.code(cblock, Pair(cblock.block(), "ceu_ex_$n"))}
+                ${this.arg.code(cblock, Pair("ceu_block_global", "ceu_throw_arg"))}  // arg scope to be set in catch set
+                if (ceu_ex_$n.tag == CEU_VALUE_NUMBER) {
+                    ceu_throw = ceu_ex_$n.number;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
+                } else {                
+                    ceu_throw = CEU_THROW_RUNTIME;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : invalid exception : expected number", 256);
+                }
+                continue;
+            }
+            """
         is Expr.Spawn -> {
             val scp = if (set == null) cblock.block() else set.first
             """
             { // SPAWN
-                ${this.task.code(cblock, Pair(cblock.block(), "ceu_mem->task_$n"))}
-                if (ceu_mem->task_$n.tag != CEU_VALUE_TASK) {                
+                CEU_Value ceu_task_$n;
+                ${this.task.code(cblock, Pair(cblock.block(), "ceu_task_$n"))}
+                if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
                     continue;
                 }
-                CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_mem->task_$n.task->size));
+                CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
                 assert(ceu_$n != NULL);
-                *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, CEU_CORO_STATUS_YIELDED, ceu_mem->task_$n.task, 0 };
+                *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
                 $scp->tofree = (CEU_Dynamic*) ceu_$n;
                 ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_$n} })")}            
             }
@@ -290,18 +291,19 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             }
             """
             { // RESUME
-                ${this.call.f.code(cblock, Pair(cblock.block(), "ceu_mem->coro_$n"))}
-                if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO || ceu_mem->coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
+                { // SETS
+                    $sets
+                }
+                CEU_Value ceu_coro_$n;
+                ${this.call.f.code(cblock, Pair(cblock.block(), "ceu_coro_$n"))}
+                if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
                     continue;
                 }
-                { // SETS
-                    $sets
-                }
                 CEU_Value* ceu_args_$n[] = { $args };
-                ceu_mem->ret_$n = ceu_mem->coro_$n.coro->task->func(
-                    ceu_mem->coro_$n.coro,
+                CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
+                    ceu_coro_$n.coro,
                     ${if (set == null) cblock.block() else set.first},
                     ${this.call.args.size},
                     ceu_args_$n
@@ -309,16 +311,17 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 if (ceu_throw != CEU_THROW_NONE) {
                     continue;
                 }
-                ${fset(this.tk, set, "ceu_mem->ret_$n")}
+                ${fset(this.tk, set, "ceu_ret_$n")}
             }
             """
         }
         is Expr.Yield -> """
             { // YIELD
-                ${this.arg.code(cblock, Pair("ceu_ret","ceu_mem->ret_$n"))}
+                CEU_Value ceu_$n;
+                ${this.arg.code(cblock, Pair("ceu_ret","ceu_$n"))}
                 ceu_coro->pc = $n;      // next resume
                 ceu_coro->status = CEU_CORO_STATUS_YIELDED;
-                return ceu_mem->ret_$n; // yield
+                return ceu_$n; // yield
             case $n:                    // resume here
                 assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                 ceu_coro->status = CEU_CORO_STATUS_RESUMED;
@@ -438,6 +441,7 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                         continue;
                     }
                 }
+                CEU_Value ceu_idx_$n;
                 { // IDX        
                     ${this.idx.code(cblock, Pair(cblock.block(), "ceu_mem->idx_$n"))}
                     if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
@@ -465,17 +469,18 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             }
             """
             { // CALL
-                ${this.f.code(cblock, Pair(cblock.block(), "ceu_mem->f_$n"))}
-                if (ceu_mem->f_$n.tag != CEU_VALUE_FUNC) {                
+                { // SETS
+                    $sets
+                }
+                CEU_Value ceu_f_$n;
+                ${this.f.code(cblock, Pair(cblock.block(), "ceu_f_$n"))}
+                if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
                     ceu_throw = CEU_THROW_RUNTIME;
                     strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
                     break;
                 }
-                { // SETS
-                    $sets
-                }
                 CEU_Value* ceu_args_$n[] = { $args };
-                ceu_mem->ret_$n = ceu_mem->f_$n.func(
+                CEU_Value ceu_$n = ceu_f_$n.func(
                     ${if (set == null) cblock.block() else set.first},
                     ${this.args.size},
                     ceu_args_$n
@@ -483,7 +488,7 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 if (ceu_throw != CEU_THROW_NONE) {
                     break;
                 }
-                ${fset(this.tk, set, "ceu_mem->ret_$n")}
+                ${fset(this.tk, set, "ceu_$n")}
             }
             """
         }

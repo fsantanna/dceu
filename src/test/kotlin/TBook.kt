@@ -1,3 +1,4 @@
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 
@@ -59,6 +60,7 @@ class TBook {
     // CHAPTER 1.4: Functions
 
     @Test
+    @Ignore
     fun todo_pg_11_currying() {
         val out = all("""
             var smallerc
@@ -79,7 +81,8 @@ class TBook {
         assert(out == "3\n8\n") { out }
     }
     @Test
-    fun pg_12_twice_quad() {
+    @Ignore
+    fun todo_pg_12_twice_quad() {
         val out = all("""
             var square
             set square = func (x) {
@@ -98,6 +101,7 @@ class TBook {
         assert(out == "16\t16\n") { out }
     }
     @Test
+    @Ignore
     fun todo_pg_12_twicec() {
         val out = all("""
             var square
@@ -117,6 +121,7 @@ class TBook {
         assert(out == "16\t16\n") { out }
     }
     @Test
+    @Ignore
     fun todo_pg_13_curry() {
         val out = all("""
             var curry
@@ -134,6 +139,7 @@ class TBook {
         assert(out == "-3\n") { out }
     }
     @Test
+    @Ignore
     fun todo_pg_13_uncurry() {
         val out = all("""
             var plusc
@@ -160,6 +166,7 @@ class TBook {
         assert(out == "16\n") { out }
     }
     @Test
+    @Ignore
     fun todo_pg_15_compose() {
         val out = all("""
             var compose

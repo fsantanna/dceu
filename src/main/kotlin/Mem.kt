@@ -31,26 +31,20 @@ fun Expr.mem (): String {
         }
         is Expr.Set -> """
             struct {
-                CEU_Value set_$n;
                 ${this.dst.mem()}
                 ${this.src.mem()}
             };
             """
         is Expr.If -> """
-            struct { // IF
-                CEU_Value ret_$n;
-                CEU_Value cnd_$n;
-                union {
-                    ${this.cnd.mem()}
-                    ${this.t.mem()}
-                    ${this.f.mem()}
-                };
+            union { // IF
+                ${this.cnd.mem()}
+                ${this.t.mem()}
+                ${this.f.mem()}
             };
             """
         is Expr.While -> """
             struct { // WHILE
                 int brk_$n;
-                CEU_Value cnd_$n;
                 union {
                     ${this.cnd.mem()}
                     ${this.body.mem()}
@@ -68,41 +62,24 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Throw -> """
-            struct { // THROW
-                CEU_Value ex_$n;
-                union {
-                    ${this.ex.mem()}
-                    ${this.arg.mem()}
-                };
-            };
-            """
-        is Expr.Spawn -> """
-            struct { // SPAWN
-                CEU_Value task_$n;
-                ${this.task.mem()}
-            };
-            """
-        is Expr.Bcast -> this.arg.mem()
-        is Expr.Resume -> """
-            struct { // RESUME
-                CEU_Value ret_$n;
-                CEU_Value coro_$n;
-                union {
-                    // FUNC
-                    ${this.call.f.mem()}
-                    struct { // ARGS
-                        ${this.call.args.map { it.mem() }.joinToString("")}
-                        ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                    };
-                };
-            };
-            """
-        is Expr.Yield -> """
-            struct { // YIELD
-                CEU_Value ret_$n;
+            union { // THROW
+                ${this.ex.mem()}
                 ${this.arg.mem()}
             };
             """
+        is Expr.Spawn -> this.task.mem()
+        is Expr.Bcast -> this.arg.mem()
+        is Expr.Resume -> """
+            union { // RESUME
+                // FUNC
+                ${this.call.f.mem()}
+                struct { // ARGS
+                    ${this.call.args.map { it.mem() }.joinToString("")}
+                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                };
+            };
+            """
+        is Expr.Yield -> this.arg.mem()
         is Expr.Defer -> this.body.mem()
 
         is Expr.Tuple -> """
@@ -113,8 +90,8 @@ fun Expr.mem (): String {
             """
         is Expr.Index -> """
             struct { // INDEX
-                CEU_Value col_$n;
-                CEU_Value idx_$n;
+                CEU_Value col_$n;   // both required
+                CEU_Value idx_$n;   // for set as well
                 union {
                     ${this.col.mem()}
                     ${this.idx.mem()}
@@ -122,15 +99,11 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Call -> """
-            struct { // CALL
-                CEU_Value ret_$n;
-                CEU_Value f_$n;
-                union {
-                    ${this.f.mem()}
-                    struct {
-                        ${this.args.map { it.mem() }.joinToString("")}
-                        ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                    };
+            union { // CALL
+                ${this.f.mem()}
+                struct {
+                    ${this.args.map { it.mem() }.joinToString("")}
+                    ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 };
             };
             """

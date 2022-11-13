@@ -95,7 +95,7 @@ class TTask {
     fun tak8_err() {
         val out = all("""
             var xxx
-            resume xxx(xxx(1))
+            resume xxx() ;;(xxx(1))
         """)
         assert(out == "anon : (lin 3, col 20) : resume error : expected yielded task\n") { out }
     }
