@@ -202,9 +202,26 @@ class Parser (lexer_: Lexer)
         }
     }
     fun exprFixs (): Expr {
-        val isop = this.acceptEnu("Op")
-        val tk0 = this.tk0
+        val ops = mutableListOf<Tk>()
+        while (true) {
+            when {
+                this.acceptEnu("Op") -> ops.add(this.tk0)
+                this.acceptFix("not") -> ops.add(this.tk0)
+                else -> break
+            }
+        }
         var e = this.exprPrim()
+        while (ops.size > 0) {
+            val op = ops.removeLast()
+            if (op.str == "not") {
+                op as Tk.Fix
+                val t = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("false",op.pos))))
+                val f = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
+                e = Expr.If(op, e, t, f)
+            } else {
+                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))
+            }
+        }
 
         // only accept sufix in the same line
         while (this.tk0.pos.isSameLine(this.tk1.pos)) {
@@ -222,17 +239,28 @@ class Parser (lexer_: Lexer)
             }
         }
 
-        if (isop) {
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("{${tk0.str}}",tk0.pos)), listOf(e))
-        }
         return e
     }
     fun exprBins (): Expr {
         var e = this.exprFixs()
-        if (this.acceptEnu("Op")) {
-            val tk0 = this.tk0
-            val e2 = this.expr()
-            e = Expr.Call(tk0, Expr.Acc(Tk.Id("{${tk0.str}}",tk0.pos)), listOf(e,e2))
+        while (this.acceptEnu("Op") || this.acceptFix("or") || this.acceptFix("and")) {
+            val op = this.tk0
+            val e2 = this.exprFixs()
+            e = when (op.str) {
+                "or"  -> {
+                    op as Tk.Fix
+                    val t = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
+                    val f = Expr.Block(op, listOf(e2))
+                    Expr.If(op, e, t, f)
+                }
+                "and" -> {
+                    op as Tk.Fix
+                    val t = Expr.Block(op, listOf(e2))
+                    val f = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("false",op.pos))))
+                    Expr.If(op, e, t, f)
+                }
+                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
+            }
         }
         return e
     }

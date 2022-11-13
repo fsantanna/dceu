@@ -380,11 +380,30 @@ class TExec {
         assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
     }
     @Test
-    fun if_err() {
+    fun if4_err() {
         val out = all("""
             if [] {}
         """.trimIndent())
         assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+    }
+    @Test
+    fun todo_if5_noblk() {
+        val out = all("""
+            var x
+            set x = 10
+            set x = if false 1
+            println(x)
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun todo_if6_noblk() {
+        val out = all("""
+            var x
+            set x = if (true) 1 else 0
+            println(x)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // FUNC / CALL
@@ -813,7 +832,7 @@ class TExec {
         val out = all("""
             println((10 + -20*2)/5)
         """, true)
-        assert(out == "-6\n") { out }
+        assert(out == "-4\n") { out }
     }
     @Test
     fun todo_scope_op_id2() {

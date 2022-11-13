@@ -254,6 +254,22 @@ class TParser {
         assert(e is Expr.If)
         assert(e.tostr() == "if true {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
     }
+    @Test
+    fun todo_expr_if3_noblk() {
+        val l = lexer("if true 1")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true 1 else nil\n") { e.tostr() }
+    }
+    @Test
+    fun todo_expr_if4_noblk() {
+        val l = lexer("if true 1 else 2")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true 1 else 2\n") { e.tostr() }
+    }
 
     // DO
 
@@ -342,7 +358,7 @@ class TParser {
         assert(e.tostr() == "native {\n    printf(\"xxx\\n\");\n}") { "."+e.tostr()+"." }
     }
 
-    // BINARY
+    // BINARY / UNARY / OPS
 
     @Test
     fun bin1_err() {
@@ -365,6 +381,29 @@ class TParser {
         val e = parser.exprBins()
         assert(e is Expr.Call)
         assert(e.tostr() == "{/=}(10,1)") { e.tostr() }
+    }
+    @Test
+    fun pre1() {
+        val l = lexer("- not - 1")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Call)
+        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
+    }
+    @Test
+    fun bin4() {
+        val l = lexer("1 + 2 + 3")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Call)
+        assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
+    }
+    @Test
+    fun bin5_not_or_and() {
+        val l = lexer("not true and false or true")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "if if if true {\nfalse\n}\nelse {\ntrue\n}\n {\nfalse\n}\nelse {\nfalse\n}\n {\ntrue\n}\nelse {\ntrue\n}\n") { e.tostr() }
     }
 
     // TASK / YIELD / RESUME
