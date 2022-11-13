@@ -5,7 +5,7 @@ import java.util.*
 var N = 1
 
 val keywords: SortedSet<String> = sortedSetOf (
-    "and", "catch", "do", "else", "false", "func", "if", "nil", "not", "or",
+    "and", "catch", "defer", "do", "else", "false", "func", "if", "nil", "not", "or",
     "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 )
 val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
@@ -28,9 +28,10 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Throw  (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)
-    data class Spawn  (val tk_: Tk, val task: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk, val call: Expr.Call): Expr(N++, tk_)
-    data class Yield  (val tk_: Tk, val arg: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

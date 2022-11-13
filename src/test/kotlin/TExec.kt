@@ -943,9 +943,9 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                println(11)
-                defer { println(22) }
-                println(33)
+                println(111)
+                defer { println(222) }
+                println(333)
             }
             defer { println(1) }
             do {
@@ -966,7 +966,7 @@ class TExec {
             defer { println(12) }
             println(13)
         """)
-        assert(out == "3\n4\n2\n5\n1\n") { out }
+        assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
 
 

@@ -181,6 +181,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Yield(tk0, unit_or_expr())
             }
+            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)

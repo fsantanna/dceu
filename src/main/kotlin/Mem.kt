@@ -102,6 +102,7 @@ fun Expr.mem (): String {
                 ${this.arg.mem()}
             };
             """
+        is Expr.Defer -> this.body.mem()
 
         is Expr.Tuple -> """
             struct { // TUPLE

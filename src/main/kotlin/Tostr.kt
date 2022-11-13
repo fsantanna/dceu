@@ -11,6 +11,7 @@ fun Expr.tostr (): String {
         is Expr.Spawn  -> "spawn " + this.task.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
         is Expr.Yield  -> "yield (" + this.arg.tostr() + ")"
+        is Expr.Defer  -> "defer " + this.body.tostr()
 
         is Expr.Nat    -> "native " + this.tk.str
         is Expr.Acc    -> this.tk.str

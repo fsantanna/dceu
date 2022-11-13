@@ -24,6 +24,8 @@ class CBlock (up_: CBlock?, ns_: Pair<Int,Int?>, syms_: MutableSet<String>) {
     val up = up_
     val ns = ns_
     val syms = syms_
+    val defers = mutableListOf<String>()
+
     fun idFind (id: String): CBlock? {
         return when {
             this.syms.contains(id) -> this
@@ -67,6 +69,9 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 while (!ceu_mem->brk_$n) {
                     ceu_mem->brk_$n = 1;
                     $es
+                }
+                { // DEFERS
+                    ${newcblock.defers.reversed().joinToString("")}
                 }
                 ceu_block_free(&ceu_mem->block_$n);
                 if (ceu_throw != CEU_THROW_NONE) {
@@ -314,7 +319,7 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
                 ${fset(this.tk, set, "(*ceu_args[0])")}
             }
             """
-
+        is Expr.Defer -> { cblock.defers.add(this.body.code(cblock,null)); "" }
         is Expr.Nat -> {
             val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
                 var ret = ""

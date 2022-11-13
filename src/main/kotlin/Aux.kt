@@ -60,6 +60,7 @@ fun Expr.copy (): Expr {
         is Expr.Spawn  -> Expr.Spawn(this.tk_, this.task.copy())
         is Expr.Resume -> Expr.Resume(this.tk_, this.call.copy())
         is Expr.Yield  -> Expr.Yield(this.tk_, this.arg.copy())
+        is Expr.Defer  -> Expr.Defer(this.tk_, this.body.copy())
 
         is Expr.Nat    -> Expr.Nat(this.tk_)
         is Expr.Acc    -> Expr.Acc(this.tk_)
