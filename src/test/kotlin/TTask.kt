@@ -13,7 +13,7 @@ class TTask {
                 println(v)          ;; 1
                 set v = yield (v+1) 
                 println(v)          ;; 3
-                set v = yield (v+1) 
+                set v = yield v+1 
                 println(v)          ;; 5
                 v+1
             }

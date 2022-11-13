@@ -164,18 +164,22 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("yield") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                if (!tk0.pos.isSameLine(this.tk0.pos)) {
-                    err(this.tk0, "yield error : line break before expression")
+                if (!tk0.pos.isSameLine(this.tk1.pos)) {
+                    err(tk0, "yield error : line break before expression")
                 }
-                val arg = if (this.acceptFix(")")) {
-                    Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
-                } else {
-                    val e = this.expr()
-                    this.acceptFix_err(")")
-                    e
+                fun unit_or_expr (): Expr {
+                    val open = this.acceptFix("(")
+                    return when {
+                        !open -> this.expr()
+                        this.acceptFix(")") -> Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
+                        else -> {
+                            val e = this.expr()
+                            this.acceptFix_err(")")
+                            e
+                        }
+                    }
                 }
-                Expr.Yield(tk0, arg)
+                Expr.Yield(tk0, unit_or_expr())
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

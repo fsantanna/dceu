@@ -409,7 +409,8 @@ class TParser {
             1
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
+        //assert(trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
     @Test
     fun task4_err() {
@@ -418,7 +419,7 @@ class TParser {
             (1)
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 1) : yield error : line break before expression")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
 
     // MISC
