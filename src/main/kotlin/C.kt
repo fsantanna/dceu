@@ -204,7 +204,7 @@ fun Expr.Block.main (): String {
         }
     """ +
     """
-        // ==  !=
+        // ==  /=
         CEU_Value ceu_op_eq_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
@@ -242,7 +242,7 @@ fun Expr.Block.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.bool=v} };
         }
-        CEU_Value ceu_op_not_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_div_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
             CEU_Value v = ceu_op_eq_eq(ret, n, args);
             v.bool = !v.bool;
             return v;
@@ -309,7 +309,7 @@ fun Expr.Block.main (): String {
                     CEU_Value print;
                     CEU_Value println;            
                     CEU_Value op_eq_eq;
-                    CEU_Value op_not_eq;
+                    CEU_Value op_div_eq;
                     ${this.mem()}
                 } CEU_Func_$n;
                 CEU_Func_$n _ceu_mem_;
@@ -320,11 +320,11 @@ fun Expr.Block.main (): String {
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_print}     };
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
-                    ceu_mem->op_not_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_not_eq} };
+                    ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_div_eq} };
                 }
                 ${this.code (
                     ArrayDeque (
-                        listOf(Pair(n, mutableSetOf("tags", "print", "println", "op_eq_eq", "op_not_eq")))
+                        listOf(Pair(n, mutableSetOf("tags", "print", "println", "op_eq_eq", "op_div_eq")))
                     ),
                     null,
                     null

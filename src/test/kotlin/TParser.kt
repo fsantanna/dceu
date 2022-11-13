@@ -360,11 +360,11 @@ class TParser {
     }
     @Test
     fun bin3() {
-        val l = lexer("10!=1")
+        val l = lexer("10/=1")
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{!=}(10,1)") { e.tostr() }
+        assert(e.tostr() == "{/=}(10,1)") { e.tostr() }
     }
 
     // TASK / YIELD / RESUME

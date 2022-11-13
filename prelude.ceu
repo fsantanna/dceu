@@ -35,7 +35,7 @@ set {+} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != @number) || (t2 != @number) {
+    if (t1 /= @number) || (t2 /= @number) {
         throw 1
     }
     native { return $v1+$v2; }
@@ -50,7 +50,7 @@ set {-} = func (v1, v2) {
     if (t1 == @number) && (t2 == @nil) {
         native { return -$v1; }
     } else {
-        if (t1 != @number) || (t2 != @number) {
+        if (t1 /= @number) || (t2 /= @number) {
             throw 1
         }
         native { return $v1-$v2; }
@@ -63,7 +63,7 @@ set {*} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != @number) || (t2 != @number) {
+    if (t1 /= @number) || (t2 /= @number) {
         throw 1
     }
     native { return $v1*$v2; }
@@ -75,7 +75,7 @@ set {/} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != @number) || (t2 != @number) {
+    if (t1 /= @number) || (t2 /= @number) {
         throw 1
     }
     native { return $v1/$v2; }
@@ -89,7 +89,7 @@ set {>=} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != t2) || (t1 != @number) {
+    if (t1 /= t2) || (t1 /= @number) {
         throw 1
     }
     native { return $v1 >= $v2; } == 1
@@ -101,7 +101,7 @@ set {>} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != t2) || (t1 != @number) {
+    if (t1 /= t2) || (t1 /= @number) {
         throw 1
     }
     native { return $v1 > $v2; } == 1
@@ -113,7 +113,7 @@ set {<=} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != t2) || (t1 != @number) {
+    if (t1 /= t2) || (t1 /= @number) {
         throw 1
     }
     native { return $v1 <= $v2; } == 1
@@ -125,7 +125,7 @@ set {<} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 != t2) || (t1 != @number) {
+    if (t1 /= t2) || (t1 /= @number) {
         throw 1
     }
     native { return $v1 < $v2; } == 1

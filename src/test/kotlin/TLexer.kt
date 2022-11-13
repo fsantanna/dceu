@@ -126,14 +126,14 @@ class TLexer {
     }
     @Test
     fun ops2() {
-        val l = lexer("> < >= <= == !=")
+        val l = lexer("> < >= <= == /=")
         val tks = l.lex().iterator()
         assert(tks.next().str == ">")
         assert(tks.next().str == "<")
         assert(tks.next().str == ">=")
         assert(tks.next().str == "<=")
         assert(tks.next().str == "==")
-        assert(tks.next().str == "!=")
+        assert(tks.next().str == "/=")
         assert(tks.next() is Tk.Eof)
     }
     @Test

@@ -809,7 +809,7 @@ class TExec {
             println(1 > 2)
             println(1 < 2)
             println(1 == 1)
-            println(1 != 1)
+            println(1 /= 1)
             println(2 >= 1)
             println(2 <= 1)
         """, true)
@@ -819,9 +819,31 @@ class TExec {
     fun op_eq() {
         val out = all("""
             println(1 == 1)
-            println(1 != 1)
+            println(1 /= 1)
         """)
         assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun todo_op_assoc() {
+        val out = all("""
+            println(2 * 3 - 1)
+        """, true)
+        assert(out == "5\n") { out }
+    }
+    @Test
+    fun todo_op_or_and() {
+        val out = all("""
+            println(true or println(1))
+            println(false and println(1))
+        """, true)
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun todo_op_not() {
+        val out = all("""
+            println(not false and not false)
+        """, true)
+        assert(out == "true\n") { out }
     }
 
     // TAGS
@@ -856,9 +878,9 @@ class TExec {
         val out = all("""
             println(@xxx)
             println(@xxx == @yyy)
-            println(@xxx != @yyy)
+            println(@xxx /= @yyy)
             println(@xxx == @xxx)
-            println(@xxx != @xxx)
+            println(@xxx /= @xxx)
         """)
         assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
