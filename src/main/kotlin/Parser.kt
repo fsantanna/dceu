@@ -249,15 +249,15 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or"  -> {
                     op as Tk.Fix
-                    val t = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
+                    val t = Expr.Block(op, listOf(e))
                     val f = Expr.Block(op, listOf(e2))
-                    Expr.If(op, e, t, f)
+                    Expr.If(op, e.copy(), t, f)
                 }
                 "and" -> {
                     op as Tk.Fix
                     val t = Expr.Block(op, listOf(e2))
-                    val f = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("false",op.pos))))
-                    Expr.If(op, e, t, f)
+                    val f = Expr.Block(op, listOf(e))
+                    Expr.If(op, e.copy(), t, f)
                 }
                 else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }

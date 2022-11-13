@@ -47,3 +47,28 @@ fun err_expected (tk: Tk, str: String) {
     err(tk, "expected $str : have $have")
 }
 
+fun Expr.copy (): Expr {
+    return when (this) {
+        is Expr.Block  -> Expr.Block(this.tk_, this.es.map { it.copy() })
+        is Expr.Dcl    -> Expr.Dcl(this.tk_)
+        is Expr.Set    -> Expr.Set(this.tk_, this.dst.copy(), this.src.copy())
+        is Expr.If     -> Expr.If(this.tk_, this.cnd.copy(), this.t.copy(), this.f.copy())
+        is Expr.While  -> Expr.While(this.tk_, this.cnd.copy(), this.body.copy())
+        is Expr.Func   -> Expr.Func(this.tk_, this.args.map { it.copy() }, this.body.copy())
+        is Expr.Catch  -> Expr.Catch(this.tk_, this.catch.copy(), this.body.copy())
+        is Expr.Throw  -> Expr.Throw(this.tk_, this.ex.copy(), this.arg.copy())
+        is Expr.Spawn  -> Expr.Spawn(this.tk_, this.task.copy())
+        is Expr.Resume -> Expr.Resume(this.tk_, this.call.copy())
+        is Expr.Yield  -> Expr.Yield(this.tk_, this.arg.copy())
+
+        is Expr.Nat    -> Expr.Nat(this.tk_)
+        is Expr.Acc    -> Expr.Acc(this.tk_)
+        is Expr.Nil    -> Expr.Nil(this.tk_)
+        is Expr.Tag    -> Expr.Tag(this.tk_)
+        is Expr.Bool   -> Expr.Bool(this.tk_)
+        is Expr.Num    -> Expr.Num(this.tk_)
+        is Expr.Tuple  -> Expr.Tuple(this.tk_, this.args.map { it.copy() })
+        is Expr.Index  -> Expr.Index(this.tk_, this.col.copy(), this.idx.copy())
+        is Expr.Call   -> Expr.Call(this.tk_, this.f.copy(), this.args.map { it.copy() })
+    }
+}

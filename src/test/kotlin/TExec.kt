@@ -882,14 +882,14 @@ class TExec {
     @Test
     fun op_not() {
         val out = all("""
-            println(not false and not false)
+            println(not nil and not false)
         """, true)
         assert(out == "true\n") { out }
     }
     @Test
     fun op2_or_and() {
         val out = all("""
-            println(1 or throw 5))
+            println(1 or throw 5)
             println(1 and 2)
             println(nil and 2)
             println(nil or 2)
