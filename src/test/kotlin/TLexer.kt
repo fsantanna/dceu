@@ -40,7 +40,7 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer(" if aaa throw nil task XXX defer set spawn loop yield while vary10 catch resume else var do _do_ true func b10 false")
+        val l = lexer(" if aaa throw nil task XXX defer set spawn loop yield while vary10 catch resume else var do _do_ broadcast true func b10 false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().str == "aaa")
@@ -61,6 +61,7 @@ class TLexer {
         assert(tks.next().str == "var")
         assert(tks.next().str == "do")
         assert(tks.next().str == "_do_")
+        assert(tks.next().str == "broadcast")
         assert(tks.next().str == "true")
         assert(tks.next().str == "func")
         assert(tks.next().str == "b10")

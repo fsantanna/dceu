@@ -123,6 +123,76 @@ class TTask {
         assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
 
-    // MISC
+    // THROW
 
+    @Test
+    fun throw1() {
+        val out = all("""
+            var co
+            set co = spawn task (x,y) {
+                throw 2
+            }
+            catch 2 {
+                resume co(1,2)
+                println(99)
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun throw2() {
+        val out = all("""
+            var co
+            set co = spawn task (x,y) {
+                yield ()
+                throw 2
+            }
+            catch 2 {
+                resume co(1,2)
+                println(1)
+                resume co()
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "1\n3\n") { out }
+    }
+
+    // BROADCAST
+
+    @Test
+    fun bcast1() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)                
+            }
+            var co1
+            set co1 = spawn tk
+            var co2
+            set co2 = spawn tk
+            broadcast 1
+            broadcast 2
+            broadcast 3
+        """)
+        assert(out == "1\n1\n2\n2\n") { out }
+    }
+    @Test
+    fun bcast2() {
+        val out = all("""
+            resume spawn task () {
+                resume spawn task () {
+                    yield ()
+                    println(2)
+                } ()
+                yield ()
+                println(1)
+            } ()
+            broadcast ()
+        """)
+        assert(out == "1\n2\n") { out }
+    }
 }

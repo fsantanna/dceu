@@ -58,6 +58,7 @@ fun Expr.copy (): Expr {
         is Expr.Catch  -> Expr.Catch(this.tk_, this.catch.copy(), this.body.copy())
         is Expr.Throw  -> Expr.Throw(this.tk_, this.ex.copy(), this.arg.copy())
         is Expr.Spawn  -> Expr.Spawn(this.tk_, this.task.copy())
+        is Expr.Bcast  -> Expr.Bcast(this.tk_, this.arg.copy())
         is Expr.Resume -> Expr.Resume(this.tk_, this.call.copy())
         is Expr.Yield  -> Expr.Yield(this.tk_, this.arg.copy())
         is Expr.Defer  -> Expr.Defer(this.tk_, this.body.copy())

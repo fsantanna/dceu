@@ -275,10 +275,16 @@ fun Expr.code(cblock: CBlock, set: Pair<String, String>?): String {
             }
             """
         }
+        is Expr.Bcast -> """
+            { // BCAST
+                CEU_Value ceu_$n;
+                ${this.arg.code(cblock, Pair(cblock.block(), "ceu_$n"))}
+            }
+            """
         is Expr.Resume -> {
             val (sets,args) = this.call.args.let {
                 Pair(
-                    it.mapIndexed { i,x -> x.code(cblock!!, Pair(cblock.block(), "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                    it.mapIndexed { i,x -> x.code(cblock, Pair(cblock.block(), "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                     it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                 )
             }

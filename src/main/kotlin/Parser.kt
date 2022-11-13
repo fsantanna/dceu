@@ -153,6 +153,7 @@ class Parser (lexer_: Lexer)
                 Expr.Throw(tk0, ex, arg)
             }
             this.acceptFix("spawn") -> Expr.Spawn(this.tk0 as Tk.Fix, this.expr())
+            this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, this.expr())
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()

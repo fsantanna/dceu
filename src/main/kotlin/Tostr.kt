@@ -9,6 +9,7 @@ fun Expr.tostr (): String {
         is Expr.Throw  -> "throw (" + this.ex.tostr() + "," + this.arg.tostr() + ")"
         is Expr.Catch  -> "catch " + this.catch.tostr() + " " + this.body.tostr()
         is Expr.Spawn  -> "spawn " + this.task.tostr()
+        is Expr.Bcast  -> "broadcast " + this.arg.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
         is Expr.Yield  -> "yield (" + this.arg.tostr() + ")"
         is Expr.Defer  -> "defer " + this.body.tostr()

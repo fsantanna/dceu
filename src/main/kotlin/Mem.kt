@@ -82,6 +82,7 @@ fun Expr.mem (): String {
                 ${this.task.mem()}
             };
             """
+        is Expr.Bcast -> this.arg.mem()
         is Expr.Resume -> """
             struct { // RESUME
                 CEU_Value ret_$n;
