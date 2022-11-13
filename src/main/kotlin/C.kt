@@ -7,6 +7,7 @@ fun Expr.Block.main (): String {
         #include <string.h>
         #include <assert.h>
         #include <stdarg.h>
+        #include <math.h>
 
         struct CEU_Value;
         struct CEU_Block;

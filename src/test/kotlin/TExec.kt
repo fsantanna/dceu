@@ -31,7 +31,7 @@ fun all (inp: String, pre: Boolean=false): String {
         return e.message!!
     }
     File("out.c").writeText(c)
-    val (ok2, out2) = exec("gcc -Werror out.c -o out.exe")
+    val (ok2, out2) = exec("gcc -Werror out.c -lm -o out.exe")
     if (!ok2) {
         return out2
     }

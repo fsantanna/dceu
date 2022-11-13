@@ -40,6 +40,18 @@ set {*} = func (v1, v2) {
     native { return $v1*$v2; }
 }
 
+var {**}
+set {**} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 /= @number) or (t2 /= @number) {
+        throw 1
+    }
+    native { return powf($v1,$v2); }
+}
+
 var {/}
 set {/} = func (v1, v2) {
     var t1
@@ -50,6 +62,18 @@ set {/} = func (v1, v2) {
         throw 1
     }
     native { return $v1/$v2; }
+}
+
+var {//}
+set {//} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 /= @number) or (t2 /= @number) {
+        throw 1
+    }
+    native { return powf($v1,1/$v2); }
 }
 
 ;; RELATIONAL:  >=  >  <=  <
