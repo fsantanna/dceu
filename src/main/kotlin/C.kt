@@ -272,15 +272,30 @@ fun Expr.Block.main (): String {
             CEU_Value_Coro* cur = block->bcast;
             while (cur != NULL) {
                 CEU_Value* args[] = { arg };
-                ceu_bcast(cur->bcast.inner, arg);
-                if (ceu_throw != CEU_THROW_NONE) {
+                if (cur->bcast.inner != NULL) {
+                    ceu_bcast(cur->bcast.inner, arg);
+                }
+                if (ceu_throw != NULL) {
                     break;
                 }
-                cur->task->func(cur, NULL, 1, args);
-                if (ceu_throw != CEU_THROW_NONE) {
+                if (cur->status == CEU_CORO_STATUS_YIELDED) {
+                    cur->task->func(cur, NULL, 1, args);
+                }
+                if (ceu_throw != NULL) {
                     break;
                 }
                 cur = cur->bcast.outer;
+            }
+        }
+        void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
+            if (block->bcast == NULL) {
+                block->bcast = coro;
+            } else {
+                CEU_Value_Coro* cur = block->bcast;
+                while (cur->bcast.outer != NULL) {
+                    cur = cur->bcast.outer;
+                }
+                cur->bcast.outer = coro;
             }
         }
     """ +

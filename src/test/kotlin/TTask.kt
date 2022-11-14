@@ -183,15 +183,38 @@ class TTask {
     @Test
     fun bcast2() {
         val out = all("""
-            resume spawn task () {
-                resume spawn task () {
+            var co1
+            set co1 = spawn task () {
+                var co2
+                set co2 = spawn task () {
                     yield ()
                     println(2)
-                } ()
+                }
+                resume co2 ()
                 yield ()
                 println(1)
-            } ()
-            broadcast ()
+            }
+            resume co1 ()
+            broadcast nil
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun bcast3() {
+        val out = all("""
+            var co1
+            set co1 = spawn task () {
+                var co2
+                set co2 = spawn task () {
+                    yield ()
+                    throw 5
+                }
+                resume co2 ()
+                yield ()
+                println(1)
+            }
+            resume co1 ()
+            broadcast nil
         """)
         assert(out == "1\n2\n") { out }
     }
