@@ -248,7 +248,10 @@ class Coder (val outer: Expr.Block) {
                     ${xtask("""
                         if (ceu_coro->status != CEU_CORO_STATUS_YIELDED) {
                             if (ceu_isbcast) {
-                                ceu_coro->bcast.coro->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                                CEU_Value_Coro* coro = ceu_coro->bcast.coro;
+                                if (coro != NULL) {
+                                    coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                                }
                             }
                             return ceu_$n;
                         }
@@ -260,10 +263,12 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_isbcast) {
                             CEU_Block* block = ceu_coro->bcast.block;
                             while (block != NULL) {
-                                CEU_Value_Coro* coro = ceu_coro->bcast.block->bcast.coro;
-                                coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
-                                if (ceu_throw != NULL) {
-                                    return ceu_$n;
+                                CEU_Value_Coro* coro = block->bcast.coro;
+                                if (coro != NULL) {
+                                    coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                                    if (ceu_throw != NULL) {
+                                        return ceu_$n;
+                                    }
                                 }
                                 block = block->bcast.block;
                             }
@@ -304,7 +309,10 @@ class Coder (val outer: Expr.Block) {
                         ceu_coro->pc = -1;
                         ceu_coro->status = CEU_CORO_STATUS_TERMINATED;
                         if (ceu_isbcast) {
-                            ceu_coro->bcast.coro->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                            CEU_Value_Coro* coro = ceu_coro->bcast.coro;
+                            if (coro != NULL) {
+                                coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                            }
                         }
                     """)}
                     return ceu_$n;
@@ -447,7 +455,10 @@ class Coder (val outer: Expr.Block) {
                     ceu_coro->pc = $n;      // next resume
                     ceu_coro->status = CEU_CORO_STATUS_YIELDED;
                     if (ceu_isbcast) {
-                        ceu_coro->bcast.coro->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                        CEU_Value_Coro* coro = ceu_coro->bcast.coro;
+                        if (coro != NULL) {
+                            coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                        }
                     }
                     return ceu_$n; // yield
                 case $n:                    // resume here

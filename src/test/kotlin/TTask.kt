@@ -197,7 +197,7 @@ class TTask {
             resume co1 ()
             broadcast nil
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "2\n1\n") { out }
     }
     @Test
     fun bcast3() {
@@ -207,7 +207,7 @@ class TTask {
                 var co2
                 set co2 = spawn task () {
                     yield ()
-                    throw 5
+                    throw @error
                 }
                 resume co2 ()
                 yield ()
@@ -216,7 +216,7 @@ class TTask {
             resume co1 ()
             broadcast nil
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "anon : (lin 7, col 21) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun bcast4() {
@@ -242,5 +242,21 @@ class TTask {
             broadcast 4
         """)
         assert(out == "1\n2\n2\n3\n") { out }
+    }
+    @Test
+    fun bcast5() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)
+            }
+            var co
+            set co = spawn tk
+            resume co(1)
+            broadcast 2
+        """)
+        assert(out == "1\n2\n") { out }
     }
 }
