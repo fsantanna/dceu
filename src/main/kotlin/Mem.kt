@@ -15,7 +15,6 @@ fun Expr.mem (): String {
             """
             struct { // BLOCK
                 CEU_Block block_$n;
-                int brk_$n;
                 ${es.seq(0)}
             };
             """
@@ -43,17 +42,13 @@ fun Expr.mem (): String {
             };
             """
         is Expr.While -> """
-            struct { // WHILE
-                int brk_$n;
-                union {
-                    ${this.cnd.mem()}
-                    ${this.body.mem()}
-                };
+            union { // WHILE
+                ${this.cnd.mem()}
+                ${this.body.mem()}
             };
             """
         is Expr.Catch -> """
             struct { // CATCH
-                int brk_$n;
                 CEU_Value catch_$n;
                 union {
                     ${this.catch.mem()}

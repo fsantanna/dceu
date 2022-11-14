@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Block) {
                 val f_b = this.upFuncOrBlock()
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Func) -> "(ceu_ret->depth + 1)"
+                    (f_b is Expr.Func) -> "(ceu_ret==NULL ? 1 : ceu_ret->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 if (this != outer) {
@@ -128,11 +128,9 @@ class Coder (val outer: Expr.Block) {
                         ceu_block_global = &ceu_mem->block_$n;
                     }    
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"}
-                    ceu_mem->brk_$n = 0;
-                    while (!ceu_mem->brk_$n) {
-                        ceu_mem->brk_$n = 1;
+                    do {
                         $es
-                    }
+                    } while (0);
                     { ${this.tk.dump("DEFERS")}
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
@@ -199,9 +197,7 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.While -> """
                 { // WHILE
-                    ceu_mem->brk_$n = 0;
-                    while (!ceu_mem->brk_$n) {
-                        ceu_mem->brk_$n = 1;
+                    do {
                         CEU_Value ceu_cnd_$n;
                         ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
                         int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
@@ -210,7 +206,7 @@ class Coder (val outer: Expr.Block) {
                         }
                         ${this.body.code(null)}
                         ceu_mem->brk_$n = 0;
-                    }
+                    } while (0);
                     if (ceu_throw != NULL) {
                         continue;
                     }
@@ -247,9 +243,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n;
                     ${xtask("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
-                    int ceu_brk_$n = 0;
-                    while (!ceu_brk_$n) {  // FUNC
-                        ceu_brk_$n = 1;
+                    do { // FUNC
                         ${xtask("""
                             switch (ceu_coro->pc) {
                                 case -1:
@@ -275,7 +269,7 @@ class Coder (val outer: Expr.Block) {
                         // BODY
                         ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
                         ${xtask("}\n}\n")}
-                    }
+                    } while (0);
                     ${xtask("ceu_coro->pc = -1;")}
                     ${xtask("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
                     return ceu_$n;
@@ -299,11 +293,9 @@ class Coder (val outer: Expr.Block) {
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : catch error : expected tag", 256);
                         continue;
                     }
-                    ceu_mem->brk_$n = 0;
-                    while (!ceu_mem->brk_$n) {
-                        ceu_mem->brk_$n = 1;
+                    do {
                         ${this.body.code(set)}
-                    }
+                    } while (0);
                     if (ceu_throw != NULL) {          // pending throw
                         assert(ceu_throw->tag == CEU_VALUE_TAG);
                         if (ceu_throw->_tag_ == ceu_mem->catch_$n._tag_) { // CAUGHT: reset throw, set arg

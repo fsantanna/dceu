@@ -311,9 +311,7 @@ fun Coder.main (): String {
             ${this.tags.map { "CEU_TAG($it,\"@$it\")\n" }.joinToString("")}
             CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
-            int ceu_brk = 0;
-            while (!ceu_brk) {
-                ceu_brk = 1;
+            do {
                 typedef struct {
                     CEU_Value tags;
                     CEU_Value print;
@@ -334,7 +332,7 @@ fun Coder.main (): String {
                 }
                 ${this.code}
                 return 0;
-            }
+            } while (0);
             fprintf(stderr, "%s\n", ceu_throw_msg);
             return 1;
         }
