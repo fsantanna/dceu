@@ -76,23 +76,23 @@ fun Expr.copy (): Expr {
 }
 
 fun Expr.ups (): Map<Expr,Expr> {
-    fun Expr.f (l: List<Expr>): Map<Expr,Expr> {
+    fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
         return l.map { it.ups() }.fold(l.map { Pair(it,this) }.toMap(), {a,b->a+b})
     }
     return when (this) {
-        is Expr.Block  -> this.f(this.es)
+        is Expr.Block  -> this.map(this.es)
         is Expr.Dcl    -> emptyMap()
-        is Expr.Set    -> this.f(listOf(this.dst, this.src))
-        is Expr.If     -> this.f(listOf(this.cnd, this.t, this.f))
-        is Expr.While  -> this.f(listOf(this.cnd, this.body))
-        is Expr.Func   -> this.f(listOf(this.body))
-        is Expr.Catch  -> this.f(listOf(this.catch, this.body))
-        is Expr.Throw  -> this.f(listOf(this.ex))
-        is Expr.Spawn  -> this.f(listOf(this.task))
-        is Expr.Bcast  -> this.f(listOf(this.arg))
-        is Expr.Resume -> this.f(listOf(this.call))
-        is Expr.Yield  -> this.f(listOf(this.arg))
-        is Expr.Defer  -> this.f(listOf(this.body))
+        is Expr.Set    -> this.map(listOf(this.dst, this.src))
+        is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
+        is Expr.While  -> this.map(listOf(this.cnd, this.body))
+        is Expr.Func   -> this.map(listOf(this.body))
+        is Expr.Catch  -> this.map(listOf(this.catch, this.body))
+        is Expr.Throw  -> this.map(listOf(this.ex))
+        is Expr.Spawn  -> this.map(listOf(this.task))
+        is Expr.Bcast  -> this.map(listOf(this.arg))
+        is Expr.Resume -> this.map(listOf(this.call))
+        is Expr.Yield  -> this.map(listOf(this.arg))
+        is Expr.Defer  -> this.map(listOf(this.body))
 
         is Expr.Nat    -> emptyMap()
         is Expr.Acc    -> emptyMap()
@@ -100,8 +100,8 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Tag    -> emptyMap()
         is Expr.Bool   -> emptyMap()
         is Expr.Num    -> emptyMap()
-        is Expr.Tuple  -> this.f(this.args)
-        is Expr.Index  -> this.f(listOf(this.col, this.idx))
-        is Expr.Call   -> this.f(listOf(this.f)) + this.f(this.args)
+        is Expr.Tuple  -> this.map(this.args)
+        is Expr.Index  -> this.map(listOf(this.col, this.idx))
+        is Expr.Call   -> this.map(listOf(this.f)) + this.map(this.args)
     }
 }

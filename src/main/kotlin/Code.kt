@@ -20,7 +20,8 @@ fun Tk.dump (pre: String = ""): String {
     return "// $pre (${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
 }
 
-data class XBlock (val syms: MutableSet<String>, val defers: MutableList<String>)
+// func (args) or block (locals)
+data class XBlock (val syms: MutableSet<String>, val defers: MutableList<String>?)
 
 class Coder (val outer: Expr.Block) {
     val code: String
@@ -37,7 +38,7 @@ class Coder (val outer: Expr.Block) {
         "coro",
         "error",
     )
-    val xblocks = mutableMapOf<Expr.Block,XBlock>()
+    val xblocks = mutableMapOf<Expr,XBlock>()
 
     init {
         this.xblocks[outer] = XBlock (
@@ -66,16 +67,16 @@ class Coder (val outer: Expr.Block) {
         return this.up { it is Expr.Func || it is Expr.Block }
     }
 
-    fun Expr.Block.idFind (id: String): Expr.Block? {
+    fun Expr.idFind (id: String): Expr? {
         val xblock = xblocks[this]!!
-        val up = this.upBlock()
+        val up = this.upFuncOrBlock()
         return when {
             xblock.syms.contains(id) -> this
             (up != null) -> up.idFind(id)
             else -> null
         }
     }
-    fun Expr.Block.idCheck (id: String, isDcl: Boolean, tk: Tk): Expr.Block? {
+    fun Expr.Block.idCheck (id: String, isDcl: Boolean, tk: Tk): Expr? {
         val blk = this.idFind(id)
         when {
             (!isDcl && blk==null) -> err(tk, "access error : variable \"$id\" is not declared")
@@ -90,9 +91,13 @@ class Coder (val outer: Expr.Block) {
     }
     fun Expr.Block.id2c (id: String, tk: Tk): String {
         val blk = this.idCheck(id,false,tk)
-        val f = blk?.upFunc()
+        val f = when {
+            (blk is Expr.Func) -> blk
+            (blk == null) -> null
+            else -> blk.upFunc()
+        }
         return if (f == null) {
-            "(ceu_mem->$id)"
+            "(ceu_mem_${outer.n}->$id)"
         } else {
             "(ceu_mem_${f.n}->$id)"
         }
@@ -129,7 +134,7 @@ class Coder (val outer: Expr.Block) {
                         $es
                     }
                     { ${this.tk.dump("DEFERS")}
-                        ${xblocks[this]!!.defers.reversed().joinToString("")}
+                        ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}
                     ceu_block_free(&ceu_mem->block_$n);
@@ -212,6 +217,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             is Expr.Func -> {
+                xblocks[this] = XBlock(this.args.map { it.str }.toMutableSet(), null)
                 fun xtask (v: String): String {
                     return if (this.isTask()) v else ""
                 }
@@ -411,7 +417,7 @@ class Coder (val outer: Expr.Block) {
                     ${fset(this.tk, set, "(*ceu_args[0])")}
                 }
                 """
-            is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers.add(this.body.code(null)); "" }
+            is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
             is Expr.Nat -> {
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
                     var ret = ""
@@ -468,7 +474,9 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.upBlock()!!.id2c(this.tk_.fromOp().noSpecial(),this.tk))
+            is Expr.Acc -> {
+                this.tk.dump("ACC") + fset(this.tk, set, this.upBlock()!!.id2c(this.tk_.fromOp().noSpecial(),this.tk))
+            }
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)

@@ -443,12 +443,12 @@ class TExec {
     fun func3() {
         val out = all("""
             var f
-            set f = func (x) {
-                x
+            set f = func (xxx) {
+                xxx
             }
-            var x
-            set x = f(10)
-            println(x)
+            var yyy
+            set yyy = f(10)
+            println(yyy)
         """)
         assert(out == "10\n") { out }
     }
@@ -994,7 +994,7 @@ class TExec {
 
     @Test
     @Ignore
-    fun todo_closure() {    // TODO: solution
+    fun todo_closure() {    // TODO: solution: pass tuple that is compared on return
         val out = all("""
             var smallerc
             set smallerc = func (x) {
@@ -1003,6 +1003,17 @@ class TExec {
                 }
             }
             println(smallerc(3)(1))
+        """)
+        assert(out == "3\n") { out }
+    }
+
+    @Test
+    fun todo_err() {
+        val out = all("""
+            var t1
+            var v
+            set v = (if t1 {t1} else {nil})
+            set v = (t1 or nil)
         """)
         assert(out == "3\n") { out }
     }
