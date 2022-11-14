@@ -21,9 +21,7 @@ fun Coder.main (): String {
             struct CEU_Block* block;    // compare on set, compare on move
         } CEU_Dynamic;
     """ +
-    """
-        /* VALUE */
-
+    """ // VALUE
         typedef enum CEU_VALUE {
             CEU_VALUE_NIL,
             CEU_VALUE_TAG,
@@ -70,9 +68,7 @@ fun Coder.main (): String {
             };
         } CEU_Value;
     """ +
-    """
-        /* BLOCK */
-
+    """ // BLOCK
         typedef struct CEU_Block {
             uint8_t depth;                  // compare on set
             CEU_Dynamic* tofree;            // list of allocated data to free on exit
@@ -109,9 +105,7 @@ fun Coder.main (): String {
             }
         }
     """ +
-    """
-        /* CORO */
-
+    """ // CORO
         typedef enum CEU_CORO_STATUS {
             //CEU_CORO_POOL_STATUS,
             //CEU_CORO_STATUS_SPAWNED,
@@ -125,8 +119,8 @@ fun Coder.main (): String {
         typedef struct CEU_Value_Coro {
             CEU_Dynamic dyn;            // coro is dynamic
             struct {
-                struct CEU_Block* inner;        // first block in the coroutine
-                struct CEU_Value_Coro* outer;   // next coroutine in the outer block
+                struct CEU_Block* block;       // first block in the coroutine
+                struct CEU_Value_Coro* coro;   // next brother coroutine in the enclosing block
             } bcast;
             CEU_CORO_STATUS status;
             CEU_Value_Task* task;       // (Stack* stack, CUE_Coro* coro, void* evt);
@@ -284,10 +278,10 @@ fun Coder.main (): String {
                 block->bcast.coro = coro;
             } else {
                 CEU_Value_Coro* cur = block->bcast.coro;
-                while (cur->bcast.outer != NULL) {
-                    cur = cur->bcast.outer;
+                while (cur->bcast.coro != NULL) {
+                    cur = cur->bcast.coro;
                 }
-                cur->bcast.outer = coro;
+                cur->bcast.coro = coro;
             }
         }
     """ +
