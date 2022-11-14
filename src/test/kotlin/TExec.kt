@@ -24,7 +24,8 @@ fun all (inp: String, pre: Boolean=false): String {
         return e.message!!
     }
     val c = try {
-        Expr.Block(Tk.Fix("",Pos("anon",0,0)),es).main()
+        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+        coder.main()
     } catch (e: Throwable) {
         if (THROW) {
             throw e
@@ -630,14 +631,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch @x {
-                    throw @y
+                catch @xxx {
+                    throw @yyy
                     println(91)
                 }
                 println(9)
             }
-            catch @y {
-                catch @x {
+            catch @yyy {
+                catch @xxx {
                     f()
                     println(92)
                 }
@@ -656,7 +657,7 @@ class TExec {
             }
             println(1)
         """.trimIndent())
-        assert(out == "anon : (lin 2, col 5) : throw error : invalid exception : expected number\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
     }
     @Test
     fun todo_catch6_err() {
@@ -733,6 +734,17 @@ class TExec {
             println(1)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun catch11_err() {
+        val out = all("""
+            catch 1 {
+                throw @y
+                println(9)
+            }
+            println(1)
+        """.trimIndent())
+        assert(out == "anon : (lin 1, col 1) : catch error : expected tag\n") { out }
     }
 
     // NATIVE

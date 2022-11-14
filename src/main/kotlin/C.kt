@@ -1,4 +1,4 @@
-fun Expr.Block.main (): String {
+fun Coder.main (): String {
     return ("" +
     """
         #include <stdio.h>
@@ -124,10 +124,11 @@ fun Expr.Block.main (): String {
     """
         /* TAGS */
 
-        #define CEU_TAG(id,str)                             \
-            static CEU_Tags ceu_tag_##id = { str, NULL };   \
-            ceu_tag_##id.next = CEU_TAGS;                   \
-            CEU_TAGS = &ceu_tag_##id;                       \
+        #define CEU_TAG(id,str)                     \
+            int CEU_TAG_##id = __COUNTER__;         \
+            CEU_Tags ceu_tag_##id = { str, NULL };  \
+            ceu_tag_##id.next = CEU_TAGS;           \
+            CEU_TAGS = &ceu_tag_##id;               \
             CEU_TAGS_MAX++;
             
         typedef struct CEU_Tags {
@@ -146,15 +147,6 @@ fun Expr.Block.main (): String {
             return cur->name;
         }
         
-        int ceu_tag_from_string (char* name) {
-            int ret = 0;
-            CEU_Tags* cur = CEU_TAGS;
-            while (cur!=NULL && strcmp(cur->name,name)) {
-                cur = cur->next;
-                ret++;
-            }
-            return CEU_TAGS_MAX-1-ret;
-        }
         
         CEU_Value ceu_tags (CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
@@ -308,29 +300,9 @@ fun Expr.Block.main (): String {
     """
         // MAIN
         int main (void) {
-            //{        
-                #define __CEU_TAG_nil
-                #define __CEU_TAG_tag
-                #define __CEU_TAG_bool
-                #define __CEU_TAG_number
-                #define __CEU_TAG_tuple
-                #define __CEU_TAG_func
-                #define __CEU_TAG_task
-                #define __CEU_TAG_coro
-                #define __CEU_TAG_error
-                CEU_TAG(nil,    "@nil");    
-                CEU_TAG(tag,    "@tag");    
-                CEU_TAG(bool,   "@bool");    
-                CEU_TAG(number, "@number");    
-                CEU_TAG(tuple,  "@tuple");    
-                CEU_TAG(func,   "@func");    
-                CEU_TAG(task,   "@task");    
-                CEU_TAG(coro,   "@coro");    
-                CEU_TAG(error,  "@error");
-                CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=ceu_tag_from_string("@error")} };
-                //assert(CEU_TAG_VALUE_nil == CEU_VALUE_NIL);
-            //}
-
+            ${this.tags.map { "CEU_TAG($it,\"@$it\")\n" }.joinToString("")}
+            CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
+            assert(CEU_TAG_nil == CEU_VALUE_NIL);
             int ceu_brk = 0;
             while (!ceu_brk) {
                 ceu_brk = 1;
@@ -340,11 +312,11 @@ fun Expr.Block.main (): String {
                     CEU_Value println;            
                     CEU_Value op_eq_eq;
                     CEU_Value op_div_eq;
-                    ${this.mem()}
-                } CEU_Func_$n;
-                CEU_Func_$n _ceu_mem_;
-                CEU_Func_$n* ceu_mem = &_ceu_mem_;
-                CEU_Func_$n* ceu_mem_$n = &_ceu_mem_;
+                    ${this.mem}
+                } CEU_Func_${this.outer.n};
+                CEU_Func_${this.outer.n} _ceu_mem_;
+                CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
+                CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
                 {
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_print}     };
@@ -352,12 +324,7 @@ fun Expr.Block.main (): String {
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_op_div_eq} };
                 }
-                ${this.code (
-                    CBlock(null, Pair(n,null),
-                        mutableSetOf("tags", "print", "println", "op_eq_eq", "op_div_eq")
-                    ),
-                    null
-                )}
+                ${this.code}
                 return 0;
             }
             fprintf(stderr, "%s\n", ceu_throw_msg);

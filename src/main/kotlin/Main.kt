@@ -71,7 +71,8 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         return e.message!! + "\n"
     }
     val c = try {
-        Expr.Block(Tk.Fix("",Pos("anon",0,0)),es).main()
+        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+        coder.main()
     } catch (e: Throwable) {
         return e.message!! + "\n"
     }
