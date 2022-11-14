@@ -216,15 +216,15 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                     }
 
                     val lin: Int? = if (file == null) {
-                        read2While { it.isDigit() }?.toIntOrNull()
+                        read2While { it.isDigit() }.toIntOrNull()
                     } else {
                         val (n4,x4) = read2()
                         if (x4 == ',') {
                             read2While { it.isDigit() }.let {
-                                if (it.isNullOrEmpty()) {
+                                if (it.isEmpty()) {
                                     err(pos, "invalid ^ token : expected number")
                                 }
-                                it!!.toInt()
+                                it.toInt()
                             }
                         } else {
                             unread2(n4)
@@ -237,10 +237,10 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                         val (n5,x5) = read2()
                         if (x5 == ',') {
                             read2While { it.isDigit() }.let {
-                                if (it.isNullOrEmpty()) {
+                                if (it.isEmpty()) {
                                     err(pos, "invalid ^ token : expected number")
                                 }
-                                it!!.toInt()
+                                it.toInt()
                             }
                         } else {
                             unread2(n5)

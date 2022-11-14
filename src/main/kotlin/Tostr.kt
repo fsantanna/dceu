@@ -6,7 +6,7 @@ fun Expr.tostr (): String {
         is Expr.If     -> "if " + this.cnd.tostr() + " " + this.t.tostr() + "else " + this.f.tostr()
         is Expr.While  -> "while " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
-        is Expr.Throw  -> "throw (" + this.ex.tostr() + "," + this.arg.tostr() + ")"
+        is Expr.Throw  -> "throw " + this.ex.tostr()
         is Expr.Catch  -> "catch " + this.catch.tostr() + " " + this.body.tostr()
         is Expr.Spawn  -> "spawn " + this.task.tostr()
         is Expr.Bcast  -> "broadcast " + this.arg.tostr()

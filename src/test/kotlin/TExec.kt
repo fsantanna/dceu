@@ -531,28 +531,28 @@ class TExec {
     // WHILE
 
     @Test
-    fun while1() {
+    fun todo_while1() {
         val out = all("""
-            println(catch 2 { while true { throw (2,1) }})
+            println(catch @x { while true { throw (@x,1) }})
         """)
         assert(out == "1\n") { out }
     }
     @Test
-    fun while2() {
+    fun todo_while2() {
         val out = all("""
-            println(catch 2 { while true { []; throw (2,1) }})
+            println(catch @x { while true { []; throw (@x,1) }})
         """)
         assert(out == "1\n") { out }
     }
     @Test
-    fun while3() {
+    fun todo_while3() {
         val out = all("""
             println(catch 2 { while true { throw (2,[1]) }})
         """)
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun while4() {
+    fun todo_while4() {
         val out = all("""
             println(catch 2 { while true {
                 var x
@@ -563,7 +563,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun while5_err() {
+    fun todo_while5_err() {
         val out = all("""
             println(catch 2 { while true {
                 var x
@@ -591,8 +591,8 @@ class TExec {
     @Test
     fun catch1() {
         val out = all("""
-            catch 1 {
-                throw 1
+            catch @x {
+                throw @x
                 println(9)
             }
             println(1)
@@ -602,8 +602,8 @@ class TExec {
     @Test
     fun catch2_err() {
         val out = all("""
-            catch 1 {
-                throw 5
+            catch @x {
+                throw @y
                 println(9)
             }
             println(1)
@@ -611,12 +611,12 @@ class TExec {
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
-    fun catch3() {
+    fun todo_catch3() {
         val out = all("""
             var x
-            set x = catch 1 {
+            set x = catch @x {
                 catch 2 {
-                    throw (1,10)
+                    throw (@x,10)
                     println(9)
                 }
                 println(9)
@@ -630,14 +630,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch 1 {
-                    throw 2
+                catch @x {
+                    throw @y
                     println(91)
                 }
                 println(9)
             }
-            catch 2 {
-                catch 1 {
+            catch @y {
+                catch @x {
                     f()
                     println(92)
                 }
@@ -650,7 +650,7 @@ class TExec {
     @Test
     fun catch5_err() {
         val out = all("""
-            catch 2 {
+            catch @x {
                 throw []
                 println(9)
             }
@@ -659,12 +659,12 @@ class TExec {
         assert(out == "anon : (lin 2, col 5) : throw error : invalid exception : expected number\n") { out }
     }
     @Test
-    fun catch6_err() {
+    fun todo_catch6_err() {
         val out = all("""
-            catch 2 {
+            catch @x {
                 var x
                 set x = []
-                throw (1, x)
+                throw (@x, x)
                 println(9)
             }
             println(1)
@@ -672,11 +672,11 @@ class TExec {
         assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun catch7() {
+    fun todo_catch7() {
         val out = all("""
             do {
-                println(catch 2 {
-                    throw (2,[10])
+                println(catch @x {
+                    throw (@x,[10])
                     println(9)
                 })
             }
@@ -684,13 +684,13 @@ class TExec {
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun catch8() {
+    fun todo_catch8() {
         val out = all("""
             var x
-            set x = catch 2 {
+            set x = catch @x {
                 var y
-                set y = catch 3 {
-                    throw (3,[10])
+                set y = catch @y {
+                    throw (@y,[10])
                     println(9)
                 }
                 ;;println(1)
@@ -703,18 +703,18 @@ class TExec {
     @Test
     fun catch9() {
         val out = all("""
-            catch 1 {
-                catch 2 {
-                    catch 3 {
-                        catch 4 {
+            catch @e1 {
+                catch @e2 {
+                    catch @e3 {
+                        catch @e4 {
                             println(1)
-                            throw 3
+                            throw @e3
                             println(99)
                         }
                         println(99)
                     }
                     println(2)
-                    throw 1
+                    throw @e1
                     println(99)
                 }
                 println(99)
@@ -726,7 +726,7 @@ class TExec {
     @Test
     fun catch10() {
         val out = all("""
-            catch 1 {
+            catch @e1 {
                 throw []
                 println(9)
             }

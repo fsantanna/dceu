@@ -124,12 +124,20 @@ fun Expr.Block.main (): String {
     """
         /* TAGS */
 
+        #define CEU_TAG(id,str)                             \
+            static CEU_Tags ceu_tag_##id = { str, NULL };   \
+            ceu_tag_##id.next = CEU_TAGS;                   \
+            CEU_TAGS = &ceu_tag_##id;                       \
+            CEU_TAGS_MAX++;
+            
         typedef struct CEU_Tags {
             char* name;
             struct CEU_Tags* next;
         } CEU_Tags;
+        
         static CEU_Tags* CEU_TAGS = NULL;
         int CEU_TAGS_MAX = 0;
+        
         char* ceu_tag_to_string (int tag) {
             CEU_Tags* cur = CEU_TAGS;
             for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
@@ -137,6 +145,7 @@ fun Expr.Block.main (): String {
             }
             return cur->name;
         }
+        
         int ceu_tag_from_string (char* name) {
             int ret = 0;
             CEU_Tags* cur = CEU_TAGS;
@@ -146,6 +155,7 @@ fun Expr.Block.main (): String {
             }
             return CEU_TAGS_MAX-1-ret;
         }
+        
         CEU_Value ceu_tags (CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {._tag_=args[0]->tag} };
@@ -256,11 +266,7 @@ fun Expr.Block.main (): String {
     """ +
     """
         // THROW
-        typedef enum {
-            CEU_THROW_NONE = 0,
-            CEU_THROW_RUNTIME
-        } CEU_Throw;
-        CEU_Throw ceu_throw = CEU_THROW_NONE;
+        CEU_Value* ceu_throw = NULL;
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
@@ -302,44 +308,28 @@ fun Expr.Block.main (): String {
     """
         // MAIN
         int main (void) {
-            {        
-                #define CEU_TAG_nil //__COUNTER__
-                static CEU_Tags ceu_tag_nil = { "@nil", NULL };
-                ceu_tag_nil.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_nil;
-                CEU_TAGS_MAX++;
-    
-                #define CEU_TAG_tag //__COUNTER__
-                static CEU_Tags ceu_tag_tag = { "@tag", NULL };
-                ceu_tag_tag.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_tag;
-                CEU_TAGS_MAX++;
-            
-                #define CEU_TAG_bool //__COUNTER__
-                static CEU_Tags ceu_tag_bool = { "@bool", NULL };
-                ceu_tag_bool.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_bool;
-                CEU_TAGS_MAX++;
-
-                #define CEU_TAG_number //__COUNTER__
-                static CEU_Tags ceu_tag_number = { "@number", NULL };
-                ceu_tag_number.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_number;
-                CEU_TAGS_MAX++;
-
-                #define CEU_TAG_tuple //__COUNTER__
-                static CEU_Tags ceu_tag_tuple = { "@tuple", NULL };
-                ceu_tag_tuple.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_tuple;
-                CEU_TAGS_MAX++;
-
-                #define CEU_TAG_func //__COUNTER__
-                static CEU_Tags ceu_tag_func = { "@func", NULL };
-                ceu_tag_func.next = CEU_TAGS;
-                CEU_TAGS = &ceu_tag_func;
-                CEU_TAGS_MAX++;
-            }
-            //assert(CEU_TAG_nil == CEU_VALUE_NIL);
+            //{        
+                #define __CEU_TAG_nil
+                #define __CEU_TAG_tag
+                #define __CEU_TAG_bool
+                #define __CEU_TAG_number
+                #define __CEU_TAG_tuple
+                #define __CEU_TAG_func
+                #define __CEU_TAG_task
+                #define __CEU_TAG_coro
+                #define __CEU_TAG_error
+                CEU_TAG(nil,    "@nil");    
+                CEU_TAG(tag,    "@tag");    
+                CEU_TAG(bool,   "@bool");    
+                CEU_TAG(number, "@number");    
+                CEU_TAG(tuple,  "@tuple");    
+                CEU_TAG(func,   "@func");    
+                CEU_TAG(task,   "@task");    
+                CEU_TAG(coro,   "@coro");    
+                CEU_TAG(error,  "@error");
+                CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=ceu_tag_from_string("@error")} };
+                //assert(CEU_TAG_VALUE_nil == CEU_VALUE_NIL);
+            //}
 
             int ceu_brk = 0;
             while (!ceu_brk) {

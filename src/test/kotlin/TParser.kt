@@ -332,12 +332,12 @@ class TParser {
     // THROW / CATCH
 
     @Test
-    fun catch1() {
+    fun todo_catch1() {
         val l = lexer("""
-            set x = catch 1 {
-                throw 1
-                throw (1,10)
-                throw (1)
+            set x = catch @e1 {
+                throw @e1
+                throw (@e1,10)
+                throw (@e1)
             }
             
         """)

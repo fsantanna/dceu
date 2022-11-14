@@ -130,9 +130,9 @@ class TTask {
         val out = all("""
             var co
             set co = spawn task (x,y) {
-                throw 2
+                throw @e2
             }
-            catch 2 {
+            catch @e2 {
                 resume co(1,2)
                 println(99)
             }
@@ -146,9 +146,9 @@ class TTask {
             var co
             set co = spawn task (x,y) {
                 yield ()
-                throw 2
+                throw @e2
             }
-            catch 2 {
+            catch @e2 {
                 resume co(1,2)
                 println(1)
                 resume co()

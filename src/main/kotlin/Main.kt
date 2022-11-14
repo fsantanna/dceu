@@ -27,7 +27,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
-    data class Throw  (val tk_: Tk.Fix, val ex: Expr, val arg: Expr): Expr(N++, tk_)
+    data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
     data class Spawn  (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
