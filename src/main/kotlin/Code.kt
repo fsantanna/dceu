@@ -222,7 +222,7 @@ class Coder (val outer: Expr.Block) {
                 fun xfunc (v: String): String {
                     return if (!this.isTask()) v else ""
                 }
-                """
+                """ // TYPE
                 typedef struct {
                     ${this.args.map {
                         """
@@ -232,17 +232,41 @@ class Coder (val outer: Expr.Block) {
                     }.joinToString("")}
                     ${this.body.mem()}
                 } CEU_Func_$n;
-                CEU_Value ceu_func_$n (${xtask("CEU_Value_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
+                """ +
+                """ // BODY
+                CEU_Value ceu_func_$n (
+                    ${xtask("CEU_Value_Coro* ceu_coro, int ceu_isbcast,")}
+                    CEU_Block* ceu_ret,
+                    int ceu_n,
+                    CEU_Value* ceu_args[]
+                ) {
+                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
                     ${xfunc("""
                         CEU_Func_$n _ceu_mem_;
                         CEU_Func_$n* ceu_mem = &_ceu_mem_;
                     """)}
                     ${xtask("""
+                        if (ceu_coro->status != CEU_CORO_STATUS_YIELDED) {
+                            if (ceu_isbcast) {
+                                ceu_coro->bcast.outer->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                            }
+                            return ceu_$n;
+                        }
+                        ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
                     """)}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
-                    CEU_Value ceu_$n;
-                    ${xtask("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
+                    ${xtask("""
+                        if (ceu_isbcast && ceu_coro->bcast.inner!=NULL) {
+                            CEU_Value_Coro* coro = ceu_coro->bcast.inner->bcast.coro;
+                            coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                            if (ceu_throw != NULL) {
+                                return ceu_$n;
+                            }
+                        }
+                    """)}
+                    """ +
+                    """ // WHILE
                     do { // FUNC
                         ${xtask("""
                             switch (ceu_coro->pc) {
@@ -270,8 +294,15 @@ class Coder (val outer: Expr.Block) {
                         ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
                         ${xtask("}\n}\n")}
                     } while (0);
-                    ${xtask("ceu_coro->pc = -1;")}
-                    ${xtask("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
+                    """ +
+                    """
+                    ${xtask("""
+                        ceu_coro->pc = -1;
+                        ceu_coro->status = CEU_CORO_STATUS_TERMINATED;
+                        if (ceu_isbcast) {
+                            ceu_coro->bcast.outer->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                        }
+                    """)}
                     return ceu_$n;
                 }
                 ${xfunc(fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })"))}
@@ -360,7 +391,9 @@ class Coder (val outer: Expr.Block) {
                 { // BCAST
                     CEU_Value ceu_arg_$n;
                     ${this.arg.code(Pair(bupc, "ceu_arg_$n"))}
-                    ceu_bcast($bupc, &ceu_arg_$n);
+                    CEU_Value_Coro* ceu_coro_$n = $bupc->bcast.block->bcast.coro;
+                    CEU_Value* ceu_args_$n[] = { &ceu_arg_$n };
+                    ceu_coro_$n->task->func(ceu_coro_$n, 1, NULL, 1, ceu_args_$n);
                 }
                 """
             }
@@ -387,6 +420,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
                         ceu_coro_$n.coro,
+                        0,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
                         ceu_args_$n
@@ -404,6 +438,9 @@ class Coder (val outer: Expr.Block) {
                     ${this.arg.code(Pair("ceu_ret","ceu_$n"))}
                     ceu_coro->pc = $n;      // next resume
                     ceu_coro->status = CEU_CORO_STATUS_YIELDED;
+                    if (ceu_isbcast) {
+                        ceu_coro->bcast.outer->task->func(ceu_coro, 1, NULL, ceu_n, ceu_args);
+                    }
                     return ceu_$n; // yield
                 case $n:                    // resume here
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");

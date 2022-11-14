@@ -35,9 +35,19 @@ fun Coder.main (): String {
             CEU_VALUE_CORO      // spawned task
         } CEU_VALUE;
         
-        typedef struct CEU_Value (*CEU_Value_Func) (struct CEU_Block* ret, int n, struct CEU_Value* args[]);
+        typedef struct CEU_Value (*CEU_Value_Func) (
+            struct CEU_Block* ret,
+            int n,
+            struct CEU_Value* args[]
+        );
         typedef struct CEU_Value_Task {
-            struct CEU_Value (*func) (struct CEU_Value_Coro* coro, struct CEU_Block* ret, int n, struct CEU_Value* args[]);
+            struct CEU_Value (*func) (
+                struct CEU_Value_Coro* coro,
+                int ceu_isbcast,
+                struct CEU_Block* ret,
+                int n,
+                struct CEU_Value* args[]
+            );
             int size;   // buffer w/ locals
         } CEU_Value_Task;
 
@@ -269,32 +279,6 @@ fun Coder.main (): String {
     """
         /* BCAST */
 
-        void ceu_bcast (CEU_Block* block, CEU_Value* arg) {
-            // active coros
-            CEU_Value_Coro* cur = block->bcast.coro;
-            while (cur != NULL) {
-                if (cur->status != CEU_CORO_STATUS_YIELDED) {
-                    // skip
-                } else {
-                    if (cur->bcast.inner != NULL) {
-                        ceu_bcast(cur->bcast.inner, arg);
-                        if (ceu_throw != NULL) {
-                            break;
-                        }
-                    }
-                    CEU_Value* args[] = { arg };
-                    cur->task->func(cur, NULL, 1, args);
-                    if (ceu_throw != NULL) {
-                        break;
-                    }
-                }
-                cur = cur->bcast.outer;
-            }
-            // nested active block
-            if (block->bcast.block != NULL) {
-                ceu_bcast(block->bcast.block, arg);
-            }
-        }
         void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
             if (block->bcast.coro == NULL) {
                 block->bcast.coro = coro;
