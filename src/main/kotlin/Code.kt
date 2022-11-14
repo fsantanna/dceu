@@ -88,11 +88,13 @@ class Coder (val outer: Expr.Block) {
             if (isptr) "(&($it))" else it
         }
     }
-    fun Expr.Func?.id2c (id: String): String {
-        return if (this == null) {
+    fun Expr.Block.id2c (id: String, tk: Tk): String {
+        val blk = this.idCheck(id,false,tk)
+        val f = blk?.upFunc()
+        return if (f == null) {
             "(ceu_mem->$id)"
         } else {
-            "(ceu_mem_${this.n}->$id)"
+            "(ceu_mem_${f.n}->$id)"
         }
     }
 
@@ -106,8 +108,9 @@ class Coder (val outer: Expr.Block) {
                     (f_b is Expr.Func) -> "(ceu_ret->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val newcblock = XBlock(mutableSetOf(), mutableListOf())
-                xblocks[this] = newcblock
+                if (this != outer) {
+                    xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
+                }
                 val es = this.es.mapIndexed { i, it ->
                     it.code(if (i == this.es.size - 1) set else null) + "\n"
                 }.joinToString("")
@@ -126,7 +129,7 @@ class Coder (val outer: Expr.Block) {
                         $es
                     }
                     { ${this.tk.dump("DEFERS")}
-                        ${newcblock.defers.reversed().joinToString("")}
+                        ${xblocks[this]!!.defers.reversed().joinToString("")}
                     }
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}
                     ceu_block_free(&ceu_mem->block_$n);
@@ -161,8 +164,8 @@ class Coder (val outer: Expr.Block) {
 
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
-                        val fup = this.upFunc()
-                        Pair(fup.id2c("_${id}_"), fup.id2c(id)) // x = src / block of _x_
+                        val bup = this.upBlock()!!
+                        Pair(bup.id2c("_${id}_",this.tk), bup.id2c(id,this.tk)) // x = src / block of _x_
                     }
 
                     else -> error("bug found")
@@ -465,7 +468,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.upFunc().id2c(this.tk_.fromOp().noSpecial()))
+            is Expr.Acc -> this.tk.dump("ACC") + fset(this.tk, set, this.upBlock()!!.id2c(this.tk_.fromOp().noSpecial(),this.tk))
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)
