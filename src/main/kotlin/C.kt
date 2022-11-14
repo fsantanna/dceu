@@ -66,7 +66,10 @@ fun Coder.main (): String {
         typedef struct CEU_Block {
             uint8_t depth;                  // compare on set
             CEU_Dynamic* tofree;            // list of allocated data to free on exit
-            struct CEU_Value_Coro* bcast;   // next coroutine in the inner block
+            struct {
+                struct CEU_Block* block;       // nested block active
+                struct CEU_Value_Coro* coro;   // first coroutine in this block
+            } bcast;
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
@@ -267,7 +270,8 @@ fun Coder.main (): String {
         /* BCAST */
 
         void ceu_bcast (CEU_Block* block, CEU_Value* arg) {
-            CEU_Value_Coro* cur = block->bcast;
+            // active coros
+            CEU_Value_Coro* cur = block->bcast.coro;
             while (cur != NULL) {
                 CEU_Value* args[] = { arg };
                 if (cur->bcast.inner != NULL) {
@@ -284,12 +288,16 @@ fun Coder.main (): String {
                 }
                 cur = cur->bcast.outer;
             }
+            // nested active block
+            if (block->bcast.block != NULL) {
+                ceu_bcast(block->bcast.block, arg);
+            }
         }
         void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
-            if (block->bcast == NULL) {
-                block->bcast = coro;
+            if (block->bcast.coro == NULL) {
+                block->bcast.coro = coro;
             } else {
-                CEU_Value_Coro* cur = block->bcast;
+                CEU_Value_Coro* cur = block->bcast.coro;
                 while (cur->bcast.outer != NULL) {
                     cur = cur->bcast.outer;
                 }

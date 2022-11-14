@@ -87,10 +87,11 @@ class Coder (outer_: Expr.Block) {
                 """
                 { // BLOCK
                     assert($depth <= UINT8_MAX);
-                    ceu_mem->block_$n = (CEU_Block) { $depth, NULL, NULL };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
                     if (ceu_block_global == NULL) {
                         ceu_block_global = &ceu_mem->block_$n;
                     }    
+                    ${if (cblock.ns.second==null) "" else "${cblock.block()}->bcast.block = &ceu_mem->block_$n;"}
                     ceu_mem->brk_$n = 0;
                     while (!ceu_mem->brk_$n) {
                         ceu_mem->brk_$n = 1;
@@ -99,6 +100,7 @@ class Coder (outer_: Expr.Block) {
                     { // DEFERS
                         ${newcblock.defers.reversed().joinToString("")}
                     }
+                    ${if (cblock.ns.second==null) "" else "${cblock.block()}->bcast.block = NULL;"}
                     ceu_block_free(&ceu_mem->block_$n);
                     if (ceu_throw != NULL) {
                         continue;
