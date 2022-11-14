@@ -725,7 +725,7 @@ class TExec {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun catch10() {
+    fun todo_catch10() {
         val out = all("""
             catch @e1 {
                 throw []

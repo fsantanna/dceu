@@ -78,6 +78,13 @@ class Parser (lexer_: Lexer)
         return true
     }
 
+    fun checkLine (tk: Tk, e: Expr): Expr {
+        if (!tk.pos.isSameLine(e.tk.pos)) {
+            err(tk, "yield error : line break before expression")
+        }
+        return e
+    }
+
     fun <T> list0 (close: String, func: ()->T): List<T> {
         val l = mutableListOf<T>()
         if (!this.checkFix(close)) {
@@ -136,19 +143,19 @@ class Parser (lexer_: Lexer)
                 Expr.Func(tk0, args, body)
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block(null))
-            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, this.expr())
-            this.acceptFix("spawn") -> Expr.Spawn(this.tk0 as Tk.Fix, this.expr())
-            this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, this.expr())
+            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("spawn") -> Expr.Spawn(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val call = this.expr()
+                val call = checkLine(tk0, this.expr())
                 if (call !is Expr.Call) {
                     err_expected(tk1, "invalid resume : expected call")
 
                 }
                 Expr.Resume(tk0, call as Expr.Call)
             }
-            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, this.expr())
+            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
