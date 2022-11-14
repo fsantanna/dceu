@@ -218,4 +218,29 @@ class TTask {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun bcast4() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                do {
+                    println(v)
+                    set v = yield ()
+                    println(v)
+                }
+                do {
+                    println(v)
+                    set v = yield ()
+                    println(v)
+                }
+            }
+            var co
+            set co = spawn tk
+            broadcast 1
+            broadcast 2
+            broadcast 3
+            broadcast 4
+        """)
+        assert(out == "1\n2\n2\n3\n") { out }
+    }
 }

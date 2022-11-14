@@ -273,14 +273,14 @@ fun Coder.main (): String {
             // active coros
             CEU_Value_Coro* cur = block->bcast.coro;
             while (cur != NULL) {
-                CEU_Value* args[] = { arg };
-                if (cur->bcast.inner != NULL) {
-                    ceu_bcast(cur->bcast.inner, arg);
-                }
-                if (ceu_throw != NULL) {
-                    break;
-                }
                 if (cur->status == CEU_CORO_STATUS_YIELDED) {
+                    if (cur->bcast.inner != NULL) {
+                        ceu_bcast(cur->bcast.inner, arg);
+                    }
+                    if (ceu_throw != NULL) {
+                        break;
+                    }
+                    CEU_Value* args[] = { arg };
                     cur->task->func(cur, NULL, 1, args);
                 }
                 if (ceu_throw != NULL) {
