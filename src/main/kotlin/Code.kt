@@ -39,6 +39,7 @@ class Coder (val outer: Expr.Block) {
         "error",
     )
     val xblocks = mutableMapOf<Expr,XBlock>()
+    val funcs = mutableListOf<Pair<String,String>>()
 
     init {
         this.xblocks[outer] = XBlock (
@@ -222,65 +223,77 @@ class Coder (val outer: Expr.Block) {
                 fun xfunc (v: String): String {
                     return if (!this.isTask()) v else ""
                 }
-                """
-                typedef struct {
-                    ${this.args.map {
+                val type = """
+                    typedef struct {
+                        ${this.args.map {
                         """
-                        CEU_Value ${it.str};
-                        CEU_Block* _${it.str}_;
-                        """
+                            CEU_Value ${it.str};
+                            CEU_Block* _${it.str}_;
+                            """
                     }.joinToString("")}
-                    ${this.body.mem()}
-                } CEU_Func_$n;
-                CEU_Value ceu_func_$n (${xtask("CEU_Value_Coro* ceu_coro,")} CEU_Block* ceu_ret, int ceu_n, CEU_Value* ceu_args[]) {
-                    ${xfunc("""
-                        CEU_Func_$n _ceu_mem_;
-                        CEU_Func_$n* ceu_mem = &_ceu_mem_;
-                    """)}
-                    ${xtask("""
-                        CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
-                    """)}
-                    CEU_Func_$n* ceu_mem_$n = ceu_mem;
-                    CEU_Value ceu_$n;
-                    ${xtask("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
-                    do { // FUNC
-                        ${xtask("""
-                            switch (ceu_coro->pc) {
-                                case -1:
-                                    assert(0 && "bug found");
-                                    break;
-                                case 0: {
+                        ${this.body.mem()}
+                    } CEU_Func_$n;
+                    """
+                val proto = """
+                    CEU_Value ceu_func_$n (
+                        ${xtask("CEU_Value_Coro* ceu_coro,")}
+                        CEU_Block* ceu_ret,
+                        int ceu_n,
+                        CEU_Value* ceu_args[]
+                    )
+                    """
+                val body = """
+                    $proto {
+                        ${xfunc("""
+                            CEU_Func_$n _ceu_mem_;
+                            CEU_Func_$n* ceu_mem = &_ceu_mem_;
                         """)}
-                        { // ARGS
-                            int ceu_i = 0;
-                            ${this.args.map {
-                                val id = it.str.noSpecial()
-                                """
-                                ceu_mem->_${id}_ = NULL; // TODO: create Block at Func top-level
-                                if (ceu_i < ceu_n) {
-                                    ceu_mem->$id = *ceu_args[ceu_i];
-                                } else {
-                                    ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
-                                }
-                                ceu_i++;
-                                """
-                            }.joinToString("")}
-                        }
-                        // BODY
-                        ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
-                        ${xtask("}\n}\n")}
-                    } while (0);
-                    ${xtask("ceu_coro->pc = -1;")}
-                    ${xtask("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
-                    return ceu_$n;
-                }
-                ${xfunc(fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })"))}
-                ${xtask("""
-                    static CEU_Value_Task ceu_task_$n;
-                    ceu_task_$n = (CEU_Value_Task) { ceu_func_$n, sizeof(CEU_Func_$n) };
-                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
-                """)}
-                """
+                        ${xtask("""
+                            CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
+                        """)}
+                        CEU_Func_$n* ceu_mem_$n = ceu_mem;
+                        CEU_Value ceu_$n;
+                        ${xtask("ceu_coro->status = CEU_CORO_STATUS_RESUMED;")}
+                        do { // FUNC
+                            ${xtask("""
+                                switch (ceu_coro->pc) {
+                                    case -1:
+                                        assert(0 && "bug found");
+                                        break;
+                                    case 0: {
+                            """)}
+                            { // ARGS
+                                int ceu_i = 0;
+                                ${this.args.map {
+                                    val id = it.str.noSpecial()
+                                    """
+                                    ceu_mem->_${id}_ = NULL; // TODO: create Block at Func top-level
+                                    if (ceu_i < ceu_n) {
+                                        ceu_mem->$id = *ceu_args[ceu_i];
+                                    } else {
+                                        ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                                    }
+                                    ceu_i++;
+                                    """
+                                }.joinToString("")}
+                            }
+                            // BODY
+                            ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
+                            ${xtask("}\n}\n")}
+                        } while (0);
+                        ${xtask("ceu_coro->pc = -1;")}
+                        ${xtask("ceu_coro->status = CEU_CORO_STATUS_TERMINATED;")}
+                        return ceu_$n;
+                    }
+                    ${xfunc(fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })"))}
+                    ${xtask("""
+                        static CEU_Value_Task ceu_task_$n;
+                        ceu_task_$n = (CEU_Value_Task) { ceu_func_$n, sizeof(CEU_Func_$n) };
+                        ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
+                    """)}
+                    """
+                funcs.add(Pair(type+proto+";\n",body))
+                ""
             }
             is Expr.Catch -> {
                 val bup = this.upBlock()!!

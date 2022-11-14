@@ -265,6 +265,7 @@ fun Coder.main (): String {
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
+        CEU_Value CEU_THROW_ERROR;  // default runtime exception
     """ +
     """
         /* BCAST */
@@ -308,20 +309,29 @@ fun Coder.main (): String {
         }
     """ +
     """
+        // FUNCS
+        
+        typedef struct {
+            CEU_Value tags;
+            CEU_Value print;
+            CEU_Value println;            
+            CEU_Value op_eq_eq;
+            CEU_Value op_div_eq;
+            ${this.mem}
+        } CEU_Func_${this.outer.n};
+
+        // types/protos + bodies
+        ${this.funcs.unzip().let {
+            (it.first + it.second).joinToString("")
+        }}
+    """ +
+    """
         // MAIN
         int main (void) {
             ${this.tags.map { "CEU_TAG($it,\"@$it\")\n" }.joinToString("")}
             CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
-                typedef struct {
-                    CEU_Value tags;
-                    CEU_Value print;
-                    CEU_Value println;            
-                    CEU_Value op_eq_eq;
-                    CEU_Value op_div_eq;
-                    ${this.mem}
-                } CEU_Func_${this.outer.n};
                 CEU_Func_${this.outer.n} _ceu_mem_;
                 CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
                 CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
