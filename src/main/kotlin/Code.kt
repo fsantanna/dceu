@@ -123,7 +123,7 @@ class Coder (val outer: Expr.Block) {
                 { ${this.tk.dump("BLOCK")}
                     assert($depth <= UINT8_MAX);
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
-                    ${if (this.upFunc().let { it==null || it.tk.str!="task" }) "" else "ceu_coro->bcast.inner = ceu_mem->block_$n;"}
+                    ${if (this.upFunc().let { it==null || it.tk.str!="task" }) "" else "ceu_coro->bcast.inner = &ceu_mem->block_$n;"}
                     if (ceu_block_global == NULL) {
                         ceu_block_global = &ceu_mem->block_$n;
                     }    
@@ -217,7 +217,9 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             is Expr.Func -> {
-                xblocks[this] = XBlock(this.args.map { it.str }.toMutableSet(), null)
+                xblocks[this] = XBlock(this.args.let {
+                    it.map { it.str } + it.map { "_${it.str}_" }
+                }.toMutableSet(), null)
                 fun xtask (v: String): String {
                     return if (this.isTask()) v else ""
                 }
@@ -354,7 +356,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
-                    ceu_bcast_enqueue(bupc, ceu_$n);
+                    ceu_bcast_enqueue($bupc, ceu_$n);
                     $scp->tofree = (CEU_Dynamic*) ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_$n} })")}            
                 }
