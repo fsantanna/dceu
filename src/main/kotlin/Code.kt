@@ -123,10 +123,8 @@ class Coder (val outer: Expr.Block) {
                 { ${this.tk.dump("BLOCK")}
                     assert($depth <= UINT8_MAX);
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
-                    ${if (this.upFunc().let { it==null || it.tk.str!="task" }) "" else "ceu_coro->bcast.inner = &ceu_mem->block_$n;"}
-                    if (ceu_block_global == NULL) {
-                        ceu_block_global = &ceu_mem->block_$n;
-                    }    
+                    ${if (this.upFuncOrBlock().let { it==null || it is Expr.Block || it.tk.str!="task" }) "" else "ceu_coro->bcast.inner = &ceu_mem->block_$n;"}
+                    ${if (this.upBlock() != null) "" else "ceu_block_global = &ceu_mem->block_$n;"}
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"}
                     do {
                         $es
@@ -135,6 +133,7 @@ class Coder (val outer: Expr.Block) {
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}
+                    ${if (this.upFuncOrBlock().let { it==null || it is Expr.Block || it.tk.str!="task" }) "" else "ceu_coro->bcast.inner = NULL;"}
                     ceu_block_free(&ceu_mem->block_$n);
                     if (ceu_throw != NULL) {
                         continue;
@@ -198,6 +197,7 @@ class Coder (val outer: Expr.Block) {
             is Expr.While -> """
                 { // WHILE
                     do {
+                CEU_WHILE_$n:;
                         CEU_Value ceu_cnd_$n;
                         ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
                         int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
@@ -205,7 +205,7 @@ class Coder (val outer: Expr.Block) {
                             continue;
                         }
                         ${this.body.code(null)}
-                        ceu_mem->brk_$n = 0;
+                        goto CEU_WHILE_$n;
                     } while (0);
                     if (ceu_throw != NULL) {
                         continue;

@@ -115,7 +115,7 @@ fun Coder.main (): String {
         typedef struct CEU_Value_Coro {
             CEU_Dynamic dyn;            // coro is dynamic
             struct {
-                struct CEU_Block* inner;        // next coroutine in the inner block
+                struct CEU_Block* inner;        // first block in the coroutine
                 struct CEU_Value_Coro* outer;   // next coroutine in the outer block
             } bcast;
             CEU_CORO_STATUS status;
@@ -273,18 +273,20 @@ fun Coder.main (): String {
             // active coros
             CEU_Value_Coro* cur = block->bcast.coro;
             while (cur != NULL) {
-                if (cur->status == CEU_CORO_STATUS_YIELDED) {
+                if (cur->status != CEU_CORO_STATUS_YIELDED) {
+                    // skip
+                } else {
                     if (cur->bcast.inner != NULL) {
                         ceu_bcast(cur->bcast.inner, arg);
-                    }
-                    if (ceu_throw != NULL) {
-                        break;
+                        if (ceu_throw != NULL) {
+                            break;
+                        }
                     }
                     CEU_Value* args[] = { arg };
                     cur->task->func(cur, NULL, 1, args);
-                }
-                if (ceu_throw != NULL) {
-                    break;
+                    if (ceu_throw != NULL) {
+                        break;
+                    }
                 }
                 cur = cur->bcast.outer;
             }
