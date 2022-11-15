@@ -127,6 +127,17 @@ fun Coder.main (): String {
             int pc;                     // next line to execute
             char mem[];                 // beginning of locals
         } CEU_Value_Coro;
+        
+        void ceu_coro_bcast_nesteds (CEU_Value_Coro* coro, int n, CEU_Value* args[]) {
+            CEU_Block* block = coro->bcast.block;
+            while (block != NULL) {
+                CEU_Value_Coro* coro = block->bcast.coro;
+                if (coro != NULL) {
+                    coro->task->func(coro, 1, NULL, n, args);
+                }
+                block = block->bcast.block;
+            }
+        }
     """ +
     """
         /* TAGS */

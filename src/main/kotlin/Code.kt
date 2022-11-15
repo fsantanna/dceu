@@ -136,7 +136,7 @@ class Coder (val outer: Expr.Block) {
                     ${if (this.upFuncOrBlock().let { it==null || it is Expr.Block || it.tk.str!="task" }) "" else "ceu_coro->bcast.block = NULL;"}
                     ceu_block_free(&ceu_mem->block_$n);
                     if (ceu_throw != NULL) {
-                        continue;
+                        continue;   // escape to end of enclosing block
                     }
                 }
                 """
@@ -202,13 +202,13 @@ class Coder (val outer: Expr.Block) {
                         ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
                         int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
                         if (nok) {
-                            continue;
+                            continue; // escape enclosing block
                         }
                         ${this.body.code(null)}
                         goto CEU_WHILE_$n;
                     } while (0);
                     if (ceu_throw != NULL) {
-                        continue;
+                        continue; // escape enclosing block
                     }
                 }
                 """
@@ -246,32 +246,20 @@ class Coder (val outer: Expr.Block) {
                         CEU_Func_$n* ceu_mem = &_ceu_mem_;
                     """)}
                     ${xtask("""
-                        if (ceu_coro->status != CEU_CORO_STATUS_YIELDED) {
-                            if (ceu_isbcast) {
-                                CEU_Value_Coro* coro = ceu_coro->bcast.coro;
-                                if (coro != NULL) {
-                                    coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
-                                }
-                            }
-                            return ceu_$n;
+                        if (ceu_isbcast && ceu_coro->status!=CEU_CORO_STATUS_YIELDED) {
+                            goto CEU_RETURN_$n;
                         }
+                    """)}
+                    ${xtask("""
+                        assert(ceu_coro->status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
                     """)}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     ${xtask("""
+                        // before awaking this coro, awake nested coros
                         if (ceu_isbcast) {
-                            CEU_Block* block = ceu_coro->bcast.block;
-                            while (block != NULL) {
-                                CEU_Value_Coro* coro = block->bcast.coro;
-                                if (coro != NULL) {
-                                    coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
-                                    if (ceu_throw != NULL) {
-                                        //return ceu_$n;
-                                    }
-                                }
-                                block = block->bcast.block;
-                            }
+                            ceu_coro_bcast_nesteds(ceu_coro, ceu_n, ceu_args);
                         }
                     """)}
                     """ +
@@ -308,6 +296,8 @@ class Coder (val outer: Expr.Block) {
                     ${xtask("""
                         ceu_coro->pc = -1;
                         ceu_coro->status = CEU_CORO_STATUS_TERMINATED;
+                    CEU_RETURN_$n:
+                        // awake next brother coro in the same level
                         if (ceu_isbcast) {
                             CEU_Value_Coro* coro = ceu_coro->bcast.coro;
                             if (coro != NULL) {
@@ -334,7 +324,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_mem->catch_$n.tag != CEU_VALUE_TAG) {
                         ceu_throw = &CEU_THROW_ERROR;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : catch error : expected tag", 256);
-                        continue;
+                        continue; // escape enclosing block
                     }
                     do {
                         ${this.body.code(set)}
@@ -356,7 +346,7 @@ class Coder (val outer: Expr.Block) {
                             }
                             ceu_throw = NULL;
                         } else {                                // UNCAUGHT: escape to outer
-                            continue;
+                            continue; // escape enclosing block;
                         }
                     }
                 }
@@ -373,7 +363,7 @@ class Coder (val outer: Expr.Block) {
                         ceu_throw = &CEU_THROW_ERROR;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : expected tag", 256);
                     }
-                    continue;
+                    continue; // escape enclosing block;
                 }
                 """
             is Expr.Spawn -> {
@@ -386,7 +376,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
                         ceu_throw = &CEU_THROW_ERROR;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
-                        continue;
+                        continue; // escape enclosing block;
                     }
                     CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
                     assert(ceu_$n != NULL);
@@ -431,7 +421,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.coro->status!=CEU_CORO_STATUS_YIELDED) {                
                         ceu_throw = &CEU_THROW_ERROR;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
-                        continue;
+                        continue; // escape enclosing block;
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
@@ -442,7 +432,7 @@ class Coder (val outer: Expr.Block) {
                         ceu_args_$n
                     );
                     if (ceu_throw != NULL) {
-                        continue;
+                        continue; // escape enclosing block;
                     }
                     ${fset(this.tk, set, "ceu_ret_$n")}
                 }
@@ -450,20 +440,13 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Yield -> """
                 { // YIELD
-                    CEU_Value ceu_$n;
-                    ${this.arg.code(Pair("ceu_ret","ceu_$n"))}
+                    ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
                     ceu_coro->pc = $n;      // next resume
                     ceu_coro->status = CEU_CORO_STATUS_YIELDED;
-                    if (ceu_isbcast) {
-                        CEU_Value_Coro* coro = ceu_coro->bcast.coro;
-                        if (coro != NULL) {
-                            coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
-                        }
-                    }
-                    return ceu_$n; // yield
+                    goto CEU_RETURN_${this.upFunc()!!.n};
                 case $n:                    // resume here
                     if (ceu_throw != NULL) {
-                        continue;
+                        continue; // escape enclosing block;
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ceu_coro->status = CEU_CORO_STATUS_RESUMED;
@@ -521,7 +504,7 @@ class Coder (val outer: Expr.Block) {
                     }
                     CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.number=ceu_f_$n()} };
                     if (ceu_throw != NULL) {
-                        continue;
+                        continue; // escape enclosing block;
                     }
                     ${fset(this.tk, set, "ceu_$n")}
                 }
@@ -577,7 +560,7 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
                             ceu_throw = &CEU_THROW_ERROR;
                             strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
-                            continue;
+                            continue; // escape enclosing block;
                         }
                     }
                     CEU_Value ceu_idx_$n;
@@ -586,14 +569,14 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
                             ceu_throw = &CEU_THROW_ERROR;
                             strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
-                            continue;
+                            continue; // escape enclosing block;
                         }
                     }
                     { // OK
                         if (ceu_mem->col_$n.tuple->n <= ceu_mem->idx_$n.number) {                
                             ceu_throw = &CEU_THROW_ERROR;
                             strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                            break;
+                            continue; // escape enclosing block
                         }    
                         ${fset(this.tk, set, "((CEU_Value*)ceu_mem->col_$n.tuple->mem)[(int) ceu_mem->idx_$n.number]")}
                     }
@@ -617,7 +600,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_f_$n.tag != CEU_VALUE_FUNC) {                
                         ceu_throw = &CEU_THROW_ERROR;
                         strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : call error : expected function", 256);
-                        break;
+                        continue; // escape enclosing block
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_$n = ceu_f_$n.func(
@@ -626,7 +609,7 @@ class Coder (val outer: Expr.Block) {
                         ceu_args_$n
                     );
                     if (ceu_throw != NULL) {
-                        break;
+                        continue; // escape enclosing block
                     }
                     ${fset(this.tk, set, "ceu_$n")}
                 }
