@@ -302,4 +302,80 @@ class TBook {
         )
         assert(out == "true\ntrue\n") { out }
     }
+    @Test
+    @Ignore // class Eq:  ===  =/=  (polymorphic, unlike ~= ~/=)
+    fun todo_pg_32_eq_poly() {
+    }
+    @Test
+    @Ignore // class Ord:  ===  =/=  (polymorphic, unlike ~= ~/=)
+    fun todo_pg_32_ord_poly() {
+    }
+    @Test
+    fun pg_33_leap1() {
+        val out = all(
+            """
+            var leapyear?
+            set leapyear? = func (y) {
+                if (y % 100 == 0) {
+                    (y % 400 == 0)
+                } else {
+                    (y % 4 == 0)
+                }
+            }
+            println(leapyear?(1980))
+            println(leapyear?(1979))
+        """, true
+        )
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun todo_pg_33_leap2() {    // TODO: and or
+        val out = all(
+            """
+            var leapyear?
+            set leapyear? = func (y) {
+                (y % 100 == 0) && (y % 400 == 0) || (y % 4 == 0)
+            }
+            println(leapyear?(1980))
+            println(leapyear?(1979))
+        """, true
+        )
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun todo_pg_34_tri() { // #Triangle.Equilateral
+        val out = all(
+        """
+             @Equ   
+             @Iso   
+             @Sca   
+             @Err
+             var analyse
+             set analyse = func (x,y,z) {
+                if x+y <= z {
+                    @Err
+                } else {
+                    if x == z {
+                        @Equ
+                    } else {
+                        if (x == y) || (y == z) {
+                            @Iso
+                        } else {
+                            @Sca
+                        }
+                    }
+                }
+             }
+            println(analyse(10,20,30))
+            println(analyse(10,20,25))
+            println(analyse(10,20,20))
+            println(analyse(10,10,10))
+        """, true)
+        assert(out == "@Err\n@Sca\n@Iso\n@Equ\n") { out }
+    }
+
+    // CHAPTER 2.2: Characters
+    // TODO
+
+
 }

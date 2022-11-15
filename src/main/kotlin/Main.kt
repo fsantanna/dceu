@@ -13,7 +13,7 @@ val keywords: SortedSet<String> = (setOf (
     "and", "not", "or"
 )).toSortedSet()
 
-val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~')
+val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos): Tk("", pos_)

@@ -747,6 +747,15 @@ class TExec {
         """, true)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
+    @Test
+    fun ops_oth() {
+        val out = all("""
+            println(2**3)
+            println(8//3)
+            println(8%3)
+        """, true)
+        assert(out == "8\n2\n2\n") { out }
+    }
 
     // TAGS
 

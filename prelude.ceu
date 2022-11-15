@@ -18,7 +18,7 @@ set {||} = func (v1, v2) {
     }
 }
 
-;; ARITHMETIC:  +  -  *  /
+;; ARITHMETIC:  +  -  *  /  %  **  //
 
 var {+}
 set {+} = func (v1, v2) {
@@ -99,6 +99,19 @@ set {//} = func (v1, v2) {
         throw 1
     } else {
         native { return powf($v1,1/$v2); }
+    }
+}
+
+var {%}
+set {%} = func (v1, v2) {
+    var t1
+    set t1 = tags(v1)
+    var t2
+    set t2 = tags(v2)
+    if (t1 /= @number) || (t2 /= @number) {
+        throw 1
+    } else {
+        native { return fmod($v1,$v2); }
     }
 }
 
