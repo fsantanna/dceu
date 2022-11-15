@@ -1,6 +1,8 @@
+package xceu
+
+import ceu.all
 import org.junit.Ignore
 import org.junit.Test
-import java.io.File
 
 class TXExec {
 

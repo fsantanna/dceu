@@ -1,3 +1,12 @@
+package ceu
+
+import Lexer
+import Parser
+import Expr
+import Coder
+import Pos
+import exec
+import main
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File

@@ -1,3 +1,6 @@
+package xceu
+
+import ceu.lexer
 import org.junit.Test
 
 class TXLexer {

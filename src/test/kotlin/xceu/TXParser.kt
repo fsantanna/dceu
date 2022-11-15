@@ -1,5 +1,8 @@
+package xceu
+
 import Expr
 import Parser
+import ceu.lexer
 import org.junit.Ignore
 import org.junit.Test
 import tostr

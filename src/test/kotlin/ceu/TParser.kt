@@ -1,3 +1,5 @@
+package ceu
+
 import Expr
 import Parser
 import org.junit.Ignore

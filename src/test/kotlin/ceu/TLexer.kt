@@ -1,3 +1,5 @@
+package ceu
+
 import Lexer
 import Tk
 import org.junit.Test

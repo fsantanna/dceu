@@ -1,3 +1,5 @@
+package ceu
+
 import org.junit.Test
 
 class TTask {
