@@ -1,9 +1,11 @@
 package ceu
 
+import org.junit.Ignore
 import org.junit.Test
 
 class TTag {
 
+    @Ignore
     @Test
     fun tag1() {
         val out = all("""
@@ -15,6 +17,7 @@ class TTag {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
 
+    @Ignore
     @Test
     fun tag2() {
         val out = all("""
