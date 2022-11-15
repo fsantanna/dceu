@@ -251,7 +251,16 @@ fun Coder.main (): String {
                         v = (e1->number == e2->number);
                         break;
                     case CEU_VALUE_TUPLE:
-                        v = (e1->tuple == e2->tuple);
+                        v = (e1->tuple->n == e2->tuple->n);
+                        if (v) {
+                            for (int i=0; i<n; i++) {
+                                CEU_Value* xs[] = { (CEU_Value*)&e1->tuple->mem[i], (CEU_Value*)&e2->tuple->mem[i] };
+                                v = ceu_op_eq_eq(ret, 2, xs).bool;
+                                if (!v) {
+                                    break;
+                                }
+                            }
+                        }
                         break;
                     case CEU_VALUE_FUNC:
                         v = (e1->func == e2->func);

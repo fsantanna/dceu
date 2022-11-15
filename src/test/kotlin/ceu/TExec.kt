@@ -743,8 +743,9 @@ class TExec {
             println([1] == [1])
             println([ ] == [1])
             println([1] /= [1])
+            println([1,[],[1,2,3]] == [1,[],[1,2,3]])
         """, true)
-        assert(out == "true\nfalse\ntrue\n") { out }
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
 
     // TAGS
