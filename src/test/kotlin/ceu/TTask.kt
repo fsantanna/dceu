@@ -1,5 +1,4 @@
 import org.junit.Test
-import java.io.File
 
 class TTask {
 
@@ -123,7 +122,7 @@ class TTask {
         assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
 
-    // THROW
+    // ceu.getTHROW
 
     @Test
     fun throw1() {

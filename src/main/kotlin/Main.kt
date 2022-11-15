@@ -2,12 +2,17 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+//val XCEU = false
+val XCEU = true
 var N = 1
 
-val keywords: SortedSet<String> = sortedSetOf (
-    "and", "broadcast", "catch", "defer", "do", "else", "false", "func", "if", "nil", "not",
-    "or", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
-)
+val keywords: SortedSet<String> = (setOf (
+    "broadcast", "catch", "defer", "do", "else", "false", "func", "if", "nil",
+    "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
+) + if (!XCEU) setOf() else setOf (
+    "and", "not", "or"
+)).toSortedSet()
+
 val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&')
 
 sealed class Tk (val str: String, val pos: Pos) {

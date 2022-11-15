@@ -126,11 +126,16 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
                 val t = this.block(null)
-                val f = if (this.acceptFix("else")) {
+                val f = if (!XCEU) {
+                    this.acceptFix_err("else")
                     this.block(null)
                 } else {
-                    val tk = Tk.Fix("{",this.tk0.pos.copy())
-                    Expr.Block(tk, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                    if (this.acceptFix("else")) {
+                        this.block(null)
+                    } else {
+                        val tk = Tk.Fix("{",this.tk0.pos.copy())
+                        Expr.Block(tk, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                    }
                 }
                 Expr.If(tk0, cnd, t, f)
             }
@@ -167,7 +172,7 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("(") -> {
-                if (this.acceptFix(")")) {
+                if (!XCEU && this.acceptFix(")")) {
                     Expr.Nil(this.tk0 as Tk.Fix)
                 } else {
                     val e = this.expr()
@@ -186,14 +191,14 @@ class Parser (lexer_: Lexer)
         while (true) {
             when {
                 this.acceptEnu("Op") -> ops.add(this.tk0)
-                this.acceptFix("not") -> ops.add(this.tk0)
+                (XCEU && this.acceptFix("not")) -> ops.add(this.tk0)
                 else -> break
             }
         }
         var e = this.exprPrim()
         while (ops.size > 0) {
             val op = ops.removeLast()
-            if (op.str == "not") {
+            if (XCEU && op.str == "not") {
                 op as Tk.Fix
                 val t = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("false",op.pos))))
                 val f = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
@@ -223,7 +228,7 @@ class Parser (lexer_: Lexer)
     }
     fun exprBins (): Expr {
         var e = this.exprFixs()
-        while (this.acceptEnu("Op") || this.acceptFix("or") || this.acceptFix("and")) {
+        while ((this.acceptEnu("Op") || (XCEU && this.acceptFix("or") || this.acceptFix("and")))) {
             val op = this.tk0
             val e2 = this.exprFixs()
             e = when (op.str) {
@@ -255,7 +260,11 @@ class Parser (lexer_: Lexer)
             ret.add(e)
         }
         if (ret.size == 0) {
-            ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            if (XCEU) {
+                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            } else {
+                err_expected(this.tk1, "expression")
+            }
         }
         return ret
     }

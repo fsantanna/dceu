@@ -1,3 +1,11 @@
+import Coder
+import Expr
+import Lexer
+import Parser
+import Pos
+import Tk
+import exec
+import main
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
@@ -9,8 +17,8 @@ import java.io.File
 //  - uninitialised value
 val VALGRIND = ""
 val THROW = false
-//val VALGRIND = "valgrind "
-//val THROW = true
+//val ceu.getVALGRIND = "valgrind "
+//val ceu.getTHROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
     val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
@@ -24,7 +32,7 @@ fun all (inp: String, pre: Boolean=false): String {
         return e.message!!
     }
     val c = try {
-        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+        val coder = Coder(Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), es))
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {
@@ -37,7 +45,7 @@ fun all (inp: String, pre: Boolean=false): String {
     if (!ok2) {
         return out2
     }
-    val (_, out3) = exec("${VALGRIND}./out.exe")
+    val (_, out3) = exec("$VALGRIND./out.exe")
     //println(out3)
     return out3
 }
@@ -587,7 +595,7 @@ class TExec {
         assert(out == "false\n") { out }
     }
 
-    // THROW / CATCH
+    // ceu.getTHROW / CATCH
 
     @Test
     fun catch1() {
@@ -806,7 +814,7 @@ class TExec {
     fun native6_err() {
         val out = all("""
              native {
-                ${D} 
+                $D 
              }
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
@@ -816,7 +824,7 @@ class TExec {
         val out = all("""
              native {
              
-                ${D}{x.y}
+                $D{x.y}
                 
              }
         """.trimIndent())
@@ -825,7 +833,7 @@ class TExec {
     @Test
     fun native8_err() {
         val out = all("""
-            native (${D})
+            native ($D)
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
