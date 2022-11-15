@@ -737,6 +737,15 @@ class TExec {
         """, true)
         assert(out == "5\n") { out }
     }
+    @Test
+    fun op_eq_tup() {
+        val out = all("""
+            println([1] == [1])
+            println([ ] == [1])
+            println([1] /= [1])
+        """, true)
+        assert(out == "true\nfalse\ntrue\n") { out }
+    }
 
     // TAGS
 
