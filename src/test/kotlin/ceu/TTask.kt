@@ -31,7 +31,7 @@ class TTask {
     @Test
     fun task2_err() {
         val out = all("""
-            spawn func () {}
+            spawn func () {nil}
         """.trimIndent())
         assert(out == "anon : (lin 1, col 7) : spawn error : expected task\n") { out }
     }
@@ -47,7 +47,7 @@ class TTask {
     fun task4_err() {
         val out = all("""
             var co
-            set co = spawn task () {}
+            set co = spawn task () {nil}
             resume co()
             resume co()
         """.trimIndent())
@@ -57,7 +57,7 @@ class TTask {
     fun task5_err() {
         val out = all("""
             var co
-            set co = spawn task () {
+            set co = spawn task () { nil
             }
             resume co()
             resume co(1,2)

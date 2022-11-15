@@ -1,11 +1,3 @@
-import Coder
-import Expr
-import Lexer
-import Parser
-import Pos
-import Tk
-import exec
-import main
 import org.junit.Ignore
 import org.junit.Test
 import java.io.File
@@ -73,7 +65,7 @@ class TExec {
     fun print3() {
         val out = all("""
             println([[],[1,2,3]])
-            println(func () {})
+            println(func () { nil })
         """)
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
@@ -224,7 +216,7 @@ class TExec {
     @Test
     fun do1() {  // set whole tuple?
         val out = all("""
-            do {}
+            do { nil }
         """)
         assert(out == "") { out }
     }
@@ -256,7 +248,7 @@ class TExec {
     fun do4() {
         val out = all("""
             var x
-            set x = do {}
+            set x = do {nil}
             println(x)
         """)
         assert(out == "nil\n") { out }
@@ -286,20 +278,6 @@ class TExec {
             }
         """.trimIndent())
         assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_scope_scope3() {
-        val out = all("""
-            var x
-            do {
-                var a
-                set a = [1,2,3] @x
-                set x = a
-            }
-            println(x)
-        """)
-        assert(out == "[1,2,3]") { out }
     }
     @Test
     fun scope4() {
@@ -368,7 +346,7 @@ class TExec {
             set x = if (true) { 1 }
             println(x)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
     }
     @Test
     fun if2() {
@@ -378,7 +356,7 @@ class TExec {
             set x = if false { 1 }
             println(x)
         """)
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
     }
     @Test
     fun if3() {
@@ -389,36 +367,15 @@ class TExec {
             println(x)
         """.trimIndent())
         //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"") { out }
     }
     @Test
     fun if4_err() {
         val out = all("""
-            println(if [] {})
+            println(if [] {nil} else {nil})
         """.trimIndent())
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_if5_noblk() {
-        val out = all("""
-            var x
-            set x = 10
-            set x = if false 1
-            println(x)
-        """)
-        assert(out == "nil\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_if6_noblk() {
-        val out = all("""
-            var x
-            set x = if (true) 1 else 0
-            println(x)
-        """)
-        assert(out == "1\n") { out }
     }
 
     // FUNC / CALL
@@ -427,7 +384,7 @@ class TExec {
     fun func1() {
         val out = all("""
             var f
-            set f = func () { }
+            set f = func () { nil }
             var x
             set x = f()
             println(x)
@@ -488,20 +445,6 @@ class TExec {
         //assert(out.contains("set error : incompatible scopes")) { out }
     }
     @Test
-    @Ignore
-    fun todo_scope_func6() {
-        val out = all("""
-            var f
-            set f = func (x,s) {
-                [x]@s
-            }
-            var x
-            set x = f(10)
-            println(x)
-        """)
-        assert(out == "[10]\n") { out }
-    }
-    @Test
     fun func7_err() {
         val out = all("1(1)")
         assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
@@ -540,49 +483,6 @@ class TExec {
     // WHILE
 
     @Test
-    fun todo_while1() {
-        val out = all("""
-            println(catch @x { while true { throw (@x,1) }})
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun todo_while2() {
-        val out = all("""
-            println(catch @x { while true { []; throw (@x,1) }})
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun todo_while3() {
-        val out = all("""
-            println(catch 2 { while true { throw (2,[1]) }})
-        """)
-        assert(out == "[1]\n") { out }
-    }
-    @Test
-    fun todo_while4() {
-        val out = all("""
-            println(catch 2 { while true {
-                var x
-                set x = [1] ;; memory released
-                throw (2,1)
-            }})
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun todo_while5_err() {
-        val out = all("""
-            println(catch 2 { while true {
-                var x
-                set x = [1]
-                throw (2,x)
-            }})
-        """.trimIndent())
-        assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-    }
-    @Test
     fun while6() {
         val out = all("""
             var x
@@ -620,21 +520,6 @@ class TExec {
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
-    fun todo_catch3() {
-        val out = all("""
-            var x
-            set x = catch @x {
-                catch 2 {
-                    throw (@x,10)
-                    println(9)
-                }
-                println(9)
-            }
-            println(x)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
     fun catch4() {
         val out = all("""
             var f
@@ -668,48 +553,6 @@ class TExec {
         assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
     }
     @Test
-    fun todo_catch6_err() {
-        val out = all("""
-            catch @x {
-                var x
-                set x = []
-                throw (@x, x)
-                println(9)
-            }
-            println(1)
-        """.trimIndent())
-        assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun todo_catch7() {
-        val out = all("""
-            do {
-                println(catch @x {
-                    throw (@x,[10])
-                    println(9)
-                })
-            }
-        """)
-        assert(out == "[10]\n") { out }
-    }
-    @Test
-    fun todo_catch8() {
-        val out = all("""
-            var x
-            set x = catch @x {
-                var y
-                set y = catch @y {
-                    throw (@y,[10])
-                    println(9)
-                }
-                ;;println(1)
-                y
-            }
-            println(x)
-        """.trimIndent())
-        assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-    }
-    @Test
     fun catch9() {
         val out = all("""
             catch @e1 {
@@ -731,17 +574,6 @@ class TExec {
             println(3)
         """)
         assert(out == "1\n2\n3\n") { out }
-    }
-    @Test
-    fun todo_catch10() {
-        val out = all("""
-            catch @e1 {
-                throw []
-                println(9)
-            }
-            println(1)
-        """)
-        assert(out == "1\n") { out }
     }
     @Test
     fun catch11_err() {
@@ -861,7 +693,6 @@ class TExec {
         """, true)
         assert(out == "-4\n") { out }
     }
-    @Test
     @Ignore
     fun todo_scope_op_id2() {
         val out = all("""
@@ -896,31 +727,6 @@ class TExec {
             println(2 * 3 - 1)
         """, true)
         assert(out == "5\n") { out }
-    }
-    @Test
-    fun op_or_and() {
-        val out = all("""
-            println(true or println(1))
-            println(false and println(1))
-        """, true)
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun op_not() {
-        val out = all("""
-            println(not nil and not false)
-        """, true)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun op2_or_and() {
-        val out = all("""
-            println(1 or throw 5)
-            println(1 and 2)
-            println(nil and 2)
-            println(nil or 2)
-        """, true)
-        assert(out == "1\n2\nnil\n2\n") { out }
     }
 
     // TAGS
@@ -1016,6 +822,7 @@ class TExec {
     }
 
     @Test
+    @Ignore
     fun todo_err() {
         val out = all("""
             var t1

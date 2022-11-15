@@ -28,8 +28,9 @@ set {+} = func (v1, v2) {
     set t2 = tags(v2)
     if (t1 /= @number) || (t2 /= @number) {
         throw 1
+    } else {
+        native { return $v1+$v2; }
     }
-    native { return $v1+$v2; }
 }
 
 var {-}
@@ -43,8 +44,9 @@ set {-} = func (v1, v2) {
     } else {
         if (t1 /= @number) || (t2 /= @number) {
             throw 1
+        } else {
+            native { return $v1-$v2; }
         }
-        native { return $v1-$v2; }
     }
 }
 
@@ -56,8 +58,9 @@ set {*} = func (v1, v2) {
     set t2 = tags(v2)
     if (t1 /= @number) || (t2 /= @number) {
         throw 1
+    } else {
+        native { return $v1*$v2; }
     }
-    native { return $v1*$v2; }
 }
 
 var {**}
@@ -68,8 +71,9 @@ set {**} = func (v1, v2) {
     set t2 = tags(v2)
     if (t1 /= @number) || (t2 /= @number) {
         throw 1
+    } else {
+        native { return powf($v1,$v2); }
     }
-    native { return powf($v1,$v2); }
 }
 
 var {/}
@@ -80,8 +84,9 @@ set {/} = func (v1, v2) {
     set t2 = tags(v2)
     if (t1 /= @number) || (t2 /= @number) {
         throw 1
+    } else {
+        native { return $v1/$v2; }
     }
-    native { return $v1/$v2; }
 }
 
 var {//}
@@ -92,8 +97,9 @@ set {//} = func (v1, v2) {
     set t2 = tags(v2)
     if (t1 /= @number) || (t2 /= @number) {
         throw 1
+    } else {
+        native { return powf($v1,1/$v2); }
     }
-    native { return powf($v1,1/$v2); }
 }
 
 ;; RELATIONAL:  >=  >  <=  <
@@ -106,8 +112,9 @@ set {>=} = func (v1,v2) {
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= @number) {
         throw 1
+    } else {
+        native { return $v1 >= $v2; } == 1
     }
-    native { return $v1 >= $v2; } == 1
 }
 
 var {>}
@@ -118,8 +125,9 @@ set {>} = func (v1,v2) {
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= @number) {
         throw 1
+    } else {
+        native { return $v1 > $v2; } == 1
     }
-    native { return $v1 > $v2; } == 1
 }
 
 var {<=}
@@ -130,8 +138,9 @@ set {<=} = func (v1,v2) {
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= @number) {
         throw 1
+    } else {
+        native { return $v1 <= $v2; } == 1
     }
-    native { return $v1 <= $v2; } == 1
 }
 
 var {<}
@@ -142,6 +151,7 @@ set {<} = func (v1,v2) {
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= @number) {
         throw 1
+    } else {
+        native { return $v1 < $v2; } == 1
     }
-    native { return $v1 < $v2; } == 1
 }

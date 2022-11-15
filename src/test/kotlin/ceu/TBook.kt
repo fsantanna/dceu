@@ -7,18 +7,21 @@ class TBook {
 
     @Test
     fun pg_2_square() {
-        val out = all("""
+        val out = all(
+            """
             var square
             set square = func (x) {
                 x * x
             }
             println(square(5))
-        """, true)
+        """, true
+        )
         assert(out == "25\n") { out }
     }
     @Test
     fun pg_2_smaller() {
-        val out = all("""
+        val out = all(
+            """
             var smaller
             set smaller = func (x,y) {
                 if x < y { x } else { y }
@@ -26,12 +29,14 @@ class TBook {
             println(smaller(1,2))
             println(smaller(1,1))
             println(smaller(2,1))
-        """, true)
+        """, true
+        )
         assert(out == "1\n1\n1\n") { out }
     }
     @Test
     fun pg_3_square_smaller() {
-        val out = all("""
+        val out = all(
+            """
             var square
             set square = func (x) {
                 x * x
@@ -41,18 +46,21 @@ class TBook {
                 if x < y { x } else { y }
             }
             println(square(smaller(3,5)))
-        """, true)
+        """, true
+        )
         assert(out == "9\n") { out }
     }
     @Test
     fun pg_3_delta() {
-        val out = all("""
+        val out = all(
+            """
             var delta
             set delta = func (a,b,c) {
                 ((b**2) - (4*a*c)) // 2
             }
             println(delta(4.2,7,2.3))
-        """, true)
+        """, true
+        )
         assert(out == "3.2187\n") { out }
     }
 
@@ -61,7 +69,8 @@ class TBook {
     @Test
     @Ignore
     fun todo_pg_11_currying() {
-        val out = all("""
+        val out = all(
+            """
             var smallerc
             set smallerc = func (x) {
                 func (y) {
@@ -76,13 +85,15 @@ class TBook {
             }
             println(smallerc(3)(5))
             println(plus(3)(5))
-        """, true)
+        """, true
+        )
         assert(out == "3\n8\n") { out }
     }
     @Test
     @Ignore
     fun todo_pg_12_twice_quad() {
-        val out = all("""
+        val out = all(
+            """
             var square
             set square = func (x) {
                 x**2
@@ -96,13 +107,15 @@ class TBook {
                 twice(square)
             }
             println(twice(square, 2), quad(2))
-        """, true)
+        """, true
+        )
         assert(out == "16\t16\n") { out }
     }
     @Test
     @Ignore
     fun todo_pg_12_twicec() {
-        val out = all("""
+        val out = all(
+            """
             var square
             set square = func (x) {
                 x**2
@@ -116,13 +129,15 @@ class TBook {
             var quad
             set quad = twicec(square)
             println(quad(2))
-        """, true)
+        """, true
+        )
         assert(out == "16\t16\n") { out }
     }
     @Test
     @Ignore
     fun todo_pg_13_curry() {
-        val out = all("""
+        val out = all(
+            """
             var curry
             set curry = func (f) {
                 func (x) {
@@ -134,13 +149,15 @@ class TBook {
             var plusc
             set plusc = curry({+})
             println(plusc(1)(-4))
-        """, true)
+        """, true
+        )
         assert(out == "-3\n") { out }
     }
     @Test
     @Ignore
     fun todo_pg_13_uncurry() {
-        val out = all("""
+        val out = all(
+            """
             var plusc
             set plusc = func (x) {
                 func (y) {
@@ -154,20 +171,24 @@ class TBook {
                 }            
             }
             println(uncurry(plusc)(1,-4))
-        """, true)
+        """, true
+        )
         assert(out == "-3\n") { out }
     }
     @Test
     fun pg_13_ops() {
-        val out = all("""
+        val out = all(
+            """
             println({*}(1 + 3, 4))
-        """, true)
+        """, true
+        )
         assert(out == "16\n") { out }
     }
     @Test
     @Ignore
     fun todo_pg_15_compose() {
-        val out = all("""
+        val out = all(
+            """
             var compose
             set compose = func (f,g) {
                 func (v) {
@@ -181,7 +202,8 @@ class TBook {
             var quad
             set quad = compose(square,square)
             println(quad(2))
-        """, true)
+        """, true
+        )
         assert(out == "16\n") { out }
     }
 
@@ -189,7 +211,8 @@ class TBook {
 
     @Test
     fun pg_18_signum() {
-        val out = all("""
+        val out = all(
+            """
             var signum
             set signum = func (x) {
                 if x < 0 {
@@ -203,12 +226,14 @@ class TBook {
                 }
             }
             println(signum(10), signum(-9), signum(0))
-        """, true)
+        """, true
+        )
         assert(out == "1\t-1\t0\n") { out }
     }
     @Test
     fun pg_19_fact() {
-        val out = all("""
+        val out = all(
+            """
             var fact
             set fact = func (x) {
                 if x == 0 {
@@ -218,7 +243,8 @@ class TBook {
                 }
             }
             println(fact(5))
-        """, true)
+        """, true
+        )
         assert(out == "120\n") { out }
     }
 
@@ -226,12 +252,13 @@ class TBook {
 
     @Test
     fun pg_23_fact() {
-        val out = all("""
+        val out = all(
+            """
             var fact
             set fact = func (x) {
                 if x < 0 {
                     throw @error
-                }
+                } else {nil}
                 if x == 0 {
                     1
                 } else {
@@ -239,7 +266,8 @@ class TBook {
                 }
             }
             println(fact(-1))
-        """, true)
+        """, true
+        )
         assert(out == "anon : (lin 5, col 21) : throw error : uncaught exception\n") { out }
     }
 }
