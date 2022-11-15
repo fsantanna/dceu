@@ -75,9 +75,9 @@ class TXExec {
     fun todo_catch3() {
         val out = all("""
             var x
-            set x = catch @x {
+            set x = catch #x {
                 catch 2 {
-                    throw (@x,10)
+                    throw (#x,10)
                     println(9)
                 }
                 println(9)
@@ -89,10 +89,10 @@ class TXExec {
     @Test
     fun todo_catch6_err() {
         val out = all("""
-            catch @x {
+            catch #x {
                 var x
                 set x = []
-                throw (@x, x)
+                throw (#x, x)
                 println(9)
             }
             println(1)
@@ -103,8 +103,8 @@ class TXExec {
     fun todo_catch7() {
         val out = all("""
             do {
-                println(catch @x {
-                    throw (@x,[10])
+                println(catch #x {
+                    throw (#x,[10])
                     println(9)
                 })
             }
@@ -115,10 +115,10 @@ class TXExec {
     fun todo_catch8() {
         val out = all("""
             var x
-            set x = catch @x {
+            set x = catch #x {
                 var y
-                set y = catch @y {
-                    throw (@y,[10])
+                set y = catch #y {
+                    throw (#y,[10])
                     println(9)
                 }
                 ;;println(1)
@@ -131,7 +131,7 @@ class TXExec {
     @Test
     fun todo_catch10() {
         val out = all("""
-            catch @e1 {
+            catch #e1 {
                 throw []
                 println(9)
             }
@@ -142,14 +142,14 @@ class TXExec {
     @Test
     fun todo_while1() {
         val out = all("""
-            println(catch @x { while true { throw (@x,1) }})
+            println(catch #x { while true { throw (#x,1) }})
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun todo_while2() {
         val out = all("""
-            println(catch @x { while true { []; throw (@x,1) }})
+            println(catch #x { while true { []; throw (#x,1) }})
         """)
         assert(out == "1\n") { out }
     }
@@ -190,7 +190,7 @@ class TXExec {
         val out = all("""
             var f
             set f = func (x,s) {
-                [x]@s
+                [x]#s
             }
             var x
             set x = f(10)
@@ -205,7 +205,7 @@ class TXExec {
             var x
             do {
                 var a
-                set a = [1,2,3] @x
+                set a = [1,2,3] #x
                 set x = a
             }
             println(x)

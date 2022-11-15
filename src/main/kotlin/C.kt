@@ -308,7 +308,7 @@ fun Coder.main (): String {
     """
         // MAIN
         int main (void) {
-            ${this.tags.map { "CEU_TAG($it,\"@$it\")\n" }.joinToString("")}
+            ${this.tags.map { "CEU_TAG($it,\"#$it\")\n" }.joinToString("")}
             CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {

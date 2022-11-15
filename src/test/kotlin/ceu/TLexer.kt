@@ -252,21 +252,28 @@ class TLexer {
 
     @Test
     fun tags1() {
-        val l = lexer("@tag")
+        val l = lexer("#tag")
         val tks = l.lex().iterator()
-        assert(tks.next().str == "@tag")
+        assert(tks.next().str == "#tag")
         assert(tks.next() is Tk.Eof)
     }
     @Test
     fun tags2_err() {
-        val l = lexer("@(")
+        val l = lexer("#(")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
     }
     @Test
     fun tags3_err() {
-        val l = lexer("@")
+        val l = lexer("#")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
+    }
+    @Test
+    fun tags4() {
+        val l = lexer("#X.y.1")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == "#X.y.1")
+        assert(tks.next() is Tk.Eof)
     }
 }

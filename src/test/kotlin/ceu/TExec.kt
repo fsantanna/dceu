@@ -509,8 +509,8 @@ class TExec {
     @Test
     fun catch1() {
         val out = all("""
-            catch @x {
-                throw @x
+            catch #x {
+                throw #x
                 println(9)
             }
             println(1)
@@ -520,8 +520,8 @@ class TExec {
     @Test
     fun catch2_err() {
         val out = all("""
-            catch @x {
-                throw @y
+            catch #x {
+                throw #y
                 println(9)
             }
             println(1)
@@ -533,14 +533,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch @xxx {
-                    throw @yyy
+                catch #xxx {
+                    throw #yyy
                     println(91)
                 }
                 println(9)
             }
-            catch @yyy {
-                catch @xxx {
+            catch #yyy {
+                catch #xxx {
                     f()
                     println(92)
                 }
@@ -553,7 +553,7 @@ class TExec {
     @Test
     fun catch5_err() {
         val out = all("""
-            catch @x {
+            catch #x {
                 throw []
                 println(9)
             }
@@ -564,18 +564,18 @@ class TExec {
     @Test
     fun catch9() {
         val out = all("""
-            catch @e1 {
-                catch @e2 {
-                    catch @e3 {
-                        catch @e4 {
+            catch #e1 {
+                catch #e2 {
+                    catch #e3 {
+                        catch #e4 {
                             println(1)
-                            throw @e3
+                            throw #e3
                             println(99)
                         }
                         println(99)
                     }
                     println(2)
-                    throw @e1
+                    throw #e1
                     println(99)
                 }
                 println(99)
@@ -588,7 +588,7 @@ class TExec {
     fun catch11_err() {
         val out = all("""
             catch 1 {
-                throw @y
+                throw #y
                 println(9)
             }
             println(1)
@@ -768,7 +768,7 @@ class TExec {
             println(tags(t))
             println(tags(tags(t)))
         """)
-        assert(out == "@number\n@tag\n@tag\n") { out }
+        assert(out == "#number\n#tag\n#tag\n") { out }
     }
     @Test
     @Ignore
@@ -789,13 +789,13 @@ class TExec {
     @Test
     fun tag2() {
         val out = all("""
-            println(@xxx)
-            println(@xxx == @yyy)
-            println(@xxx /= @yyy)
-            println(@xxx == @xxx)
-            println(@xxx /= @xxx)
+            println(#xxx)
+            println(#xxx == #yyy)
+            println(#xxx /= #yyy)
+            println(#xxx == #xxx)
+            println(#xxx /= #xxx)
         """)
-        assert(out == "@xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
+        assert(out == "#xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
 
     // DEFER

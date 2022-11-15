@@ -148,8 +148,8 @@ class Lexer (inps: List<Pair<String,Reader>>) {
                         yield(Tk.Id("{$op}", pos))
                     }
                 }
-                (x == '@') -> {
-                    val tag = x + read2While { it.isLetterOrDigit() }
+                (x == '#') -> {
+                    val tag = x + read2While { it.isLetterOrDigit() || it=='.' }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }

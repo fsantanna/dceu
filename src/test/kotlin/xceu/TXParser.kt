@@ -54,10 +54,10 @@ class TXParser {
     @Test
     fun todo_catch1() {
         val l = lexer("""
-            set x = catch @e1 {
-                throw @e1
-                throw (@e1,10)
-                throw (@e1)
+            set x = catch #e1 {
+                throw #e1
+                throw (#e1,10)
+                throw (#e1)
             }
             
         """)

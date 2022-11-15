@@ -131,9 +131,9 @@ class TTask {
         val out = all("""
             var co
             set co = spawn task (x,y) {
-                throw @e2
+                throw #e2
             }
-            catch @e2 {
+            catch #e2 {
                 resume co(1,2)
                 println(99)
             }
@@ -147,9 +147,9 @@ class TTask {
             var co
             set co = spawn task (x,y) {
                 yield ()
-                throw @e2
+                throw #e2
             }
-            catch @e2 {
+            catch #e2 {
                 resume co(1,2)
                 println(1)
                 resume co()
@@ -208,7 +208,7 @@ class TTask {
                 var co2
                 set co2 = spawn task () {
                     yield ()
-                    throw @error
+                    throw #error
                 }
                 resume co2 ()
                 yield ()
