@@ -6,7 +6,9 @@ import org.junit.Test
 
 class TBook {
 
-    // CHAPTER 1.1: Fundamental concepts
+    // CHAPTER 1: Fundamental concepts
+
+    // CHAPTER 1.1: Session and scripts
 
     @Test
     fun pg_2_square() {
@@ -66,6 +68,12 @@ class TBook {
         )
         assert(out == "3.2187\n") { out }
     }
+
+    // CHAPTER 1.2: Evaluation
+    // ok
+
+    // CHAPTER 1.3: Values
+    // ok
 
     // CHAPTER 1.4: Functions
 
@@ -253,8 +261,19 @@ class TBook {
 
     // CHAPTER 1.6: Types
 
+    @Test // 1.6.2: Type classes
+    @Ignore
+    fun todo_poly() {}
+
+    // CHAPTER 1.7: Specifications
+    // ok
+
+    // CHAPTER 2: Simple datatypes
+
+    // CHAPTER 2.1: Booleans
+
     @Test
-    fun pg_23_fact() {
+    fun pg_30_bool() {
         val out = all(
             """
             var fact
@@ -272,5 +291,15 @@ class TBook {
         """, true
         )
         assert(out == "anon : (lin 5, col 21) : throw error : uncaught exception\n") { out }
+    }
+    @Test
+    fun todo_pg_31_short() {    // TODO: user and/or
+        val out = all(
+            """
+            println(if false { throw @error } else { true })
+            println(if true { true } else { throw @error })
+        """, true
+        )
+        assert(out == "true\ntrue\n") { out }
     }
 }

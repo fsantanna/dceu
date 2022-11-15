@@ -1,3 +1,5 @@
+import java.io.File
+
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
@@ -13,6 +15,13 @@ class Parser (lexer_: Lexer)
     fun lex () {
         this.tk0 = tk1
         this.tk1 = tks.next()
+    }
+
+    fun nest (name: String, inp: String): Expr {
+        val inps = listOf(Pair(name, inp.reader()))
+        val lexer = Lexer(inps)
+        val parser = Parser(lexer)
+        return parser.expr()
     }
 
     fun checkFix (str: String): Boolean {
