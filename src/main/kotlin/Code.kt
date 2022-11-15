@@ -267,7 +267,7 @@ class Coder (val outer: Expr.Block) {
                                 if (coro != NULL) {
                                     coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
                                     if (ceu_throw != NULL) {
-                                        return ceu_$n;
+                                        //return ceu_$n;
                                     }
                                 }
                                 block = block->bcast.block;
@@ -462,6 +462,9 @@ class Coder (val outer: Expr.Block) {
                     }
                     return ceu_$n; // yield
                 case $n:                    // resume here
+                    if (ceu_throw != NULL) {
+                        continue;
+                    }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                     ${fset(this.tk, set, "(*ceu_args[0])")}
