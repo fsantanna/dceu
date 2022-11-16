@@ -33,8 +33,12 @@ fun Coder.main (): String {
             CEU_VALUE_CORO      // spawned task
         } CEU_VALUE;
         
+        typedef struct CEU_Value_Func_or_Task {
+            struct CEU_Value_Func_or_Task* up;
+        } CEU_Value_Func_or_Task;
+        
         typedef struct CEU_Value_Func {
-            void* up;
+            struct CEU_Value_Func_or_Task* up;
             struct CEU_Value (*f) (
                 struct CEU_Value_Func* func,
                 struct CEU_Block* ret,
@@ -43,7 +47,7 @@ fun Coder.main (): String {
             );
         } CEU_Value_Func;
         typedef struct CEU_Value_Task {
-            void* up;
+            struct CEU_Value_Func_or_Task* up;
             struct CEU_Value (*f) (
                 struct CEU_Value_Coro* coro,
                 struct CEU_Block* ret,

@@ -89,23 +89,31 @@ class Coder (val outer: Expr.Block) {
         }
     }
     fun Expr.Block.id2c (id: String): String {
-        fun Expr.aux (v: String?): String {
+        val tk = this.upFunc().let {
+            when {
+                (it == null) -> null
+                (it.tk.str == "task") -> "(ceu_coro->task)"
+                else -> "ceu_func"
+            }
+        }
+        fun Expr.aux (n: Int): String {
             val xblock = xblocks[this]!!
             val bup = this.upFuncOrBlock()
             val fup = this.upFunc()
             val ok = xblock.syms.contains(id)
             return when {
-                (ok && v==null) -> "(ceu_mem->$id)"
-                (ok && v!=null) -> "($v->$id)"
-                (this is Expr.Block) -> bup!!.aux(v)
-                (this is Expr.Func) -> {
-                    val tk = "ceu_" + (if (this.tk.str=="func") "func" else "coro")
-                    bup!!.aux("((CEU_Func_${fup?.n ?: outer.n}*)($tk->up))")
+                (ok && this==outer) -> "(ceu_mem_${outer.n}->$id)"
+                (ok && n==0) -> "(ceu_mem->$id)"
+                (ok && n!=0) -> {
+                    val blk = if (bup is Expr.Func) bup.n else fup!!.n
+                    "(((CEU_Func_$blk*) $tk ${"->up".repeat(n)})->$id)"
                 }
+                (this is Expr.Block) -> bup!!.aux(n)
+                (this is Expr.Func) -> bup!!.aux(n+1)
                 else -> TODO("bug found")
             }
         }
-        return this.aux(null)
+        return this.aux(0)
     }
 
     fun Expr.code(set: Pair<String, String>?): String {
@@ -223,6 +231,11 @@ class Coder (val outer: Expr.Block) {
                 xblocks[this] = XBlock(this.args.let {
                     it.map { it.str } + it.map { "_${it.str}_" }
                 }.toMutableSet(), null)
+                val ceu_up = when {
+                    (this.upFunc() == null) -> "NULL"
+                    (this.tk.str == "func") -> "ceu_func"
+                    else -> "(ceu_coro->task)"
+                }
                 fun xtask (v: String): String {
                     return if (this.isTask()) v else ""
                 }
@@ -319,12 +332,12 @@ class Coder (val outer: Expr.Block) {
                 }
                 ${xfunc("""
                     static CEU_Value_Func ceu_func_$n;
-                    ceu_func_$n = (CEU_Value_Func) { ceu_mem, ceu_f_$n };
+                    ceu_func_$n = (CEU_Value_Func) { (CEU_Value_Func_or_Task*) $ceu_up, ceu_f_$n };
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=&ceu_func_$n} })")}
                 """)}
                 ${xtask("""
                     static CEU_Value_Task ceu_task_$n;
-                    ceu_task_$n = (CEU_Value_Task) { ceu_mem, ceu_f_$n, sizeof(CEU_Func_$n) };
+                    ceu_task_$n = (CEU_Value_Task) { (CEU_Value_Func_or_Task*) $ceu_up, ceu_f_$n, sizeof(CEU_Func_$n) };
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
                 """)}
                 """
