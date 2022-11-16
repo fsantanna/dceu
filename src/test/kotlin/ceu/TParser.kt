@@ -437,15 +437,4 @@ class TParser {
         assert(e.tostr() == "defer {\nnil\n}\n\n") { e.tostr() }
     }
 
-    // MISC
-
-    @Test
-    @Ignore
-    fun misc1() {
-        val l = lexer("""
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        //println(e.tostr())
-    }
 }

@@ -34,14 +34,16 @@ fun Coder.main (): String {
         } CEU_VALUE;
         
         typedef struct CEU_Value (*CEU_Value_Func) (
+            void* up,
             struct CEU_Block* ret,
             int n,
             struct CEU_Value* args[]
         );
         typedef struct CEU_Value_Task {
             struct CEU_Value (*func) (
+                int isbcast,
                 struct CEU_Value_Coro* coro,
-                int ceu_isbcast,
+                void* ceu_up,
                 struct CEU_Block* ret,
                 int n,
                 struct CEU_Value* args[]
@@ -132,7 +134,7 @@ fun Coder.main (): String {
             while (block != NULL) {
                 CEU_Value_Coro* coro = block->bcast.coro;
                 if (coro != NULL) {
-                    coro->task->func(coro, 1, NULL, n, args);
+                    coro->task->func(1, coro, NULL, NULL, n, args);
                 }
                 block = block->bcast.block;
             }
@@ -165,7 +167,7 @@ fun Coder.main (): String {
         }
         
         
-        CEU_Value ceu_tags (CEU_Block* ret, int n, CEU_Value* args[]) {
+        CEU_Value ceu_tags (void* up, CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {._tag_=args[0]->tag} };
         }
@@ -213,7 +215,7 @@ fun Coder.main (): String {
                     assert(0 && "bug found");
             }
         }
-        CEU_Value ceu_print (CEU_Block* ret, int n, CEU_Value* args[]) {
+        CEU_Value ceu_print (void* up, CEU_Block* ret, int n, CEU_Value* args[]) {
             for (int i=0; i<n; i++) {
                 if (i > 0) {
                     printf("\t");
@@ -222,15 +224,15 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value ceu_println (CEU_Block* ret, int n, CEU_Value* args[]) {
-            ceu_print(ret, n, args);
+        CEU_Value ceu_println (void* up, CEU_Block* ret, int n, CEU_Value* args[]) {
+            ceu_print(up, ret, n, args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
     """ +
     """
         // ==  /=
-        CEU_Value ceu_op_eq_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_eq_eq (void* up, CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
@@ -254,7 +256,7 @@ fun Coder.main (): String {
                         if (v) {
                             for (int i=0; i<e1->tuple->n; i++) {
                                 CEU_Value* xs[] = { &((CEU_Value*)e1->tuple->mem)[i], &((CEU_Value*)e2->tuple->mem)[i] };
-                                v = ceu_op_eq_eq(ret, 2, xs).bool;
+                                v = ceu_op_eq_eq(up, ret, 2, xs).bool;
                                 if (!v) {
                                     break;
                                 }
@@ -276,8 +278,8 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.bool=v} };
         }
-        CEU_Value ceu_op_div_eq (CEU_Block* ret, int n, CEU_Value* args[]) {
-            CEU_Value v = ceu_op_eq_eq(ret, n, args);
+        CEU_Value ceu_op_div_eq (void* up, CEU_Block* ret, int n, CEU_Value* args[]) {
+            CEU_Value v = ceu_op_eq_eq(up, ret, n, args);
             v.bool = !v.bool;
             return v;
         }

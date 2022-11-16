@@ -224,6 +224,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """ // TYPE
                 typedef struct {
+                    void* ceu_up;   // point to outer func
                     ${this.args.map {
                         """
                         CEU_Value ${it.str};
@@ -235,7 +236,8 @@ class Coder (val outer: Expr.Block) {
                 """ +
                 """ // BODY
                 CEU_Value ceu_func_$n (
-                    ${xtask("CEU_Value_Coro* ceu_coro, int ceu_isbcast,")}
+                    ${xtask("int ceu_isbcast, CEU_Value_Coro* ceu_coro,")}
+                    void* ceu_up,
                     CEU_Block* ceu_ret,
                     int ceu_n,
                     CEU_Value* ceu_args[]
@@ -272,7 +274,8 @@ class Coder (val outer: Expr.Block) {
                                     break;
                                 case 0: {
                         """)}
-                        { // ARGS
+                        { // UP, ARGS
+                            ceu_mem->ceu_up = ceu_up;
                             int ceu_i = 0;
                             ${this.args.map {
                                 val id = it.str.noSpecial()
@@ -301,7 +304,7 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_isbcast) {
                             CEU_Value_Coro* coro = ceu_coro->bcast.coro;
                             if (coro != NULL) {
-                                coro->task->func(coro, 1, NULL, ceu_n, ceu_args);
+                                coro->task->func(1, coro, NULL, ceu_n, ceu_args);
                             }
                         }
                     """)}
@@ -429,8 +432,8 @@ class Coder (val outer: Expr.Block) {
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
-                        ceu_coro_$n.coro,
                         0,
+                        ceu_coro_$n.coro,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
                         ceu_args_$n
@@ -610,6 +613,7 @@ class Coder (val outer: Expr.Block) {
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_$n = ceu_f_$n.func(
+                        ceu_mem,
                         ${if (set == null) this.upBlock()!!.toc(true) else set.first},
                         ${this.args.size},
                         ceu_args_$n
