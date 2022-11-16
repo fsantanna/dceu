@@ -678,6 +678,44 @@ class TExec {
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
     }
+    @Test
+    fun native9() {
+        val out = all("""
+            var x
+            var f
+            set f = func () {
+                native {
+                    ${D}x = 20;
+                }
+            }
+            f()
+            println(x)
+        """)
+        assert(out == "20\n") { out }
+    }
+
+    @Test
+    @Ignore
+    fun native_opaque() {
+        val out = all("""
+            var f
+            set f = func () {
+                native {
+                    return "ola"
+                }
+            }
+            var g
+            set g = func (x) {
+                native {
+                    printf("%s\n", (char*)${D}x);
+                }
+            }
+            var x
+            set x = f()
+            g(x)
+        """)
+        assert(out == "20\n") { out }
+    }
 
     // OPERATORS
 
@@ -833,6 +871,16 @@ class TExec {
 
 
     // MISC
+
+    @Test
+    fun id_c() {
+        val out = all("""
+            var xxx
+            set xxx = func () {nil}
+            println(xxx())
+        """)
+        assert(out == "nil\n") { out }
+    }
 
     @Test
     @Ignore

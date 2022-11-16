@@ -455,6 +455,7 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
             is Expr.Nat -> {
+                val block = this.upBlock()!!
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
                     var ret = ""
                     var i = 0
@@ -489,8 +490,9 @@ class Coder (val outer: Expr.Block) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
+                            id = block.id2c(id,this.tk)
                             ids.add(id)
-                            "(ceu_mem->$id.number)$x"
+                            "($id.number)$x"
                         }
                     }
                     Pair(ids,ret)
@@ -498,7 +500,7 @@ class Coder (val outer: Expr.Block) {
                 """
                 { // NATIVE
                     float ceu_f_$n (void) {
-                        ${ids.map { "ceu_mem->$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
+                        ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
                         $body
                         return 0;
                     }
