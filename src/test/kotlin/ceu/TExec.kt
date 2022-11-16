@@ -777,13 +777,22 @@ class TExec {
     }
     @Test
     fun op_eq_tup() {
-        val out = all("""
+        val out = ceu.all(
+            """
             println([1] == [1])
             println([ ] == [1])
             println([1] /= [1])
             println([1,[],[1,2,3]] == [1,[],[1,2,3]])
-        """, true)
+        """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun op_eq_tupXX() {
+        val out = ceu.all(
+            """
+            println([1,[1],1] == [1,[1],1])
+        """)
+        assert(out == "true\n") { out }
     }
     @Test
     fun ops_oth() {
