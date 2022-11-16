@@ -60,7 +60,7 @@ fun Coder.main (): String {
                 //void nil;
                 int _tag_;
                 int bool;
-                float number;
+                double number;
                 CEU_Value_Tuple* tuple;
                 CEU_Value_Func func;
                 CEU_Value_Task* task;

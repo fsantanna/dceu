@@ -123,6 +123,17 @@ class TTask {
         """)
         assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
+    @Test
+    fun task11_class() {
+        val out = all("""
+            var T
+            set T = task (x,y) {
+                println(x,y)
+            }
+            resume (spawn T) (1,2)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
 
     // ceu.getTHROW
 

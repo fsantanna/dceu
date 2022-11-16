@@ -499,7 +499,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
                 { // NATIVE
-                    float ceu_f_$n (void) {
+                    double ceu_f_$n (void) {
                         ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
                         $body
                         return 0;
