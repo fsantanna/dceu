@@ -83,21 +83,21 @@ class TParser {
     fun expr_call1() {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e is Expr.Call && e.tk.str=="f" && e.f is Expr.Acc && e.args.size==2)
     }
     @Test
     fun expr_call2() {
         val l = lexer(" f() ")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e is Expr.Call && e.f.tk.str=="f" && e.f is Expr.Acc && e.args.size==0)
     }
     @Test
     fun expr_call3() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e is Expr.Call && e.f is Expr.Call && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
@@ -105,13 +105,13 @@ class TParser {
     fun expr_call_err1() {
         val l = lexer("f (999 ")
         val parser = Parser(l)
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
     }
     @Test
     fun expr_call_err2() {
         val l = lexer(" f ({ ")
         val parser = Parser(l)
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
     }
 
     // EXPR.TUPLE
@@ -120,21 +120,21 @@ class TParser {
     fun expr_tuple1() {
         val l = lexer(" [ 1.5F, x] ")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e is Expr.Tuple && e.args.size==2)
     }
     @Test
     fun expr_tuple2() {
         val l = lexer("[[],[1,2,3]]")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e.tostr() == "[[],[1,2,3]]")
     }
     @Test
     fun expr_tuple_err() {
         val l = lexer("[{")
         val parser = Parser(l)
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
 
     // EXPR.INDEX
@@ -143,14 +143,14 @@ class TParser {
     fun expr_index() {
         val l = lexer("x[10]")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.exprSufs()
         assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Num)
     }
     @Test
     fun expr_index_err() {
         val l = lexer("x[10")
         val parser = Parser(l)
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
     }
 
     // EXPRS
@@ -221,7 +221,7 @@ class TParser {
     fun expr_set() {
         val l = lexer("set x = [10]")
         val parser = Parser(l)
-        val e = parser.exprFixs()
+        val e = parser.expr()
         assert(e is Expr.Set && e.tk.str == "set")
         assert(e.tostr() == "set x = [10]")
     }
@@ -231,7 +231,7 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set 1 = 1")
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
     }
     @Test
     fun expr_err2() {  // set whole tuple?
@@ -239,7 +239,7 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
-        assert(trap { parser.exprFixs() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
     }
 
     // IF
@@ -363,6 +363,13 @@ class TParser {
         val e = parser.expr()
         assert(e is Expr.Call)
         assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
+    }
+    @Test
+    fun pre_pos1() {
+        val l = lexer("-x[0]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "{-}(x[0])") { e.tostr() }
     }
 
     // TASK / YIELD / RESUME
