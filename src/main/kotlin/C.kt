@@ -128,8 +128,7 @@ fun Coder.main (): String {
             char mem[];                 // beginning of locals
         } CEU_Value_Coro;
         
-        void ceu_coro_bcast_nesteds (CEU_Value_Coro* coro, int n, CEU_Value* args[]) {
-            CEU_Block* block = coro->bcast.block;
+        void ceu_bcast_blocks (CEU_Block* block, int n, CEU_Value* args[]) {
             while (block != NULL) {
                 CEU_Value_Coro* coro = block->bcast.coro;
                 if (coro != NULL) {

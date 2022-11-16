@@ -259,7 +259,7 @@ class Coder (val outer: Expr.Block) {
                     ${xtask("""
                         // before awaking this coro, awake nested coros
                         if (ceu_isbcast) {
-                            ceu_coro_bcast_nesteds(ceu_coro, ceu_n, ceu_args);
+                            ceu_bcast_blocks(ceu_coro->bcast.block, ceu_n, ceu_args);
                         }
                     """)}
                     """ +
@@ -388,18 +388,22 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Bcast -> {
-                val bupc = this.upBlock()!!.toc(true)
+                var bup = this.upBlock()!!
+                while (true) {
+                    val nxt = bup.upBlock()
+                    if (nxt == null) {
+                        break
+                    } else {
+                        bup = nxt
+                    }
+                }
+                val bupc = bup.toc(true)
                 """
                 { // BCAST
                     CEU_Value ceu_arg_$n;
                     ${this.arg.code(Pair(bupc, "ceu_arg_$n"))}
-                    {
-                        CEU_Value_Coro* coro = $bupc->bcast.coro;
-                        if (coro != NULL) {
-                            CEU_Value* args[] = { &ceu_arg_$n };
-                            coro->task->func(coro, 1, NULL, 1, args);
-                        }
-                    }
+                    CEU_Value* args[] = { &ceu_arg_$n };
+                    ceu_bcast_blocks($bupc, 1, args);
                 }
                 """
             }
