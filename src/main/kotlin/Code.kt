@@ -304,7 +304,7 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_isbcast) {
                             CEU_Value_Coro* coro = ceu_coro->bcast.coro;
                             if (coro != NULL) {
-                                coro->task->func(1, coro, NULL, ceu_n, ceu_args);
+                                coro->task->func(1, coro, ceu_mem, NULL, ceu_n, ceu_args);
                             }
                         }
                     """)}
@@ -434,6 +434,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
                         0,
                         ceu_coro_$n.coro,
+                        ceu_mem,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
                         ceu_args_$n
