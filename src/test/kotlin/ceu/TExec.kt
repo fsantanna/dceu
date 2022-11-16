@@ -18,8 +18,8 @@ import java.io.File
 //  - uninitialised value
 val VALGRIND = ""
 val THROW = false
-//val ceu.getVALGRIND = "valgrind "
-//val ceu.getTHROW = true
+//val VALGRIND = "valgrind "
+//val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
     val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
@@ -418,6 +418,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (xxx) {
+                ;;println(tags(xxx))
                 xxx
             }
             var yyy
@@ -487,6 +488,36 @@ class TExec {
             f()
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : access error : variable \"f\" is not declared") { out }
+    }
+    @Test
+    fun func11() {
+        val out = ceu.all(
+            """
+            println(func (x) {
+                var fff
+                set fff = func (xxx) {
+                    println(tags(xxx))
+                    xxx
+                }
+                fff(x)
+            } (10))
+        """)
+        assert(out == "#number\n10\n") { out }
+    }
+    @Test
+    fun func12() {
+        val out = ceu.all(
+            """
+            var fff
+            set fff = func (xxx) {
+                println(tags(xxx))
+                xxx
+            }
+            println(func () {
+                fff(10)
+            } ())
+        """)
+        assert(out == "#number\n10\n") { out }
     }
 
     // WHILE

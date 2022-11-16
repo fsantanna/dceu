@@ -67,40 +67,45 @@ class Coder (val outer: Expr.Block) {
         return this.up { it is Expr.Func || it is Expr.Block }
     }
 
-    fun Expr.idFind (id: String): Expr? {
+    fun Expr.isDeclared (id: String): Boolean {
         val xblock = xblocks[this]!!
         val up = this.upFuncOrBlock()
-        return when {
-            xblock.syms.contains(id) -> this
-            (up != null) -> up.idFind(id)
-            else -> null
+        return (xblock.syms.contains(id) || (up!=null && up.isDeclared(id)))
+    }
+    fun Expr.assertIsNotDeclared (id: String, tk: Tk) {
+        if (this.isDeclared(id)) {
+            err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
-    fun Expr.Block.idCheck (id: String, isDcl: Boolean, tk: Tk): Expr? {
-        val blk = this.idFind(id)
-        when {
-            (!isDcl && blk==null) -> err(tk, "access error : variable \"$id\" is not declared")
-            ( isDcl && blk!=null) -> err(tk, "declaration error : variable \"$id\" is already declared")
+    fun Expr.assertIsDeclared (id: String, tk: Tk) {
+        if (!this.isDeclared(id)) {
+             err(tk, "access error : variable \"$id\" is not declared")
         }
-        return blk
     }
+
     fun Expr.Block.toc (isptr: Boolean): String {
         return "ceu_mem->block_${this.n}".let {
             if (isptr) "(&($it))" else it
         }
     }
-    fun Expr.Block.id2c (id: String, tk: Tk): String {
-        val blk = this.idCheck(id,false,tk)
-        val f = when {
-            (blk is Expr.Func) -> blk
-            (blk == null) -> null
-            else -> blk.upFunc()
+    fun Expr.Block.id2c (id: String): String {
+        fun Expr.aux (v: String?): String {
+            val xblock = xblocks[this]!!
+            val bup = this.upFuncOrBlock()
+            val fup = this.upFunc()
+            val ok = xblock.syms.contains(id)
+            return when {
+                (ok && v==null) -> "(ceu_mem->$id)"
+                (ok && v!=null) -> "($v->$id)"
+                (this is Expr.Block) -> bup!!.aux(v)
+                (this is Expr.Func) -> {
+                    val tk = "ceu_" + (if (this.tk.str=="func") "func" else "coro")
+                    bup!!.aux("((CEU_Func_${fup?.n ?: outer.n}*)($tk->up))")
+                }
+                else -> TODO("bug found")
+            }
         }
-        return if (f == null) {
-            "(ceu_mem_${outer.n}->$id)"
-        } else {
-            "(ceu_mem_${f.n}->$id)"
-        }
+        return this.aux(null)
     }
 
     fun Expr.code(set: Pair<String, String>?): String {
@@ -145,7 +150,7 @@ class Coder (val outer: Expr.Block) {
                 val id = this.tk_.fromOp().noSpecial()
                 val bup = this.upBlock()!!
                 val xup = xblocks[bup]!!
-                bup.idCheck(id, true, this.tk)
+                bup.assertIsNotDeclared(id, this.tk)
                 xup.syms.add(id)
                 xup.syms.add("_${id}_")
 
@@ -167,7 +172,9 @@ class Coder (val outer: Expr.Block) {
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
                         val bup = this.upBlock()!!
-                        Pair(bup.id2c("_${id}_",this.tk), bup.id2c(id,this.tk)) // x = src / block of _x_
+                        bup.assertIsDeclared(id, this.tk)
+                        bup.assertIsDeclared("_${id}_", this.tk)
+                        Pair(bup.id2c("_${id}_"), bup.id2c(id)) // x = src / block of _x_
                     }
 
                     else -> error("bug found")
@@ -224,7 +231,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """ // TYPE
                 typedef struct {
-                    void* ceu_up;   // point to outer func
+                    void* ceu_up;
                     ${this.args.map {
                         """
                         CEU_Value ${it.str};
@@ -235,12 +242,13 @@ class Coder (val outer: Expr.Block) {
                 } CEU_Func_$n;
                 """ +
                 """ // BODY
-                CEU_Value ceu_func_$n (
-                    ${xtask("int ceu_isbcast, CEU_Value_Coro* ceu_coro,")}
-                    void* ceu_up,
+                CEU_Value ceu_f_$n (
+                    ${xfunc("CEU_Value_Func* ceu_func,")}
+                    ${xtask("CEU_Value_Coro* ceu_coro,")}
                     CEU_Block* ceu_ret,
                     int ceu_n,
                     CEU_Value* ceu_args[]
+                    ${xtask(", int ceu_isbcast")}
                 ) {
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
                     ${xfunc("""
@@ -274,8 +282,7 @@ class Coder (val outer: Expr.Block) {
                                     break;
                                 case 0: {
                         """)}
-                        { // UP, ARGS
-                            ceu_mem->ceu_up = ceu_up;
+                        { // ARGS
                             int ceu_i = 0;
                             ${this.args.map {
                                 val id = it.str.noSpecial()
@@ -304,16 +311,20 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_isbcast) {
                             CEU_Value_Coro* coro = ceu_coro->bcast.coro;
                             if (coro != NULL) {
-                                coro->task->func(1, coro, ceu_mem, NULL, ceu_n, ceu_args);
+                                coro->task->f(coro, NULL, ceu_n, ceu_args, 1);
                             }
                         }
                     """)}
                     return ceu_$n;
                 }
-                ${xfunc(fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=ceu_func_$n} })"))}
+                ${xfunc("""
+                    static CEU_Value_Func ceu_func_$n;
+                    ceu_func_$n = (CEU_Value_Func) { ceu_mem, ceu_f_$n };
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=&ceu_func_$n} })")}
+                """)}
                 ${xtask("""
                     static CEU_Value_Task ceu_task_$n;
-                    ceu_task_$n = (CEU_Value_Task) { ceu_func_$n, sizeof(CEU_Func_$n) };
+                    ceu_task_$n = (CEU_Value_Task) { ceu_mem, ceu_f_$n, sizeof(CEU_Func_$n) };
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
                 """)}
                 """
@@ -431,13 +442,12 @@ class Coder (val outer: Expr.Block) {
                         continue; // escape enclosing block;
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
-                    CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->func(
-                        0,
+                    CEU_Value ceu_ret_$n = ceu_coro_$n.coro->task->f(
                         ceu_coro_$n.coro,
-                        ceu_mem,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
-                        ceu_args_$n
+                        ceu_args_$n,
+                        0
                     );
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
@@ -463,7 +473,7 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
             is Expr.Nat -> {
-                val block = this.upBlock()!!
+                val bup = this.upBlock()!!
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
                     var ret = ""
                     var i = 0
@@ -498,7 +508,8 @@ class Coder (val outer: Expr.Block) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            id = block.id2c(id,this.tk)
+                            bup.assertIsDeclared(id, this.tk)
+                            id = bup.id2c(id)
                             ids.add(id)
                             "($id.number)$x"
                         }
@@ -521,7 +532,10 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Acc -> {
-                this.tk.dump("ACC") + fset(this.tk, set, this.upBlock()!!.id2c(this.tk_.fromOp().noSpecial(),this.tk))
+                val bup = this.upBlock()!!
+                val id = this.tk_.fromOp().noSpecial()
+                bup.assertIsDeclared(id, this.tk)
+                this.tk.dump("ACC") + fset(this.tk, set, bup.id2c(id))
             }
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
@@ -613,8 +627,8 @@ class Coder (val outer: Expr.Block) {
                         continue; // escape enclosing block
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
-                    CEU_Value ceu_$n = ceu_f_$n.func(
-                        ceu_mem,
+                    CEU_Value ceu_$n = ceu_f_$n.func->f(
+                        ceu_f_$n.func,
                         ${if (set == null) this.upBlock()!!.toc(true) else set.first},
                         ${this.args.size},
                         ceu_args_$n
