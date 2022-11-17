@@ -16,8 +16,8 @@ fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     """
 }
 
-fun Tk.dump (pre: String = ""): String {
-    return "// $pre (${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
+fun Tk.dump (): String {
+    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
 }
 
 // func (args) or block (locals)
@@ -39,7 +39,7 @@ class Coder (val outer: Expr.Block) {
         "error",
     )
     val xblocks = mutableMapOf<Expr,XBlock>()
-    val tops = mutableListOf<String>()
+    val tops = mutableListOf<Pair<String,String>>()
 
     init {
         this.xblocks[outer] = XBlock (
@@ -84,19 +84,23 @@ class Coder (val outer: Expr.Block) {
         }
     }
 
+    fun Expr.top (): String {
+        return this.upFunc().let {
+            when {
+                (it == null) -> "NULL"
+                (it.tk.str == "task") -> "(ceu_coro->task)"
+                else -> "ceu_func"
+            }
+        }
+    }
+
     fun Expr.Block.toc (isptr: Boolean): String {
         return "ceu_mem->block_${this.n}".let {
             if (isptr) "(&($it))" else it
         }
     }
     fun Expr.Block.id2c (id: String): String {
-        val tk = this.upFunc().let {
-            when {
-                (it == null) -> null
-                (it.tk.str == "task") -> "(ceu_coro->task)"
-                else -> "ceu_func"
-            }
-        }
+        val top = this.top()
         fun Expr.aux (n: Int): String {
             val xblock = xblocks[this]!!
             val bup = this.upFuncOrBlock()
@@ -106,8 +110,10 @@ class Coder (val outer: Expr.Block) {
                 (ok && this==outer) -> "(ceu_mem_${outer.n}->$id)"
                 (ok && n==0) -> "(ceu_mem->$id)"
                 (ok && n!=0) -> {
-                    val blk = if (bup is Expr.Func) bup.n else fup!!.n
-                    "(((CEU_Func_$blk*) $tk ${"->up".repeat(n)})->$id)"
+                    //println(id)
+                    //println(this)
+                    val blk = if (this is Expr.Func) this.n else fup!!.n
+                    "(((CEU_Func_$blk*) $top ${"->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Func) -> bup!!.aux(n+1)
@@ -134,7 +140,7 @@ class Coder (val outer: Expr.Block) {
                     it.code(if (i == this.es.size - 1) set else null) + "\n"
                 }.joinToString("")
                 """
-                { ${this.tk.dump("BLOCK")}
+                { // BLOCK ${this.tk.dump()}
                     assert($depth <= UINT8_MAX);
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
                     ${if (this.upFuncOrBlock().let { it==null || it is Expr.Block || it.tk.str!="task" }) "" else "ceu_coro->bcast.block = &ceu_mem->block_$n;"}
@@ -143,7 +149,7 @@ class Coder (val outer: Expr.Block) {
                     do {
                         $es
                     } while (0);
-                    { ${this.tk.dump("DEFERS")}
+                    { // DEFERS ${this.tk.dump()}
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
                     ${if (f_b==null || f_b is Expr.Func) "" else "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}
@@ -165,7 +171,7 @@ class Coder (val outer: Expr.Block) {
 
                 val (x,_x_) = Pair("(ceu_mem->$id)","(ceu_mem->_${id}_)")
                 """
-                // DCL
+                // DCL ${this.tk.dump()}
                 $x = (CEU_Value) { CEU_VALUE_NIL };
                 $_x_ = ${bup.toc(true)};   // can't be static b/c recursion
                 ${fset(this.tk, set, id)}                
@@ -189,7 +195,7 @@ class Coder (val outer: Expr.Block) {
                     else -> error("bug found")
                 }
                 """
-                { // SET
+                { // SET ${this.tk.dump()}
                     CEU_Value ceu_$n;
                     ${this.dst.code(null)}
                     ${this.src.code(Pair(scp, "ceu_$n"))}
@@ -199,7 +205,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.If -> """
-                { // IF
+                { // IF ${this.tk.dump()}
                     CEU_Value ceu_cnd_$n;
                     ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
                     int nok = (ceu_cnd_$n.tag==CEU_VALUE_NIL || (ceu_cnd_$n.tag==CEU_VALUE_BOOL && !ceu_cnd_$n.bool));
@@ -211,7 +217,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             is Expr.While -> """
-                { // WHILE
+                { // WHILE ${this.tk.dump()}
                     do {
                 CEU_WHILE_$n:;
                         CEU_Value ceu_cnd_$n;
@@ -232,18 +238,13 @@ class Coder (val outer: Expr.Block) {
                 xblocks[this] = XBlock(this.args.let {
                     it.map { it.str } + it.map { "_${it.str}_" }
                 }.toMutableSet(), null)
-                val ceu_up = when {
-                    (this.upFunc() == null) -> "NULL"
-                    (this.tk.str == "func") -> "ceu_func"
-                    else -> "(ceu_coro->task)"
-                }
                 fun xtask (v: String): String {
                     return if (this.isTask()) v else ""
                 }
                 fun xfunc (v: String): String {
                     return if (!this.isTask()) v else ""
                 }
-                (""" // TYPE
+                val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     void* ceu_up;
                     ${this.args.map {
@@ -254,8 +255,8 @@ class Coder (val outer: Expr.Block) {
                     }.joinToString("")}
                     ${this.body.mem()}
                 } CEU_Func_$n;
-                """ +
-                """ // BODY
+                """
+                val func = """ // BODY ${this.tk.dump()}
                 CEU_Value ceu_f_$n (
                     ${xfunc("CEU_Value_Func* ceu_func,")}
                     ${xtask("CEU_Value_Coro* ceu_coro,")}
@@ -266,11 +267,13 @@ class Coder (val outer: Expr.Block) {
                     ${xfunc("""
                         CEU_Func_$n _ceu_mem_;
                         CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                        ceu_func->mem = ceu_mem;
                     """)}
                     ${xtask("""
                         assert(ceu_coro->status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
+                        ceu_coro->mem = ceu_mem;
                     """)}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
@@ -311,16 +314,17 @@ class Coder (val outer: Expr.Block) {
                     """)}
                     return ceu_$n;
                 }
-                """).let { tops.add(it) }
+                """
+                tops.add(Pair(type,func))
                 """
                 ${xfunc("""
                     static CEU_Value_Func ceu_func_$n;
-                    ceu_func_$n = (CEU_Value_Func) { (CEU_Value_Func_or_Task*) $ceu_up, ceu_f_$n };
+                    ceu_func_$n = (CEU_Value_Func) { (CEU_Value_Func_or_Task*) ${this.top()}, NULL, ceu_f_$n };
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_FUNC, {.func=&ceu_func_$n} })")}
                 """)}
                 ${xtask("""
                     static CEU_Value_Task ceu_task_$n;
-                    ceu_task_$n = (CEU_Value_Task) { (CEU_Value_Func_or_Task*) $ceu_up, ceu_f_$n, sizeof(CEU_Func_$n) };
+                    ceu_task_$n = (CEU_Value_Task) { (CEU_Value_Func_or_Task*) ${this.top()}, NULL, ceu_f_$n, sizeof(CEU_Func_$n) };
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TASK, {.task=&ceu_task_$n} })")}
                 """)}
                 """
@@ -329,7 +333,7 @@ class Coder (val outer: Expr.Block) {
                 val bup = this.upBlock()!!
                 val scp = if (set != null) set.first else bup.toc(true)
                 """
-                { // CATCH
+                { // CATCH ${this.tk.dump()}
                     ${this.catch.code(Pair(bup.toc(true), "ceu_mem->catch_$n"))}
                     if (ceu_mem->catch_$n.tag != CEU_VALUE_TAG) {
                         ceu_throw = &CEU_THROW_ERROR;
@@ -363,7 +367,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Throw -> """
-                { // THROW
+                { // THROW ${this.tk.dump()}
                     static CEU_Value ceu_$n;    // static b/c may cross function call
                     ${this.ex.code(Pair(this.upBlock()!!.toc(true), "ceu_$n"))}
                     ceu_throw = &ceu_$n;
@@ -380,7 +384,7 @@ class Coder (val outer: Expr.Block) {
                 val bupc = this.upBlock()!!.toc(true)
                 val scp = if (set == null) bupc else set.first
                 """
-                { // SPAWN
+                { // SPAWN ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
                     if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
@@ -409,7 +413,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 val bupc = bup.toc(true)
                 """
-                { // BCAST
+                { // BCAST ${this.tk.dump()}
                     CEU_Value ceu_arg_$n;
                     ${this.arg.code(Pair(bupc, "ceu_arg_$n"))}
                     ceu_bcast_blocks($bupc, &ceu_arg_$n);
@@ -425,7 +429,7 @@ class Coder (val outer: Expr.Block) {
                     )
                 }
                 """
-                { // RESUME
+                { // RESUME ${this.tk.dump()}
                     { // SETS
                         $sets
                     }
@@ -451,7 +455,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Yield -> """
-                { // YIELD
+                { // YIELD ${this.tk.dump()}
                     ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
                     ceu_coro->pc = $n;      // next resume
                     ceu_coro->status = CEU_CORO_STATUS_YIELDED;
@@ -510,7 +514,7 @@ class Coder (val outer: Expr.Block) {
                     Pair(ids,ret)
                 }
                 """
-                { // NATIVE
+                { // NATIVE ${this.tk.dump()}
                     double ceu_f_$n (void) {
                         ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
                         $body
@@ -528,7 +532,7 @@ class Coder (val outer: Expr.Block) {
                 val bup = this.upBlock()!!
                 val id = this.tk_.fromOp().noSpecial()
                 bup.assertIsDeclared(id, this.tk)
-                this.tk.dump("ACC") + fset(this.tk, set, bup.id2c(id))
+                "// ACC " + this.tk.dump() + "\n" + fset(this.tk, set, bup.id2c(id))
             }
             is Expr.Nil -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
@@ -554,7 +558,7 @@ class Coder (val outer: Expr.Block) {
                     it.code(Pair(scp, "ceu_mem->arg_${i}_$n"))
                 }.joinToString("")
                 """
-                { // TUPLE /* ${this.tostr()} */
+                { // TUPLE  ${this.tk.dump()}
                     $args
                     CEU_Value ceu_sta_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
@@ -571,7 +575,7 @@ class Coder (val outer: Expr.Block) {
             is Expr.Index -> {
                 val bupc = this.upBlock()!!.toc(true)
                 """
-                { // INDEX /* ${this.tostr()} */
+                { // INDEX  ${this.tk.dump()}
                     { // COL
                         ${this.col.code(Pair(bupc, "ceu_mem->col_$n"))}
                         if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
@@ -608,7 +612,7 @@ class Coder (val outer: Expr.Block) {
                     )
                 }
                 """
-                { // CALL
+                { // CALL ${this.tk.dump()}
                     { // SETS
                         $sets
                     }

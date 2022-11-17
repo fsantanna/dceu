@@ -519,6 +519,48 @@ class TExec {
         """)
         assert(out == "#number\n10\n") { out }
     }
+    @Test
+    fun func13() {
+        val out = ceu.all(
+            """
+            func () {
+                var fff
+                set fff = func () {
+                    println(1)
+                }
+                fff()
+            } ()
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun func14() {
+        val out = ceu.all(
+            """
+            println(func (x) {
+                var fff
+                set fff = func (xxx) {
+                    println(tags(xxx))
+                    xxx
+                }
+                fff(x)
+            } (10))
+        """)
+        assert(out == "#number\n10\n") { out }
+    }
+    @Test
+    fun func15() {
+        val out = ceu.all(
+            """
+            func (xxx) {
+                println(xxx)
+                func () {
+                    println(xxx)
+                }()
+            }(10)
+        """)
+        assert(out == "10\n10\n") { out }
+    }
 
     // WHILE
 

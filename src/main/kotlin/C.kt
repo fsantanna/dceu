@@ -35,10 +35,12 @@ fun Coder.main (): String {
         
         typedef struct CEU_Value_Func_or_Task {
             struct CEU_Value_Func_or_Task* up;
+            void* mem;
         } CEU_Value_Func_or_Task;
         
         typedef struct CEU_Value_Func {
             struct CEU_Value_Func_or_Task* up;
+            void* mem;
             struct CEU_Value (*f) (
                 struct CEU_Value_Func* func,
                 struct CEU_Block* ret,
@@ -48,6 +50,7 @@ fun Coder.main (): String {
         } CEU_Value_Func;
         typedef struct CEU_Value_Task {
             struct CEU_Value_Func_or_Task* up;
+            void* mem;
             struct CEU_Value (*f) (
                 struct CEU_Value_Coro* coro,
                 struct CEU_Block* ret,
@@ -166,7 +169,7 @@ fun Coder.main (): String {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {._tag_=args[0]->tag} };
         }
-        CEU_Value_Func ceu_tags = { NULL, ceu_tags_f };
+        CEU_Value_Func ceu_tags = { NULL, NULL, ceu_tags_f };
         ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
     """ +
     """ // PRINT
@@ -220,13 +223,13 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value_Func ceu_print = { NULL, ceu_print_f };
+        CEU_Value_Func ceu_print = { NULL, NULL, ceu_print_f };
         CEU_Value ceu_println_f (CEU_Value_Func* func, CEU_Block* ret, int n, CEU_Value* args[]) {
             ceu_print.f(func, ret, n, args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value_Func ceu_println = { NULL, ceu_println_f };
+        CEU_Value_Func ceu_println = { NULL, NULL, ceu_println_f };
     """ +
     """
         // EQ-NEQ
@@ -276,13 +279,13 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.bool=v} };
         }
-        CEU_Value_Func ceu_op_eq_eq = { NULL, ceu_op_eq_eq_f };
+        CEU_Value_Func ceu_op_eq_eq = { NULL, NULL, ceu_op_eq_eq_f };
         CEU_Value ceu_op_div_eq_f (CEU_Value_Func* func, CEU_Block* ret, int n, CEU_Value* args[]) {
             CEU_Value v = ceu_op_eq_eq.f(func, ret, n, args);
             v.bool = !v.bool;
             return v;
         }
-        CEU_Value_Func ceu_op_div_eq = { NULL, ceu_op_div_eq_f };
+        CEU_Value_Func ceu_op_div_eq = { NULL, NULL, ceu_op_div_eq_f };
     """ +
     """
         // THROW
@@ -339,7 +342,8 @@ fun Coder.main (): String {
         CEU_Func_${this.outer.n} _ceu_mem_;
         CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
         CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
-        ${tops.joinToString("")}
+        ${tops.map { it.first }.joinToString("")}
+        ${tops.map { it.second }.joinToString("")}
     """ +
     """ // MAIN
         int main (void) {

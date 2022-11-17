@@ -79,6 +79,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
         coder.main()
     } catch (e: Throwable) {
+        //throw e;
         return e.message!! + "\n"
     }
     File("out.c").writeText(c)
