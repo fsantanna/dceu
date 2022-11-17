@@ -39,6 +39,7 @@ class Coder (val outer: Expr.Block) {
         "error",
     )
     val xblocks = mutableMapOf<Expr,XBlock>()
+    val tops = mutableListOf<String>()
 
     init {
         this.xblocks[outer] = XBlock (
@@ -242,7 +243,7 @@ class Coder (val outer: Expr.Block) {
                 fun xfunc (v: String): String {
                     return if (!this.isTask()) v else ""
                 }
-                """ // TYPE
+                (""" // TYPE
                 typedef struct {
                     void* ceu_up;
                     ${this.args.map {
@@ -330,6 +331,8 @@ class Coder (val outer: Expr.Block) {
                     """)}
                     return ceu_$n;
                 }
+                """).let { tops.add(it) }
+                """
                 ${xfunc("""
                     static CEU_Value_Func ceu_func_$n;
                     ceu_func_$n = (CEU_Value_Func) { (CEU_Value_Func_or_Task*) $ceu_up, ceu_f_$n };

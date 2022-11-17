@@ -875,6 +875,18 @@ class TExec {
         """)
         assert(out == "#xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
+    @Test
+    fun tag3() {
+        val out = all("""
+            func () {
+                println(#xxx)
+            }()
+            func () {
+                println(#xxx)
+            }()
+        """)
+        assert(out == "#xxx\n#xxx\n") { out }
+    }
 
     // DEFER
 

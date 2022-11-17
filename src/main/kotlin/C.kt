@@ -150,9 +150,10 @@ fun Coder.main (): String {
     """
         /* TAGS */
 
-        #define CEU_TAG(id,str)                     \
+        #define CEU_TAG_DEFINE(id,str)              \
             int CEU_TAG_##id = __COUNTER__;         \
-            CEU_Tags ceu_tag_##id = { str, NULL };  \
+            CEU_Tags ceu_tag_##id = { str, NULL };
+        #define CEU_TAG_INIT(id,str)                \
             ceu_tag_##id.next = CEU_TAGS;           \
             CEU_TAGS = &ceu_tag_##id;               \
             CEU_TAGS_MAX++;
@@ -178,6 +179,7 @@ fun Coder.main (): String {
             return (CEU_Value) { CEU_VALUE_TAG, {._tag_=args[0]->tag} };
         }
         CEU_Value_Func ceu_tags = { NULL, ceu_tags_f };
+        ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
     """ +
     """
         /* PRINT */
@@ -301,6 +303,7 @@ fun Coder.main (): String {
         CEU_Value ceu_throw_arg;
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
+        CEU_Value CEU_THROW_ERROR; // = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
     """ +
     """
         /* BCAST */
@@ -317,24 +320,26 @@ fun Coder.main (): String {
             }
         }
     """ +
-    """
-        // MAIN
+    """ // FUNCS
+        typedef struct {
+            CEU_Value tags;
+            CEU_Value print;
+            CEU_Value println;            
+            CEU_Value op_eq_eq;
+            CEU_Value op_div_eq;
+            ${this.mem}
+        } CEU_Func_${this.outer.n};
+        CEU_Func_${this.outer.n} _ceu_mem_;
+        CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
+        CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
+        ${tops.joinToString("")}
+    """ +
+    """ // MAIN
         int main (void) {
-            ${this.tags.map { "CEU_TAG($it,\"#$it\")\n" }.joinToString("")}
-            CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
+            ${this.tags.map { "CEU_TAG_INIT($it,\"#$it\")\n" }.joinToString("")}
+            CEU_THROW_ERROR = (CEU_Value) { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
-                typedef struct {
-                    CEU_Value tags;
-                    CEU_Value print;
-                    CEU_Value println;            
-                    CEU_Value op_eq_eq;
-                    CEU_Value op_div_eq;
-                    ${this.mem}
-                } CEU_Func_${this.outer.n};
-                CEU_Func_${this.outer.n} _ceu_mem_;
-                CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
-                CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
                 {
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.func=&ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.func=&ceu_print}     };
