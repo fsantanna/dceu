@@ -57,11 +57,13 @@ fun Expr.copy (): Expr {
         is Expr.Func   -> Expr.Func(this.tk_, this.args.map { it.copy() }, this.body.copy())
         is Expr.Catch  -> Expr.Catch(this.tk_, this.catch.copy(), this.body.copy())
         is Expr.Throw  -> Expr.Throw(this.tk_, this.ex.copy())
-        is Expr.Coro  -> Expr.Coro(this.tk_, this.task.copy())
+        is Expr.Defer  -> Expr.Defer(this.tk_, this.body.copy())
+
+        is Expr.Coro   -> Expr.Coro(this.tk_, this.task.copy())
         is Expr.Bcast  -> Expr.Bcast(this.tk_, this.arg.copy())
         is Expr.Resume -> Expr.Resume(this.tk_, this.call.copy())
         is Expr.Yield  -> Expr.Yield(this.tk_, this.arg.copy())
-        is Expr.Defer  -> Expr.Defer(this.tk_, this.body.copy())
+        is Expr.Spawn  -> Expr.Spawn(this.tk_, this.call.copy())
 
         is Expr.Nat    -> Expr.Nat(this.tk_)
         is Expr.Acc    -> Expr.Acc(this.tk_)
@@ -88,11 +90,13 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Func   -> this.map(listOf(this.body))
         is Expr.Catch  -> this.map(listOf(this.catch, this.body))
         is Expr.Throw  -> this.map(listOf(this.ex))
-        is Expr.Coro  -> this.map(listOf(this.task))
+        is Expr.Defer  -> this.map(listOf(this.body))
+
+        is Expr.Coro   -> this.map(listOf(this.task))
         is Expr.Bcast  -> this.map(listOf(this.arg))
         is Expr.Resume -> this.map(listOf(this.call))
         is Expr.Yield  -> this.map(listOf(this.arg))
-        is Expr.Defer  -> this.map(listOf(this.body))
+        is Expr.Spawn  -> this.map(listOf(this.call))
 
         is Expr.Nat    -> emptyMap()
         is Expr.Acc    -> emptyMap()

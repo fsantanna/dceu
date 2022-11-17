@@ -156,11 +156,13 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block(null))
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
+
             this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val call = checkLine(tk0, this.expr())
+                val call = this.expr()
                 if (call !is Expr.Call) {
                     err_expected(tk1, "invalid resume : expected call")
 
@@ -168,7 +170,15 @@ class Parser (lexer_: Lexer)
                 Expr.Resume(tk0, call as Expr.Call)
             }
             this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
-            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
+            this.acceptFix("spawn") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val call = this.expr()
+                if (call !is Expr.Call) {
+                    err_expected(tk1, "invalid spawn : expected call")
+
+                }
+                Expr.Spawn(tk0, call as Expr.Call)
+            }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)

@@ -135,6 +135,57 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
 
+    // SPAWN
+
+    @Test
+    fun spawn1() {
+        val out = all("""
+            var t
+            set t = task (v) {
+                println(v)          ;; 1
+                set v = yield (v+1) 
+                println(v)          ;; 3
+                set v = yield v+1 
+                println(v)          ;; 5
+                v+1
+            }
+            var a
+            set a = spawn t(1)
+            println(tags(a))
+            var v
+            set v = resume a(3)
+            println(v)              ;; 4
+            set v = resume a(v+1)
+            println(v)              ;; 6
+        """, true)
+        assert(out == "1\n#coro\n3\n4\n5\n6\n") { out }
+    }
+    @Test
+    fun spawn2() {
+        val out = all("""
+            var T
+            set T = task (x,y) {
+                println(x,y)
+            }
+            spawn T(1,2)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun spawn3_err() {
+        val out = all("""
+            spawn (func () {nil}) ()
+        """)
+        assert(out == "anon : (lin 1, col 8) : spawn error : expected task\n") { out }
+    }
+    @Test
+    fun spawn4_err() {
+        val out = all("""
+            spawn (func () {nil})
+        """)
+        assert(out == "anon : (lin 3, col 9) : expected invalid spawn : expected call : have end of file") { out }
+    }
+
     // THROW
 
     @Test
@@ -287,7 +338,7 @@ class TTask {
             coroutine T(1) in ts
             broadcast 2
         """)
-        assert(out == "#coroutines\n1\n2\n") { out }
+        assert(out == "#coros\n1\n2\n") { out }
     }
 
 }

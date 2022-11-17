@@ -57,6 +57,8 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Throw -> this.ex.mem()
+        is Expr.Defer -> this.body.mem()
+
         is Expr.Coro -> this.task.mem()
         is Expr.Bcast -> this.arg.mem()
         is Expr.Resume -> """
@@ -70,7 +72,16 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Yield -> this.arg.mem()
-        is Expr.Defer -> this.body.mem()
+        is Expr.Spawn -> """
+            union { // SPAWN
+                // CORO
+                ${this.call.f.mem()}
+                struct { // ARGS
+                    ${this.call.args.map { it.mem() }.joinToString("")}
+                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                };
+            };
+            """
 
         is Expr.Tuple -> """
             struct { // TUPLE

@@ -27,7 +27,7 @@ set {+} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1+$v2; }
     }
@@ -43,7 +43,7 @@ set {-} = func (v1, v2) {
         native { return -$v1; }
     } else {
         if (t1 /= #number) || (t2 /= #number) {
-            throw 1
+            throw #error
         } else {
             native { return $v1-$v2; }
         }
@@ -57,7 +57,7 @@ set {*} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1*$v2; }
     }
@@ -70,7 +70,7 @@ set {**} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return powf($v1,$v2); }
     }
@@ -83,7 +83,7 @@ set {/} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1/$v2; }
     }
@@ -96,7 +96,7 @@ set {//} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return powf($v1,1/$v2); }
     }
@@ -109,7 +109,7 @@ set {%} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= #number) || (t2 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return fmod($v1,$v2); }
     }
@@ -124,7 +124,7 @@ set {>=} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1 >= $v2; } == 1
     }
@@ -137,7 +137,7 @@ set {>} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1 > $v2; } == 1
     }
@@ -150,7 +150,7 @@ set {<=} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1 <= $v2; } == 1
     }
@@ -163,7 +163,7 @@ set {<} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= #number) {
-        throw 1
+        throw #error
     } else {
         native { return $v1 < $v2; } == 1
     }

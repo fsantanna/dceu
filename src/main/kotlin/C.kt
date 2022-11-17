@@ -205,10 +205,10 @@ fun Coder.main (): String {
                     printf("func: %p", v->func);
                     break;
                 case CEU_VALUE_TASK:
-                    printf("func: %p", v->task);
+                    printf("task: %p", v->task);
                     break;
                 case CEU_VALUE_CORO:
-                    printf("func: %p", v->coro);
+                    printf("coro: %p", v->coro);
                     break;
                 default:
                     assert(0 && "bug found");

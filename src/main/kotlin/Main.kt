@@ -37,6 +37,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Bcast  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk): Expr(N++, tk_)

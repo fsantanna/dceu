@@ -380,11 +380,13 @@ class Coder (val outer: Expr.Block) {
                     continue; // escape enclosing block;
                 }
                 """
+            is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
+
             is Expr.Coro -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val scp = if (set == null) bupc else set.first
                 """
-                { // SPAWN ${this.tk.dump()}
+                { // CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
                     if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
@@ -468,7 +470,48 @@ class Coder (val outer: Expr.Block) {
                     ${fset(this.tk, set, "(*ceu_args[0])")}
                 }
                 """
-            is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
+            is Expr.Spawn -> {
+                val bupc = this.upBlock()!!.toc(true)
+                val scp = if (set == null) bupc else set.first
+                val (sets,args) = this.call.args.let {
+                    Pair(
+                        it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                        it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
+                    )
+                }
+                """
+                { // SPAWN/CORO ${this.tk.dump()}
+                    CEU_Value ceu_task_$n;
+                    ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
+                    if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
+                        ceu_throw = &CEU_THROW_ERROR;
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : spawn error : expected task", 256);
+                        continue; // escape enclosing block;
+                    }
+                    CEU_Value_Coro* ceu_coro_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
+                    assert(ceu_coro_$n != NULL);
+                    *ceu_coro_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
+                    ceu_bcast_enqueue($bupc, ceu_coro_$n);
+                    $scp->tofree = (CEU_Dynamic*) ceu_coro_$n;
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_coro_$n} })")}            
+                // SPAWN/RESUME ${this.tk.dump()}
+                    { // SETS
+                        $sets
+                    }
+                    CEU_Value* ceu_args_$n[] = { $args };
+                    ceu_coro_$n->task->f(
+                        ceu_coro_$n,
+                        ${if (set == null) bupc else set.first},
+                        ${this.call.args.size},
+                        ceu_args_$n
+                    );
+                    if (ceu_throw != NULL) {
+                        continue; // escape enclosing block;
+                    }
+                }
+                """
+            }
+
             is Expr.Nat -> {
                 val bup = this.upBlock()!!
                 val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
