@@ -273,7 +273,7 @@ class Coder (val outer: Expr.Block) {
                         assert(ceu_coro->status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
-                        ceu_coro->mem = ceu_mem;
+                        ceu_coro->task->mem = ceu_mem;
                     """)}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
