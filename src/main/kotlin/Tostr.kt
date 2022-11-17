@@ -8,7 +8,7 @@ fun Expr.tostr (): String {
         is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
         is Expr.Throw  -> "throw " + this.ex.tostr()
         is Expr.Catch  -> "catch " + this.catch.tostr() + " " + this.body.tostr()
-        is Expr.Spawn  -> "spawn " + this.task.tostr()
+        is Expr.Coro  -> "coroutine " + this.task.tostr()
         is Expr.Bcast  -> "broadcast " + this.arg.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
         is Expr.Yield  -> "yield (" + this.arg.tostr() + ")"

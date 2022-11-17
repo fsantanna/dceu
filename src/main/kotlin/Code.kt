@@ -380,7 +380,7 @@ class Coder (val outer: Expr.Block) {
                     continue; // escape enclosing block;
                 }
                 """
-            is Expr.Spawn -> {
+            is Expr.Coro -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val scp = if (set == null) bupc else set.first
                 """
@@ -389,7 +389,7 @@ class Coder (val outer: Expr.Block) {
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
                     if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
                         ceu_throw = &CEU_THROW_ERROR;
-                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : spawn error : expected task", 256);
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : coroutine error : expected task", 256);
                         continue; // escape enclosing block;
                     }
                     CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));

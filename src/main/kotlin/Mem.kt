@@ -57,7 +57,7 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Throw -> this.ex.mem()
-        is Expr.Spawn -> this.task.mem()
+        is Expr.Coro -> this.task.mem()
         is Expr.Bcast -> this.arg.mem()
         is Expr.Resume -> """
             union { // RESUME

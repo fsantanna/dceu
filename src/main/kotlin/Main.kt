@@ -7,8 +7,8 @@ val XCEU = false
 var N = 1
 
 val keywords: SortedSet<String> = (setOf (
-    "broadcast", "catch", "defer", "do", "else", "false", "func", "if", "nil",
-    "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
+    "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "false", "func",
+    "if", "nil", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "not", "or"
 )).toSortedSet()
@@ -33,7 +33,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
-    data class Spawn  (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
+    data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)

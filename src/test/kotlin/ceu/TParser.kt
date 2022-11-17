@@ -381,7 +381,7 @@ class TParser {
                 set v = yield (1) 
                 yield (2) 
             }
-            spawn t
+            coroutine t
             set v = resume a(1)
             resume a(2)
         """)
@@ -393,7 +393,7 @@ class TParser {
             yield (2)
             }
 
-            spawn t
+            coroutine t
             set v = resume a(1)
             resume a(2)
             

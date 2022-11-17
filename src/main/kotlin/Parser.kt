@@ -1,5 +1,3 @@
-import java.io.File
-
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
@@ -158,7 +156,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block(null))
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
-            this.acceptFix("spawn") -> Expr.Spawn(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix

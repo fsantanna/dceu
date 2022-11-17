@@ -4,7 +4,7 @@ import org.junit.Test
 
 class TTask {
 
-    // TASK / SPAWN / RESUME / YIELD
+    // TASK / COROUTINE / RESUME / YIELD
 
     @Test
     fun task1() {
@@ -19,7 +19,7 @@ class TTask {
                 v+1
             }
             var a
-            set a = spawn t
+            set a = coroutine t
             var v
             set v = resume a(1)
             println(v)              ;; 2
@@ -33,9 +33,9 @@ class TTask {
     @Test
     fun task2_err() {
         val out = all("""
-            spawn func () {nil}
+            coroutine func () {nil}
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 7) : spawn error : expected task\n") { out }
+        assert(out == "anon : (lin 1, col 11) : coroutine error : expected task\n") { out }
     }
     @Test
     fun task3_err() {
@@ -49,7 +49,7 @@ class TTask {
     fun task4_err() {
         val out = all("""
             var co
-            set co = spawn task () {nil}
+            set co = coroutine task () {nil}
             resume co()
             resume co()
         """.trimIndent())
@@ -59,7 +59,7 @@ class TTask {
     fun task5_err() {
         val out = all("""
             var co
-            set co = spawn task () { nil
+            set co = coroutine task () { nil
             }
             resume co()
             resume co(1,2)
@@ -70,7 +70,7 @@ class TTask {
     fun task6() {
         val out = all("""
             var co
-            set co = spawn task (v) {
+            set co = coroutine task (v) {
                 set v = yield () 
                 println(v)
             }
@@ -83,7 +83,7 @@ class TTask {
     fun task7() {
         val out = all("""
             var co
-            set co = spawn task (v) {
+            set co = coroutine task (v) {
                 println(v)
             }
             println(1)
@@ -104,7 +104,7 @@ class TTask {
     fun task9_mult() {
         val out = all("""
             var co
-            set co = spawn task (x,y) {
+            set co = coroutine task (x,y) {
                 println(x,y)
             }
             resume co(1,2)
@@ -115,7 +115,7 @@ class TTask {
     fun task10_err() {
         val out = all("""
             var co
-            set co = spawn task () {
+            set co = coroutine task () {
                 yield ()
             }
             resume co()
@@ -130,18 +130,18 @@ class TTask {
             set T = task (x,y) {
                 println(x,y)
             }
-            resume (spawn T) (1,2)
+            resume (coroutine T) (1,2)
         """)
         assert(out == "1\t2\n") { out }
     }
 
-    // ceu.getTHROW
+    // THROW
 
     @Test
     fun throw1() {
         val out = all("""
             var co
-            set co = spawn task (x,y) {
+            set co = coroutine task (x,y) {
                 throw #e2
             }
             catch #e2 {
@@ -156,7 +156,7 @@ class TTask {
     fun throw2() {
         val out = all("""
             var co
-            set co = spawn task (x,y) {
+            set co = coroutine task (x,y) {
                 yield ()
                 throw #e2
             }
@@ -183,9 +183,9 @@ class TTask {
                 println(v)                
             }
             var co1
-            set co1 = spawn tk
+            set co1 = coroutine tk
             var co2
-            set co2 = spawn tk
+            set co2 = coroutine tk
             broadcast 1
             broadcast 2
             broadcast 3
@@ -196,9 +196,9 @@ class TTask {
     fun bcast2() {
         val out = all("""
             var co1
-            set co1 = spawn task () {
+            set co1 = coroutine task () {
                 var co2
-                set co2 = spawn task () {
+                set co2 = coroutine task () {
                     yield ()
                     println(2)
                 }
@@ -215,9 +215,9 @@ class TTask {
     fun bcast3() {
         val out = all("""
             var co1
-            set co1 = spawn task () {
+            set co1 = coroutine task () {
                 var co2
-                set co2 = spawn task () {
+                set co2 = coroutine task () {
                     yield ()
                     throw #error
                 }
@@ -247,7 +247,7 @@ class TTask {
                 }
             }
             var co
-            set co = spawn tk
+            set co = coroutine tk
             broadcast 1
             broadcast 2
             broadcast 3
@@ -265,10 +265,29 @@ class TTask {
                 println(v)
             }
             var co
-            set co = spawn tk
+            set co = coroutine tk
             resume co(1)
             broadcast 2
         """)
         assert(out == "1\n2\n") { out }
     }
+
+    // POOL
+
+    @Test
+    fun pool1() {
+        val out = all("""
+            coros ts
+            println(tags(ts))
+            set T = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)
+            }
+            coroutine T(1) in ts
+            broadcast 2
+        """)
+        assert(out == "#coroutines\n1\n2\n") { out }
+    }
+
 }
