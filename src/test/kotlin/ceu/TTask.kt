@@ -176,7 +176,7 @@ class TTask {
         val out = all("""
             spawn (func () {nil}) ()
         """)
-        assert(out == "anon : (lin 1, col 8) : spawn error : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 20) : spawn error : expected task\n") { out }
     }
     @Test
     fun spawn4_err() {
@@ -328,14 +328,46 @@ class TTask {
     @Test
     fun pool1() {
         val out = all("""
-            coros ts
+            var ts
+            set ts = coroutines()
             println(tags(ts))
+            var T
             set T = task (v) {
                 println(v)
                 set v = yield ()
                 println(v)
             }
-            coroutine T(1) in ts
+            do {
+                spawn T(1) in ts
+            }
+            broadcast 2
+        """)
+        assert(out == "#coros\n1\n2\n") { out }
+    }
+    @Test
+    fun poolN() {
+        val out = all("""
+            var ts
+            set ts = coroutines()
+            println(tags(ts))
+            var T
+            set T = task (v) {
+                pub = v
+                println(v)
+                set v = yield ()
+                println(v)
+            }
+            spawn T(1) in ts
+            spawn T(2) in ts
+            
+            while t1 in ts {
+                while t2 in ts {
+                    println(t1.pub, t2.pub)
+                }
+            }
+            set fst = coroutines_start(ts)  ;;
+            set snd = coroutines_next(fst)
+            coroutines_stop(ts)  ;; removes pending
             broadcast 2
         """)
         assert(out == "#coros\n1\n2\n") { out }

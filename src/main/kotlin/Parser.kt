@@ -175,9 +175,16 @@ class Parser (lexer_: Lexer)
                 val call = this.expr()
                 if (call !is Expr.Call) {
                     err_expected(tk1, "invalid spawn : expected call")
-
                 }
-                Expr.Spawn(tk0, call as Expr.Call)
+                val coros = if (!this.acceptFix("in")) null else {
+                    this.expr()
+                }
+                Expr.Spawn(tk0, coros, call as Expr.Call)
+            }
+            this.acceptFix("coroutines") -> {
+                this.acceptFix_err("(")
+                this.acceptFix_err(")")
+                Expr.Coros(this.tk0 as Tk.Fix)
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

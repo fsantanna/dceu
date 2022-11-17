@@ -30,7 +30,8 @@ fun Coder.main (): String {
             CEU_VALUE_TUPLE,
             CEU_VALUE_FUNC,
             CEU_VALUE_TASK,     // task prototype
-            CEU_VALUE_CORO      // spawned task
+            CEU_VALUE_CORO,     // spawned task
+            CEU_VALUE_COROS
         } CEU_VALUE;
         
         typedef struct CEU_Value_Func_or_Task {

@@ -36,6 +36,7 @@ class Coder (val outer: Expr.Block) {
         "func",
         "task",
         "coro",
+        "coros",
         "error",
     )
     val xblocks = mutableMapOf<Expr,XBlock>()
@@ -511,6 +512,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
+            is Expr.Coros -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS })")
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!

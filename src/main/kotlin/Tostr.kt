@@ -10,11 +10,12 @@ fun Expr.tostr (): String {
         is Expr.Catch  -> "catch " + this.catch.tostr() + " " + this.body.tostr()
         is Expr.Defer  -> "defer " + this.body.tostr()
 
-        is Expr.Coro  -> "coroutine " + this.task.tostr()
+        is Expr.Coro   -> "coroutine " + this.task.tostr()
         is Expr.Bcast  -> "broadcast " + this.arg.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
         is Expr.Yield  -> "yield (" + this.arg.tostr() + ")"
-        is Expr.Spawn  -> "resume " + this.call.tostr()
+        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in"+this.coros.tostr())
+        is Expr.Coros  -> "coroutines()"
 
         is Expr.Nat    -> "native " + this.tk.str
         is Expr.Acc    -> this.tk.str

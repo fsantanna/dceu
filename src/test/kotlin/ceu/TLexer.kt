@@ -44,7 +44,7 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer(" if aaa throw coroutines nil task XXX defer set coroutine spawn loop yield while vary10 catch resume else var do _do_ broadcast true func b10 false")
+        val l = lexer(" if aaa throw coroutines nil task XXX defer set coroutine spawn loop yield while vary10 catch resume else var do _do_ broadcast true func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id && it.str == "aaa" })
@@ -71,6 +71,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "true" })
         assert(tks.next().let { it is Tk.Fix && it.str == "func" })
         assert(tks.next().let { it is Tk.Id && it.str == "b10" })
+        assert(tks.next().let { it is Tk.Id && it.str == "in" })
         assert(tks.next().let { it is Tk.Fix && it.str == "false" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())

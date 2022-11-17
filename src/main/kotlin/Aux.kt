@@ -63,7 +63,8 @@ fun Expr.copy (): Expr {
         is Expr.Bcast  -> Expr.Bcast(this.tk_, this.arg.copy())
         is Expr.Resume -> Expr.Resume(this.tk_, this.call.copy())
         is Expr.Yield  -> Expr.Yield(this.tk_, this.arg.copy())
-        is Expr.Spawn  -> Expr.Spawn(this.tk_, this.call.copy())
+        is Expr.Spawn  -> Expr.Spawn(this.tk_, this.coros?.copy(), this.call.copy())
+        is Expr.Coros  -> Expr.Coros(this.tk_)
 
         is Expr.Nat    -> Expr.Nat(this.tk_)
         is Expr.Acc    -> Expr.Acc(this.tk_)
@@ -97,6 +98,7 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Resume -> this.map(listOf(this.call))
         is Expr.Yield  -> this.map(listOf(this.arg))
         is Expr.Spawn  -> this.map(listOf(this.call))
+        is Expr.Coros  -> emptyMap()
 
         is Expr.Nat    -> emptyMap()
         is Expr.Acc    -> emptyMap()
