@@ -11,8 +11,6 @@ fun Coder.main (): String {
 
         struct CEU_Value;
         struct CEU_Block;
-        struct CEU_Stack;
-        struct CEU_Value_Coro;
         
         // all dynamic data must start with this struct
         // CEU_Tuple, CEU_Value_Coro
@@ -34,11 +32,26 @@ fun Coder.main (): String {
             CEU_VALUE_COROS
         } CEU_VALUE;
         
+        typedef enum CEU_CORO_STATUS {
+            //CEU_CORO_POOL_STATUS,
+            //CEU_CORO_STATUS_SPAWNED,
+            CEU_CORO_STATUS_RESUMED,
+            CEU_CORO_STATUS_YIELDED,
+            //CEU_CORO_STATUS_PAUSED,
+            //CEU_CORO_STATUS_DYING,
+            CEU_CORO_STATUS_TERMINATED
+        } CEU_CORO_STATUS;        
+
+        typedef struct CEU_Value_Tuple {
+            CEU_Dynamic dyn;    // tuple is dynamic
+            uint8_t n;          // number of items
+            char mem[0];        // beginning of CEU_Value[n]
+        } CEU_Value_Tuple;
+
         typedef struct CEU_Value_Func_or_Task {
             struct CEU_Value_Func_or_Task* up;
             void* mem;
         } CEU_Value_Func_or_Task;
-        
         typedef struct CEU_Value_Func {
             struct CEU_Value_Func_or_Task* up;
             void* mem;
@@ -49,6 +62,7 @@ fun Coder.main (): String {
                 struct CEU_Value* args[]
             );
         } CEU_Value_Func;
+        struct CEU_Value_Coro;
         typedef struct CEU_Value_Task {
             struct CEU_Value_Func_or_Task* up;
             void* mem;
@@ -61,11 +75,24 @@ fun Coder.main (): String {
             int size;   // buffer w/ locals
         } CEU_Value_Task;
 
-        typedef struct CEU_Value_Tuple {
-            CEU_Dynamic dyn;    // tuple is dynamic
-            uint8_t n;          // number of items
-            char mem[0];        // beginning of CEU_Value[n]
-        } CEU_Value_Tuple;
+        typedef struct CEU_Value_Coro {
+            CEU_Dynamic dyn;            // coro is dynamic
+            struct {
+                struct CEU_Block* block;       // first block in the coroutine
+                struct CEU_Value_Coro* coro;   // next brother coroutine in the enclosing block
+            } bcast;
+            enum CEU_CORO_STATUS status;
+            CEU_Value_Task* task;       // (Stack* stack, CUE_Coro* coro, void* evt);
+            int pc;                     // next line to execute
+            char mem[];                 // beginning of locals
+        } CEU_Value_Coro;
+
+        typedef struct CEU_Value_Coros {
+            CEU_Dynamic dyn;        // coros is dynamic
+            uint8_t n;              // number of open iterators
+            CEU_Value_Coro* coro;   // first coro 
+        } CEU_Value_Coros;
+        
         typedef struct CEU_Value {
             int tag;
             union {
@@ -76,7 +103,8 @@ fun Coder.main (): String {
                 CEU_Value_Tuple* tuple;
                 CEU_Value_Func* func;
                 CEU_Value_Task* task;
-                struct CEU_Value_Coro* coro;
+                CEU_Value_Coro* coro;
+                CEU_Value_Coros* coros;
             };
         } CEU_Value;
     """ +
@@ -116,29 +144,6 @@ fun Coder.main (): String {
                 cur = cur->next;
             }
         }
-    """ +
-    """ // CORO
-        typedef enum CEU_CORO_STATUS {
-            //CEU_CORO_POOL_STATUS,
-            //CEU_CORO_STATUS_SPAWNED,
-            CEU_CORO_STATUS_RESUMED,
-            CEU_CORO_STATUS_YIELDED,
-            //CEU_CORO_STATUS_PAUSED,
-            //CEU_CORO_STATUS_DYING,
-            CEU_CORO_STATUS_TERMINATED
-        } CEU_CORO_STATUS;
-        
-        typedef struct CEU_Value_Coro {
-            CEU_Dynamic dyn;            // coro is dynamic
-            struct {
-                struct CEU_Block* block;       // first block in the coroutine
-                struct CEU_Value_Coro* coro;   // next brother coroutine in the enclosing block
-            } bcast;
-            CEU_CORO_STATUS status;
-            CEU_Value_Task* task;       // (Stack* stack, CUE_Coro* coro, void* evt);
-            int pc;                     // next line to execute
-            char mem[];                 // beginning of locals
-        } CEU_Value_Coro;
     """ +
     """ // TAGS
 
