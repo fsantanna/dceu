@@ -52,8 +52,7 @@ fun Coder.main (): String {
                 struct CEU_Value_Coro* coro,
                 struct CEU_Block* ret,
                 int n,
-                struct CEU_Value* args[],
-                int isbcast
+                struct CEU_Value* args[]
             );
             int size;   // buffer w/ locals
         } CEU_Value_Task;
@@ -136,19 +135,8 @@ fun Coder.main (): String {
             int pc;                     // next line to execute
             char mem[];                 // beginning of locals
         } CEU_Value_Coro;
-        
-        void ceu_bcast_blocks (CEU_Block* block, int n, CEU_Value* args[]) {
-            while (block != NULL) {
-                CEU_Value_Coro* coro = block->bcast.coro;
-                if (coro != NULL) {
-                    coro->task->f(coro, NULL, n, args, 1);
-                }
-                block = block->bcast.block;
-            }
-        }
     """ +
-    """
-        /* TAGS */
+    """ // TAGS
 
         #define CEU_TAG_DEFINE(id,str)              \
             int CEU_TAG_##id = __COUNTER__;         \
@@ -181,8 +169,7 @@ fun Coder.main (): String {
         CEU_Value_Func ceu_tags = { NULL, ceu_tags_f };
         ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
     """ +
-    """
-        /* PRINT */
+    """ // PRINT
         void ceu_print1 (CEU_Value* v) {
             switch (v->tag) {
                 case CEU_VALUE_NIL:
@@ -242,7 +229,7 @@ fun Coder.main (): String {
         CEU_Value_Func ceu_println = { NULL, ceu_println_f };
     """ +
     """
-        // ==  /=
+        // EQ-NEQ
         CEU_Value ceu_op_eq_eq_f (CEU_Value_Func* func, CEU_Block* ret, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
@@ -305,9 +292,29 @@ fun Coder.main (): String {
         char ceu_throw_msg[256];
         CEU_Value CEU_THROW_ERROR; // = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
     """ +
-    """
-        /* BCAST */
-
+    """ // BCAST
+        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg);
+        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
+            while (cur != NULL) {
+                CEU_Value_Coro* coro = cur->bcast.coro;
+                if (coro != NULL) {
+                    ceu_bcast_coros(coro, arg);
+                }
+                cur = cur->bcast.block;
+            }
+        }
+        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg) {
+            while (cur != NULL) {
+                if (cur->status != CEU_CORO_STATUS_YIELDED) {
+                    // skip
+                } else {
+                    ceu_bcast_blocks(cur->bcast.block, arg);
+                    CEU_Value* args[] = { arg };
+                    cur->task->f(cur, NULL, 1, args);
+                }
+                cur = cur->bcast.coro;
+            }
+        }
         void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
             if (block->bcast.coro == NULL) {
                 block->bcast.coro = coro;

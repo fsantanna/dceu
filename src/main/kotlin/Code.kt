@@ -262,17 +262,10 @@ class Coder (val outer: Expr.Block) {
                     CEU_Block* ceu_ret,
                     int ceu_n,
                     CEU_Value* ceu_args[]
-                    ${xtask(", int ceu_isbcast")}
                 ) {
-                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
                     ${xfunc("""
                         CEU_Func_$n _ceu_mem_;
                         CEU_Func_$n* ceu_mem = &_ceu_mem_;
-                    """)}
-                    ${xtask("""
-                        if (ceu_isbcast && ceu_coro->status!=CEU_CORO_STATUS_YIELDED) {
-                            goto CEU_RETURN_$n;
-                        }
                     """)}
                     ${xtask("""
                         assert(ceu_coro->status == CEU_CORO_STATUS_YIELDED);
@@ -280,12 +273,7 @@ class Coder (val outer: Expr.Block) {
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->mem;
                     """)}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
-                    ${xtask("""
-                        // before awaking this coro, awake nested coros
-                        if (ceu_isbcast) {
-                            ceu_bcast_blocks(ceu_coro->bcast.block, ceu_n, ceu_args);
-                        }
-                    """)}
+                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
                     """ +
                     """ // WHILE
                     do { // FUNC
@@ -320,14 +308,6 @@ class Coder (val outer: Expr.Block) {
                     ${xtask("""
                         ceu_coro->pc = -1;
                         ceu_coro->status = CEU_CORO_STATUS_TERMINATED;
-                    CEU_RETURN_$n:
-                        // awake next brother coro in the same level
-                        if (ceu_isbcast) {
-                            CEU_Value_Coro* coro = ceu_coro->bcast.coro;
-                            if (coro != NULL) {
-                                coro->task->f(coro, NULL, ceu_n, ceu_args, 1);
-                            }
-                        }
                     """)}
                     return ceu_$n;
                 }
@@ -432,8 +412,7 @@ class Coder (val outer: Expr.Block) {
                 { // BCAST
                     CEU_Value ceu_arg_$n;
                     ${this.arg.code(Pair(bupc, "ceu_arg_$n"))}
-                    CEU_Value* args[] = { &ceu_arg_$n };
-                    ceu_bcast_blocks($bupc, 1, args);
+                    ceu_bcast_blocks($bupc, &ceu_arg_$n);
                 }
                 """
             }
@@ -462,8 +441,7 @@ class Coder (val outer: Expr.Block) {
                         ceu_coro_$n.coro,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
-                        ceu_args_$n,
-                        0
+                        ceu_args_$n
                     );
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
@@ -477,13 +455,12 @@ class Coder (val outer: Expr.Block) {
                     ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
                     ceu_coro->pc = $n;      // next resume
                     ceu_coro->status = CEU_CORO_STATUS_YIELDED;
-                    goto CEU_RETURN_${this.upFunc()!!.n};
+                    return ceu_${this.upFunc()!!.n};
                 case $n:                    // resume here
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                    ceu_coro->status = CEU_CORO_STATUS_RESUMED;
                     ${fset(this.tk, set, "(*ceu_args[0])")}
                 }
                 """

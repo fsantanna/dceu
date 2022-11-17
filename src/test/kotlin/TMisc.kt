@@ -38,17 +38,14 @@ class TMisc {
             set co1 = spawn task () {
                 var co2
                 set co2 = spawn task () {
-println(99)
                     yield ()
                     println(2)
                 }
                 resume co2 ()
-println(100)
                 yield ()
                 println(1)
             }
             resume co1 ()
-println(101)
             broadcast nil
         """
         )
