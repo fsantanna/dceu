@@ -406,21 +406,11 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Bcast -> {
-                var bup = this.upBlock()!!
-                while (true) {
-                    val nxt = bup.upBlock()
-                    if (nxt == null) {
-                        break
-                    } else {
-                        bup = nxt
-                    }
-                }
-                val bupc = bup.toc(true)
                 """
                 { // BCAST ${this.tk.dump()}
                     CEU_Value ceu_arg_$n;
-                    ${this.arg.code(Pair(bupc, "ceu_arg_$n"))}
-                    ceu_bcast_blocks($bupc, &ceu_arg_$n);
+                    ${this.arg.code(Pair("(&ceu_mem_${outer.n}->block_${outer.n})", "ceu_arg_$n"))}
+                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_arg_$n);
                 }
                 """
             }

@@ -350,6 +350,58 @@ class TTask {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun bcast6() {
+        val out = all("""
+            func () {
+                broadcast 1
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun bcast7() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)                
+            }
+            var co1
+            set co1 = coroutine tk
+            var co2
+            set co2 = coroutine tk
+            do {
+                broadcast 1
+                broadcast 2
+                broadcast 3
+            }
+        """)
+        assert(out == "1\n1\n2\n2\n") { out }
+    }
+    @Test
+    fun bcast8() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)                
+            }
+            var co1
+            set co1 = coroutine tk
+            var co2
+            set co2 = coroutine tk
+            func () {
+                broadcast 1
+                broadcast 2
+                broadcast 3
+            }()
+        """)
+        assert(out == "1\n1\n2\n2\n") { out }
+    }
 
     // POOL
 
