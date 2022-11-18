@@ -496,6 +496,20 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
+    fun pool7_leak() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun poolN() {
         val out = all("""
             var ts

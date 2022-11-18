@@ -150,7 +150,7 @@ class Coder (val outer: Expr.Block) {
                     do {
                         $es
                     } while (0);
-                    { // BCAST CLEAR ${this.tk.dump()}
+                    { // BCAST-CLEAR ${this.tk.dump()}
                         CEU_Value ceu_arg = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
                         ceu_bcast_blocks(&ceu_mem->block_$n, &ceu_arg);
                     }
@@ -307,18 +307,23 @@ class Coder (val outer: Expr.Block) {
                                 """
                             }.joinToString("")}
                         }
+                        { // started with BCAST-CLEAR
+                            if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_error) {
+                                continue; // from BCAST-CLEAR: escape enclosing block
+                            }
+                        }
                         // BODY
                         ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
                         ${xtask("}\n}\n")}
                     } while (0);
                     """ +
-                    """
-                    ${xtask(""" // TERMINATE
+                    """ // TERMINATE
+                    ${xtask("""
                         ceu_coro->Bcast.Coro.pc = -1;
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
                         if (ceu_coro->Bcast.Coro.coros != NULL) {
                             if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.n == 0) {
-                                assert(0 && "auto terminate");
+                                ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                             }
                         }
                     """)}
@@ -400,7 +405,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
-                    char* err = ceu_coro_coroutine($scp, &ceu_task_$n, &ceu_coro_$n);
+                    char* err = ceu_coro_create($scp, &ceu_task_$n, &ceu_coro_$n);
                     if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;
                         snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
@@ -461,10 +466,10 @@ class Coder (val outer: Expr.Block) {
                     return ceu_${this.upFunc()!!.n};
                 case $n:                    // resume here
                     if (ceu_throw!=NULL) {
-                        continue; // escape enclosing block;
+                        continue; // escape enclosing block
                     }
-                    if (ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_error) {
-                        continue; // escape enclosing block;
+                    if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_error) {
+                        continue; // from BCAST-CLEAR: escape enclosing block
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ${fset(this.tk, set, "(*ceu_args[0])")}
@@ -486,9 +491,9 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_coro_$n;
                     ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
                     char* err = ${if (this.coros == null) {
-                        "ceu_coro_coroutine($scp, &ceu_task_$n, &ceu_coro_$n);"
+                        "ceu_coro_create($scp, &ceu_task_$n, &ceu_coro_$n);"
                     } else {
-                        "ceu_coros_coroutine(ceu_mem->coros_$n.Dyn, &ceu_task_$n, &ceu_coro_$n);"
+                        "ceu_coros_create(ceu_mem->coros_$n.Dyn, &ceu_task_$n, &ceu_coro_$n);"
                     }}
                     if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;

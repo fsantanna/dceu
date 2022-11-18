@@ -18,11 +18,12 @@
     - 1 ~= "1"
     - #x ~= #x.y
     - str ~= ".*"
-- emit only plain values b/c of bcast
+- xceu
 
 # BACK
 
-- xceu
+- kill: coro, coros
+- emit only plain values b/c of bcast
 - tuple is plain immutable value
     - move on assign
     - no scope error

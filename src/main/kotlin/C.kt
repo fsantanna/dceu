@@ -159,6 +159,7 @@ fun Coder.main (): String {
         
         void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg) {
             while (cur != NULL) {
+                CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 switch (cur->tag) {
                     case CEU_VALUE_CORO: {
                         if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
@@ -175,7 +176,7 @@ fun Coder.main (): String {
                         break;
                     }
                 }
-                cur = cur->Bcast.next;
+                cur = nxt;
             }
         }
         
@@ -191,22 +192,7 @@ fun Coder.main (): String {
             }
         }
 
-        char* ceu_coros_coroutine (CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
-            if (task->tag != CEU_VALUE_TASK) {
-                return "coroutine error : expected task";
-            }
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Proto->Task.size);
-            assert(coro != NULL);
-            *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, NULL, { // no free, no block
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,task->Proto,0} } }
-                }
-            };
-            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
-            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
-            return NULL;
-        }
-        char* ceu_coro_coroutine (CEU_Block* block, CEU_Value* task, CEU_Value* ret) {
+        char* ceu_coro_create (CEU_Block* block, CEU_Value* task, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
@@ -221,6 +207,41 @@ fun Coder.main (): String {
             block->tofree = coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             return NULL;
+        }
+
+        char* ceu_coros_create (CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
+            if (task->tag != CEU_VALUE_TASK) {
+                return "coroutine error : expected task";
+            }
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Proto->Task.size);
+            assert(coro != NULL);
+            *coro = (CEU_Dynamic) {
+                CEU_VALUE_CORO, NULL, NULL, { // no free, no block
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,task->Proto,0} } }
+                }
+            };
+            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            return NULL;
+        }
+
+        char* ceu_coros_destroy (CEU_Dynamic* coros, CEU_Dynamic* coro) {
+            CEU_Dynamic* cur = coros->Bcast.Coros.first;
+            if (cur == coro) {
+                coros->Bcast.Coros.first = coro->Bcast.next;
+            } else {
+                CEU_Dynamic* prv = cur;
+                while (prv != NULL) {
+                    if (prv->Bcast.next == coro) {
+                        break;
+                    }
+                    prv = prv->Bcast.next;
+                }
+                cur = prv->Bcast.next;
+                prv->Bcast.next = coro->Bcast.next;
+            }
+            assert(cur == coro);
+            free(coro);
         }
     """ +
     """ // TAGS
