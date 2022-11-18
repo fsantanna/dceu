@@ -512,10 +512,14 @@ class Coder (val outer: Expr.Block) {
                 { // COROS ${this.tk.dump()}
                     CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
                     assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_COROS, $scp->tofree, $scp, {.Bcast={NULL,{.Coros={0,NULL}}} };
+                    *ceu_$n = (CEU_Dynamic) {
+                        CEU_VALUE_COROS, $scp->tofree, $scp, {
+                            .Bcast = { NULL, {.Coros = {0, NULL}} }
+                        }
+                    };
                     ceu_bcast_enqueue($scp, ceu_$n);
                     $scp->tofree = ceu_$n;
-                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS, {.coros=ceu_$n} })")}
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
                 }
                 """
             }

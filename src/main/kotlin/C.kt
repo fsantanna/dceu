@@ -144,7 +144,7 @@ fun Coder.main (): String {
             }
         }
     """ +
-    """ // BCAST
+    """ // BCAST / BCAST
         void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg);
         void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
             while (cur != NULL) {
@@ -155,6 +155,7 @@ fun Coder.main (): String {
                 cur = cur->bcast.block;
             }
         }
+        
         void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg) {
             while (cur != NULL) {
                 switch (cur->tag) {
@@ -176,6 +177,7 @@ fun Coder.main (): String {
                 cur = cur->Bcast.next;
             }
         }
+        
         void ceu_bcast_enqueue (CEU_Block* block, CEU_Dynamic* dyn) {
             if (block->bcast.dyn == NULL) {
                 block->bcast.dyn = dyn;
@@ -187,8 +189,7 @@ fun Coder.main (): String {
                 cur->Bcast.next = dyn;
             }
         }
-    """ +
-    """ // COROS
+
         char* ceu_coro_coroutine (CEU_Value* ret, CEU_Value* task, CEU_Block* block) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
