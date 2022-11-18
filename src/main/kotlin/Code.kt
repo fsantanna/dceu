@@ -150,6 +150,10 @@ class Coder (val outer: Expr.Block) {
                     do {
                         $es
                     } while (0);
+                    { // BCAST CLEAR ${this.tk.dump()}
+                        CEU_Value ceu_arg = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
+                        ceu_bcast_blocks(&ceu_mem->block_$n, &ceu_arg);
+                    }
                     { // DEFERS ${this.tk.dump()}
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
@@ -461,7 +465,10 @@ class Coder (val outer: Expr.Block) {
                     ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
                     return ceu_${this.upFunc()!!.n};
                 case $n:                    // resume here
-                    if (ceu_throw != NULL) {
+                    if (ceu_throw!=NULL) {
+                        continue; // escape enclosing block;
+                    }
+                    if (ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_error) {
                         continue; // escape enclosing block;
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");

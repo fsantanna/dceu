@@ -134,6 +134,19 @@ class TTask {
         """)
         assert(out == "1\t2\n") { out }
     }
+    @Test
+    fun task12_tuple_leak() {
+        val out = all("""
+            var T
+            set T = task () {
+                [1,2,3]
+                yield nil
+            }
+            resume (coroutine T) ()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // SPAWN
 
@@ -343,6 +356,22 @@ class TTask {
             broadcast 2
         """)
         assert(out == "#coros\n1\n2\n") { out }
+    }
+    @Test
+    fun pool2_leak() {
+        val out = all("""
+            var T
+            set T = task () {
+                [1,2,3]
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn T(1) in ts
+            spawn T(2) in ts
+            println(1)
+        """)
+        assert(out == "1\n") { out }
     }
     @Test
     fun poolN() {
