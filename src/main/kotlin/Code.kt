@@ -389,18 +389,15 @@ class Coder (val outer: Expr.Block) {
                 """
                 { // CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
+                    CEU_Value ceu_coro_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
-                    if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
+                    char* err = ceu_coro_coroutine(&ceu_coro_$n, &ceu_task_$n, $scp);
+                    if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;
-                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : coroutine error : expected task", 256);
+                        snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
                         continue; // escape enclosing block;
                     }
-                    CEU_Value_Coro* ceu_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
-                    assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
-                    ceu_bcast_enqueue($bupc, ceu_$n);
-                    $scp->tofree = (CEU_Dynamic*) ceu_$n;
-                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_$n} })")}            
+                    ${fset(this.tk, set, "ceu_coro_$n")}
                 }
                 """
             }
@@ -483,25 +480,22 @@ class Coder (val outer: Expr.Block) {
                 """
                 { // SPAWN/CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
+                    CEU_Value ceu_coro_$n;
                     ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
-                    if (ceu_task_$n.tag != CEU_VALUE_TASK) {                
+                    char* err = ceu_coro_coroutine(&ceu_coro_$n, &ceu_task_$n, $scp);
+                    if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;
-                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : spawn error : expected task", 256);
+                        snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : %s", err);
                         continue; // escape enclosing block;
                     }
-                    CEU_Value_Coro* ceu_coro_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
-                    assert(ceu_coro_$n != NULL);
-                    *ceu_coro_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
-                    ceu_bcast_enqueue($scp, ceu_coro_$n);
-                    $scp->tofree = (CEU_Dynamic*) ceu_coro_$n;
-                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_coro_$n} })")}            
+                    ${fset(this.tk, set, "ceu_coro_$n")}            
                 // SPAWN/RESUME ${this.tk.dump()}
                     { // SETS
                         $sets
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
-                    ceu_coro_$n->task->f(
-                        ceu_coro_$n,
+                    ceu_coro_$n.coro->task->f(
+                        ceu_coro_$n.coro,
                         ${if (set == null) bupc else set.first},
                         ${this.call.args.size},
                         ceu_args_$n

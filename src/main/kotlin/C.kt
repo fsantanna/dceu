@@ -108,24 +108,6 @@ fun Coder.main (): String {
             };
         } CEU_Value;
     """ +
-            /*
-    """ // COROS
-        CEU_Value ceu_coro_coroutine (CEU_Value_Task* task) {
-            if (task->tag != CEU_VALUE_TASK) {
-                ceu_throw = &CEU_THROW_ERROR;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : coroutine error : expected task", 256);
-                continue; // escape enclosing block;
-            }
-            CEU_Value_Coro* coro = malloc(sizeof(CEU_Value_Coro) + (task.task->size));
-            assert(coro != NULL);
-            *coro = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task.task, 0 };
-            ceu_bcast_enqueue($bupc, coro);
-            $scp->tofree = (CEU_Dynamic*) coro;
-            return ((CEU_Value) { CEU_VALUE_CORO, {.coro=coro} });
-        }
-    """ +
-
-             */
     """ // BLOCK
         typedef struct CEU_Block {
             uint8_t depth;                  // compare on set
@@ -161,6 +143,55 @@ fun Coder.main (): String {
                 prv = cur;
                 cur = cur->next;
             }
+        }
+    """ +
+    """ // BCAST
+        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg);
+        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
+            while (cur != NULL) {
+                CEU_Value_Coro* coro = cur->bcast.coro;
+                if (coro != NULL) {
+                    ceu_bcast_coros(coro, arg);
+                }
+                cur = cur->bcast.block;
+            }
+        }
+        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg) {
+            while (cur != NULL) {
+                if (cur->status != CEU_CORO_STATUS_YIELDED) {
+                    // skip
+                } else {
+                    ceu_bcast_blocks(cur->bcast.block, arg);
+                    CEU_Value* args[] = { arg };
+                    cur->task->f(cur, NULL, 1, args);
+                }
+                cur = cur->bcast.coro;
+            }
+        }
+        void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
+            if (block->bcast.coro == NULL) {
+                block->bcast.coro = coro;
+            } else {
+                CEU_Value_Coro* cur = block->bcast.coro;
+                while (cur->bcast.coro != NULL) {
+                    cur = cur->bcast.coro;
+                }
+                cur->bcast.coro = coro;
+            }
+        }
+    """ +
+    """ // COROS
+        char* ceu_coro_coroutine (CEU_Value* ret, CEU_Value* task, CEU_Block* block) {
+            if (task->tag != CEU_VALUE_TASK) {
+                return "coroutine error : expected task";
+            }
+            CEU_Value_Coro* coro = malloc(sizeof(CEU_Value_Coro) + (task->task->size));
+            assert(coro != NULL);
+            *coro = (CEU_Value_Coro) { {block->tofree,block}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task->task, 0 };
+            ceu_bcast_enqueue(block, coro);
+            block->tofree = (CEU_Dynamic*) coro;
+            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.coro=coro} });
+            return NULL;
         }
     """ +
     """ // TAGS
@@ -318,41 +349,6 @@ fun Coder.main (): String {
         CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
         char ceu_throw_msg[256];
         CEU_Value CEU_THROW_ERROR; // = { CEU_VALUE_TAG, {._tag_=CEU_TAG_error} };
-    """ +
-    """ // BCAST
-        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg);
-        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
-            while (cur != NULL) {
-                CEU_Value_Coro* coro = cur->bcast.coro;
-                if (coro != NULL) {
-                    ceu_bcast_coros(coro, arg);
-                }
-                cur = cur->bcast.block;
-            }
-        }
-        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg) {
-            while (cur != NULL) {
-                if (cur->status != CEU_CORO_STATUS_YIELDED) {
-                    // skip
-                } else {
-                    ceu_bcast_blocks(cur->bcast.block, arg);
-                    CEU_Value* args[] = { arg };
-                    cur->task->f(cur, NULL, 1, args);
-                }
-                cur = cur->bcast.coro;
-            }
-        }
-        void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
-            if (block->bcast.coro == NULL) {
-                block->bcast.coro = coro;
-            } else {
-                CEU_Value_Coro* cur = block->bcast.coro;
-                while (cur->bcast.coro != NULL) {
-                    cur = cur->bcast.coro;
-                }
-                cur->bcast.coro = coro;
-            }
-        }
     """ +
     """ // FUNCS
         typedef struct {

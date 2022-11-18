@@ -176,7 +176,7 @@ class TTask {
         val out = all("""
             spawn (func () {nil}) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : spawn error : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 20) : coroutine error : expected task\n") { out }
     }
     @Test
     fun spawn4_err() {

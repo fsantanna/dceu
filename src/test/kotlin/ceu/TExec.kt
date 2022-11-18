@@ -16,9 +16,9 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-val VALGRIND = ""
+//val VALGRIND = ""
 val THROW = false
-//val VALGRIND = "valgrind "
+val VALGRIND = "valgrind "
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
