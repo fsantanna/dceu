@@ -352,10 +352,10 @@ class Coder (val outer: Expr.Block) {
                                 // assign ceu_throw_arg to set.first
                                 switch (ceu_throw_arg.tag) {
                                     case CEU_VALUE_TUPLE:
-                                        ceu_block_move((CEU_Dynamic*)ceu_throw_arg.tuple, ceu_block_global, $scp);
+                                        ceu_block_move((CEU_Dyn*)ceu_throw_arg.tuple, ceu_block_global, $scp);
                                         break;
                                     case CEU_VALUE_CORO:
-                                        ceu_block_move((CEU_Dynamic*)ceu_throw_arg.coro, ceu_block_global, $scp);
+                                        ceu_block_move((CEU_Dyn*)ceu_throw_arg.coro, ceu_block_global, $scp);
                                         break;
                                 }
                             }
@@ -506,7 +506,19 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Coros -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS })")
+            is Expr.Coros -> {
+                val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
+                """
+                { // COROS ${this.tk.dump()}
+                    CEU_Value_Coros* ceu_$n = malloc(sizeof(CEU_Value_Coros));
+                    assert(ceu_$n != NULL);
+                    *ceu_$n = (CEU_Value_Coros) { {CEU_VALUE_COROS,$scp->tofree,$scp}, {NULL,NULL}, 0 };
+                    ceu_bcast_enqueue($scp, (CEU_Value_Bcast*) ceu_$n);
+                    $scp->tofree = (CEU_Dyn*) ceu_$n;
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS, {.coros=ceu_$n} })")}
+                }
+                """
+            }
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!
@@ -597,7 +609,7 @@ class Coder (val outer: Expr.Block) {
                     it.code(Pair(scp, "ceu_mem->arg_${i}_$n"))
                 }.joinToString("")
                 """
-                { // TUPLE  ${this.tk.dump()}
+                { // TUPLE ${this.tk.dump()}
                     $args
                     CEU_Value ceu_sta_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
@@ -606,7 +618,7 @@ class Coder (val outer: Expr.Block) {
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Value_Tuple) { {CEU_VALUE_TUPLE,$scp->tofree,$scp}, ${this.args.size} };
                     memcpy(ceu_$n->mem, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
-                    $scp->tofree = (CEU_Dynamic*) ceu_$n;
+                    $scp->tofree = (CEU_Dyn*) ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}
                 }
                 """

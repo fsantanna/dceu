@@ -34,14 +34,14 @@ fun Coder.main (): String {
         
         // all dynamic data must start with this struct
         // CEU_Tuple, CEU_Value_Coro
-        typedef struct CEU_Dynamic {
+        typedef struct CEU_Dyn {
             CEU_VALUE tag;
-            struct CEU_Dynamic* next;   // next in block->tofree
+            struct CEU_Dyn* next;   // next in block->tofree
             struct CEU_Block* block;    // compare on set, compare on move
-        } CEU_Dynamic;
+        } CEU_Dyn;
 
         typedef struct CEU_Value_Tuple {
-            CEU_Dynamic dyn;    // tuple is dynamic
+            CEU_Dyn dyn;        // tuple is dynamic
             uint8_t n;          // number of items
             char mem[0];        // beginning of CEU_Value[n]
         } CEU_Value_Tuple;
@@ -72,12 +72,17 @@ fun Coder.main (): String {
             );
             int size;   // buffer w/ locals
         } CEU_Value_Task;
+        
+        typedef struct CEU_Value_Bcast { // coro/coros are "bcastable"
+            CEU_Dyn dyn;
+            struct CEU_Value_Bcast* next;  // next brother coro/coros in the enclosing block
+        } CEU_Value_Bcast;
 
         typedef struct CEU_Value_Coro {
-            CEU_Dynamic dyn;            // coro is dynamic
+            CEU_Dyn dyn;                // coro is dynamic
             struct {
-                struct CEU_Block* block;       // first block in the coroutine
-                struct CEU_Value_Coro* coro;   // next brother coroutine in the enclosing block
+                struct CEU_Value_Dyn* dyn;  // next brother coro/coros in the enclosing block
+                struct CEU_Block* block;    // first block in the coroutine
             } bcast;
             enum CEU_CORO_STATUS status;
             CEU_Value_Task* task;       // (Stack* stack, CUE_Coro* coro, void* evt);
@@ -86,9 +91,12 @@ fun Coder.main (): String {
         } CEU_Value_Coro;
 
         typedef struct CEU_Value_Coros {
-            CEU_Dynamic dyn;        // coros is dynamic
-            uint8_t n;              // number of open iterators
-            CEU_Value_Coro* coro;   // first coro 
+            CEU_Dyn dyn;    // coros is dynamic
+            struct {
+                struct CEU_Value_Dyn*  outer;  // next brother dyn 
+                struct CEU_Value_Coro* inner;  // first nested coro
+            } bcast;
+            uint8_t n;      // number of open iterators
         } CEU_Value_Coros;
         
         typedef struct CEU_Value {
@@ -109,22 +117,35 @@ fun Coder.main (): String {
     """ // BLOCK
         typedef struct CEU_Block {
             uint8_t depth;                  // compare on set
-            CEU_Dynamic* tofree;            // list of allocated data to free on exit
+            CEU_Dyn* tofree;                // list of allocated data to free on exit
             struct {
-                struct CEU_Block* block;       // nested block active
-                struct CEU_Value_Coro* coro;   // first coroutine in this block
+                struct CEU_Block* block;        // nested block active
+                struct CEU_Value_Bcast* dyn;    // first coro/coros in this block
             } bcast;
         } CEU_Block;
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
-                CEU_Dynamic* cur = block->tofree;
+                CEU_Dyn* cur = block->tofree;
+                switch (cur->tag) {
+                    case CEU_VALUE_COROS: {
+                        CEU_Value_Coros* coros = (CEU_Value_Coros*) cur;
+                        CEU_Value_Coro* inner = coros->bcast.inner;
+                        while (inner != NULL) {
+                            CEU_Value_Coro* x = inner;
+                            inner = (CEU_Value_Coro*) inner->bcast.dyn;
+                            free(x);
+                        }
+                        break;
+                    }
+                }
                 block->tofree = block->tofree->next;
                 free(cur);
             }
         }
-        void ceu_block_move (CEU_Dynamic* V, CEU_Block* FR, CEU_Block* TO) {
-            CEU_Dynamic* prv = NULL;
-            CEU_Dynamic* cur = FR->tofree;
+        void ceu_block_move (CEU_Dyn* V, CEU_Block* FR, CEU_Block* TO) {
+            assert(V->tag == CEU_VALUE_TUPLE && "bug found");
+            CEU_Dyn* prv = NULL;
+            CEU_Dyn* cur = FR->tofree;
             while (cur != NULL) {
                 if (cur == V) {
                     if (prv == NULL) {
@@ -144,37 +165,48 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST
-        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg);
+        void ceu_bcast_dyns (CEU_Value_Bcast* cur, CEU_Value* arg);
         void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
             while (cur != NULL) {
-                CEU_Value_Coro* coro = cur->bcast.coro;
-                if (coro != NULL) {
-                    ceu_bcast_coros(coro, arg);
+                CEU_Value_Bcast* dyn = cur->bcast.dyn;
+                if (dyn != NULL) {
+                    ceu_bcast_dyns(dyn, arg);
                 }
                 cur = cur->bcast.block;
             }
         }
-        void ceu_bcast_coros (CEU_Value_Coro* cur, CEU_Value* arg) {
+        void ceu_bcast_dyns (CEU_Value_Bcast* cur, CEU_Value* arg) {
             while (cur != NULL) {
-                if (cur->status != CEU_CORO_STATUS_YIELDED) {
-                    // skip
-                } else {
-                    ceu_bcast_blocks(cur->bcast.block, arg);
-                    CEU_Value* args[] = { arg };
-                    cur->task->f(cur, NULL, 1, args);
+                switch (cur->dyn.tag) {
+                    case CEU_VALUE_CORO: {
+                        CEU_Value_Coro* coro =  (CEU_Value_Coro*) cur;
+                        if (coro->status != CEU_CORO_STATUS_YIELDED) {
+                            // skip
+                        } else {
+                            ceu_bcast_blocks(coro->bcast.block, arg);
+                            CEU_Value* args[] = { arg };
+                            coro->task->f(coro, NULL, 1, args);
+                        }
+                        break;
+                    }
+                    case CEU_VALUE_COROS: {
+                        CEU_Value_Coros* coros = (CEU_Value_Coros*) cur;
+                        ceu_bcast_dyns((CEU_Value_Bcast*)coros->bcast.inner, arg);
+                        break;
+                    }
                 }
-                cur = cur->bcast.coro;
+                cur = cur->next;
             }
         }
-        void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Coro* coro) {
-            if (block->bcast.coro == NULL) {
-                block->bcast.coro = coro;
+        void ceu_bcast_enqueue (CEU_Block* block, CEU_Value_Bcast* dyn) {
+            if (block->bcast.dyn == NULL) {
+                block->bcast.dyn = dyn;
             } else {
-                CEU_Value_Coro* cur = block->bcast.coro;
-                while (cur->bcast.coro != NULL) {
-                    cur = cur->bcast.coro;
+                CEU_Value_Bcast* cur = block->bcast.dyn;
+                while (cur->next != NULL) {
+                    cur = cur->next;
                 }
-                cur->bcast.coro = coro;
+                cur->next = dyn;
             }
         }
     """ +
@@ -186,8 +218,8 @@ fun Coder.main (): String {
             CEU_Value_Coro* coro = malloc(sizeof(CEU_Value_Coro) + (task->task->size));
             assert(coro != NULL);
             *coro = (CEU_Value_Coro) { {CEU_VALUE_CORO,block->tofree,block}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task->task, 0 };
-            ceu_bcast_enqueue(block, coro);
-            block->tofree = (CEU_Dynamic*) coro;
+            ceu_bcast_enqueue(block, (CEU_Value_Bcast*) coro);
+            block->tofree = (CEU_Dyn*) coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.coro=coro} });
             return NULL;
         }
