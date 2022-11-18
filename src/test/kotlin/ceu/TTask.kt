@@ -441,7 +441,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pool3_defer() {
+    fun pool4_defer() {
         val out = all("""
             var T
             set T = task (v) {
@@ -459,6 +459,42 @@ class TTask {
         assert(out == "0\n1\n2\n") { out }
     }
     @Test
+    fun pool5_scope() {
+        val out = all("""
+            do {
+                var ts
+                set ts = coroutines()
+                var T
+                set T = task (v) {
+                    println(v)
+                    set v = yield ()
+                    println(v)
+                }
+                spawn T(1) in ts
+            }
+            broadcast 2
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun pool6_terminate() {
+        val out = all("""
+            do {
+                var ts
+                set ts = coroutines()
+                var T
+                set T = task (v) {
+                    println(v)
+                    println(v)
+                }
+                spawn T(1) in ts
+                TODO
+            }
+            broadcast 2
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun poolN() {
         val out = all("""
             var ts
@@ -474,8 +510,11 @@ class TTask {
             spawn T(1) in ts
             spawn T(2) in ts
             
+            var x
             while t1 in ts {
+                set x = t1
                 while t2 in ts {
+                    set x = t2
                     println(t1.pub, t2.pub)
                 }
             }

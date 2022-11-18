@@ -525,6 +525,7 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
+            is Expr.Iter -> TODO()
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!

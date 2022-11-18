@@ -1,6 +1,6 @@
 # NEXT
 
-- sdl bcast
+- count memory
 - pool kill/while
     - iter
     - nested bcast
@@ -10,7 +10,6 @@
 - tags
     - implement with vector or list?
     - tag hier or tag of tag?
-- count memory
 - polymorphism
     - poly var
     - set f = func (a#x, b#y)
@@ -40,16 +39,20 @@
     - access to ceu_throw value
 - tag of tag requires higher ID to avoid cycle
 - ((1>>f)>>g) -> g(f(1))
-- parser reject no assign stmts
-    - defer
-    - while
-    - ?
-- parser reject anything after throw (last stmt)
+- parser
+    - reject no assign stmts
+        - defer
+        - while
+        - ?
+    - reject anything after throw (last stmt)
+    - reject yield with no direct enclosing task
 - closures
     - only accept dyns as upvalue
     - has same scope as upval
 - 3 `add` 4  -->  add(3,4)
 - move as a primitive?
+    - needs to move nested objs
+    - var x = [...] ; move x (up)
 - ceu2c
     - struct <- tuple
     - vec <- buf
