@@ -313,15 +313,20 @@ class Coder (val outer: Expr.Block) {
                     } while (0);
                     """ +
                     """
-                    ${xtask("""
+                    ${xtask(""" // TERMINATE
                         ceu_coro->Bcast.Coro.pc = -1;
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
+                        if (ceu_coro->Bcast.Coro.coros != NULL) {
+                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.n == 0) {
+                                assert(0 && "auto terminate");
+                            }
+                        }
                     """)}
                     return ceu_$n;
                 }
                 """
                 tops.add(Pair(type,func))
-                """
+                """ // STATIC
                 ${xfunc("""
                     static CEU_Proto ceu_func_$n;
                     ceu_func_$n = (CEU_Proto) { ${this.top()}, NULL, {.Func=ceu_f_$n} };

@@ -485,10 +485,11 @@ class TTask {
                 var T
                 set T = task (v) {
                     println(v)
-                    println(v)
                 }
                 spawn T(1) in ts
-                TODO
+                while t in ts {
+                    throw 1     // never reached
+                }
             }
             broadcast 2
         """)

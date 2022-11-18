@@ -81,6 +81,7 @@ fun Coder.main (): String {
                     union {
                         struct {
                             enum CEU_CORO_STATUS status;
+                            struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             struct CEU_Proto* task;     // task->Task
                             int pc;                     // next line to execute
@@ -144,7 +145,7 @@ fun Coder.main (): String {
             }
         }
     """ +
-    """ // BCAST / BCAST
+    """ // BCAST / COROS
         void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg);
         void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
             while (cur != NULL) {
@@ -198,7 +199,7 @@ fun Coder.main (): String {
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, { // no free, no block
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,task->Proto,0} } }
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,task->Proto,0} } }
                 }
             };
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
@@ -213,7 +214,7 @@ fun Coder.main (): String {
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, block->tofree, block, {
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,task->Proto,0} } }
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,task->Proto,0} } }
                 }
             };
             ceu_bcast_enqueue(&block->bcast.dyn, coro);

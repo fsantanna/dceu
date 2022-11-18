@@ -147,14 +147,15 @@ class Parser (lexer_: Lexer)
                 Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("while") -> {
+                val tk0 = this.tk0 as Tk.Fix
                 val e = this.expr()
                 if (this.acceptFix("in")) {
                     if (e !is Expr.Acc) {
                         err(e.tk, "invalid while : expected identifier")
                     }
-                    Expr.Iter(this.tk0 as Tk.Fix, e.tk as Tk.Id, this.expr(), this.block(null))
+                    Expr.Iter(tk0, e.tk as Tk.Id, this.expr(), this.block(null))
                 } else {
-                    Expr.While(this.tk0 as Tk.Fix, e, this.block(null))
+                    Expr.While(tk0, e, this.block(null))
                 }
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
