@@ -604,7 +604,7 @@ class Coder (val outer: Expr.Block) {
                     };
                     CEU_Value_Tuple* ceu_$n = malloc(sizeof(CEU_Value_Tuple) + ${this.args.size} * sizeof(CEU_Value));
                     assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Value_Tuple) { {$scp->tofree,$scp}, ${this.args.size} };
+                    *ceu_$n = (CEU_Value_Tuple) { {CEU_VALUE_TUPLE,$scp->tofree,$scp}, ${this.args.size} };
                     memcpy(ceu_$n->mem, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
                     $scp->tofree = (CEU_Dynamic*) ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.tuple=ceu_$n} })")}

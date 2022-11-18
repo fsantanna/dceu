@@ -17,19 +17,15 @@ fun Coder.main (): String {
             CEU_VALUE_BOOL,
             CEU_VALUE_NUMBER,
             CEU_VALUE_TUPLE,
-            CEU_VALUE_FUNC,
+            CEU_VALUE_FUNC,     // func prototype
             CEU_VALUE_TASK,     // task prototype
             CEU_VALUE_CORO,     // spawned task
-            CEU_VALUE_COROS
+            CEU_VALUE_COROS     // pool of spawned tasks
         } CEU_VALUE;
         
         typedef enum CEU_CORO_STATUS {
-            //CEU_CORO_POOL_STATUS,
-            //CEU_CORO_STATUS_SPAWNED,
             CEU_CORO_STATUS_RESUMED,
             CEU_CORO_STATUS_YIELDED,
-            //CEU_CORO_STATUS_PAUSED,
-            //CEU_CORO_STATUS_DYING,
             CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;        
 
@@ -39,6 +35,7 @@ fun Coder.main (): String {
         // all dynamic data must start with this struct
         // CEU_Tuple, CEU_Value_Coro
         typedef struct CEU_Dynamic {
+            CEU_VALUE tag;
             struct CEU_Dynamic* next;   // next in block->tofree
             struct CEU_Block* block;    // compare on set, compare on move
         } CEU_Dynamic;
@@ -95,7 +92,7 @@ fun Coder.main (): String {
         } CEU_Value_Coros;
         
         typedef struct CEU_Value {
-            int tag;
+            CEU_VALUE tag;
             union {
                 //void nil;
                 int _tag_;
@@ -188,7 +185,7 @@ fun Coder.main (): String {
             }
             CEU_Value_Coro* coro = malloc(sizeof(CEU_Value_Coro) + (task->task->size));
             assert(coro != NULL);
-            *coro = (CEU_Value_Coro) { {block->tofree,block}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task->task, 0 };
+            *coro = (CEU_Value_Coro) { {CEU_VALUE_CORO,block->tofree,block}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task->task, 0 };
             ceu_bcast_enqueue(block, coro);
             block->tofree = (CEU_Dynamic*) coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.coro=coro} });
