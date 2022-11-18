@@ -1,6 +1,6 @@
 fun Coder.main (): String {
     return ("" +
-    """
+    """ // INCLUDES
         #include <stdio.h>
         #include <stdlib.h>
         #include <stdint.h>
@@ -9,15 +9,6 @@ fun Coder.main (): String {
         #include <stdarg.h>
         #include <math.h>
 
-        struct CEU_Value;
-        struct CEU_Block;
-        
-        // all dynamic data must start with this struct
-        // CEU_Tuple, CEU_Value_Coro
-        typedef struct CEU_Dynamic {
-            struct CEU_Dynamic* next;   // next in block->tofree
-            struct CEU_Block* block;    // compare on set, compare on move
-        } CEU_Dynamic;
     """ +
     """ // VALUE
         typedef enum CEU_VALUE {
@@ -41,6 +32,16 @@ fun Coder.main (): String {
             //CEU_CORO_STATUS_DYING,
             CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;        
+
+        struct CEU_Value;
+        struct CEU_Block;
+        
+        // all dynamic data must start with this struct
+        // CEU_Tuple, CEU_Value_Coro
+        typedef struct CEU_Dynamic {
+            struct CEU_Dynamic* next;   // next in block->tofree
+            struct CEU_Block* block;    // compare on set, compare on move
+        } CEU_Dynamic;
 
         typedef struct CEU_Value_Tuple {
             CEU_Dynamic dyn;    // tuple is dynamic
