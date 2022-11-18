@@ -147,6 +147,21 @@ class TTask {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun task13_defer() {
+        val out = all("""
+            var T
+            set T = task () {
+                defer {
+                    println(2)
+                }
+                yield nil
+            }
+            resume (coroutine T) ()
+            println(1)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
 
     // SPAWN
 
@@ -372,6 +387,24 @@ class TTask {
             println(1)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun pool3_defer() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                defer {
+                    println(v)
+                }
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn T(1) in ts
+            spawn T(2) in ts
+            println(0)
+        """)
+        assert(out == "0\n1\n2\n") { out }
     }
     @Test
     fun poolN() {
