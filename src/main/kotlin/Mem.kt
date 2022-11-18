@@ -73,12 +73,16 @@ fun Expr.mem (): String {
             """
         is Expr.Yield -> this.arg.mem()
         is Expr.Spawn -> """
-            union { // SPAWN
-                // CORO
-                ${this.call.f.mem()}
-                struct { // ARGS
-                    ${this.call.args.map { it.mem() }.joinToString("")}
-                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+            struct { // SPAWN
+                ${if (this.coros==null) "" else "CEU_Value coros_$n;"}
+                union {
+                    ${this.coros?.mem() ?: ""}
+                    // CORO
+                    ${this.call.f.mem()}
+                    struct { // ARGS
+                        ${this.call.args.map { it.mem() }.joinToString("")}
+                        ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                    };
                 };
             };
             """

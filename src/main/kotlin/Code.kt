@@ -391,7 +391,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
-                    char* err = ceu_coro_coroutine(&ceu_coro_$n, &ceu_task_$n, $scp);
+                    char* err = ceu_coro_coroutine($scp, &ceu_task_$n, &ceu_coro_$n);
                     if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;
                         snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
@@ -479,10 +479,15 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
                 { // SPAWN/CORO ${this.tk.dump()}
+                    ${if (this.coros == null) "" else this.coros.code(Pair(bupc, "ceu_mem->coros_$n"))}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
-                    char* err = ceu_coro_coroutine(&ceu_coro_$n, &ceu_task_$n, $scp);
+                    char* err = ${if (this.coros == null) {
+                        "ceu_coro_coroutine($scp, &ceu_task_$n, &ceu_coro_$n);"
+                    } else {
+                        "ceu_coros_coroutine(ceu_mem->coros_$n.Dyn, &ceu_task_$n, &ceu_coro_$n);"
+                    }}
                     if (err != NULL) {
                         ceu_throw = &CEU_THROW_ERROR;
                         snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : %s", err);
@@ -517,7 +522,7 @@ class Coder (val outer: Expr.Block) {
                             .Bcast = { NULL, {.Coros = {0, NULL}} }
                         }
                     };
-                    ceu_bcast_enqueue($scp, ceu_$n);
+                    ceu_bcast_enqueue(&$scp->bcast.dyn, ceu_$n);
                     $scp->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
                 }

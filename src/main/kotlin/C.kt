@@ -74,7 +74,7 @@ fun Coder.main (): String {
             union {
                 struct {
                     uint8_t n;              // number of items
-                    char mem[0];             // beginning of CEU_Value[n]
+                    char mem[0];            // beginning of CEU_Value[n]
                 } Tuple;
                 struct {
                     struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
@@ -84,7 +84,7 @@ fun Coder.main (): String {
                             struct CEU_Block* block;    // first block to bcast
                             struct CEU_Proto* task;     // task->Task
                             int pc;                     // next line to execute
-                            char mem[0];                 // beginning of locals
+                            char mem[0];                // beginning of locals
                         } Coro;
                         struct {
                             uint8_t n;                  // number of open iterators
@@ -178,11 +178,11 @@ fun Coder.main (): String {
             }
         }
         
-        void ceu_bcast_enqueue (CEU_Block* block, CEU_Dynamic* dyn) {
-            if (block->bcast.dyn == NULL) {
-                block->bcast.dyn = dyn;
+        void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
+            if (*outer == NULL) {
+                *outer = dyn;
             } else {
-                CEU_Dynamic* cur = block->bcast.dyn;
+                CEU_Dynamic* cur = *outer;
                 while (cur->Bcast.next != NULL) {
                     cur = cur->Bcast.next;
                 }
@@ -190,7 +190,22 @@ fun Coder.main (): String {
             }
         }
 
-        char* ceu_coro_coroutine (CEU_Value* ret, CEU_Value* task, CEU_Block* block) {
+        char* ceu_coros_coroutine (CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
+            if (task->tag != CEU_VALUE_TASK) {
+                return "coroutine error : expected task";
+            }
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Proto->Task.size);
+            assert(coro != NULL);
+            *coro = (CEU_Dynamic) {
+                CEU_VALUE_CORO, NULL, NULL, { // no free, no block
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,task->Proto,0} } }
+                }
+            };
+            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            return NULL;
+        }
+        char* ceu_coro_coroutine (CEU_Block* block, CEU_Value* task, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
@@ -201,7 +216,7 @@ fun Coder.main (): String {
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,task->Proto,0} } }
                 }
             };
-            ceu_bcast_enqueue(block, coro);
+            ceu_bcast_enqueue(&block->bcast.dyn, coro);
             block->tofree = coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             return NULL;
