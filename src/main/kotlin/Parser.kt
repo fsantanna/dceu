@@ -153,7 +153,8 @@ class Parser (lexer_: Lexer)
                     if (e !is Expr.Acc) {
                         err(e.tk, "invalid while : expected identifier")
                     }
-                    Expr.Iter(tk0, e.tk as Tk.Id, this.expr(), this.block(null))
+                    Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
+                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk), this.block(null))))
                 } else {
                     Expr.While(tk0, e, this.block(null))
                 }

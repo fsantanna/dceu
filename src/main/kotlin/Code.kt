@@ -535,7 +535,35 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Iter -> TODO()
+            is Expr.Iter -> {
+                val bupc = this.upBlock()!!.toc(true)
+                val loc = this.loc.str
+                """
+                { // ITER ${this.tk.dump()}
+                    ${this.coros.code(Pair(bupc, "ceu_mem->coros_$n"))}
+                    if (ceu_mem->coros_$n.tag != CEU_VALUE_COROS) {                
+                        ceu_throw = &CEU_THROW_ERROR;
+                        strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
+                        continue; // escape enclosing block;
+                    }
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.n++;
+                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
+                    do {
+                CEU_ITER_$n:;
+                        if (ceu_mem->$loc.Dyn == NULL) {
+                            continue; // escape enclosing block
+                        }
+                        ${this.body.code(null)}
+                        ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
+                        goto CEU_ITER_$n;
+                    } while (0);
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.n--;
+                    if (ceu_throw != NULL) {
+                        continue; // escape enclosing block
+                    }
+                }
+                """
+            }
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!

@@ -488,7 +488,7 @@ class TTask {
                 }
                 spawn T(1) in ts
                 while t in ts {
-                    throw 1     // never reached
+                    throw 1     ;; never reached
                 }
             }
             broadcast 2
@@ -508,6 +508,15 @@ class TTask {
             println(1)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun pool8_err() {
+        val out = all("""
+            while x in nil {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 2, col 24) : while error : expected coroutines\n") { out }
     }
     @Test
     fun poolN() {
@@ -533,9 +542,6 @@ class TTask {
                     println(t1.pub, t2.pub)
                 }
             }
-            set fst = coroutines_start(ts)  ;;
-            set snd = coroutines_next(fst)
-            coroutines_stop(ts)  ;; removes pending
             broadcast 2
         """)
         assert(out == "#coros\n1\n2\n") { out }

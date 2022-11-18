@@ -86,6 +86,12 @@ fun Expr.mem (): String {
                 };
             };
             """
+        is Expr.Iter -> """
+            struct { // ITER
+                CEU_Value coros_$n;
+                ${this.body.mem()}
+            };
+            """
 
         is Expr.Tuple -> """
             struct { // TUPLE
