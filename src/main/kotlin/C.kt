@@ -173,7 +173,7 @@ fun Coder.main (): String {
                         break;
                     }
                 }
-                cur = cur->next;
+                cur = cur->Bcast.next;
             }
         }
         void ceu_bcast_enqueue (CEU_Block* block, CEU_Dynamic* dyn) {
