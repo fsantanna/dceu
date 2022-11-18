@@ -1,0 +1,66 @@
+# NEXT
+
+- sdl bcast
+- pool kill/while
+    - iter
+    - nested bcast
+    - no escape
+    - kills after iters=0
+- task.pub
+- tags
+    - implement with vector or list?
+    - tag hier or tag of tag?
+- count memory
+- polymorphism
+    - poly var
+    - set f = func (a#x, b#y)
+    - set MAX#x = 10
+- ~= (like)
+    - 1 ~= "1"
+    - #x ~= #x.y
+    - str ~= ".*"
+- emit only plain values b/c of bcast
+
+# BACK
+
+- xceu
+- tuple is plain immutable value
+    - move on assign
+    - no scope error
+    - unless holds dyns
+- native pre code
+- collections
+    - @dict, @[...]
+    - $vec,  $[...], homogeneous, string
+    - $size
+- char type
+- args keyword (or ...)
+    - access to variable args from func args
+- err keyword
+    - access to ceu_throw value
+- tag of tag requires higher ID to avoid cycle
+- ((1>>f)>>g) -> g(f(1))
+- parser reject no assign stmts
+    - defer
+    - while
+    - ?
+- parser reject anything after throw (last stmt)
+- closures
+    - only accept dyns as upvalue
+    - has same scope as upval
+- 3 `add` 4  -->  add(3,4)
+- move as a primitive?
+- ceu2c
+    - struct <- tuple
+    - vec <- buf
+
+
+# IDEAS
+
+- code NAV tree
+- lessmilk
+- 7 guis
+- IUP
+- doc pico-sdl/ceu
+- incremental GC
+    - is a coro itself (start from leaves, back to root)
