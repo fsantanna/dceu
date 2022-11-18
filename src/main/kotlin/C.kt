@@ -108,6 +108,24 @@ fun Coder.main (): String {
             };
         } CEU_Value;
     """ +
+            /*
+    """ // COROS
+        CEU_Value ceu_coro_coroutine (CEU_Value_Task* task) {
+            if (task->tag != CEU_VALUE_TASK) {
+                ceu_throw = &CEU_THROW_ERROR;
+                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : coroutine error : expected task", 256);
+                continue; // escape enclosing block;
+            }
+            CEU_Value_Coro* coro = malloc(sizeof(CEU_Value_Coro) + (task.task->size));
+            assert(coro != NULL);
+            *coro = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, task.task, 0 };
+            ceu_bcast_enqueue($bupc, coro);
+            $scp->tofree = (CEU_Dynamic*) coro;
+            return ((CEU_Value) { CEU_VALUE_CORO, {.coro=coro} });
+        }
+    """ +
+
+             */
     """ // BLOCK
         typedef struct CEU_Block {
             uint8_t depth;                  // compare on set

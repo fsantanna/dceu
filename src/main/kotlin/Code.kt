@@ -492,7 +492,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value_Coro* ceu_coro_$n = malloc(sizeof(CEU_Value_Coro) + (ceu_task_$n.task->size));
                     assert(ceu_coro_$n != NULL);
                     *ceu_coro_$n = (CEU_Value_Coro) { {$scp->tofree,$scp}, {NULL,NULL}, CEU_CORO_STATUS_YIELDED, ceu_task_$n.task, 0 };
-                    ceu_bcast_enqueue($bupc, ceu_coro_$n);
+                    ceu_bcast_enqueue($scp, ceu_coro_$n);
                     $scp->tofree = (CEU_Dynamic*) ceu_coro_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_CORO, {.coro=ceu_coro_$n} })")}            
                 // SPAWN/RESUME ${this.tk.dump()}
