@@ -247,11 +247,12 @@ fun Coder.main (): String {
         char* ceu_coros_cleanup (CEU_Dynamic* coros) {
             CEU_Dynamic* cur = coros->Bcast.Coros.first;
             while (cur != NULL) {
+                CEU_Dynamic* nxt = cur->Bcast.next;
                 if (cur->Bcast.Coro.status == CEU_CORO_STATUS_TERMINATED) {
                     //assert(0 && "OK");
                     ceu_coros_destroy(coros, cur);
                 }
-                cur = cur->Bcast.next;
+                cur = nxt;
             }
         }
 
