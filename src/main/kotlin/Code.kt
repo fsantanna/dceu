@@ -569,7 +569,7 @@ class Coder (val outer: Expr.Block) {
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!
-                val (ids,body) = this.tk.str.drop(1).dropLast(1).let {
+                val (ids,body) = this.tk.str.let {
                     var ret = ""
                     var i = 0
 
@@ -613,9 +613,12 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
                 { // NATIVE ${this.tk.dump()}
+                #if 0
                     double ceu_f_$n (void) {
                         ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
+                #endif
                         $body
+                #if 0
                         return 0;
                     }
                     CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.Number=ceu_f_$n()} };
@@ -623,6 +626,7 @@ class Coder (val outer: Expr.Block) {
                         continue; // escape enclosing block;
                     }
                     ${fset(this.tk, set, "ceu_$n")}
+                #endif
                 }
                 """
             }

@@ -22,7 +22,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Op  (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Id  (val str_: String, val pos_: Pos): Tk(str_, pos_)
     data class Num (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Nat (val str_: String, val pos_: Pos): Tk(str_, pos_)
+    data class Nat (val str_: String, val pos_: Pos, val tag: String?): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Block  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
@@ -43,7 +43,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Coros  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
 
-    data class Nat    (val tk_: Tk): Expr(N++, tk_)
+    data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
