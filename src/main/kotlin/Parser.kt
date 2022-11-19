@@ -15,8 +15,9 @@ class Parser (lexer_: Lexer)
         this.tk1 = tks.next()
     }
 
-    fun nest (name: String, tk: Tk, inp: String): Expr {
-        val inps = listOf(Pair(Triple(name,tk.pos.lin,tk.pos.col), inp.reader()))
+    fun nest (inp: String): Expr {
+        val top = lexer.stack.first()
+        val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
         val lexer = Lexer(inps)
         val parser = Parser(lexer)
         return parser.expr()
@@ -236,9 +237,7 @@ class Parser (lexer_: Lexer)
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
                 op as Tk.Fix
-                val t = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("false",op.pos))))
-                val f = Expr.Block(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
-                e = Expr.If(op, e, t, f)
+                e = this.nest("if ${e.tostr()} { false } else { true }\n")
             } else {
                 e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))
             }
@@ -270,18 +269,20 @@ class Parser (lexer_: Lexer)
             val op = this.tk0
             val e2 = this.exprPres()
             e = when (op.str) {
-                "or"  -> {
-                    op as Tk.Fix
-                    val t = Expr.Block(op, listOf(e))
-                    val f = Expr.Block(op, listOf(e2))
-                    Expr.If(op, e.copy(), t, f)
-                }
-                "and" -> {
-                    op as Tk.Fix
-                    val t = Expr.Block(op, listOf(e2))
-                    val f = Expr.Block(op, listOf(e))
-                    Expr.If(op, e.copy(), t, f)
-                }
+                "or" -> this.nest("""
+                    do {
+                        var ceu_${e.n}
+                        set ceu_${e.n} = ${e.tostr()} 
+                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr()} }
+                    }
+                """)
+                "and" -> this.nest("""
+                    do {
+                        var ceu_${e.n}
+                        set ceu_${e.n} = ${e.tostr()} 
+                        if ceu_${e.n} { ${e2.tostr()} } else { ceu_${e.n} }
+                    }
+                """)
                 else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }
         }

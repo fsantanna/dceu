@@ -66,12 +66,58 @@ class TXParser {
         assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
 
+    // BIN AND OR
+
     @Test
-    fun todo_bin5_not_or_and() {    // blk->dcl->set->if
+    fun bin1_or() {
+        val l = lexer("1 or 2")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\nceu_1\n}\nelse {\n2\n}\n\n}\n") { e.tostr() }
+    }
+    @Test
+    fun bin2_and() {
+        val l = lexer("1 and 2")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\n2\n}\nelse {\nceu_1\n}\n\n}\n") { e.tostr() }
+    }
+    @Test
+    fun bin3_not_or_and() {
         val l = lexer("not true and false or true")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if if if true {\nfalse\n}\nelse {\ntrue\n}\n {\nfalse\n}\nelse {\nfalse\n}\n {\ntrue\n}\nelse {\ntrue\n}\n") { e.tostr() }
+        assert(e.tostr() == """
+            do {
+            var ceu_24
+            set ceu_24 = do {
+            var ceu_7
+            set ceu_7 = if true {
+            false
+            }
+            else {
+            true
+            }
+            
+            if ceu_7 {
+            false
+            }
+            else {
+            ceu_7
+            }
+            
+            }
+            
+            if ceu_24 {
+            ceu_24
+            }
+            else {
+            true
+            }
+            
+            }
+            
+        """.trimIndent()) { e.tostr() }
     }
 
     @Test
