@@ -313,14 +313,33 @@ class TParser {
     @Test
     fun native1() {
         val l = lexer("""
-            native {
+            native ```
                 printf("xxx\n");
-            }
+            ```
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "native {\n    printf(\"xxx\\n\");\n}") { "."+e.tostr()+"." }
+        assert(e.tostr() == "native ```\n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
+    }
+    @Test
+    fun native2_err() {
+        val l = lexer("""
+            native ``
+                printf("xxx\n");
+            ```
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 3, col 1) : native error : expected \"``\"")
+    }
+    @Test
+    fun native3_err() {
+        val l = lexer("""
+            native ``
+                printf("xxx\n");
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 4, col 9) : native error : expected \"``\"")
     }
 
     // BINARY / UNARY / OPS

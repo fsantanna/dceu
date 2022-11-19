@@ -8,7 +8,7 @@ var N = 1
 
 val keywords: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "false", "func",
-    "if", "in", "nil", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
+    "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "not", "or"
 )).toSortedSet()

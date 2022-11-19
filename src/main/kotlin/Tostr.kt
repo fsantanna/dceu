@@ -18,7 +18,7 @@ fun Expr.tostr (): String {
         is Expr.Coros  -> "coroutines()"
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
 
-        is Expr.Nat    -> "native " + this.tk.str
+        is Expr.Nat    -> "native " + "```" + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str

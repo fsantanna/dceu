@@ -157,45 +157,39 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x.isLetter() || x in listOf('_','\'','?','!')) -> {
                     val id = x + read2While { (it.isLetterOrDigit() || it in listOf('_','\'','?','!')) }
-                    when {
-                        keywords.contains(id) -> yield(Tk.Fix(id, pos))
-                        (id != "native") -> yield(Tk.Id(id, pos))
-                        else -> {
-                            val (x1,_) = next()
-                            if (x1!='(' && x1!='{') {
-                                err(pos,"native error : expected \"(\" or \"{\"")
-                            }
-
-                            var open = x1
-                            var close = if (x1 == '(') ')' else '}'
-                            var open_close = 1
-
-                            var nat = x1.toString()
-                            while (true) {
-                                val (n2,x2) = read2()
-                                when {
-                                    iseof(n2) -> {
-                                        err(pos, "native error : expected \"$close\"")
-                                    }
-                                    (x2 == open) -> open_close++
-                                    (x2 == close) -> {
-                                        open_close--
-                                        if (open_close == 0) {
-                                            nat += x2
-                                            break
-                                        }
-                                    }
-                                }
-                                nat += x2
-                            }
-                            //println("#$pay#")
-                            yield(Tk.Nat(nat, pos))
-                        }
+                    if (keywords.contains(id)) {
+                         yield(Tk.Fix(id, pos))
+                    } else {
+                        yield(Tk.Id(id, pos))
                     }
                 }
                 x.isDigit() -> {
                     val num = x + read2While { it=='.' || it.isLetterOrDigit() }
                     yield(Tk.Num(num, pos))
+                }
+                (x == '`') -> {
+                    val open = x + read2While('`')
+                    var nat = ""
+                    while (true) {
+                        val (n2,x2) = read2()
+                        when {
+                            iseof(n2) -> {
+                                err(stack.first().toPos(), "native error : expected \"$open\"")
+                            }
+                            (x2 == '`') -> {
+                                val xxx = stack.first().toPos().let { Pos(it.file,it.lin,it.col-1) }
+                                val close = x2 + read2While('`')
+                                if (open == close) {
+                                    break
+                                } else {
+                                    err(xxx, "native error : expected \"$open\"")
+                                }
+                            }
+                        }
+                        nat += x2
+                    }
+                    //println("#$pay#")
+                    yield(Tk.Nat(nat, pos))
                 }
                 (x == '^') -> {
                     val (_,x2) = read2()

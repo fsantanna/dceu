@@ -200,7 +200,9 @@ class Parser (lexer_: Lexer)
                 Expr.Coros(this.tk0 as Tk.Fix)
             }
 
-            this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
+            this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
+                Expr.Nat(this.tk0 as Tk.Nat)
+            }
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)

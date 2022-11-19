@@ -674,97 +674,105 @@ class TExec {
     @Test
     fun native1() {
         val out = all("""
-            native {
+            ```
                 printf("xxx\n");
-            }
+            ```
         """)
         assert(out == "xxx\n") { out }
     }
     @Test
-    fun native2() {
+    fun native2_num() {
         val out = all("""
             var x
-            set x = native {
-                return 1.5;
-            }
-            println(x)
+            set x = `#number 1.5`
         """)
         assert(out == "1.5\n") { out }
     }
     @Test
-    fun native3() {
+    fun native3_str() {
         val out = all("""
             var x
-            set x = native {}
+            set x = `#opaque "ola"`
+            native ```
+                puts(${D}x);
+            ```
+        """)
+        assert(out == "1.5\n") { out }
+    }
+    @Test
+    fun native4_err() {
+        val out = all("""
+            var x
+            set x = ``` ```
             println(x)
         """)
         assert(out == "0\n") { out }
     }
     @Test
-    fun native4() {
+    fun native5() {
         val out = all("""
             var x
             set x = 10
-            set x = native {
+            set x = native ```#number
                 printf(">>> %g\n", ${D}x);
-                return ${D}x*2;
-            }
+                ${D}x*2;
+            ```
             println(x)
         """)
         assert(out == ">>> 10\n20\n") { out }
     }
     @Test
-    fun native5() {
+    fun native6() {
         val out = all("""
             var x
-            native {
+            ```
                 ${D}x = 20;
-            }
+            ```
             println(x)
         """)
         assert(out == "20\n") { out }
     }
     @Test
-    fun native6_err() {
-        val out = all("""
-             native {
-                $D 
-             }
-        """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
-    }
-    @Test
     fun native7_err() {
         val out = all("""
-             native {
+             `
              
                 $D{x.y}
                 
-             }
+             `
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier") { out }
     }
     @Test
-    fun native8_err() {
-        val out = all("""
-            native ($D)
-        """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 2) : unterminated token") { '.'+out+'.' }
-    }
-    @Test
-    fun native9() {
+    fun native8() {
         val out = all("""
             var x
             var f
             set f = func () {
-                native {
+                native```
                     ${D}x = 20;
-                }
+                ```
             }
             f()
             println(x)
         """)
         assert(out == "20\n") { out }
+    }
+    @Test
+    fun native9_err() {
+        val out = all("""
+             native`
+                $D 
+             `
+        """.trimIndent())
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
+    }
+    @Test
+    fun native10_err() {
+        val out = all("""
+            native` ($D) `
+        """.trimIndent())
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
 
     @Test
