@@ -69,7 +69,7 @@ fun Coder.main (): String {
         
         typedef struct CEU_Dynamic {
             CEU_VALUE tag;                  // required to switch over free/bcast
-            struct CEU_Dynamic* next;       // next dyn to free
+            struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
             struct CEU_Block*   block;      // block to compare on set/move
             union {
                 struct {

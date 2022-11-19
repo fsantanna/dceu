@@ -6,7 +6,8 @@ fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
 fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     return """
         if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
-            if ($src.Dyn->block->depth > $ret_block->depth) {                
+            // coro in coros has block=NULL
+            if ($src.Dyn->block==NULL || $src.Dyn->block->depth>$ret_block->depth) {                
                 ceu_throw = &CEU_THROW_ERROR;
                 strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
                 continue;

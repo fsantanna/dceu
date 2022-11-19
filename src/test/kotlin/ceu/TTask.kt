@@ -558,10 +558,10 @@ class TTask {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun pool11_term() {
+    fun pool11_err_scope() {
         val out = all("""
             var T
-            set T = task () { nil }
+            set T = task () { yield nil }
             var ts
             set ts = coroutines()
             spawn T() in ts
@@ -570,7 +570,7 @@ class TTask {
                 set yyy = xxx
             }
         """)
-        assert(out == "1\n2\n3\n") { out }
+        assert(out == "anon : (lin 9, col 27) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun poolN() {
