@@ -982,23 +982,11 @@ class TExec {
         val out = all("""
             var smallerc
             set smallerc = func (x) {
-                func (y) {  // TODO: cannot return func that uses x in this block
+                func (y) {  ;; TODO: cannot return func that uses x in this block
                     if x { x } else { y }
                 }
             }
             println(smallerc(3)(1))
-        """)
-        assert(out == "3\n") { out }
-    }
-
-    @Test
-    @Ignore
-    fun todo_err() {
-        val out = all("""
-            var t1
-            var v
-            set v = (if t1 {t1} else {nil})
-            set v = (t1 or nil)
         """)
         assert(out == "3\n") { out }
     }

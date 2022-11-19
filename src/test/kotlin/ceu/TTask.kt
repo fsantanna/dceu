@@ -537,6 +537,42 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
+    fun pool10_term() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            while xxx in ts {
+                println(1)
+                broadcast 1
+                while yyy in ts {
+                    println(2)
+                }
+            }
+            println(3)
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun pool11_term() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            var yyy
+            while xxx in ts {
+                set yyy = xxx
+            }
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
     fun poolN() {
         val out = all("""
             var ts

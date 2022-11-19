@@ -108,17 +108,6 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
-                switch (cur->tag) {
-                    case CEU_VALUE_COROS: {
-                        CEU_Dynamic* coro = cur->Bcast.Coros.first;
-                        while (coro != NULL) { // these coros are not linked in Dyn.next
-                            CEU_Dynamic* x = coro;
-                            coro = coro->Bcast.next;
-                            free(x);
-                        }
-                        break;
-                    }
-                }
                 block->tofree = block->tofree->next;
                 free(cur);
             }

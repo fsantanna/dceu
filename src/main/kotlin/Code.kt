@@ -5,7 +5,7 @@ fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
 }
 fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
     return """
-        if ($src.tag == CEU_VALUE_TUPLE) {
+        if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
             if ($src.Dyn->block->depth > $ret_block->depth) {                
                 ceu_throw = &CEU_THROW_ERROR;
                 strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
@@ -188,7 +188,6 @@ class Coder (val outer: Expr.Block) {
                         "ceu_mem->col_${this.dst.n}.Dyn->block",
                         "((CEU_Value*)ceu_mem->col_${this.dst.n}.Dyn->Tuple.mem)[(int) ceu_mem->idx_${this.dst.n}.Number]"
                     )
-
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
                         val bup = this.upBlock()!!
@@ -196,7 +195,6 @@ class Coder (val outer: Expr.Block) {
                         bup.assertIsDeclared("_${id}_", this.tk)
                         Pair(bup.id2c("_${id}_"), bup.id2c(id)) // x = src / block of _x_
                     }
-
                     else -> error("bug found")
                 }
                 """
