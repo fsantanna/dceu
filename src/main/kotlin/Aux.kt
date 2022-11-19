@@ -50,7 +50,7 @@ fun err_expected (tk: Tk, str: String) {
 fun Expr.copy (): Expr {
     return when (this) {
         is Expr.Block  -> Expr.Block(this.tk_, this.es.map { it.copy() })
-        is Expr.Dcl    -> Expr.Dcl(this.tk_)
+        is Expr.Dcl    -> Expr.Dcl(this.tk_, this.init)
         is Expr.Set    -> Expr.Set(this.tk_, this.dst.copy(), this.src.copy())
         is Expr.If     -> Expr.If(this.tk_, this.cnd.copy(), this.t.copy(), this.f.copy())
         is Expr.While  -> Expr.While(this.tk_, this.cnd.copy(), this.body.copy())

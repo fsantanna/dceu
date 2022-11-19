@@ -177,7 +177,7 @@ class Coder (val outer: Expr.Block) {
                 val (x,_x_) = Pair("(ceu_mem->$id)","(ceu_mem->_${id}_)")
                 """
                 // DCL ${this.tk.dump()}
-                $x = (CEU_Value) { CEU_VALUE_NIL };
+                ${if (!this.init) "" else "$x = (CEU_Value) { CEU_VALUE_NIL };"}
                 $_x_ = ${bup.toc(true)};   // can't be static b/c recursion
                 ${fset(this.tk, set, id)}                
                 """
@@ -558,6 +558,9 @@ class Coder (val outer: Expr.Block) {
                         goto CEU_ITER_$n;
                     } while (0);
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.n--;
+                    if (ceu_mem->coros_$n.Dyn->Bcast.Coros.n == 0) {
+                        ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
+                    }
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block
                     }

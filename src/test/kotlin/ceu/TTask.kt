@@ -519,6 +519,24 @@ class TTask {
         assert(out == "anon : (lin 2, col 24) : while error : expected coroutines\n") { out }
     }
     @Test
+    fun pool9_term() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            while xxx in ts {
+                println(1)
+                broadcast 1
+            }
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
     fun poolN() {
         val out = all("""
             var ts
@@ -526,7 +544,7 @@ class TTask {
             println(tags(ts))
             var T
             set T = task (v) {
-                pub = v
+                set pub = v
                 println(v)
                 set v = yield ()
                 println(v)
