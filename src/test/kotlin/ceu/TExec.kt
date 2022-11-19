@@ -22,8 +22,8 @@ val THROW = false
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
-    val inps = listOf(Pair("anon", inp.reader())) + if (!pre) emptyList() else {
-        listOf(Pair("prelude.ceu", File("prelude.ceu").reader()))
+    val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
+        listOf(Pair(Triple("prelude.ceu",1,1), File("prelude.ceu").reader()))
     }
     val lexer = Lexer(inps)
     val parser = Parser(lexer)

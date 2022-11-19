@@ -10,12 +10,12 @@ fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }
 
-class Lexer (inps: List<Pair<String,Reader>>) {
+class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
     val stack = ArrayDeque<Lex>()
 
     init {
         for (inp in inps) {
-            stack.addFirst(Lex(inp.first, 1, 1, PushbackReader(inp.second,2)))
+            stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, PushbackReader(inp.second,2)))
         }
     }
 

@@ -69,8 +69,8 @@ fun exec (cmd: String): Pair<Boolean,String> {
 }
 fun all (name: String, reader: Reader, args: List<String>): String {
     val inps = listOf(
-        Pair(name, reader),
-        Pair("prelude.ceu", File("prelude.ceu").reader())
+        Pair(Triple(name,1,1), reader),
+        Pair(Triple("prelude.ceu",1,1), File("prelude.ceu").reader())
     )
     val lexer = Lexer(inps)
     val parser = Parser(lexer)

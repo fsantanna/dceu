@@ -16,7 +16,7 @@ fun trap (f: ()->Unit): String {
 }
 
 fun lexer (str: String): Lexer {
-    return Lexer(listOf(Pair("anon", str.reader())))
+    return Lexer(listOf(Pair(Triple("anon",1,1), str.reader())))
 }
 
 class TLexer {

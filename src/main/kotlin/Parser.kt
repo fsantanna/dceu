@@ -15,8 +15,8 @@ class Parser (lexer_: Lexer)
         this.tk1 = tks.next()
     }
 
-    fun nest (name: String, inp: String): Expr {
-        val inps = listOf(Pair(name, inp.reader()))
+    fun nest (name: String, tk: Tk, inp: String): Expr {
+        val inps = listOf(Pair(Triple(name,tk.pos.lin,tk.pos.col), inp.reader()))
         val lexer = Lexer(inps)
         val parser = Parser(lexer)
         return parser.expr()
