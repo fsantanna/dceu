@@ -613,20 +613,17 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
                 { // NATIVE ${this.tk.dump()}
-                #if 0
-                    double ceu_f_$n (void) {
-                        ${ids.map { "$it.tag = CEU_VALUE_NUMBER;\n" }.joinToString("") }
-                #endif
-                        $body
-                #if 0
-                        return 0;
-                    }
-                    CEU_Value ceu_$n = { CEU_VALUE_NUMBER, {.Number=ceu_f_$n()} };
+                    ${if (this.tk_.tag == null) {
+                        body
+                    } else {
+                        val (TAG,Tag) = this.tk_.tag.drop(1).let {
+                            Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
+                        }
+                        fset(this.tk, set, "((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
+                    }}
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
                     }
-                    ${fset(this.tk, set, "ceu_$n")}
-                #endif
                 }
                 """
             }

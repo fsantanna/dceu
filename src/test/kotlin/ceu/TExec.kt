@@ -685,8 +685,10 @@ class TExec {
         val out = all("""
             var x
             set x = `#number 1.5`
+            println(x)
+            println(`#number 1.5`)
         """)
-        assert(out == "1.5\n") { out }
+        assert(out == "1.5\n1.5\n") { out }
     }
     @Test
     fun native3_str() {
