@@ -1,6 +1,7 @@
 package xceu
 
 import Expr
+import N
 import Parser
 import ceu.lexer
 import org.junit.Ignore
@@ -70,6 +71,7 @@ class TXParser {
 
     @Test
     fun bin1_or() {
+        N = 1
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
@@ -77,6 +79,7 @@ class TXParser {
     }
     @Test
     fun bin2_and() {
+        N = 1
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
@@ -84,6 +87,7 @@ class TXParser {
     }
     @Test
     fun bin3_not_or_and() {
+        N = 1
         val l = lexer("not true and false or true")
         val parser = Parser(l)
         val e = parser.expr()
