@@ -1,5 +1,8 @@
 # NEXT
 
+- evt/err globals
+    - broadcast @[...]  <-- evt cannot be assigned anywhere
+    - throw @[...]      <-- err cannot be assigned anywhere
 - count memory
 - pool kill/while
     - iter

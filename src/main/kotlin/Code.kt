@@ -621,7 +621,7 @@ class Coder (val outer: Expr.Block) {
                     ret
                 }
                 """
-                { // NATIVE ${this.tk.dump()}
+                //{ // NATIVE ${this.tk.dump()}
                     ${if (this.tk_.tag == null) {
                         body
                     } else {
@@ -636,7 +636,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
                     }
-                }
+                //}
                 """
             }
             is Expr.Acc -> {

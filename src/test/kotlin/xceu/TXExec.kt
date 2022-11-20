@@ -174,6 +174,48 @@ class TXExec {
         assert(out == "1\n2\n3\n") { out }
     }
 
+    // INDEX: TUPLE / DICT
+
+    @Test
+    fun index1_tuple() {
+        val out = all("""
+            var t = [1,2,3]
+            println(t.a, t.c)
+        """)
+        assert(out == "1\t3\n") { out }
+    }
+    @Test
+    fun index2_dict() {
+        val out = all("""
+            var t = @[ (#x,1), (#y,2) ]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+
+    // AWAIT
+
+    @Test
+    fun await1() {
+        val out = all("""
+            var evt = @[]
+            spawn {
+                await #x
+                println(99)
+            }
+            do {
+                println(1)
+                set evt[#type] = #y
+                broadcast ()
+                println(2)
+                set evt[#type] = #x
+                broadcast ()
+                println(3)
+            }
+        """)
+        assert(out == "1\n2\n99\n3\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test

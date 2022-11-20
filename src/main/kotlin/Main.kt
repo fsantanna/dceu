@@ -11,7 +11,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true",
     "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "ifs", "not", "or", "par", "with"
+    "and", "await", "ifs", "not", "or", "par", "with"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')

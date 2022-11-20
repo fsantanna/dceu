@@ -295,6 +295,18 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
+            (XCEU && this.acceptFix("await")) -> {
+                val tag = this.expr()
+                this.nest("""
+                    do {
+                        var ceu_tag = ${tag.tostr()}
+                        yield ()
+                        while evt[#type] /= ceu_tag {
+                            yield ()
+                        }
+                    }
+                """)
+            }
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")
