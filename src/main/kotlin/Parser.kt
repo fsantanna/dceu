@@ -196,14 +196,22 @@ class Parser (lexer_: Lexer)
             this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val call = this.expr()
-                if (call !is Expr.Call) {
-                    err_expected(tk1, "invalid spawn : expected call")
+                if (XCEU && this.checkFix("{")) {
+                    this.nest("""
+                        spawn (task () {
+                            ${this.block(null).es.tostr()}
+                        }) ()
+                    """)
+                } else {
+                    val call = this.expr()
+                    if (call !is Expr.Call) {
+                        err_expected(tk1, "invalid spawn : expected call")
+                    }
+                    val coros = if (!this.acceptFix("in")) null else {
+                        this.expr()
+                    }
+                    Expr.Spawn(tk0, coros, call as Expr.Call)
                 }
-                val coros = if (!this.acceptFix("in")) null else {
-                    this.expr()
-                }
-                Expr.Spawn(tk0, coros, call as Expr.Call)
             }
             this.acceptFix("coroutines") -> {
                 this.acceptFix_err("(")
@@ -258,7 +266,7 @@ class Parser (lexer_: Lexer)
                 this.nest(ifs)
             }
             (XCEU && this.acceptFix("par")) -> {
-                var pars = mutableListOf(this.block(null))
+                val pars = mutableListOf(this.block(null))
                 this.acceptFix_err("with")
                 pars.add(this.block(null))
                 while (this.acceptFix("with")) {

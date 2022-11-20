@@ -139,7 +139,7 @@ class TXExec {
         assert(out == "1\n1\n2\n2\n") { out }
     }
 
-    // PAR
+    // SPAWN, PAR
 
     @Test
     fun par1() {
@@ -159,6 +159,19 @@ class TXExec {
             broadcast ()
         """)
         assert(out == "3\n2\n") { out }
+    }
+    @Test
+    fun spawn2() {
+        val out = all("""
+            spawn {
+                println(1)
+                yield ()
+                println(3)
+            }
+            println(2)
+            broadcast ()
+        """)
+        assert(out == "1\n2\n3\n") { out }
     }
 
     // THROW / CATCH

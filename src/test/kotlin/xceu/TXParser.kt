@@ -187,7 +187,7 @@ class TXParser {
         assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
     }
 
-    // PAR
+    // SPAWN, PAR
 
     @Test
     fun par1() {
@@ -210,6 +210,18 @@ class TXParser {
         val l = lexer("par {}")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"with\" : have end of file")
+    }
+    @Test
+    fun spawn3() {
+        val l = lexer("""
+            spawn {
+                1
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        println(e.tostr())
+        assert(e.tostr() == "spawn task () {\n1\n}\n()") { e.tostr() }
     }
 
     // CATCH
