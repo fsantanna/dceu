@@ -433,7 +433,18 @@ fun Coder.main (): String {
         }
         CEU_Proto ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
-    """ // DICT
+    """ // TUPLE / DICT
+        CEU_Dynamic* ceu_tuple_create (CEU_Block* scp, int n, CEU_Value* args) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
+            if (ret != NULL) {
+                assert(ret != NULL);
+                *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, scp->tofree, scp, {.Tuple={n,{}}} };
+                memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
+                scp->tofree = ret;
+            }
+            return ret;
+        }
+        
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.n; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };

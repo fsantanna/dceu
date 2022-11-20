@@ -670,14 +670,11 @@ class Coder (val outer: Expr.Block) {
                 """
                 { // TUPLE ${this.tk.dump()}
                     $args
-                    CEU_Value ceu_sta_$n[${this.args.size}] = {
+                    CEU_Value ceu_args_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic) + ${this.args.size} * sizeof(CEU_Value));
+                    CEU_Dynamic* ceu_$n = ceu_tuple_create($scp, ${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_TUPLE, $scp->tofree, $scp, {.Tuple={${this.args.size},{}}} };
-                    memcpy(ceu_$n->Tuple.mem, ceu_sta_$n, ${this.args.size} * sizeof(CEU_Value));
-                    $scp->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
                 }
                 """

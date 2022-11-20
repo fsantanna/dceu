@@ -1,5 +1,6 @@
 # NEXT
 
+- error messages in XCEU
 - evt/err globals
     - broadcast @[...]  <-- evt cannot be assigned anywhere
     - throw @[...]      <-- err cannot be assigned anywhere
