@@ -680,7 +680,6 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Dict -> {
-                val N = max(4, this.args.size)
                 val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
@@ -690,20 +689,11 @@ class Coder (val outer: Expr.Block) {
                 """
                 { // DICT ${this.tk.dump()}
                     $args
-                    CEU_Value ceu_sta_$n[${this.args.size}][2] = {
+                    CEU_Value ceu_args_$n[${this.args.size}][2] = {
                         ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
                     };
-                    
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
+                    CEU_Dynamic* ceu_$n = ceu_dict_create($scp, ${max(4,this.args.size)}, ${this.args.size}, &ceu_args_$n);
                     assert(ceu_$n != NULL);
-
-                    CEU_Value (*ceu_mem_$n)[][2] = malloc($N*2*sizeof(CEU_Value));
-                    assert(ceu_mem_$n != NULL);
-                    memset(ceu_mem_$n, 0, $N*2*sizeof(CEU_Value));  // x[i]=nil
-
-                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={$N,ceu_mem_$n}} };
-                    memcpy(ceu_$n->Dict.mem, ceu_sta_$n, ${this.args.size} * 2*sizeof(CEU_Value));
-                    $scp->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
                 }
                 """

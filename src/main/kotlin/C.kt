@@ -436,15 +436,33 @@ fun Coder.main (): String {
     """ // TUPLE / DICT
         CEU_Dynamic* ceu_tuple_create (CEU_Block* scp, int n, CEU_Value* args) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
-            if (ret != NULL) {
-                assert(ret != NULL);
-                *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, scp->tofree, scp, {.Tuple={n,{}}} };
-                memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-                scp->tofree = ret;
+            if (ret == NULL) {
+                return NULL;
             }
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, scp->tofree, scp, {.Tuple={n,{}}} };
+            memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
+            scp->tofree = ret;
             return ret;
         }
-        
+
+        CEU_Dynamic* ceu_dict_create (CEU_Block* scp, int max, int n, CEU_Value (*args)[][2]) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+            if (ret == NULL) {
+                return NULL;
+            }
+            CEU_Value (*mem)[][2] = malloc(max*2*sizeof(CEU_Value));
+            if (mem == NULL) {
+                free(ret);
+                return NULL;
+            }
+            memset(mem, 0, max*2*sizeof(CEU_Value));  // x[i]=nil
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, scp->tofree, scp, {.Dict={max,mem}} };
+            memcpy(mem, args, n*2*sizeof(CEU_Value));
+            scp->tofree = ret;
+            return ret;
+        }
+
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.n; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
