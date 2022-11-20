@@ -13,8 +13,9 @@ class TTag {
             println(#bool   /=  #bool) 
             println(#task   ~== #coro) 
             println(#tuple  ~/= #nil) 
+            println(#pointer /=  #bool) 
         """)
-        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+        assert(out == "true\nfalse\nfalse\ntrue\ntrue\n") { out }
     }
 
     @Ignore

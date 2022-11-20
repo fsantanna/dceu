@@ -16,6 +16,7 @@ fun Coder.main (): String {
             CEU_VALUE_TAG,
             CEU_VALUE_BOOL,
             CEU_VALUE_NUMBER,
+            CEU_VALUE_POINTER,
             CEU_VALUE_FUNC,     // func prototype
             CEU_VALUE_TASK,     // task prototype
             CEU_VALUE_TUPLE,
@@ -40,6 +41,7 @@ fun Coder.main (): String {
                 int Tag;
                 int Bool;
                 double Number;
+                void* Pointer;
                 struct CEU_Proto* Proto;    // Func/Task 
                 struct CEU_Dynamic* Dyn;    // Tuple/Coro/Coros: allocates memory
             };
@@ -298,6 +300,9 @@ fun Coder.main (): String {
                 case CEU_VALUE_NUMBER:
                     printf("%g", v->Number);
                     break;
+                case CEU_VALUE_POINTER:
+                    printf("pointer: %p", v->Pointer);
+                    break;
                 case CEU_VALUE_TUPLE:
                     printf("[");
                     for (int i=0; i<v->Dyn->Tuple.n; i++) {
@@ -361,6 +366,9 @@ fun Coder.main (): String {
                         break;
                     case CEU_VALUE_NUMBER:
                         v = (e1->Number == e2->Number);
+                        break;
+                    case CEU_VALUE_POINTER:
+                        v = (e1->Pointer == e2->Pointer);
                         break;
                     case CEU_VALUE_TUPLE:
                         v = (e1->Dyn->Tuple.n == e2->Dyn->Tuple.n);

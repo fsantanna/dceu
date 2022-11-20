@@ -121,8 +121,8 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                 }
                 (x in listOf('}','(',')','[',']', ',')) -> yield(Tk.Fix(x.toString(), pos))
-                (x in operators) -> {
-                    val op = x + read2While { it in operators }
+                (x in OPERATORS) -> {
+                    val op = x + read2While { it in OPERATORS }
                     if (op == "=") {
                         yield(Tk.Fix(op, pos))
                     } else {
@@ -131,11 +131,11 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == '{') -> {
                     val (n1,x1) = read2()
-                    if (x1 !in operators) {
+                    if (x1 !in OPERATORS) {
                         unread2(n1)
                         yield(Tk.Fix("{", pos))
                     } else {
-                        val op = x1 + read2While { it in operators }
+                        val op = x1 + read2While { it in OPERATORS }
                         val (_,x2) = read2()
                         if (x2 != '}') {
                             if (op.length == 1) {
@@ -157,7 +157,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x.isLetter() || x in listOf('_','\'','?','!')) -> {
                     val id = x + read2While { (it.isLetterOrDigit() || it in listOf('_','\'','?','!')) }
-                    if (keywords.contains(id)) {
+                    if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {
                         yield(Tk.Id(id, pos))

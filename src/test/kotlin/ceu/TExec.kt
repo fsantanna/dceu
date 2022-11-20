@@ -694,12 +694,12 @@ class TExec {
     fun native3_str() {
         val out = all("""
             var x
-            set x = `#opaque "ola"`
+            set x = `#pointer "ola"`
             native ```
-                puts(${D}x);
+                puts(${D}x.Pointer);
             ```
         """)
-        assert(out == "1.5\n") { out }
+        assert(out == "ola\n") { out }
     }
     @Test
     fun native4_err() {
@@ -708,7 +708,7 @@ class TExec {
             set x = ``` ```
             println(x)
         """)
-        assert(out == "0\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun native5() {
@@ -716,8 +716,8 @@ class TExec {
             var x
             set x = 10
             set x = native ```#number
-                printf(">>> %g\n", ${D}x);
-                ${D}x*2;
+                (printf(">>> %g\n", ${D}x.Number),
+                ${D}x.Number*2)
             ```
             println(x)
         """)
@@ -727,8 +727,9 @@ class TExec {
     fun native6() {
         val out = all("""
             var x
+            set x = 1
             ```
-                ${D}x = 20;
+                ${D}x.Number = 20;
             ```
             println(x)
         """)
@@ -749,10 +750,11 @@ class TExec {
     fun native8() {
         val out = all("""
             var x
+            set x = 0
             var f
             set f = func () {
                 native```
-                    ${D}x = 20;
+                    ${D}x.Number = 20;
                 ```
             }
             f()
@@ -767,37 +769,42 @@ class TExec {
                 $D 
              `
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 7) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
     @Test
     fun native10_err() {
         val out = all("""
             native` ($D) `
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 7) : native error : (lin 1, col 4) : invalid identifier") { out }
     }
-
     @Test
-    @Ignore
-    fun native_opaque() {
+    fun native11_pointer() {
         val out = all("""
             var f
             set f = func () {
-                native {
-                    return "ola"
-                }
+                native `#pointer
+                    "ola"
+                `
             }
             var g
             set g = func (x) {
-                native {
-                    printf("%s\n", (char*)${D}x);
-                }
+                native `
+                    printf("%s\n", (char*)${D}x.Pointer);
+                `
             }
             var x
             set x = f()
             g(x)
         """)
-        assert(out == "20\n") { out }
+        assert(out == "ola\n") { out }
+    }
+    @Test
+    fun native12_pointer() {
+        val out = all("""
+            println(`#pointer"oi"`)
+        """)
+        assert(out.contains("pointer: 0x")) { out }
     }
 
     // OPERATORS

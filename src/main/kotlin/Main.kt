@@ -6,14 +6,28 @@ val XCEU = false
 //val XCEU = true
 var N = 1
 
-val keywords: SortedSet<String> = (setOf (
+val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "false", "func",
     "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "not", "or"
 )).toSortedSet()
 
-val operators = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
+val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
+
+val TAGS = listOf (
+    "nil",
+    "tag",
+    "bool",
+    "number",
+    "pointer",
+    "func",
+    "task",
+    "tuple",
+    "coro",
+    "coros",
+    "error",
+)
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos): Tk("", pos_)

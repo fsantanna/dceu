@@ -28,18 +28,7 @@ class Coder (val outer: Expr.Block) {
     val code: String
     val mem: String
     val ups = outer.ups()
-    val tags = mutableListOf (
-        "nil",
-        "tag",
-        "bool",
-        "number",
-        "tuple",
-        "func",
-        "task",
-        "coro",
-        "coros",
-        "error",
-    )
+    val tags = TAGS.toMutableList()
     val xblocks = mutableMapOf<Expr,XBlock>()
     val tops = mutableListOf<Pair<String,String>>()
 
@@ -569,7 +558,7 @@ class Coder (val outer: Expr.Block) {
 
             is Expr.Nat -> {
                 val bup = this.upBlock()!!
-                val (ids,body) = this.tk.str.let {
+                val body = this.tk.str.let {
                     var ret = ""
                     var i = 0
 
@@ -589,7 +578,6 @@ class Coder (val outer: Expr.Block) {
                         return x
                     }
 
-                    val ids = mutableListOf<String>()
                     while (i < it.length) {
                         ret += if (it[i] != '$') read() else {
                             read()
@@ -605,11 +593,10 @@ class Coder (val outer: Expr.Block) {
                             }
                             bup.assertIsDeclared(id, this.tk)
                             id = bup.id2c(id)
-                            ids.add(id)
-                            "($id.Number)$x"
+                            "($id)$x"
                         }
                     }
-                    Pair(ids,ret)
+                    ret
                 }
                 """
                 { // NATIVE ${this.tk.dump()}
@@ -619,7 +606,10 @@ class Coder (val outer: Expr.Block) {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        fset(this.tk, set, "((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
+                        """
+                        CEU_Value ceu_$n = ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} });
+                        ${fset(this.tk, set, "ceu_$n")}
+                        """
                     }}
                     if (ceu_throw != NULL) {
                         continue; // escape enclosing block;
