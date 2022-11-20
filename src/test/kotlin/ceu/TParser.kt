@@ -253,7 +253,7 @@ class TParser {
         assert(e.tostr() == "if true {\n1\n}\nelse {\n0\n}\n") { e.tostr() }
     }
     @Test
-    fun expr_if2() {
+    fun expr_if2_err() {
         val l = lexer("if true { 1 }")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
@@ -262,13 +262,13 @@ class TParser {
     // DO
 
     @Test
-    fun expr_do1() {  // set whole tuple?
+    fun expr_do1_err() {
         val l = lexer("do{}")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 4) : expected expression : have \"}\"")
     }
     @Test
-    fun expr_do2() {  // set whole tuple?
+    fun expr_do2() {
         val l = lexer("do { var a; set a=1; print(a) }")
         val parser = Parser(l)
         val e = parser.exprPrim()
@@ -279,7 +279,7 @@ class TParser {
     // FUNC
 
     @Test
-    fun expr_func1() {
+    fun expr_func1_err() {
         val l = lexer("func () {}")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
@@ -296,7 +296,7 @@ class TParser {
     // WHILE
 
     @Test
-    fun expr_while1() {
+    fun expr_while1_err() {
         val l = lexer("while true { }")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 14) : expected expression : have \"}\"")
@@ -320,7 +320,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "native ```  \n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
+        assert(e.tostr() == "native ``` \n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
     }
     @Test
     fun native2_err() {
@@ -357,7 +357,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "native ``` #ola ```") { "."+e.tostr()+"." }
+        assert(e.tostr() == "native ```#ola ```") { "."+e.tostr()+"." }
     }
 
     // BINARY / UNARY / OPS

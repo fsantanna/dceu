@@ -351,7 +351,7 @@ class TExec {
     // IF
 
     @Test
-    fun if1() {
+    fun if1_err() {
         val out = all("""
             var x
             set x = if (true) { 1 }
@@ -360,7 +360,7 @@ class TExec {
         assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
     }
     @Test
-    fun if2() {
+    fun if2_err() {
         val out = all("""
             var x
             set x = 10
@@ -370,7 +370,7 @@ class TExec {
         assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
     }
     @Test
-    fun if3() {
+    fun if3_err() {
         val out = all("""
             var x
             set x = 10

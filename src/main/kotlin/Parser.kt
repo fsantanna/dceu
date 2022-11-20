@@ -88,7 +88,7 @@ class Parser (lexer_: Lexer)
 
     fun checkLine (tk: Tk, e: Expr): Expr {
         if (!tk.pos.isSameLine(e.tk.pos)) {
-            err(tk, "yield error : line break before expression")
+            err(tk, "${tk.str} error : line break before expression")
         }
         return e
     }
@@ -222,7 +222,7 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("(") -> {
-                if (!XCEU && this.acceptFix(")")) {
+                if (XCEU && this.acceptFix(")")) {
                     Expr.Nil(this.tk0 as Tk.Fix)
                 } else {
                     val e = this.expr()
@@ -253,7 +253,7 @@ class Parser (lexer_: Lexer)
                     n++
                 }
                 es += "}\n".repeat(n)
-                println(es)
+                //println(es)
                 this.nest(es)
             }
             else -> {

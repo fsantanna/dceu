@@ -51,7 +51,7 @@ class TXExec {
         val out = all("""
             var x
             set x = 10
-            set x = if false 1
+            set x = if false {1}
             println(x)
         """)
         assert(out == "nil\n") { out }
@@ -59,8 +59,7 @@ class TXExec {
     @Test
     fun if6_noblk() {
         val out = all("""
-            var x
-            set x = if (true) 1 else 0
+            var x = if (true) {1} else {0}
             println(x)
         """)
         assert(out == "1\n") { out }
@@ -78,7 +77,7 @@ class TXExec {
             }
             println(x)
         """, true)
-        assert(out == "1\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun ifs2() {
@@ -88,7 +87,6 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
-
 
     // OPS: not, and, or
 
@@ -116,6 +114,25 @@ class TXExec {
             println(nil or 2)
         """)
         assert(out == "1\n2\nnil\n2\n") { out }
+    }
+
+    // YIELD
+
+    @Test
+    fun bcast1() {
+        val out = all("""
+            var tk = task (v) {
+                println(v)
+                set v = yield ()
+                println(v)                
+            }
+            var co1 = coroutine tk
+            var co2 = coroutine tk
+            broadcast 1
+            broadcast 2
+            broadcast 3
+        """)
+        assert(out == "1\n1\n2\n2\n") { out }
     }
 
     // THROW / CATCH
