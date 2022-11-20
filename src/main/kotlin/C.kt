@@ -446,19 +446,22 @@ fun Coder.main (): String {
             return ret;
         }
 
-        CEU_Dynamic* ceu_dict_create (CEU_Block* scp, int max, int n, CEU_Value (*args)[][2]) {
+        CEU_Dynamic* ceu_dict_create (CEU_Block* scp, int n, CEU_Value (*args)[][2]) {
+            int min = (n < 4) ? 4 : n; 
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             if (ret == NULL) {
                 return NULL;
             }
-            CEU_Value (*mem)[][2] = malloc(max*2*sizeof(CEU_Value));
+            CEU_Value (*mem)[][2] = malloc(min*2*sizeof(CEU_Value));
             if (mem == NULL) {
                 free(ret);
                 return NULL;
             }
-            memset(mem, 0, max*2*sizeof(CEU_Value));  // x[i]=nil
-            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, scp->tofree, scp, {.Dict={max,mem}} };
-            memcpy(mem, args, n*2*sizeof(CEU_Value));
+            memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, scp->tofree, scp, {.Dict={min,mem}} };
+            if (args != NULL) {
+                memcpy(mem, args, n*2*sizeof(CEU_Value));
+            }
             scp->tofree = ret;
             return ret;
         }
@@ -497,11 +500,7 @@ fun Coder.main (): String {
     """ +
     """ // FUNCS
         typedef struct {
-            CEU_Value tags;
-            CEU_Value print;
-            CEU_Value println;            
-            CEU_Value op_eq_eq;
-            CEU_Value op_div_eq;
+            ${GLOBALS.map { "CEU_Value $it;\n" }.joinToString("")}
             ${this.mem}
         } CEU_Func_${this.outer.n};
         CEU_Func_${this.outer.n} _ceu_mem_;
@@ -522,6 +521,8 @@ fun Coder.main (): String {
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_div_eq} };
+                    ceu_mem->err = ((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&ceu_mem_${outer.n}->block_${outer.n}, 0, NULL)} });
+                    assert(ceu_mem->err.Dyn != NULL);
                 }
                 ${this.code}
                 return 0;

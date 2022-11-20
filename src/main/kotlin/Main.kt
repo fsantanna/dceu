@@ -31,6 +31,10 @@ val TAGS = listOf (
     "error",
 )
 
+val GLOBALS = setOf (
+    "tags", "print", "println", "op_eq_eq", "op_div_eq", "err"
+)
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos): Tk(str_, pos_)
