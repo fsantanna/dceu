@@ -5,6 +5,7 @@ import Parser
 import Expr
 import Coder
 import Pos
+import XCEU
 import exec
 import main
 import org.junit.Ignore
@@ -22,8 +23,9 @@ val THROW = false
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
+    val prelude = if (XCEU) "xprelude.ceu" else "prelude.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
-        listOf(Pair(Triple("prelude.ceu",1,1), File("prelude.ceu").reader()))
+        listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
     val lexer = Lexer(inps)
     val parser = Parser(lexer)

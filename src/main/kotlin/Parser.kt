@@ -117,8 +117,19 @@ class Parser (lexer_: Lexer)
         return when {
             this.acceptFix("do") -> this.block(this.tk0 as Tk.Fix)
             this.acceptFix("var") -> {
+                val tk0 = this.tk0 as Tk.Fix
                 this.acceptEnu_err("Id")
-                Expr.Dcl(this.tk0 as Tk.Id, true)
+                val id = this.tk0 as Tk.Id
+                if (XCEU && this.acceptFix("=")) {
+                    val eq = this.tk0 as Tk.Fix
+                    val e = this.expr()
+                    Expr.XSeq(tk0, listOf(
+                        Expr.Dcl(id, false),
+                        Expr.Set(eq, Expr.Acc(id), e)
+                    ))
+                } else {
+                    Expr.Dcl(this.tk0 as Tk.Id, true)
+                }
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -219,6 +230,32 @@ class Parser (lexer_: Lexer)
                     e
                 }
             }
+
+            (XCEU && this.acceptFix("ifs")) -> {
+                this.acceptFix_err("{")
+                val e1 = this.expr()
+                val b1 = this.block(null)
+                var es = "if ${e1.tostr()} ${b1.tostr()}else {\n"
+                var n = 1
+                while (!this.acceptFix("}")) {
+                    if (this.acceptFix("else")) {
+                        val be = this.block(null)
+                        es += be.es.map { it.tostr()+"\n" }.joinToString("")
+                        this.acceptFix("}")
+                        break
+                    }
+                    val ei = this.expr()
+                    val bi = this.block((null))
+                    es += """
+                        if ${ei.tostr()} ${bi.tostr()}
+                        else {
+                    """
+                    n++
+                }
+                es += "}\n".repeat(n)
+                println(es)
+                this.nest(es)
+            }
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")
@@ -298,7 +335,11 @@ class Parser (lexer_: Lexer)
         val ret = mutableListOf<Expr>()
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
             val e = this.expr()
-            ret.add(e)
+            if (XCEU && e is Expr.XSeq) {
+                ret.addAll(e.es)
+            } else {
+                ret.add(e)
+            }
         }
         if (ret.size == 0) {
             if (XCEU) {

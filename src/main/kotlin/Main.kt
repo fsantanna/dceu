@@ -2,15 +2,16 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-val XCEU = false
-//val XCEU = true
+//val XCEU = false
+val XCEU = true
 var N = 1
 
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "false", "func",
-    "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true", "var", "yield", "while"
+    "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true",
+    "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "not", "or"
+    "and", "ifs", "not", "or"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
@@ -66,6 +67,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
     data class Call   (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
+
+    data class XSeq   (val tk_: Tk, val es: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {

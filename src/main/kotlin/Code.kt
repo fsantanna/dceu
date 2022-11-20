@@ -726,6 +726,8 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
+
+            is Expr.XSeq -> error("bug found")
         }
     }
 }

@@ -79,5 +79,7 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Tuple  -> this.map(this.args)
         is Expr.Index  -> this.map(listOf(this.col, this.idx))
         is Expr.Call   -> this.map(listOf(this.f)) + this.map(this.args)
+
+        is Expr.XSeq -> error("bug found")
     }
 }

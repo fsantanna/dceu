@@ -19,9 +19,14 @@
     - #x ~= #x.y
     - str ~= ".*"
 - xceu
+    - ifs exp as it { it==1 {}
+    - iter xs as x
+    - do exp as it {}
+    - func f { ... }
 
 # BACK
 
+- native `#pre`
 - kill: coro, coros
 - emit only plain values b/c of bcast
 - tuple is plain immutable value
@@ -58,7 +63,6 @@
     - struct <- tuple
     - vec <- buf
 
-
 # IDEAS
 
 - code NAV tree
@@ -68,3 +72,5 @@
 - doc pico-sdl/ceu
 - incremental GC
     - is a coro itself (start from leaves, back to root)
+- contracts
+- android SDK

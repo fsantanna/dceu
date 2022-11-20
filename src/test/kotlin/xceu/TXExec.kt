@@ -6,6 +6,8 @@ import org.junit.Test
 
 class TXExec {
 
+    // EMPTY IF
+
     @Test
     fun if1() {
         val out = all("""
@@ -44,20 +46,65 @@ class TXExec {
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun if5_noblk() {
+        val out = all("""
+            var x
+            set x = 10
+            set x = if false 1
+            println(x)
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun if6_noblk() {
+        val out = all("""
+            var x
+            set x = if (true) 1 else 0
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+
+    // IFS
+
+    @Test
+    fun ifs1() {
+        val out = all("""
+            var x = ifs {
+                10 < 1 { 99 }
+                5+5==0 { 99 }
+                else { 10 }
+            }
+            println(x)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ifs2() {
+        val out = all("""
+            var x = ifs { true { `#number 1` } }
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+
+
+    // OPS: not, and, or
 
     @Test
     fun op_or_and() {
         val out = all("""
             println(true or println(1))
             println(false and println(1))
-        """, true)
+        """)
         assert(out == "true\nfalse\n") { out }
     }
     @Test
     fun op_not() {
         val out = all("""
             println(not nil and not false)
-        """, true)
+        """)
         assert(out == "true\n") { out }
     }
     @Test
@@ -67,9 +114,11 @@ class TXExec {
             println(1 and 2)
             println(nil and 2)
             println(nil or 2)
-        """, true)
+        """)
         assert(out == "1\n2\nnil\n2\n") { out }
     }
+
+    // THROW / CATCH
 
     @Test
     fun todo_catch3() {
@@ -213,27 +262,5 @@ class TXExec {
         assert(out == "[1,2,3]") { out }
     }
 
-
-    @Test
-    @Ignore
-    fun todo_if5_noblk() {
-        val out = all("""
-            var x
-            set x = 10
-            set x = if false 1
-            println(x)
-        """)
-        assert(out == "nil\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_if6_noblk() {
-        val out = all("""
-            var x
-            set x = if (true) 1 else 0
-            println(x)
-        """)
-        assert(out == "1\n") { out }
-    }
 
 }

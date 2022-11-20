@@ -4,13 +4,33 @@ import Expr
 import N
 import Parser
 import ceu.lexer
+import ceu.trap
 import org.junit.Ignore
 import org.junit.Test
 import tostr
 
 class TXParser {
+    // DCL + SET
     @Test
-    fun expr_if2() {  // set whole tuple?
+    fun dcl1() {
+        val l = lexer("var x = 1")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        //println(e)
+        assert(e is Expr.XSeq && e.es[1] is Expr.Set)
+    }
+    @Test
+    fun dcl2() {
+        val l = lexer("do { var x = 1 }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\nvar x\nset x = 1\n}\n") { e.tostr() }
+    }
+
+    // EMPTY BLOCKS
+
+    @Test
+    fun empty1_if() {
         val l = lexer("if true { 1 }")
         val parser = Parser(l)
         val e = parser.exprPrim()
@@ -18,7 +38,7 @@ class TXParser {
         assert(e.tostr() == "if true {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
     }
     @Test
-    fun expr_do1() {  // set whole tuple?
+    fun empty2_do() {  // set whole tuple?
         val l = lexer("do{}")
         val parser = Parser(l)
         val e = parser.exprPrim()
@@ -26,7 +46,7 @@ class TXParser {
         assert(e.tostr() == "do {\nnil\n}\n") { e.tostr() }
     }
     @Test
-    fun expr_func1() {
+    fun empty3_func() {
         val l = lexer("func () {}")
         val parser = Parser(l)
         val e = parser.exprPrim()
@@ -34,13 +54,57 @@ class TXParser {
         assert(e.tostr() == "func () {\nnil\n}\n") { e.tostr() }
     }
     @Test
-    fun expr_while1() {
+    fun empty4_while() {
         val l = lexer("while true { }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.While && e.body.es[0] is Expr.Nil)
         assert(e.tostr() == "while true {\nnil\n}\n") { e.tostr() }
     }
+
+    // IFS
+
+    @Test
+    fun ifs1() {
+        val l = lexer("ifs { a {1} else {0} }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "if a {\n1\n}\nelse {\n0\n}\n") { e.tostr() }
+    }
+    @Test
+    fun ifs2_err() {
+        val l = lexer("ifs { }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
+    }
+    @Test
+    fun ifs3_err() {
+        val l = lexer("ifs { else {} }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"else\"")
+    }
+    @Test
+    fun ifs4_err() {
+        val l = lexer("ifs { nil }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"{\" : have \"}\"")
+    }
+    @Test
+    fun ifs5() {
+        val l = lexer("ifs { a {1} }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "if a {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
+    }
+    @Test
+    fun ifs6() {
+        val l = lexer("ifs { a{1} b{2} else{0} }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "if a {\n1\n}\nelse {\nif b {\n2\n}\nelse {\n0\n}\n\n}\n") { e.tostr() }
+    }
+
+
     @Test
     fun pre1() {
         val l = lexer("- not - 1")
