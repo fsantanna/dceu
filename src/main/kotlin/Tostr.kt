@@ -25,6 +25,7 @@ fun Expr.tostr (): String {
         is Expr.Bool   -> this.tk.str
         is Expr.Num    -> this.tk.str
         is Expr.Tuple  -> "[" + this.args.map { it.tostr() }.joinToString(",") + "]"
+        is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr()},${it.second.tostr()})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr() + "[" + this.idx.tostr() + "]"
         is Expr.Call   -> this.f.tostr() + "(" + this.args.map { it.tostr() }.joinToString(",") + ")"
 

@@ -77,6 +77,7 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Bool   -> emptyMap()
         is Expr.Num    -> emptyMap()
         is Expr.Tuple  -> this.map(this.args)
+        is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
         is Expr.Index  -> this.map(listOf(this.col, this.idx))
         is Expr.Call   -> this.map(listOf(this.f)) + this.map(this.args)
 

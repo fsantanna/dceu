@@ -41,6 +41,13 @@ class TLexer {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
+    @Test
+    fun syms2() {
+        val l = lexer("@[ @1")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == "@[")
+        assert(trap { tks.next() } == "anon : (lin 1, col 4) : operator error : expected \"@[\"")
+    }
 
     @Test
     fun ids() {

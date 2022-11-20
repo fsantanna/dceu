@@ -27,6 +27,7 @@
 
 # BACK
 
+- coroutines(max)
 - native `#pre`
 - kill: coro, coros
 - emit only plain values b/c of bcast
@@ -36,6 +37,7 @@
     - unless holds dyns
 - native pre code
 - collections
+    - tup.a, .b, .x
     - @dict, @[...]
     - $vec,  $[...], homogeneous, string
     - $size

@@ -114,7 +114,7 @@ class TParser {
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
     }
 
-    // EXPR.TUPLE
+    // TUPLE
 
     @Test
     fun expr_tuple1() {
@@ -135,6 +135,41 @@ class TParser {
         val l = lexer("[{")
         val parser = Parser(l)
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
+    }
+    @Test
+
+    // DICT
+
+    fun dict1() {
+        val l = lexer(" @[ (1,x) , (#number,2) ] ")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Dict && e.args.size==2)
+    }
+    @Test
+    fun dict2() {
+        val l = lexer("@[(#dict,@[]), (#tuple,[1,2,3])]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "@[(#dict,@[]),(#tuple,[1,2,3])]")
+    }
+    @Test
+    fun dict3_err() {
+        val l = lexer("@[({")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected expression : have \"{\"")
+    }
+    @Test
+    fun dict4_err() {
+        val l = lexer("@[(")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected expression : have end of file")
+    }
+    @Test
+    fun dict5_err() {
+        val l = lexer("@[(1,{")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected expression : have \"{\"")
     }
 
     // EXPR.INDEX
@@ -426,8 +461,8 @@ class TParser {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = task (v) {
-            set v = yield (1)
-            yield (2)
+            set v = yield 1
+            yield 2
             }
 
             coroutine t

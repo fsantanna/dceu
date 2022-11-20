@@ -20,6 +20,7 @@ fun Coder.main (): String {
             CEU_VALUE_FUNC,     // func prototype
             CEU_VALUE_TASK,     // task prototype
             CEU_VALUE_TUPLE,
+            CEU_VALUE_DICT,
             CEU_VALUE_CORO,     // spawned task
             CEU_VALUE_COROS     // pool of spawned tasks
         } CEU_VALUE;
@@ -43,7 +44,7 @@ fun Coder.main (): String {
                 double Number;
                 void* Pointer;
                 struct CEU_Proto* Proto;    // Func/Task 
-                struct CEU_Dynamic* Dyn;    // Tuple/Coro/Coros: allocates memory
+                struct CEU_Dynamic* Dyn;    // Tuple/Dict/Coro/Coros: allocates memory
             };
         } CEU_Value;
 
@@ -75,9 +76,13 @@ fun Coder.main (): String {
             struct CEU_Block*   block;      // block to compare on set/move
             union {
                 struct {
-                    uint8_t n;              // number of items
-                    char mem[0];            // beginning of CEU_Value[n]
+                    int n;                  // number of items
+                    CEU_Value mem[0];       // beginning of CEU_Value[n]
                 } Tuple;
+                struct {
+                    int n;                  // size of mem
+                    CEU_Value mem[0][2];    // beginning of CEU_Value[n]
+                } Dict;
                 struct {
                     struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
                     union {
@@ -309,7 +314,23 @@ fun Coder.main (): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        ceu_print1(&((CEU_Value*)v->Dyn->Tuple.mem)[i]);
+                        ceu_print1(&v->Dyn->Tuple.mem[i]);
+                    }                    
+                    printf("]");
+                    break;
+                case CEU_VALUE_DICT:
+                    printf("@[");
+                    for (int i=0; i<v->Dyn->Dict.n; i++) {
+                        if (i > 0) {
+                            printf(",");
+                        }
+                        if (v->Dyn->Dict.mem[i][0].tag != CEU_VALUE_NIL) {
+                            printf("(");
+                            ceu_print1(&v->Dyn->Dict.mem[i][0]);
+                            printf(",");
+                            ceu_print1(&v->Dyn->Dict.mem[i][1]);
+                            printf(")");
+                        }
                     }                    
                     printf("]");
                     break;
@@ -371,13 +392,18 @@ fun Coder.main (): String {
                         v = (e1->Pointer == e2->Pointer);
                         break;
                     case CEU_VALUE_TUPLE:
-                        v = (e1->Dyn->Tuple.n == e2->Dyn->Tuple.n);
+                        v = (e1->Dyn == e2->Dyn);
                         if (v) {
-                            for (int i=0; i<e1->Dyn->Tuple.n; i++) {
-                                CEU_Value* xs[] = { &((CEU_Value*)e1->Dyn->Tuple.mem)[i], &((CEU_Value*)e2->Dyn->Tuple.mem)[i] };
-                                v = ceu_op_eq_eq_f(func, ret, 2, xs).Bool;
-                                if (!v) {
-                                    break;
+                            // OK
+                        } else {
+                            v = (e1->Dyn->Tuple.n==e2->Dyn->Tuple.n);
+                            if (v) {
+                                for (int i=0; i<e1->Dyn->Tuple.n; i++) {
+                                    CEU_Value* xs[] = { &e1->Dyn->Tuple.mem[i], &e2->Dyn->Tuple.mem[i] };
+                                    v = ceu_op_eq_eq_f(func, ret, 2, xs).Bool;
+                                    if (!v) {
+                                        break;
+                                    }
                                 }
                             }
                         }

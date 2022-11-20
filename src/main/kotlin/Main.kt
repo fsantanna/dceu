@@ -2,8 +2,8 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-//val XCEU = false
-val XCEU = true
+val XCEU = false
+//val XCEU = true
 var N = 1
 
 val KEYWORDS: SortedSet<String> = (setOf (
@@ -25,6 +25,7 @@ val TAGS = listOf (
     "func",
     "task",
     "tuple",
+    "dict",
     "coro",
     "coros",
     "error",
@@ -65,6 +66,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
+    data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
     data class Call   (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
 

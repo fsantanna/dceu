@@ -128,7 +128,7 @@ class TExec {
         val out = all("""
             println(1[1])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected tuple\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
     }
     @Test
     fun index_err2() {
@@ -143,6 +143,56 @@ class TExec {
             println([1][2])
         """.trimIndent())
         assert(out == "anon : (lin 1, col 13) : index error : out of bounds\n") { out }
+    }
+
+    // DICT
+
+    @Test
+    fun dict1() {
+        val out = all("""
+            println(tags(@[(1,2)]))
+            println(@[(1,2)])
+        """)
+        assert(out == "#dict\n@[(1,2)]\n") { out }
+    }
+    @Test
+    fun dict2() {
+        val out = all("""
+            var t
+            set t = @[(#x,1)]
+            println(t[#x])
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun dict3() {
+        val out = all("""
+            var t
+            set t = @[(#x,1)]
+            println(t[#y])
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun dict4() {
+        val out = all("""
+            var t
+            set t = @[(#x,1)]
+            set t[#x] = 2
+            println(t[#x])
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun dict5() {
+        val out = all("""
+            var t
+            set t = @[]
+            set t[#x] = 1
+            set t[#y] = 2
+            println(t)
+        """)
+        assert(out == "1\n2\n") { out }
     }
 
     // DCL

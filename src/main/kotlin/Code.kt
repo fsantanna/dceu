@@ -176,7 +176,7 @@ class Coder (val outer: Expr.Block) {
                 val (scp, dst) = when (this.dst) {
                     is Expr.Index -> Pair(
                         "ceu_mem->col_${this.dst.n}.Dyn->block",
-                        "((CEU_Value*)ceu_mem->col_${this.dst.n}.Dyn->Tuple.mem)[(int) ceu_mem->idx_${this.dst.n}.Number]"
+                        "ceu_mem->col_${this.dst.n}.Dyn->Tuple.mem[(int) ceu_mem->idx_${this.dst.n}.Number]"
                     )
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
@@ -640,7 +640,6 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
             is Expr.Tuple -> {
-                assert(this.args.size <= 256) { "bug found" }
                 val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
@@ -661,34 +660,72 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
+            is Expr.Dict -> {
+                val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
+                val args = this.args.mapIndexed { i, it ->
+                    // allocate in the same scope of set (set.first) or use default block
+                    it.first.code (Pair(scp, "ceu_mem->arg_${i}_a_$n"))+
+                    it.second.code(Pair(scp, "ceu_mem->arg_${i}_b_$n"))
+                }.joinToString("")
+                """
+                { // DICT ${this.tk.dump()}
+                    $args
+                    CEU_Value ceu_sta_$n[${this.args.size}][2] = {
+                        ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
+                    };
+                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic) + ${this.args.size} * 2*sizeof(CEU_Value));
+                    assert(ceu_$n != NULL);
+                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={${this.args.size},{}}} };
+                    memcpy(ceu_$n->Dict.mem, ceu_sta_$n, ${this.args.size} * 2*sizeof(CEU_Value));
+                    $scp->tofree = ceu_$n;
+                    ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
+                }
+                """
+            }
             is Expr.Index -> {
                 val bupc = this.upBlock()!!.toc(true)
                 """
                 { // INDEX  ${this.tk.dump()}
                     { // COL
                         ${this.col.code(Pair(bupc, "ceu_mem->col_$n"))}
-                        if (ceu_mem->col_$n.tag != CEU_VALUE_TUPLE) {                
+                        if (ceu_mem->col_$n.tag!=CEU_VALUE_TUPLE && ceu_mem->col_$n.tag!=CEU_VALUE_DICT) {                
                             ceu_throw = &CEU_THROW_ERROR;
-                            strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected tuple", 256);
+                            strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected collection", 256);
                             continue; // escape enclosing block;
                         }
                     }
                     CEU_Value ceu_idx_$n;
                     { // IDX        
                         ${this.idx.code(Pair(bupc, "ceu_mem->idx_$n"))}
-                        if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
+                        if (ceu_mem->col_$n.tag == CEU_VALUE_DICT) {
+                            // ok
+                        } else if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
                             ceu_throw = &CEU_THROW_ERROR;
                             strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
                             continue; // escape enclosing block;
                         }
                     }
-                    { // OK
-                        if (ceu_mem->col_$n.Dyn->Tuple.n <= ceu_mem->idx_$n.Number) {                
-                            ceu_throw = &CEU_THROW_ERROR;
-                            strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                            continue; // escape enclosing block
-                        }    
-                        ${fset(this.tk, set, "((CEU_Value*)ceu_mem->col_$n.Dyn->Tuple.mem)[(int) ceu_mem->idx_$n.Number]")}
+                    switch (ceu_mem->col_$n.tag) { // OK
+                        case CEU_VALUE_TUPLE:                
+                            if (ceu_mem->col_$n.Dyn->Tuple.n <= ceu_mem->idx_$n.Number) {                
+                                ceu_throw = &CEU_THROW_ERROR;
+                                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
+                                continue; // escape enclosing block
+                            }    
+                            ${fset(this.tk, set, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
+                            break;
+                        case CEU_VALUE_DICT: {
+                            int I = -1;
+                            for (int i=0; i<ceu_mem->col_$n.Dyn->Dict.n; i++) {
+                                CEU_Value* args[] = { &ceu_mem->idx_$n, &ceu_mem->col_$n.Dyn->Dict.mem[i][0] };
+                                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, NULL, 2, args).Bool) {
+                                    I = i;
+                                    break;
+                                }
+                            }
+                            ${fset(this.tk, set, "((I==-1) ? (CEU_Value) { CEU_VALUE_NIL } : ceu_mem->col_$n.Dyn->Dict.mem[I][1])")}
+                            break;
+                        }
                     }
                 }
                 """

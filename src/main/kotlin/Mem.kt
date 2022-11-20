@@ -99,6 +99,19 @@ fun Expr.mem (): String {
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
             };
             """
+        is Expr.Dict -> """
+            struct { // DICT
+                ${this.args.map {
+                    listOf(it.first.mem(),it.second.mem())
+                }.flatten().joinToString("")}
+                ${this.args.mapIndexed { i,_ ->
+                    """
+                    CEU_Value arg_${i}_a_$n;
+                    CEU_Value arg_${i}_b_$n;
+                    """
+                }.joinToString("")}
+            };
+            """
         is Expr.Index -> """
             struct { // INDEX
                 CEU_Value col_$n;   // both required
@@ -118,6 +131,7 @@ fun Expr.mem (): String {
                 };
             };
             """
+
         else -> ""
     }
 }

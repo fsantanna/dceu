@@ -229,6 +229,14 @@ class Parser (lexer_: Lexer)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
+            this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]") {
+                this.acceptFix_err("(")
+                val k = this.expr()
+                this.acceptFix(",")
+                val v = this.expr()
+                this.acceptFix(")")
+                Pair(k,v)
+            })
             this.acceptFix("(") -> {
                 val tk0 = this.tk0
                 if (XCEU && this.acceptFix(")")) {
