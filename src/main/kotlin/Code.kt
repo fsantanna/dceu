@@ -1,3 +1,5 @@
+import java.lang.Integer.min
+
 // block: String -> current enclosing block for normal allocation
 // ret: Pair<block,var> -> enclosing assignment with destination block and variable
 fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
@@ -173,17 +175,36 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Set -> {
+                val col = "ceu_mem->col_${this.dst.n}"
+                val idx = "ceu_mem->idx_${this.dst.n}"
                 val (scp, dst) = when (this.dst) {
                     is Expr.Index -> Pair(
-                        "ceu_mem->col_${this.dst.n}.Dyn->block",
-                        "ceu_mem->col_${this.dst.n}.Dyn->Tuple.mem[(int) ceu_mem->idx_${this.dst.n}.Number]"
+                        "$col.Dyn->block",
+                        """
+                        switch ($col.tag) { // OK
+                            case CEU_VALUE_TUPLE:                
+                                ceu_dst = &$col.Dyn->Tuple.mem[(int) $idx.Number];
+                                break;
+                            case CEU_VALUE_DICT: {
+                                int idx = ceu_dict_key_find(&$col, &$idx);
+                                if (idx == -1) {
+                                    assert(0 && "TODO");
+                                }
+                                ceu_dst = &$col.Dyn->Dict.mem[idx][1];
+                                break;
+                            }
+                        }
+                        """
                     )
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
                         val bup = this.upBlock()!!
                         bup.assertIsDeclared(id, this.tk)
                         bup.assertIsDeclared("_${id}_", this.tk)
-                        Pair(bup.id2c("_${id}_"), bup.id2c(id)) // x = src / block of _x_
+                        Pair ( // x = src / block of _x_
+                            bup.id2c("_${id}_"),
+                            "ceu_dst = &${bup.id2c(id)};"
+                        )
                     }
                     else -> error("bug found")
                 }
@@ -192,7 +213,11 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_$n;
                     ${this.dst.code(null)}
                     ${this.src.code(Pair(scp, "ceu_$n"))}
-                    $dst = ceu_$n;
+                    {
+                        CEU_Value* ceu_dst;
+                        $dst
+                        *ceu_dst = ceu_$n;
+                    }
                     ${fset(this.tk, set, "ceu_$n")}
                 }
                 """
@@ -661,6 +686,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Dict -> {
+                val N = min(4, this.args.size)
                 val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
@@ -673,9 +699,12 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_sta_$n[${this.args.size}][2] = {
                         ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic) + ${this.args.size} * 2*sizeof(CEU_Value));
+                    
+                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic) + $N * 2*sizeof(CEU_Value));
                     assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={${this.args.size},{}}} };
+                    memset(ceu_$n->Dict.mem, 0, $N * 2*sizeof(CEU_Value));  // x[i]=nil
+
+                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={$N,{}}} };
                     memcpy(ceu_$n->Dict.mem, ceu_sta_$n, ${this.args.size} * 2*sizeof(CEU_Value));
                     $scp->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
@@ -715,15 +744,8 @@ class Coder (val outer: Expr.Block) {
                             ${fset(this.tk, set, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
                             break;
                         case CEU_VALUE_DICT: {
-                            int I = -1;
-                            for (int i=0; i<ceu_mem->col_$n.Dyn->Dict.n; i++) {
-                                CEU_Value* args[] = { &ceu_mem->idx_$n, &ceu_mem->col_$n.Dyn->Dict.mem[i][0] };
-                                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, NULL, 2, args).Bool) {
-                                    I = i;
-                                    break;
-                                }
-                            }
-                            ${fset(this.tk, set, "((I==-1) ? (CEU_Value) { CEU_VALUE_NIL } : ceu_mem->col_$n.Dyn->Dict.mem[I][1])")}
+                            int idx = ceu_dict_key_find(&ceu_mem->col_$n, &ceu_mem->idx_$n);
+                            ${fset(this.tk, set, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : ceu_mem->col_$n.Dyn->Dict.mem[idx][1])")}
                             break;
                         }
                     }

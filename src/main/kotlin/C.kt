@@ -12,7 +12,7 @@ fun Coder.main (): String {
     """ +
     """ // VALUE
         typedef enum CEU_VALUE {
-            CEU_VALUE_NIL,
+            CEU_VALUE_NIL = 0,
             CEU_VALUE_TAG,
             CEU_VALUE_BOOL,
             CEU_VALUE_NUMBER,
@@ -427,6 +427,17 @@ fun Coder.main (): String {
             return v;
         }
         CEU_Proto ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
+    """ +
+    """ // DICT
+        int ceu_dict_key_find (CEU_Value* col, CEU_Value* key) {
+            for (int i=0; i<col->Dyn->Dict.n; i++) {
+                CEU_Value* args[] = { key, &col->Dyn->Dict.mem[i][0] };
+                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, NULL, 2, args).Bool) {
+                    return i;
+                }
+            }
+            return -1;
+        }        
     """ +
     """
         // THROW
