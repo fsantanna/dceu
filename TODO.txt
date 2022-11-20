@@ -23,6 +23,7 @@
     - iter xs as x
     - do exp as it {}
     - func f { ... }
+    - par, paror, parand
 
 # BACK
 

@@ -13,7 +13,7 @@ fun Expr.tostr (): String {
         is Expr.Coro   -> "coroutine " + this.task.tostr()
         is Expr.Bcast  -> "broadcast " + this.arg.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
-        is Expr.Yield  -> "yield (" + this.arg.tostr() + ")"
+        is Expr.Yield  -> "yield " + this.arg.tostr()
         is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in"+this.coros.tostr())
         is Expr.Coros  -> "coroutines()"
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"

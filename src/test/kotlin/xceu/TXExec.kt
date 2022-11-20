@@ -46,20 +46,24 @@ class TXExec {
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
     }
+
+    // NO BLOCK
     @Test
-    fun if5_noblk() {
+    @Ignore
+    fun todo_if5_noblk() {
         val out = all("""
             var x
             set x = 10
-            set x = if false {1}
+            set x = if false 1
             println(x)
         """)
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if6_noblk() {
+    @Ignore
+    fun todo_if6_noblk() {
         val out = all("""
-            var x = if (true) {1} else {0}
+            var x = if (true) 1 else 0
             println(x)
         """)
         assert(out == "1\n") { out }
@@ -133,6 +137,28 @@ class TXExec {
             broadcast 3
         """)
         assert(out == "1\n1\n2\n2\n") { out }
+    }
+
+    // PAR
+
+    @Test
+    fun par1() {
+        val out = all("""
+            spawn task () {
+                par {
+                    yield ()
+                    yield ()
+                    println(1)
+                } with {
+                    yield ()
+                    println(2)
+                } with {
+                    println(3)
+                }
+            } ()
+            broadcast ()
+        """)
+        assert(out == "3\n2\n") { out }
     }
 
     // THROW / CATCH

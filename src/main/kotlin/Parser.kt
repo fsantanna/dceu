@@ -222,8 +222,9 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("(") -> {
+                val tk0 = this.tk0
                 if (XCEU && this.acceptFix(")")) {
-                    Expr.Nil(this.tk0 as Tk.Fix)
+                    Expr.Nil(Tk.Fix("nil", tk0.pos))
                 } else {
                     val e = this.expr()
                     this.acceptFix_err(")")
@@ -235,26 +236,48 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
                 val e1 = this.expr()
                 val b1 = this.block(null)
-                var es = "if ${e1.tostr()} ${b1.tostr()}else {\n"
+                var ifs = "if ${e1.tostr()} ${b1.tostr()}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
                         val be = this.block(null)
-                        es += be.es.map { it.tostr()+"\n" }.joinToString("")
+                        ifs += be.es.map { it.tostr()+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
                     }
                     val ei = this.expr()
                     val bi = this.block((null))
-                    es += """
+                    ifs += """
                         if ${ei.tostr()} ${bi.tostr()}
                         else {
                     """
                     n++
                 }
-                es += "}\n".repeat(n)
+                ifs += "}\n".repeat(n)
                 //println(es)
-                this.nest(es)
+                this.nest(ifs)
+            }
+            (XCEU && this.acceptFix("par")) -> {
+                var pars = mutableListOf(this.block(null))
+                this.acceptFix_err("with")
+                pars.add(this.block(null))
+                while (this.acceptFix("with")) {
+                    pars.add(this.block(null))
+                }
+                val spws = pars.map { """
+                    spawn (task () {
+                        ${it.es.tostr()}
+                    }) ()
+                """}.joinToString("")
+                //println(spws)
+                this.nest("""
+                    do {
+                        $spws
+                        while true {
+                            yield ()
+                        }
+                    }
+                """)
             }
             else -> {
                 err_expected(this.tk1, "expression")

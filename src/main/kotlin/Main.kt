@@ -2,8 +2,8 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-val XCEU = false
-//val XCEU = true
+//val XCEU = false
+val XCEU = true
 var N = 1
 
 val KEYWORDS: SortedSet<String> = (setOf (
@@ -11,7 +11,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "if", "in", "native", "nil", "resume", "set", "spawn", "task", "throw", "true",
     "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "ifs", "not", "or"
+    "and", "ifs", "not", "or", "par", "with"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')

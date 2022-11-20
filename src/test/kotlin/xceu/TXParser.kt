@@ -61,6 +61,24 @@ class TXParser {
         assert(e is Expr.While && e.body.es[0] is Expr.Nil)
         assert(e.tostr() == "while true {\nnil\n}\n") { e.tostr() }
     }
+    @Test
+    @Ignore
+    fun todo_if3_noblk() {
+        val l = lexer("if true 1")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true 1 else nil\n") { e.tostr() }
+    }
+    @Test
+    @Ignore
+    fun todo_if4_noblk() {
+        val l = lexer("if true 1 else 2")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true 1 else 2\n") { e.tostr() }
+    }
 
     // IFS
 
@@ -102,33 +120,6 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "if a {\n1\n}\nelse {\nif b {\n2\n}\nelse {\n0\n}\n\n}\n") { e.tostr() }
-    }
-
-
-    @Test
-    fun pre1() {
-        val l = lexer("- not - 1")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Call)
-        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
-    }
-
-    // TODO
-
-    @Test
-    fun todo_catch1() {
-        val l = lexer("""
-            set x = catch #e1 {
-                throw #e1
-                throw (#e1,10)
-                throw (#e1)
-            }
-            
-        """)
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
 
     // BIN AND OR
@@ -187,23 +178,55 @@ class TXParser {
             
         """.trimIndent()) { e.tostr() }
     }
+    @Test
+    fun pre1() {
+        val l = lexer("- not - 1")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Call)
+        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
+    }
+
+    // PAR
 
     @Test
-    @Ignore
-    fun todo_expr_if3_noblk() {
-        val l = lexer("if true 1")
+    fun par1() {
+        val l = lexer("""
+            par {
+                1
+            } with {
+                2
+            } with {
+                3
+            }
+        """)
         val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.If)
-        assert(e.tostr() == "if true 1 else nil\n") { e.tostr() }
+        val e = parser.expr()
+        println(e.tostr())
+        assert(e.tostr() == "do {\nspawn task () {\n1\n}\n()\nspawn task () {\n2\n}\n()\nspawn task () {\n3\n}\n()\nwhile true {\nyield nil\n}\n\n}\n") { e.tostr() }
     }
     @Test
-    @Ignore
-    fun todo_expr_if4_noblk() {
-        val l = lexer("if true 1 else 2")
+    fun par2_err() {
+        val l = lexer("par {}")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"with\" : have end of file")
+    }
+
+    // CATCH
+
+    @Test
+    fun todo_catch1() {
+        val l = lexer("""
+            set x = catch #e1 {
+                throw #e1
+                throw (#e1,10)
+                throw (#e1)
+            }
+            
+        """)
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.If)
-        assert(e.tostr() == "if true 1 else 2\n") { e.tostr() }
+        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
+
 }
