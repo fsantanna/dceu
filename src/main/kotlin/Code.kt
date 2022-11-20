@@ -1,4 +1,4 @@
-import java.lang.Integer.min
+import java.lang.Integer.max
 
 // block: String -> current enclosing block for normal allocation
 // ret: Pair<block,var> -> enclosing assignment with destination block and variable
@@ -183,14 +183,15 @@ class Coder (val outer: Expr.Block) {
                         """
                         switch ($col.tag) { // OK
                             case CEU_VALUE_TUPLE:                
-                                ceu_dst = &$col.Dyn->Tuple.mem[(int) $idx.Number];
+                                $col.Dyn->Tuple.mem[(int) $idx.Number] = ceu_$n;
                                 break;
                             case CEU_VALUE_DICT: {
-                                int idx = ceu_dict_key_find(&$col, &$idx);
+                                int idx = ceu_dict_key_index($col.Dyn, &$idx);
                                 if (idx == -1) {
-                                    assert(0 && "TODO");
+                                    idx = ceu_dict_empty_index($col.Dyn);
+                                    (*$col.Dyn->Dict.mem)[idx][0] = $idx;
                                 }
-                                ceu_dst = &$col.Dyn->Dict.mem[idx][1];
+                                (*$col.Dyn->Dict.mem)[idx][1] = ceu_$n;
                                 break;
                             }
                         }
@@ -203,7 +204,7 @@ class Coder (val outer: Expr.Block) {
                         bup.assertIsDeclared("_${id}_", this.tk)
                         Pair ( // x = src / block of _x_
                             bup.id2c("_${id}_"),
-                            "ceu_dst = &${bup.id2c(id)};"
+                            "${bup.id2c(id)} = ceu_$n;"
                         )
                     }
                     else -> error("bug found")
@@ -213,11 +214,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_$n;
                     ${this.dst.code(null)}
                     ${this.src.code(Pair(scp, "ceu_$n"))}
-                    {
-                        CEU_Value* ceu_dst;
-                        $dst
-                        *ceu_dst = ceu_$n;
-                    }
+                    $dst
                     ${fset(this.tk, set, "ceu_$n")}
                 }
                 """
@@ -686,7 +683,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Dict -> {
-                val N = min(4, this.args.size)
+                val N = max(4, this.args.size)
                 val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
@@ -700,11 +697,14 @@ class Coder (val outer: Expr.Block) {
                         ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
                     };
                     
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic) + $N * 2*sizeof(CEU_Value));
+                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
                     assert(ceu_$n != NULL);
-                    memset(ceu_$n->Dict.mem, 0, $N * 2*sizeof(CEU_Value));  // x[i]=nil
 
-                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={$N,{}}} };
+                    CEU_Value (*ceu_mem_$n)[][2] = malloc($N*2*sizeof(CEU_Value));
+                    assert(ceu_mem_$n != NULL);
+                    memset(ceu_mem_$n, 0, $N*2*sizeof(CEU_Value));  // x[i]=nil
+
+                    *ceu_$n = (CEU_Dynamic) { CEU_VALUE_DICT, $scp->tofree, $scp, {.Dict={$N,ceu_mem_$n}} };
                     memcpy(ceu_$n->Dict.mem, ceu_sta_$n, ${this.args.size} * 2*sizeof(CEU_Value));
                     $scp->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
@@ -744,8 +744,8 @@ class Coder (val outer: Expr.Block) {
                             ${fset(this.tk, set, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
                             break;
                         case CEU_VALUE_DICT: {
-                            int idx = ceu_dict_key_find(&ceu_mem->col_$n, &ceu_mem->idx_$n);
-                            ${fset(this.tk, set, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : ceu_mem->col_$n.Dyn->Dict.mem[idx][1])")}
+                            int idx = ceu_dict_key_index(ceu_mem->col_$n.Dyn, &ceu_mem->idx_$n);
+                            ${fset(this.tk, set, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1])")}
                             break;
                         }
                     }

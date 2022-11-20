@@ -81,7 +81,7 @@ fun Coder.main (): String {
                 } Tuple;
                 struct {
                     int n;                  // size of mem
-                    CEU_Value mem[0][2];    // beginning of CEU_Value[n]
+                    CEU_Value (*mem)[0][2]; // beginning of CEU_Value[n][2]
                 } Dict;
                 struct {
                     struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
@@ -115,6 +115,9 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
+                if (cur->tag == CEU_VALUE_DICT) {
+                    free(cur->Dict.mem);
+                }
                 block->tofree = block->tofree->next;
                 free(cur);
             }
@@ -320,15 +323,17 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_DICT:
                     printf("@[");
+                    int comma = 0;
                     for (int i=0; i<v->Dyn->Dict.n; i++) {
-                        if (i > 0) {
-                            printf(",");
-                        }
-                        if (v->Dyn->Dict.mem[i][0].tag != CEU_VALUE_NIL) {
+                        if ((*v->Dyn->Dict.mem)[i][0].tag != CEU_VALUE_NIL) {
+                            if (comma != 0) {
+                                printf(",");
+                            }
+                            comma = 1;
                             printf("(");
-                            ceu_print1(&v->Dyn->Dict.mem[i][0]);
+                            ceu_print1(&(*v->Dyn->Dict.mem)[i][0]);
                             printf(",");
-                            ceu_print1(&v->Dyn->Dict.mem[i][1]);
+                            ceu_print1(&(*v->Dyn->Dict.mem)[i][1]);
                             printf(")");
                         }
                     }                    
@@ -429,14 +434,28 @@ fun Coder.main (): String {
         CEU_Proto ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
     """ // DICT
-        int ceu_dict_key_find (CEU_Value* col, CEU_Value* key) {
-            for (int i=0; i<col->Dyn->Dict.n; i++) {
-                CEU_Value* args[] = { key, &col->Dyn->Dict.mem[i][0] };
+        int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
+            for (int i=0; i<col->Dict.n; i++) {
+                CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
                 if (ceu_op_eq_eq_f(&ceu_op_eq_eq, NULL, 2, args).Bool) {
                     return i;
                 }
             }
             return -1;
+        }        
+        int ceu_dict_empty_index (CEU_Dynamic* col) {
+            for (int i=0; i<col->Dict.n; i++) {
+                if ((*col->Dict.mem)[i][0].tag == CEU_VALUE_NIL) {
+                    return i;
+                }
+            }
+            int old = col->Dict.n;
+            int new = old * 2;
+            col->Dict.n = new;
+            col->Dict.mem = realloc(col->Dict.mem, new*2*sizeof(CEU_Value));
+            assert(col->Dict.mem != NULL);
+            memset(&(*col->Dict.mem)[old], 0, old*2*sizeof(CEU_Value));  // x[i]=nil
+            return old;
         }        
     """ +
     """

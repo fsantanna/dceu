@@ -192,7 +192,7 @@ class TExec {
             set t[#y] = 2
             println(t)
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "@[(#x,1),(#y,2)]\n") { out }
     }
 
     // DCL
