@@ -114,16 +114,17 @@ class TLexer {
     @Test
     fun native() {
         val l = lexer("""
-            native { abc }
-            native {{ijk}}
-            native ( {i${D}jk} )
-            native ( {ijk}
+            ` abc `
+            `{ijk}`
+            ` {i${D}jk} `
+            `  {ijk} 
         """.trimIndent())
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str=="{ abc }" })
-        assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{{ijk}}" })
-        assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str=="( {i\$jk} )" })
-        assert(trap { tks.next() } == "anon : (lin 4, col 1) : native error : expected \")\"")
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str==" abc " })
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{ijk}" })
+        assert(tks.next().let { it is Tk.Nat && it.pos.lin==3 && it.pos.col==1 && it.str==" {i\$jk} " })
+        //println(tks.next())
+        assert(trap { tks.next() } == "anon : (lin 4, col 10) : native error : expected \"`\"")
     }
 
     @Test
