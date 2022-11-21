@@ -197,13 +197,13 @@ class Parser (lexer_: Lexer)
                     """)
                 } else {
                     val call = this.expr()
-                    if (call !is Expr.Call) {
+                    if (call !is Expr.Block || call.es[0] !is Expr.Call) {
                         err_expected(tk1, "invalid spawn : expected call")
                     }
                     val coros = if (!this.acceptFix("in")) null else {
                         this.expr()
                     }
-                    Expr.Block(tk0, listOf(Expr.Spawn(tk0, coros, call as Expr.Call)))
+                    Expr.Spawn(tk0, coros, call as Expr.Call)
                 }
             }
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
@@ -211,11 +211,11 @@ class Parser (lexer_: Lexer)
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
-                if (call !is Expr.Call) {
+                if (call !is Expr.Block || call.es[0] !is Expr.Call) {
                     err_expected(tk1, "invalid resume : expected call")
 
                 }
-                Expr.Block(tk0, listOf(Expr.Resume(tk0, call as Expr.Call)))
+                Expr.Resume(tk0, call as Expr.Call)
             }
 
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
