@@ -77,7 +77,7 @@ fun Expr.mem (): String {
                 ${this.body.mem()}
             };
             """
-        is Expr.Bcast -> this.arg.mem()
+        is Expr.Bcast -> this.evt.mem()
         is Expr.Yield -> this.arg.mem()
         is Expr.Resume -> """
             union { // RESUME

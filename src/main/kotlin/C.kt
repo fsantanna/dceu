@@ -261,6 +261,16 @@ fun Coder.main (): String {
             }
         }
 
+        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
+        CEU_Value* ceu_evt = &CEU_EVT_NIL;
+        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
+            //  - can pass further
+            //  - cannot pass back
+            //  - each catch condition:
+            //      - must set its depth at the beginning 
+            //      - must not yield
+            //      - must deallocate at the end
+
     """ +
     """ // TAGS
 
@@ -499,11 +509,11 @@ fun Coder.main (): String {
     """
         // THROW
         int ceu_has_throw = 0;
-        CEU_Value CEU_THROW_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        CEU_Value CEU_THROW_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_throw = &CEU_THROW_NIL;
-        char ceu_throw_error_msg[256];
-        CEU_Block ceu_throw_block = { 0, NULL, {NULL,NULL} };
+        CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
+        CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
+        CEU_Value* ceu_err = &CEU_ERR_NIL;
+        char ceu_err_error_msg[256];
+        CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
             //  - can pass further
             //  - cannot pass back
             //  - each catch condition:
@@ -537,9 +547,9 @@ fun Coder.main (): String {
                 ${this.code}
                 return 0;
             } while (0);
-            fprintf(stderr, "%s\n", ceu_throw_error_msg);
-            ceu_block_free(&ceu_throw_block);
-            ceu_throw = &CEU_THROW_NIL;
+            fprintf(stderr, "%s\n", ceu_err_error_msg);
+            ceu_block_free(&ceu_err_block);
+            ceu_err = &CEU_ERR_NIL;
             return 1;
         }
     """)
