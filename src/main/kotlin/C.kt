@@ -102,6 +102,10 @@ fun Coder.main (): String {
                 } Bcast;
             };
         } CEU_Dynamic;
+        
+        int ceu_as_bool (CEU_Value* v) {
+            return !(v->tag==CEU_VALUE_NIL || (v->tag==CEU_VALUE_BOOL && !v->Bool));
+        }
     """ +
     """ // BLOCK
         typedef struct CEU_Block {
@@ -492,11 +496,8 @@ fun Coder.main (): String {
     """ +
     """
         // THROW
-        CEU_Value* ceu_throw = NULL;
-        CEU_Value ceu_throw_arg;
-        CEU_Block* ceu_block_global = NULL;     // used as throw scope. then, catch fixes it
+        int ceu_has_throw = 0;
         char ceu_throw_msg[256];
-        CEU_Value CEU_THROW_ERROR; // = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
     """ +
     """ // FUNCS
         typedef struct {
@@ -512,7 +513,6 @@ fun Coder.main (): String {
     """ // MAIN
         int main (void) {
             ${this.tags.map { "CEU_TAG_INIT($it,\"#$it\")\n" }.joinToString("")}
-            CEU_THROW_ERROR = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {

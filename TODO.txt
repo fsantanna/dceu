@@ -49,7 +49,7 @@
 - args keyword (or ...)
     - access to variable args from func args
 - err keyword
-    - access to ceu_throw value
+    - access to ceu_has_throw value
 - tag of tag requires higher ID to avoid cycle
 - ((1>>f)>>g) -> g(f(1))
 - parser

@@ -658,14 +658,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch #xxx {
+                catch err==#xxx {
                     throw #yyy
                     println(91)
                 }
                 println(9)
             }
-            catch #yyy {
-                catch #xxx {
+            catch err==#yyy {
+                catch err==#xxx {
                     f()
                     println(92)
                 }

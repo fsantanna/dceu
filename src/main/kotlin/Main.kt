@@ -17,18 +17,11 @@ val KEYWORDS: SortedSet<String> = (setOf (
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
 
 val TAGS = listOf (
-    "nil",
-    "tag",
-    "bool",
-    "number",
-    "pointer",
-    "func",
-    "task",
-    "tuple",
-    "dict",
-    "coro",
-    "coros",
-    "error",
+    "nil", "tag", "bool", "number", "pointer",
+    "func", "task",
+    "tuple", "dict",
+    "coro", "coros",
+    "clear",            // bcast-clear
 )
 
 val GLOBALS = setOf (

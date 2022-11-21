@@ -48,12 +48,9 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Catch -> """
-            struct { // CATCH
-                CEU_Value catch_$n;
-                union {
-                    ${this.catch.mem()}
-                    ${this.body.mem()}
-                };
+            union { // CATCH
+                ${this.catch.mem()}
+                ${this.body.mem()}
             };
             """
         is Expr.Throw -> this.ex.mem()
