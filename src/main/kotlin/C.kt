@@ -73,7 +73,7 @@ fun Coder.main (): String {
         typedef struct CEU_Dynamic {
             CEU_VALUE tag;                  // required to switch over free/bcast
             struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
-            struct CEU_Block*   block;      // block to compare on set/move
+            struct CEU_Block*   hold;       // holding block to compare on set/move
             union {
                 struct {
                     int n;                  // number of items
@@ -126,6 +126,7 @@ fun Coder.main (): String {
                 free(cur);
             }
         }
+        #if 0
         void ceu_block_move (CEU_Dynamic* V, CEU_Block* FR, CEU_Block* TO) {
             assert(V->tag == CEU_VALUE_TUPLE && "bug found");
             CEU_Dynamic* prv = NULL;
@@ -138,7 +139,7 @@ fun Coder.main (): String {
                         prv->next = cur->next;
                     }              
                     //assert(0 && "OK");
-                    cur->block = TO;
+                    cur->hold = TO;
                     cur->next = TO->tofree;
                     TO->tofree = cur;
                     break;
@@ -147,6 +148,7 @@ fun Coder.main (): String {
                 cur = cur->next;
             }
         }
+        #endif
     """ +
     """ // BCAST / COROS
         void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg);
@@ -438,19 +440,19 @@ fun Coder.main (): String {
         CEU_Proto ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
     """ // TUPLE / DICT
-        CEU_Dynamic* ceu_tuple_create (CEU_Block* scp, int n, CEU_Value* args) {
+        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n, CEU_Value* args) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             if (ret == NULL) {
                 return NULL;
             }
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, scp->tofree, scp, {.Tuple={n,{}}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, hld->tofree, hld, {.Tuple={n,{}}} };
             memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-            scp->tofree = ret;
+            hld->tofree = ret;
             return ret;
         }
 
-        CEU_Dynamic* ceu_dict_create (CEU_Block* scp, int n, CEU_Value (*args)[][2]) {
+        CEU_Dynamic* ceu_dict_create (CEU_Block* hld, int n, CEU_Value (*args)[][2]) {
             int min = (n < 4) ? 4 : n; 
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             if (ret == NULL) {
@@ -462,11 +464,11 @@ fun Coder.main (): String {
                 return NULL;
             }
             memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
-            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, scp->tofree, scp, {.Dict={min,mem}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, hld->tofree, hld, {.Dict={min,mem}} };
             if (args != NULL) {
                 memcpy(mem, args, n*2*sizeof(CEU_Value));
             }
-            scp->tofree = ret;
+            hld->tofree = ret;
             return ret;
         }
 

@@ -1,22 +1,20 @@
-import java.lang.Integer.max
-
-// block: String -> current enclosing block for normal allocation
-// ret: Pair<block,var> -> enclosing assignment with destination block and variable
-fun fset(tk: Tk, ret: Pair<String, String>?, src: String): String {
-    return if (ret == null) "" else fset(tk, ret.first, ret.second, src)
-}
-fun fset(tk: Tk, ret_block: String, ret_var: String, src: String): String {
-    return """
+// block: String -> current enclosing block for normal allocation (if null, free on enclosing, but hold refuses any assignment
+// ret: Pair<block,var> -> enclosing assignment with destination holding block and variable
+fun fset(tk: Tk, hld: Pair<String, String>?, src: String): String {
+    return if (hld == null) "" else {
+        """
         if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
-            // coro in coros has block=NULL
-            if ($src.Dyn->block==NULL || $src.Dyn->block->depth>$ret_block->depth) {                
+            // src.Dyn==NULL: refuses assignment (err, coro in coros)
+            assert($src.Dyn->hold != NULL && "TODO"); // also refuse
+            if ($src.Dyn->hold==NULL || $src.Dyn->hold->depth>${hld.first}->depth) {                
                 ceu_has_throw = 1;
                 strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
                 continue;
             }
         }
-        $ret_var = $src;
+        ${hld.second} = $src;
     """
+    }
 }
 
 fun Tk.dump (): String {
@@ -173,9 +171,9 @@ class Coder (val outer: Expr.Block) {
             is Expr.Set -> {
                 val col = "ceu_mem->col_${this.dst.n}"
                 val idx = "ceu_mem->idx_${this.dst.n}"
-                val (scp, dst) = when (this.dst) {
+                val (hld, dst) = when (this.dst) {
                     is Expr.Index -> Pair(
-                        "$col.Dyn->block",
+                        "$col.Dyn->hold",
                         """
                         switch ($col.tag) { // OK
                             case CEU_VALUE_TUPLE:                
@@ -209,7 +207,7 @@ class Coder (val outer: Expr.Block) {
                 { // SET ${this.tk.dump()}
                     CEU_Value ceu_$n;
                     ${this.dst.code(null)}
-                    ${this.src.code(Pair(scp, "ceu_$n"))}
+                    ${this.src.code(Pair(hld, "ceu_$n"))}
                     $dst
                     ${fset(this.tk, set, "ceu_$n")}
                 }
@@ -384,13 +382,13 @@ class Coder (val outer: Expr.Block) {
 
             is Expr.Coro -> {
                 val bupc = this.upBlock()!!.toc(true)
-                val scp = if (set == null) bupc else set.first
+                val hld = if (set == null) bupc else set.first
                 """
                 { // CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.task.code(Pair(bupc, "ceu_task_$n"))}
-                    char* err = ceu_coro_create($scp, &ceu_task_$n, &ceu_coro_$n);
+                    char* err = ceu_coro_create($hld, &ceu_task_$n, &ceu_coro_$n);
                     if (err != NULL) {
                         ceu_has_throw = 1;
                         snprintf(ceu_throw_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
@@ -462,7 +460,7 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Spawn -> {
                 val bupc = this.upBlock()!!.toc(true)
-                val scp = if (set == null) bupc else set.first
+                val hld = if (set == null) bupc else set.first
                 val (sets,args) = this.call.args.let {
                     Pair(
                         it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
@@ -476,7 +474,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_coro_$n;
                     ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
                     char* err = ${if (this.coros == null) {
-                        "ceu_coro_create($scp, &ceu_task_$n, &ceu_coro_$n);"
+                        "ceu_coro_create($hld, &ceu_task_$n, &ceu_coro_$n);"
                     } else {
                         "ceu_coros_create(ceu_mem->coros_$n.Dyn, &ceu_task_$n, &ceu_coro_$n);"
                     }}
@@ -504,18 +502,18 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Coros -> {
-                val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
+                val hld = if (set == null) this.upBlock()!!.toc(true) else set.first
                 """
                 { // COROS ${this.tk.dump()}
                     CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Dynamic) {
-                        CEU_VALUE_COROS, $scp->tofree, $scp, {
+                        CEU_VALUE_COROS, $hld->tofree, $hld, {
                             .Bcast = { NULL, {.Coros = {0, NULL}} }
                         }
                     };
-                    ceu_bcast_enqueue(&$scp->bcast.dyn, ceu_$n);
-                    $scp->tofree = ceu_$n;
+                    ceu_bcast_enqueue(&$hld->bcast.dyn, ceu_$n);
+                    $hld->tofree = ceu_$n;
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
                 }
                 """
@@ -637,10 +635,10 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Num -> fset(this.tk, set, "((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
             is Expr.Tuple -> {
-                val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
+                val hld = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
-                    it.code(Pair(scp, "ceu_mem->arg_${i}_$n"))
+                    it.code(Pair(hld, "ceu_mem->arg_${i}_$n"))
                 }.joinToString("")
                 """
                 { // TUPLE ${this.tk.dump()}
@@ -648,18 +646,18 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_args_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = ceu_tuple_create($scp, ${this.args.size}, ceu_args_$n);
+                    CEU_Dynamic* ceu_$n = ceu_tuple_create($hld, ${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
                 }
                 """
             }
             is Expr.Dict -> {
-                val scp = if (set == null) this.upBlock()!!.toc(true) else set.first
+                val hld = if (set == null) this.upBlock()!!.toc(true) else set.first
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
-                    it.first.code (Pair(scp, "ceu_mem->arg_${i}_a_$n"))+
-                    it.second.code(Pair(scp, "ceu_mem->arg_${i}_b_$n"))
+                    it.first.code (Pair(hld, "ceu_mem->arg_${i}_a_$n"))+
+                    it.second.code(Pair(hld, "ceu_mem->arg_${i}_b_$n"))
                 }.joinToString("")
                 """
                 { // DICT ${this.tk.dump()}
@@ -667,7 +665,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_args_$n[${this.args.size}][2] = {
                         ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = ceu_dict_create($scp, ${this.args.size}, &ceu_args_$n);
+                    CEU_Dynamic* ceu_$n = ceu_dict_create($hld, ${this.args.size}, &ceu_args_$n);
                     assert(ceu_$n != NULL);
                     ${fset(this.tk, set, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
                 }
