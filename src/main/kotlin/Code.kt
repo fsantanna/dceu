@@ -1,19 +1,20 @@
 // block: String -> current enclosing block for normal allocation (if null, free on enclosing, but hold refuses any assignment
 // ret: Pair<block,var> -> enclosing assignment with destination holding block and variable
 fun fset(tk: Tk, hld: Pair<String, String>?, src: String): String {
-    return if (hld == null) "" else {
-        """
-        if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
-            // src.Dyn==NULL: refuses assignment (err, coro in coros)
-            assert($src.Dyn->hold != NULL && "TODO"); // also refuse
-            if ($src.Dyn->hold==NULL || $src.Dyn->hold->depth>${hld.first}->depth) {                
-                ceu_has_throw = 1;
-                strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
-                continue;
+    return when {
+        (hld == null) -> ""
+        (hld.first == "NULL") -> "${hld.second} = $src;"
+        else -> """
+            if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
+                // src.Dyn==NULL: refuses assignment (err, coro in coros)
+                if ($src.Dyn->hold==NULL || $src.Dyn->hold->depth>${hld.first}->depth) {
+                    ceu_has_throw = 1;
+                    strncpy(ceu_throw_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
+                    continue;
+                }
             }
-        }
-        ${hld.second} = $src;
-    """
+            ${hld.second} = $src;
+        """
     }
 }
 
@@ -54,6 +55,13 @@ class Coder (val outer: Expr.Block) {
     }
     fun Expr.upFuncOrBlock (): Expr? {
         return this.up { it is Expr.Func || it is Expr.Block }
+    }
+    fun Expr.XXX (hld: Pair<String, String>?): String {
+        return when {
+            (hld == null) -> this.upBlock()!!.toc(true)
+            (hld.first == "NULL") -> this.upBlock()!!.toc(true)
+            else -> hld.first
+        }
     }
 
     fun Expr.isDeclared (id: String): Boolean {
@@ -382,7 +390,7 @@ class Coder (val outer: Expr.Block) {
 
             is Expr.Coro -> {
                 val bupc = this.upBlock()!!.toc(true)
-                val hldBlk = if (hld == null) bupc else hld.first
+                val hldBlk = this.XXX(hld)
                 """
                 { // CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
@@ -460,7 +468,7 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Spawn -> {
                 val bupc = this.upBlock()!!.toc(true)
-                val hldBlk = if (hld == null) bupc else hld.first
+                val hldBlk = this.XXX(hld)
                 val (sets,args) = this.call.args.let {
                     Pair(
                         it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
@@ -502,7 +510,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Coros -> {
-                val hldBlk = if (hld == null) this.upBlock()!!.toc(true) else hld.first
+                val hldBlk = this.XXX(hld)
                 """
                 { // COROS ${this.tk.dump()}
                     CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
@@ -635,7 +643,7 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Num -> fset(this.tk, hld, "((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
             is Expr.Tuple -> {
-                val hldBlk = if (hld == null) this.upBlock()!!.toc(true) else hld.first
+                val hldBlk = this.XXX(hld)
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
                     it.code(Pair(hldBlk, "ceu_mem->arg_${i}_$n"))
@@ -653,7 +661,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Dict -> {
-                val hldBlk = if (hld == null) this.upBlock()!!.toc(true) else hld.first
+                val hldBlk = this.XXX(hld)
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
                     it.first.code (Pair(hldBlk, "ceu_mem->arg_${i}_a_$n"))+
