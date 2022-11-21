@@ -197,19 +197,19 @@ fun Coder.main (): String {
             }
         }
 
-        char* ceu_coro_create (CEU_Block* block, CEU_Value* task, CEU_Value* ret) {
+        char* ceu_coro_create (CEU_Block* dst, CEU_Block* src, CEU_Value* task, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Proto->Task.size);
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, block->tofree, block, {
+                CEU_VALUE_CORO, dst->tofree, src, {
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,task->Proto,0} } }
                 }
             };
-            ceu_bcast_enqueue(&block->bcast.dyn, coro);
-            block->tofree = coro;
+            ceu_bcast_enqueue(&dst->bcast.dyn, coro);
+            dst->tofree = coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             return NULL;
         }
@@ -440,19 +440,19 @@ fun Coder.main (): String {
         CEU_Proto ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
     """ // TUPLE / DICT
-        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n, CEU_Value* args) {
+        CEU_Dynamic* ceu_tuple_create (CEU_Block* dst, CEU_Block* src, int n, CEU_Value* args) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             if (ret == NULL) {
                 return NULL;
             }
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, hld->tofree, hld, {.Tuple={n,{}}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, dst->tofree, src, {.Tuple={n,{}}} };
             memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-            hld->tofree = ret;
+            dst->tofree = ret;
             return ret;
         }
 
-        CEU_Dynamic* ceu_dict_create (CEU_Block* hld, int n, CEU_Value (*args)[][2]) {
+        CEU_Dynamic* ceu_dict_create (CEU_Block* dst, CEU_Block* src, int n, CEU_Value (*args)[][2]) {
             int min = (n < 4) ? 4 : n; 
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             if (ret == NULL) {
@@ -464,11 +464,11 @@ fun Coder.main (): String {
                 return NULL;
             }
             memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
-            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, hld->tofree, hld, {.Dict={min,mem}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, dst->tofree, src, {.Dict={min,mem}} };
             if (args != NULL) {
                 memcpy(mem, args, n*2*sizeof(CEU_Value));
             }
-            hld->tofree = ret;
+            dst->tofree = ret;
             return ret;
         }
 
@@ -523,7 +523,7 @@ fun Coder.main (): String {
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_div_eq} };
-                    ceu_mem->err = ((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&ceu_mem_${outer.n}->block_${outer.n}, 0, NULL)} });
+                    ceu_mem->err = ((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&ceu_mem_${outer.n}->block_${outer.n}, NULL, 0, NULL)} });
                     assert(ceu_mem->err.Dyn != NULL);
                 }
                 ${this.code}
