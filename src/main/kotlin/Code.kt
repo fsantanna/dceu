@@ -429,7 +429,8 @@ class Coder (val outer: Expr.Block) {
             is Expr.Spawn -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val hld = this.hld_or_up(hold)
-                val (sets,args) = this.call.args.let {
+                val call = (this.call.es[0] as Expr.Call)
+                val (sets,args) = call.args.let {
                     Pair(
                         it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                         it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
@@ -440,7 +441,7 @@ class Coder (val outer: Expr.Block) {
                     ${if (this.coros == null) "" else this.coros.code(Pair(bupc, "ceu_mem->coros_$n"))}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
-                    ${this.call.f.code(Pair(bupc, "ceu_task_$n"))}
+                    ${call.f.code(Pair(bupc, "ceu_task_$n"))}
                     char* err = ${if (this.coros == null) {
                         "ceu_coro_create($hld, &ceu_task_$n, &ceu_coro_$n);"
                     } else {
@@ -449,7 +450,7 @@ class Coder (val outer: Expr.Block) {
                     if (err != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : %s", err);
+                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${call.f.tk.pos.lin}, col ${call.f.tk.pos.col}) : %s", err);
                         continue; // escape enclosing block;
                     }
                     ${fset(this.tk, hold, "ceu_coro_$n")}            
@@ -461,7 +462,7 @@ class Coder (val outer: Expr.Block) {
                     ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f(
                         ceu_coro_$n.Dyn,
                         $hld,
-                        ${this.call.args.size},
+                        ${call.args.size},
                         ceu_args_$n
                     );
                     if (ceu_has_throw) {
@@ -536,7 +537,8 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Resume -> {
                 val bupc = this.upBlock()!!.toc(true)
-                val (sets,args) = this.call.args.let {
+                val call = (this.call.es[0] as Expr.Call)
+                val (sets,args) = call.args.let {
                     Pair(
                         it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                         it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
@@ -549,18 +551,18 @@ class Coder (val outer: Expr.Block) {
                         $sets
                     }
                     CEU_Value ceu_coro_$n;
-                    ${this.call.f.code(Pair(bupc, "ceu_coro_$n"))}
+                    ${call.f.code(Pair(bupc, "ceu_coro_$n"))}
                     if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED) {                
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
+                        strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${call.f.tk.pos.lin}, col ${call.f.tk.pos.col}) : resume error : expected yielded task", 256);
                         continue; // escape enclosing block;
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
                     CEU_Value ceu_ret_$n = ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f(
                         ceu_coro_$n.Dyn,
                         $hld,
-                        ${this.call.args.size},
+                        ${call.args.size},
                         ceu_args_$n
                     );
                     if (ceu_has_throw) {

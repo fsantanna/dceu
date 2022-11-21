@@ -57,20 +57,23 @@ fun Expr.mem (): String {
         is Expr.Defer -> this.body.mem()
 
         is Expr.Coro -> this.task.mem()
-        is Expr.Spawn -> """
+        is Expr.Spawn -> {
+            val call = (this.call.es[0] as Expr.Call)
+            """
             struct { // SPAWN
                 ${if (this.coros==null) "" else "CEU_Value coros_$n;"}
                 union {
                     ${this.coros?.mem() ?: ""}
                     // CORO
-                    ${this.call.f.mem()}
+                    ${call.f.mem()}
                     struct { // ARGS
-                        ${this.call.args.map { it.mem() }.joinToString("")}
-                        ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                        ${call.args.map { it.mem() }.joinToString("")}
+                        ${call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                     };
                 };
             };
             """
+        }
         is Expr.Iter -> """
             struct { // ITER
                 CEU_Value coros_$n;
@@ -79,16 +82,19 @@ fun Expr.mem (): String {
             """
         is Expr.Bcast -> this.evt.mem()
         is Expr.Yield -> this.arg.mem()
-        is Expr.Resume -> """
+        is Expr.Resume -> {
+            val call = (this.call.es[0] as Expr.Call)
+            """
             union { // RESUME
                 // FUNC
-                ${this.call.f.mem()}
+                ${call.f.mem()}
                 struct { // ARGS
-                    ${this.call.args.map { it.mem() }.joinToString("")}
-                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                    ${call.args.map { it.mem() }.joinToString("")}
+                    ${call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 };
             };
             """
+        }
 
         is Expr.Tuple -> """
             struct { // TUPLE

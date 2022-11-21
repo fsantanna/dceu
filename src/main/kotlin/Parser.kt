@@ -203,7 +203,7 @@ class Parser (lexer_: Lexer)
                     val coros = if (!this.acceptFix("in")) null else {
                         this.expr()
                     }
-                    Expr.Spawn(tk0, coros, call as Expr.Call)
+                    Expr.Spawn(tk0, coros, call as Expr.Block)
                 }
             }
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
@@ -215,7 +215,7 @@ class Parser (lexer_: Lexer)
                     err_expected(tk1, "invalid resume : expected call")
 
                 }
-                Expr.Resume(tk0, call as Expr.Call)
+                Expr.Resume(tk0, call as Expr.Block)
             }
 
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
