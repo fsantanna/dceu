@@ -35,7 +35,7 @@ fun all (inp: String, pre: Boolean=false): String {
         return e.message!!
     }
     val c = try {
-        val coder = Coder(Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), es))
+        val coder = Coder(Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es))
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {

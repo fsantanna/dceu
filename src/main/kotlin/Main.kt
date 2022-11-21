@@ -38,7 +38,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Nat (val str_: String, val pos_: Pos, val tag: String?): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Block  (val tk_: Tk, val isFake: Boolean, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
@@ -96,7 +96,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         return e.message!! + "\n"
     }
     val c = try {
-        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),es))
+        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),false,es))
         coder.main()
     } catch (e: Throwable) {
         //throw e;

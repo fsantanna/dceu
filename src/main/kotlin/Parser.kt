@@ -110,7 +110,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Block(tk0, es)
+        return Expr.Block(tk0, false, es)
     }
 
     fun exprPrim (): Expr {
@@ -152,7 +152,7 @@ class Parser (lexer_: Lexer)
                     if (this.acceptFix("else")) {
                         this.block()
                     } else {
-                        Expr.Block(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Block(tk0, false, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -165,7 +165,7 @@ class Parser (lexer_: Lexer)
                         err(e.tk, "invalid while : expected identifier")
                     }
                     Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
-                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
+                        Expr.Block(tk0, true, listOf(Expr.Dcl(e.tk,false), this.block())))
                 } else {
                     Expr.While(tk0, e, this.block())
                 }
@@ -328,7 +328,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Fix
                 e = this.nest("if ${e.tostr()} { false } else { true }\n")
             } else {
-                e = Expr.Block(op, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
+                e = Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
             }
         }
         return e
@@ -345,7 +345,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Block(e.tk, listOf(Expr.Call(e.tk, e, list0(")") { this.expr() })))
+                    e = Expr.Block(e.tk, true, listOf(Expr.Call(e.tk, e, list0(")") { this.expr() })))
                 }
                 else -> break
             }
@@ -372,7 +372,7 @@ class Parser (lexer_: Lexer)
                         if ceu_${e.n} { ${e2.tostr()} } else { ceu_${e.n} }
                     }
                 """)
-                else  -> Expr.Block(op, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))))
+                else  -> Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))))
             }
         }
         return e

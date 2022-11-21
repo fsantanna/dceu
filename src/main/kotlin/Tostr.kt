@@ -1,6 +1,11 @@
 fun Expr.tostr (): String {
     return when (this) {
-        is Expr.Block  -> (if (this.tk.str=="do") "do " else "") + "{\n" + this.es.tostr() + "}\n"
+        is Expr.Block  -> if (this.isFake) {
+            assert(this.es.size == 1)
+            this.es[0].tostr()
+        } else {
+            (if (this.tk.str=="do") "do " else "") + "{\n" + this.es.tostr() + "}\n"
+        }
         is Expr.Dcl    -> "var " + this.tk.str
         is Expr.Set    -> "set " + this.dst.tostr() + " = " + this.src.tostr()
         is Expr.If     -> "if " + this.cnd.tostr() + " " + this.t.tostr() + "else " + this.f.tostr()
