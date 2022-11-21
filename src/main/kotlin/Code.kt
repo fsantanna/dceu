@@ -37,11 +37,11 @@ class Coder (val outer: Expr.Block) {
     }
 
     fun Expr.up (f: (Expr)->Boolean): Expr? {
-        val up = ups[this]
+        val x = ups[this]
         return when {
-            (up == null) -> null
-            f(up) -> up
-            else -> up.up(f)
+            (x == null) -> null
+            f(x) -> x
+            else -> x.up(f)
         }
     }
     fun Expr.upBlock (): Expr.Block? {

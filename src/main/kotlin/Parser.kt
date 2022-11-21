@@ -345,7 +345,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Block(e.tk, true, listOf(Expr.Call(e.tk, e, list0(")") { this.expr() })))
+                    e = Expr.Block(e.tk, true, listOf(Expr.Call(e.tk, e, (list0(")"){this.expr()}))))
                 }
                 else -> break
             }

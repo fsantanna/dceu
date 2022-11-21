@@ -17,7 +17,7 @@ fun Expr.tostr (): String {
 
         is Expr.Coros  -> "coroutines()"
         is Expr.Coro   -> "coroutine " + this.task.tostr()
-        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in"+this.coros.tostr())
+        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in "+this.coros.tostr())
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
         is Expr.Bcast  -> "broadcast " + this.evt.tostr()
         is Expr.Yield  -> "yield " + this.arg.tostr()

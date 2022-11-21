@@ -2,6 +2,17 @@ import org.junit.Test
 
 class TMisc {
     @Test
+    fun spawn_var() {
+        val out = ceu.all(
+            """
+            var x
+            spawn (task(){nil})(x) in coroutines()
+            println(0)
+        """
+        )
+        assert(out == "0\n1\n2\n") { out }
+    }
+    @Test
     fun bcast9() {
         val out = ceu.all(
             """
