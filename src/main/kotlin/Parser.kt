@@ -185,18 +185,12 @@ class Parser (lexer_: Lexer)
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
 
-            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
-            this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
-            this.acceptFix("resume") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val call = this.expr()
-                if (call !is Expr.Call) {
-                    err_expected(tk1, "invalid resume : expected call")
-
-                }
-                Expr.Resume(tk0, call as Expr.Call)
+            this.acceptFix("coroutines") -> {
+                this.acceptFix_err("(")
+                this.acceptFix_err(")")
+                Expr.Coros(this.tk0 as Tk.Fix)
             }
-            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (XCEU && this.checkFix("{")) {
@@ -216,10 +210,16 @@ class Parser (lexer_: Lexer)
                     Expr.Spawn(tk0, coros, call as Expr.Call)
                 }
             }
-            this.acceptFix("coroutines") -> {
-                this.acceptFix_err("(")
-                this.acceptFix_err(")")
-                Expr.Coros(this.tk0 as Tk.Fix)
+            this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("resume") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val call = this.expr()
+                if (call !is Expr.Call) {
+                    err_expected(tk1, "invalid resume : expected call")
+
+                }
+                Expr.Resume(tk0, call as Expr.Call)
             }
 
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {

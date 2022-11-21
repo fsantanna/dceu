@@ -62,13 +62,13 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.Throw  -> this.map(listOf(this.ex))
         is Expr.Defer  -> this.map(listOf(this.body))
 
-        is Expr.Coro   -> this.map(listOf(this.task))
-        is Expr.Bcast  -> this.map(listOf(this.arg))
-        is Expr.Resume -> this.map(listOf(this.call))
-        is Expr.Yield  -> this.map(listOf(this.arg))
-        is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
         is Expr.Coros  -> emptyMap()
+        is Expr.Coro   -> this.map(listOf(this.task))
+        is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
         is Expr.Iter   -> this.map(listOf(this.coros,this.body))
+        is Expr.Bcast  -> this.map(listOf(this.arg))
+        is Expr.Yield  -> this.map(listOf(this.arg))
+        is Expr.Resume -> this.map(listOf(this.call))
 
         is Expr.Nat    -> emptyMap()
         is Expr.Acc    -> emptyMap()

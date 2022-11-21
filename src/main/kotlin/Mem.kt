@@ -57,18 +57,6 @@ fun Expr.mem (): String {
         is Expr.Defer -> this.body.mem()
 
         is Expr.Coro -> this.task.mem()
-        is Expr.Bcast -> this.arg.mem()
-        is Expr.Resume -> """
-            union { // RESUME
-                // FUNC
-                ${this.call.f.mem()}
-                struct { // ARGS
-                    ${this.call.args.map { it.mem() }.joinToString("")}
-                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                };
-            };
-            """
-        is Expr.Yield -> this.arg.mem()
         is Expr.Spawn -> """
             struct { // SPAWN
                 ${if (this.coros==null) "" else "CEU_Value coros_$n;"}
@@ -87,6 +75,18 @@ fun Expr.mem (): String {
             struct { // ITER
                 CEU_Value coros_$n;
                 ${this.body.mem()}
+            };
+            """
+        is Expr.Bcast -> this.arg.mem()
+        is Expr.Yield -> this.arg.mem()
+        is Expr.Resume -> """
+            union { // RESUME
+                // FUNC
+                ${this.call.f.mem()}
+                struct { // ARGS
+                    ${this.call.args.map { it.mem() }.joinToString("")}
+                    ${this.call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                };
             };
             """
 
@@ -129,6 +129,7 @@ fun Expr.mem (): String {
             };
             """
 
-        else -> ""
+        is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> ""
+        is Expr.Coros, is Expr.Func, is Expr.XSeq -> ""
     }
 }

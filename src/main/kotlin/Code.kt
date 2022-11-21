@@ -391,6 +391,23 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
 
+            is Expr.Coros -> {
+                val hld = this.hld_or_up(hold)
+                """
+                { // COROS ${this.tk.dump()}
+                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
+                    assert(ceu_$n != NULL);
+                    *ceu_$n = (CEU_Dynamic) {
+                        CEU_VALUE_COROS, $hld->tofree, $hld, {
+                            .Bcast = { NULL, {.Coros = {0, NULL}} }
+                        }
+                    };
+                    ceu_bcast_enqueue(&$hld->bcast.dyn, ceu_$n);
+                    $hld->tofree = ceu_$n;
+                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
+                }
+                """
+            }
             is Expr.Coro -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val hld = this.hld_or_up(hold)
@@ -410,71 +427,6 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Bcast -> {
-                """
-                { // BCAST ${this.tk.dump()}
-                    CEU_Value ceu_arg_$n;
-                    ${this.arg.code(Pair("(&ceu_mem_${outer.n}->block_${outer.n})", "ceu_arg_$n"))}
-                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_arg_$n);
-                    if (ceu_has_throw) {
-                        continue; // escape enclosing block
-                    }
-                }
-                """
-            }
-            is Expr.Resume -> {
-                val bupc = this.upBlock()!!.toc(true)
-                val (sets,args) = this.call.args.let {
-                    Pair(
-                        it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
-                        it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
-                    )
-                }
-                val hld = this.hld_or_up(hold)
-                """
-                { // RESUME ${this.tk.dump()}
-                    { // SETS
-                        $sets
-                    }
-                    CEU_Value ceu_coro_$n;
-                    ${this.call.f.code(Pair(bupc, "ceu_coro_$n"))}
-                    if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED) {                
-                        ceu_has_throw = 1;
-                        ceu_throw = &CEU_THROW_ERROR;
-                        strncpy(ceu_throw_error_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
-                        continue; // escape enclosing block;
-                    }
-                    CEU_Value* ceu_args_$n[] = { $args };
-                    CEU_Value ceu_ret_$n = ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f(
-                        ceu_coro_$n.Dyn,
-                        $hld,
-                        ${this.call.args.size},
-                        ceu_args_$n
-                    );
-                    if (ceu_has_throw) {
-                        continue; // escape enclosing block;
-                    }
-                    ${fset(this.tk, hold, "ceu_ret_$n")}
-                }
-                """
-            }
-            is Expr.Yield -> """
-                { // YIELD ${this.tk.dump()}
-                    ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
-                    ceu_coro->Bcast.Coro.pc = $n;      // next resume
-                    ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
-                    return ceu_${this.upFunc()!!.n};
-                case $n:                    // resume here
-                    if (ceu_has_throw) {
-                        continue; // escape enclosing block
-                    }
-                    if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_clear) {
-                        continue; // from BCAST-CLEAR: escape enclosing block
-                    }
-                    assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                    ${fset(this.tk, hold, "(*ceu_args[0])")}
-                }
-                """
             is Expr.Spawn -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val hld = this.hld_or_up(hold)
@@ -519,23 +471,6 @@ class Coder (val outer: Expr.Block) {
                 }
                 """
             }
-            is Expr.Coros -> {
-                val hld = this.hld_or_up(hold)
-                """
-                { // COROS ${this.tk.dump()}
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
-                    assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Dynamic) {
-                        CEU_VALUE_COROS, $hld->tofree, $hld, {
-                            .Bcast = { NULL, {.Coros = {0, NULL}} }
-                        }
-                    };
-                    ceu_bcast_enqueue(&$hld->bcast.dyn, ceu_$n);
-                    $hld->tofree = ceu_$n;
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
-                }
-                """
-            }
             is Expr.Iter -> {
                 val bupc = this.upBlock()!!.toc(true)
                 val loc = this.loc.str
@@ -566,6 +501,71 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_has_throw) {
                         continue; // escape enclosing block
                     }
+                }
+                """
+            }
+            is Expr.Bcast -> {
+                """
+                { // BCAST ${this.tk.dump()}
+                    CEU_Value ceu_arg_$n;
+                    ${this.arg.code(Pair("(&ceu_mem_${outer.n}->block_${outer.n})", "ceu_arg_$n"))}
+                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_arg_$n);
+                    if (ceu_has_throw) {
+                        continue; // escape enclosing block
+                    }
+                }
+                """
+            }
+            is Expr.Yield -> """
+                { // YIELD ${this.tk.dump()}
+                    ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
+                    ceu_coro->Bcast.Coro.pc = $n;      // next resume
+                    ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
+                    return ceu_${this.upFunc()!!.n};
+                case $n:                    // resume here
+                    if (ceu_has_throw) {
+                        continue; // escape enclosing block
+                    }
+                    if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_clear) {
+                        continue; // from BCAST-CLEAR: escape enclosing block
+                    }
+                    assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
+                    ${fset(this.tk, hold, "(*ceu_args[0])")}
+                }
+                """
+            is Expr.Resume -> {
+                val bupc = this.upBlock()!!.toc(true)
+                val (sets,args) = this.call.args.let {
+                    Pair(
+                        it.mapIndexed { i,x -> x.code(Pair(bupc, "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                        it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
+                    )
+                }
+                val hld = this.hld_or_up(hold)
+                """
+                { // RESUME ${this.tk.dump()}
+                    { // SETS
+                        $sets
+                    }
+                    CEU_Value ceu_coro_$n;
+                    ${this.call.f.code(Pair(bupc, "ceu_coro_$n"))}
+                    if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED) {                
+                        ceu_has_throw = 1;
+                        ceu_throw = &CEU_THROW_ERROR;
+                        strncpy(ceu_throw_error_msg, "${tk.pos.file} : (lin ${this.call.f.tk.pos.lin}, col ${this.call.f.tk.pos.col}) : resume error : expected yielded task", 256);
+                        continue; // escape enclosing block;
+                    }
+                    CEU_Value* ceu_args_$n[] = { $args };
+                    CEU_Value ceu_ret_$n = ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f(
+                        ceu_coro_$n.Dyn,
+                        $hld,
+                        ${this.call.args.size},
+                        ceu_args_$n
+                    );
+                    if (ceu_has_throw) {
+                        continue; // escape enclosing block;
+                    }
+                    ${fset(this.tk, hold, "ceu_ret_$n")}
                 }
                 """
             }

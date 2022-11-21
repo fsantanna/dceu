@@ -7,16 +7,16 @@ fun Expr.tostr (): String {
         is Expr.While  -> "while " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
         is Expr.Throw  -> "throw " + this.ex.tostr()
-        is Expr.Catch  -> "catch " + this.cnd.tostr() + " " + this.body.tostr()
+        is Expr.Catch  -> "catch " + this.cnd.es[0].tostr() + " " + this.body.tostr()
         is Expr.Defer  -> "defer " + this.body.tostr()
 
-        is Expr.Coro   -> "coroutine " + this.task.tostr()
-        is Expr.Bcast  -> "broadcast " + this.arg.tostr()
-        is Expr.Resume -> "resume " + this.call.tostr()
-        is Expr.Yield  -> "yield " + this.arg.tostr()
-        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in"+this.coros.tostr())
         is Expr.Coros  -> "coroutines()"
+        is Expr.Coro   -> "coroutine " + this.task.tostr()
+        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in"+this.coros.tostr())
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
+        is Expr.Bcast  -> "broadcast " + this.arg.tostr()
+        is Expr.Yield  -> "yield " + this.arg.tostr()
+        is Expr.Resume -> "resume " + this.call.tostr()
 
         is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str

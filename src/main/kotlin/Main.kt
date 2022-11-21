@@ -48,13 +48,13 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
 
-    data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
-    data class Bcast  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
-    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Call): Expr(N++, tk_)
     data class Coros  (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Call): Expr(N++, tk_)
     data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class Bcast  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
