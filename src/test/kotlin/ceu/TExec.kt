@@ -634,7 +634,7 @@ class TExec {
     @Test
     fun catch1() {
         val out = all("""
-            catch #x {
+            catch err==#x {
                 throw #x
                 println(9)
             }
@@ -689,10 +689,10 @@ class TExec {
     @Test
     fun catch9() {
         val out = all("""
-            catch #e1 {
-                catch #e2 {
-                    catch #e3 {
-                        catch #e4 {
+            catch err==#e1 {
+                catch err==#e2 {
+                    catch err==#e3 {
+                        catch err==#e4 {
                             println(1)
                             throw #e3
                             println(99)
