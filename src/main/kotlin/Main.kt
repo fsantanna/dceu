@@ -21,7 +21,7 @@ val TAGS = listOf (
     "func", "task",
     "tuple", "dict",
     "coro", "coros",
-    "clear",            // bcast-clear
+    "clear", "error",      // bcast-clear
 )
 
 val GLOBALS = setOf (
@@ -44,7 +44,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val catch: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Block, val body: Expr.Block): Expr(N++, tk_)
     data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
 

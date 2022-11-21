@@ -49,7 +49,7 @@ fun Expr.mem (): String {
             """
         is Expr.Catch -> """
             union { // CATCH
-                ${this.catch.mem()}
+                ${this.cnd.mem()}
                 ${this.body.mem()}
             };
             """

@@ -178,7 +178,10 @@ class Parser (lexer_: Lexer)
                 val body = this.block(null)
                 Expr.Func(tk0, args, body)
             }
-            this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block(null))
+            this.acceptFix("catch") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                Expr.Catch(tk0, Expr.Block(tk0, listOf(this.expr())), this.block(null))
+            }
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
 

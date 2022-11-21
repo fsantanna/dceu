@@ -58,7 +58,7 @@ fun Expr.ups (): Map<Expr,Expr> {
         is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
         is Expr.While  -> this.map(listOf(this.cnd, this.body))
         is Expr.Func   -> this.map(listOf(this.body))
-        is Expr.Catch  -> this.map(listOf(this.catch, this.body))
+        is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
         is Expr.Throw  -> this.map(listOf(this.ex))
         is Expr.Defer  -> this.map(listOf(this.body))
 

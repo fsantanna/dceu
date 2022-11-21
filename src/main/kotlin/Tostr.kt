@@ -7,7 +7,7 @@ fun Expr.tostr (): String {
         is Expr.While  -> "while " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
         is Expr.Throw  -> "throw " + this.ex.tostr()
-        is Expr.Catch  -> "catch " + this.catch.tostr() + " " + this.body.tostr()
+        is Expr.Catch  -> "catch " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Defer  -> "defer " + this.body.tostr()
 
         is Expr.Coro   -> "coroutine " + this.task.tostr()

@@ -645,7 +645,7 @@ class TExec {
     @Test
     fun catch2_err() {
         val out = all("""
-            catch #x {
+            catch err==#x {
                 throw #y
                 println(9)
             }
@@ -654,7 +654,7 @@ class TExec {
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
-    fun catch4() {
+    fun catch3() {
         val out = all("""
             var f
             set f = func () {
@@ -676,18 +676,19 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun catch5_err() {
+    fun catch4() {
         val out = all("""
-            catch #x {
+            catch err==#x {
                 throw []
                 println(9)
             }
             println(1)
         """.trimIndent())
-        assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
+        //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
-    fun catch9() {
+    fun catch5() {
         val out = all("""
             catch err==#e1 {
                 catch err==#e2 {
@@ -710,15 +711,91 @@ class TExec {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun catch11_err() {
+    fun catch6_err() {
         val out = all("""
-            catch 1 {
+            catch true {
                 throw #y
                 println(9)
             }
             println(1)
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : catch error : expected tag\n") { out }
+        //assert(out == "anon : (lin 1, col 1) : catch error : expected tag\n") { out }
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun catch7() {
+        val out = ceu.all(
+            """
+            catch do {
+                err==#x
+            } {
+                throw #x
+                println(9)
+            }
+            println(1)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun catch8() {
+        val out = ceu.all(
+            """
+            var x
+            catch do {
+                set x = err
+                err==#x
+            } {
+                throw [#x]
+                println(9)
+            }
+            println(x)
+        """
+        )
+        assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun catch9() {
+        val out = ceu.all(
+            """
+            var x
+            catch do {
+                set x = err
+                err==#x
+            } {
+                throw #x
+                println(9)
+            }
+            println(x)
+        """
+        )
+        assert(out == "#x\n") { out }
+    }
+    @Test
+    fun catch10() {
+        val out = ceu.all(
+            """
+            catch err[0]==#x {
+                throw [#x]
+                println(9)
+            }
+            println(err)
+        """
+        )
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun catch11() {
+        val out = ceu.all(
+            """
+            catch false {
+                throw #xxx
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
 
     // NATIVE
