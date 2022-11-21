@@ -250,7 +250,7 @@ class TTask {
         assert(out == "1\n3\n") { out }
     }
 
-    // BROADCAST
+    // BCAST / BROADCAST
 
     @Test
     fun bcast1() {

@@ -685,7 +685,7 @@ class TExec {
             println(1)
         """.trimIndent())
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun catch5() {
@@ -796,6 +796,19 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n") { out }
+    }
+    @Test
+    fun catch12() {
+        val out = all(
+            """
+            catch err==[] {
+                throw []
+                println(9)
+            }
+            println(1)
+        """.trimIndent()
+        )
+        assert(out == "1\n") { out }
     }
 
     // NATIVE

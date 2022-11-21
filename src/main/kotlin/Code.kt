@@ -4,8 +4,7 @@
 fun fset(tk: Tk, hold: Pair<String, String>?, src: String): String {
     return if (hold == null) "" else """
         if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
-            // src.Dyn==NULL: refuses assignment across yield (err, evt, coro in coros)
-            if ($src.Dyn->hold==NULL || $src.Dyn->hold->depth>${hold.first}->depth) {
+            if ($src.Dyn->hold->depth > ${hold.first}->depth) {
                 ceu_has_throw = 1;
                 ceu_throw = &CEU_THROW_ERROR;
                 strncpy(ceu_throw_error_msg, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : set error : incompatible scopes", 256);
@@ -417,6 +416,9 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_arg_$n;
                     ${this.arg.code(Pair("(&ceu_mem_${outer.n}->block_${outer.n})", "ceu_arg_$n"))}
                     ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_arg_$n);
+                    if (ceu_has_throw) {
+                        continue; // escape enclosing block
+                    }
                 }
                 """
             }
