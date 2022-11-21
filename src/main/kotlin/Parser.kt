@@ -105,17 +105,17 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (tk0: Tk.Fix?): Expr.Block {
+    fun block (): Expr.Block {
+        val tk0 = this.tk0
         this.acceptFix_err("{")
-        val tk0_ = tk0 ?: this.tk0 as Tk.Fix
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Block(tk0_, es)
+        return Expr.Block(tk0, es)
     }
 
     fun exprPrim (): Expr {
         return when {
-            this.acceptFix("do") -> this.block(this.tk0 as Tk.Fix)
+            this.acceptFix("do") -> this.block()
             this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptEnu_err("Id")
@@ -144,16 +144,15 @@ class Parser (lexer_: Lexer)
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
-                val t = this.block(null)
+                val t = this.block()
                 val f = if (!XCEU) {
                     this.acceptFix_err("else")
-                    this.block(null)
+                    this.block()
                 } else {
                     if (this.acceptFix("else")) {
-                        this.block(null)
+                        this.block()
                     } else {
-                        val tk = Tk.Fix("{",this.tk0.pos.copy())
-                        Expr.Block(tk, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Block(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -166,24 +165,21 @@ class Parser (lexer_: Lexer)
                         err(e.tk, "invalid while : expected identifier")
                     }
                     Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
-                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block(null))))
+                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
                 } else {
-                    Expr.While(tk0, e, this.block(null))
+                    Expr.While(tk0, e, this.block())
                 }
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
-                val body = this.block(null)
+                val body = this.block()
                 Expr.Func(tk0, args, body)
             }
-            this.acceptFix("catch") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                Expr.Catch(tk0, Expr.Block(tk0, listOf(this.expr())), this.block(null))
-            }
+            this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
-            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block(null))
+            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             this.acceptFix("coroutines") -> {
                 this.acceptFix_err("(")
@@ -196,7 +192,7 @@ class Parser (lexer_: Lexer)
                 if (XCEU && this.checkFix("{")) {
                     this.nest("""
                         spawn (task () {
-                            ${this.block(null).es.tostr()}
+                            ${this.block().es.tostr()}
                         }) ()
                     """)
                 } else {
@@ -207,7 +203,7 @@ class Parser (lexer_: Lexer)
                     val coros = if (!this.acceptFix("in")) null else {
                         this.expr()
                     }
-                    Expr.Spawn(tk0, coros, call as Expr.Call)
+                    Expr.Block(tk0, listOf(Expr.Spawn(tk0, coros, call as Expr.Call)))
                 }
             }
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
@@ -219,7 +215,7 @@ class Parser (lexer_: Lexer)
                     err_expected(tk1, "invalid resume : expected call")
 
                 }
-                Expr.Resume(tk0, call as Expr.Call)
+                Expr.Block(tk0, listOf(Expr.Resume(tk0, call as Expr.Call)))
             }
 
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
@@ -254,18 +250,18 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("ifs")) -> {
                 this.acceptFix_err("{")
                 val e1 = this.expr()
-                val b1 = this.block(null)
+                val b1 = this.block()
                 var ifs = "if ${e1.tostr()} ${b1.tostr()}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
-                        val be = this.block(null)
+                        val be = this.block()
                         ifs += be.es.map { it.tostr()+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
                     }
                     val ei = this.expr()
-                    val bi = this.block((null))
+                    val bi = this.block()
                     ifs += """
                         if ${ei.tostr()} ${bi.tostr()}
                         else {
@@ -277,11 +273,11 @@ class Parser (lexer_: Lexer)
                 this.nest(ifs)
             }
             (XCEU && this.acceptFix("par")) -> {
-                val pars = mutableListOf(this.block(null))
+                val pars = mutableListOf(this.block())
                 this.acceptFix_err("with")
-                pars.add(this.block(null))
+                pars.add(this.block())
                 while (this.acceptFix("with")) {
-                    pars.add(this.block(null))
+                    pars.add(this.block())
                 }
                 val spws = pars.map { """
                     spawn (task () {
@@ -332,7 +328,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Fix
                 e = this.nest("if ${e.tostr()} { false } else { true }\n")
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))
+                e = Expr.Block(op, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
             }
         }
         return e
@@ -349,7 +345,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, list0(")") { this.expr() })
+                    e = Expr.Block(e.tk, listOf(Expr.Call(e.tk, e, list0(")") { this.expr() })))
                 }
                 else -> break
             }
@@ -376,7 +372,7 @@ class Parser (lexer_: Lexer)
                         if ceu_${e.n} { ${e2.tostr()} } else { ceu_${e.n} }
                     }
                 """)
-                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
+                else  -> Expr.Block(op, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))))
             }
         }
         return e

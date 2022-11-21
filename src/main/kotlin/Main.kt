@@ -38,13 +38,13 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Nat (val str_: String, val pos_: Pos, val tag: String?): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Block  (val tk_: Tk.Fix, val es: List<Expr>) : Expr(N++, tk_)
+    data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Func   (val tk_: Tk.Fix, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Block, val body: Expr.Block): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
 

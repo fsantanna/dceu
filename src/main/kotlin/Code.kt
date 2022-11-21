@@ -36,23 +36,22 @@ class Coder (val outer: Expr.Block) {
         this.mem = outer.mem()
     }
 
-    fun Expr.up (me: Boolean=false, f: (Expr)->Boolean): Expr? {
+    fun Expr.up (f: (Expr)->Boolean): Expr? {
         val up = ups[this]
         return when {
-            (me && f(this)) -> this
             (up == null) -> null
             f(up) -> up
-            else -> up.up(me, f)
+            else -> up.up(f)
         }
     }
-    fun Expr.upBlock (me: Boolean=false): Expr.Block? {
-        return this.up(me) { it is Expr.Block } as Expr.Block?
+    fun Expr.upBlock (): Expr.Block? {
+        return this.up() { it is Expr.Block } as Expr.Block?
     }
-    fun Expr.upFunc (me: Boolean=false): Expr.Func? {
-        return this.up(me) { it is Expr.Func } as Expr.Func?
+    fun Expr.upFunc (): Expr.Func? {
+        return this.up() { it is Expr.Func } as Expr.Func?
     }
-    fun Expr.upFuncOrBlock (me: Boolean=false): Expr? {
-        return this.up(me) { it is Expr.Func || it is Expr.Block }
+    fun Expr.upFuncOrBlock (): Expr? {
+        return this.up() { it is Expr.Func || it is Expr.Block }
     }
 
     fun Expr.hld_or_up (hold: Pair<String, String>?): String {
@@ -357,7 +356,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Catch -> {
-                val bupc = this.cnd.upBlock(true)!!.toc(true)
+                val bupc = this.upBlock()!!.toc(true)
                 """
                 { // CATCH ${this.tk.dump()}
                     do {
@@ -367,7 +366,7 @@ class Coder (val outer: Expr.Block) {
                         ceu_has_throw = 0;
                         //ceu_print1(ceu_err);
                         CEU_Value ceu_catch_$n;
-                        ceu_err_block.depth = $bupc->depth;
+                        ceu_err_block.depth = $bupc->depth + 1;
                         ${this.cnd.code(Pair(bupc, "ceu_catch_$n"))}
                         if (!ceu_as_bool(&ceu_catch_$n)) {
                             ceu_has_throw = 1; // UNCAUGHT: escape to outer
