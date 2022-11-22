@@ -142,13 +142,7 @@ class Coder (val outer: Expr.Block) {
                     do {
                         $es
                     } while (0);
-                    { // BCAST-CLEAR ${this.tk.dump()}
-                        ceu_evt = &CEU_EVT_CLEAR;
-                        ceu_has_bcast++;
-                        ceu_bcast_blocks(&ceu_mem->block_$n);
-                        ceu_has_bcast--;
-                        ceu_evt = NULL;
-                    }
+                    ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
                     { // DEFERS ${this.tk.dump()}
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
@@ -469,11 +463,7 @@ class Coder (val outer: Expr.Block) {
                 { // BCAST ${this.tk.dump()}
                     CEU_Value ceu_$n;
                     ${this.evt.code(Pair("(&ceu_evt_block)", "ceu_$n"))}
-                    ceu_evt = &ceu_$n;
-                    ceu_has_bcast++;
-                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}));
-                    ceu_has_bcast--;
-                    ceu_evt = NULL;
+                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_$n);
                     if (ceu_has_throw) {
                         continue; // escape enclosing block
                     }
