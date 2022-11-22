@@ -796,21 +796,19 @@ class TTask {
         """
             spawn task () {
                 yield nil
-                println(evt)
-                while (true) {
-                    println(999)
-                    println(evt)
-                    if {==}(evt[#type],#x) { false } else { true }
+                while (if {==}(evt[#type],#x) { false } else { true }) {
                     yield nil
-                    println(1)
-                    println(evt)
                 }
+                println(99)
             }()
+            println(1)
             broadcast @[(#type,#y)]
+            println(2)
             broadcast @[(#type,#x)]
+            println(3)
         """
         )
-        assert(out == "anon : (lin 5, col 27) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n2\n99\n3\n") { out }
     }
     @Test
     fun evt4() {
@@ -818,7 +816,6 @@ class TTask {
             """
             spawn task () {
                 while (true) {
-                    println(999)
                     println(evt)
                     yield nil
                 }
