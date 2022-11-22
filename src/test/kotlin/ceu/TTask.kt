@@ -160,7 +160,7 @@ class TTask {
             resume (coroutine T) ()
             println(1)
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "2\n1\n") { out }
     }
 
     // SPAWN
@@ -265,6 +265,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
+                println(evt)
                 set v = yield nil
                 println(v)                
                 println(evt)                
@@ -277,7 +278,7 @@ class TTask {
             broadcast 2
             broadcast 3
         """)
-        assert(out == "1\n1\n2\n2\n") { out }
+        assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
     }
     @Test
     fun bcast2() {
@@ -321,16 +322,16 @@ class TTask {
     fun bcast4() {
         val out = all("""
             var tk
-            set tk = task (v) {
+            set tk = task () {
                 do {
-                    println(v)
-                    set v = yield nil
-                    println(v)
+                    println(evt)
+                    yield nil
+                    println(evt)
                 }
                 do {
-                    println(v)
-                    set v = yield nil
-                    println(v)
+                    println(evt)
+                    yield nil
+                    println(evt)
                 }
             }
             var co
@@ -348,8 +349,8 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                set v = yield nil
-                println(v)
+                yield nil
+                println(evt)
             }
             var co
             set co = coroutine tk
@@ -372,10 +373,9 @@ class TTask {
     fun bcast7() {
         val out = all("""
             var tk
-            set tk = task (v) {
-                println(v)
-                set v = yield nil
-                println(v)                
+            set tk = task () {
+                yield nil
+                println(evt)                
             }
             var co1
             set co1 = coroutine tk
@@ -387,16 +387,15 @@ class TTask {
                 broadcast 3
             }
         """)
-        assert(out == "1\n1\n2\n2\n") { out }
+        assert(out == "2\n2\n") { out }
     }
     @Test
     fun bcast8() {
         val out = all("""
             var tk
             set tk = task (v) {
-                println(v)
-                set v = yield nil
-                println(v)                
+                yield nil
+                println(evt)                
             }
             var co1
             set co1 = coroutine tk
@@ -408,7 +407,7 @@ class TTask {
                 broadcast 3
             }()
         """)
-        assert(out == "1\n1\n2\n2\n") { out }
+        assert(out == "2\n2\n") { out }
     }
 
     // POOL
@@ -422,8 +421,8 @@ class TTask {
             var T
             set T = task (v) {
                 println(v)
-                set v = yield nil
-                println(v)
+                yield nil
+                println(evt)
             }
             do {
                 spawn T(1) in ts

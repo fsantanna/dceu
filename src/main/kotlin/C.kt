@@ -188,6 +188,9 @@ fun Coder.main (): String {
             ceu_bcast_blocks_aux(cur);
             ceu_has_bcast--;
             ceu_evt = prv;
+            if (ceu_has_bcast == 0) {
+                ceu_block_free(&ceu_evt_block);
+            }
         }
         
         void ceu_bcast_dyns (CEU_Dynamic* cur) {
