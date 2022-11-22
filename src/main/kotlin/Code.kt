@@ -296,13 +296,15 @@ class Coder (val outer: Expr.Block) {
                                     assert(0 && "bug found");
                                     break;
                                 case 0: {
+                                    int ceu_depth = (ceu_ret==NULL ? 1 : ceu_ret->depth + 1);
+                                    ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
                         """)}
                         { // ARGS
                             int ceu_i = 0;
                             ${this.args.map {
                                 val id = it.str.noSpecial()
                                 """
-                                ceu_mem->_${id}_ = NULL; // TODO: create Block at Func top-level
+                                ceu_mem->_${id}_ = ${this.body.toc(true)};
                                 if (ceu_i < ceu_n) {
                                     ceu_mem->$id = *ceu_args[ceu_i];
                                 } else {
@@ -444,7 +446,10 @@ class Coder (val outer: Expr.Block) {
                         if (ceu_mem->$loc.Dyn == NULL) {
                             continue; // escape enclosing block
                         }
+                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold; 
+                        ceu_mem->$loc.Dyn->hold = ${this.body.toc(true)};
                         ${this.body.code(null)}
+                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n; 
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
                         goto CEU_ITER_$n;
                     } while (0);

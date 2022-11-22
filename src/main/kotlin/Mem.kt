@@ -69,6 +69,7 @@ fun Expr.mem (): String {
         is Expr.Iter -> """
             struct { // ITER
                 CEU_Value coros_$n;
+                CEU_Block* hold_$n;
                 ${this.body.mem()}
             };
             """

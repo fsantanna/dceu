@@ -409,9 +409,79 @@ class TTask {
         """)
         assert(out == "2\n2\n") { out }
     }
+    @Test
+    fun bcast9() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (v) {
+                set v = yield nil
+                throw #1                
+            }
+            var co1
+            set co1 = coroutine tk
+            var co2
+            set co2 = coroutine tk
+            catch err==#1 {
+                func () {
+                    println(1)
+                    broadcast 1
+                    println(2)
+                    broadcast 2
+                    println(3)
+                    broadcast 3
+                }()
+            }
+            println(99)
+        """
+        )
+        assert(out == "1\n2\n99\n") { out }
+    }
+    @Test
+    fun bcast10() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (v) {
+                println(v)
+                yield nil
+                println(evt)                
+                yield nil
+                println(evt)                
+            }
+            var co1
+            set co1 = coroutine tk
+            var co2
+            set co2 = coroutine tk
+            catch err==#1 {
+                func () {
+                    println(1)
+                    resume co1(10)
+                    resume co2(10)
+                    println(2)
+                    broadcast [20]
+                    println(3)
+                    broadcast @[(30,30)]
+                }()
+            }
+        """
+        )
+        assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
+    }
 
     // POOL
 
+    @Test
+    fun pool0() {
+        val out = ceu.all(
+            """
+            var x
+            spawn (task(){nil})(x) in coroutines()
+            println(0)
+        """
+        )
+        assert(out == "0\n") { out }
+    }
     @Test
     fun pool1() {
         val out = all("""
@@ -608,4 +678,38 @@ class TTask {
         assert(out == "#coros\n1\n2\n") { out }
     }
 
+    // EVT
+
+    @Test
+    fun evt_hld1_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) {
+                set xxx = evt
+            }
+            var co
+            set co = coroutine tk
+            broadcast []
+        """
+        )
+        assert(out == "anon : (lin 4, col 27) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun evt_hld2_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) {
+                yield nil
+                set xxx = evt
+            }
+            var co
+            set co = coroutine tk
+            broadcast 1
+            broadcast []
+        """
+        )
+        assert(out == "anon : (lin 5, col 27) : set error : incompatible scopes\n") { out }
+    }
 }
