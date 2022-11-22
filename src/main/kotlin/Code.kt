@@ -233,18 +233,12 @@ class Coder (val outer: Expr.Block) {
                 """
             is Expr.While -> """
                 { // WHILE ${this.tk.dump()}
-                    do {
-                CEU_WHILE_$n:;
-                        CEU_Value ceu_cnd_$n;
-                        ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
-                        if (!ceu_as_bool(&ceu_cnd_$n)) {
-                            continue; // escape enclosing block
-                        }
+                CEU_WHILE_START_$n:;
+                    CEU_Value ceu_cnd_$n;
+                    ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
+                    if (ceu_as_bool(&ceu_cnd_$n)) {
                         ${this.body.code(null)}
-                        goto CEU_WHILE_$n;
-                    } while (0);
-                    if (ceu_has_throw) {
-                        continue; // escape enclosing block
+                        goto CEU_WHILE_START_$n;
                     }
                 }
                 """
