@@ -69,6 +69,7 @@
 - ceu2c
     - struct <- tuple
     - vec <- buf
+- call w/o blocks optimize
 
 # IDEAS
 

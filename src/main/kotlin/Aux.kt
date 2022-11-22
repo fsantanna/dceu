@@ -20,6 +20,14 @@ fun Tk.Id.fromOp (): String {
     }
 }
 
+fun Any?.cond (f: ()->String): String {
+    return when (this) {
+        null  -> ""
+        false -> ""
+        else  -> f()
+    }
+}
+
 fun String.noSpecial (): String {
     val MAP = mapOf(
         Pair('\'', "_plic"),
@@ -27,10 +35,6 @@ fun String.noSpecial (): String {
         Pair('!', "_bang"),
     )
     return this.toList().map { MAP[it] ?: it }.joinToString("")
-}
-
-fun Expr.Func.isTask (): Boolean {
-    return (this.tk.str == "task")
 }
 
 fun err (pos: Pos, str: String) {

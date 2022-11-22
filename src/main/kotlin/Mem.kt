@@ -2,9 +2,9 @@ fun Expr.mem (): String {
     return when (this) {
         is Expr.Block -> {
             fun List<Expr>.seq (i: Int): String {
-                return if (i == this.size) "" else {
+                return (i != this.size).cond {
                     val s = if (this[i] is Expr.Block) "union" else "struct"
-                    return """
+                    """
                         $s {
                             ${this[i].mem()}
                             ${this.seq(i+1)}
@@ -59,7 +59,7 @@ fun Expr.mem (): String {
         is Expr.Coro -> this.task.mem()
         is Expr.Spawn -> """
             struct { // SPAWN
-                ${if (this.coros==null) "" else "CEU_Value coros_$n;"}
+                ${this.coros.cond{"CEU_Value coros_$n;"}}
                 union {
                     ${this.coros?.mem() ?: ""}
                     ${this.call.mem()}

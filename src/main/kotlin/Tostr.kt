@@ -4,7 +4,7 @@ fun Expr.tostr (): String {
             assert(this.es.size == 1)
             this.es[0].tostr()
         } else {
-            (if (this.tk.str=="do") "do " else "") + "{\n" + this.es.tostr() + "}\n"
+            (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr() + "}\n"
         }
         is Expr.Dcl    -> "var " + this.tk.str
         is Expr.Set    -> "set " + this.dst.tostr() + " = " + this.src.tostr()
@@ -17,7 +17,7 @@ fun Expr.tostr (): String {
 
         is Expr.Coros  -> "coroutines()"
         is Expr.Coro   -> "coroutine " + this.task.tostr()
-        is Expr.Spawn  -> "spawn " + this.call.tostr() + (if (this.coros==null) "" else " in "+this.coros.tostr())
+        is Expr.Spawn  -> "spawn " + this.call.tostr() + this.coros.cond{" in "+this.coros!!.tostr()}
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
         is Expr.Bcast  -> "broadcast " + this.evt.tostr()
         is Expr.Yield  -> "yield " + this.arg.tostr()
