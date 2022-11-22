@@ -161,7 +161,8 @@ fun Coder.main (): String {
     """ // BCAST / EVT
         int ceu_has_bcast = 0;
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
-        CEU_Value* ceu_evt = NULL;
+        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
+        CEU_Value* ceu_evt = &CEU_EVT_NIL;
         CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
             //  - can pass further
             //  - cannot pass back
