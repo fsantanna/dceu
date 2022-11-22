@@ -125,10 +125,10 @@ class TXExec {
     @Test
     fun bcast1() {
         val out = all("""
-            var tk = task (v) {
-                println(v)
-                set v = yield ()
-                println(v)                
+            var tk = task () {
+                println(evt)
+                yield ()
+                println(evt)                
             }
             var co1 = coroutine tk
             var co2 = coroutine tk
@@ -185,7 +185,7 @@ class TXExec {
         assert(out == "1\t3\n") { out }
     }
     @Test
-    fun index2_dict() {
+    fun todo_index2_dict() {
         val out = all("""
             var t = @[ (#x,1), (#y,2) ]
             println(t.x, t.y)

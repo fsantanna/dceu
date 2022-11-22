@@ -509,6 +509,11 @@ fun Coder.main (): String {
             //      - must set its depth at the beginning 
             //      - must not yield
             //      - must deallocate at the end
+        int ceu_has_throw_clear (void) {
+            return (ceu_has_throw > 0) || (
+                ceu_has_bcast>0 && ceu_evt->tag==CEU_VALUE_TAG && ceu_evt->Tag==CEU_TAG_clear
+            );
+        }
     """ +
     """ // FUNCS
         typedef struct {

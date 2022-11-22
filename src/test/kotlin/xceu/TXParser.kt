@@ -183,7 +183,7 @@ class TXParser {
         val l = lexer("- not - 1")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Call)
+        assert(e is Expr.Block && e.isFake)
         assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
     }
 

@@ -10,6 +10,7 @@ import exec
 import main
 import org.junit.Ignore
 import org.junit.Test
+import tostr
 import java.io.File
 
 // search in tests output for
@@ -34,6 +35,7 @@ fun all (inp: String, pre: Boolean=false): String {
     } catch (e: Throwable) {
         return e.message!!
     }
+    //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
         val coder = Coder(Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es))
         coder.main()

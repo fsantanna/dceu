@@ -790,4 +790,42 @@ class TTask {
         )
         assert(out == "anon : (lin 5, col 27) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun evt_hld3() {
+        val out = ceu.all(
+        """
+            spawn task () {
+                yield nil
+                println(evt)
+                while (true) {
+                    println(999)
+                    println(evt)
+                    if {==}(evt[#type],#x) { false } else { true }
+                    yield nil
+                    println(1)
+                    println(evt)
+                }
+            }()
+            broadcast @[(#type,#y)]
+            broadcast @[(#type,#x)]
+        """
+        )
+        assert(out == "anon : (lin 5, col 27) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun evt4() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                while (true) {
+                    println(999)
+                    println(evt)
+                    yield nil
+                }
+            }()
+            broadcast 1
+        """
+        )
+        assert(out == "nil\n1\n") { out }
+    }
 }

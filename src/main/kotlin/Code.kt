@@ -153,7 +153,7 @@ class Coder (val outer: Expr.Block) {
                     ${(f_b!=null && f_b !is Expr.Func).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
                     ${this.upFuncOrBlock().let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{"ceu_coro->Bcast.Coro.block = NULL;"}}
                     ceu_block_free(&ceu_mem->block_$n);
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue;   // escape to end of enclosing block
                     }
                 }
@@ -290,6 +290,9 @@ class Coder (val outer: Expr.Block) {
                                     assert(0 && "bug found");
                                     break;
                                 case 0: {
+                                    if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
+                                        continue; // from BCAST-CLEAR: escape enclosing block
+                                    }
                                     int ceu_depth = (ceu_ret==NULL ? 1 : ceu_ret->depth + 1);
                                     ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
                         """}}
@@ -307,11 +310,6 @@ class Coder (val outer: Expr.Block) {
                                 ceu_i++;
                                 """
                             }.joinToString("")}
-                        }
-                        { // started with BCAST-CLEAR
-                            if (ceu_has_bcast>0 && ceu_evt->tag==CEU_VALUE_TAG && ceu_evt->Tag==CEU_TAG_clear) {
-                                continue; // from BCAST-CLEAR: escape enclosing block
-                            }
                         }
                         // BODY
                         ${this.body.code(Pair("ceu_ret", "ceu_$n"))}
@@ -356,7 +354,7 @@ class Coder (val outer: Expr.Block) {
                     do {
                         ${this.body.code(hold)}
                     } while (0);
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         ceu_has_throw = 0;
                         //ceu_print1(ceu_err);
                         CEU_Value ceu_catch_$n;
@@ -451,7 +449,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.n == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
                 }
@@ -463,7 +461,7 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_$n;
                     ${this.evt.code(Pair("(&ceu_evt_block)", "ceu_$n"))}
                     ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_$n);
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
                 }
@@ -476,11 +474,8 @@ class Coder (val outer: Expr.Block) {
                     ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
                     return ceu_${this.upFunc()!!.n};
                 case $n:                    // resume here
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
-                    }
-                    if (ceu_has_bcast>0 && ceu_evt->tag==CEU_VALUE_TAG && ceu_evt->Tag==CEU_TAG_clear) {
-                        continue; // from BCAST-CLEAR: escape enclosing block
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ceu_evt_block.depth = ${this.upBlock()!!.toc(true)}->depth + 1;
@@ -544,7 +539,7 @@ class Coder (val outer: Expr.Block) {
                         ${fset(this.tk, hold, "ceu_$n")}
                         """
                     }}
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block;
                     }
                 //}
@@ -728,7 +723,7 @@ class Coder (val outer: Expr.Block) {
                         ${this.args.size},
                         ceu_args_$n
                     );
-                    if (ceu_has_throw) {
+                    if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
                     ${iscall.cond{fset(this.tk, hold, "ceu_$n")}}
