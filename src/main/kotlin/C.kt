@@ -199,7 +199,9 @@ fun Coder.main (): String {
                             // skip
                         } else {
                             ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                            cur->Bcast.Coro.task->Task.f(cur, NULL, 0, NULL);
+                            CEU_Value arg = { CEU_VALUE_NIL };
+                            CEU_Value* args[] = { &arg };
+                            cur->Bcast.Coro.task->Task.f(cur, NULL, 1, args);
                         }
                         break;
                     }
