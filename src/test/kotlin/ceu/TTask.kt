@@ -468,6 +468,23 @@ class TTask {
         )
         assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
     }
+    @Test
+    fun bcast11() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (v) {
+                do {
+                    set v = evt
+                }
+            }
+            var co
+            set co = coroutine tk
+            broadcast []
+        """
+        )
+        assert(out == "anon : (lin 5, col 29) : set error : incompatible scopes\n") { out }
+    }
 
     // POOL
 
@@ -648,6 +665,47 @@ class TTask {
             }
         """)
         assert(out == "anon : (lin 9, col 27) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pool12_err_scope() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () { yield nil }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            while xxx in ts {
+                var yyy
+                while zzz in ts {
+                    set yyy = zzz
+                }
+                set yyy = xxx
+            }
+        """
+        )
+        assert(out == "anon : (lin 10, col 31) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pool13_scope() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () { yield nil }
+            var ts
+            set ts = coroutines()
+            spawn T() in ts
+            while xxx in ts {
+                var yyy
+                while zzz in ts {
+                    nil
+                }
+                set yyy = xxx
+            }
+            println(1)
+        """
+        )
+        assert(out == "1\n") { out }
     }
     @Test
     fun poolN() {
