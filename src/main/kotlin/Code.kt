@@ -665,18 +665,12 @@ class Coder (val outer: Expr.Block) {
                 val resume = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Resume) up2 else null)
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
-                fun xcall (f: ()->String): String {
-                    return if (iscall) f() else ""
-                }
-                fun xspawn (f: ()->String): String {
-                    return if (spawn!=null) f() else ""
-                }
-                fun xresume (f: ()->String): String {
-                    return if (resume!=null) f() else ""
-                }
 
-                val bupc = this.upBlock()!!.toc(true)
-                val hld = this.hld_or_up(hold)
+                val (bupc,bupupc) = this.upBlock()!!.let {
+                    Pair(it.toc(true), it.upBlock()!!.toc(true))
+                }
+                val uphld = this.hld_or_up(hold)
+                val upuphld = this.upBlock()!!.hld_or_up(hold)
                 val (f,dyn) = if (iscall) {
                     Pair("ceu_f_$n.Proto->Func", "ceu_f_$n.Proto")
                 } else {
@@ -701,12 +695,12 @@ class Coder (val outer: Expr.Block) {
                 """} +
                 spawn.cond{"""
                 { // SPAWN/CORO ${this.tk.dump()}
-                    ${if (spawn!!.coros == null) "" else spawn.coros!!.code(Pair(bupc, "ceu_mem->coros_${spawn.n}"))}
+                    ${spawn!!.coros.cond{spawn.coros!!.code(Pair(bupupc, "ceu_mem->coros_${spawn.n}"))}}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
-                    ${this.f.code(Pair(bupc, "ceu_task_$n"))}
+                    ${this.f.code(Pair(bupupc, "ceu_task_$n"))}
                     char* ceu_err_$n = ${if (spawn.coros == null) {
-                        "ceu_coro_create($hld, &ceu_task_$n, &ceu_coro_$n);"
+                        "ceu_coro_create($upuphld, &ceu_task_$n, &ceu_coro_$n);"
                     } else {
                         "ceu_coros_create(ceu_mem->coros_${spawn.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);"
                     }}
@@ -715,7 +709,7 @@ class Coder (val outer: Expr.Block) {
                 resume.cond{"""
                 { // RESUME ${this.tk.dump()}
                     CEU_Value ceu_coro_$n;
-                    ${this.f.code(Pair(bupc, "ceu_coro_$n"))}
+                    ${this.f.code(Pair(bupupc, "ceu_coro_$n"))}
                     char* ceu_err_$n = NULL;
                     if (ceu_coro_$n.tag!=CEU_VALUE_CORO || ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED) {                
                         ceu_err_$n = "resume error : expected yielded task";
@@ -736,7 +730,7 @@ class Coder (val outer: Expr.Block) {
                     ${resume.cond { "CEU_Value ceu_$n = " }}
                     $f(
                         $dyn,
-                        $hld,
+                        $uphld,
                         ${this.args.size},
                         ceu_args_$n
                     );

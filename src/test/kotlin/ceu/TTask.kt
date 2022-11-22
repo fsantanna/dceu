@@ -160,7 +160,7 @@ class TTask {
             resume (coroutine T) ()
             println(1)
         """)
-        assert(out == "2\n1\n") { out }
+        assert(out == "1\n2\n") { out }
     }
 
     // SPAWN
@@ -212,6 +212,26 @@ class TTask {
             spawn (func () {nil})
         """)
         assert(out == "anon : (lin 3, col 9) : expected invalid spawn : expected call : have end of file") { out }
+    }
+    @Test
+    fun spawn5() {
+        val out = all("""
+            var t
+            set t = task () {
+                println(1)
+                do {
+                    println(2)
+                    yield nil
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = spawn t()
+            resume co()
+            println(5)
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
     }
 
     // THROW
