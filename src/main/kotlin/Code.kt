@@ -112,6 +112,7 @@ class Coder (val outer: Expr.Block) {
         }
         return when {
             (id == "err") -> "(*ceu_err)"
+            (id == "evt") -> "(*ceu_evt)"
             else -> this.aux(0)
         }
     }
@@ -142,8 +143,11 @@ class Coder (val outer: Expr.Block) {
                         $es
                     } while (0);
                     { // BCAST-CLEAR ${this.tk.dump()}
-                        CEU_Value ceu_arg = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
-                        ceu_bcast_blocks(&ceu_mem->block_$n, &ceu_arg);
+                        ceu_evt = &CEU_EVT_CLEAR;
+                        ceu_has_bcast++;
+                        ceu_bcast_blocks(&ceu_mem->block_$n);
+                        ceu_has_bcast--;
+                        ceu_evt = NULL;
                     }
                     { // DEFERS ${this.tk.dump()}
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
@@ -315,7 +319,7 @@ class Coder (val outer: Expr.Block) {
                             }.joinToString("")}
                         }
                         { // started with BCAST-CLEAR
-                            if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_clear) {
+                            if (ceu_has_bcast>0 && ceu_evt->tag==CEU_VALUE_TAG && ceu_evt->Tag==CEU_TAG_clear) {
                                 continue; // from BCAST-CLEAR: escape enclosing block
                             }
                         }
@@ -466,7 +470,10 @@ class Coder (val outer: Expr.Block) {
                     CEU_Value ceu_$n;
                     ${this.evt.code(Pair("(&ceu_evt_block)", "ceu_$n"))}
                     ceu_evt = &ceu_$n;
-                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_arg_$n);
+                    ceu_has_bcast++;
+                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}));
+                    ceu_has_bcast--;
+                    ceu_evt = NULL;
                     if (ceu_has_throw) {
                         continue; // escape enclosing block
                     }
@@ -483,7 +490,7 @@ class Coder (val outer: Expr.Block) {
                     if (ceu_has_throw) {
                         continue; // escape enclosing block
                     }
-                    if (ceu_n>0 && ceu_args[0]->tag==CEU_VALUE_TAG && ceu_args[0]->Tag==CEU_TAG_clear) {
+                    if (ceu_has_bcast>0 && ceu_evt->tag==CEU_VALUE_TAG && ceu_evt->Tag==CEU_TAG_clear) {
                         continue; // from BCAST-CLEAR: escape enclosing block
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");

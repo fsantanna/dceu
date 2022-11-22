@@ -10,7 +10,7 @@ class TMisc {
             println(0)
         """
         )
-        assert(out == "0\n1\n2\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun bcast9() {

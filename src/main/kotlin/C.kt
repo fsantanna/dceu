@@ -8,7 +8,6 @@ fun Coder.main (): String {
         #include <assert.h>
         #include <stdarg.h>
         #include <math.h>
-
     """ +
     """ // VALUE
         typedef enum CEU_VALUE {
@@ -126,43 +125,20 @@ fun Coder.main (): String {
                 free(cur);
             }
         }
-        #if 0
-        void ceu_block_move (CEU_Dynamic* V, CEU_Block* FR, CEU_Block* TO) {
-            assert(V->tag == CEU_VALUE_TUPLE && "bug found");
-            CEU_Dynamic* prv = NULL;
-            CEU_Dynamic* cur = FR->tofree;
-            while (cur != NULL) {
-                if (cur == V) {
-                    if (prv == NULL) {
-                        FR->tofree = NULL;
-                    } else {
-                        prv->next = cur->next;
-                    }              
-                    //assert(0 && "OK");
-                    cur->hold = TO;
-                    cur->next = TO->tofree;
-                    TO->tofree = cur;
-                    break;
-                }
-                prv = cur;
-                cur = cur->next;
-            }
-        }
-        #endif
     """ +
     """ // BCAST / COROS
-        void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg);
-        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* arg) {
+        void ceu_bcast_dyns (CEU_Dynamic* cur);
+        void ceu_bcast_blocks (CEU_Block* cur) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
-                    ceu_bcast_dyns(dyn, arg);
+                    ceu_bcast_dyns(dyn);
                 }
                 cur = cur->bcast.block;
             }
         }
         
-        void ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* arg) {
+        void ceu_bcast_dyns (CEU_Dynamic* cur) {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 switch (cur->tag) {
@@ -170,14 +146,13 @@ fun Coder.main (): String {
                         if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
                             // skip
                         } else {
-                            ceu_bcast_blocks(cur->Bcast.Coro.block, arg);
-                            CEU_Value* args[] = { arg };
-                            cur->Bcast.Coro.task->Task.f(cur, NULL, 1, args);
+                            ceu_bcast_blocks(cur->Bcast.Coro.block);
+                            cur->Bcast.Coro.task->Task.f(cur, NULL, 0, NULL);
                         }
                         break;
                     }
                     case CEU_VALUE_COROS: {
-                        ceu_bcast_dyns(cur->Bcast.Coros.first, arg);
+                        ceu_bcast_dyns(cur->Bcast.Coros.first);
                         break;
                     }
                 }
@@ -260,20 +235,8 @@ fun Coder.main (): String {
                 cur = nxt;
             }
         }
-
-        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_evt = &CEU_EVT_NIL;
-        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
-            //  - can pass further
-            //  - cannot pass back
-            //  - each catch condition:
-            //      - must set its depth at the beginning 
-            //      - must not yield
-            //      - must deallocate at the end
-
     """ +
     """ // TAGS
-
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
             CEU_Tags ceu_tag_##id = { str, NULL };
@@ -288,8 +251,7 @@ fun Coder.main (): String {
         } CEU_Tags;
         
         static CEU_Tags* CEU_TAGS = NULL;
-        int CEU_TAGS_MAX = 0;
-        
+        int CEU_TAGS_MAX = 0;        
         char* ceu_tag_to_string (int tag) {
             CEU_Tags* cur = CEU_TAGS;
             for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
@@ -302,8 +264,6 @@ fun Coder.main (): String {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
         }
-        CEU_Proto ceu_tags = { NULL, NULL, {.Func=ceu_tags_f} };
-        ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Value* v) {
@@ -506,8 +466,12 @@ fun Coder.main (): String {
             return old;
         }        
     """ +
-    """
-        // THROW
+    """ // GLOBALS
+        // TAGS
+        CEU_Proto ceu_tags = { NULL, NULL, {.Func=ceu_tags_f} };
+        ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
+
+        // THROW / ERR
         int ceu_has_throw = 0;
         CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
@@ -520,6 +484,20 @@ fun Coder.main (): String {
             //      - must set its depth at the beginning 
             //      - must not yield
             //      - must deallocate at the end
+
+        // BCAST / EVT
+        int ceu_has_bcast = 0;
+        CEU_Value CEU_EVT_NIL   = { CEU_VALUE_NIL };
+        CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
+        CEU_Value* ceu_evt = &CEU_EVT_NIL;
+        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
+            //  - can pass further
+            //  - cannot pass back
+            //  - each catch condition:
+            //      - must set its depth at the beginning 
+            //      - must not yield
+            //      - must deallocate at the end
+
     """ +
     """ // FUNCS
         typedef struct {

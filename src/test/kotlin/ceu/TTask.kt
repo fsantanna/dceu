@@ -253,6 +253,13 @@ class TTask {
     // BCAST / BROADCAST
 
     @Test
+    fun bcast0() {
+        val out = all("""
+            println(broadcast 1)
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
     fun bcast1() {
         val out = all("""
             var tk
@@ -260,6 +267,7 @@ class TTask {
                 println(v)
                 set v = yield nil
                 println(v)                
+                println(evt)                
             }
             var co1
             set co1 = coroutine tk
