@@ -177,7 +177,7 @@ class TXExec {
     // INDEX: TUPLE / DICT
 
     @Test
-    fun index1_tuple() {
+    fun todo_ndex1_tuple() {
         val out = all("""
             var t = [1,2,3]
             println(t.a, t.c)
@@ -198,18 +198,16 @@ class TXExec {
     @Test
     fun await1() {
         val out = all("""
-            var evt = @[]
             spawn {
-                await #x
+                println(0)
+                await evt[#type]==#x
                 println(99)
             }
             do {
                 println(1)
-                set evt[#type] = #y
-                broadcast ()
+                broadcast @[(#type,#y)]
                 println(2)
-                set evt[#type] = #x
-                broadcast ()
+                broadcast @[(#type,#x)]
                 println(3)
             }
         """)
