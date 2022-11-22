@@ -57,23 +57,15 @@ fun Expr.mem (): String {
         is Expr.Defer -> this.body.mem()
 
         is Expr.Coro -> this.task.mem()
-        is Expr.Spawn -> {
-            val call = (this.call.es[0] as Expr.Call)
-            """
+        is Expr.Spawn -> """
             struct { // SPAWN
                 ${if (this.coros==null) "" else "CEU_Value coros_$n;"}
                 union {
                     ${this.coros?.mem() ?: ""}
-                    // CORO
-                    ${call.f.mem()}
-                    struct { // ARGS
-                        ${call.args.map { it.mem() }.joinToString("")}
-                        ${call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                    };
+                    ${this.call.mem()}
                 };
             };
-            """
-        }
+        """
         is Expr.Iter -> """
             struct { // ITER
                 CEU_Value coros_$n;
@@ -82,19 +74,7 @@ fun Expr.mem (): String {
             """
         is Expr.Bcast -> this.evt.mem()
         is Expr.Yield -> this.arg.mem()
-        is Expr.Resume -> {
-            val call = (this.call.es[0] as Expr.Call)
-            """
-            union { // RESUME
-                // FUNC
-                ${call.f.mem()}
-                struct { // ARGS
-                    ${call.args.map { it.mem() }.joinToString("")}
-                    ${call.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                };
-            };
-            """
-        }
+        is Expr.Resume -> this.call.mem()
 
         is Expr.Tuple -> """
             struct { // TUPLE

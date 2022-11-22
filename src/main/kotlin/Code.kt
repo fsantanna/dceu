@@ -675,7 +675,11 @@ class Coder (val outer: Expr.Block) {
 
                 val bupc = this.upBlock()!!.toc(true)
                 val hld = this.hld_or_up(hold)
-                val f = if (iscall) "ceu_f_$n.Proto" else "ceu_coro_$n.Dyn"
+                val (f,dyn) = if (iscall) {
+                    Pair("ceu_f_$n.Proto->Func", "ceu_f_$n.Proto")
+                } else {
+                    Pair("ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f", "ceu_coro_$n.Dyn")
+                }
 
                 val (sets,args) = this.args.let {
                     Pair (
@@ -695,14 +699,14 @@ class Coder (val outer: Expr.Block) {
                 """} +
                 xspawn{"""
                 { // SPAWN/CORO ${this.tk.dump()}
-                    ${if (spawn!!.coros == null) "" else spawn.code(Pair(bupc, "ceu_mem->coros_$n"))}
+                    ${if (spawn!!.coros == null) "" else spawn.coros!!.code(Pair(bupc, "ceu_mem->coros_${spawn.n}"))}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.f.code(Pair(bupc, "ceu_task_$n"))}
                     char* ceu_err_$n = ${if (spawn.coros == null) {
                         "ceu_coro_create($hld, &ceu_task_$n, &ceu_coro_$n);"
                     } else {
-                        "ceu_coros_create(ceu_mem->coros_$n.Dyn, &ceu_task_$n, &ceu_coro_$n);"
+                        "ceu_coros_create(ceu_mem->coros_${spawn.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);"
                     }}
                     ${fset(this.tk, hold, "ceu_coro_$n")}            
                 """} +
@@ -726,8 +730,10 @@ class Coder (val outer: Expr.Block) {
                         $sets
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
-                    CEU_Value ceu_$n = ceu_f_$n.Proto->Func(
-                        $f,
+                    ${xcall { "CEU_Value ceu_$n = " }}
+                    ${xresume { "CEU_Value ceu_$n = " }}
+                    $f(
+                        $dyn,
                         $hld,
                         ${this.args.size},
                         ceu_args_$n
@@ -736,7 +742,7 @@ class Coder (val outer: Expr.Block) {
                         continue; // escape enclosing block
                     }
                     ${xcall{fset(this.tk, hold, "ceu_$n")}}
-                    ${xresume{fset(resume!!.tk, hold, "ceu_ret_$n")}}
+                    ${xresume{fset(resume!!.tk, hold, "ceu_$n")}}
                 }
                 """
             }
