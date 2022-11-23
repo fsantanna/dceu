@@ -46,7 +46,7 @@
 - collections
     - tup.a, .b, .x
     - @dict, @[...]
-    - $vec,  $[...], homogeneous, string
+    - #vec,  #[...], homogeneous, string
     - $size
 - char type
 - args keyword (or ...)

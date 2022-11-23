@@ -1,7 +1,6 @@
 ;; ARITHMETIC:  +  -  *  /  %  **  //
 
-var {+}
-set {+} = func (v1, v2) {
+func {+} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -10,8 +9,7 @@ set {+} = func (v1, v2) {
     `:number ($v1.Number + $v2.Number)`
 }
 
-var {-}
-set {-} = func (v1, v2) {
+func {-} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     ifs {
@@ -27,8 +25,7 @@ set {-} = func (v1, v2) {
     }
 }
 
-var {*}
-set {*} = func (v1, v2) {
+func {*} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -37,8 +34,7 @@ set {*} = func (v1, v2) {
     `:number ($v1.Number * $v2.Number)`
 }
 
-var {**}
-set {**} = func (v1, v2) {
+func {**} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -47,8 +43,7 @@ set {**} = func (v1, v2) {
     `:number powf($v1.Number, $v2.Number)`
 }
 
-var {/}
-set {/} = func (v1, v2) {
+func {/} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -57,8 +52,7 @@ set {/} = func (v1, v2) {
     `:number ($v1.Number / $v2.Number)`
 }
 
-var {//}
-set {//} = func (v1, v2) {
+func {//} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -67,8 +61,7 @@ set {//} = func (v1, v2) {
     `:number powf($v1.Number, 1/$v2.Number)`
 }
 
-var {%}
-set {%} = func (v1, v2) {
+func {%} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
@@ -79,8 +72,7 @@ set {%} = func (v1, v2) {
 
 ;; RELATIONAL:  >=  >  <=  <
 
-var {>=}
-set {>=} = func (v1,v2) {
+func {>=} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
@@ -89,8 +81,7 @@ set {>=} = func (v1,v2) {
     `:bool ($v1.Number >= $v2.Number)`
 }
 
-var {>}
-set {>} = func (v1,v2) {
+func {>} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
@@ -99,8 +90,7 @@ set {>} = func (v1,v2) {
     `:bool ($v1.Number > $v2.Number)`
 }
 
-var {<=}
-set {<=} = func (v1,v2) {
+func {<=} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
@@ -109,8 +99,7 @@ set {<=} = func (v1,v2) {
     `:bool ($v1.Number <= $v2.Number)`
 }
 
-var {<}
-set {<} = func (v1,v2) {
+func {<} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
