@@ -211,7 +211,7 @@ class TXExec {
                 println(3)
             }
         """)
-        assert(out == "1\n2\n99\n3\n") { out }
+        assert(out == "0\n1\n2\n99\n3\n") { out }
     }
 
     // THROW / CATCH

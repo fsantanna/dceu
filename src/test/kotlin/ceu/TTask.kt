@@ -794,9 +794,11 @@ class TTask {
     fun evt_hld3() {
         val out = ceu.all(
         """
+            var fff
+            set fff = func (x) { x }
             spawn task () {
                 yield nil
-                while (if {==}(evt[#type],#x) { false } else { true }) {
+                while evt[#type]/=#x {
                     yield nil
                 }
                 println(99)
@@ -806,12 +808,30 @@ class TTask {
             println(2)
             broadcast @[(#type,#x)]
             println(3)
-        """
-        )
+        """)
         assert(out == "1\n2\n99\n3\n") { out }
     }
     @Test
-    fun evt4() {
+    fun evt_hld4_err() {
+        val out = ceu.all(
+            """
+            var fff
+            set fff = func (x) { x }
+            spawn task () {
+                do {
+                    yield nil
+                }
+                fff(evt[#type])
+                println(99)
+            }()
+            broadcast @[(#type,#y)]
+            broadcast @[(#type,#x)]
+        """
+        )
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun evt5() {
         val out = ceu.all(
             """
             spawn task () {

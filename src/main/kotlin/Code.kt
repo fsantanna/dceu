@@ -234,6 +234,8 @@ class Coder (val outer: Expr.Block) {
             is Expr.While -> """
                 { // WHILE ${this.tk.dump()}
                 CEU_WHILE_START_$n:;
+                    // may yield in inner block, need to reset evt depth here
+                    ceu_evt_block.depth = ${this.upBlock()!!.toc(true)}->depth + 1;
                     CEU_Value ceu_cnd_$n;
                     ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
                     if (ceu_as_bool(&ceu_cnd_$n)) {
