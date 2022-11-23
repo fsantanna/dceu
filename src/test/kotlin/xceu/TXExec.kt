@@ -222,6 +222,21 @@ class TXExec {
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
+    @Test
+    fun await3() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                while (true) {
+                    await true                    
+                    println(evt)
+                }
+            }()
+            broadcast @[]
+        """
+        )
+        assert(out == "@[]\n") { out }
+    }
 
 
     // THROW / CATCH

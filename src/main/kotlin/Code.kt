@@ -108,6 +108,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_has_throw_clear()) {
                         continue;   // escape to end of enclosing block
                     }
+                    // may yield in inner block, need to reset evt depth here
+                    ceu_evt_block.depth = ceu_mem->block_$n.depth;
                 }
                 """
             }
@@ -181,8 +183,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.While -> """
                 { // WHILE ${this.tk.dump()}
                 CEU_WHILE_START_$n:;
-                    // may yield in inner block, need to reset evt depth here
-                    ceu_evt_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
                     CEU_Value ceu_cnd_$n;
                     ${this.cnd.code(Pair(ups.block(this)!!.toc(true), "ceu_cnd_$n"))}
                     if (ceu_as_bool(&ceu_cnd_$n)) {

@@ -859,9 +859,26 @@ class TTask {
                     yield nil
                 }
             }()
-            broadcast 1
+            broadcast @[]
         """
         )
-        assert(out == "nil\n1\n") { out }
+        assert(out == "nil\n@[]\n") { out }
+    }
+    @Test
+    fun evt6() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                while (true) {
+                    do {
+                        yield nil
+                    }
+                    println(evt)
+                }
+            }()
+            broadcast @[]
+        """
+        )
+        assert(out == "nil\n@[]\n") { out }
     }
 }
