@@ -847,7 +847,8 @@ class TTask {
             broadcast @[(#type,#x)]
         """
         )
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "99\n") { out }
     }
     @Test
     fun evt5() {
@@ -879,6 +880,6 @@ class TTask {
             broadcast @[]
         """
         )
-        assert(out == "nil\n@[]\n") { out }
+        assert(out == "@[]\n") { out }
     }
 }
