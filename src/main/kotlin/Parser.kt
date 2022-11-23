@@ -107,7 +107,9 @@ class Parser (lexer_: Lexer)
         val l = mutableListOf<T>()
         while (!this.checkFix(close)) {
             l.add(func())
-            this.acceptFix(",")
+            if (!this.acceptFix(",")) {
+                break
+            }
         }
         this.acceptFix_err(close)
         return l
