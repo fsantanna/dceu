@@ -220,7 +220,7 @@ class TXExec {
         val out = all("""
             await f()
         """)
-        assert(out == "0\n1\n2\n99\n3\n") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
 
 

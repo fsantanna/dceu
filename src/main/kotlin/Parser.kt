@@ -1,3 +1,13 @@
+fun Pos.pre (): String {
+    return "^[${this.lin},${this.col}]"
+}
+fun Expr.pre (): String {
+    return "${this.tk.pos.pre()}${this.tostr()}"
+}
+fun List<Expr>.pre (): String {
+    return this.map { it.pre() }.joinToString("\n") + "\n"
+}
+
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
@@ -192,7 +202,7 @@ class Parser (lexer_: Lexer)
                 if (XCEU && this.checkFix("{")) {
                     this.nest("""
                         spawn (task () {
-                            ${this.block().es.tostr()}
+                            ${this.block().es.pre()}
                         }) ()
                     """)
                 } else {
@@ -251,19 +261,19 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
                 val e1 = this.expr()
                 val b1 = this.block()
-                var ifs = "if ${e1.tostr()} ${b1.tostr()}else {\n"
+                var ifs = "if ${e1.pre()} ${b1.pre()}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
                         val be = this.block()
-                        ifs += be.es.map { it.tostr()+"\n" }.joinToString("")
+                        ifs += be.es.map { it.pre()+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
                     }
                     val ei = this.expr()
                     val bi = this.block()
                     ifs += """
-                        if ${ei.tostr()} ${bi.tostr()}
+                        if ${ei.pre()} ${bi.pre()}
                         else {
                     """
                     n++
@@ -281,7 +291,7 @@ class Parser (lexer_: Lexer)
                 }
                 val spws = pars.map { """
                     spawn (task () {
-                        ${it.es.tostr()}
+                        ${it.es.pre()}
                     }) ()
                 """}.joinToString("")
                 //println(spws)
@@ -295,12 +305,13 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (XCEU && this.acceptFix("await")) -> {
-                val cnd = this.expr().tostr()
+                val tk0 = this.tk0
+                val cnd = this.expr()
                 this.nest("""
                     do {
-                        yield ()
+                        ${tk0.pos.pre()}yield ()
                         ;;println(evt)
-                        while not ($cnd) {
+                        while not (${cnd.pre()}) {
                             yield ()
                         }
                     }
@@ -326,7 +337,7 @@ class Parser (lexer_: Lexer)
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
                 op as Tk.Fix
-                e = this.nest("if ${e.tostr()} { false } else { true }\n")
+                e = this.nest("if ${e.pre()} { false } else { true }\n")
             } else {
                 e = Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
             }
@@ -361,15 +372,15 @@ class Parser (lexer_: Lexer)
                 "or" -> this.nest("""
                     do {
                         var ceu_${e.n}
-                        set ceu_${e.n} = ${e.tostr()} 
-                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr()} }
+                        set ceu_${e.n} = ${e.pre()} 
+                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.pre()} }
                     }
                 """)
                 "and" -> this.nest("""
                     do {
                         var ceu_${e.n}
-                        set ceu_${e.n} = ${e.tostr()} 
-                        if ceu_${e.n} { ${e2.tostr()} } else { ceu_${e.n} }
+                        set ceu_${e.n} = ${e.pre()} 
+                        if ceu_${e.n} { ${e2.pre()} } else { ceu_${e.n} }
                     }
                 """)
                 else  -> Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))))

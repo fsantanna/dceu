@@ -254,10 +254,16 @@ class TLexer {
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"[\"")
     }
     @Test
-    fun inc10_err() {
+    fun inc10() {
         val l = lexer("^[1]x")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected end of line")
+        assert(tks.next().let { it.pos.lin==1 && it.pos.col==1 && it.str=="x" })
+    }
+    @Test
+    fun inc11() {
+        val l = lexer("^[2,10]x")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it.pos.lin==2 && it.pos.col==10 && it.str=="x" })
     }
 
     // TAGS

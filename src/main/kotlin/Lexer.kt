@@ -273,7 +273,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     when {
                         iseof(n7) -> unread2(n7)
                         (x7 == '\n') -> {}  // skip leading \n
-                        else -> err(pos, "token ^ error : expected end of line")
+                        else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
                     }
 
                     when {
@@ -287,7 +287,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         (lin != null) -> stack.first().let {
                             it.file = if (file==null) it.file else file
                             it.lin  = lin
-                            it.col  = if (col==null) it.col else col
+                            it.col  = if (col==null) 1 else col
                         }
                         else -> error("bug found")
                     }

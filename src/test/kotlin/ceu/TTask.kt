@@ -168,7 +168,7 @@ class TTask {
         val out = all("""
             yield nil
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
     @Test
     fun yield2_err() {
@@ -179,7 +179,7 @@ class TTask {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
     }
 
     // SPAWN
