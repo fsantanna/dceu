@@ -4,10 +4,10 @@ var {+}
 set {+} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number ($v1.Number + $v2.Number)`
+    `:number ($v1.Number + $v2.Number)`
 }
 
 var {-}
@@ -15,14 +15,14 @@ set {-} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     ifs {
-        (t1 == #number) and (t2 == #nil) {
-            `#number (- $v1.Number)`
+        (t1 == :number) and (t2 == :nil) {
+            `:number (- $v1.Number)`
         }
-        (t1 /= #number) or (t2 /= #number) {
-            throw #error
+        (t1 /= :number) or (t2 /= :number) {
+            throw :error
         }
         else {
-            `#number ($v1.Number - $v2.Number)`
+            `:number ($v1.Number - $v2.Number)`
         }
     }
 }
@@ -31,50 +31,50 @@ var {*}
 set {*} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number ($v1.Number * $v2.Number)`
+    `:number ($v1.Number * $v2.Number)`
 }
 
 var {**}
 set {**} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number powf($v1.Number, $v2.Number)`
+    `:number powf($v1.Number, $v2.Number)`
 }
 
 var {/}
 set {/} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number ($v1.Number / $v2.Number)`
+    `:number ($v1.Number / $v2.Number)`
 }
 
 var {//}
 set {//} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number powf($v1.Number, 1/$v2.Number)`
+    `:number powf($v1.Number, 1/$v2.Number)`
 }
 
 var {%}
 set {%} = func (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= #number) or (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) or (t2 /= :number) {
+        throw :error
     }
-    `#number fmod($v1.Number, $v2.Number)`
+    `:number fmod($v1.Number, $v2.Number)`
 }
 
 ;; RELATIONAL:  >=  >  <=  <
@@ -83,38 +83,38 @@ var {>=}
 set {>=} = func (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= t2) or (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) or (t1 /= :number) {
+        throw :error
     }
-    `#bool ($v1.Number >= $v2.Number)`
+    `:bool ($v1.Number >= $v2.Number)`
 }
 
 var {>}
 set {>} = func (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= t2) or (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) or (t1 /= :number) {
+        throw :error
     }
-    `#bool ($v1.Number > $v2.Number)`
+    `:bool ($v1.Number > $v2.Number)`
 }
 
 var {<=}
 set {<=} = func (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= t2) or (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) or (t1 /= :number) {
+        throw :error
     }
-    `#bool ($v1.Number <= $v2.Number)`
+    `:bool ($v1.Number <= $v2.Number)`
 }
 
 var {<}
 set {<} = func (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
-    if (t1 /= t2) or (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) or (t1 /= :number) {
+        throw :error
     }
-    `#bool ($v1.Number < $v2.Number)`
+    `:bool ($v1.Number < $v2.Number)`
 }

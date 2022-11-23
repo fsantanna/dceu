@@ -158,14 +158,14 @@ class TExec {
             println(tags(@[(1,2)]))
             println(@[(1,2)])
         """)
-        assert(out == "#dict\n@[(1,2)]\n") { out }
+        assert(out == ":dict\n@[(1,2)]\n") { out }
     }
     @Test
     fun dict2() {
         val out = all("""
             var t
-            set t = @[(#x,1)]
-            println(t[#x])
+            set t = @[(:x,1)]
+            println(t[:x])
         """)
         assert(out == "1\n") { out }
     }
@@ -173,8 +173,8 @@ class TExec {
     fun dict3() {
         val out = all("""
             var t
-            set t = @[(#x,1)]
-            println(t[#y])
+            set t = @[(:x,1)]
+            println(t[:y])
         """)
         assert(out == "nil\n") { out }
     }
@@ -182,9 +182,9 @@ class TExec {
     fun dict4() {
         val out = all("""
             var t
-            set t = @[(#x,1)]
-            set t[#x] = 2
-            println(t[#x])
+            set t = @[(:x,1)]
+            set t[:x] = 2
+            println(t[:x])
         """)
         assert(out == "2\n") { out }
     }
@@ -193,11 +193,11 @@ class TExec {
         val out = all("""
             var t
             set t = @[]
-            set t[#x] = 1
-            set t[#y] = 2
+            set t[:x] = 1
+            set t[:y] = 2
             println(t)
         """)
-        assert(out == "@[(#x,1),(#y,2)]\n") { out }
+        assert(out == "@[(:x,1),(:y,2)]\n") { out }
     }
 
     // DCL
@@ -573,7 +573,7 @@ class TExec {
                 fff(x)
             } (10))
         """)
-        assert(out == "#number\n10\n") { out }
+        assert(out == ":number\n10\n") { out }
     }
     @Test
     fun func12() {
@@ -588,7 +588,7 @@ class TExec {
                 fff(10)
             } ())
         """)
-        assert(out == "#number\n10\n") { out }
+        assert(out == ":number\n10\n") { out }
     }
     @Test
     fun func13() {
@@ -617,7 +617,7 @@ class TExec {
                 fff(x)
             } (10))
         """)
-        assert(out == "#number\n10\n") { out }
+        assert(out == ":number\n10\n") { out }
     }
     @Test
     fun func15() {
@@ -653,8 +653,8 @@ class TExec {
     @Test
     fun catch1() {
         val out = all("""
-            catch err==#x {
-                throw #x
+            catch err==:x {
+                throw :x
                 println(9)
             }
             println(1)
@@ -664,8 +664,8 @@ class TExec {
     @Test
     fun catch2_err() {
         val out = all("""
-            catch err==#x {
-                throw #y
+            catch err==:x {
+                throw :y
                 println(9)
             }
             println(1)
@@ -677,14 +677,14 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                catch err==#xxx {
-                    throw #yyy
+                catch err==:xxx {
+                    throw :yyy
                     println(91)
                 }
                 println(9)
             }
-            catch err==#yyy {
-                catch err==#xxx {
+            catch err==:yyy {
+                catch err==:xxx {
                     f()
                     println(92)
                 }
@@ -697,7 +697,7 @@ class TExec {
     @Test
     fun catch4() {
         val out = all("""
-            catch err==#x {
+            catch err==:x {
                 throw []
                 println(9)
             }
@@ -709,18 +709,18 @@ class TExec {
     @Test
     fun catch5() {
         val out = all("""
-            catch err==#e1 {
-                catch err==#e2 {
-                    catch err==#e3 {
-                        catch err==#e4 {
+            catch err==:e1 {
+                catch err==:e2 {
+                    catch err==:e3 {
+                        catch err==:e4 {
                             println(1)
-                            throw #e3
+                            throw :e3
                             println(99)
                         }
                         println(99)
                     }
                     println(2)
-                    throw #e1
+                    throw :e1
                     println(99)
                 }
                 println(99)
@@ -733,7 +733,7 @@ class TExec {
     fun catch6_err() {
         val out = all("""
             catch true {
-                throw #y
+                throw :y
                 println(9)
             }
             println(1)
@@ -746,9 +746,9 @@ class TExec {
         val out = ceu.all(
             """
             catch do {
-                err==#x
+                err==:x
             } {
-                throw #x
+                throw :x
                 println(9)
             }
             println(1)
@@ -763,9 +763,9 @@ class TExec {
             var x
             catch do {
                 set x = err
-                err==#x
+                err==:x
             } {
-                throw [#x]
+                throw [:x]
                 println(9)
             }
             println(x)
@@ -780,22 +780,22 @@ class TExec {
             var x
             catch do {
                 set x = err
-                err==#x
+                err==:x
             } {
-                throw #x
+                throw :x
                 println(9)
             }
             println(x)
         """
         )
-        assert(out == "#x\n") { out }
+        assert(out == ":x\n") { out }
     }
     @Test
     fun catch10() {
         val out = ceu.all(
             """
-            catch err[0]==#x {
-                throw [#x]
+            catch err[0]==:x {
+                throw [:x]
                 println(9)
             }
             println(err)
@@ -808,7 +808,7 @@ class TExec {
         val out = ceu.all(
             """
             catch false {
-                throw #xxx
+                throw :xxx
                 println(9)
             }
             println(1)
@@ -845,9 +845,9 @@ class TExec {
     fun native2_num() {
         val out = all("""
             var x
-            set x = `#number 1.5`
+            set x = `:number 1.5`
             println(x)
-            println(`#number 1.5`)
+            println(`:number 1.5`)
         """)
         assert(out == "1.5\n1.5\n") { out }
     }
@@ -855,7 +855,7 @@ class TExec {
     fun native3_str() {
         val out = all("""
             var x
-            set x = `#pointer "ola"`
+            set x = `:pointer "ola"`
             native ```
                 puts(${D}x.Pointer);
             ```
@@ -876,7 +876,7 @@ class TExec {
         val out = all("""
             var x
             set x = 10
-            set x = native ```#number
+            set x = native ```:number
                 (printf(">>> %g\n", ${D}x.Number),
                 ${D}x.Number*2)
             ```
@@ -944,7 +944,7 @@ class TExec {
         val out = all("""
             var f
             set f = func () {
-                native `#pointer
+                native `:pointer
                     "ola"
                 `
             }
@@ -963,7 +963,7 @@ class TExec {
     @Test
     fun native12_pointer() {
         val out = all("""
-            println(`#pointer"oi"`)
+            println(`:pointer"oi"`)
         """)
         assert(out.contains("pointer: 0x")) { out }
     }
@@ -1066,7 +1066,7 @@ class TExec {
             println(tags(t))
             println(tags(tags(t)))
         """)
-        assert(out == "#number\n#tag\n#tag\n") { out }
+        assert(out == ":number\n:tag\n:tag\n") { out }
     }
     @Test
     @Ignore
@@ -1087,25 +1087,25 @@ class TExec {
     @Test
     fun tag2() {
         val out = all("""
-            println(#xxx)
-            println(#xxx == #yyy)
-            println(#xxx /= #yyy)
-            println(#xxx == #xxx)
-            println(#xxx /= #xxx)
+            println(:xxx)
+            println(:xxx == :yyy)
+            println(:xxx /= :yyy)
+            println(:xxx == :xxx)
+            println(:xxx /= :xxx)
         """)
-        assert(out == "#xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
+        assert(out == ":xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
     fun tag3() {
         val out = all("""
             func () {
-                println(#xxx)
+                println(:xxx)
             }()
             func () {
-                println(#xxx)
+                println(:xxx)
             }()
         """)
-        assert(out == "#xxx\n#xxx\n") { out }
+        assert(out == ":xxx\n:xxx\n") { out }
     }
 
     // DEFER

@@ -205,7 +205,7 @@ class TTask {
             set v = resume a(v+1)
             println(v)              ;; 6
         """, true)
-        assert(out == "1\n#coro\n3\n4\n5\n6\n") { out }
+        assert(out == "1\n:coro\n3\n4\n5\n6\n") { out }
     }
     @Test
     fun spawn2() {
@@ -260,9 +260,9 @@ class TTask {
         val out = all("""
             var co
             set co = coroutine task (x,y) {
-                throw #e2
+                throw :e2
             }
-            catch #e2 {
+            catch :e2 {
                 resume co(1,2)
                 println(99)
             }
@@ -276,9 +276,9 @@ class TTask {
             var co
             set co = coroutine task (x,y) {
                 yield nil
-                throw #e2
+                throw :e2
             }
-            catch #e2 {
+            catch :e2 {
                 resume co(1,2)
                 println(1)
                 resume co()
@@ -346,7 +346,7 @@ class TTask {
                 var co2
                 set co2 = coroutine task () {
                     yield nil
-                    throw #error
+                    throw :error
                 }
                 resume co2 ()
                 yield nil
@@ -455,13 +455,13 @@ class TTask {
             var tk
             set tk = task (v) {
                 set v = yield nil
-                throw #1                
+                throw :1                
             }
             var co1
             set co1 = coroutine tk
             var co2
             set co2 = coroutine tk
-            catch err==#1 {
+            catch err==:1 {
                 func () {
                     println(1)
                     broadcast 1
@@ -492,7 +492,7 @@ class TTask {
             set co1 = coroutine tk
             var co2
             set co2 = coroutine tk
-            catch err==#1 {
+            catch err==:1 {
                 func () {
                     println(1)
                     resume co1(10)
@@ -555,7 +555,7 @@ class TTask {
             }
             broadcast 2
         """)
-        assert(out == "#coros\n1\n2\n") { out }
+        assert(out == ":coros\n1\n2\n") { out }
     }
     @Test
     fun pool2_leak() {
@@ -747,7 +747,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun poolN() {
+    fun todo_poolN() {
         val out = all("""
             var ts
             set ts = coroutines()
@@ -772,7 +772,7 @@ class TTask {
             }
             broadcast 2
         """)
-        assert(out == "#coros\n1\n2\n") { out }
+        assert(out == ":coros\n1\n2\n") { out }
     }
 
     // EVT
@@ -817,15 +817,15 @@ class TTask {
             set fff = func (x) { x }
             spawn task () {
                 yield nil
-                while evt[#type]/=#x {
+                while evt[:type]/=:x {
                     yield nil
                 }
                 println(99)
             }()
             println(1)
-            broadcast @[(#type,#y)]
+            broadcast @[(:type,:y)]
             println(2)
-            broadcast @[(#type,#x)]
+            broadcast @[(:type,:x)]
             println(3)
         """)
         assert(out == "1\n2\n99\n3\n") { out }
@@ -840,11 +840,11 @@ class TTask {
                 do {
                     yield nil
                 }
-                fff(evt[#type])
+                fff(evt[:type])
                 println(99)
             }()
-            broadcast @[(#type,#y)]
-            broadcast @[(#type,#x)]
+            broadcast @[(:type,:y)]
+            broadcast @[(:type,:x)]
         """
         )
         //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }

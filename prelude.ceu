@@ -26,10 +26,10 @@ set {+} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number ($v1.Number + $v2.Number)`
+        `:number ($v1.Number + $v2.Number)`
     }
 }
 
@@ -39,13 +39,13 @@ set {-} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 == #number) && (t2 == #nil) {
-        `#number (- $v1.Number)`
+    if (t1 == :number) && (t2 == :nil) {
+        `:number (- $v1.Number)`
     } else {
-        if (t1 /= #number) || (t2 /= #number) {
-            throw #error
+        if (t1 /= :number) || (t2 /= :number) {
+            throw :error
         } else {
-            `#number ($v1.Number - $v2.Number)`
+            `:number ($v1.Number - $v2.Number)`
         }
     }
 }
@@ -56,10 +56,10 @@ set {*} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number ($v1.Number * $v2.Number)`
+        `:number ($v1.Number * $v2.Number)`
     }
 }
 
@@ -69,10 +69,10 @@ set {**} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number powf($v1.Number, $v2.Number)`
+        `:number powf($v1.Number, $v2.Number)`
     }
 }
 
@@ -82,10 +82,10 @@ set {/} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number ($v1.Number / $v2.Number)`
+        `:number ($v1.Number / $v2.Number)`
     }
 }
 
@@ -95,10 +95,10 @@ set {//} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number powf($v1.Number, 1/$v2.Number)`
+        `:number powf($v1.Number, 1/$v2.Number)`
     }
 }
 
@@ -108,10 +108,10 @@ set {%} = func (v1, v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= #number) || (t2 /= #number) {
-        throw #error
+    if (t1 /= :number) || (t2 /= :number) {
+        throw :error
     } else {
-        `#number fmod($v1.Number, $v2.Number)`
+        `:number fmod($v1.Number, $v2.Number)`
     }
 }
 
@@ -123,10 +123,10 @@ set {>=} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= t2) || (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) || (t1 /= :number) {
+        throw :error
     } else {
-        `#bool ($v1.Number >= $v2.Number)`
+        `:bool ($v1.Number >= $v2.Number)`
     }
 }
 
@@ -136,10 +136,10 @@ set {>} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= t2) || (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) || (t1 /= :number) {
+        throw :error
     } else {
-        `#bool ($v1.Number > $v2.Number)`
+        `:bool ($v1.Number > $v2.Number)`
     }
 }
 
@@ -149,10 +149,10 @@ set {<=} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= t2) || (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) || (t1 /= :number) {
+        throw :error
     } else {
-        `#bool ($v1.Number <= $v2.Number)`
+        `:bool ($v1.Number <= $v2.Number)`
     }
 }
 
@@ -162,9 +162,9 @@ set {<} = func (v1,v2) {
     set t1 = tags(v1)
     var t2
     set t2 = tags(v2)
-    if (t1 /= t2) || (t1 /= #number) {
-        throw #error
+    if (t1 /= t2) || (t1 /= :number) {
+        throw :error
     } else {
-        `#bool ($v1.Number < $v2.Number)`
+        `:bool ($v1.Number < $v2.Number)`
     }
 }

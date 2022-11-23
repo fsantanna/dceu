@@ -148,17 +148,17 @@ class TParser {
 
     @Test
     fun dict1() {
-        val l = lexer(" @[ (1,x) , (#number,2) ] ")
+        val l = lexer(" @[ (1,x) , (:number,2) ] ")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Dict && e.args.size==2)
     }
     @Test
     fun dict2() {
-        val l = lexer("@[(#dict,@[]), (#tuple,[1,2,3])]")
+        val l = lexer("@[(:dict,@[]), (:tuple,[1,2,3])]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "@[(#dict,@[]),(#tuple,[1,2,3])]")
+        assert(e.tostr() == "@[(:dict,@[]),(:tuple,[1,2,3])]")
     }
     @Test
     fun dict3_err() {
@@ -393,7 +393,7 @@ class TParser {
     @Test
     fun native4_err() {
         val l = lexer("""
-            native `#
+            native `:
         """.trimIndent())
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 8) : tag error : expected identifier")
@@ -401,12 +401,12 @@ class TParser {
     @Test
     fun native5() {
         val l = lexer("""
-            native ```#ola```
+            native ```:ola```
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "native ```#ola ```") { "."+e.tostr()+"." }
+        assert(e.tostr() == "native ```:ola ```") { "."+e.tostr()+"." }
     }
 
     // BINARY / UNARY / OPS

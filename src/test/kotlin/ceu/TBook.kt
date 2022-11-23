@@ -279,7 +279,7 @@ class TBook {
             var fact
             set fact = func (x) {
                 if x < 0 {
-                    throw #error
+                    throw :error
                 } else {nil}
                 if x == 0 {
                     1
@@ -296,8 +296,8 @@ class TBook {
     fun todo_pg_31_short() {    // TODO: user and/or
         val out = all(
             """
-            println(if false { throw #error } else { true })
-            println(if true { true } else { throw #error })
+            println(if false { throw :error } else { true })
+            println(if true { true } else { throw :error })
         """, true
         )
         assert(out == "true\ntrue\n") { out }
@@ -343,25 +343,25 @@ class TBook {
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun todo_pg_34_tri() { // #Triangle.Equilateral
+    fun todo_pg_34_tri() { // :Triangle.Equilateral
         val out = all(
         """
-             #Equ   
-             #Iso   
-             #Sca   
-             #Err
+             :Equ   
+             :Iso   
+             :Sca   
+             :Err
              var analyse
              set analyse = func (x,y,z) {
                 if x+y <= z {
-                    #Err
+                    :Err
                 } else {
                     if x == z {
-                        #Equ
+                        :Equ
                     } else {
                         if (x == y) || (y == z) {
-                            #Iso
+                            :Iso
                         } else {
-                            #Sca
+                            :Sca
                         }
                     }
                 }
@@ -371,7 +371,7 @@ class TBook {
             println(analyse(10,20,20))
             println(analyse(10,10,10))
         """, true)
-        assert(out == "#Err\n#Sca\n#Iso\n#Equ\n") { out }
+        assert(out == ":Err\n:Sca\n:Iso\n:Equ\n") { out }
     }
 
     // CHAPTER 2.2: Characters

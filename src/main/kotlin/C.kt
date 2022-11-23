@@ -148,7 +148,7 @@ fun Coder.main (): String {
         static CEU_Tags* CEU_TAGS = NULL;
         int CEU_TAGS_MAX = 0;        
         CEU_Proto ceu_tags = { NULL, NULL, {.Func=ceu_tags_f} };
-        ${this.tags.map { "CEU_TAG_DEFINE($it,\"#$it\")\n" }.joinToString("")}
+        ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
 
         char* ceu_tag_to_string (int tag) {
             CEU_Tags* cur = CEU_TAGS;
@@ -528,7 +528,7 @@ fun Coder.main (): String {
     """ +
     """ // MAIN
         int main (void) {
-            ${this.tags.map { "CEU_TAG_INIT($it,\"#$it\")\n" }.joinToString("")}
+            ${this.tags.map { "CEU_TAG_INIT($it,\":$it\")\n" }.joinToString("")}
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {

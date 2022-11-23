@@ -155,7 +155,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         yield(Tk.Id("{$op}", pos))
                     }
                 }
-                (x == '#') -> {
+                (x == ':') -> {
                     val tag = x + read2While { it.isLetterOrDigit() || it=='.' }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
@@ -178,7 +178,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     val open = x + read2While('`')
                     var nat = ""
                     val tag = read2().let { (n2,x2) ->
-                        if (x2 != '#') {
+                        if (x2 != ':') {
                             unread2(n2)
                             null
                         } else {
@@ -207,7 +207,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         }
                         nat += x2
                     }
-                    //println("#$pay#")
+                    //println(":$pay:")
                     yield(Tk.Nat(nat, pos, tag))
                 }
                 (x == '^') -> {
