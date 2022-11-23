@@ -77,7 +77,12 @@ class Ups (val outer: Expr.Block) {
             is Expr.Spawn  -> { this.call.check() ; this.coros?.check() }
             is Expr.Iter   -> { this.coros.check() ; this.body.check() }
             is Expr.Bcast  -> this.evt.check()
-            is Expr.Yield  -> this.arg.check()
+            is Expr.Yield  -> {
+                if (func(this)?.tk?.str != "task") {
+                    err(this.tk, "yield error : expected enclosing task")
+                }
+                this.arg.check()
+            }
             is Expr.Resume -> this.call.check()
 
             is Expr.Nat    -> {}
