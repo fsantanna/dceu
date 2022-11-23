@@ -251,7 +251,7 @@ fun Coder.main (): String {
         }
 
         char* ceu_coros_create (int* ok, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
-            if (coros->Bcast.Coros.cur == coros->Bcast.Coros.max) {
+            if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
                 *ok = 0;
                 return NULL;
             }

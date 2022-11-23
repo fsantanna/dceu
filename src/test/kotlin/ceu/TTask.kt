@@ -753,7 +753,7 @@ class TTask {
             coroutines(0)
         """
         )
-        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number") { out }
+        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n") { out }
     }
     @Test
     fun pool15_max_err() {
@@ -762,7 +762,7 @@ class TTask {
             coroutines(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number") { out }
+        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n") { out }
     }
     @Test
     fun pool16_max() {

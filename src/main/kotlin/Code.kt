@@ -695,7 +695,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         continue; // escape enclosing block
                     }
                     ${iscall.cond{fset(this.tk, hold, "ceu_$n")}}
-                    ${spawn.cond{"}"}}
+                    ${iscoros.cond{"}"}}
                     ${resume.cond{fset(resume!!.tk, hold, "ceu_$n")}}
                 }
                 """
