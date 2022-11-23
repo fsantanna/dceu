@@ -34,7 +34,10 @@
 - coroutines(max)
 - native `#pre`
 - kill: coro, coros
-- emit only plain values b/c of bcast
+- emit local
+    - imply outer task?
+    - explicit #tag?
+    - bcast x in ?
 - tuple is plain immutable value
     - move on assign
     - no scope error
