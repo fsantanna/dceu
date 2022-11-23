@@ -4,11 +4,11 @@ fun Expr.tostr (): String {
             assert(this.es.size == 1)
             this.es[0].tostr()
         } else {
-            (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr() + "}\n"
+            (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr() + "}"
         }
         is Expr.Dcl    -> "var " + this.tk.str
         is Expr.Set    -> "set " + this.dst.tostr() + " = " + this.src.tostr()
-        is Expr.If     -> "if " + this.cnd.tostr() + " " + this.t.tostr() + "else " + this.f.tostr()
+        is Expr.If     -> "if " + this.cnd.tostr() + " " + this.t.tostr() + " else " + this.f.tostr()
         is Expr.While  -> "while " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
         is Expr.Throw  -> "throw " + this.ex.tostr()

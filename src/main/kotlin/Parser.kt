@@ -182,10 +182,16 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
                 val body = this.block()
-                Expr.Func(tk0, args, body)
+                val func = Expr.Func(tk0, args, body)
+                if (id == null) func else {
+                    this.nest("""
+                        var ${id.str} = ${func.pre()} 
+                    """)
+                }
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
@@ -317,6 +323,16 @@ class Parser (lexer_: Lexer)
                     }
                 """)//.let { println(it.tostr()); it }
             }
+            (XCEU && this.acceptFix("every")) -> {
+                val cnd = this.expr()
+                val body = this.block()
+                this.nest("""
+                    while true {
+                        await ${cnd.pre()}
+                        ${body.es.pre()}
+                    }
+                """)//.let { println(it.tostr()); it }
+            }
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")
@@ -389,7 +405,20 @@ class Parser (lexer_: Lexer)
         return e
     }
     fun expr (): Expr {
-        return this.exprBins()
+        val e = this.exprBins()
+        return when {
+            !XCEU -> e
+            !this.acceptFix("where") -> e
+            else -> {
+                val body = this.block()
+                this.nest("""
+                    do {
+                        ${body.es.pre()}
+                        ${e.pre()}
+                    }
+                """)
+            }
+        }
     }
 
     fun exprs (): List<Expr> {

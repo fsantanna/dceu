@@ -174,6 +174,17 @@ class TXExec {
         """)
         assert(out == "1\n2\n3\n") { out }
     }
+    @Test
+    fun spawn3() {
+        val out = all("""
+            spawn {
+                spawn {
+                    println(1)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // INDEX: TUPLE / DICT
 
@@ -194,7 +205,7 @@ class TXExec {
         assert(out == "1\t2\n") { out }
     }
 
-    // AWAIT
+    // AWAIT / EVERY
 
     @Test
     fun await1() {
@@ -214,7 +225,6 @@ class TXExec {
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
     }
-
     @Test
     fun await2_err() {
         val out = all("""
@@ -237,7 +247,82 @@ class TXExec {
         )
         assert(out == "@[]\n") { out }
     }
+    @Test
+    fun every4() {
+        val out = all("""
+            spawn {
+                println(0)
+                every evt[#type]==#x {
+                    println(evt[#v])
+                }
+            }
+            do {
+                println(1)
+                broadcast @[(#type,#x),(#v,10)]
+                println(2)
+                broadcast @[(#type,#y),(#v,20)]
+                println(3)
+                broadcast @[(#type,#x),(#v,30)]
+                println(4)
+            }
+        """)
+        assert(out == "0\n1\n10\n2\n3\n30\n4\n") { out }
+    }
 
+    // FUNC / TASK
+
+    @Test
+    fun func1() {
+        val out = ceu.all(
+            """
+            func f (x) {
+                println(x)
+            }
+            f(10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun task2() {
+        val out = ceu.all(
+            """
+            task f (x) {
+                println(x)
+            }
+            spawn f (10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun func3_err() {
+        val out = ceu.all(
+            """
+            func f {
+                println(x)
+            }
+        """
+        )
+        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"") { out }
+    }
+
+    // WHERE
+
+    @Test
+    fun where1() {
+        val out = ceu.all(
+            """
+            println(x) where {
+                var x = 1
+            }
+            var z = y + 10 where {
+                var y = 20
+            }
+            println(z)
+        """,true)
+        assert(out == "1\n30\n") { out }
+    }
 
     // THROW / CATCH
 

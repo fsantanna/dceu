@@ -24,7 +24,7 @@ class TXParser {
         val l = lexer("do { var x = 1 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar x\nset x = 1\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nvar x\nset x = 1\n}") { e.tostr() }
     }
 
     // EMPTY BLOCKS
@@ -35,7 +35,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty2_do() {  // set whole tuple?
@@ -43,7 +43,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Block && e.es.size==1)
-        assert(e.tostr() == "do {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty3_func() {
@@ -51,7 +51,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Func && e.args.size==0)
-        assert(e.tostr() == "func () {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "func () {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty4_while() {
@@ -59,7 +59,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.While && e.body.es[0] is Expr.Nil)
-        assert(e.tostr() == "while true {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "while true {\nnil\n}") { e.tostr() }
     }
     @Test
     @Ignore
@@ -87,7 +87,7 @@ class TXParser {
         val l = lexer("ifs { a {1} else {0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n}\nelse {\n0\n}\n") { e.tostr() }
+        assert(e.tostr() == "if a {\n1\n} else {\n0\n}") { e.tostr() }
     }
     @Test
     fun ifs2_err() {
@@ -112,14 +112,14 @@ class TXParser {
         val l = lexer("ifs { a {1} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n}\nelse {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "if a {\n1\n} else {\nnil\n}") { e.tostr() }
     }
     @Test
     fun ifs6() {
         val l = lexer("ifs { a{1} b{2} else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n}\nelse {\nif b {\n2\n}\nelse {\n0\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "if a {\n1\n} else {\nif b {\n2\n} else {\n0\n}\n}") { e.tostr() }
     }
 
     // BIN AND OR
@@ -130,7 +130,7 @@ class TXParser {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\nceu_1\n}\nelse {\n2\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\nceu_1\n} else {\n2\n}\n}") { e.tostr() }
     }
     @Test
     fun bin2_and() {
@@ -138,7 +138,7 @@ class TXParser {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\n2\n}\nelse {\nceu_1\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nvar ceu_1\nset ceu_1 = 1\nif ceu_1 {\n2\n} else {\nceu_1\n}\n}") { e.tostr() }
     }
     @Test
     fun bin3_not_or_and() {
@@ -153,29 +153,21 @@ class TXParser {
             var ceu_7
             set ceu_7 = if true {
             false
-            }
-            else {
+            } else {
             true
             }
-            
             if ceu_7 {
             false
-            }
-            else {
+            } else {
             ceu_7
             }
-            
             }
-            
             if ceu_24 {
             ceu_24
-            }
-            else {
+            } else {
             true
             }
-            
             }
-            
         """.trimIndent()) { e.tostr() }
     }
     @Test
@@ -184,7 +176,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Block && e.isFake)
-        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n}\nelse {\ntrue\n}\n)") { e.tostr() }
+        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n} else {\ntrue\n})") { e.tostr() }
     }
 
     // SPAWN, PAR
@@ -203,7 +195,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         println(e.tostr())
-        assert(e.tostr() == "do {\nspawn task () {\n1\n}\n()\nspawn task () {\n2\n}\n()\nspawn task () {\n3\n}\n()\nwhile true {\nyield nil\n}\n\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nspawn task () {\n1\n}()\nspawn task () {\n2\n}()\nspawn task () {\n3\n}()\nwhile true {\nyield nil\n}\n}") { e.tostr() }
     }
     @Test
     fun par2_err() {
@@ -221,7 +213,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         println(e.tostr())
-        assert(e.tostr() == "spawn task () {\n1\n}\n()") { e.tostr() }
+        assert(e.tostr() == "spawn task () {\n1\n}()") { e.tostr() }
     }
 
     // CATCH

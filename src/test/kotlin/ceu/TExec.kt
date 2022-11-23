@@ -230,6 +230,20 @@ class TExec {
         """)
         assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared") { out }
     }
+    @Test
+    fun todo_dcl4_dup() {
+        val out = all("""
+            do {
+                var x
+                println(x)
+            }
+            do {
+                var x
+                println(x)
+            }
+        """)
+        assert(out == "nil\nnil\n") { out }
+    }
 
     // SET
 

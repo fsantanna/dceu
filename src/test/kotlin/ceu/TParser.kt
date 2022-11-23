@@ -299,7 +299,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1\n}\nelse {\n0\n}\n") { e.tostr() }
+        assert(e.tostr() == "if true {\n1\n} else {\n0\n}") { e.tostr() }
     }
     @Test
     fun expr_if2_err() {
@@ -322,7 +322,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Block && e.es.size==3)
-        assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}\n") { e.tostr() }
+        assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}") { e.tostr() }
     }
 
     // FUNC
@@ -339,7 +339,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Func && e.args.size==2)
-        assert(e.tostr() == "func (a,b) {\n10\n}\n") { e.tostr() }
+        assert(e.tostr() == "func (a,b) {\n10\n}") { e.tostr() }
     }
 
     // WHILE
@@ -477,7 +477,6 @@ class TParser {
             set v = yield 1
             yield 2
             }
-
             coroutine t
             set v = resume a(1)
             resume a(2)
@@ -519,7 +518,7 @@ class TParser {
         val l = lexer("defer { nil }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "defer {\nnil\n}\n\n") { e.tostr() }
+        assert(e.tostr() == "defer {\nnil\n}\n") { e.tostr() }
     }
 
     // COROS
@@ -535,7 +534,7 @@ class TParser {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile t in ts {\nnil\n}\n\n") { e.tostr() }
+        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile t in ts {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun coros2_err() {
