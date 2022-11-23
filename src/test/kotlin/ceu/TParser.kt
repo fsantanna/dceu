@@ -137,9 +137,16 @@ class TParser {
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
+    fun tuple4() {
+        val l = lexer("[1.5F,] ")
+        val parser = Parser(l)
+        val e = parser.exprSufs()
+        assert(e is Expr.Tuple && e.args.size==1)
+    }
 
     // DICT
 
+    @Test
     fun dict1() {
         val l = lexer(" @[ (1,x) , (#number,2) ] ")
         val parser = Parser(l)
@@ -170,6 +177,13 @@ class TParser {
         val l = lexer("@[(1,{")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected expression : have \"{\"")
+    }
+    @Test
+    fun dict6() {
+        val l = lexer("@[(1.5F,1),] ")
+        val parser = Parser(l)
+        val e = parser.exprSufs()
+        assert(e is Expr.Dict && e.args.size==1)
     }
 
     // EXPR.INDEX
