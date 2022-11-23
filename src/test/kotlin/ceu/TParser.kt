@@ -497,15 +497,6 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
-    @Test
-    fun yield3_err() {
-        val l = lexer("""
-            yield nil
-        """.trimIndent())
-        val parser = Parser(l)
-        parser.expr()
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-    }
 
     // DEFER
 

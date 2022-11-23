@@ -163,6 +163,14 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
 
+    @Test
+    fun yield1_err() {
+        val out = all("""
+            yield nil
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+
     // SPAWN
 
     @Test

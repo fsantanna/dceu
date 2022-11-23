@@ -19,40 +19,14 @@ fun Tk.dump (): String {
     return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
 }
 
-// func (args) or block (locals)
-data class XBlock (val syms: MutableSet<String>, val defers: MutableList<String>?)
-
 class Coder (val outer: Expr.Block, val ups: Ups) {
-    val code: String
-    val mem: String
     val tags = TAGS.toMutableList()
-    val xblocks = mutableMapOf<Expr,XBlock>()
     val tops = mutableListOf<Pair<String,String>>()
-
-    init {
-        this.xblocks[outer] = XBlock(GLOBALS.toMutableSet(), mutableListOf())
-        this.code = outer.code (null)
-        this.mem = outer.mem()
-    }
+    val mem: String = outer.mem()
+    val code: String = outer.code(null)
 
     fun Expr.hld_or_up (hold: Pair<String, String>?): String {
         return hold?.first ?: ups.block(this)!!.toc(true)
-    }
-
-    fun Expr.isDeclared (id: String): Boolean {
-        val xblock = xblocks[this]!!
-        val up = ups.func_or_block(this)
-        return (xblock.syms.contains(id) || (up!=null && up.isDeclared(id)))
-    }
-    fun Expr.assertIsNotDeclared (id: String, tk: Tk) {
-        if (this.isDeclared(id)) {
-            err(tk, "declaration error : variable \"$id\" is already declared")
-        }
-    }
-    fun Expr.assertIsDeclared (id: String, tk: Tk) {
-        if (!this.isDeclared(id)) {
-             err(tk, "access error : variable \"$id\" is not declared")
-        }
     }
 
     fun Expr.top (): String {
@@ -73,7 +47,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.Block.id2c (id: String): String {
         val top = this.top()
         fun Expr.aux (n: Int): String {
-            val xblock = xblocks[this]!!
+            val xblock = ups.xblocks[this]!!
             val bup = ups.func_or_block(this)
             val fup = ups.func(this)
             val ok = xblock.syms.contains(id)
@@ -108,9 +82,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (f_b is Expr.Func) -> "(ceu_ret==NULL ? 1 : ceu_ret->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                if (this != outer) {
-                    xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
-                }
                 val es = this.es.mapIndexed { i, it ->
                     it.code(if (i == this.es.size - 1) hold else null) + "\n"
                 }.joinToString("")
@@ -129,7 +100,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } while (0);
                     ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
                     { // DEFERS ${this.tk.dump()}
-                        ${xblocks[this]!!.defers!!.reversed().joinToString("")}
+                        ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
                     ${(f_b!=null && f_b !is Expr.Func).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
                     ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{"ceu_coro->Bcast.Coro.block = NULL;"}}
@@ -143,11 +114,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
                 val bup = ups.block(this)!!
-                val xup = xblocks[bup]!!
-                bup.assertIsNotDeclared(id, this.tk)
-                xup.syms.add(id)
-                xup.syms.add("_${id}_")
-
                 val (x,_x_) = Pair("(ceu_mem->$id)","(ceu_mem->_${id}_)")
                 """
                 // DCL ${this.tk.dump()}
@@ -182,8 +148,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
                         val bup = ups.block(this)!!
-                        bup.assertIsDeclared(id, this.tk)
-                        bup.assertIsDeclared("_${id}_", this.tk)
+                        ups.assertIsDeclared(bup, id, this.tk)
+                        ups.assertIsDeclared(bup, "_${id}_", this.tk)
                         Pair ( // x = src / block of _x_
                             bup.id2c("_${id}_"),
                             "${bup.id2c(id)} = ceu_$n;"
@@ -226,9 +192,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             is Expr.Func -> {
-                xblocks[this] = XBlock(this.args.let {
-                    it.map { it.str } + it.map { "_${it.str}_" }
-                }.toMutableSet(), null)
                 val isfunc = (this.tk.str == "func")
                 val istask = (this.tk.str == "task")
                 val type = """ // TYPE ${this.tk.dump()}
@@ -363,7 +326,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     continue; // escape enclosing block;
                 }
                 """
-            is Expr.Defer -> { xblocks[ups.block(this)!!]!!.defers!!.add(this.body.code(null)); "" }
+            is Expr.Defer -> { ups.xblocks[ups.block(this)!!]!!.defers!!.add(this.body.code(null)); "" }
 
             is Expr.Coros -> {
                 val hld = this.hld_or_up(hold)
@@ -502,7 +465,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            bup.assertIsDeclared(id, this.tk)
+                            ups.assertIsDeclared(bup, id, this.tk)
                             id = bup.id2c(id)
                             "($id)$x"
                         }
@@ -531,7 +494,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Acc -> {
                 val bup = ups.block(this)!!
                 val id = this.tk_.fromOp().noSpecial()
-                bup.assertIsDeclared(id, this.tk)
+                ups.assertIsDeclared(bup, id, this.tk)
                 "// ACC " + this.tk.dump() + "\n" + fset(this.tk, hold, bup.id2c(id))
             }
             is Expr.Nil -> fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_NIL })")
