@@ -560,4 +560,36 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 4, col 24) : expected expression : have \"{\"")
     }
+    @Test
+    fun coros4_err() {
+        val l = lexer("""
+            spawn in nil, {}
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \"{\"")
+    }
+    @Test
+    fun coros5_err() {
+        val l = lexer("""
+            spawn in ()
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected expression : have \")\"")
+    }
+    @Test
+    fun coros6_err() {
+        val l = lexer("""
+            spawn in nil, f
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected invalid spawn : expected call : have end of file")
+    }
+    @Test
+    fun coros7_err() {
+        val l = lexer("""
+            spawn
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+    }
 }

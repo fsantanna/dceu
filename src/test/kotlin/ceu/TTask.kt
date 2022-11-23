@@ -532,7 +532,7 @@ class TTask {
         val out = ceu.all(
             """
             var x
-            spawn (task(){nil})(x) in coroutines()
+            spawn in coroutines(), (task(){nil})(x)
             println(0)
         """
         )
@@ -551,7 +551,7 @@ class TTask {
                 println(evt)
             }
             do {
-                spawn T(1) in ts
+                spawn in ts, T(1)
             }
             broadcast 2
         """)
@@ -567,8 +567,8 @@ class TTask {
             }
             var ts
             set ts = coroutines()
-            spawn T(1) in ts
-            spawn T(2) in ts
+            spawn in ts, T(1)
+            spawn in ts, T(2)
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -585,8 +585,8 @@ class TTask {
             }
             var ts
             set ts = coroutines()
-            spawn T(1) in ts
-            spawn T(2) in ts
+            spawn in ts, T(1)
+            spawn in ts, T(2)
             println(0)
         """)
         assert(out == "0\n1\n2\n") { out }
@@ -603,7 +603,7 @@ class TTask {
                     set v = yield nil
                     println(v)
                 }
-                spawn T(1) in ts
+                spawn in ts, T(1)
             }
             broadcast 2
         """)
@@ -619,7 +619,7 @@ class TTask {
                 set T = task (v) {
                     println(v)
                 }
-                spawn T(1) in ts
+                spawn in ts, T(1)
                 while t in ts {
                     throw 1     ;; never reached
                 }
@@ -637,7 +637,7 @@ class TTask {
             }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -660,7 +660,7 @@ class TTask {
             }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             while xxx in ts {
                 println(1)
                 broadcast 1
@@ -678,7 +678,7 @@ class TTask {
             }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             while xxx in ts {
                 println(1)
                 broadcast 1
@@ -697,7 +697,7 @@ class TTask {
             set T = task () { yield nil }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             var yyy
             while xxx in ts {
                 set yyy = xxx
@@ -713,7 +713,7 @@ class TTask {
             set T = task () { yield nil }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             while xxx in ts {
                 var yyy
                 while zzz in ts {
@@ -733,7 +733,7 @@ class TTask {
             set T = task () { yield nil }
             var ts
             set ts = coroutines()
-            spawn T() in ts
+            spawn in ts, T()
             while xxx in ts {
                 var yyy
                 while zzz in ts {
@@ -759,8 +759,8 @@ class TTask {
                 set v = yield nil
                 println(v)
             }
-            spawn T(1) in ts
-            spawn T(2) in ts
+            spawn in ts, T(1)
+            spawn in ts, T(2)
             
             var x
             while t1 in ts {

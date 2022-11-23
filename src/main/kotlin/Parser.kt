@@ -205,21 +205,30 @@ class Parser (lexer_: Lexer)
             this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                if (XCEU && this.checkFix("{")) {
-                    this.nest("""
-                        spawn (task () {
-                            ${this.block().es.pre()}
-                        }) ()
-                    """)
-                } else {
-                    val call = this.expr()
-                    if (call !is Expr.Block || call.es[0] !is Expr.Call) {
-                        err_expected(tk1, "invalid spawn : expected call")
+                when {
+                    this.acceptFix("in") -> {
+                        val coros = this.expr()
+                        this.acceptFix_err(",")
+                        val call = this.expr()
+                        if (call !is Expr.Block || call.es[0] !is Expr.Call) {
+                            err_expected(tk1, "invalid spawn : expected call")
+                        }
+                        Expr.Spawn(tk0, coros, call as Expr.Block)
                     }
-                    val coros = if (!this.acceptFix("in")) null else {
-                        this.expr()
+                    (XCEU && this.checkFix("{")) -> {
+                        this.nest("""
+                            spawn (task () {
+                                ${this.block().es.pre()}
+                            }) ()
+                        """)
                     }
-                    Expr.Spawn(tk0, coros, call as Expr.Block)
+                    else -> {
+                        val call = this.expr()
+                        if (call !is Expr.Block || call.es[0] !is Expr.Call) {
+                            err_expected(tk1, "invalid spawn : expected call")
+                        }
+                        Expr.Spawn(tk0, null, call as Expr.Block)
+                    }
                 }
             }
             this.acceptFix("broadcast") -> Expr.Bcast(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
