@@ -185,6 +185,14 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun spawn4() {
+        val out = all("""
+            (spawn in ts, T()) where {
+            }
+        """)
+        assert(out == "anon : (lin 2, col 23) : access error : variable \"ts\" is not declared") { out }
+    }
 
     // INDEX: TUPLE / DICT
 

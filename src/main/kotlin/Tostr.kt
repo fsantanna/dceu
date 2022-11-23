@@ -15,9 +15,9 @@ fun Expr.tostr (): String {
         is Expr.Catch  -> "catch " + this.cnd.tostr() + " " + this.body.tostr()
         is Expr.Defer  -> "defer " + this.body.tostr()
 
-        is Expr.Coros  -> "coroutines()"
+        is Expr.Coros  -> "coroutines(${this.max.cond { this.max!!.tostr() }})"
         is Expr.Coro   -> "coroutine " + this.task.tostr()
-        is Expr.Spawn  -> "spawn " + this.call.tostr() + this.coros.cond{" in "+this.coros!!.tostr()}
+        is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+this.coros!!.tostr()+", "} + this.call.tostr()
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
         is Expr.Bcast  -> "broadcast " + this.evt.tostr()
         is Expr.Yield  -> "yield " + this.arg.tostr()

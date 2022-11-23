@@ -267,7 +267,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_coro->Bcast.Coro.pc = -1;
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
                         if (ceu_coro->Bcast.Coro.coros != NULL) {
-                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.n == 0) {
+                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                 ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                             }
                         }
@@ -332,11 +332,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val hld = this.hld_or_up(hold)
                 """
                 { // COROS ${this.tk.dump()}
+                    ${this.max.cond { """
+                        CEU_Value ceu_max_$n;
+                        ${this.max!!.code(Pair(ups.block(this)!!.toc(true), "ceu_max_$n"))}
+                        if (ceu_max_$n.tag!=CEU_VALUE_NUMBER || ceu_max_$n.Number<=0) {                
+                            ceu_has_throw = 1;
+                            ceu_err = &CEU_ERR_ERROR;
+                            strncpy(ceu_err_error_msg,
+                                "${tk.pos.file} : (lin ${this.max.tk.pos.lin}, col ${this.max.tk.pos.col}) : coroutines error : expected positive number",
+                                 256);
+                            continue; // escape enclosing block;
+                        }
+                    """}}
                     CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Dynamic) {
                         CEU_VALUE_COROS, $hld->tofree, $hld, {
-                            .Bcast = { NULL, {.Coros = {0, NULL}} }
+                            .Bcast = { NULL, {.Coros = {${if (this.max==null) 0 else "ceu_max_$n.Number"}, 0, 0, NULL}} }
                         }
                     };
                     ceu_bcast_enqueue(&$hld->bcast.dyn, ceu_$n);
@@ -377,7 +389,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
                         continue; // escape enclosing block;
                     }
-                    ceu_mem->coros_$n.Dyn->Bcast.Coros.n++;
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
                     ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
                     do {
                 CEU_ITER_$n:;
@@ -391,8 +403,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
                         goto CEU_ITER_$n;
                     } while (0);
-                    ceu_mem->coros_$n.Dyn->Bcast.Coros.n--;
-                    if (ceu_mem->coros_$n.Dyn->Bcast.Coros.n == 0) {
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
+                    if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
                     if (ceu_has_throw_clear()) {
@@ -600,6 +612,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val resume = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Resume) up2 else null)
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
+                val iscoros = (spawn?.coros != null)
 
                 val (bupc,bupupc) = ups.block(this)!!.let {
                     Pair(it.toc(true), ups.block(it)!!.toc(true))
@@ -630,16 +643,25 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """} +
                 spawn.cond{"""
                 { // SPAWN/CORO ${this.tk.dump()}
-                    ${spawn!!.coros.cond{spawn.coros!!.code(Pair(bupupc, "ceu_mem->coros_${spawn.n}"))}}
+                    ${iscoros.cond{spawn!!.coros!!.code(Pair(bupupc, "ceu_mem->coros_${spawn.n}"))}}
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.f.code(Pair(bupupc, "ceu_task_$n"))}
-                    char* ceu_err_$n = ${if (spawn.coros == null) {
-                        "ceu_coro_create($upuphld, &ceu_task_$n, &ceu_coro_$n);"
-                    } else {
-                        "ceu_coros_create(ceu_mem->coros_${spawn.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);"
+                    ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
+                    char* ceu_err_$n = ${if (!iscoros) {
+                        """
+                        ceu_coro_create($upuphld, &ceu_task_$n, &ceu_coro_$n);
+                        ${fset(this.tk, hold, "ceu_coro_$n")}
+                        """
+                } else {
+                        """
+                        ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);
+                        ${fset(spawn.tk, hold, "ceu_ok_$n")}
+                        if (ceu_ok_$n.Bool) {
+                            // call task only if ok
+                        //} // closes below
+                        """
                     }}
-                    ${fset(this.tk, hold, "ceu_coro_$n")}            
                 """} +
                 resume.cond{"""
                 { // RESUME ${this.tk.dump()}
@@ -673,6 +695,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         continue; // escape enclosing block
                     }
                     ${iscall.cond{fset(this.tk, hold, "ceu_$n")}}
+                    ${spawn.cond{"}"}}
                     ${resume.cond{fset(resume!!.tk, hold, "ceu_$n")}}
                 }
                 """

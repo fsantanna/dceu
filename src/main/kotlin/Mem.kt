@@ -56,6 +56,7 @@ fun Expr.mem (): String {
         is Expr.Throw -> this.ex.mem()
         is Expr.Defer -> this.body.mem()
 
+        is Expr.Coros -> this.max?.mem() ?: ""
         is Expr.Coro -> this.task.mem()
         is Expr.Spawn -> """
             struct { // SPAWN
@@ -117,6 +118,6 @@ fun Expr.mem (): String {
             """
 
         is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> ""
-        is Expr.Coros, is Expr.Func, is Expr.XSeq -> ""
+        is Expr.Func, is Expr.XSeq -> ""
     }
 }

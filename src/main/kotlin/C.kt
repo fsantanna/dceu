@@ -94,7 +94,9 @@ fun Coder.main (): String {
                             char mem[0];                // beginning of locals
                         } Coro;
                         struct {
-                            uint8_t n;                  // number of open iterators
+                            uint8_t max;                // max number of instances
+                            uint8_t cur;                // cur number of instances
+                            uint8_t open;               // number of open iterators
                             struct CEU_Dynamic* first;  // coro->Bcast.Coro, first coro to bcast/free
                         } Coros;
                     };
@@ -248,19 +250,24 @@ fun Coder.main (): String {
             return NULL;
         }
 
-        char* ceu_coros_create (CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
+        char* ceu_coros_create (int* ok, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret) {
+            if (coros->Bcast.Coros.cur == coros->Bcast.Coros.max) {
+                *ok = 0;
+                return NULL;
+            }
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Proto->Task.size);
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, NULL, { // no free, no block
+                CEU_VALUE_CORO, NULL, coros->hold, { // no free
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,task->Proto,0} } }
                 }
             };
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            coros->Bcast.Coros.cur++;
             return NULL;
         }
 
@@ -281,6 +288,7 @@ fun Coder.main (): String {
             }
             assert(cur == coro);
             free(coro);
+            coros->Bcast.Coros.cur--;
         }
         
         char* ceu_coros_cleanup (CEU_Dynamic* coros) {

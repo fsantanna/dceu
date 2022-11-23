@@ -747,6 +747,46 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
+    fun pool14_max_err() {
+        val out = ceu.all(
+            """
+            coroutines(0)
+        """
+        )
+        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number") { out }
+    }
+    @Test
+    fun pool15_max_err() {
+        val out = ceu.all(
+            """
+            coroutines(nil)
+        """
+        )
+        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number") { out }
+    }
+    @Test
+    fun pool16_max() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(1)
+            var T
+            set T = task () { yield nil }
+            var ok1
+            set ok1 = spawn in ts, T()
+            var ok2
+            set ok2 = spawn in ts, T()
+            broadcast nil
+            var ok3
+            set ok3 = spawn in ts, T()
+            var ok4
+            set ok4 = spawn in ts, T()
+            println(ok1, ok2, ok3, ok4)
+        """
+        )
+        assert(out == "true\tfalse\ttrue\tfalse\n") { out }
+    }
+    @Test
     fun todo_poolN() {
         val out = all("""
             var ts

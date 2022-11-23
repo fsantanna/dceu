@@ -199,8 +199,9 @@ class Parser (lexer_: Lexer)
 
             this.acceptFix("coroutines") -> {
                 this.acceptFix_err("(")
+                val max = this.expr()
                 this.acceptFix_err(")")
-                Expr.Coros(this.tk0 as Tk.Fix)
+                Expr.Coros(this.tk0 as Tk.Fix, max)
             }
             this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("spawn") -> {

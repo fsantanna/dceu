@@ -72,7 +72,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Throw  -> this.ex.check()
             is Expr.Defer  -> this.body.check()
 
-            is Expr.Coros  -> {}
+            is Expr.Coros  -> this.max?.check()
             is Expr.Coro   -> this.task.check()
             is Expr.Spawn  -> { this.call.check() ; this.coros?.check() }
             is Expr.Iter   -> { this.coros.check() ; this.body.check() }
@@ -114,7 +114,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Throw  -> this.map(listOf(this.ex))
             is Expr.Defer  -> this.map(listOf(this.body))
 
-            is Expr.Coros  -> emptyMap()
+            is Expr.Coros  -> this.map(listOfNotNull(this.max))
             is Expr.Coro   -> this.map(listOf(this.task))
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
             is Expr.Iter   -> this.map(listOf(this.coros,this.body))
