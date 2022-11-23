@@ -240,5 +240,4 @@ class TXParser {
         val e = parser.exprPrim()
         assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
     }
-
 }

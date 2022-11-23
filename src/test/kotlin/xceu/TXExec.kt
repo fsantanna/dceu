@@ -1,6 +1,7 @@
 package xceu
 
 import ceu.all
+import ceu.lexer
 import org.junit.Ignore
 import org.junit.Test
 
@@ -213,6 +214,15 @@ class TXExec {
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
     }
+
+    @Test
+    fun await2_err() {
+        val out = all("""
+            await f()
+        """)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+
 
     // THROW / CATCH
 

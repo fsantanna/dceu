@@ -22,10 +22,9 @@ fun Tk.dump (): String {
 // func (args) or block (locals)
 data class XBlock (val syms: MutableSet<String>, val defers: MutableList<String>?)
 
-class Coder (val outer: Expr.Block) {
+class Coder (val outer: Expr.Block, val ups: Ups) {
     val code: String
     val mem: String
-    val ups = outer.ups()
     val tags = TAGS.toMutableList()
     val xblocks = mutableMapOf<Expr,XBlock>()
     val tops = mutableListOf<Pair<String,String>>()
@@ -36,31 +35,13 @@ class Coder (val outer: Expr.Block) {
         this.mem = outer.mem()
     }
 
-    fun Expr.up (f: (Expr)->Boolean): Expr? {
-        val x = ups[this]
-        return when {
-            (x == null) -> null
-            f(x) -> x
-            else -> x.up(f)
-        }
-    }
-    fun Expr.upBlock (): Expr.Block? {
-        return this.up() { it is Expr.Block } as Expr.Block?
-    }
-    fun Expr.upFunc (): Expr.Func? {
-        return this.up() { it is Expr.Func } as Expr.Func?
-    }
-    fun Expr.upFuncOrBlock (): Expr? {
-        return this.up() { it is Expr.Func || it is Expr.Block }
-    }
-
     fun Expr.hld_or_up (hold: Pair<String, String>?): String {
-        return hold?.first ?: this.upBlock()!!.toc(true)
+        return hold?.first ?: ups.block(this)!!.toc(true)
     }
 
     fun Expr.isDeclared (id: String): Boolean {
         val xblock = xblocks[this]!!
-        val up = this.upFuncOrBlock()
+        val up = ups.func_or_block(this)
         return (xblock.syms.contains(id) || (up!=null && up.isDeclared(id)))
     }
     fun Expr.assertIsNotDeclared (id: String, tk: Tk) {
@@ -75,7 +56,7 @@ class Coder (val outer: Expr.Block) {
     }
 
     fun Expr.top (): String {
-        return this.upFunc().let {
+        return ups.func(this).let {
             when {
                 (it == null) -> "NULL"
                 (it.tk.str == "task") -> "(ceu_coro->Bcast.Coro.task)"
@@ -93,8 +74,8 @@ class Coder (val outer: Expr.Block) {
         val top = this.top()
         fun Expr.aux (n: Int): String {
             val xblock = xblocks[this]!!
-            val bup = this.upFuncOrBlock()
-            val fup = this.upFunc()
+            val bup = ups.func_or_block(this)
+            val fup = ups.func(this)
             val ok = xblock.syms.contains(id)
             return when {
                 (ok && this==outer) -> "(ceu_mem_${outer.n}->$id)"
@@ -120,8 +101,8 @@ class Coder (val outer: Expr.Block) {
     fun Expr.code(hold: Pair<String, String>?): String {
         return when (this) {
             is Expr.Block -> {
-                val bup = this.upBlock()
-                val f_b = this.upFuncOrBlock()
+                val bup = ups.block(this)
+                val f_b = ups.func_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
                     (f_b is Expr.Func) -> "(ceu_ret==NULL ? 1 : ceu_ret->depth + 1)"
@@ -137,7 +118,7 @@ class Coder (val outer: Expr.Block) {
                 { // BLOCK ${this.tk.dump()}
                     assert($depth <= UINT8_MAX);
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
-                    ${this.upFuncOrBlock().let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
+                    ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
                         "ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
                     ${(f_b!=null && f_b !is Expr.Func).cond {
@@ -151,7 +132,7 @@ class Coder (val outer: Expr.Block) {
                         ${xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
                     ${(f_b!=null && f_b !is Expr.Func).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
-                    ${this.upFuncOrBlock().let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{"ceu_coro->Bcast.Coro.block = NULL;"}}
+                    ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{"ceu_coro->Bcast.Coro.block = NULL;"}}
                     ceu_block_free(&ceu_mem->block_$n);
                     if (ceu_has_throw_clear()) {
                         continue;   // escape to end of enclosing block
@@ -161,7 +142,7 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = this.upBlock()!!
+                val bup = ups.block(this)!!
                 val xup = xblocks[bup]!!
                 bup.assertIsNotDeclared(id, this.tk)
                 xup.syms.add(id)
@@ -200,7 +181,7 @@ class Coder (val outer: Expr.Block) {
                     )
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
-                        val bup = this.upBlock()!!
+                        val bup = ups.block(this)!!
                         bup.assertIsDeclared(id, this.tk)
                         bup.assertIsDeclared("_${id}_", this.tk)
                         Pair ( // x = src / block of _x_
@@ -223,7 +204,7 @@ class Coder (val outer: Expr.Block) {
             is Expr.If -> """
                 { // IF ${this.tk.dump()}
                     CEU_Value ceu_cnd_$n;
-                    ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
+                    ${this.cnd.code(Pair(ups.block(this)!!.toc(true), "ceu_cnd_$n"))}
                     if (ceu_as_bool(&ceu_cnd_$n)) {
                         ${this.t.code(hold)}
                     } else {
@@ -235,9 +216,9 @@ class Coder (val outer: Expr.Block) {
                 { // WHILE ${this.tk.dump()}
                 CEU_WHILE_START_$n:;
                     // may yield in inner block, need to reset evt depth here
-                    ceu_evt_block.depth = ${this.upBlock()!!.toc(true)}->depth + 1;
+                    ceu_evt_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
                     CEU_Value ceu_cnd_$n;
-                    ${this.cnd.code(Pair(this.upBlock()!!.toc(true), "ceu_cnd_$n"))}
+                    ${this.cnd.code(Pair(ups.block(this)!!.toc(true), "ceu_cnd_$n"))}
                     if (ceu_as_bool(&ceu_cnd_$n)) {
                         ${this.body.code(null)}
                         goto CEU_WHILE_START_$n;
@@ -350,7 +331,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Catch -> {
-                val bupc = this.upBlock()!!.toc(true)
+                val bupc = ups.block(this)!!.toc(true)
                 """
                 { // CATCH ${this.tk.dump()}
                     do {
@@ -382,7 +363,7 @@ class Coder (val outer: Expr.Block) {
                     continue; // escape enclosing block;
                 }
                 """
-            is Expr.Defer -> { xblocks[this.upBlock()!!]!!.defers!!.add(this.body.code(null)); "" }
+            is Expr.Defer -> { xblocks[ups.block(this)!!]!!.defers!!.add(this.body.code(null)); "" }
 
             is Expr.Coros -> {
                 val hld = this.hld_or_up(hold)
@@ -402,7 +383,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Coro -> {
-                val bupc = this.upBlock()!!.toc(true)
+                val bupc = ups.block(this)!!.toc(true)
                 val hld = this.hld_or_up(hold)
                 """
                 { // CORO ${this.tk.dump()}
@@ -422,7 +403,7 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Spawn -> this.call.code(hold)
             is Expr.Iter -> {
-                val bupc = this.upBlock()!!.toc(true)
+                val bupc = ups.block(this)!!.toc(true)
                 val loc = this.loc.str
                 """
                 { // ITER ${this.tk.dump()}
@@ -471,23 +452,23 @@ class Coder (val outer: Expr.Block) {
             }
             is Expr.Yield -> """
                 { // YIELD ${this.tk.dump()}
-                    ${this.arg.code(Pair("ceu_ret","ceu_${this.upFunc()!!.n}"))}
+                    ${this.arg.code(Pair("ceu_ret","ceu_${ups.func(this)!!.n}"))}
                     ceu_coro->Bcast.Coro.pc = $n;      // next resume
                     ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
-                    return ceu_${this.upFunc()!!.n};
+                    return ceu_${ups.func(this)!!.n};
                 case $n:                    // resume here
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                    ceu_evt_block.depth = ${this.upBlock()!!.toc(true)}->depth + 1;
+                    ceu_evt_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
                     ${fset(this.tk, hold, "(*ceu_args[0])")}
                 }
                 """
             is Expr.Resume -> this.call.code(hold)
 
             is Expr.Nat -> {
-                val bup = this.upBlock()!!
+                val bup = ups.block(this)!!
                 val body = this.tk.str.let {
                     var ret = ""
                     var i = 0
@@ -548,7 +529,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Acc -> {
-                val bup = this.upBlock()!!
+                val bup = ups.block(this)!!
                 val id = this.tk_.fromOp().noSpecial()
                 bup.assertIsDeclared(id, this.tk)
                 "// ACC " + this.tk.dump() + "\n" + fset(this.tk, hold, bup.id2c(id))
@@ -607,7 +588,7 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Index -> {
-                val bupc = this.upBlock()!!.toc(true)
+                val bupc = ups.block(this)!!.toc(true)
                 """
                 { // INDEX  ${this.tk.dump()}
                     { // COL
@@ -651,17 +632,17 @@ class Coder (val outer: Expr.Block) {
                 """
             }
             is Expr.Call -> {
-                val up1 = ups[this]
-                val up2 = ups[up1]
+                val up1 = ups.ups[this]
+                val up2 = ups.ups[up1]
                 val resume = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Resume) up2 else null)
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
 
-                val (bupc,bupupc) = this.upBlock()!!.let {
-                    Pair(it.toc(true), it.upBlock()!!.toc(true))
+                val (bupc,bupupc) = ups.block(this)!!.let {
+                    Pair(it.toc(true), ups.block(it)!!.toc(true))
                 }
                 val uphld = this.hld_or_up(hold)
-                val upuphld = this.upBlock()!!.hld_or_up(hold)
+                val upuphld = ups.block(this)!!.hld_or_up(hold)
                 val (f,dyn) = if (iscall) {
                     Pair("ceu_f_$n.Proto->Func", "ceu_f_$n.Proto")
                 } else {
@@ -670,7 +651,7 @@ class Coder (val outer: Expr.Block) {
 
                 val (sets,args) = this.args.let {
                     Pair (
-                        it.mapIndexed { i,x -> x.code(Pair(this.upBlock()!!.toc(true), "ceu_mem->arg_${i}_$n")) }.joinToString(""),
+                        it.mapIndexed { i,x -> x.code(Pair(ups.block(this)!!.toc(true), "ceu_mem->arg_${i}_$n")) }.joinToString(""),
                         it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                     )
                 }
@@ -678,7 +659,7 @@ class Coder (val outer: Expr.Block) {
                 iscall.cond{"""
                 { // CALL ${this.tk.dump()}
                     CEU_Value ceu_f_$n;
-                    ${this.f.code(Pair(this.upBlock()!!.toc(true), "ceu_f_$n"))}
+                    ${this.f.code(Pair(ups.block(this)!!.toc(true), "ceu_f_$n"))}
                     char* ceu_err_$n = NULL;
                     if (ceu_f_$n.tag != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";

@@ -5,6 +5,7 @@ import Parser
 import Expr
 import Coder
 import Pos
+import Ups
 import XCEU
 import exec
 import main
@@ -37,7 +38,9 @@ fun all (inp: String, pre: Boolean=false): String {
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
-        val coder = Coder(Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es))
+        val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es)
+        val ups = Ups(outer)
+        val coder = Coder(outer, ups)
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {

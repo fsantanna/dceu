@@ -96,7 +96,9 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         return e.message!! + "\n"
     }
     val c = try {
-        val coder = Coder(Expr.Block(Tk.Fix("",Pos("anon",0,0)),false,es))
+        val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es)
+        val ups = Ups(outer)
+        val coder = Coder(outer, ups)
         coder.main()
     } catch (e: Throwable) {
         //throw e;
