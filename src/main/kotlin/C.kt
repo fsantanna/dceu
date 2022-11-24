@@ -257,6 +257,7 @@ fun Coder.main (): String {
             }
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Frame->Task.size);
             assert(coro != NULL);
+            task->Frame->mem = coro->Bcast.Coro.__mem;
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, hld->tofree, hld, {
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,*(task->Frame),0} } }
@@ -278,6 +279,7 @@ fun Coder.main (): String {
             }
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Frame->Task.size);
             assert(coro != NULL);
+            task->Frame->mem = coro->Bcast.Coro.__mem;
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,*(task->Frame),0} } }

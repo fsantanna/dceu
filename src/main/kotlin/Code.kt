@@ -223,7 +223,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.__mem;
-                        ceu_coro->Bcast.Coro.task->mem = ceu_mem;
+                        //ceu_coro->Bcast.Coro.task.mem = ceu_mem;
                     """}}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
@@ -283,12 +283,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} })")}
                 """}}
                 ${istask.cond{"""
-                    ceu_mem->task_$n = (CEU_Frame) {
+                    static CEU_Frame ceu_task_$n;
+                    ceu_task_$n = (CEU_Frame) {
                         ${this.top()}, NULL, {
                             .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
                         }
                     };
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_mem->task_$n} })")}
+                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} })")}
                 """}}
                 """
             }

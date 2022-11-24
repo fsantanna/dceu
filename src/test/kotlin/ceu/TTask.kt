@@ -787,6 +787,154 @@ class TTask {
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
     @Test
+    fun pool17_term() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(2)
+            var T
+            set T = task (v) {
+                println(10)
+                defer {
+                    println(20)
+                }
+                yield nil
+                if v {
+                    yield nil
+                } else {
+                    nil
+                }
+            }
+            println(0)
+            spawn in ts, T(false)
+            spawn in ts, T(true)
+            println(1)
+            broadcast @[]
+            println(2)
+            broadcast @[]
+            println(3)
+        """
+        )
+        assert(out == "0\n10\n10\n1\n20\n2\n20\n3\n") { out }
+    }
+    @Test
+    fun pool18_throw() {
+        val out = ceu.all(
+            """
+            println(1)
+            catch err==:ok {
+                println(2)
+                spawn task () {
+                    println(3)
+                    yield nil
+                    println(6)
+                    throw :ok
+                } ()
+                spawn task () {
+                    catch :ok {
+                        println(4)
+                        yield nil
+                    }
+                    println(999)
+                } ()
+                println(5)
+                broadcast nil
+                println(9999)
+            }
+            println(7)
+        """
+        )
+        assert(out == "1\n2\n3\n4\n5\n6\n7\n") { out }
+    }
+    @Test
+    fun pool19_throw() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task (v) {
+                spawn task () {
+                    println(v)
+                    yield nil
+                    println(v)
+                } ()
+                while true { yield nil }
+            }
+            spawn T(1)
+            spawn T(2)
+            broadcast nil
+        """
+        )
+        assert(out == "1\n2\n1\n2\n") { out }
+    }
+    @Test
+    fun pool20_throw() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(2)
+            var T
+            set T = task (v) {
+                defer {
+                    println(v)
+                }
+                catch err==:ok {
+                    spawn task () {
+                        yield nil
+                        if v == 1 {
+                            throw :ok
+                        } else {
+                            nil
+                        }
+                        while true { yield nil }
+                    } ()
+                    while true { yield nil }
+                }
+                println(v)
+            }
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            broadcast nil
+            broadcast nil
+            println(999)
+        """
+        )
+        assert(out == "1\n1\n999\n2\n") { out }
+    }
+    @Test
+    fun pool21_throw() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(2)
+            var T
+            set T = task (v) {
+                defer {
+                    println(v)
+                }
+                catch err==:ok {
+                    spawn task () {
+                        yield nil
+                        if v == 2 {
+                            throw :ok
+                        } else {
+                            nil
+                        }
+                        while true { yield nil }
+                    } ()
+                    while true { yield nil }
+                }
+                println(v)
+            }
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            broadcast nil
+            broadcast nil
+            println(999)
+        """
+        )
+        assert(out == "2\n2\n999\n1\n") { out }
+    }
+    @Test
     fun todo_poolN() {
         val out = all("""
             var ts
