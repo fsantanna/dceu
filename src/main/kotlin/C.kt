@@ -193,20 +193,40 @@ fun Coder.main (): String {
     """ // BCAST / EVT
         void ceu_bcast_dyns (CEU_Dynamic* cur);
         void ceu_bcast_blocks_aux (CEU_Block* cur) {
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                     ceu_bcast_dyns(dyn);
+                    if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+                        // ok
+                    } else {
+                        // coros threw exception and didn't catch it
+                        // nested blocks must be killed as well
+                        // stop now, clean up comes soon from :clear
+                        return;
+                    }
                 }
                 cur = cur->bcast.block;
             }
         }
 
         void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
+            assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
             CEU_Value* prv = ceu_evt;
             ceu_has_bcast++;
             ceu_evt = evt;
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             ceu_bcast_blocks_aux(cur);
+            if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+                // ok
+            } else {
+                // whole bcast threw exception and didn't catch it
+                // must not clean up now
+                // stop now, clean up comes soon form :clear
+                //return;
+            }
             ceu_has_bcast--;
             ceu_evt = prv;
             if (ceu_has_bcast == 0) {
@@ -215,6 +235,7 @@ fun Coder.main (): String {
         }
         
         void ceu_bcast_dyns (CEU_Dynamic* cur) {
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 switch (cur->tag) {
@@ -222,15 +243,28 @@ fun Coder.main (): String {
                         if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
                             // skip
                         } else {
+                            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                             ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
+                            // if nested block threw uncaught exception, awake myself next to catch it
+                            //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                             CEU_Value arg = { CEU_VALUE_NIL };
                             CEU_Value* args[] = { &arg };
-                            cur->Bcast.Coro.task->Task.f(cur, NULL, 1, args);
+                            cur->Bcast.Coro.task.Task.f(cur, NULL, 1, args);
+                            if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+                                // ok
+                            } else {
+                                // cur threw exception and didn't catch it
+                                // brothers must be killed as well
+                                // stop now, clean up comes soon from :clear
+                                return;
+                            }
                         }
                         break;
                     }
                     case CEU_VALUE_COROS: {
+                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                         ceu_bcast_dyns(cur->Bcast.Coros.first);
+                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                         break;
                     }
                 }

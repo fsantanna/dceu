@@ -300,6 +300,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     do {
                         ${this.body.code(hold)}
                     } while (0);
+                    if (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR) {
+                        // do not catch anything while clearing up
+                        continue; // escape enclosing block;
+                    }
                     if (ceu_has_throw_clear()) {
                         ceu_has_throw = 0;
                         //ceu_print1(ceu_err);
