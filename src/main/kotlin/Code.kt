@@ -208,7 +208,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 val func = """ // BODY ${this.tk.dump()}
                 CEU_Value ceu_f_$n (
-                    ${isfunc.cond{"CEU_Proto* ceu_func,"}}
+                    ${isfunc.cond{"CEU_Frame* ceu_func,"}}
                     ${istask.cond{"CEU_Dynamic* ceu_coro,"}}
                     CEU_Block* ceu_ret,
                     int ceu_n,
@@ -222,7 +222,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${istask.cond{"""
                         assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
-                        CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.mem;
+                        CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.__mem;
                         ceu_coro->Bcast.Coro.task->mem = ceu_mem;
                     """}}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
@@ -278,18 +278,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 tops.add(Pair(type,func))
                 """ // STATIC
                 ${isfunc.cond{"""
-                    static CEU_Proto ceu_func_$n;
-                    ceu_func_$n = (CEU_Proto) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_func_$n} })")}
+                    static CEU_Frame ceu_func_$n;
+                    ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
+                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} })")}
                 """}}
                 ${istask.cond{"""
-                    static CEU_Proto ceu_task_$n;
-                    ceu_task_$n = (CEU_Proto) {
+                    ceu_mem->task_$n = (CEU_Frame) {
                         ${this.top()}, NULL, {
                             .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
                         }
                     };
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TASK, {.Proto=&ceu_task_$n} })")}
+                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_mem->task_$n} })")}
                 """}}
                 """
             }
@@ -619,8 +618,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 val uphld = this.hld_or_up(hold)
                 val upuphld = ups.block(this)!!.hld_or_up(hold)
-                val (f,dyn) = if (iscall) {
-                    Pair("ceu_f_$n.Proto->Func", "ceu_f_$n.Proto")
+                val (frame,dyn) = if (iscall) {
+                    Pair("ceu_f_$n.Frame->Func", "ceu_f_$n.Frame")
                 } else {
                     Pair("ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f", "ceu_coro_$n.Dyn")
                 }
@@ -685,7 +684,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args_$n[] = { $args };
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
-                    $f(
+                    $frame(
                         $dyn,
                         $uphld,
                         ${this.args.size},
