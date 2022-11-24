@@ -33,7 +33,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return ups.func(this).let {
             when {
                 (it == null) -> "NULL"
-                (it.tk.str == "task") -> "(ceu_coro->Bcast.Coro.task)"
+                (it.tk.str == "task") -> "(&ceu_coro->Bcast.Coro.task)"
                 else -> "ceu_func"
             }
         }
@@ -58,7 +58,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     //println(id)
                     //println(this)
                     val blk = if (this is Expr.Func) this.n else fup!!.n
-                    "(((CEU_Func_$blk*) $top ${"->up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Func_$blk*) (*$top) ${".up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Func) -> bup!!.aux(n+1)
@@ -621,7 +621,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val (frame,dyn) = if (iscall) {
                     Pair("ceu_f_$n.Frame->Func", "ceu_f_$n.Frame")
                 } else {
-                    Pair("ceu_coro_$n.Dyn->Bcast.Coro.task->Task.f", "ceu_coro_$n.Dyn")
+                    Pair("ceu_coro_$n.Dyn->Bcast.Coro.task.Task.f", "ceu_coro_$n.Dyn")
                 }
 
                 val (sets,args) = this.args.let {

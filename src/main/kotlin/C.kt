@@ -89,7 +89,7 @@ fun Coder.main (): String {
                             enum CEU_CORO_STATUS status;
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
-                            struct CEU_Frame* task;     // task->Task
+                            struct CEU_Frame task;      // task->Task
                             int pc;                     // next line to execute
                             char __mem[0];              // beginning of locals, will be allocated here, but accessed through this->task->mem
                         } Coro;
@@ -259,7 +259,7 @@ fun Coder.main (): String {
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, hld->tofree, hld, {
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,task->Frame,0} } }
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,*(task->Frame),0} } }
                 }
             };
             ceu_bcast_enqueue(&hld->bcast.dyn, coro);
@@ -280,7 +280,7 @@ fun Coder.main (): String {
             assert(coro != NULL);
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,task->Frame,0} } }
+                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,*(task->Frame),0} } }
                 }
             };
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
