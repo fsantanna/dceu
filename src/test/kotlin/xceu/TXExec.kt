@@ -194,6 +194,111 @@ class TXExec {
         assert(out == "anon : (lin 2, col 23) : access error : variable \"ts\" is not declared") { out }
     }
 
+    // PARAND / PAROR / WATCHING
+
+    @Test
+    fun paror1() {
+        val out = all("""
+            spawn task () {
+                paror {
+                    yield ()
+                    println(1)
+                } with {
+                    println(2)
+                } with {
+                    yield ()
+                    println(3)
+                }
+                println(999)
+            } ()
+        """)
+        assert(out == "2\n999\n") { out }
+    }
+    @Test
+    fun paror2() {
+        val out = all("""
+            spawn task () {
+                paror {
+                    defer { println(1) }
+                    yield ()
+                    yield ()
+                    println(1)
+                } with {
+                    yield ()
+                    println(2)
+                } with {
+                    defer { println(3) }
+                    yield ()
+                    yield ()
+                    println(3)
+                }
+                println(999)
+            } ()
+            broadcast nil
+        """)
+        assert(out == "2\n1\n3\n999\n") { out }
+    }
+    @Test
+    fun parand3() {
+        val out = all("""
+            spawn task () {
+                parand {
+                    yield ()
+                    println(1)
+                } with {
+                    println(2)
+                } with {
+                    yield ()
+                    println(3)
+                }
+                println(999)
+            } ()
+            broadcast nil
+        """, true)
+        assert(out == "2\n1\n3\n999\n") { out }
+    }
+    @Test
+    fun parand4() {
+        val out = all("""
+            spawn task () {
+                parand {
+                    defer { println(1) }
+                    yield ()
+                    yield ()
+                    println(1)
+                } with {
+                    yield ()
+                    println(2)
+                } with {
+                    defer { println(3) }
+                    yield ()
+                    yield ()
+                    println(3)
+                }
+                println(999)
+            } ()
+            broadcast nil
+            broadcast nil
+        """, true)
+        assert(out == "2\n1\n1\n3\n3\n999\n") { out }
+    }
+    @Test
+    fun watching5() {
+        val out = all("""
+            spawn task () {
+                watching evt==1 {
+                    defer { println(2) }
+                    yield ()
+                    println(1)
+                }
+                println(999)
+            } ()
+            broadcast nil
+            broadcast 1
+        """)
+        assert(out == "1\n2\n999\n") { out }
+    }
+
     // INDEX: TUPLE / DICT
 
     @Test

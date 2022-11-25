@@ -316,9 +316,57 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     do {
                         $spws
-                        while true {
-                            yield ()
+                        await false
+                    }
+                """)
+            }
+            (XCEU && this.acceptFix("parand")) -> {
+                val pars = mutableListOf(this.block())
+                val n = pars[0].n
+                this.acceptFix_err("with")
+                pars.add(this.block())
+                while (this.acceptFix("with")) {
+                    pars.add(this.block())
+                }
+                val spws = pars.map { """
+                    spawn (task () {
+                        ${it.es.pre()}
+                        set ceu_n_$n = ceu_n_$n + 1
+                        if ceu_n_$n == ${pars.size} {
+                            throw :ceu_parand_$n
                         }
+                    }) ()
+                """}.joinToString("")
+                //println(spws)
+                this.nest("""
+                    do {
+                        var ceu_n_$n = 0
+                        catch err==:ceu_parand_$n {
+                            $spws
+                            await false
+                        }
+                    }
+                """)
+            }
+            (XCEU && this.acceptFix("paror")) -> {
+                val pars = mutableListOf(this.block())
+                val n = pars[0].n
+                this.acceptFix_err("with")
+                pars.add(this.block())
+                while (this.acceptFix("with")) {
+                    pars.add(this.block())
+                }
+                val spws = pars.map { """
+                    spawn (task () {
+                        ${it.es.pre()}
+                        throw :ceu_paror_$n
+                    }) ()
+                """}.joinToString("")
+                //println(spws)
+                this.nest("""
+                    catch err==:ceu_paror_$n {
+                        $spws
+                        await false
                     }
                 """)
             }
@@ -341,6 +389,17 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     while true {
                         await ${cnd.pre()}
+                        ${body.es.pre()}
+                    }
+                """)//.let { println(it.tostr()); it }
+            }
+            (XCEU && this.acceptFix("watching")) -> {
+                val cnd = this.expr()
+                val body = this.block()
+                this.nest("""
+                    paror {
+                        await ${cnd.pre()}
+                    } with {
                         ${body.es.pre()}
                     }
                 """)//.let { println(it.tostr()); it }

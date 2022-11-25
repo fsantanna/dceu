@@ -156,7 +156,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                 }
                 (x == ':') -> {
-                    val tag = x + read2While { it.isLetterOrDigit() || it=='.' }
+                    val tag = x + read2While { it.isLetterOrDigit() || it=='.' || it=='_' }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }

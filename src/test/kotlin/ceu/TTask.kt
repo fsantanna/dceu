@@ -162,16 +162,15 @@ class TTask {
         """)
         assert(out == "1\n2\n") { out }
     }
-
     @Test
-    fun yield1_err() {
+    fun yield14_err() {
         val out = all("""
             yield nil
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
     @Test
-    fun yield2_err() {
+    fun yield15_err() {
         val out = all("""
             task () {
                 func () {
@@ -180,6 +179,19 @@ class TTask {
             }
         """)
         assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
+    }
+    @Test
+    fun task16_nest() {
+        val out = all("""
+            spawn task (v1) {
+                spawn task (v2) {
+                    spawn task (v3) {
+                        println(v1,v2,v3)
+                    }(3)
+                }(2)
+            }(1)
+        """)
+        assert(out == "1\t2\t3\n") { out }
     }
 
     // SPAWN

@@ -58,7 +58,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     //println(id)
                     //println(this)
                     val blk = if (this is Expr.Func) this.n else fup!!.n
-                    "(((CEU_Func_$blk*) (*$top) ${".up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Func_$blk*) ($top) ${"->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Func) -> bup!!.aux(n+1)
