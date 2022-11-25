@@ -229,6 +229,13 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected identifier : have \"2\"")
     }
+    @Test
+    fun pub7() {
+        val l = lexer("set pub = x.pub + pub")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "set pub = {+}(x.pub,pub)") { e.tostr() }
+    }
 
     // EXPRS
 

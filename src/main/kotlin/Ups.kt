@@ -84,7 +84,7 @@ class Ups (val outer: Expr.Block) {
                 this.arg.check()
             }
             is Expr.Resume -> this.call.check()
-            is Expr.Pub    -> this.coro.check()
+            is Expr.Pub    -> this.coro?.check()
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
@@ -122,7 +122,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Bcast  -> this.map(listOf(this.evt))
             is Expr.Yield  -> this.map(listOf(this.arg))
             is Expr.Resume -> this.map(listOf(this.call))
-            is Expr.Pub    -> this.map(listOf(this.coro))
+            is Expr.Pub    -> this.map(listOfNotNull(this.coro))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()

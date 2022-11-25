@@ -22,7 +22,7 @@ fun Expr.tostr (): String {
         is Expr.Bcast  -> "broadcast " + this.evt.tostr()
         is Expr.Yield  -> "yield " + this.arg.tostr()
         is Expr.Resume -> "resume " + this.call.tostr()
-        is Expr.Pub    -> this.coro.tostr() + ".pub"
+        is Expr.Pub    -> if (this.coro == null) "pub" else (this.coro.tostr() + ".pub")
 
         is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str

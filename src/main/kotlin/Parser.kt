@@ -155,7 +155,7 @@ class Parser (lexer_: Lexer)
                 val dst = this.expr()
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (dst !is Expr.Acc && dst !is Expr.Index) {
+                if (!(dst is Expr.Acc || dst is Expr.Index || dst is Expr.Pub)) {
                     err(tk0, "invalid set : invalid destination")
                 }
                 Expr.Set(tk0, dst, src)
@@ -254,6 +254,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Resume(tk0, call as Expr.Block)
             }
+            this.acceptFix("pub") -> Expr.Pub(this.tk0, null)
 
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
                 Expr.Nat(this.tk0 as Tk.Nat)
