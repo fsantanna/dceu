@@ -298,6 +298,25 @@ class TXExec {
         """)
         assert(out == "1\n2\n999\n") { out }
     }
+    @Test
+    fun watching6_clk() {
+        val out = ceu.all("""
+            spawn task () {
+                watching 10s {
+                    defer { println(10) }
+                    await false
+                    println(1)
+                }
+                println(999)
+            } ()
+            println(0)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(1)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(2)
+        """, true)
+        assert(out == "0\n1\n10\n999\n2\n") { out }
+    }
 
     // INDEX: TUPLE / DICT
 

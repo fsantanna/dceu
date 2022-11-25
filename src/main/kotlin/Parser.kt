@@ -124,6 +124,14 @@ class Parser (lexer_: Lexer)
         return Expr.Block(tk0, false, es)
     }
 
+    fun clk_or_expr (): Pair<Tk.Clk?,Expr?> {
+        return if (this.acceptEnu("Clk")) {
+            Pair(this.tk0 as Tk.Clk, null)
+        } else {
+            Pair(null, this.expr())
+        }
+    }
+
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> this.block()
@@ -373,9 +381,9 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val tk0 = this.tk0
-                if (this.acceptEnu("Clk")) {
-                    val clk = this.tk0 as Tk.Clk
-                    this.nest("""
+                val (clk,cnd) = this.clk_or_expr()
+                when {
+                    (clk != null) -> this.nest("""
                         do {
                             var ceu_ms = ${clk.ms}
                             while ceu_ms > 0 {
@@ -384,17 +392,16 @@ class Parser (lexer_: Lexer)
                             }
                         }
                     """)//.let { println(it.tostr()); it }
-                } else {
-                    val cnd = this.expr()
-                    this.nest("""
+                    (cnd != null) -> this.nest("""
                         do {
                             ${tk0.pos.pre()}yield ()
                             ;;println(evt)
-                            while not (${cnd.pre()}) {
+                            while not (${cnd!!.pre()}) {
                                 yield ()
                             }
                         }
                     """)//.let { println(it.tostr()); it }
+                    else -> error("bug found")
                 }
             }
             (XCEU && this.acceptFix("every")) -> {
@@ -408,11 +415,11 @@ class Parser (lexer_: Lexer)
                 """)//.let { println(it.tostr()); it }
             }
             (XCEU && this.acceptFix("watching")) -> {
-                val cnd = this.expr()
+                val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
                     paror {
-                        await ${cnd.pre()}
+                        await ${if (clk!=null) clk.str else cnd!!.pre() }
                     } with {
                         ${body.es.pre()}
                     }
