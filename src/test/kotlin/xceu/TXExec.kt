@@ -381,6 +381,23 @@ class TXExec {
         """)
         assert(out == "0\n1\n10\n2\n3\n30\n4\n") { out }
     }
+    @Test
+    fun await5_clk() {
+        val out = ceu.all("""
+            spawn task () {
+                while (true) {
+                    await 10s                    
+                    println(999)
+                }
+            }()
+            println(0)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(1)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(2)
+        """, true)
+        assert(out == "0\n1\n999\n2\n") { out }
+    }
 
     // FUNC / TASK
 

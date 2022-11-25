@@ -65,6 +65,7 @@ class Parser (lexer_: Lexer)
             "Id"  -> this.tk1 is Tk.Id
             "Num" -> this.tk1 is Tk.Num
             "Nat" -> this.tk1 is Tk.Nat
+            "Clk" -> this.tk1 is Tk.Clk
             else  -> error("bug found")
         }
     }
@@ -372,16 +373,29 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val tk0 = this.tk0
-                val cnd = this.expr()
-                this.nest("""
-                    do {
-                        ${tk0.pos.pre()}yield ()
-                        ;;println(evt)
-                        while not (${cnd.pre()}) {
-                            yield ()
+                if (this.acceptEnu("Clk")) {
+                    val clk = this.tk0 as Tk.Clk
+                    this.nest("""
+                        do {
+                            var ceu_ms = ${clk.ms}
+                            while ceu_ms > 0 {
+                                await evt[:type]==:timer
+                                set ceu_ms = ceu_ms - evt[:dt]
+                            }
                         }
-                    }
-                """)//.let { println(it.tostr()); it }
+                    """)//.let { println(it.tostr()); it }
+                } else {
+                    val cnd = this.expr()
+                    this.nest("""
+                        do {
+                            ${tk0.pos.pre()}yield ()
+                            ;;println(evt)
+                            while not (${cnd.pre()}) {
+                                yield ()
+                            }
+                        }
+                    """)//.let { println(it.tostr()); it }
+                }
             }
             (XCEU && this.acceptFix("every")) -> {
                 val cnd = this.expr()
