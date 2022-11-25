@@ -215,7 +215,19 @@ class TParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Tag)
-        assert(e.tostr() == "x.a") { e.tostr() }
+        assert(e.tostr() == "x[:a]") { e.tostr() }
+    }
+    @Test
+    fun index5_err() {
+        val l = lexer("x . .")
+        val parser = Parser(l)
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+    }
+    @Test
+    fun index6_err() {
+        val l = lexer("x . 2")
+        val parser = Parser(l)
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected identifier : have \"2\"")
     }
 
     // EXPRS

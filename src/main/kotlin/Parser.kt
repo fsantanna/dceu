@@ -457,10 +457,18 @@ class Parser (lexer_: Lexer)
         // only accept sufix in the same line
         while (this.tk0.pos.isSameLine(this.tk1.pos)) {
             when {
-                // INDEX
+                // INDEX / PUB
                 this.acceptFix("[") -> {
                     e = Expr.Index(e.tk, e, this.expr())
                     this.acceptFix_err("]")
+                }
+                this.acceptFix(".") -> {
+                    if (this.acceptFix("pub")) {
+                        e = Expr.Pub(e.tk, e)
+                    } else {
+                        this.acceptEnu_err("Id")
+                        e = Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
+                    }
                 }
                 // ECALL
                 this.acceptFix("(") -> {
