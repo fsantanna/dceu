@@ -1086,7 +1086,22 @@ class TTask {
     // PUB
 
     @Test
-    fun pub1() {
+    fun pub1_err() {
+        val out = all("""
+            var a
+            a.pub
+        """, true)
+        assert(out == "anon : (lin 3, col 13) : pub error : expected coroutine") { out }
+    }
+    @Test
+    fun pub2_err() {
+        val out = all("""
+            pub
+        """, true)
+        assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task") { out }
+    }
+    @Test
+    fun pub3() {
         val out = all("""
             var t
             set t = task (v1) {

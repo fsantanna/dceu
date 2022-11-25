@@ -84,7 +84,12 @@ class Ups (val outer: Expr.Block) {
                 this.arg.check()
             }
             is Expr.Resume -> this.call.check()
-            is Expr.Pub    -> this.coro?.check()
+            is Expr.Pub    -> {
+                if (this.coro==null && func(this)?.tk?.str!="task") {
+                    err(this.tk, "pub error : expected enclosing task")
+                }
+                this.coro?.check()
+            }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}

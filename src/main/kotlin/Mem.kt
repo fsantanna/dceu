@@ -77,8 +77,12 @@ fun Expr.mem (): String {
         is Expr.Bcast -> this.evt.mem()
         is Expr.Yield -> this.arg.mem()
         is Expr.Resume -> this.call.mem()
-        is Expr.Pub -> this.coro?.mem() ?: ""
-
+        is Expr.Pub -> """
+            struct { // PUB
+                ${this.coro?.mem() ?: ""}
+                CEU_Value coro_$n;
+            };
+            """
         is Expr.Tuple -> """
             struct { // TUPLE
                 ${this.args.map { it.mem() }.joinToString("")}

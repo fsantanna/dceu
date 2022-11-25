@@ -91,6 +91,7 @@ fun Coder.main (): String {
                             struct CEU_Block* block;    // first block to bcast
                             struct CEU_Frame task;      // task->Task
                             int pc;                     // next line to execute
+                            CEU_Value pub;
                             char __mem[0];              // beginning of locals, will be allocated here, but accessed through this->task->mem
                         } Coro;
                         struct {

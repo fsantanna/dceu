@@ -125,28 +125,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             }
             is Expr.Set -> {
-                val col = "ceu_mem->col_${this.dst.n}"
-                val idx = "ceu_mem->idx_${this.dst.n}"
                 val (hldSrc, dst) = when (this.dst) {
-                    is Expr.Index -> Pair(
-                        "$col.Dyn->hold",
-                        """
-                        switch ($col.tag) { // OK
-                            case CEU_VALUE_TUPLE:                
-                                $col.Dyn->Tuple.mem[(int) $idx.Number] = ceu_$n;
-                                break;
-                            case CEU_VALUE_DICT: {
-                                int idx = ceu_dict_key_index($col.Dyn, &$idx);
-                                if (idx == -1) {
-                                    idx = ceu_dict_empty_index($col.Dyn);
-                                    (*$col.Dyn->Dict.mem)[idx][0] = $idx;
-                                }
-                                (*$col.Dyn->Dict.mem)[idx][1] = ceu_$n;
-                                break;
-                            }
-                        }
-                        """
-                    )
                     is Expr.Acc -> {
                         val id = this.dst.tk_.fromOp().noSpecial()
                         val bup = ups.block(this)!!
@@ -157,13 +136,40 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             "${bup.id2c(id)} = ceu_$n;"
                         )
                     }
+                    is Expr.Index -> {
+                        val col = "ceu_mem->col_${this.dst.n}"
+                        val idx = "ceu_mem->idx_${this.dst.n}"
+                        Pair(
+                            "$col.Dyn->hold",
+                            """
+                            switch ($col.tag) { // OK
+                                case CEU_VALUE_TUPLE:                
+                                    $col.Dyn->Tuple.mem[(int) $idx.Number] = ceu_$n;
+                                    break;
+                                case CEU_VALUE_DICT: {
+                                    int idx = ceu_dict_key_index($col.Dyn, &$idx);
+                                    if (idx == -1) {
+                                        idx = ceu_dict_empty_index($col.Dyn);
+                                        (*$col.Dyn->Dict.mem)[idx][0] = $idx;
+                                    }
+                                    (*$col.Dyn->Dict.mem)[idx][1] = ceu_$n;
+                                    break;
+                                }
+                            }
+                            """
+                        )
+                    }
+                    is Expr.Pub -> Pair(
+                        "ceu_mem->coro_${this.dst.n}.Dyn->hold",
+                        "ceu_mem->coro_${this.dst.n}.Dyn->Bcast.Coro.pub = ceu_$n;"
+                    )
                     else -> error("bug found")
                 }
                 """
                 { // SET ${this.tk.dump()}
                     CEU_Value ceu_$n;
-                    ${this.dst.code(null)}
-                    ${this.src.code(Pair(hldSrc, "ceu_$n"))}
+                    ${this.dst.code(null)}                // before src (src needs dst.hold)
+                    ${this.src.code(Pair(hldSrc, "ceu_$n"))}    // after dst (src needs dst.hold)
                     $dst
                     ${fset(this.tk, hold, "ceu_$n")}
                 }
@@ -445,7 +451,25 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             is Expr.Resume -> this.call.code(hold)
-            is Expr.Pub -> TODO()
+            is Expr.Pub -> {
+                val bupc = ups.block(this)!!.toc(true)
+                """
+                //{ // PUB
+                    ${if (this.coro == null) {
+                        "ceu_mem->coro_$n = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_coro} };"
+                    } else { """
+                        ${this.coro.code(Pair(bupc, "ceu_mem->coro_$n"))}
+                        if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO) {                
+                            ceu_has_throw = 1;
+                            ceu_err = &CEU_ERR_ERROR;
+                            strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
+                            continue; // escape enclosing block;
+                        }
+                    """ }}
+                    ${fset(this.tk, hold, "ceu_mem->coro_$n.Dyn->Bcast.Coro.pub")}
+                //}
+                """
+            }
 
             is Expr.Nat -> {
                 val bup = ups.block(this)!!
