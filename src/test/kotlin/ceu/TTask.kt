@@ -1120,4 +1120,36 @@ class TTask {
         """, true)
         assert(out == "nil\n1\n3\n") { out }
     }
+    @Test
+    fun pub4_err() {
+        val out = all("""
+            var t
+            set t = task () {
+                set pub = []
+            }
+            var x
+            do {
+                var a
+                set a = coroutine t
+                resume a()
+                set x = a.pub
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pub5() {
+        val out = all("""
+            var t
+            set t = task () {
+                set pub = 10
+            }
+            var a
+            set a = coroutine t
+            resume a()
+            println(a.pub + a.pub)
+        """, true)
+        assert(out == "20\n") { out }
+    }
 }
