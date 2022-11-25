@@ -445,6 +445,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             is Expr.Resume -> this.call.code(hold)
+            is Expr.Pub -> TODO()
 
             is Expr.Nat -> {
                 val bup = ups.block(this)!!

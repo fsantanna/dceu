@@ -22,7 +22,7 @@ fun lexer (str: String): Lexer {
 class TLexer {
     @Test
     fun syms() {
-        val l = lexer("{ } ( ; ( = ) ) - , ][ / * +")
+        val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")
         val tks = l.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
@@ -38,6 +38,7 @@ class TLexer {
         assert(tks.next().str == "/")
         assert(tks.next().str == "*")
         assert(tks.next().str == "+")
+        assert(tks.next().str == ".")
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -51,13 +52,14 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer(" if aaa throw coroutines nil task XXX defer set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true func b10 in false")
+        val l = lexer(" if aaa throw coroutines nil pub task XXX defer set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
         assert(tks.next().let { it is Tk.Fix && it.str == "throw" })
         assert(tks.next().let { it is Tk.Fix && it.str == "coroutines" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "pub" })
         assert(tks.next().let { it is Tk.Fix && it.str == "task" })
         assert(tks.next().let { it is Tk.Id  && it.str == "XXX" })
         assert(tks.next().let { it is Tk.Fix && it.str == "defer" })

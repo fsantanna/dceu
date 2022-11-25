@@ -77,6 +77,7 @@ fun Expr.mem (): String {
         is Expr.Bcast -> this.evt.mem()
         is Expr.Yield -> this.arg.mem()
         is Expr.Resume -> this.call.mem()
+        is Expr.Pub -> this.coro.mem()
 
         is Expr.Tuple -> """
             struct { // TUPLE

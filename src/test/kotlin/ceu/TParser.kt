@@ -186,20 +186,36 @@ class TParser {
         assert(e is Expr.Dict && e.args.size==1)
     }
 
-    // EXPR.INDEX
+    // EXPR.INDEX / PUB
 
     @Test
-    fun expr_index() {
+    fun index1() {
         val l = lexer("x[10]")
         val parser = Parser(l)
         val e = parser.exprSufs()
         assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Num)
     }
     @Test
-    fun expr_index_err() {
+    fun index2_err() {
         val l = lexer("x[10")
         val parser = Parser(l)
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
+    }
+    @Test
+    fun pub3() {
+        val l = lexer("x . pub")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Pub && e.coro is Expr.Acc)
+        assert(e.tostr() == "x.pub") { e.tostr() }
+    }
+    @Test
+    fun index4() {
+        val l = lexer("x . a")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Tag)
+        assert(e.tostr() == "x.a") { e.tostr() }
     }
 
     // EXPRS

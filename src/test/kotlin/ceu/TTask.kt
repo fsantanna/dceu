@@ -1082,4 +1082,27 @@ class TTask {
         )
         assert(out == "@[]\n") { out }
     }
+
+    // PUB
+
+    @Test
+    fun pub1() {
+        val out = all("""
+            var t
+            set t = task (v1) {
+                set pub = v1
+                var v2
+                set v2 = yield nil
+                set pub = pub + v2
+            }
+            var a
+            set a = coroutine t
+            println(a.pub)
+            resume a(1)
+            println(a.pub)
+            resume a(2)
+            println(a.pub)
+        """, true)
+        assert(out == "nil\n1\n3\n") { out }
+    }
 }
