@@ -219,16 +219,17 @@ fun Coder.main (): String {
             ceu_evt = evt;
             assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             ceu_bcast_blocks_aux(cur);
-            if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+            ceu_has_bcast--;
+            int isclr = (ceu_evt == &CEU_EVT_CLEAR);
+            ceu_evt = prv;
+            if (ceu_has_throw==0 || isclr) {
                 // ok
             } else {
                 // whole bcast threw exception and didn't catch it
                 // must not clean up now
                 // stop now, clean up comes soon form :clear
-                //return;
+                return;
             }
-            ceu_has_bcast--;
-            ceu_evt = prv;
             if (ceu_has_bcast == 0) {
                 ceu_block_free(&ceu_evt_block);
             }
