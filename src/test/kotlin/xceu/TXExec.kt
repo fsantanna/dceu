@@ -417,6 +417,38 @@ class TXExec {
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
     }
+    @Test
+    fun every6_clk() {
+        val out = ceu.all("""
+            spawn task () {
+                every 10s {
+                    println(10)
+                }
+            }()
+            println(0)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(1)
+            broadcast @[(:type,:timer),(:dt,5000)]
+            println(2)
+            broadcast @[(:type,:timer),(:dt,10000)]
+            println(3)
+        """, true)
+        assert(out == "0\n1\n10\n2\n10\n3\n") { out }
+    }
+    @Test
+    fun todo_every7_clk() { // awake twice from single bcast
+        val out = ceu.all("""
+            spawn task () {
+                every 10s {
+                    println(10)
+                }
+            }()
+            println(0)
+            broadcast @[(:type,:timer),(:dt,20000)]
+            println(1)
+        """, true)
+        assert(out == "0\n10\n10\n1") { out }
+    }
 
     // FUNC / TASK
 

@@ -405,11 +405,11 @@ class Parser (lexer_: Lexer)
                 }
             }
             (XCEU && this.acceptFix("every")) -> {
-                val cnd = this.expr()
+                val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
                     while true {
-                        await ${cnd.pre()}
+                        await ${if (clk!=null) clk.str else cnd!!.pre() }
                         ${body.es.pre()}
                     }
                 """)//.let { println(it.tostr()); it }
