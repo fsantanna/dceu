@@ -29,7 +29,9 @@ fun Expr.mem (): String {
             """
         }
         is Expr.Set -> """
-            struct {
+            struct { // SET
+                CEU_Block* set_hld_$n;
+                CEU_Value* set_dst_$n;
                 ${this.dst.mem()}
                 ${this.src.mem()}
             };

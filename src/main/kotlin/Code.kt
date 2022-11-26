@@ -72,7 +72,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.code(hold: Pair<String, String>?): String {
+    fun Expr.code(assrc: Pair<String, String>?, asdst: Int?=null): String {
         return when (this) {
             is Expr.Block -> {
                 val bup = ups.block(this)
@@ -83,7 +83,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, it ->
-                    it.code(if (i == this.es.size - 1) hold else null) + "\n"
+                    it.code(if (i == this.es.size - 1) assrc else null) + "\n"
                 }.joinToString("")
                 """
                 { // BLOCK ${this.tk.dump()}
@@ -121,57 +121,25 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 // DCL ${this.tk.dump()}
                 ${this.init.cond{"$x = (CEU_Value) { CEU_VALUE_NIL };"}}
                 $_x_ = ${bup.toc(true)};   // can't be static b/c recursion
-                ${fset(this.tk, hold, id)}                
+                ${fset(this.tk, assrc, id)}                
                 """
             }
             is Expr.Set -> {
-                val (hldSrc, dst) = when (this.dst) {
-                    is Expr.Acc -> {
-                        val id = this.dst.tk_.fromOp().noSpecial()
-                        val bup = ups.block(this)!!
-                        ups.assertIsDeclared(bup, id, this.tk)
-                        ups.assertIsDeclared(bup, "_${id}_", this.tk)
-                        Pair ( // x = src / block of _x_
-                            bup.id2c("_${id}_"),
-                            "${bup.id2c(id)} = ceu_$n;"
-                        )
-                    }
-                    is Expr.Index -> {
-                        val col = "ceu_mem->col_${this.dst.n}"
-                        val idx = "ceu_mem->idx_${this.dst.n}"
+                when (this.dst) {
+                    is Expr.Pub -> {
                         Pair(
-                            "$col.Dyn->hold",
-                            """
-                            switch ($col.tag) { // OK
-                                case CEU_VALUE_TUPLE:                
-                                    $col.Dyn->Tuple.mem[(int) $idx.Number] = ceu_$n;
-                                    break;
-                                case CEU_VALUE_DICT: {
-                                    int idx = ceu_dict_key_index($col.Dyn, &$idx);
-                                    if (idx == -1) {
-                                        idx = ceu_dict_empty_index($col.Dyn);
-                                        (*$col.Dyn->Dict.mem)[idx][0] = $idx;
-                                    }
-                                    (*$col.Dyn->Dict.mem)[idx][1] = ceu_$n;
-                                    break;
-                                }
-                            }
-                            """
+                            "ceu_mem->coro_${this.dst.n}.Dyn->hold",
+                            "ceu_mem->coro_${this.dst.n}.Dyn->Bcast.Coro.pub = ceu_$n;"
                         )
+                        TODO()
                     }
-                    is Expr.Pub -> Pair(
-                        "ceu_mem->coro_${this.dst.n}.Dyn->hold",
-                        "ceu_mem->coro_${this.dst.n}.Dyn->Bcast.Coro.pub = ceu_$n;"
-                    )
-                    else -> error("bug found")
+                    else -> {}
                 }
                 """
                 { // SET ${this.tk.dump()}
-                    CEU_Value ceu_$n;
-                    ${this.dst.code(null)}                // before src (src needs dst.hold)
-                    ${this.src.code(Pair(hldSrc, "ceu_$n"))}    // after dst (src needs dst.hold)
-                    $dst
-                    ${fset(this.tk, hold, "ceu_$n")}
+                    ${this.dst.code(null, n)} // before src (src needs set_hld/set_$n)
+                    ${this.src.code(Pair("ceu_mem->set_hld_$n", "(*ceu_mem->set_dst_$n)"), null)}
+                    ${fset(this.tk, assrc, "(*ceu_mem->set_dst_$n)")}
                 }
                 """
             }
@@ -180,9 +148,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_cnd_$n;
                     ${this.cnd.code(Pair(ups.block(this)!!.toc(true), "ceu_cnd_$n"))}
                     if (ceu_as_bool(&ceu_cnd_$n)) {
-                        ${this.t.code(hold)}
+                        ${this.t.code(assrc)}
                     } else {
-                        ${this.f.code(hold)}
+                        ${this.f.code(assrc)}
                     }
                 }
                 """
@@ -202,6 +170,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val istask = (this.tk.str == "task")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
+                    ${istask.cond{"CEU_Value ceu_pub;"}}
                     void* ceu_up;
                     ${this.args.map {
                         """
@@ -286,7 +255,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${isfunc.cond{"""
                     static CEU_Frame ceu_func_$n;
                     ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} })")}
+                    ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} })")}
                 """}}
                 ${istask.cond{"""
                     static CEU_Frame ceu_task_$n;
@@ -295,7 +264,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
                         }
                     };
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} })")}
+                    ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} })")}
                 """}}
                 """
             }
@@ -304,7 +273,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 { // CATCH ${this.tk.dump()}
                     do {
-                        ${this.body.code(hold)}
+                        ${this.body.code(assrc)}
                     } while (0);
                     if (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not catch anything while clearing up
@@ -339,7 +308,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Defer -> { ups.xblocks[ups.block(this)!!]!!.defers!!.add(this.body.code(null)); "" }
 
             is Expr.Coros -> {
-                val hld = this.hld_or_up(hold)
+                val hld = this.hld_or_up(assrc)
                 """
                 { // COROS ${this.tk.dump()}
                     ${this.max.cond { """
@@ -363,13 +332,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     ceu_bcast_enqueue(&$hld->bcast.dyn, ceu_$n);
                     $hld->tofree = ceu_$n;
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
+                    ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
                 }
                 """
             }
             is Expr.Coro -> {
                 val bupc = ups.block(this)!!.toc(true)
-                val hld = this.hld_or_up(hold)
+                val hld = this.hld_or_up(assrc)
                 """
                 { // CORO ${this.tk.dump()}
                     CEU_Value ceu_task_$n;
@@ -382,11 +351,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
                         continue; // escape enclosing block;
                     }
-                    ${fset(this.tk, hold, "ceu_coro_$n")}
+                    ${fset(this.tk, assrc, "ceu_coro_$n")}
                 }
                 """
             }
-            is Expr.Spawn -> this.call.code(hold)
+            is Expr.Spawn -> this.call.code(assrc)
             is Expr.Iter -> {
                 val bupc = ups.block(this)!!.toc(true)
                 val loc = this.loc.str
@@ -447,10 +416,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ceu_evt_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
-                    ${fset(this.tk, hold, "(*ceu_args[0])")}
+                    ${fset(this.tk, assrc, "(*ceu_args[0])")}
                 }
                 """
-            is Expr.Resume -> this.call.code(hold)
+            is Expr.Resume -> this.call.code(assrc)
             is Expr.Pub -> {
                 val bupc = ups.block(this)!!.toc(true)
                 """
@@ -466,7 +435,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             continue; // escape enclosing block;
                         }
                     """ }}
-                    ${fset(this.tk, hold, "ceu_mem->coro_$n.Dyn->Bcast.Coro.pub")}
+                    ${fset(this.tk, assrc, "ceu_mem->coro_$n.Dyn->Bcast.Coro.pub")}
                 //}
                 """
             }
@@ -523,7 +492,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """
                         CEU_Value ceu_$n = ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} });
-                        ${fset(this.tk, hold, "ceu_$n")}
+                        ${fset(this.tk, assrc, "ceu_$n")}
                         """
                     }}
                     if (ceu_has_throw_clear()) {
@@ -536,26 +505,34 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val bup = ups.block(this)!!
                 val id = this.tk_.fromOp().noSpecial()
                 ups.assertIsDeclared(bup, id, this.tk)
-                "// ACC " + this.tk.dump() + "\n" + fset(this.tk, hold, bup.id2c(id))
+                if (asdst == null) {
+                    "// ACC " + this.tk.dump() + "\n" + fset(this.tk, assrc, bup.id2c(id))
+                } else {
+                    ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                    """ // ACC
+                    ceu_mem->set_hld_$asdst = ${bup.id2c("_${id}_")};
+                    ceu_mem->set_dst_$asdst = &${bup.id2c(id)};
+                    """
+                }
             }
-            is Expr.Nil -> fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_NIL })")
+            is Expr.Nil -> fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)
                 if (!tags.contains(tag)) {
                     tags.add(tag)
                 }
-                fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} })")
+                fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} })")
             }
             is Expr.Bool -> {
                 fset(
                     this.tk,
-                    hold,
+                    assrc,
                     "((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} })"
                 )
             }
-            is Expr.Num -> fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
+            is Expr.Num -> fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
             is Expr.Tuple -> {
-                val hld = this.hld_or_up(hold)
+                val hld = this.hld_or_up(assrc)
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
                     it.code(Pair(hld, "ceu_mem->arg_${i}_$n"))
@@ -568,12 +545,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_tuple_create($hld, ${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
+                    ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
                 }
                 """
             }
             is Expr.Dict -> {
-                val hld = this.hld_or_up(hold)
+                val hld = this.hld_or_up(assrc)
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
                     it.first.code (Pair(hld, "ceu_mem->arg_${i}_a_$n"))+
@@ -587,7 +564,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_dict_create($hld, ${this.args.size}, &ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${fset(this.tk, hold, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
+                    ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
                 }
                 """
             }
@@ -603,6 +580,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected collection", 256);
                             continue; // escape enclosing block;
                         }
+                        ${asdst.cond { "ceu_mem->set_hld_${asdst!!} = ceu_mem->col_$n.Dyn->hold;" }}
                     }
                     CEU_Value ceu_idx_$n;
                     { // IDX        
@@ -623,12 +601,26 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ceu_err = &CEU_ERR_ERROR;
                                 strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
                                 continue; // escape enclosing block
-                            }    
-                            ${fset(this.tk, hold, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
+                            }
+                            ${if (asdst == null) {
+                                fset(this.tk, assrc, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")
+                            } else {
+                                "ceu_mem->set_dst_$asdst = &ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
+                            }}
                             break;
                         case CEU_VALUE_DICT: {
                             int idx = ceu_dict_key_index(ceu_mem->col_$n.Dyn, &ceu_mem->idx_$n);
-                            ${fset(this.tk, hold, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1])")}
+                            ${if (asdst == null) {
+                                fset(this.tk, assrc, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1])")
+                            } else {
+                                """ // SET
+                                if (idx == -1) {
+                                    idx = ceu_dict_empty_index(ceu_mem->col_$n.Dyn);
+                                    (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                }
+                                ceu_mem->set_dst_$asdst = &(*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1];
+                                """ 
+                            }}
                             break;
                         }
                     }
@@ -646,8 +638,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val (bupc,bupupc) = ups.block(this)!!.let {
                     Pair(it.toc(true), ups.block(it)!!.toc(true))
                 }
-                val uphld = this.hld_or_up(hold)
-                val upuphld = ups.block(this)!!.hld_or_up(hold)
+                val uphld = this.hld_or_up(assrc)
+                val upuphld = ups.block(this)!!.hld_or_up(assrc)
                 val (frame,dyn) = if (iscall) {
                     Pair("ceu_f_$n.Frame->Func", "ceu_f_$n.Frame")
                 } else {
@@ -680,12 +672,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create($upuphld, &ceu_task_$n, &ceu_coro_$n);
-                        ${fset(this.tk, hold, "ceu_coro_$n")}
+                        ${fset(this.tk, assrc, "ceu_coro_$n")}
                         """
                 } else {
                         """
                         ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);
-                        ${fset(spawn.tk, hold, "ceu_ok_$n")}
+                        ${fset(spawn.tk, assrc, "ceu_ok_$n")}
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok
                         //} // closes below
@@ -723,9 +715,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
-                    ${iscall.cond{fset(this.tk, hold, "ceu_$n")}}
+                    ${iscall.cond{fset(this.tk, assrc, "ceu_$n")}}
                     ${iscoros.cond{"}"}}
-                    ${resume.cond{fset(resume!!.tk, hold, "ceu_$n")}}
+                    ${resume.cond{fset(resume!!.tk, assrc, "ceu_$n")}}
                 }
                 """
             }

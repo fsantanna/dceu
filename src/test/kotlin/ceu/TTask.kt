@@ -242,7 +242,7 @@ class TTask {
         val out = all("""
             spawn (func () {nil})
         """)
-        assert(out == "anon : (lin 3, col 9) : expected invalid spawn : expected call : have end of file") { out }
+        assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call") { out }
     }
     @Test
     fun spawn5() {

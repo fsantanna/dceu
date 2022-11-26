@@ -524,7 +524,7 @@ class TParser {
             resume a
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected invalid resume : expected call : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid resume : expected call")
     }
     @Test
     fun yield1_err() {
@@ -633,7 +633,7 @@ class TParser {
             spawn in nil, f
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected invalid spawn : expected call : have end of file")
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
     }
     @Test
     fun coros7_err() {
