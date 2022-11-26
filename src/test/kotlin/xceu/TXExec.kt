@@ -332,6 +332,35 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun all8() {
+        val out = all("""
+            spawn {
+                par {
+                    every 500ms {
+                    }
+                } with {
+                    every true { }
+                }
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun all9() {
+        val out = all("""
+            spawn task () {
+                ^[9,29]yield nil                                          
+            }()                                                       
+            spawn task () {                                           
+                ^[9,29]yield nil                       
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+
 
 
     // INDEX: TUPLE / DICT
@@ -664,6 +693,5 @@ class TXExec {
         """)
         assert(out == "[1,2,3]") { out }
     }
-
 
 }

@@ -1091,7 +1091,7 @@ class TTask {
             var a
             a.pub
         """, true)
-        assert(out == "anon : (lin 3, col 13) : pub error : expected coroutine") { out }
+        assert(out == "anon : (lin 3, col 13) : pub error : expected coroutine\n") { out }
     }
     @Test
     fun pub2_err() {
@@ -1149,6 +1149,42 @@ class TTask {
             set a = coroutine t
             resume a()
             println(a.pub + a.pub)
+        """, true)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun pub6_pool() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            var x
+            while t in ts {
+                println(t.pub[0]+t.pub[0])
+            }
+        """, true)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun todo_pub7_pool_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            var x
+            while t in ts {
+                set x = t.pub   ;; TODO: incompatible scope
+            }
         """, true)
         assert(out == "20\n") { out }
     }
