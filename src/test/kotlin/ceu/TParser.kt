@@ -545,6 +545,22 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
+    @Test
+    fun task3_err() {
+        val l = lexer("""
+            func :nopub () {}
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid func : unexpected \":nopub\"")
+    }
+    @Test
+    fun task4_err() {
+        val l = lexer("""
+            task :xxx () {}
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
+    }
 
     // DEFER
 

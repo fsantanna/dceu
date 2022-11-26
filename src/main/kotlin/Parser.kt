@@ -181,11 +181,17 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val isFake = this.acceptEnu("Tag")
+                if (isFake) {
+                    if (tk0.str=="func" || this.tk0.str!=":nopub") {
+                        err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
+                    }
+                }
                 val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
                 val body = this.block()
-                val func = Expr.Func(tk0, args, body)
+                val func = Expr.Func(tk0, isFake, args, body)
                 if (id == null) func else {
                     this.nest("""
                         ${tk0.pos.pre()}var ${id.str} = ${func.tostr(true)} 
@@ -213,7 +219,7 @@ class Parser (lexer_: Lexer)
                         this.acceptFix_err(",")
                         val call = this.expr()
                         if (call !is Expr.Block || call.es[0] !is Expr.Call) {
-                            err_expected(tk1, "invalid spawn : expected call")
+                            err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, coros, call as Expr.Block)
                     }
@@ -227,7 +233,7 @@ class Parser (lexer_: Lexer)
                     else -> {
                         val call = this.expr()
                         if (call !is Expr.Block || call.es[0] !is Expr.Call) {
-                            err_expected(tk1, "invalid spawn : expected call")
+                            err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, null, call as Expr.Block)
                     }
@@ -239,7 +245,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
                 if (call !is Expr.Block || call.es[0] !is Expr.Call) {
-                    err_expected(tk1, "invalid resume : expected call")
+                    err(tk1, "invalid resume : expected call")
 
                 }
                 Expr.Resume(tk0, call as Expr.Block)

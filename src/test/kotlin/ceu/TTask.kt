@@ -1209,7 +1209,7 @@ class TTask {
         val out = all("""
             spawn (task () {
                 set pub = 1
-                spawn (task () {
+                spawn (task :nopub () {
                     println(pub)
                 }) ()
             }) ()
