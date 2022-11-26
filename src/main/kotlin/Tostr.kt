@@ -1,28 +1,32 @@
-fun Expr.tostr (): String {
+fun Pos.pre (): String {
+    return "^[${this.lin},${this.col}]"
+}
+
+fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Block  -> if (this.isFake) {
             assert(this.es.size == 1)
-            this.es[0].tostr()
+            this.es[0].tostr(pre)
         } else {
-            (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr() + "}"
+            (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         }
         is Expr.Dcl    -> "var " + this.tk.str
-        is Expr.Set    -> "set " + this.dst.tostr() + " = " + this.src.tostr()
-        is Expr.If     -> "if " + this.cnd.tostr() + " " + this.t.tostr() + " else " + this.f.tostr()
-        is Expr.While  -> "while " + this.cnd.tostr() + " " + this.body.tostr()
-        is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr()
-        is Expr.Throw  -> "throw " + this.ex.tostr()
-        is Expr.Catch  -> "catch " + this.cnd.tostr() + " " + this.body.tostr()
-        is Expr.Defer  -> "defer " + this.body.tostr()
+        is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
+        is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
+        is Expr.While  -> "while " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
+        is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr(pre)
+        is Expr.Throw  -> "throw " + this.ex.tostr(pre)
+        is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
+        is Expr.Defer  -> "defer " + this.body.tostr(pre)
 
-        is Expr.Coros  -> "coroutines(${this.max.cond { this.max!!.tostr() }})"
-        is Expr.Coro   -> "coroutine " + this.task.tostr()
-        is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+this.coros!!.tostr()+", "} + this.call.tostr()
-        is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr()} ${this.body.es[1].tostr()}"
-        is Expr.Bcast  -> "broadcast " + this.evt.tostr()
-        is Expr.Yield  -> "yield " + this.arg.tostr()
-        is Expr.Resume -> "resume " + this.call.tostr()
-        is Expr.Pub    -> if (this.coro == null) "pub" else (this.coro.tostr() + ".pub")
+        is Expr.Coros  -> "coroutines(${this.max.cond { this.max!!.tostr(pre) }})"
+        is Expr.Coro   -> "coroutine " + this.task.tostr(pre)
+        is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+this.coros!!.tostr(pre)+", "} + this.call.tostr(pre)
+        is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr(pre)} ${this.body.es[1].tostr(pre)}"
+        is Expr.Bcast  -> "broadcast " + this.evt.tostr(pre)
+        is Expr.Yield  -> "yield " + this.arg.tostr(pre)
+        is Expr.Resume -> "resume " + this.call.tostr(pre)
+        is Expr.Pub    -> if (this.coro == null) "pub" else (this.coro.tostr(pre) + ".pub")
 
         is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str
@@ -30,15 +34,15 @@ fun Expr.tostr (): String {
         is Expr.Tag    -> this.tk.str
         is Expr.Bool   -> this.tk.str
         is Expr.Num    -> this.tk.str
-        is Expr.Tuple  -> "[" + this.args.map { it.tostr() }.joinToString(",") + "]"
-        is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr()},${it.second.tostr()})" }.joinToString(",") + "]"
-        is Expr.Index  -> this.col.tostr() + "[" + this.idx.tostr() + "]"
-        is Expr.Call   -> this.f.tostr() + "(" + this.args.map { it.tostr() }.joinToString(",") + ")"
+        is Expr.Tuple  -> "[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
+        is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
+        is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
+        is Expr.Call   -> this.f.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
 
         is Expr.XSeq -> error("bug found")
-    }
+    }.let { if (pre) this.tk.pos.pre()+it else it }
 }
 
-fun List<Expr>.tostr (): String {
-    return this.map { it.tostr() }.joinToString("\n") + "\n"
+fun List<Expr>.tostr (pre: Boolean=false): String {
+    return this.map { it.tostr(pre) }.joinToString("\n") + "\n"
 }
