@@ -317,6 +317,22 @@ class TXExec {
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
     }
+    @Test
+    fun all7() {
+        val out = ceu.all(
+            """
+            task Bird () {
+                watching true {
+                    par {
+                    } with {
+                    }
+                }
+            }            
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+
 
     // INDEX: TUPLE / DICT
 
@@ -362,7 +378,7 @@ class TXExec {
         val out = all("""
             await f()
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task\n") { out }
     }
     @Test
     fun await3() {

@@ -36,8 +36,8 @@ fun all (inp: String, pre: Boolean=false): String {
     } catch (e: Throwable) {
         return e.message!!
     }
-    //println(es.map { it.toString() }.joinToString(""))
-    //println(es.map { it.tostr() }.joinToString(""))
+    //println(es.map { it.toString()+"\n" }.joinToString(""))
+    //println(es.map { it.tostr(true)+"\n" }.joinToString(""))
     val c = try {
         val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es)
         val ups = Ups(outer)

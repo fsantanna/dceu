@@ -188,7 +188,7 @@ class Parser (lexer_: Lexer)
                 val func = Expr.Func(tk0, args, body)
                 if (id == null) func else {
                     this.nest("""
-                        var ${id.str} = ${func.tostr(true)} 
+                        ${tk0.pos.pre()}var ${id.str} = ${func.tostr(true)} 
                     """)
                 }
             }
@@ -219,7 +219,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            spawn (task () {
+                            ${tk0.pos.pre()}spawn (task () {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)
@@ -276,10 +276,11 @@ class Parser (lexer_: Lexer)
             }
 
             (XCEU && this.acceptFix("ifs")) -> {
+                val pre0 = this.tk0.pos.pre()
                 this.acceptFix_err("{")
                 val e1 = this.expr()
                 val b1 = this.block()
-                var ifs = "if ${e1.tostr(true)} ${b1.tostr(true)}else {\n"
+                var ifs = "${pre0}if ${e1.tostr(true)} ${b1.tostr(true)}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
@@ -288,10 +289,11 @@ class Parser (lexer_: Lexer)
                         this.acceptFix("}")
                         break
                     }
+                    val pre1 = this.tk0.pos.pre()
                     val ei = this.expr()
                     val bi = this.block()
                     ifs += """
-                        if ${ei.tostr(true)} ${bi.tostr(true)}
+                        ${pre1}if ${ei.tostr(true)} ${bi.tostr(true)}
                         else {
                     """
                     n++
@@ -301,6 +303,7 @@ class Parser (lexer_: Lexer)
                 this.nest(ifs)
             }
             (XCEU && this.acceptFix("par")) -> {
+                val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
                 this.acceptFix_err("with")
                 pars.add(this.block())
@@ -308,19 +311,20 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    spawn (task () {
+                    ${it.tk.pos.pre()}spawn (task () {
                         ${it.es.tostr(true)}
                     }) ()
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
-                    do {
+                    ${pre0}do {
                         $spws
                         await false
                     }
                 """)
             }
             (XCEU && this.acceptFix("parand")) -> {
+                val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
                 val n = pars[0].n
                 this.acceptFix_err("with")
@@ -339,9 +343,9 @@ class Parser (lexer_: Lexer)
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
-                    do {
+                    ${pre0}do {
                         var ceu_n_$n = 0
-                        catch err==:ceu_parand_$n {
+                        ${pre0}catch err==:ceu_parand_$n {
                             $spws
                             await false
                         }
@@ -349,6 +353,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (XCEU && this.acceptFix("paror")) -> {
+                val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
                 val n = pars[0].n
                 this.acceptFix_err("with")
@@ -357,25 +362,25 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    spawn (task () {
+                    ${it.tk.pos.pre()}spawn (task () {
                         ${it.es.tostr(true)}
                         throw :ceu_paror_$n
                     }) ()
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
-                    catch err==:ceu_paror_$n {
+                    ${pre0}catch err==:ceu_paror_$n {
                         $spws
                         await false
                     }
                 """)
             }
             (XCEU && this.acceptFix("await")) -> {
-                val tk0 = this.tk0
+                val pre0 = this.tk0.pos.pre()
                 val (clk,cnd) = this.clk_or_expr()
                 when {
                     (clk != null) -> this.nest("""
-                        do {
+                        ${pre0}do {
                             var ceu_ms = ${clk.ms}
                             while ceu_ms > 0 {
                                 await evt[:type]==:timer
@@ -384,8 +389,8 @@ class Parser (lexer_: Lexer)
                         }
                     """)//.let { println(it.tostr()); it }
                     (cnd != null) -> this.nest("""
-                        do {
-                            ${tk0.pos.pre()}yield ()
+                        ${pre0}do {
+                            yield ()
                             ;;println(evt)
                             while not (${cnd!!.tostr(true)}) {
                                 yield ()
@@ -396,20 +401,22 @@ class Parser (lexer_: Lexer)
                 }
             }
             (XCEU && this.acceptFix("every")) -> {
+                val pre0 = this.tk0.pos.pre()
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
-                    while true {
+                    ${pre0}while true {
                         await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
                         ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
             }
             (XCEU && this.acceptFix("watching")) -> {
+                val pre0 = this.tk0.pos.pre()
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
-                    paror {
+                    ${pre0}paror {
                         await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
                     } with {
                         ${body.es.tostr(true)}
@@ -436,7 +443,7 @@ class Parser (lexer_: Lexer)
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
                 op as Tk.Fix
-                e = this.nest("if ${e.tostr(true)} { false } else { true }\n")
+                e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
                 e = Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
             }
@@ -477,14 +484,14 @@ class Parser (lexer_: Lexer)
             val e2 = this.exprPres()
             e = when (op.str) {
                 "or" -> this.nest("""
-                    do {
+                    ${op.pos.pre()}do {
                         var ceu_${e.n}
                         set ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
-                    do {
+                    ${op.pos.pre()}do {
                         var ceu_${e.n}
                         set ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
@@ -501,9 +508,10 @@ class Parser (lexer_: Lexer)
             !XCEU -> e
             !this.acceptFix("where") -> e
             else -> {
+                val tk0 = this.tk0
                 val body = this.block()
                 this.nest("""
-                    do {
+                    ${tk0.pos.pre()}do {
                         ${body.es.tostr(true)}
                         ${e.tostr(true)}
                     }

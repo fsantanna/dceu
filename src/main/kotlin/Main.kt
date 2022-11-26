@@ -28,15 +28,15 @@ val GLOBALS = setOf (
     "tags", "print", "println", "op_eq_eq", "op_div_eq", "err", "evt"
 )
 
-sealed class Tk (val str: String, val pos: Pos) {
-    data class Eof (val pos_: Pos): Tk("", pos_)
-    data class Fix (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Tag (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Op  (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Id  (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Num (val str_: String, val pos_: Pos): Tk(str_, pos_)
-    data class Nat (val str_: String, val pos_: Pos, val tag: String?): Tk(str_, pos_)
-    data class Clk (val str_: String, val pos_: Pos, val ms: Int): Tk(str_, pos_)
+sealed class Tk (val n: Int, val str: String, val pos: Pos) {
+    data class Eof (val pos_: Pos): Tk(N++, "", pos_)
+    data class Fix (val str_: String, val pos_: Pos): Tk(N++, str_, pos_)
+    data class Tag (val str_: String, val pos_: Pos): Tk(N++, str_, pos_)
+    data class Op  (val str_: String, val pos_: Pos): Tk(N++, str_, pos_)
+    data class Id  (val str_: String, val pos_: Pos): Tk(N++, str_, pos_)
+    data class Num (val str_: String, val pos_: Pos): Tk(N++, str_, pos_)
+    data class Nat (val str_: String, val pos_: Pos, val tag: String?): Tk(N++, str_, pos_)
+    data class Clk (val str_: String, val pos_: Pos, val ms: Int): Tk(N++, str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Block  (val tk_: Tk, val isFake: Boolean, val es: List<Expr>) : Expr(N++, tk_)
