@@ -266,7 +266,14 @@ fun Coder.main (): String {
                     case CEU_VALUE_COROS: {
                         assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                         ceu_bcast_dyns(cur->Bcast.Coros.first);
-                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                        if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+                            // ok
+                        } else {
+                            // cur threw exception and didn't catch it
+                            // brothers must be killed as well
+                            // stop now, clean up comes soon from :clear
+                            return;
+                        }
                         break;
                     }
                 }

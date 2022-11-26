@@ -390,7 +390,7 @@ class Parser (lexer_: Lexer)
                     """)//.let { println(it.tostr()); it }
                     (cnd != null) -> this.nest("""
                         ${pre0}do {
-                            yield ()
+                            ${pre0}yield ()
                             ;;println(evt)
                             while not (${cnd!!.tostr(true)}) {
                                 yield ()

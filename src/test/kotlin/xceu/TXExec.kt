@@ -344,7 +344,7 @@ class TXExec {
                 }
             }
             println(1)
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
@@ -360,8 +360,19 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
-
-
+    @Test
+    fun todo_all10() {
+        val out = all("""
+            task T () {
+                watching (throw :error) {
+                    await false
+                }
+            }            
+            spawn in coroutines(), T()
+            broadcast nil
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // INDEX: TUPLE / DICT
 
@@ -407,7 +418,7 @@ class TXExec {
         val out = all("""
             await f()
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
     @Test
     fun await3() {

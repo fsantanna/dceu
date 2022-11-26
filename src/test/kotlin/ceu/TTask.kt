@@ -300,6 +300,22 @@ class TTask {
         """)
         assert(out == "1\n3\n") { out }
     }
+    @Test
+    fun throw3() {
+        val out = all("""
+            var T
+            set T = task () {
+                spawn task () {
+                    yield nil
+                    throw :error 
+                }()
+                yield nil
+            }
+            spawn in coroutines(), T()
+            broadcast nil
+        """)
+        assert(out == "anon : (lin 6, col 21) : throw error : uncaught exception\n") { out }
+    }
 
     // BCAST / BROADCAST
 
@@ -1187,5 +1203,17 @@ class TTask {
             }
         """, true)
         assert(out == "20\n") { out }
+    }
+    @Test
+    fun todo_pub8_fake_task() {
+        val out = all("""
+            spawn (task () {
+                set pub = 1
+                spawn (task () {
+                    println(pub)
+                }) ()
+            }) ()
+        """, true)
+        assert(out == "1\n") { out }
     }
 }
