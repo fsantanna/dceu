@@ -124,25 +124,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${fset(this.tk, assrc, id)}                
                 """
             }
-            is Expr.Set -> {
-                when (this.dst) {
-                    is Expr.Pub -> {
-                        Pair(
-                            "ceu_mem->coro_${this.dst.n}.Dyn->hold",
-                            "ceu_mem->coro_${this.dst.n}.Dyn->Bcast.Coro.pub = ceu_$n;"
-                        )
-                        TODO()
-                    }
-                    else -> {}
-                }
-                """
+            is Expr.Set -> """
                 { // SET ${this.tk.dump()}
                     ${this.dst.code(null, n)} // before src (src needs set_hld/set_$n)
                     ${this.src.code(Pair("ceu_mem->set_hld_$n", "(*ceu_mem->set_dst_$n)"), null)}
                     ${fset(this.tk, assrc, "(*ceu_mem->set_dst_$n)")}
                 }
                 """
-            }
             is Expr.If -> """
                 { // IF ${this.tk.dump()}
                     CEU_Value ceu_cnd_$n;
@@ -170,8 +158,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val istask = (this.tk.str == "task")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
-                    ${istask.cond{"CEU_Value ceu_pub;"}}
-                    void* ceu_up;
                     ${this.args.map {
                         """
                         CEU_Value ${it.str};
@@ -198,7 +184,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.__mem;
-                        //ceu_coro->Bcast.Coro.task.mem = ceu_mem;
+                        //ceu_coro->Bcast.Coro.task.mem = ceu_mem; // ceu_coro_create does this
                     """}}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
@@ -422,21 +408,40 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Resume -> this.call.code(assrc)
             is Expr.Pub -> {
                 val bupc = ups.block(this)!!.toc(true)
+                val n: Int? = if (this.coro != null) null else {
+                    var n = 0
+                    var fup = ups.func(this)!!
+                    while (fup.isFake) {
+                        n++
+                        fup = ups.func(fup)!!
+                    }
+                    n
+                }
                 """
-                //{ // PUB
+                { // PUB
+                    CEU_Value* ceu_$n;
                     ${if (this.coro == null) {
-                        "ceu_mem->coro_$n = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_coro} };"
+                        "ceu_$n = &((CEU_Task*) ((&ceu_coro->Bcast.Coro.task) ${"->up".repeat(n!!)}->mem)->ceu_pub;"
                     } else { """
-                        ${this.coro.code(Pair(bupc, "ceu_mem->coro_$n"))}
-                        if (ceu_mem->coro_$n.tag!=CEU_VALUE_CORO) {                
+                        CEU_Dynamic* ceu_coro_$n;
+                        ${this.coro.code(Pair(bupc, "ceu_coro_$n"))}
+                        if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
                             strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
                             continue; // escape enclosing block;
                         }
+                        ceu_$n = &ceu_coro_$n->Bcast.Coro.pub;
                     """ }}
-                    ${fset(this.tk, assrc, "ceu_mem->coro_$n.Dyn->Bcast.Coro.pub")}
-                //}
+                    ${if (asdst == null) {
+                        fset(this.tk, assrc, "(*ceu_$n)")
+                    } else {
+                        """
+                        ceu_mem->set_hld_$asdst = NULL; // TODO
+                        ceu_mem->set_dst_$asdst = ceu_$n;
+                        """
+                    }}
+                }
                 """
             }
 
@@ -483,7 +488,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ret
                 }
                 """
-                //{ // NATIVE ${this.tk.dump()}
+                //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
                     ${if (this.tk_.tag == null) {
                         body
                     } else {

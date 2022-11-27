@@ -1216,4 +1216,18 @@ class TTask {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun todo_pub9_fake_task() {
+        val out = all("""
+            spawn (task () {
+                set pub = []
+                var x
+                spawn (task :nopub () {
+                    set x = pub
+                }) ()
+                println(x)
+            }) ()
+        """, true)
+        assert(out == "[]\n") { out }
+    }
 }
