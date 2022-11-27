@@ -94,12 +94,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = ups.block(this)!!
                 val (x,_x_) = Pair("(ceu_mem->$id)","(ceu_mem->_${id}_)")
                 """
                 // DCL ${this.tk.dump()}
                 ${this.init.cond{"$x = (CEU_Value) { CEU_VALUE_NIL };"}}
-                $_x_ = ${bup.toc(true)};   // can't be static b/c recursion
+                $_x_ = ${ups.block(this)!!.toc(true)};   // can't be static b/c recursion
                 ${assrc_dst.cond { "$assrc_dst = $id;" }}
                 """
             }
@@ -233,9 +232,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """}}
                 """
             }
-            is Expr.Catch -> {
-                val bupc = ups.block(this)!!.toc(true)
-                """
+            is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}
                     do {
                         ${this.body.code(assrc_dst, null)}
@@ -248,7 +245,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_has_throw = 0;
                         //ceu_print1(ceu_err);
                         CEU_Value ceu_catch_$n;
-                        ceu_err_block.depth = $bupc->depth + 1;
+                        ceu_err_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
                         ${this.cnd.code("ceu_catch_$n", null)}
                         if (!ceu_as_bool(&ceu_catch_$n)) {
                             ceu_has_throw = 1; // UNCAUGHT: escape to outer
@@ -259,7 +256,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                 }
                 """
-            }
             is Expr.Throw -> """
                 { // THROW ${this.tk.dump()}
                     static CEU_Value ceu_$n;    // static b/c may cross function call
@@ -380,7 +376,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             is Expr.Resume -> this.call.code(assrc_dst, null)
             is Expr.Pub -> {
-                val bupc = ups.block(this)!!.toc(true)
                 val X: Int? = if (this.coro != null) null else {
                     var n = 0
                     var fup = ups.func(this)!!
