@@ -474,7 +474,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 if (asdst_src == null) {
                     """
                     // ACC ${this.tk.dump()}
-                    ${assrc_dst.cond { "$assrc_dst = ${bup.id2c(id)};" }}
+                    $assrc_dst = ${bup.id2c(id)};
                     """
                 } else {
                     ups.assertIsDeclared(bup, "_${id}_", this.tk)
@@ -490,7 +490,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """
                 }
             }
-            is Expr.Nil -> assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_NIL });" }
+            is Expr.EvtErr -> {
+                if (asdst_src == null) {
+                    "$assrc_dst = *ceu_${this.tk.str};\n"
+                } else {
+                    """
+                    { // EVT/ERR - SET
+                        char* ceu_err_$n = ceu_block_set(&ceu_${this.tk.str}_blk, &$asdst_src);
+                        if (ceu_err_$n != NULL) {
+                            snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
+                            continue;
+                        }
+                        ceu_${this.tk.str} = &$asdst_src;
+                    }
+                    """
+                }
+            }
+            is Expr.Nil -> assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_NIL });\n" }
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)
                 if (!tags.contains(tag)) {
