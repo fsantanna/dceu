@@ -177,12 +177,16 @@ fun Coder.main (): String {
                 free(cur);
             }
         }
+        void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn);
         char* ceu_block_set (CEU_Block* dst, CEU_Value* src) {
             if (src->tag >= CEU_VALUE_TUPLE) { // any Dyn
                 if (src->Dyn->hold == NULL) {
                     src->Dyn->hold = dst;
                     src->Dyn->next = dst->tofree;
                     dst->tofree = src->Dyn;
+                    if (src->tag >= CEU_VALUE_CORO) {  // any Coro/Coros
+                        ceu_bcast_enqueue(&dst->bcast.dyn, src->Dyn);
+                    }
                 } else if (src->Dyn->hold->depth > dst->depth) {
                     ceu_has_throw = 1;
                     ceu_err = &CEU_ERR_ERROR;
@@ -201,7 +205,7 @@ fun Coder.main (): String {
         CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
         CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
     """ +
-    """ // BCAST / EVT
+    """ // BCAST
         void ceu_bcast_dyns (CEU_Dynamic* cur);
         void ceu_bcast_blocks_aux (CEU_Block* cur) {
             assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
@@ -304,7 +308,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // COROS
-        char* ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
+        char* ceu_coro_create (CEU_Value* task, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
@@ -312,12 +316,10 @@ fun Coder.main (): String {
             assert(coro != NULL);
             task->Frame->mem = coro->Bcast.Coro.__mem;
             *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, hld->tofree, hld, {
+                CEU_VALUE_CORO, NULL, NULL, {
                     .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,*(task->Frame),0} } }
                 }
             };
-            ceu_bcast_enqueue(&hld->bcast.dyn, coro);
-            hld->tofree = coro;
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             return NULL;
         }
@@ -532,7 +534,7 @@ fun Coder.main (): String {
             return ret;
         }
 
-        CEU_Dynamic* ceu_dict_create (CEU_Block* hld, int n, CEU_Value (*args)[][2]) {
+        CEU_Dynamic* ceu_dict_create (int n, CEU_Value (*args)[][2]) {
             int min = (n < 4) ? 4 : n; 
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             if (ret == NULL) {

@@ -327,6 +327,23 @@ class TTask {
         assert(out == "nil\n") { out }
     }
     @Test
+    fun bcast01() {
+        val out = all("""
+            var tk
+            set tk = task (v) {
+                println(v, evt)
+                set v = yield nil
+                println(v, evt)
+            }
+            var co
+            set co = coroutine tk
+            broadcast 1
+            broadcast 2
+            broadcast 3
+        """)
+        assert(out == "nil\t1\nnil\t2\n") { out }
+    }
+    @Test
     fun bcast1() {
         val out = all("""
             var tk
