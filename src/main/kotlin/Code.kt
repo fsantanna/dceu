@@ -408,7 +408,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Resume -> this.call.code(assrc)
             is Expr.Pub -> {
                 val bupc = ups.block(this)!!.toc(true)
-                val n: Int? = if (this.coro != null) null else {
+                val X: Int? = if (this.coro != null) null else {
                     var n = 0
                     var fup = ups.func(this)!!
                     while (fup.isFake) {
@@ -419,11 +419,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
                 { // PUB
-                    CEU_Value* ceu_$n;
+                    CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
-                        "ceu_$n = &((CEU_Task*) ((&ceu_coro->Bcast.Coro.task) ${"->up".repeat(n!!)}->mem)->ceu_pub;"
+                        """
+                        char* ceu_ptr_$n = ((&ceu_coro->Bcast.Coro.task) ${"->up".repeat(X!!)}->mem);
+                        ceu_dyn_$n = (CEU_Dynamic*) (ceu_ptr_$n - offsetof(struct CEU_Dynamic, Bcast.Coro.__mem));
+                        """
                     } else { """
-                        CEU_Dynamic* ceu_coro_$n;
+                        CEU_Value ceu_coro_$n;
                         ${this.coro.code(Pair(bupc, "ceu_coro_$n"))}
                         if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
                             ceu_has_throw = 1;
@@ -431,14 +434,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
                             continue; // escape enclosing block;
                         }
-                        ceu_$n = &ceu_coro_$n->Bcast.Coro.pub;
+                        ceu_dyn_$n = ceu_coro_$n.Dyn;
                     """ }}
                     ${if (asdst == null) {
-                        fset(this.tk, assrc, "(*ceu_$n)")
+                        fset(this.tk, assrc, "(ceu_dyn_$n->Bcast.Coro.pub)")
                     } else {
                         """
-                        ceu_mem->set_hld_$asdst = NULL; // TODO
-                        ceu_mem->set_dst_$asdst = ceu_$n;
+                        ceu_mem->set_hld_$asdst = ceu_dyn_$n->hold;
+                        ceu_mem->set_dst_$asdst = &ceu_dyn_$n->Bcast.Coro.pub;
                         """
                     }}
                 }

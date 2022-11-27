@@ -1201,11 +1201,12 @@ class TTask {
             while t in ts {
                 set x = t.pub   ;; TODO: incompatible scope
             }
+            println(999)
         """, true)
         assert(out == "20\n") { out }
     }
     @Test
-    fun todo_pub8_fake_task() {
+    fun pub8_fake_task() {
         val out = all("""
             spawn (task () {
                 set pub = 1
@@ -1217,7 +1218,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_pub9_fake_task() {
+    fun pub9_fake_task() {
         val out = all("""
             spawn (task () {
                 set pub = []

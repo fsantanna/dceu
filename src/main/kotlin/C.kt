@@ -3,13 +3,14 @@ fun Coder.main (): String {
     """ // INCLUDES
         #include <stdio.h>
         #include <stdlib.h>
+        #include <stddef.h>
         #include <stdint.h>
         #include <string.h>
         #include <assert.h>
         #include <stdarg.h>
         #include <math.h>
     """ +
-    """ // VALUE
+    """ // CEU_Value
         typedef enum CEU_VALUE {
             CEU_VALUE_NIL = 0,
             CEU_VALUE_TAG,
@@ -46,7 +47,12 @@ fun Coder.main (): String {
                 struct CEU_Dynamic* Dyn;    // Tuple/Dict/Coro/Coros: allocates memory
             };
         } CEU_Value;
-
+        
+        int ceu_as_bool (CEU_Value* v) {
+            return !(v->tag==CEU_VALUE_NIL || (v->tag==CEU_VALUE_BOOL && !v->Bool));
+        }
+    """ +
+    """ // CEU_Frame
         typedef struct CEU_Frame {
             struct CEU_Frame* up;   // active frame above
             void* mem;              // active local variables
@@ -68,7 +74,8 @@ fun Coder.main (): String {
                 } Task;
             };
         } CEU_Frame;
-        
+    """ +
+    """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
             CEU_VALUE tag;                  // required to switch over free/bcast
             struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
@@ -104,10 +111,6 @@ fun Coder.main (): String {
                 } Bcast;
             };
         } CEU_Dynamic;
-        
-        int ceu_as_bool (CEU_Value* v) {
-            return !(v->tag==CEU_VALUE_NIL || (v->tag==CEU_VALUE_BOOL && !v->Bool));
-        }
     """ +
     """ // BLOCK
         typedef struct CEU_Block {
