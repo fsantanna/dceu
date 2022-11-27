@@ -225,7 +225,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task () {
+                            ${tk0.pos.pre()}spawn (task :nopub () {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)
@@ -317,9 +317,9 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn (task () {
+                    ${it.tk.pos.pre()}spawn {
                         ${it.es.tostr(true)}
-                    }) ()
+                    }
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
@@ -339,13 +339,13 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    spawn (task () {
+                    spawn {
                         ${it.es.tostr(true)}
                         set ceu_n_$n = ceu_n_$n + 1
                         if ceu_n_$n == ${pars.size} {
                             throw :ceu_parand_$n
                         }
-                    }) ()
+                    }
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
@@ -368,10 +368,10 @@ class Parser (lexer_: Lexer)
                     pars.add(this.block())
                 }
                 val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn (task () {
+                    ${it.tk.pos.pre()}spawn {
                         ${it.es.tostr(true)}
                         throw :ceu_paror_$n
-                    }) ()
+                    }
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""

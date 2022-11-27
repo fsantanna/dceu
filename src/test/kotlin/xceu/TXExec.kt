@@ -543,6 +543,38 @@ class TXExec {
         )
         assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"") { out }
     }
+    @Test
+    fun todo_task4_pub_fake_err() {
+        val out = all("""
+            spawn {
+                watching evt==:a {
+                    every evt==:b {
+                        println(pub)    ;; no enclosing task
+                    }
+                }
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun task5_pub_fake() {
+        val out = all("""
+            spawn (task () {
+                set pub = 1
+                watching evt==:a {
+                    every evt==:b {
+                        println(pub)
+                    }
+                }
+            }) ()
+            broadcast :b
+            broadcast :b
+            broadcast :a
+            broadcast :b
+        """)
+        assert(out == "1\n1\n") { out }
+    }
 
     // WHERE
 

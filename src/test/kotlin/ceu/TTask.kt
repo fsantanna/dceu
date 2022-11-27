@@ -1231,4 +1231,32 @@ class TTask {
         """, true)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun pub10_fake_err() {
+        val out = all("""
+            spawn (task :nopub () {
+                pub
+            }) ()
+        """, true)
+        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
+    }
+    @Test
+    fun todo_pub11_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var y
+            do {
+                var t = coroutine(T)
+                var x
+                set x = t.pub
+                set y = t.pub
+            }
+            println(999)
+        """, true)
+        assert(out == "20\n") { out }
+    }
 }
