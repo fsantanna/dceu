@@ -731,7 +731,7 @@ class TTask {
                 set yyy = xxx
             }
         """)
-        assert(out == "anon : (lin 9, col 27) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool12_err_scope() {

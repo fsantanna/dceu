@@ -3,6 +3,7 @@
 // hold: where to hold the assignment (scope block & variable name)
 fun fset(tk: Tk, hold: Pair<String, String>?, src: String): String {
     return hold.cond{"""
+        /*
         if ($src.tag >= CEU_VALUE_TUPLE) { // any Dyn
             if ($src.Dyn->hold->depth > ${hold!!.first}->depth) {
                 ceu_has_throw = 1;
@@ -11,6 +12,7 @@ fun fset(tk: Tk, hold: Pair<String, String>?, src: String): String {
                 continue;
             }
         }
+        */
         ${hold.second} = $src;
     """}
 }
@@ -72,7 +74,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.code(assrc: Pair<String, String>?, asdst: Int?=null): String {
+    fun Expr.code(assrc: Pair<String, String>?, asdst: String?=null): String {
         return when (this) {
             is Expr.Block -> {
                 val bup = ups.block(this)
@@ -126,9 +128,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Set -> """
                 { // SET ${this.tk.dump()}
-                    ${this.dst.code(null, n)} // before src (src needs set_hld/set_$n)
-                    ${this.src.code(Pair("ceu_mem->set_hld_$n", "(*ceu_mem->set_dst_$n)"), null)}
-                    ${fset(this.tk, assrc, "(*ceu_mem->set_dst_$n)")}
+                    ${this.src.code(Pair(ups.block(this)!!.toc(true), "ceu_mem->set_$n"), null)}
+                    ${this.dst.code(null, "ceu_mem->set_$n")}
+                    ${fset(this.tk, assrc, "ceu_mem->set_$n")}
                 }
                 """
             is Expr.If -> """
@@ -440,6 +442,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         fset(this.tk, assrc, "(ceu_dyn_$n->Bcast.Coro.pub)")
                     } else {
                         """
+                        //printf(">>> set_hld_$asdst = %p / %d\n", ceu_dyn_$n->hold, ceu_dyn_$n->hold->depth);
                         ceu_mem->set_hld_$asdst = ceu_dyn_$n->hold;
                         ceu_mem->set_dst_$asdst = &ceu_dyn_$n->Bcast.Coro.pub;
                         """
@@ -517,9 +520,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "// ACC " + this.tk.dump() + "\n" + fset(this.tk, assrc, bup.id2c(id))
                 } else {
                     ups.assertIsDeclared(bup, "_${id}_", this.tk)
-                    """ // ACC
-                    ceu_mem->set_hld_$asdst = ${bup.id2c("_${id}_")};
-                    ceu_mem->set_dst_$asdst = &${bup.id2c(id)};
+                    """
+                    { // ACC - SET
+                        char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, &$asdst);
+                        if (ceu_err_$n != NULL) {
+                            snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
+                            continue;
+                        }
+                        ${bup.id2c(id)} = $asdst;
+                    }
                     """
                 }
             }
@@ -551,7 +560,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_args_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = ceu_tuple_create($hld, ${this.args.size}, ceu_args_$n);
+                    CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
                     ${fset(this.tk, assrc, "((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
                 }
@@ -580,53 +589,38 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val bupc = ups.block(this)!!.toc(true)
                 """
                 { // INDEX  ${this.tk.dump()}
-                    { // COL
-                        ${this.col.code(Pair(bupc, "ceu_mem->col_$n"))}
-                        if (ceu_mem->col_$n.tag!=CEU_VALUE_TUPLE && ceu_mem->col_$n.tag!=CEU_VALUE_DICT) {                
-                            ceu_has_throw = 1;
-                            ceu_err = &CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : index error : expected collection", 256);
-                            continue; // escape enclosing block;
+                    CEU_Value ceu_col_$n;
+                    ${this.idx.code(Pair(bupc, "ceu_mem->idx_$n"))}
+                    ${this.col.code(Pair(bupc, "ceu_col_$n"))}
+                    char* ceu_err_$n = ceu_col_check(&ceu_col_$n, &ceu_mem->idx_$n);
+                    ${asdst.cond { """
+                        if (ceu_err_$n == NULL) {
+                            ceu_err_$n = ceu_block_set(ceu_col_$n.Dyn->hold, &$asdst);
                         }
-                        ${asdst.cond { "ceu_mem->set_hld_${asdst!!} = ceu_mem->col_$n.Dyn->hold;" }}
+                    """}}
+                    if (ceu_err_$n != NULL) {                
+                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : %s", ceu_err_$n);
+                        continue; // escape enclosing block;
                     }
-                    CEU_Value ceu_idx_$n;
-                    { // IDX        
-                        ${this.idx.code(Pair(bupc, "ceu_mem->idx_$n"))}
-                        if (ceu_mem->col_$n.tag == CEU_VALUE_DICT) {
-                            // ok
-                        } else if (ceu_mem->idx_$n.tag != CEU_VALUE_NUMBER) {                
-                            ceu_has_throw = 1;
-                            ceu_err = &CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : expected number", 256);
-                            continue; // escape enclosing block;
-                        }
-                    }
-                    switch (ceu_mem->col_$n.tag) { // OK
+                    switch (ceu_col_$n.tag) { // OK
                         case CEU_VALUE_TUPLE:                
-                            if (ceu_mem->col_$n.Dyn->Tuple.n <= ceu_mem->idx_$n.Number) {                
-                                ceu_has_throw = 1;
-                                ceu_err = &CEU_ERR_ERROR;
-                                strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                                continue; // escape enclosing block
-                            }
                             ${if (asdst == null) {
-                                fset(this.tk, assrc, "ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")
+                                fset(this.tk, assrc, "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")
                             } else {
-                                "ceu_mem->set_dst_$asdst = &ceu_mem->col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
+                                "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst;"
                             }}
                             break;
                         case CEU_VALUE_DICT: {
-                            int idx = ceu_dict_key_index(ceu_mem->col_$n.Dyn, &ceu_mem->idx_$n);
+                            int idx = ceu_dict_key_index(ceu_col_$n.Dyn, &ceu_mem->idx_$n);
                             ${if (asdst == null) {
-                                fset(this.tk, assrc, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1])")
+                                fset(this.tk, assrc, "((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_col_$n.Dyn->Dict.mem)[idx][1])")
                             } else {
                                 """ // SET
                                 if (idx == -1) {
-                                    idx = ceu_dict_empty_index(ceu_mem->col_$n.Dyn);
-                                    (*ceu_mem->col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                    idx = ceu_dict_empty_index(ceu_col_$n.Dyn);
+                                    (*ceu_col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
                                 }
-                                ceu_mem->set_dst_$asdst = &(*ceu_mem->col_$n.Dyn->Dict.mem)[idx][1];
+                                (*ceu_col_$n.Dyn->Dict.mem)[idx][1] = $asdst;
                                 """ 
                             }}
                             break;

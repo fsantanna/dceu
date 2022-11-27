@@ -30,8 +30,7 @@ fun Expr.mem (): String {
         }
         is Expr.Set -> """
             struct { // SET
-                CEU_Block* set_hld_$n;
-                CEU_Value* set_dst_$n;
+                CEU_Value set_$n;
                 ${this.dst.mem()}
                 ${this.src.mem()}
             };
@@ -101,8 +100,7 @@ fun Expr.mem (): String {
             """
         is Expr.Index -> """
             struct { // INDEX
-                CEU_Value col_$n;   // both required
-                CEU_Value idx_$n;   // for set as well
+                CEU_Value idx_$n;
                 union {
                     ${this.col.mem()}
                     ${this.idx.mem()}

@@ -19,9 +19,9 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
+val VALGRIND = ""
 val THROW = false
-val VALGRIND = "valgrind "
+//val VALGRIND = "valgrind "
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
@@ -142,14 +142,14 @@ class TExec {
         val out = all("""
             println([1][[]])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 13) : index error : expected number\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
     }
     @Test
     fun index_err3() {
         val out = all("""
             println([1][2])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 13) : index error : out of bounds\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
     }
 
     // DICT
@@ -358,8 +358,8 @@ class TExec {
                 set a = [1,2,3]
                 set x = a
             }
-        """.trimIndent())
-        assert(out == "anon : (lin 5, col 13) : set error : incompatible scopes\n") { out }
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope4() {
@@ -390,8 +390,8 @@ class TExec {
                 set x[2] = y
             }
             println(x)
-        """.trimIndent())
-        assert(out == "anon : (lin 6, col 16) : set error : incompatible scopes\n") { out }
+        """)
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope6() {

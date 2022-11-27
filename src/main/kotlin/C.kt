@@ -75,6 +75,52 @@ fun Coder.main (): String {
             };
         } CEU_Frame;
     """ +
+    """ // TAGS
+        #define CEU_TAG_DEFINE(id,str)              \
+            const int CEU_TAG_##id = __COUNTER__;   \
+            CEU_Tags ceu_tag_##id = { str, NULL };
+        #define CEU_TAG_INIT(id,str)                \
+            ceu_tag_##id.next = CEU_TAGS;           \
+            CEU_TAGS = &ceu_tag_##id;               \
+            CEU_TAGS_MAX++;
+            
+        typedef struct CEU_Tags {
+            char* name;
+            struct CEU_Tags* next;
+        } CEU_Tags;
+        
+        CEU_Value ceu_tags_f (CEU_Frame* _1, struct CEU_Block* _2, int n, CEU_Value* args[]) {
+            assert(n == 1 && "bug found");
+            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
+        }
+
+        static CEU_Tags* CEU_TAGS = NULL;
+        int CEU_TAGS_MAX = 0;        
+        CEU_Frame ceu_tags = { NULL, NULL, {.Func=ceu_tags_f} };
+        ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
+
+        char* ceu_tag_to_string (int tag) {
+            CEU_Tags* cur = CEU_TAGS;
+            for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
+                cur = cur->next;
+            }
+            return cur->name;
+        }              
+    """ +
+    """ // THROW / ERR / EVT
+        int ceu_has_bcast = 0;
+        int ceu_has_throw = 0;
+        CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
+        CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
+        CEU_Value* ceu_err = &CEU_ERR_NIL;
+        char ceu_err_error_msg[256];
+        CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
+        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
+        CEU_Value* ceu_evt = &CEU_EVT_NIL;
+        int ceu_has_throw_clear (void) {
+            return (ceu_has_throw > 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
+        }
+    """ +
     """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
             CEU_VALUE tag;                  // required to switch over free/bcast
@@ -131,68 +177,29 @@ fun Coder.main (): String {
                 free(cur);
             }
         }
-    """ +
-    """ // TAGS
-        #define CEU_TAG_DEFINE(id,str)              \
-            const int CEU_TAG_##id = __COUNTER__;   \
-            CEU_Tags ceu_tag_##id = { str, NULL };
-        #define CEU_TAG_INIT(id,str)                \
-            ceu_tag_##id.next = CEU_TAGS;           \
-            CEU_TAGS = &ceu_tag_##id;               \
-            CEU_TAGS_MAX++;
-            
-        typedef struct CEU_Tags {
-            char* name;
-            struct CEU_Tags* next;
-        } CEU_Tags;
-        
-        CEU_Value ceu_tags_f (CEU_Frame* _1, CEU_Block* _2, int n, CEU_Value* args[]) {
-            assert(n == 1 && "bug found");
-            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
-        }
-
-        static CEU_Tags* CEU_TAGS = NULL;
-        int CEU_TAGS_MAX = 0;        
-        CEU_Frame ceu_tags = { NULL, NULL, {.Func=ceu_tags_f} };
-        ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
-
-        char* ceu_tag_to_string (int tag) {
-            CEU_Tags* cur = CEU_TAGS;
-            for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
-                cur = cur->next;
+        char* ceu_block_set (CEU_Block* dst, CEU_Value* src) {
+            if (src->tag >= CEU_VALUE_TUPLE) { // any Dyn
+                if (src->Dyn->hold == NULL) {
+                    src->Dyn->hold = dst;
+                    src->Dyn->next = dst->tofree;
+                    dst->tofree = src->Dyn;
+                } else if (src->Dyn->hold->depth > dst->depth) {
+                    ceu_has_throw = 1;
+                    ceu_err = &CEU_ERR_ERROR;
+                    return "set error : incompatible scopes";
+                }
             }
-            return cur->name;
-        }              
-    """ +
-    """ // THROW / ERR / EVT
-        int ceu_has_bcast = 0;
-        int ceu_has_throw = 0;
-        CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_err = &CEU_ERR_NIL;
-        char ceu_err_error_msg[256];
-        CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
-            //  - can pass further
-            //  - cannot pass back
-            //  - each catch condition:
-            //      - must set its depth at the beginning 
-            //      - must not yield
-            //      - must deallocate at the end
-
-        CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
-        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_evt = &CEU_EVT_NIL;
-        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
-            //  - can pass further
-            //  - cannot pass back
-            //  - each catch condition:
-            //      - must set its depth at the beginning 
-            //      - must not yield
-            //      - must deallocate at the end
-
-        int ceu_has_throw_clear (void) {
-            return (ceu_has_throw > 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
+            return NULL;
         }
+
+        //  - can pass further
+        //  - cannot pass back
+        //  - each catch condition:
+        //      - must set its depth at the beginning 
+        //      - must not yield
+        //      - must deallocate at the end
+        CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
+        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };
     """ +
     """ // BCAST / EVT
         void ceu_bcast_dyns (CEU_Dynamic* cur);
@@ -514,15 +521,14 @@ fun Coder.main (): String {
         CEU_Frame ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
     """ // TUPLE / DICT
-        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n, CEU_Value* args) {
+        CEU_Dynamic* ceu_tuple_create (int n, CEU_Value* args) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             if (ret == NULL) {
                 return NULL;
             }
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, (hld==NULL ? NULL : hld->tofree), hld, {.Tuple={n,{}}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, NULL, NULL, {.Tuple={n,{}}} };
             memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-            hld->tofree = ret;
             return ret;
         }
 
@@ -538,11 +544,10 @@ fun Coder.main (): String {
                 return NULL;
             }
             memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
-            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, (hld==NULL ? NULL : hld->tofree), hld, {.Dict={min,mem}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, NULL, NULL, {.Dict={min,mem}} };
             if (args != NULL) {
                 memcpy(mem, args, n*2*sizeof(CEU_Value));
             }
-            hld->tofree = ret;
             return ret;
         }
 
@@ -569,6 +574,27 @@ fun Coder.main (): String {
             memset(&(*col->Dict.mem)[old], 0, old*2*sizeof(CEU_Value));  // x[i]=nil
             return old;
         }        
+
+        char* ceu_col_check (CEU_Value* col, CEU_Value* idx) {
+            if (col->tag!=CEU_VALUE_TUPLE && col->tag!=CEU_VALUE_DICT) {                
+                ceu_has_throw = 1;
+                ceu_err = &CEU_ERR_ERROR;
+                return "index error : expected collection";
+            }
+            if (col->tag == CEU_VALUE_TUPLE) {
+                if (idx->tag != CEU_VALUE_NUMBER) {
+                    ceu_has_throw = 1;
+                    ceu_err = &CEU_ERR_ERROR;
+                    return "index error : expected number";
+                }
+                if (col->Dyn->Tuple.n <= idx->Number) {                
+                    ceu_has_throw = 1;
+                    ceu_err = &CEU_ERR_ERROR;
+                    return "index error : out of bounds";
+                }
+            }
+            return NULL;
+        }
     """ +
     """ // FUNCS
         typedef struct {
