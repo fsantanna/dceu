@@ -644,7 +644,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                        ${assrc_dst.cond { "$assrc_dst = ceu_coro_$n;" }}
+                        ${if (assrc_dst == null) {
+                            // allocate in enclosing block (up/up b/c up is fake)
+                            "ceu_block_set(${ups.block(ups.block(this)!!)!!.toc(true)}, &ceu_coro_$n);"
+                        } else {
+                            "$assrc_dst = ceu_coro_$n;"
+                        }}
                         """
                 } else {
                         """

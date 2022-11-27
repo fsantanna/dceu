@@ -264,6 +264,50 @@ class TTask {
         """)
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
+    @Test
+    fun spawn6() {
+        val out = all("""
+            var t
+            set t = task () {
+                println(1)
+                do {
+                    println(2)
+                    yield nil
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = if true { spawn t() } else { nil }
+            resume co()
+            println(5)
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun spawn7() {
+        val out = all("""
+            var f
+            set f = func () {
+                spawn t()
+            }
+            var t
+            set t = task () {
+                println(1)
+                do {
+                    println(2)
+                    yield nil
+                    println(3)
+                }
+                println(4)
+            }
+            var co
+            set co = f()
+            resume co()
+            println(5)
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
 
     // THROW
 
@@ -325,6 +369,20 @@ class TTask {
             println(broadcast 1)
         """)
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun bcast001() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                println(1)
+                yield nil
+                println(2)
+            }()
+            broadcast nil
+        """
+        )
+        assert(out == "1\n2\n") { out }
     }
     @Test
     fun bcast01() {
@@ -1064,15 +1122,19 @@ class TTask {
         assert(out == "1\n2\n99\n3\n") { out }
     }
     @Test
-    fun evt_hld4_err() {
+    fun evt_hld4() {
         val out = ceu.all(
             """
             var fff
             set fff = func (x) { x }
             spawn task () {
+                println(1)
                 do {
+                    println(2)
                     yield nil
+                    println(3)
                 }
+                println(4)
                 fff(evt[:type])
                 println(99)
             }()
