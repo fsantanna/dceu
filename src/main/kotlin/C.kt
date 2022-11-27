@@ -179,19 +179,22 @@ fun Coder.main (): String {
         }
         void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn);
         char* ceu_block_set (CEU_Block* dst, CEU_Value* src) {
-            if (src->tag >= CEU_VALUE_TUPLE) { // any Dyn
-                if (src->Dyn->hold == NULL) {
-                    src->Dyn->hold = dst;
-                    src->Dyn->next = dst->tofree;
-                    dst->tofree = src->Dyn;
-                    if (src->tag >= CEU_VALUE_CORO) {  // any Coro/Coros
-                        ceu_bcast_enqueue(&dst->bcast.dyn, src->Dyn);
-                    }
-                } else if (src->Dyn->hold->depth > dst->depth) {
-                    ceu_has_throw = 1;
-                    ceu_err = &CEU_ERR_ERROR;
-                    return "set error : incompatible scopes";
+            if (src->tag < CEU_VALUE_TUPLE) {
+                return NULL;
+            }
+            
+            // any Dyn
+            if (src->Dyn->hold == NULL) {
+                src->Dyn->hold = dst;
+                src->Dyn->next = dst->tofree;
+                dst->tofree = src->Dyn;
+                if (src->tag >= CEU_VALUE_CORO) {  // any Coro/Coros
+                    ceu_bcast_enqueue(&dst->bcast.dyn, src->Dyn);
                 }
+            } else if (src->Dyn->hold->depth > dst->depth) {
+                ceu_has_throw = 1;
+                ceu_err = &CEU_ERR_ERROR;
+                return "set error : incompatible scopes";
             }
             return NULL;
         }
@@ -227,8 +230,12 @@ fun Coder.main (): String {
             }
         }
 
-        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
+        void* ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
             assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
+            char* err = ceu_block_set(&ceu_evt_block, evt);
+            if (err != NULL) {
+                return err;
+            }
             CEU_Value* prv = ceu_evt;
             ceu_has_bcast++;
             ceu_evt = evt;
@@ -243,11 +250,12 @@ fun Coder.main (): String {
                 // whole bcast threw exception and didn't catch it
                 // must not clean up now
                 // stop now, clean up comes soon form :clear
-                return;
+                return NULL;
             }
             if (ceu_has_bcast == 0) {
                 ceu_block_free(&ceu_evt_block);
             }
+            return NULL;
         }
         
         void ceu_bcast_dyns (CEU_Dynamic* cur) {

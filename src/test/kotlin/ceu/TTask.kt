@@ -1023,7 +1023,7 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 4, col 27) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun evt_hld2_err() {
@@ -1040,7 +1040,7 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 5, col 27) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun evt_hld3() {
@@ -1114,6 +1114,17 @@ class TTask {
         """
         )
         assert(out == "@[]\n") { out }
+    }
+    @Test
+    fun evt7_err() {
+        val out = ceu.all(
+            """
+            var x
+            set x = []
+            broadcast x
+        """
+        )
+        assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
     }
 
     // PUB

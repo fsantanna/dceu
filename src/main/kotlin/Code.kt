@@ -296,11 +296,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.task.code("ceu_task_$n", null)}
-                    char* err = ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                    if (err != NULL) {
+                    char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
+                    if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", err);
+                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     ${assrc_dst.cond { "$assrc_dst = ceu_coro_$n;" }}
@@ -348,7 +348,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // BCAST ${this.tk.dump()}
                     CEU_Value ceu_$n;
                     ${this.evt.code("ceu_$n", null)}
-                    ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_$n);
+                    char* ceu_err_$n = ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_$n);
+                    if (ceu_err_$n != NULL) {
+                        ceu_has_throw = 1;
+                        ceu_err = &CEU_ERR_ERROR;
+                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                        continue; // escape enclosing block;
+                    }
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
