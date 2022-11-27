@@ -44,11 +44,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 else -> TODO("bug found")
             }
         }
-        return when {
-            (id == "err") -> "(*ceu_err)"
-            (id == "evt") -> "(*ceu_evt)"
-            else -> this.aux(0)
-        }
+        return this.aux(0)
     }
 
     fun Expr.code(assrc_dst: String?, asdst_src: String?): String {

@@ -7,9 +7,9 @@ val XCEU = false
 var N = 1
 
 val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "false", "func",
-    "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task", "throw", "true",
-    "var", "yield", "while"
+    "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
+    "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task",
+    "throw", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "every", "ifs", "not", "or", "par", "parand", "paror", "watching", "with", "where"
 )).toSortedSet()
@@ -25,7 +25,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "tags", "print", "println", "op_eq_eq", "op_div_eq", "err", "evt"
+    "tags", "print", "println", "op_eq_eq", "op_div_eq"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -60,6 +60,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
+    data class EvtErr (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)

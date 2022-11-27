@@ -104,6 +104,7 @@ class Ups (val outer: Expr.Block) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
+            is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
@@ -142,6 +143,7 @@ class Ups (val outer: Expr.Block) {
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
+            is Expr.EvtErr -> emptyMap()
             is Expr.Nil    -> emptyMap()
             is Expr.Tag    -> emptyMap()
             is Expr.Bool   -> emptyMap()

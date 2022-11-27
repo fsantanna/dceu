@@ -30,6 +30,7 @@ fun Expr.tostr (pre: Boolean = false): String {
 
         is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str
+        is Expr.EvtErr -> this.tk.str
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str
         is Expr.Bool   -> this.tk.str

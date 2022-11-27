@@ -8,7 +8,7 @@ import tostr
 
 class TParser {
 
-    // EXPR.VAR
+    // EXPR.VAR / EVT / ERR
 
     @Test
     fun expr_var () {
@@ -28,6 +28,20 @@ class TParser {
         val l = lexer("  ")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 3) : expected expression : have end of file")
+    }
+    @Test
+    fun evt3 () {
+        val l = lexer(" evt ")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.EvtErr && e.tk.str == "evt")
+    }
+    @Test
+    fun err4 () {
+        val l = lexer(" err ")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.EvtErr && e.tk.str == "err")
     }
 
     // EXPR.PARENS

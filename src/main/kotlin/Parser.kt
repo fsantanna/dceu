@@ -252,6 +252,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("pub") -> Expr.Pub(this.tk0, null)
 
+            this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
             this.acceptEnu("Nat") || this.acceptFix("native") && this.acceptEnu("Nat") -> {
                 Expr.Nat(this.tk0 as Tk.Nat)
             }
