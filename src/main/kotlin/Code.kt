@@ -54,7 +54,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val f_b = ups.func_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Func) -> "(ceu_ret==NULL ? 1 : ceu_ret->depth + 1)"
+                    (f_b is Expr.Func) -> "1"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, it ->
@@ -145,7 +145,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 CEU_Value ceu_f_$n (
                     ${isfunc.cond{"CEU_Frame* ceu_func,"}}
                     ${istask.cond{"CEU_Dynamic* ceu_coro,"}}
-                    CEU_Block* ceu_ret,
                     int ceu_n,
                     CEU_Value* ceu_args[]
                 ) {
@@ -174,7 +173,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
                                         continue; // from BCAST-CLEAR: escape enclosing block
                                     }
-                                    int ceu_depth = (ceu_ret==NULL ? 1 : ceu_ret->depth + 1);
+                                    int ceu_depth = 1;
                                     ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
@@ -682,7 +681,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${resume.cond { "CEU_Value ceu_$n = " }}
                     $frame(
                         $dyn,
-                        ${ups.block(this)!!.toc(true)},
                         ${this.args.size},
                         ceu_args_$n
                     );
