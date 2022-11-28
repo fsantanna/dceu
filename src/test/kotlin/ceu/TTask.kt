@@ -153,16 +153,16 @@ class TTask {
             var T
             set T = task () {
                 defer {
-                    println(4)
+                    println(3)
                 }
                 println(1)
-                yield nil
+                yield nil   ;; never awakes
                 println(2)
             }
             resume (coroutine T) ()
-            println(3)
+            println(4)
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "1\n3\n4\n") { out }
     }
     @Test
     fun yield14_err() {
