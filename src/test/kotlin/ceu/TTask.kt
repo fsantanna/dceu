@@ -153,12 +153,14 @@ class TTask {
             var T
             set T = task () {
                 defer {
-                    println(2)
+                    println(4)
                 }
+                println(1)
                 yield nil
+                println(2)
             }
             resume (coroutine T) ()
-            println(1)
+            println(3)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -345,7 +347,7 @@ class TTask {
         assert(out == "1\n3\n") { out }
     }
     @Test
-    fun throw3() {
+    fun throw3_err() {
         val out = all("""
             var T
             set T = task () {
@@ -611,7 +613,7 @@ class TTask {
         assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
     }
     @Test
-    fun bcast11() {
+    fun bcast11_err() {
         val out = ceu.all(
             """
             var tk
@@ -625,7 +627,7 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 5, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n") { out }
     }
 
     // POOL
@@ -826,7 +828,7 @@ class TTask {
             }
         """
         )
-        assert(out == "anon : (lin 10, col 31) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool13_scope() {
@@ -1143,7 +1145,7 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "99\n") { out }
+        assert(out == "1\n2\n3\n4\n99\n") { out }
     }
     @Test
     fun evt5() {

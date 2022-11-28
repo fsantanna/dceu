@@ -759,7 +759,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun catch8() {
+    fun catch8_err() {
         val out = ceu.all(
             """
             var x
@@ -830,6 +830,20 @@ class TExec {
         """.trimIndent()
         )
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun catch13_err() {
+        val out = ceu.all(
+            """
+            var x
+            set x = err
+            do {
+                set x = err
+            }
+            println(1)
+            """
+        )
+        assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
     }
 
     // NATIVE
