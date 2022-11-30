@@ -557,7 +557,7 @@ fun Coder.main (): String {
                     }
                 }
             }
-            if (max != NULL) {
+            if (hld != NULL) {
                 dyn->hold = hld;
                 dyn->next = hld->tofree;
                 hld->tofree = dyn;

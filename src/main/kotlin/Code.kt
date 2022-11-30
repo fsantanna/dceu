@@ -58,7 +58,19 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, it ->
-                    it.code(if (i == this.es.size - 1) assrc_dst else null, false, null) + "\n"
+                    if (i == this.es.size-1) {
+                        it.code(assrc_dst, false, null) + assrc_dst.cond { """
+                        // would fail later, but memory is reclaimed here, so need to check before return
+                        if ($assrc_dst.tag>=CEU_VALUE_TUPLE && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
+                            // scope of dyn ret must still be NULL or at most outer depth
+                            ceu_has_throw = 1;
+                            ceu_err = &CEU_ERR_ERROR;
+                            strncpy(ceu_err_error_msg, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : return error : incompatible scopes", 256);
+                        }                        
+                        """}
+                    } else {
+                        it.code(null, false, null) + "\n"
+                    }
                 }.joinToString("")
                 """
                 { // BLOCK ${this.tk.dump()}
