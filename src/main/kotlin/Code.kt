@@ -290,6 +290,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // THROW ${this.tk.dump()}
                     static CEU_Value ceu_throw_$n;    // static b/c may cross function call
                     ${this.ex.code("ceu_throw_$n", true, null)}
+                    assert(NULL == ceu_block_set(&ceu_err_block, &ceu_throw_$n));
                     ceu_err = &ceu_throw_$n;
                     ceu_has_throw = 1;
                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
@@ -320,7 +321,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             .Bcast = { NULL, {.Coros = {${if (this.max==null) 0 else "ceu_max_$n.Number"}, 0, 0, NULL}} }
                         }
                     };
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} });" }}
+                    ${SET("((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })", ups.block(this)!!.toc(true))}
                 }
                 """
             }

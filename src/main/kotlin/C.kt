@@ -285,8 +285,8 @@ fun Coder.main (): String {
                             // if nested block threw uncaught exception, awake myself next to catch it
                             //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                             CEU_Value arg = { CEU_VALUE_NIL };
-                            CEU_Value* args[] = { &arg };
-                            cur->Bcast.Coro.task.Task.f(cur, 1, args);
+                            CEU_Value* args[] = { &arg };  // any depth works?
+                            cur->Bcast.Coro.task.Task.f(cur, 0, 1, args);
                             if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
                                 // ok
                             } else {
@@ -597,8 +597,8 @@ fun Coder.main (): String {
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.n; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
-                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, 2, args).Bool) {
-                    return i;
+                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, 0, 2, args).Bool) {
+                    return i;                   // any depth works
                 }
             }
             return -1;
