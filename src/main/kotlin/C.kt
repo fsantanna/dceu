@@ -177,9 +177,24 @@ fun Coder.main (): String {
         }
         void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn);
         char* ceu_block_set (CEU_Block* dst, CEU_Value* src) {
-            if (src->tag < CEU_VALUE_TUPLE) {
-                return NULL;    // nothing to be done for non-dyn
-            }            
+            switch (src->tag) {
+                case CEU_VALUE_TUPLE:
+                    for (int i=0; i<src->Dyn->Tuple.n; i++) {
+                        ceu_block_set(dst, &src->Dyn->Tuple.mem[i]);
+                    }
+                    break;
+                case CEU_VALUE_DICT:
+                    for (int i=0; i<src->Dyn->Dict.n; i++) {
+                        ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][0]);
+                        ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][1]);
+                    }
+                    break;
+                case CEU_VALUE_CORO:
+                case CEU_VALUE_COROS:
+                    break;
+                default:
+                    return NULL;    // nothing to be done for non-dyn
+            }
             if (src->Dyn->hold == NULL) {
                 src->Dyn->hold = dst;
                 src->Dyn->next = dst->tofree;

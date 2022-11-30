@@ -302,7 +302,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    ${(!assrc_set).cond { "ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_coro_$n);" }}
+                    ${(!assrc_set).cond { "assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_coro_$n));" }}
                     ${assrc_dst.cond { "$assrc_dst = ceu_coro_$n;" }}
                 }
                 """
@@ -477,23 +477,25 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val bup = ups.block(this)!!
                 val id = this.tk_.fromOp().noSpecial()
                 ups.assertIsDeclared(bup, id, this.tk)
-                if (asdst_src == null) {
-                    """
-                    // ACC ${this.tk.dump()}
-                    $assrc_dst = ${bup.id2c(id)};
-                    """
-                } else {
-                    ups.assertIsDeclared(bup, "_${id}_", this.tk)
-                    """
-                    { // ACC - SET
-                        char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, &$asdst_src);
-                        if (ceu_err_$n != NULL) {
-                            snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
-                            continue;
+                when {
+                    (assrc_dst !== null) -> """
+                        // ACC ${this.tk.dump()}
+                        $assrc_dst = ${bup.id2c(id)};
+                        """
+                    (asdst_src != null) -> {
+                        ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                        """
+                        { // ACC - SET
+                            char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, &$asdst_src);
+                            if (ceu_err_$n != NULL) {
+                                snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
+                                continue;
+                            }
+                            ${bup.id2c(id)} = $asdst_src;
                         }
-                        ${bup.id2c(id)} = $asdst_src;
+                        """
                     }
-                    """
+                    else -> "// ACC - useless"
                 }
             }
             is Expr.EvtErr -> {
@@ -539,7 +541,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });" }}
+                    ${if (assrc_dst == null) {
+                        """ // just creates dummy tmp to free it later
+                        CEU_Value ceu_tmp_$n = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });
+                        assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
+                        """
+                    } else {
+                        "$assrc_dst = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });"
+                    }}
                 }
                 """
             }
@@ -620,7 +629,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 val (sets,args) = this.args.let {
                     Pair (
-                        it.mapIndexed { i,x -> x.code("ceu_mem->arg_${i}_$n", false, null) }.joinToString(""),
+                        it.mapIndexed { i,x ->
+                            x.code("ceu_mem->arg_${i}_$n", false, null) +
+                            """
+                            {
+                                char* ceu_err_$n = ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_mem->arg_${i}_$n);
+                                if (ceu_err_$n != NULL) {
+                                    snprintf(ceu_err_error_msg, 256, "${x.tk.pos.file} : (lin ${x.tk.pos.lin}, col ${x.tk.pos.col}) : %s", ceu_err_$n);
+                                    continue;
+                                }
+                            }
+                            """
+                        }.joinToString(""),
                         it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                     )
                 }
@@ -644,7 +664,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                        ${(!assrc_set).cond { "ceu_block_set(${ups.block(ups.block(this)!!)!!.toc(true)}, &ceu_coro_$n);" }}
+                        ${(!assrc_set).cond { "assert(NULL == ceu_block_set(${ups.block(ups.block(this)!!)!!.toc(true)}, &ceu_coro_$n));" }}
                         ${assrc_dst.cond { "$assrc_dst = ceu_coro_$n;" }}
                         """
                     } else {

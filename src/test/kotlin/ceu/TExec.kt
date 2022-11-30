@@ -121,7 +121,7 @@ class TExec {
         assert(out == "false\n") { out }
     }
 
-    // INDEX
+    // INDEX / TUPLE
 
     @Test
     fun index() {
@@ -150,6 +150,96 @@ class TExec {
             println([1][2])
         """.trimIndent())
         assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
+    }
+    @Test
+    fun tuple4_free() {
+        val out = all("""
+            [1,2,3]
+            println(1)
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun tuple5_free() {
+        val out = all("""
+            var f
+            set f = func () { nil }
+            f([1,2,3])
+            println(1)
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun tuple6_free() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                if v > 0 {
+                    [f(v-1)]
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun tuple7_hold_err() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                var x
+                if v > 0 {
+                    set x = f(v-1)  ;; invalid set
+                    [x]
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun tuple8_hold_err() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                if v > 0 {
+                    var x
+                    set x = f(v-1)
+                    [x] ;; invalid return
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun tuple9_hold() {
+        val out = all("""
+            do {
+                var x
+                set x = [0]
+                x   ;; escape but no access
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun tuple10_hold_err() {
+        val out = all("""
+            println(do {
+                var x
+                set x = [0]
+                x   ;; escape but no access
+            })
+        """)
+        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
     }
 
     // DICT
