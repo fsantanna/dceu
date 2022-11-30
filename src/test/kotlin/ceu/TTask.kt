@@ -627,7 +627,7 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 
     // POOL
@@ -1083,7 +1083,7 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
     @Test
     fun evt_hld2_err() {

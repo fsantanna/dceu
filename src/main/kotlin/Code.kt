@@ -66,6 +66,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
                             strncpy(ceu_err_error_msg, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : return error : incompatible scopes", 256);
+                            continue;   // escape to end of enclosing block
                         }                        
                         """}
                     } else {
