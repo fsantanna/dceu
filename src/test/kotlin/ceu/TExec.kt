@@ -216,7 +216,8 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold() {
@@ -239,7 +240,8 @@ class TExec {
                 x   ;; escape but no access
             })
         """)
-        assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
     }
 
     // DICT
