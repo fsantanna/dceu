@@ -544,7 +544,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Tuple -> {
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
-                    it.code("ceu_mem->arg_${i}_$n", false, null)
+                    it.code("ceu_mem->arg_${i}_$n", true, null)
                 }.joinToString("")
                 """
                 { // TUPLE ${this.tk.dump()}
@@ -554,13 +554,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${if (assrc_dst == null) {
-                        """ // just creates dummy tmp to free it later
+                    ${when {
+                        (assrc_dst != null) -> "$assrc_dst = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });"
+                        !assrc_set -> """ // just creates dummy tmp to free it later
                         CEU_Value ceu_tmp_$n = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });
                         assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
                         """
-                    } else {
-                        "$assrc_dst = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });"
+                        else -> ""
                     }}
                 }
                 """
@@ -568,8 +568,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Dict -> {
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
-                    it.first.code ("ceu_mem->arg_${i}_a_$n", false, null)+
-                    it.second.code("ceu_mem->arg_${i}_b_$n", false, null)
+                    it.first.code ("ceu_mem->arg_${i}_a_$n", true, null)+
+                    it.second.code("ceu_mem->arg_${i}_b_$n", true, null)
                 }.joinToString("")
                 """
                 { // DICT ${this.tk.dump()}
@@ -601,24 +601,24 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     switch (ceu_col_$n.tag) { // OK
                         case CEU_VALUE_TUPLE:                
-                            ${if (asdst_src == null) {
-                                "$assrc_dst = ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
-                            } else {
-                                "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;"
+                            ${when {
+                                (asdst_src != null) -> "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;"
+                                (assrc_dst != null) -> "$assrc_dst = ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
+                                else -> "" //"ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
                             }}
                             break;
                         case CEU_VALUE_DICT: {
                             int idx = ceu_dict_key_index(ceu_col_$n.Dyn, &ceu_mem->idx_$n);
-                            ${if (asdst_src == null) {
-                                "$assrc_dst = ((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_col_$n.Dyn->Dict.mem)[idx][1]);"
-                            } else {
-                                """ // SET
-                                if (idx == -1) {
-                                    idx = ceu_dict_empty_index(ceu_col_$n.Dyn);
-                                    (*ceu_col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
-                                }
-                                (*ceu_col_$n.Dyn->Dict.mem)[idx][1] = $asdst_src;
-                                """ 
+                            ${when {
+                                (asdst_src != null) -> """ // SET
+                                    if (idx == -1) {
+                                        idx = ceu_dict_empty_index(ceu_col_$n.Dyn);
+                                        (*ceu_col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                    }
+                                    (*ceu_col_$n.Dyn->Dict.mem)[idx][1] = $asdst_src;
+                                    """
+                                (assrc_dst != null) -> "$assrc_dst = ((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_col_$n.Dyn->Dict.mem)[idx][1]);"
+                                else -> "" //"((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_col_$n.Dyn->Dict.mem)[idx][1]);"
                             }}
                             break;
                         }
@@ -644,7 +644,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val (sets,args) = this.args.let {
                     Pair (
                         it.mapIndexed { i,x ->
-                            x.code("ceu_mem->arg_${i}_$n", false, null) +
+                            x.code("ceu_mem->arg_${i}_$n", true, null) +
                             """
                             { // check scopes of args
                                 char* ceu_err_$n = ceu_block_set(${bup.toc(true)}, &ceu_mem->arg_${i}_$n);

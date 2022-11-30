@@ -145,6 +145,13 @@ class TExec {
         assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
     }
     @Test
+    fun index23() {
+        val out = all("""
+            println([[1]][[0][0]])
+        """.trimIndent())
+        assert(out == "[1]\n") { out }
+    }
+    @Test
     fun index_err3() {
         val out = all("""
             println([1][2])
@@ -155,6 +162,14 @@ class TExec {
     fun tuple4_free() {
         val out = all("""
             [1,2,3]
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun tuple45_free() {
+        val out = all("""
+            [1,2,3][1]
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -240,8 +255,8 @@ class TExec {
                 x   ;; escape but no access
             })
         """)
-        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
     }
 
     // DICT
