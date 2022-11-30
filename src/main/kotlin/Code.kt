@@ -54,7 +54,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val f_b = ups.func_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Func) -> "1"
+                    (f_b is Expr.Func) -> "(ceu_depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, it ->
@@ -145,6 +145,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 CEU_Value ceu_f_$n (
                     ${isfunc.cond{"CEU_Frame* ceu_func,"}}
                     ${istask.cond{"CEU_Dynamic* ceu_coro,"}}
+                    int ceu_depth,
                     int ceu_n,
                     CEU_Value* ceu_args[]
                 ) {
@@ -173,7 +174,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
                                         continue; // from BCAST-CLEAR: escape enclosing block
                                     }
-                                    int ceu_depth = 1;
                                     ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
@@ -257,7 +257,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.ex.code("ceu_$n", false, null)}
                     ceu_err = &ceu_$n;
                     ceu_has_throw = 1;
-                    strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
+                    strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
                     continue; // escape enclosing block;
                 }
                 """
@@ -273,7 +273,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
                             strncpy(ceu_err_error_msg,
-                                "${tk.pos.file} : (lin ${this.max.tk.pos.lin}, col ${this.max.tk.pos.col}) : coroutines error : expected positive number",
+                                "${this.tk.pos.file} : (lin ${this.max.tk.pos.lin}, col ${this.max.tk.pos.col}) : coroutines error : expected positive number",
                                  256);
                             continue; // escape enclosing block;
                         }
@@ -299,7 +299,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
+                        snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     ${(!assrc_set).cond { "assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_coro_$n));" }}
@@ -316,7 +316,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_mem->coros_$n.tag != CEU_VALUE_COROS) {                
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
+                        strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
                         continue; // escape enclosing block;
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
@@ -352,7 +352,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                        snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     if (ceu_has_throw_clear()) {
@@ -401,7 +401,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
+                            strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
                             continue; // escape enclosing block;
                         }
                         ceu_dyn_$n = ceu_coro_$n.Dyn;
@@ -488,7 +488,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         { // ACC - SET
                             char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, &$asdst_src);
                             if (ceu_err_$n != NULL) {
-                                snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
+                                snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                                 continue;
                             }
                             ${bup.id2c(id)} = $asdst_src;
@@ -506,7 +506,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     { // EVT/ERR - SET
                         char* ceu_err_$n = ceu_block_set(&ceu_${this.tk.str}_blk, &$asdst_src);
                         if (ceu_err_$n != NULL) {
-                            snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${tk.pos.lin}, col ${tk.pos.col}) : %s", ceu_err_$n);
+                            snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                             continue;
                         }
                         ceu_${this.tk.str} = &$asdst_src;
@@ -583,7 +583,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                     """}}
                     if (ceu_err_$n != NULL) {                
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : %s", ceu_err_$n);
+                        snprintf(ceu_err_error_msg, 256, "${this.col.tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     switch (ceu_col_$n.tag) { // OK
@@ -616,6 +616,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Call -> {
                 val up1 = ups.ups[this]
                 val up2 = ups.ups[up1]
+                val bup = ups.block(this)!!
                 val resume = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Resume) up2 else null)
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
@@ -632,8 +633,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         it.mapIndexed { i,x ->
                             x.code("ceu_mem->arg_${i}_$n", false, null) +
                             """
-                            {
-                                char* ceu_err_$n = ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_mem->arg_${i}_$n);
+                            { // check scopes of args
+                                char* ceu_err_$n = ceu_block_set(${bup.toc(true)}, &ceu_mem->arg_${i}_$n);
                                 if (ceu_err_$n != NULL) {
                                     snprintf(ceu_err_error_msg, 256, "${x.tk.pos.file} : (lin ${x.tk.pos.lin}, col ${x.tk.pos.col}) : %s", ceu_err_$n);
                                     continue;
@@ -690,7 +691,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : %s", ceu_err_$n);
+                        snprintf(ceu_err_error_msg, 256, "${this.f.tk.pos.file} : (lin ${this.f.tk.pos.lin}, col ${this.f.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     { // SETS
@@ -701,6 +702,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${resume.cond { "CEU_Value ceu_$n = " }}
                     $frame(
                         $dyn,
+                        ${bup.toc(false)}.depth,
                         ${this.args.size},
                         ceu_args_$n
                     );

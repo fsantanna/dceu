@@ -59,12 +59,14 @@ fun Coder.main (): String {
             union {
                 struct CEU_Value (*Func) (
                     struct CEU_Frame* func,
+                    int depth,
                     int n,
                     struct CEU_Value* args[]
                 );
                 struct {
                     struct CEU_Value (*f) (
                         struct CEU_Dynamic* coro,   // coro->Bcast.Coro
+                        int depth,
                         int n,
                         struct CEU_Value* args[]
                     );
@@ -87,7 +89,7 @@ fun Coder.main (): String {
             struct CEU_Tags* next;
         } CEU_Tags;
         
-        CEU_Value ceu_tags_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_tags_f (CEU_Frame* _1, int _2, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
         }
@@ -463,7 +465,7 @@ fun Coder.main (): String {
                     assert(0 && "bug found");
             }
         }
-        CEU_Value ceu_print_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_print_f (CEU_Frame* _1, int _2, int n, CEU_Value* args[]) {
             for (int i=0; i<n; i++) {
                 if (i > 0) {
                     printf("\t");
@@ -473,8 +475,8 @@ fun Coder.main (): String {
             return (CEU_Value) { CEU_VALUE_NIL };
         }
         CEU_Frame ceu_print = { NULL, NULL, {.Func=ceu_print_f} };
-        CEU_Value ceu_println_f (CEU_Frame* func, int n, CEU_Value* args[]) {
-            ceu_print.Func(func, n, args);
+        CEU_Value ceu_println_f (CEU_Frame* func, int depth, int n, CEU_Value* args[]) {
+            ceu_print.Func(func, depth, n, args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
@@ -482,7 +484,7 @@ fun Coder.main (): String {
     """ +
     """
         // EQ-NEQ
-        CEU_Value ceu_op_eq_eq_f (CEU_Frame* func, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_eq_eq_f (CEU_Frame* func, int depth, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
@@ -513,7 +515,7 @@ fun Coder.main (): String {
                             if (v) {
                                 for (int i=0; i<e1->Dyn->Tuple.n; i++) {
                                     CEU_Value* xs[] = { &e1->Dyn->Tuple.mem[i], &e2->Dyn->Tuple.mem[i] };
-                                    v = ceu_op_eq_eq_f(func, 2, xs).Bool;
+                                    v = ceu_op_eq_eq_f(func, depth, 2, xs).Bool;
                                     if (!v) {
                                         break;
                                     }
@@ -534,14 +536,34 @@ fun Coder.main (): String {
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
         }
         CEU_Frame ceu_op_eq_eq = { NULL, NULL, {.Func=ceu_op_eq_eq_f} };
-        CEU_Value ceu_op_div_eq_f (CEU_Frame* func, int n, CEU_Value* args[]) {
-            CEU_Value v = ceu_op_eq_eq.Func(func, n, args);
+        CEU_Value ceu_op_div_eq_f (CEU_Frame* func, int depth, int n, CEU_Value* args[]) {
+            CEU_Value v = ceu_op_eq_eq.Func(func, depth, n, args);
             v.Bool = !v.Bool;
             return v;
         }
         CEU_Frame ceu_op_div_eq = { NULL, NULL, {.Func=ceu_op_div_eq_f} };
     """ +
     """ // TUPLE / DICT
+        void ceu_max_depth (CEU_Dynamic* dyn, int n, CEU_Value* childs) {
+            // new dyn should have at least the maximum depth among its children
+            CEU_Block* hld = NULL;
+            int max = -1;
+            for (int i=0; i<n; i++) {
+                CEU_Value* cur = &childs[i];
+                if (cur->tag>=CEU_VALUE_TUPLE && cur->Dyn->hold!=NULL) {
+                    if (max < cur->Dyn->hold->depth) {
+                        max = cur->Dyn->hold->depth;
+                        hld = cur->Dyn->hold;
+                    }
+                }
+            }
+            if (max != NULL) {
+                dyn->hold = hld;
+                dyn->next = hld->tofree;
+                hld->tofree = dyn;
+            }
+        }
+
         CEU_Dynamic* ceu_tuple_create (int n, CEU_Value* args) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             if (ret == NULL) {
@@ -550,6 +572,7 @@ fun Coder.main (): String {
             assert(ret != NULL);
             *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, NULL, NULL, {.Tuple={n,{}}} };
             memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
+            ceu_max_depth(ret, n, args);
             return ret;
         }
 
@@ -566,9 +589,8 @@ fun Coder.main (): String {
             }
             memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
             *ret = (CEU_Dynamic) { CEU_VALUE_DICT, NULL, NULL, {.Dict={min,mem}} };
-            if (args != NULL) {
-                memcpy(mem, args, n*2*sizeof(CEU_Value));
-            }
+            memcpy(mem, args, n*2*sizeof(CEU_Value));
+            ceu_max_depth(ret, n*2, (CEU_Value*)args);
             return ret;
         }
 

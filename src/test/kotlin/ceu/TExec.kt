@@ -157,7 +157,7 @@ class TExec {
             [1,2,3]
             println(1)
         """)
-        assert(out == "2\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun tuple5_free() {
@@ -167,7 +167,7 @@ class TExec {
             f([1,2,3])
             println(1)
         """)
-        assert(out == "2\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun tuple6_free() {
@@ -182,7 +182,7 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "2\n") { out }
+        assert(out == "[[[0]]]\n") { out }
     }
     @Test
     fun tuple7_hold_err() {
@@ -199,7 +199,7 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "2\n") { out }
+        assert(out == "anon : (lin 3, col 21) : return error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple8_hold_err() {
@@ -216,7 +216,7 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "2\n") { out }
+        assert(out == "anon : (lin 3, col 21) : return error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold() {
