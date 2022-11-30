@@ -269,6 +269,17 @@ class TTask {
     @Test
     fun spawn6() {
         val out = all("""
+            var x
+            set x = do {
+                spawn (task() {println(1)}) ()
+            }
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun spawn67() {
+        val out = all("""
             var t
             set t = task () {
                 println(1)

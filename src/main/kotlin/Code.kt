@@ -59,7 +59,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 val es = this.es.mapIndexed { i, it ->
                     if (i == this.es.size-1) {
-                        it.code(assrc_dst, false, null) + assrc_set.cond { """
+                        it.code(assrc_dst, assrc_set, null) + assrc_set.cond { """
                         // would fail later, but memory is reclaimed here, so need to check before return
                         if ($assrc_dst.tag>=CEU_VALUE_TUPLE && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
                             // scope of dyn ret must still be NULL or at most outer depth
