@@ -266,9 +266,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             is Expr.Throw -> """
                 { // THROW ${this.tk.dump()}
-                    static CEU_Value ceu_$n;    // static b/c may cross function call
-                    ${this.ex.code("ceu_$n", false, null)}
-                    ceu_err = &ceu_$n;
+                    static CEU_Value ceu_throw_$n;    // static b/c may cross function call
+                    ${this.ex.code("ceu_throw_$n", true, null)}
+                    ceu_err = &ceu_throw_$n;
                     ceu_has_throw = 1;
                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
                     continue; // escape enclosing block;
@@ -554,13 +554,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
+                    CEU_Value ceu_tmp_$n = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });
                     ${when {
-                        (assrc_dst != null) -> "$assrc_dst = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });"
-                        !assrc_set -> """ // just creates dummy tmp to free it later
-                        CEU_Value ceu_tmp_$n = ((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} });
-                        assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
-                        """
-                        else -> ""
+                        (assrc_dst == null) -> """ // nothing to set, hold in local block
+                            assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
+                            """
+                        assrc_set -> """ // do not set block yet
+                            $assrc_dst = ceu_tmp_$n;
+                            """
+                        else -> """ // assign and set local block (nowhere else to hold)
+                            assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
+                            $assrc_dst = ceu_tmp_$n;
+                            """
                     }}
                 }
                 """

@@ -19,9 +19,9 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-val VALGRIND = ""
+//val VALGRIND = ""
 val THROW = false
-//val VALGRIND = "valgrind "
+val VALGRIND = "valgrind "
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
@@ -124,11 +124,26 @@ class TExec {
     // INDEX / TUPLE
 
     @Test
-    fun index() {
+    fun index01() {
+        val out = all("""
+            [1,2,3][1]
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun index011() {
         val out = all("""
             println([1,2,3][1])
         """)
         assert(out == "2\n") { out }
+    }
+    @Test
+    fun index_err01() {
+        val out = all("""
+            println([1,[2],3][1])   ;; [2] is at block, not at call arg // index made it outside call
+        """)
+        assert(out == "[2]\n") { out }
     }
     @Test
     fun index_err1() {
@@ -880,7 +895,7 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {
