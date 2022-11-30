@@ -47,7 +47,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return this.aux(0)
     }
 
-    fun Expr.code(assrc_dst: String?, assrc_set: Boolean, asdst_src: String?): String {
+    // assrc_dst: calling expr is a source and here's its destination
+    // assrc_hld: calling expr destination hold block is set, do not call ceu_block_set here, otherwise call it and hold in enclosing block
+    // asdst_src: calling expr is a destination and here's its source
+    fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
         fun SET (v: String): String {
             return """
             {
@@ -56,7 +59,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (assrc_dst == null) -> """ // nothing to set, hold in local block
                         assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
                         """
-                    assrc_set -> """ // do not set block yet
+                    assrc_hld -> """ // do not set block yet
                         $assrc_dst = ceu_tmp_$n;
                         """
                     else -> """ // assign and set local block (nowhere else to hold)
@@ -78,7 +81,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 val es = this.es.mapIndexed { i, it ->
                     if (i == this.es.size-1) {
-                        it.code(assrc_dst, assrc_set, null) + assrc_set.cond { """
+                        it.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
                         // would fail later, but memory is reclaimed here, so need to check before return
                         if ($assrc_dst.tag>=CEU_VALUE_TUPLE && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
                             // scope of dyn ret must still be NULL or at most outer depth
@@ -133,7 +136,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Set -> """
                 { // SET ${this.tk.dump()}
                     ${this.src.code("ceu_mem->set_$n", true, null)}
-                    ${this.dst.code(null, assrc_set, "ceu_mem->set_$n")}
+                    ${this.dst.code(null, assrc_hld, "ceu_mem->set_$n")}
                     ${assrc_dst.cond { "$assrc_dst = ceu_mem->set_$n;" }}
                 }
                 """
@@ -142,9 +145,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_cnd_$n;
                     ${this.cnd.code("ceu_cnd_$n", false, null)}
                     if (ceu_as_bool(&ceu_cnd_$n)) {
-                        ${this.t.code(assrc_dst, assrc_set, null)}
+                        ${this.t.code(assrc_dst, assrc_hld, null)}
                     } else {
-                        ${this.f.code(assrc_dst, assrc_set, null)}
+                        ${this.f.code(assrc_dst, assrc_hld, null)}
                     }
                 }
                 """
@@ -224,7 +227,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }.joinToString("")}
                         }
                         // BODY
-                        ${this.body.code("ceu_$n", assrc_set, null)}
+                        ${this.body.code("ceu_$n", assrc_hld, null)}
                         ${istask.cond{"}\n}\n"}}
                     } while (0);
                     """ +
@@ -262,7 +265,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}
                     do {
-                        ${this.body.code(assrc_dst, assrc_set, null)}
+                        ${this.body.code(assrc_dst, assrc_hld, null)}
                     } while (0);
                     if (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not catch anything while clearing up
@@ -338,7 +341,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             }
-            is Expr.Spawn -> this.call.code(assrc_dst, assrc_set, null)
+            is Expr.Spawn -> this.call.code(assrc_dst, assrc_hld, null)
             is Expr.Iter -> {
                 val loc = this.loc.str
                 """
@@ -407,7 +410,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${assrc_dst.cond { "$assrc_dst = *ceu_args[0];" }}
                 }
                 """
-            is Expr.Resume -> this.call.code(assrc_dst, assrc_set, null)
+            is Expr.Resume -> this.call.code(assrc_dst, assrc_hld, null)
             is Expr.Pub -> {
                 val X: Int? = if (this.coro != null) null else {
                     var n = 0

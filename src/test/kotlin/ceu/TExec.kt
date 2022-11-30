@@ -581,6 +581,15 @@ class TExec {
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun if_hld() {
+        val out = all("""
+            if [] {nil} else {nil}
+            println(1)
+        """.trimIndent())
+        //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
+        assert(out == "1\n") { out }
+    }
 
     // FUNC / CALL
 
