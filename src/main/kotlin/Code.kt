@@ -51,19 +51,19 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     // assrc_hld: calling expr destination hold block is set, do not call ceu_block_set here, otherwise call it and hold in enclosing block
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
-        fun SET (v: String): String {
+        fun SET (v: String, bup: String): String {
             return """
             {
                 CEU_Value ceu_tmp_$n = $v;
                 ${when {
                     (assrc_dst == null) -> """ // nothing to set, hold in local block
-                        assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
+                        assert(NULL == ceu_block_set($bup, &ceu_tmp_$n));
                         """
                     assrc_hld -> """ // do not set block yet
                         $assrc_dst = ceu_tmp_$n;
                         """
                     else -> """ // assign and set local block (nowhere else to hold)
-                        assert(NULL == ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_tmp_$n));
+                        assert(NULL == ceu_block_set($bup, &ceu_tmp_$n));
                         $assrc_dst = ceu_tmp_$n;
                         """
                 }}
@@ -337,7 +337,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    ${SET("ceu_coro_$n")}
+                    ${SET("ceu_coro_$n", ups.block(this)!!.toc(true))}
                 }
                 """
             }
@@ -575,7 +575,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${SET("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
+                    ${SET("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })", ups.block(this)!!.toc(true))}
                 }
                 """
             }
@@ -593,7 +593,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     };
                     CEU_Dynamic* ceu_$n = ceu_dict_create(${this.args.size}, &ceu_args_$n);
                     assert(ceu_$n != NULL);
-                    ${SET("((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })")}
+                    ${SET("((CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} })", ups.block(this)!!.toc(true))}
                 }
                 """
             }
@@ -692,7 +692,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                        ${SET("ceu_coro_$n")}
+                        ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true))}
                         """
                     } else {
                         """

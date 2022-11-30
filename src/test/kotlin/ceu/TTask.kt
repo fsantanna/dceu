@@ -1160,6 +1160,22 @@ class TTask {
         assert(out == "1\n2\n3\n4\n99\n") { out }
     }
     @Test
+    fun evt45() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                println(111)
+                yield nil
+                println(222)
+            }()
+            println(1)
+            broadcast nil
+            println(2)
+        """
+        )
+        assert(out == "111\n1\n222\n2\n") { out }
+    }
+    @Test
     fun evt5() {
         val out = ceu.all(
             """
