@@ -1064,7 +1064,7 @@ class TTask {
         assert(out == "2\n2\n999\n1\n") { out }
     }
     @Test
-    fun todo_poolN() {
+    fun pool22() {
         val out = all("""
             var ts
             set ts = coroutines()
@@ -1072,24 +1072,19 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = v
-                println(v)
                 set v = yield nil
-                println(v)
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
             
-            var x
             while t1 in ts {
-                set x = t1
                 while t2 in ts {
-                    set x = t2
                     println(t1.pub, t2.pub)
                 }
             }
             broadcast 2
         """)
-        assert(out == ":coros\n1\n2\n") { out }
+        assert(out == ":coros\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
 
     // EVT
@@ -1361,7 +1356,7 @@ class TTask {
                 set x = t.pub   ;; TODO: incompatible scope
             }
             println(999)
-        """, true)
+        """)
         assert(out == "20\n") { out }
     }
     @Test
@@ -1411,12 +1406,13 @@ class TTask {
             do {
                 var t
                 set t = coroutine(T)
+                resume t ()
                 var x
                 set x = t.pub
                 set y = t.pub  ;; incompatible scopes
             }
             println(999)
         """)
-        assert(out == "20\n") { out }
+        assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
     }
 }
