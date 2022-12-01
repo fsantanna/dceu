@@ -1124,8 +1124,8 @@ class TTask {
             broadcast []
         """
         )
-        assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun evt_hld3() {
@@ -1285,7 +1285,8 @@ class TTask {
             }
             println(x)
         """)
-        assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub5() {
@@ -1408,13 +1409,14 @@ class TTask {
             }
             var y
             do {
-                var t = coroutine(T)
+                var t
+                set t = coroutine(T)
                 var x
                 set x = t.pub
-                set y = t.pub
+                set y = t.pub  ;; incompatible scopes
             }
             println(999)
-        """, true)
+        """)
         assert(out == "20\n") { out }
     }
 }

@@ -288,10 +288,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             is Expr.Throw -> """
                 { // THROW ${this.tk.dump()}
-                    static CEU_Value ceu_throw_$n;    // static b/c may cross function call
-                    ${this.ex.code("ceu_throw_$n", true, null)}
-                    assert(NULL == ceu_block_set(&ceu_err_block, &ceu_throw_$n));
-                    ceu_err = &ceu_throw_$n;
+                    static CEU_Value ceu_ex_$n;    // static b/c may cross function call
+                    ${this.ex.code("ceu_ex_$n", true, null)}
+                    assert(NULL == ceu_block_set(&ceu_err_block, &ceu_ex_$n));
+                    ceu_err = &ceu_ex_$n;
                     ceu_has_throw = 1;
                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
                     continue; // escape enclosing block;
@@ -381,9 +381,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Bcast -> {
                 """
                 { // BCAST ${this.tk.dump()}
-                    CEU_Value ceu_$n;
-                    ${this.evt.code("ceu_$n", false, null)}
-                    char* ceu_err_$n = ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_$n);
+                    CEU_Value ceu_evt_$n;
+                    ${this.evt.code("ceu_evt_$n", true, null)}
+                    char* ceu_err_$n = ceu_block_set(&ceu_evt_block, &ceu_evt_$n);
+                    if (ceu_err_$n == NULL) {
+                        ceu_err_$n = ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_evt_$n);
+                    }
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;

@@ -19,9 +19,9 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
+val VALGRIND = ""
 val THROW = false
-val VALGRIND = "valgrind "
+//val VALGRIND = "valgrind "
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
@@ -963,7 +963,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun catch13_err() {
+    fun catch13() {
         val out = ceu.all(
             """
             var x
@@ -974,7 +974,8 @@ class TExec {
             println(1)
             """
         )
-        assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n") { out }
     }
 
     // NATIVE
