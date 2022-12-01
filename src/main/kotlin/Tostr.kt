@@ -4,6 +4,7 @@ fun Pos.pre (): String {
 
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
+        is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr(pre)
         is Expr.Block  -> if (this.isFake) {
             assert(this.es.size == 1)
             this.es[0].tostr(pre)
@@ -14,7 +15,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.While  -> "while " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
-        is Expr.Func   -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr(pre)
         is Expr.Throw  -> "throw " + this.ex.tostr(pre)
         is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)

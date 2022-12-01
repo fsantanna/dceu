@@ -71,6 +71,106 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             """
         }
         return when (this) {
+            is Expr.Func -> {
+                val isfunc = (this.tk.str == "func")
+                val istask = (this.tk.str == "task")
+                val type = """ // TYPE ${this.tk.dump()}
+                typedef struct {
+                    ${this.args.map {
+                    """
+                        CEU_Value ${it.str};
+                        CEU_Block* _${it.str}_;
+                        """
+                }.joinToString("")}
+                    ${this.body.mem()}
+                } CEU_Func_$n;
+                """
+                val func = """ // BODY ${this.tk.dump()}
+                CEU_Value ceu_f_$n (
+                    ${isfunc.cond{"CEU_Frame* ceu_func,"}}
+                    ${istask.cond{"CEU_Dynamic* ceu_coro,"}}
+                    int ceu_depth,
+                    int ceu_n,
+                    CEU_Value* ceu_args[]
+                ) {
+                    ${isfunc.cond{"""
+                        CEU_Func_$n _ceu_mem_;
+                        CEU_Func_$n* ceu_mem = &_ceu_mem_;
+                        ceu_func->mem = ceu_mem;
+                    """}}
+                    ${istask.cond{"""
+                        assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
+                        ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
+                        CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.__mem;
+                        //ceu_coro->Bcast.Coro.task.mem = ceu_mem; // ceu_coro_create does this
+                    """}}
+                    CEU_Func_$n* ceu_mem_$n = ceu_mem;
+                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
+                    """ +
+                        """ // WHILE
+                    do { // FUNC
+                        ${istask.cond{"""
+                            switch (ceu_coro->Bcast.Coro.pc) {
+                                case -1:
+                                    assert(0 && "bug found");
+                                    break;
+                                case 0: {
+                                    if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
+                                        continue; // from BCAST-CLEAR: escape enclosing block
+                                    }
+                                    ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
+                        """}}
+                        { // ARGS
+                            int ceu_i = 0;
+                            ${this.args.map {
+                            val id = it.str.noSpecial()
+                            """
+                                ceu_mem->_${id}_ = ${this.body.toc(true)};
+                                if (ceu_i < ceu_n) {
+                                    ceu_mem->$id = *ceu_args[ceu_i];
+                                } else {
+                                    ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                                }
+                                ceu_i++;
+                                """
+                        }.joinToString("")}
+                        }
+                        // BODY
+                        ${this.body.code("ceu_$n", assrc_hld, null)}
+                        ${istask.cond{"}\n}\n"}}
+                    } while (0);
+                    """ +
+                        """ // TERMINATE
+                    ${istask.cond{"""
+                        ceu_coro->Bcast.Coro.pc = -1;
+                        ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
+                        if (ceu_coro->Bcast.Coro.coros != NULL) {
+                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
+                            }
+                        }
+                    """}}
+                    return ceu_$n;
+                }
+                """
+                tops.add(Pair(type,func))
+                """ // STATIC
+                ${isfunc.cond{"""
+                    static CEU_Frame ceu_func_$n;
+                    ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
+                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} });" }}
+                """}}
+                ${istask.cond{"""
+                    static CEU_Frame ceu_task_$n;
+                    ceu_task_$n = (CEU_Frame) {
+                        ${this.top()}, NULL, {
+                            .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
+                        }
+                    };
+                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
+                """}}
+                """
+            }
             is Expr.Block -> {
                 val bup = ups.block(this)
                 val f_b = ups.func_or_block(this)
@@ -162,106 +262,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                 }
                 """
-            is Expr.Func -> {
-                val isfunc = (this.tk.str == "func")
-                val istask = (this.tk.str == "task")
-                val type = """ // TYPE ${this.tk.dump()}
-                typedef struct {
-                    ${this.args.map {
-                        """
-                        CEU_Value ${it.str};
-                        CEU_Block* _${it.str}_;
-                        """
-                    }.joinToString("")}
-                    ${this.body.mem()}
-                } CEU_Func_$n;
-                """
-                val func = """ // BODY ${this.tk.dump()}
-                CEU_Value ceu_f_$n (
-                    ${isfunc.cond{"CEU_Frame* ceu_func,"}}
-                    ${istask.cond{"CEU_Dynamic* ceu_coro,"}}
-                    int ceu_depth,
-                    int ceu_n,
-                    CEU_Value* ceu_args[]
-                ) {
-                    ${isfunc.cond{"""
-                        CEU_Func_$n _ceu_mem_;
-                        CEU_Func_$n* ceu_mem = &_ceu_mem_;
-                        ceu_func->mem = ceu_mem;
-                    """}}
-                    ${istask.cond{"""
-                        assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
-                        ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
-                        CEU_Func_$n* ceu_mem = (CEU_Func_$n*) ceu_coro->Bcast.Coro.__mem;
-                        //ceu_coro->Bcast.Coro.task.mem = ceu_mem; // ceu_coro_create does this
-                    """}}
-                    CEU_Func_$n* ceu_mem_$n = ceu_mem;
-                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
-                    """ +
-                    """ // WHILE
-                    do { // FUNC
-                        ${istask.cond{"""
-                            switch (ceu_coro->Bcast.Coro.pc) {
-                                case -1:
-                                    assert(0 && "bug found");
-                                    break;
-                                case 0: {
-                                    if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
-                                        continue; // from BCAST-CLEAR: escape enclosing block
-                                    }
-                                    ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
-                        """}}
-                        { // ARGS
-                            int ceu_i = 0;
-                            ${this.args.map {
-                                val id = it.str.noSpecial()
-                                """
-                                ceu_mem->_${id}_ = ${this.body.toc(true)};
-                                if (ceu_i < ceu_n) {
-                                    ceu_mem->$id = *ceu_args[ceu_i];
-                                } else {
-                                    ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
-                                }
-                                ceu_i++;
-                                """
-                            }.joinToString("")}
-                        }
-                        // BODY
-                        ${this.body.code("ceu_$n", assrc_hld, null)}
-                        ${istask.cond{"}\n}\n"}}
-                    } while (0);
-                    """ +
-                    """ // TERMINATE
-                    ${istask.cond{"""
-                        ceu_coro->Bcast.Coro.pc = -1;
-                        ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
-                        if (ceu_coro->Bcast.Coro.coros != NULL) {
-                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
-                            }
-                        }
-                    """}}
-                    return ceu_$n;
-                }
-                """
-                tops.add(Pair(type,func))
-                """ // STATIC
-                ${isfunc.cond{"""
-                    static CEU_Frame ceu_func_$n;
-                    ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} });" }}
-                """}}
-                ${istask.cond{"""
-                    static CEU_Frame ceu_task_$n;
-                    ceu_task_$n = (CEU_Frame) {
-                        ${this.top()}, NULL, {
-                            .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
-                        }
-                    };
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
-                """}}
-                """
-            }
             is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}
                     do {

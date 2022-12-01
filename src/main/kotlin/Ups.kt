@@ -45,6 +45,12 @@ class Ups (val outer: Expr.Block) {
 
     fun Expr.check () {
         when (this) {
+            is Expr.Func   -> {
+                xblocks[this] = XBlock(this.args.let {
+                    it.map { it.str } + it.map { "_${it.str}_" }
+                }.toMutableSet(), null)
+                this.body.check()
+            }
             is Expr.Block -> {
                 if (this != outer) {
                     xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
@@ -62,12 +68,6 @@ class Ups (val outer: Expr.Block) {
             is Expr.Set    -> { this.dst.check() ; this.src.check() }
             is Expr.If     -> { this.cnd.check() ; this.t.check() ; this.f.check() }
             is Expr.While  -> { this.cnd.check() ; this.body.check() }
-            is Expr.Func   -> {
-                xblocks[this] = XBlock(this.args.let {
-                    it.map { it.str } + it.map { "_${it.str}_" }
-                }.toMutableSet(), null)
-                this.body.check()
-            }
             is Expr.Catch  -> { this.cnd.check() ; this.body.check() }
             is Expr.Throw  -> this.ex.check()
             is Expr.Defer  -> this.body.check()
@@ -122,12 +122,12 @@ class Ups (val outer: Expr.Block) {
             return l.map { it.calc() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
         }
         return when (this) {
+            is Expr.Func   -> this.map(listOf(this.body))
             is Expr.Block  -> this.map(this.es)
             is Expr.Dcl    -> emptyMap()
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.While  -> this.map(listOf(this.cnd, this.body))
-            is Expr.Func   -> this.map(listOf(this.body))
             is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
             is Expr.Throw  -> this.map(listOf(this.ex))
             is Expr.Defer  -> this.map(listOf(this.body))

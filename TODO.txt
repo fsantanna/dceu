@@ -73,6 +73,9 @@
     - struct <- tuple
     - vec <- buf
 - call w/o blocks optimize
+- ranges
+    - [1..2]
+    - [1..2]
 
 # IDEAS
 
