@@ -441,8 +441,20 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         ceu_dyn_$n = ceu_coro_$n.Dyn;
                     """ }}
-                    ${assrc_dst.cond { "$assrc_dst = ceu_dyn_$n->Bcast.Coro.pub;" }}
-                    ${asdst_src.cond { "ceu_dyn_$n->Bcast.Coro.pub = $asdst_src;" }}
+                    ${when {
+                        (assrc_dst != null) -> """ // PUB - read
+                            $assrc_dst = ceu_dyn_$n->Bcast.Coro.pub;
+                            """
+                        (asdst_src != null) -> """ // PUB - SET
+                            char* ceu_err_$n = ceu_block_set(ceu_dyn_$n->hold, &$asdst_src);
+                            if (ceu_err_$n != NULL) {
+                                snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                                continue;
+                            }
+                            ceu_dyn_$n->Bcast.Coro.pub = $asdst_src;
+                            """
+                        else -> "// PUB - useless"
+                    }}
                 }
                 """
             }

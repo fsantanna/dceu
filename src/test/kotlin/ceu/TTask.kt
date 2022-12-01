@@ -1302,6 +1302,31 @@ class TTask {
         assert(out == "20\n") { out }
     }
     @Test
+    fun pub56_pool() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]  ;; valgrind test
+            }
+            spawn T()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun pub562_pool() {
+        val out = all("""
+            var T
+            set T = task () {
+                pub ;; useless test
+                nil
+            }
+            spawn T()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun pub6_pool() {
         val out = all("""
             var T
