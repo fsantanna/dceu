@@ -1,16 +1,9 @@
 # NEXT
 
-- error messages in XCEU
-- evt/err globals
-    - broadcast @[...]  <-- evt cannot be assigned anywhere
-    - throw @[...]      <-- err cannot be assigned anywhere
 - count memory
-- pool kill/while
-    - iter
-    - nested bcast
-    - no escape
-    - kills after iters=0
-- task.pub
+- kill task
+- await task
+- local bcast
 - tags
     - implement with vector or list?
     - tag hier or tag of tag?
@@ -23,26 +16,21 @@
     - #x ~= #x.y
     - str ~= ".*"
 - xceu
-    - ifs exp as it { it==1 {}
+    - ifs exp as it { it==1 {} }
     - iter xs as x
     - do exp as it {}
-    - func f { ... }
-    - par, paror, parand
 
 # BACK
 
-- coroutines(max)
-- native `#pre`
-- kill: coro, coros
+- native `:pre`
 - emit local
     - imply outer task?
     - explicit #tag?
-    - bcast x in ?
+    - bcast in :x, y
 - tuple is plain immutable value
     - move on assign
     - no scope error
     - unless holds dyns
-- native pre code
 - collections
     - tup.a, .b, .x
     - @dict, @[...]
@@ -51,10 +39,8 @@
 - char type
 - args keyword (or ...)
     - access to variable args from func args
-- err keyword
-    - access to ceu_has_throw value
 - tag of tag requires higher ID to avoid cycle
-- ((1>>f)>>g) -> g(f(1))
+- 1 >> f >> g -> g(f(1))
 - parser
     - reject no assign stmts
         - defer
