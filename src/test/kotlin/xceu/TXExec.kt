@@ -286,7 +286,7 @@ class TXExec {
     fun watching5() {
         val out = all("""
             spawn task () {
-                watching evt==1 {
+                awaiting evt==1 {
                     defer { println(2) }
                     yield ()
                     println(1)
@@ -302,7 +302,7 @@ class TXExec {
     fun watching6_clk() {
         val out = ceu.all("""
             spawn task () {
-                watching 10s {
+                awaiting 10s {
                     defer { println(10) }
                     await false
                     println(1)
@@ -322,7 +322,7 @@ class TXExec {
         val out = ceu.all(
             """
             task Bird () {
-                watching true {
+                awaiting true {
                     par {
                     } with {
                     }
@@ -364,7 +364,7 @@ class TXExec {
     fun todo_all10() {
         val out = all("""
             task T () {
-                watching (throw :error) {
+                awaiting (throw :error) {
                     await false
                 }
             }            
@@ -547,7 +547,7 @@ class TXExec {
     fun todo_task4_pub_fake_err() {
         val out = all("""
             spawn {
-                watching evt==:a {
+                awaiting evt==:a {
                     every evt==:b {
                         println(pub)    ;; no enclosing task
                     }
@@ -562,7 +562,7 @@ class TXExec {
         val out = all("""
             spawn (task () {
                 set pub = 1
-                watching evt==:a {
+                awaiting evt==:a {
                     every evt==:b {
                         println(pub)
                     }

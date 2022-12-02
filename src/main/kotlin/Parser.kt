@@ -428,7 +428,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)//.let { println(it.tostr()); it }
             }
-            (XCEU && this.acceptFix("watching")) -> {
+            (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()

@@ -20,9 +20,9 @@ import java.io.File
 //  - Invalid read of size
 //  - uninitialised value
 val VALGRIND = ""
-//val THROW = false
+val THROW = false
 //val VALGRIND = "valgrind "
-val THROW = true
+//val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
     val prelude = if (XCEU) "xprelude.ceu" else "prelude.ceu"
