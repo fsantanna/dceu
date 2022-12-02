@@ -28,6 +28,7 @@ fun Coder.main (): String {
         typedef enum CEU_CORO_STATUS {
             CEU_CORO_STATUS_RESUMED,
             CEU_CORO_STATUS_YIELDED,
+            CEU_CORO_STATUS_TOGGLED,
             CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;        
 

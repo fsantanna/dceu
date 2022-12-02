@@ -1445,7 +1445,29 @@ class TTask {
     // TOGGLE
 
     @Test
-    fun toggle1() {
+    fun todo_toggle1() { // should be rt error
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+                println(10)
+            }
+            var t
+            set t = spawn T()
+            toggle t (false)
+            resume t ()
+        """)
+        assert(out.contains("Assertion `ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
+    }
+    @Test
+    fun toggle2_err() {
+        val out = all("""
+            toggle 1 (true)
+        """)
+        assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled task\n") { out }
+    }
+    @Test
+    fun toggle3() {
         val out = all("""
             var T
             set T = task () {
@@ -1456,10 +1478,10 @@ class TTask {
             set t = spawn T()
             toggle t (false)
             println(1)
-            resume t ()
+            broadcast nil
             toggle t (true)
             println(2)
-            resume t ()
+            broadcast nil
         """)
         assert(out == "1\n2\n10\n") { out }
     }

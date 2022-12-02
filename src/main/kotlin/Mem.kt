@@ -90,7 +90,17 @@ fun Expr.mem (): String {
         }
         is Expr.Yield -> this.arg.mem()
         is Expr.Resume -> this.call.mem()
+        is Expr.Toggle -> """
+            struct { // TOGGLE
+                CEU_Value on_$n;
+                union {
+                    ${this.coro.mem()}
+                    ${this.on.mem()}
+                };
+            };
+            """
         is Expr.Pub -> this.coro?.mem() ?: ""
+
         is Expr.Tuple -> """
             struct { // TUPLE
                 ${this.args.map { it.mem() }.joinToString("")}
