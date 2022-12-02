@@ -20,11 +20,11 @@ fun Tk.Id.fromOp (): String {
     }
 }
 
-fun Any?.cond (f: ()->String): String {
+fun <T> T?.cond (f: (v:T)->String): String {
     return when (this) {
         null  -> ""
         false -> ""
-        else  -> f()
+        else  -> f(this)
     }
 }
 

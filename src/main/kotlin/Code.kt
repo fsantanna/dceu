@@ -158,7 +158,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${isfunc.cond{"""
                     static CEU_Frame ceu_func_$n;
                     ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, {.Func=ceu_f_$n} };
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} });" }}
+                    ${assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} });" }}
                 """}}
                 ${istask.cond{"""
                     static CEU_Frame ceu_task_$n;
@@ -167,7 +167,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
                         }
                     };
-                    ${assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
+                    ${assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
                 """}}
                 """
             }
@@ -179,20 +179,20 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (f_b is Expr.Func) -> "(ceu_depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val es = this.es.mapIndexed { i, it ->
+                val es = this.es.mapIndexed { i, X ->
                     if (i == this.es.size-1) {
-                        it.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
+                        X.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
                         // would fail later, but memory is reclaimed here, so need to check before return
                         if ($assrc_dst.tag>=CEU_VALUE_TUPLE && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
                             // scope of dyn ret must still be NULL or at most outer depth
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : return error : incompatible scopes", 256);
+                            strncpy(ceu_err_error_msg, "${X.tk.pos.file} : (lin ${X.tk.pos.lin}, col ${X.tk.pos.col}) : return error : incompatible scopes", 256);
                             continue;   // escape to end of enclosing block
                         }                        
                         """}
                     } else {
-                        it.code(null, false, null) + "\n"
+                        X.code(null, false, null) + "\n"
                     }
                 }.joinToString("")
                 """
@@ -230,14 +230,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 // DCL ${this.tk.dump()}
                 ${this.init.cond{"$x = (CEU_Value) { CEU_VALUE_NIL };"}}
                 $_x_ = ${ups.block(this)!!.toc(true)};   // can't be static b/c recursion
-                ${assrc_dst.cond { "$assrc_dst = $id;" }}
+                ${assrc_dst.cond { "$it = $id;" }}
                 """
             }
             is Expr.Set -> """
                 { // SET ${this.tk.dump()}
                     ${this.src.code("ceu_mem->set_$n", true, null)}
                     ${this.dst.code(null, assrc_hld, "ceu_mem->set_$n")}
-                    ${assrc_dst.cond { "$assrc_dst = ceu_mem->set_$n;" }}
+                    ${assrc_dst.cond { "$it = ceu_mem->set_$n;" }}
                 }
                 """
             is Expr.If -> """
@@ -304,12 +304,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // COROS ${this.tk.dump()}
                     ${this.max.cond { """
                         CEU_Value ceu_max_$n;
-                        ${this.max!!.code("ceu_max_$n", false, null)}
+                        ${it.code("ceu_max_$n", false, null)}
                         if (ceu_max_$n.tag!=CEU_VALUE_NUMBER || ceu_max_$n.Number<=0) {                
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
                             strncpy(ceu_err_error_msg,
-                                "${this.tk.pos.file} : (lin ${this.max.tk.pos.lin}, col ${this.max.tk.pos.col}) : coroutines error : expected positive number",
+                                "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number",
                                  256);
                             continue; // escape enclosing block;
                         }
@@ -411,7 +411,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ceu_evt_block.depth = ${ups.block(this)!!.toc(true)}->depth + 1;
-                    ${assrc_dst.cond { "$assrc_dst = *ceu_args[0];" }}
+                    ${assrc_dst.cond { "$it = *ceu_args[0];" }}
                 }
                 """
             is Expr.Resume -> this.call.code(assrc_dst, assrc_hld, null)
@@ -514,7 +514,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """
                         CEU_Value ceu_$n = ((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} });
-                        ${assrc_dst.cond { "$assrc_dst = ceu_$n;" }}
+                        ${assrc_dst.cond { "$it = ceu_$n;" }}
                         """
                     }}
                     if (ceu_has_throw_clear()) {
@@ -564,19 +564,19 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """
                 }
             }
-            is Expr.Nil -> assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_NIL });\n" }
+            is Expr.Nil -> assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_NIL });\n" }
             is Expr.Tag -> {
                 val tag = this.tk.str.drop(1)
                 if (!tags.contains(tag)) {
                     tags.add(tag)
                 }
-                assrc_dst.cond { "$assrc_dst = ((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} });" }
+                assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} });" }
             }
             is Expr.Bool -> assrc_dst.cond {
-                 "$assrc_dst = ((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });";
+                 "$it = ((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} });";
             }
             is Expr.Num -> assrc_dst.cond {
-                "$assrc_dst = ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });";
+                "$it = ((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} });";
             }
             is Expr.Tuple -> {
                 val args = this.args.mapIndexed { i, it ->
@@ -622,7 +622,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ceu_col_check(&ceu_col_$n, &ceu_mem->idx_$n);
                     ${asdst_src.cond { """
                         if (ceu_err_$n == NULL) {
-                            ceu_err_$n = ceu_block_set(ceu_col_$n.Dyn->hold, &$asdst_src);
+                            ceu_err_$n = ceu_block_set(ceu_col_$n.Dyn->hold, &$it);
                         }
                     """}}
                     if (ceu_err_$n != NULL) {                
@@ -713,7 +713,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } else {
                         """
                         ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);
-                        ${assrc_dst.cond { "$assrc_dst = ceu_ok_$n;" }}
+                        ${assrc_dst.cond { "$it = ceu_ok_$n;" }}
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok
                         //} // closes below
@@ -751,9 +751,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
-                    ${iscall.cond{assrc_dst.cond { "$assrc_dst = ceu_$n;" }}}
+                    ${iscall.cond{assrc_dst.cond { "$it = ceu_$n;" }}}
                     ${iscoros.cond{"}"}}
-                    ${resume.cond{assrc_dst.cond { "$assrc_dst = ceu_$n;" }}}
+                    ${resume.cond{assrc_dst.cond { "$it = ceu_$n;" }}}
                 }
                 """
             }

@@ -574,6 +574,34 @@ class TParser {
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
     }
 
+    // BROADCAST
+
+    @Test
+    fun bcast_coro1_err() {
+        val l = lexer("broadcast in")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 13) : expected expression : have end of file")
+    }
+    @Test
+    fun bcast_coro2_err() {
+        val l = lexer("broadcast in x")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : expected \",\" : have end of file")
+    }
+    @Test
+    fun bcast_coro3_err() {
+        val l = lexer("broadcast in x,")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 16) : expected expression : have end of file")
+    }
+    @Test
+    fun bcast_coro4() {
+        val l = lexer("broadcast in x, 10")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "broadcast in x, 10\n") { e.tostr() }
+    }
+
     // DEFER
 
     @Test

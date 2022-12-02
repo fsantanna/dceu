@@ -641,6 +641,32 @@ class TTask {
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 
+    // BCAST / CORO
+
+    @Test
+    fun bcast_coro1() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task (v) {
+                yield nil
+                println(v)
+            }
+            var t1
+            set t1 = spawn T (1)
+            var t2
+            set t2 = spawn T (2)
+            broadcast in t1, nil
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun bcast_coro2_err() {
+        val out = ceu.all("broadcast in nil, nil")
+        assert(out == "anon : (lin 1, col 14) : broadcast error : expected coroutine\n") { out }
+    }
+
     // POOL
 
     @Test
