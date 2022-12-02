@@ -51,7 +51,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     // assrc_hld: calling expr destination hold block is set, do not call ceu_block_set here, otherwise call it and hold in enclosing block
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
-        fun SET (v: String, bup: String): String {
+        fun SET (v: String, bup: String, hld: Boolean=assrc_hld): String {
             return """
             {
                 CEU_Value ceu_tmp_$n = $v;
@@ -59,7 +59,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (assrc_dst == null) -> """ // nothing to set, hold in local block
                         assert(NULL == ceu_block_set($bup, &ceu_tmp_$n));
                         """
-                    assrc_hld -> """ // do not set block yet
+                    hld -> """ // do not set block yet
                         $assrc_dst = ceu_tmp_$n;
                         """
                     else -> """ // assign and set local block (nowhere else to hold)
@@ -733,7 +733,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                        ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true))}
+                        ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true), false)}
                         """
                     } else {
                         """
