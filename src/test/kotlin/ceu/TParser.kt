@@ -224,24 +224,22 @@ class TParser {
         assert(e.tostr() == "x.pub") { e.tostr() }
     }
     @Test
-    fun index4() {
+    fun index4_err() {
         val l = lexer("x . a")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Tag)
-        assert(e.tostr() == "x[:a]") { e.tostr() }
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"a\"")
     }
     @Test
     fun index5_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \".\"")
     }
     @Test
     fun index6_err() {
         val l = lexer("x . 2")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected identifier : have \"2\"")
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"2\"")
     }
     @Test
     fun pub7() {

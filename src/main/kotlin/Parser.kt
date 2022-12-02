@@ -475,8 +475,12 @@ class Parser (lexer_: Lexer)
                         this.acceptFix("pub") -> Expr.Pub(e.tk, e)
                         (XCEU && this.acceptEnu("Id")) -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
                         (XCEU && this.acceptEnu("Num")) -> Expr.Index(e.tk, e, Expr.Num(this.tk0 as Tk.Num))
-                        else -> {
+                        XCEU -> {
                             err_expected(this.tk1, "field")
+                            error("unreachable")
+                        }
+                        else -> {
+                            err_expected(this.tk1, "\"pub\"")
                             error("unreachable")
                         }
                     }

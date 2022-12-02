@@ -179,15 +179,29 @@ class TXParser {
         assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n} else {\ntrue\n})") { e.tostr() }
     }
 
-    // TUPLE
+    // TUPLE / INDEX
 
     @Test
-    fun tuple1() {
+    fun index1() {
         N = 1
         val l = lexer("x.1")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "x[1]") { e.tostr() }
+    }
+    @Test
+    fun index2() {
+        val l = lexer("x . a")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Tag)
+        assert(e.tostr() == "x[:a]") { e.tostr() }
+    }
+    @Test
+    fun index3_err() {
+        val l = lexer("x . .")
+        val parser = Parser(l)
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected field : have \".\"")
     }
 
     // SPAWN, PAR
