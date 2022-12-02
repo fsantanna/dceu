@@ -1441,4 +1441,26 @@ class TTask {
         """)
         assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
     }
+
+    // TOGGLE
+
+    @Test
+    fun toggle1() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+                println(10)
+            }
+            var t
+            set t = spawn T()
+            toggle t (false)
+            println(1)
+            resume t ()
+            toggle t (true)
+            println(2)
+            resume t ()
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
 }

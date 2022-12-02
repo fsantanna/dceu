@@ -257,6 +257,41 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Resume(tk0, call as Expr.Block)
             }
+            this.acceptFix("toggle") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val coro = this.expr()
+                val iscall = coro is Expr.Block && coro.isFake && coro.es[0] is Expr.Call
+                if (!XCEU || iscall) {
+                    if (!iscall) {
+                        err(coro.tk, "invalid toggle : expected argument")
+                    }
+                    val call = (coro as Expr.Block).es[0] as Expr.Call
+                    if (call.args.size != 1) {
+                        err(call.tk, "invalid toggle : expected single argument")
+                    }
+                    Expr.Toggle(tk0, call.f, call.args[0])
+                } else {
+                    this.acceptFix_err("->")
+                    val (on,off) = Pair(coro, this.expr())
+                    val blk = this.block()
+                    this.nest("""
+                        do {
+                            var task_$N = spawn {
+                                $blk
+                            }
+                            par {
+                                every $on {
+                                    toggle task_$N(true)
+                                }
+                            } with {
+                                every $off {
+                                    toggle task_$N(false)
+                                }
+                            }
+                        }
+                    """)//.let { println(it.tostr()); it }
+                }
+            }
             this.acceptFix("pub") -> Expr.Pub(this.tk0, null)
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)

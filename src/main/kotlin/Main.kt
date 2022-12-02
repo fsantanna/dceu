@@ -9,7 +9,7 @@ var N = 1
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task",
-    "throw", "true", "var", "yield", "while"
+    "throw", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "not", "or", "par", "parand", "paror", "with", "where"
 )).toSortedSet()
@@ -56,6 +56,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Bcast  (val tk_: Tk.Fix, val coro: Expr?, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Block): Expr(N++, tk_)
+    data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val coro: Expr?): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)

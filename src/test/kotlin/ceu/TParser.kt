@@ -602,6 +602,40 @@ class TParser {
         assert(e.tostr() == "broadcast in x, 10\n") { e.tostr() }
     }
 
+    // TOGGLE
+
+    @Test
+    fun toggle1() {
+        val l = lexer("toggle t(true)")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "toggle t(true)\n") { e.tostr() }
+    }
+    @Test
+    fun toggle2_err() {
+        val l = lexer("toggle x")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected argument")
+    }
+    @Test
+    fun toggle3_err() {
+        val l = lexer("toggle")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have end of file")
+    }
+    @Test
+    fun toggle4_err() {
+        val l = lexer("toggle x(1,2)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected single argument")
+    }
+    @Test
+    fun toggle5_err() {
+        val l = lexer("toggle f()")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected single argument")
+    }
+
     // DEFER
 
     @Test
