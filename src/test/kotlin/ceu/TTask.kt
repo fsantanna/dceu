@@ -656,7 +656,7 @@ class TTask {
             set t1 = spawn T (1)
             var t2
             set t2 = spawn T (2)
-             broadcast in :global, in t1, nil
+             broadcast in t1, nil
         """
         )
         assert(out == "1\n") { out }
@@ -1186,8 +1186,8 @@ class TTask {
                 fff(evt[:type])
                 println(99)
             }()
-             broadcast in :global, @[(:type,:y)]
-            broadcast @[(:type,:x)]
+            broadcast in :global, @[(:type,:y)]
+            broadcast in :global, @[(:type,:x)]
         """
         )
         //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
@@ -1203,7 +1203,7 @@ class TTask {
                 println(222)
             }()
             println(1)
-            broadcast nil
+            broadcast in :global, nil
             println(2)
         """
         )
@@ -1219,7 +1219,7 @@ class TTask {
                     yield nil
                 }
             }()
-            broadcast @[]
+            broadcast in :global, @[]
         """
         )
         assert(out == "nil\n@[]\n") { out }
@@ -1236,7 +1236,7 @@ class TTask {
                     println(evt)
                 }
             }()
-            broadcast @[]
+            broadcast in :global, @[]
         """
         )
         assert(out == "@[]\n") { out }
@@ -1247,7 +1247,7 @@ class TTask {
             """
             var x
             set x = []
-            broadcast x
+            broadcast in :global, x
         """
         )
         assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
@@ -1478,10 +1478,10 @@ class TTask {
             set t = spawn T()
             toggle t (false)
             println(1)
-            broadcast nil
+            broadcast in :global, nil
             toggle t (true)
             println(2)
-            broadcast nil
+            broadcast in :global, nil
         """)
         assert(out == "1\n2\n10\n") { out }
     }
