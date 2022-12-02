@@ -609,6 +609,37 @@ class TXExec {
         assert(out == "1\n30\n") { out }
     }
 
+    // TOGGLE
+
+    @Test
+    fun toggle1_err() {
+        val out = all("""
+            toggle f() -> {
+        """)
+        assert(out == "anon : (lin 2, col 27) : expected expression : have \"{\"") { out }
+    }
+    @Test
+    fun toggle2() {
+        val out = all("""
+            task T (v) {
+                set pub = v
+                toggle evt.type==:hide -> evt.type==:show {
+                    println(pub)
+                    every evt.type==:draw {
+                        println(evt.v)
+                    }
+                }
+            }
+            spawn T (0)
+            broadcast @[(:type,:draw),(:v,1)]
+            broadcast @[(:type,:hide)]
+            broadcast @[(:type,:draw),(:v,99)]
+            broadcast @[(:type,:show)]
+            broadcast @[(:type,:draw),(:v,2)]
+        """)
+        assert(out == "0\n1\n2\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test
