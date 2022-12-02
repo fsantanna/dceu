@@ -179,6 +179,17 @@ class TXParser {
         assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n} else {\ntrue\n})") { e.tostr() }
     }
 
+    // TUPLE
+
+    @Test
+    fun tuple1() {
+        N = 1
+        val l = lexer("x.1")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "x[1]") { e.tostr() }
+    }
+
     // SPAWN, PAR
 
     @Test
