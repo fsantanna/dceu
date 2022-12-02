@@ -75,19 +75,15 @@ fun Expr.mem (): String {
                 ${this.body.mem()}
             };
             """
-        is Expr.Bcast -> if (this.coro == null) {
-            this.evt.mem()
-        } else {
-            """
+        is Expr.Bcast -> """
             struct { // BCAST
-                CEU_Value coro_$n;
+                CEU_Value in_$n;
                 union {
-                    ${this.coro.mem()}
+                    ${this.xin.mem()}
                     ${this.evt.mem()}
                 };
             };
             """
-        }
         is Expr.Yield -> this.arg.mem()
         is Expr.Resume -> this.call.mem()
         is Expr.Toggle -> """

@@ -53,7 +53,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Block): Expr(N++, tk_)
     data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
-    data class Bcast  (val tk_: Tk.Fix, val coro: Expr?, val evt: Expr): Expr(N++, tk_)
+    data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Block): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)

@@ -369,7 +369,7 @@ class TTask {
                 yield nil
             }
             spawn in coroutines(), T()
-            broadcast nil
+            broadcast in :global, nil
         """)
         assert(out == "anon : (lin 6, col 21) : throw error : uncaught exception\n") { out }
     }
@@ -379,7 +379,7 @@ class TTask {
     @Test
     fun bcast0() {
         val out = all("""
-            println(broadcast 1)
+            println(broadcast in :global, 1)
         """)
         assert(out == "nil\n") { out }
     }
@@ -392,7 +392,7 @@ class TTask {
                 yield nil
                 println(2)
             }()
-            broadcast nil
+             broadcast in :global, nil
         """
         )
         assert(out == "1\n2\n") { out }
@@ -408,9 +408,9 @@ class TTask {
             }
             var co
             set co = coroutine tk
-            broadcast 1
-            broadcast 2
-            broadcast 3
+             broadcast in :global, 1
+             broadcast in :global, 2
+             broadcast in :global, 3
         """)
         assert(out == "nil\t1\nnil\t2\n") { out }
     }
@@ -429,9 +429,9 @@ class TTask {
             set co1 = coroutine tk
             var co2
             set co2 = coroutine tk
-            broadcast 1
-            broadcast 2
-            broadcast 3
+             broadcast in :global, 1
+             broadcast in :global, 2
+             broadcast in :global, 3
         """)
         assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
     }
@@ -450,7 +450,7 @@ class TTask {
                 println(1)
             }
             resume co1 ()
-            broadcast nil
+             broadcast in :global, nil
         """)
         assert(out == "2\n1\n") { out }
     }
@@ -469,7 +469,7 @@ class TTask {
                 println(1)
             }
             resume co1 ()
-            broadcast nil
+             broadcast in :global, nil
         """)
         assert(out == "anon : (lin 7, col 21) : throw error : uncaught exception\n") { out }
     }
@@ -491,10 +491,10 @@ class TTask {
             }
             var co
             set co = coroutine tk
-            broadcast 1
-            broadcast 2
-            broadcast 3
-            broadcast 4
+             broadcast in :global, 1
+             broadcast in :global, 2
+             broadcast in :global, 3
+             broadcast in :global, 4
         """)
         assert(out == "1\n2\n2\n3\n") { out }
     }
@@ -510,7 +510,7 @@ class TTask {
             var co
             set co = coroutine tk
             resume co(1)
-            broadcast 2
+             broadcast in :global, 2
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -518,7 +518,7 @@ class TTask {
     fun bcast6() {
         val out = all("""
             func () {
-                broadcast 1
+                 broadcast in :global, 1
             }
             println(1)
         """)
@@ -537,9 +537,9 @@ class TTask {
             var co2
             set co2 = coroutine tk
             do {
-                broadcast 1
-                broadcast 2
-                broadcast 3
+                 broadcast in :global, 1
+                 broadcast in :global, 2
+                 broadcast in :global, 3
             }
         """)
         assert(out == "2\n2\n") { out }
@@ -557,9 +557,9 @@ class TTask {
             var co2
             set co2 = coroutine tk
             func () {
-                broadcast 1
-                broadcast 2
-                broadcast 3
+                 broadcast in :global, 1
+                 broadcast in :global, 2
+                 broadcast in :global, 3
             }()
         """)
         assert(out == "2\n2\n") { out }
@@ -580,11 +580,11 @@ class TTask {
             catch err==:1 {
                 func () {
                     println(1)
-                    broadcast 1
+                     broadcast in :global, 1
                     println(2)
-                    broadcast 2
+                     broadcast in :global, 2
                     println(3)
-                    broadcast 3
+                     broadcast in :global, 3
                 }()
             }
             println(99)
@@ -614,9 +614,9 @@ class TTask {
                     resume co1(10)
                     resume co2(10)
                     println(2)
-                    broadcast [20]
+                     broadcast in :global, [20]
                     println(3)
-                    broadcast @[(30,30)]
+                     broadcast in :global, @[(30,30)]
                 }()
             }
         """
@@ -635,7 +635,7 @@ class TTask {
             }
             var co
             set co = coroutine tk
-            broadcast []
+             broadcast in :global, []
         """
         )
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
@@ -656,14 +656,14 @@ class TTask {
             set t1 = spawn T (1)
             var t2
             set t2 = spawn T (2)
-            broadcast in t1, nil
+             broadcast in :global, in t1, nil
         """
         )
         assert(out == "1\n") { out }
     }
     @Test
     fun bcast_coro2_err() {
-        val out = ceu.all("broadcast in nil, nil")
+        val out = ceu.all(" broadcast in nil, nil")
         assert(out == "anon : (lin 1, col 14) : broadcast error : expected coroutine\n") { out }
     }
 
@@ -708,7 +708,7 @@ class TTask {
             do {
                 spawn in ts, T(1)
             }
-            broadcast 2
+             broadcast in :global, 2
         """)
         assert(out == ":coros\n1\n2\n") { out }
     }
@@ -760,7 +760,7 @@ class TTask {
                 }
                 spawn in ts, T(1)
             }
-            broadcast 2
+             broadcast in :global, 2
         """)
         assert(out == "1\n") { out }
     }
@@ -779,7 +779,7 @@ class TTask {
                     throw 1     ;; never reached
                 }
             }
-            broadcast 2
+             broadcast in :global, 2
         """)
         assert(out == "1\n") { out }
     }
@@ -818,7 +818,7 @@ class TTask {
             spawn in ts, T()
             while xxx in ts {
                 println(1)
-                broadcast 1
+                 broadcast in :global, 1
             }
             println(2)
         """)
@@ -836,7 +836,7 @@ class TTask {
             spawn in ts, T()
             while xxx in ts {
                 println(1)
-                broadcast 1
+                 broadcast in :global, 1
                 while yyy in ts {
                     println(2)
                 }
@@ -931,7 +931,7 @@ class TTask {
             set ok1 = spawn in ts, T()
             var ok2
             set ok2 = spawn in ts, T()
-            broadcast nil
+             broadcast in :global, nil
             var ok3
             set ok3 = spawn in ts, T()
             var ok4
@@ -964,9 +964,9 @@ class TTask {
             spawn in ts, T(false)
             spawn in ts, T(true)
             println(1)
-            broadcast @[]
+             broadcast in :global, @[]
             println(2)
-            broadcast @[]
+             broadcast in :global, @[]
             println(3)
         """
         )
@@ -993,7 +993,7 @@ class TTask {
                     println(999)
                 } ()
                 println(5)
-                broadcast nil
+                 broadcast in :global, nil
                 println(9999)
             }
             println(7)
@@ -1016,7 +1016,7 @@ class TTask {
             }
             spawn T(1)
             spawn T(2)
-            broadcast nil
+             broadcast in :global, nil
         """
         )
         assert(out == "1\n2\n1\n2\n") { out }
@@ -1048,8 +1048,8 @@ class TTask {
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
-            broadcast nil
-            broadcast nil
+             broadcast in :global, nil
+             broadcast in :global, nil
             println(999)
         """
         )
@@ -1082,8 +1082,8 @@ class TTask {
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
-            broadcast nil
-            broadcast nil
+             broadcast in :global, nil
+             broadcast in :global, nil
             println(999)
         """
         )
@@ -1108,7 +1108,7 @@ class TTask {
                     println(t1.pub, t2.pub)
                 }
             }
-            broadcast 2
+             broadcast in :global, 2
         """)
         assert(out == ":coros\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
@@ -1125,7 +1125,7 @@ class TTask {
             }
             var co
             set co = coroutine tk
-            broadcast []
+             broadcast in :global, []
         """
         )
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
@@ -1141,8 +1141,8 @@ class TTask {
             }
             var co
             set co = coroutine tk
-            broadcast 1
-            broadcast []
+             broadcast in :global, 1
+             broadcast in :global, []
         """
         )
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
@@ -1162,9 +1162,9 @@ class TTask {
                 println(99)
             }()
             println(1)
-            broadcast @[(:type,:y)]
+             broadcast in :global, @[(:type,:y)]
             println(2)
-            broadcast @[(:type,:x)]
+             broadcast in :global, @[(:type,:x)]
             println(3)
         """)
         assert(out == "1\n2\n99\n3\n") { out }
@@ -1186,7 +1186,7 @@ class TTask {
                 fff(evt[:type])
                 println(99)
             }()
-            broadcast @[(:type,:y)]
+             broadcast in :global, @[(:type,:y)]
             broadcast @[(:type,:x)]
         """
         )

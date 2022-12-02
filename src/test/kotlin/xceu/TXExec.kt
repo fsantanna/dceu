@@ -133,9 +133,9 @@ class TXExec {
             }
             var co1 = coroutine tk
             var co2 = coroutine tk
-            broadcast 1
-            broadcast 2
-            broadcast 3
+             broadcast in :global, 1
+             broadcast in :global, 2
+             broadcast in :global, 3
         """)
         assert(out == "1\n1\n2\n2\n") { out }
     }
@@ -157,7 +157,7 @@ class TXExec {
                     println(3)
                 }
             } ()
-            broadcast ()
+             broadcast in :global, ()
         """)
         assert(out == "3\n2\n") { out }
     }
@@ -170,7 +170,7 @@ class TXExec {
                 println(3)
             }
             println(2)
-            broadcast ()
+             broadcast in :global, ()
         """)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -234,7 +234,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast nil
+             broadcast in :global, nil
         """)
         assert(out == "2\n1\n3\n999\n") { out }
     }
@@ -253,7 +253,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast nil
+             broadcast in :global, nil
         """, true)
         assert(out == "2\n1\n3\n999\n") { out }
     }
@@ -277,8 +277,8 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast nil
-            broadcast nil
+             broadcast in :global, nil
+             broadcast in :global, nil
         """, true)
         assert(out == "2\n1\n1\n3\n3\n999\n") { out }
     }
@@ -293,8 +293,8 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast nil
-            broadcast 1
+             broadcast in :global, nil
+             broadcast in :global, 1
         """)
         assert(out == "1\n2\n999\n") { out }
     }
@@ -310,9 +310,9 @@ class TXExec {
                 println(999)
             } ()
             println(0)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(1)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(2)
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
@@ -369,7 +369,7 @@ class TXExec {
                 }
             }            
             spawn in coroutines(), T()
-            broadcast nil
+             broadcast in :global, nil
         """)
         assert(out == "1\n") { out }
     }
@@ -405,9 +405,9 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast @[(:type,:y)]
+                 broadcast in :global, @[(:type,:y)]
                 println(2)
-                broadcast @[(:type,:x)]
+                 broadcast in :global, @[(:type,:x)]
                 println(3)
             }
         """)
@@ -430,7 +430,7 @@ class TXExec {
                     println(evt)
                 }
             }()
-            broadcast @[]
+             broadcast in :global, @[]
         """
         )
         assert(out == "@[]\n") { out }
@@ -446,11 +446,11 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast @[(:type,:x),(:v,10)]
+                 broadcast in :global, @[(:type,:x),(:v,10)]
                 println(2)
-                broadcast @[(:type,:y),(:v,20)]
+                 broadcast in :global, @[(:type,:y),(:v,20)]
                 println(3)
-                broadcast @[(:type,:x),(:v,30)]
+                 broadcast in :global, @[(:type,:x),(:v,30)]
                 println(4)
             }
         """)
@@ -466,9 +466,9 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(1)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
@@ -482,11 +482,11 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(1)
-            broadcast @[(:type,:timer),(:dt,5000)]
+             broadcast in :global, @[(:type,:timer),(:dt,5000)]
             println(2)
-            broadcast @[(:type,:timer),(:dt,10000)]
+             broadcast in :global, @[(:type,:timer),(:dt,10000)]
             println(3)
         """, true)
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
@@ -500,7 +500,7 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast @[(:type,:timer),(:dt,20000)]
+             broadcast in :global, @[(:type,:timer),(:dt,20000)]
             println(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
@@ -568,10 +568,10 @@ class TXExec {
                     }
                 }
             }) ()
-            broadcast :b
-            broadcast :b
-            broadcast :a
-            broadcast :b
+             broadcast in :global, :b
+             broadcast in :global, :b
+             broadcast in :global, :a
+             broadcast in :global, :b
         """)
         assert(out == "1\n1\n") { out }
     }
@@ -587,7 +587,7 @@ class TXExec {
                 }
             }
             spawn T()
-            broadcast nil
+             broadcast in :global, nil
         """)
         assert(out == "10\n10\n") { out }
     }
@@ -631,11 +631,11 @@ class TXExec {
                 }
             }
             spawn T (0)
-            broadcast @[(:type,:draw),(:v,1)]
-            broadcast @[(:type,:hide)]
-            broadcast @[(:type,:draw),(:v,99)]
-            broadcast @[(:type,:show)]
-            broadcast @[(:type,:draw),(:v,2)]
+             broadcast in :global, @[(:type,:draw),(:v,1)]
+             broadcast in :global, @[(:type,:hide)]
+             broadcast in :global, @[(:type,:draw),(:v,99)]
+             broadcast in :global, @[(:type,:show)]
+             broadcast in :global, @[(:type,:draw),(:v,2)]
         """)
         assert(out == "0\n1\n2\n") { out }
     }

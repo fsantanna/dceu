@@ -240,12 +240,12 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("broadcast") -> {
-                val coro = if (!this.acceptFix("in")) null else {
-                    val v = this.expr()
-                    this.acceptFix_err(",")
-                    v
-                }
-                Expr.Bcast(this.tk0 as Tk.Fix, coro, checkLine(this.tk0, this.expr()))
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("in")
+                val xin = this.expr()
+                this.acceptFix_err(",")
+                val evt = this.expr()
+                Expr.Bcast(tk0, xin, evt)
             }
             this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
@@ -445,7 +445,7 @@ class Parser (lexer_: Lexer)
                         ${pre0}do {
                             ${pre0}yield ()
                             ;;println(evt)
-                            while not (${cnd!!.tostr(true)}) {
+                            while not (${cnd.tostr(true)}) {
                                 yield ()
                             }
                         }
