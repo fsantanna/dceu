@@ -130,10 +130,10 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x in OPERATORS) -> {
                     val op = x + read2While { it in OPERATORS }
-                    if (op == "=") {
-                        yield(Tk.Fix(op, pos))
-                    } else {
-                        yield(Tk.Op(op, pos))
+                    when {
+                        (op == "=") -> yield(Tk.Fix(op, pos))
+                        XCEU && (op == "->") -> yield(Tk.Fix(op, pos))
+                        else -> yield(Tk.Op(op, pos))
                     }
                 }
                 (x == '{') -> {

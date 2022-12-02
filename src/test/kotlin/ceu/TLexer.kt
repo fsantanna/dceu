@@ -140,22 +140,22 @@ class TLexer {
 
     @Test
     fun ops1() {
-        val l = lexer("{-} {+} {x} {*/} ( + ({==})")
+        val l = lexer("{-} {+} {x} {*/} -> ( + ({==})")
         val tks = l.lex().iterator()
-        //println(tks.next())
-        assert(tks.next().let { it is Tk.Id && it.str == "{-}" })
-        assert(tks.next().let { it is Tk.Id && it.str == "{+}" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{-}" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{+}" })
         assert(tks.next().let { it is Tk.Fix && it.str == "{" })
-        assert(tks.next().let { it is Tk.Id && it.str == "x" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
         assert(tks.next().let { it is Tk.Fix && it.str == "}" })
-        assert(tks.next().let { it is Tk.Id && it.str == "{*/}" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Op && it.str == "+" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Id && it.str == "{==}" })
-        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{*/}" })
         //println(tks.next())
-        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==28 })
+        assert(tks.next().let { it is Tk.Op  && it.str == "->" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "+" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{==}" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==31 })
     }
     @Test
     fun ops2() {

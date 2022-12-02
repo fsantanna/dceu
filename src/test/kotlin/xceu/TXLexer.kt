@@ -25,6 +25,16 @@ class TXLexer {
     }
 
     @Test
+    fun arrow1() {
+        val l = lexer("->")
+        val tks = l.lex().iterator()
+        //println(tks.next())
+        assert(tks.next().let { it is Tk.Fix && it.str == "->" })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
+
+    @Test
     fun clk1() {
         val l = lexer("1s 1 h 1h10min30s15ms 10ms")
         val tks = l.lex().iterator()

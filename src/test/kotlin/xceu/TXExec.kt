@@ -76,9 +76,9 @@ class TXExec {
     fun ifs1() {
         val out = all("""
             var x = ifs {
-                10 < 1 { 99 }
-                5+5==0 { 99 }
-                else { 10 }
+                10 < 1 -> 99
+                5+5==0 -> { 99 }
+                else -> 10
             }
             println(x)
         """, true)
@@ -87,7 +87,7 @@ class TXExec {
     @Test
     fun ifs2() {
         val out = all("""
-            var x = ifs { true { `:number 1` } }
+            var x = ifs { true -> `:number 1` }
             println(x)
         """)
         assert(out == "1\n") { out }

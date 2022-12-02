@@ -286,19 +286,22 @@ class Parser (lexer_: Lexer)
                 val pre0 = this.tk0.pos.pre()
                 this.acceptFix_err("{")
                 val e1 = this.expr()
-                val b1 = this.block()
+                this.acceptFix_err("->")
+                val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
                 var ifs = "${pre0}if ${e1.tostr(true)} ${b1.tostr(true)}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
-                        val be = this.block()
+                        this.acceptFix_err("->")
+                        val be = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
                         ifs += be.es.map { it.tostr(true)+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
                     }
                     val pre1 = this.tk0.pos.pre()
                     val ei = this.expr()
-                    val bi = this.block()
+                    this.acceptFix_err("->")
+                    val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
                     ifs += """
                         ${pre1}if ${ei.tostr(true)} ${bi.tostr(true)}
                         else {
