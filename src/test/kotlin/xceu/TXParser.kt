@@ -195,7 +195,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         println(e.tostr())
-        assert(e.tostr() == "do {\nspawn task () {\n1\n}()\nspawn task () {\n2\n}()\nspawn task () {\n3\n}()\ndo {\nyield nil\nwhile if false {\nfalse\n} else {\ntrue\n} {\nyield nil\n}\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nspawn task :nopub () {\n1\n}()\nspawn task :nopub () {\n2\n}()\nspawn task :nopub () {\n3\n}()\ndo {\nyield nil\nwhile if false {\nfalse\n} else {\ntrue\n} {\nyield nil\n}\n}\n}") { e.tostr() }
     }
     @Test
     fun par2_err() {
@@ -213,7 +213,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         println(e.tostr())
-        assert(e.tostr() == "spawn task () {\n1\n}()") { e.tostr() }
+        assert(e.tostr() == "spawn task :nopub () {\n1\n}()") { e.tostr() }
     }
 
     // CATCH

@@ -575,6 +575,22 @@ class TXExec {
         """)
         assert(out == "1\n1\n") { out }
     }
+    @Test
+    fun task6_pub_fake() {
+        val out = all("""
+            task T () {
+                set pub = 10
+                println(pub)
+                spawn {
+                    println(pub)
+                    await false
+                }
+            }
+            spawn T()
+            broadcast nil
+        """)
+        assert(out == "10\n10\n") { out }
+    }
 
     // WHERE
 
