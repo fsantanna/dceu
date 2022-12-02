@@ -23,7 +23,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Coro   -> "coroutine " + this.task.tostr(pre)
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Iter   -> "while ${this.loc.str} in ${this.coros.tostr(pre)} ${this.body.es[1].tostr(pre)}"
-        is Expr.Bcast  -> "broadcast " + this.evt.tostr(pre)
+        is Expr.Bcast  -> "broadcast " + this.coro.cond { "in ${it.tostr(pre)}, " } + this.evt.tostr(pre)
         is Expr.Yield  -> "yield " + this.arg.tostr(pre)
         is Expr.Resume -> "resume " + this.call.tostr(pre)
         is Expr.Pub    -> if (this.coro == null) "pub" else (this.coro.tostr(pre) + ".pub")

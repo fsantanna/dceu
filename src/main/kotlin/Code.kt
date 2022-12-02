@@ -381,11 +381,24 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Bcast -> {
                 """
                 { // BCAST ${this.tk.dump()}
+                    ${this.coro.cond { """
+                        ${it.code("ceu_mem->coro_$n",false,null) }
+                        if (ceu_mem->coro_$n.tag != CEU_VALUE_CORO) {
+                            ceu_has_throw = 1;
+                            ceu_err = &CEU_ERR_ERROR;
+                            strncpy(ceu_err_error_msg, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : broadcast error : expected coroutine", 256);
+                            continue; // escape enclosing block;
+                        }
+                    """ }}
                     CEU_Value ceu_evt_$n;
                     ${this.evt.code("ceu_evt_$n", true, null)}
                     char* ceu_err_$n = ceu_block_set(&ceu_evt_block, &ceu_evt_$n);
                     if (ceu_err_$n == NULL) {
-                        ceu_err_$n = ceu_bcast_blocks((&ceu_mem_${outer.n}->block_${outer.n}), &ceu_evt_$n);
+                        ${if (this.coro == null) {
+                            "ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_evt_$n);"
+                        } else {
+                            "ceu_err_$n = ceu_bcast_dyn(ceu_mem->coro_$n.Dyn, &ceu_evt_$n);"
+                        }}
                     }
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;

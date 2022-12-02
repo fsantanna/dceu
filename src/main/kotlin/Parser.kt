@@ -240,7 +240,12 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("broadcast") -> {
-                Expr.Bcast(this.tk0 as Tk.Fix, null, checkLine(this.tk0, this.expr()))
+                val coro = if (!this.acceptFix("in")) null else {
+                    val v = this.expr()
+                    this.acceptFix_err(",")
+                    v
+                }
+                Expr.Bcast(this.tk0 as Tk.Fix, coro, checkLine(this.tk0, this.expr()))
             }
             this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
