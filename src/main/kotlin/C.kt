@@ -223,6 +223,49 @@ fun Coder.main (): String {
     """ +
     """ // BCAST
         void ceu_bcast_dyns (CEU_Dynamic* cur);
+        void* ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
+            assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
+            char* err = ceu_block_set(&ceu_evt_block, evt);
+            if (err != NULL) {
+                return err;
+            }
+            *prv = ceu_evt;
+            ceu_has_bcast++;
+            ceu_evt = evt;
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+            return NULL;
+        }
+        void* ceu_bcast_pos (CEU_Value** prv, CEU_Value* evt) {
+            ceu_has_bcast--;
+            int isclr = (ceu_evt == &CEU_EVT_CLEAR);
+            ceu_evt = *prv;
+            if (ceu_has_throw==0 || isclr) {
+                // ok
+            } else {
+                // whole bcast threw exception and didn't catch it
+                // must not clean up now
+                // stop now, clean up comes soon form :clear
+                return NULL;
+            }
+            if (ceu_has_bcast == 0) {
+                ceu_block_free(&ceu_evt_block);
+            }
+            return NULL;
+        }
+        
+        void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
+            if (*outer == NULL) {
+                *outer = dyn;
+            } else {
+                CEU_Dynamic* cur = *outer;
+                while (cur->Bcast.next != NULL) {
+                    cur = cur->Bcast.next;
+                }
+                cur->Bcast.next = dyn;
+            }
+        }
+    """ +
+    """ // BCAST_BLOCKS
         void ceu_bcast_blocks_aux (CEU_Block* cur) {
             assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             while (cur != NULL) {
@@ -242,89 +285,65 @@ fun Coder.main (): String {
                 cur = cur->bcast.block;
             }
         }
-
         void* ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
-            assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
-            char* err = ceu_block_set(&ceu_evt_block, evt);
+            CEU_Value* prv;
+            char* err = ceu_bcast_pre(&prv, evt);
             if (err != NULL) {
                 return err;
             }
-            CEU_Value* prv = ceu_evt;
-            ceu_has_bcast++;
-            ceu_evt = evt;
-            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             ceu_bcast_blocks_aux(cur);
-            ceu_has_bcast--;
-            int isclr = (ceu_evt == &CEU_EVT_CLEAR);
-            ceu_evt = prv;
-            if (ceu_has_throw==0 || isclr) {
-                // ok
-            } else {
-                // whole bcast threw exception and didn't catch it
-                // must not clean up now
-                // stop now, clean up comes soon form :clear
-                return NULL;
+            return ceu_bcast_pos(&prv, evt);
+        }
+    """ +
+    """ // BCAST_DYN
+        void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
+            switch (cur->tag) {
+                case CEU_VALUE_CORO: {
+                    if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
+                        // skip
+                    } else {
+                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                        ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
+                        // if nested block threw uncaught exception, awake myself next to catch it
+                        //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                        CEU_Value arg = { CEU_VALUE_NIL };
+                        CEU_Value* args[] = { &arg };  // any depth works?
+                        cur->Bcast.Coro.task.Task.f(cur, 0, 1, args);
+                    }
+                    break;
+                }
+                case CEU_VALUE_COROS: {
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    ceu_bcast_dyns(cur->Bcast.Coros.first);
+                    break;
+                }
             }
-            if (ceu_has_bcast == 0) {
-                ceu_block_free(&ceu_evt_block);
+        }
+
+        void* ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
+            CEU_Value* prv;
+            char* err = ceu_bcast_pre(&prv, evt);
+            if (err != NULL) {
+                return err;
             }
-            return NULL;
+            ceu_bcast_dyn_aux(cur);
+            return ceu_bcast_pos(&prv, evt);
         }
         
         void ceu_bcast_dyns (CEU_Dynamic* cur) {
             assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
-                switch (cur->tag) {
-                    case CEU_VALUE_CORO: {
-                        if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
-                            // skip
-                        } else {
-                            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                            ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                            // if nested block threw uncaught exception, awake myself next to catch it
-                            //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                            CEU_Value arg = { CEU_VALUE_NIL };
-                            CEU_Value* args[] = { &arg };  // any depth works?
-                            cur->Bcast.Coro.task.Task.f(cur, 0, 1, args);
-                            if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
-                                // ok
-                            } else {
-                                // cur threw exception and didn't catch it
-                                // brothers must be killed as well
-                                // stop now, clean up comes soon from :clear
-                                return;
-                            }
-                        }
-                        break;
-                    }
-                    case CEU_VALUE_COROS: {
-                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                        ceu_bcast_dyns(cur->Bcast.Coros.first);
-                        if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
-                            // ok
-                        } else {
-                            // cur threw exception and didn't catch it
-                            // brothers must be killed as well
-                            // stop now, clean up comes soon from :clear
-                            return;
-                        }
-                        break;
-                    }
+                ceu_bcast_dyn_aux(cur);
+                if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
+                    // ok
+                } else {
+                    // cur threw exception and didn't catch it
+                    // brothers must be killed as well
+                    // stop now, clean up comes soon from :clear
+                    return;
                 }
                 cur = nxt;
-            }
-        }
-        
-        void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
-            if (*outer == NULL) {
-                *outer = dyn;
-            } else {
-                CEU_Dynamic* cur = *outer;
-                while (cur->Bcast.next != NULL) {
-                    cur = cur->Bcast.next;
-                }
-                cur->Bcast.next = dyn;
             }
         }
     """ +
