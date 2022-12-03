@@ -757,6 +757,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
                     ${if (iscall) "(ceu_proto_$n.Proto)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame.proto)"} (
+                        NULL,
                         ceu_frame,
                         ${this.args.size},
                         ceu_args_$n
