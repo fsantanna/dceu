@@ -1526,7 +1526,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
+        assert(out.contains("Assertion ` ceu_frame->Task.coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
     }
     @Test
     fun toggle2_err() {
