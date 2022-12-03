@@ -728,7 +728,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
-                        ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true), false)}
+                        ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true))} // , false
                         """
                     } else {
                         """
