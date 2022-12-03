@@ -34,12 +34,17 @@ fun Coder.main (): String {
 
         struct CEU_Dynamic;
         struct CEU_Frame;        
-        struct CEU_Block;        
-
+        struct CEU_Block;
+           
         typedef struct CEU_Value (*CEU_Proto) (
-            struct CEU_Frame* frame,
-            int n,
-            struct CEU_Value* args[]
+            union {
+                struct CEU_Frame*   up;     // func
+                struct CEU_Dynamic* coro;   // task
+            } ceu;
+            struct {
+                int n;
+                struct CEU_Value* buf[];
+            } args;
         );
 
         typedef struct CEU_Value {
@@ -61,18 +66,17 @@ fun Coder.main (): String {
     """ +
     """ // CEU_Frame
         typedef struct CEU_Frame {
-            struct CEU_Frame* up;   // frame above me
-            int depth;              // number of frames above me
-            void* mem;              // my local variables
-            CEU_Proto proto;
-            union {
-                // void Func
-                struct { // only for task frame
-                    int size; // local mem must be allocated for each coro
-                    struct CEU_Dynamic* coro;
-                } Task;
-            };
+            struct CEU_Frame* up;           // frame above me
+            void* mem;                      // my local variables
         } CEU_Frame;
+        
+        int ceu_depth (CEU_Frame* frame) {
+            if (frame == NULL) {
+                return 0;
+            } else {
+                return 1 + ceu_depth(frame->up);
+            }
+        }
     """ +
     """ // TAGS
         #define CEU_TAG_DEFINE(id,str)              \
@@ -140,10 +144,10 @@ fun Coder.main (): String {
                             enum CEU_CORO_STATUS status;
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
-                            struct CEU_Frame frame;      // frame->Task
+                            CEU_Proto proto;            // needed on bcast
                             int pc;                     // next line to execute
                             CEU_Value pub;
-                            char __mem[0];              // beginning of locals, will be allocated here, but accessed through this->frame->mem
+                            struct CEU_Frame* frame;    // frame is malloc'ed
                         } Coro;
                         struct {
                             uint8_t max;                // max number of instances
@@ -357,10 +361,8 @@ fun Coder.main (): String {
                     .Bcast = { NULL, {
                         .Coro = {
                             CEU_CORO_STATUS_YIELDED,
-                            NULL, NULL,
-                            task->Proto,
-                            NULL,0,
-                            { CEU_VALUE_NIL }
+                            NULL, NULL, task->Proto,
+                            0, { CEU_VALUE_NIL }, NULL
                         }
                     } }
                 }
@@ -384,10 +386,8 @@ fun Coder.main (): String {
                     .Bcast = { NULL, {
                         .Coro = {
                             CEU_CORO_STATUS_YIELDED,
-                            NULL, NULL,
-                            task->Proto,
-                            NULL,0,
-                            { CEU_VALUE_NIL }
+                            NULL, NULL, task->Proto,
+                            0, { CEU_VALUE_NIL }, NULL
                         }
                     } }
                 }
@@ -670,10 +670,12 @@ fun Coder.main (): String {
         typedef struct {
             ${GLOBALS.map { "CEU_Value $it;\n" }.joinToString("")}
             ${this.mem}
-        } CEU_Func_${this.outer.n};
-        CEU_Func_${this.outer.n} _ceu_mem_;
-        CEU_Func_${this.outer.n}* ceu_mem = &_ceu_mem_;
-        CEU_Func_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
+        } CEU_Proto_Mem_${this.outer.n};
+        CEU_Proto_Mem_${this.outer.n} _ceu_mem_;
+        CEU_Proto_Mem_${this.outer.n}* ceu_mem = &_ceu_mem_;
+        CEU_Proto_Mem_${this.outer.n}* ceu_mem_${this.outer.n} = &_ceu_mem_;
+        CEU_Frame _ceu_frame_ = { NULL, &_ceu_mem_ };
+        CEU_Frame* ceu_frame = &_ceu_frame_;
         ${tops.map { it.first }.joinToString("")}
         ${tops.map { it.second }.joinToString("")}
     """ +
