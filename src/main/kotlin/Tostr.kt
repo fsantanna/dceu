@@ -4,7 +4,7 @@ fun Pos.pre (): String {
 
 fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
-        is Expr.Func   -> this.tk.str + this.isFake.cond{" :fake"} +  " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr(pre)
+        is Expr.Proto  -> this.tk.str + this.isFake.cond{" :fake"} +  " (" + this.args.map { it.str }.joinToString(",") + ") " + this.body.tostr(pre)
         is Expr.Block  -> if (this.isFake) {
             assert(this.es.size == 1)
             this.es[0].tostr(pre)
@@ -39,7 +39,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Tuple  -> "[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> this.f.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
+        is Expr.Call   -> this.proto.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
 
         is Expr.XSeq -> error("bug found")
     }.let { if (pre) this.tk.pos.pre()+it else it }

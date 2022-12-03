@@ -127,7 +127,7 @@ fun Expr.mem (): String {
             """
         is Expr.Call -> """
             union { // CALL
-                ${this.f.mem()}
+                ${this.proto.mem()}
                 struct {
                     ${this.args.map { it.mem() }.joinToString("")}
                     ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
@@ -136,6 +136,6 @@ fun Expr.mem (): String {
             """
 
         is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> ""
-        is Expr.Func, is Expr.XSeq -> ""
+        is Expr.Proto, is Expr.XSeq -> ""
     }
 }

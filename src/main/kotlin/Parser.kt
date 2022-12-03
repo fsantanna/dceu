@@ -191,10 +191,10 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
                 val body = this.block()
-                val func = Expr.Func(tk0, isFake, args, body)
-                if (id == null) func else {
+                val proto = Expr.Proto(tk0, isFake, args, body)
+                if (id == null) proto else {
                     this.nest("""
-                        ${tk0.pos.pre()}var ${id.str} = ${func.tostr(true)} 
+                        ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 
                     """)
                 }
             }
@@ -270,7 +270,7 @@ class Parser (lexer_: Lexer)
                     if (call.args.size != 1) {
                         err(call.tk, "invalid toggle : expected single argument")
                     }
-                    Expr.Toggle(tk0, call.f, call.args[0])
+                    Expr.Toggle(tk0, call.proto, call.args[0])
                 } else {
                     this.acceptFix_err("->")
                     val (off,on) = Pair(coro, this.expr())

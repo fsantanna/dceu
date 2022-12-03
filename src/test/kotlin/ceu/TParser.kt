@@ -2,7 +2,6 @@ package ceu
 
 import Expr
 import Parser
-import org.junit.Ignore
 import org.junit.Test
 import tostr
 
@@ -98,21 +97,21 @@ class TParser {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.exprSufs()
-        assert(e is Expr.Block && e.es[0].let { it is Expr.Call && it.tk.str=="f" && it.f is Expr.Acc && it.args.size==2 })
+        assert(e is Expr.Block && e.es[0].let { it is Expr.Call && it.tk.str=="f" && it.proto is Expr.Acc && it.args.size==2 })
     }
     @Test
     fun expr_call2() {
         val l = lexer(" f() ")
         val parser = Parser(l)
         val e = parser.exprSufs().let { assert(it is Expr.Block); (it as Expr.Block).es[0] }
-        assert(e is Expr.Call && e.f.tk.str=="f" && e.f is Expr.Acc && e.args.size==0)
+        assert(e is Expr.Call && e.proto.tk.str=="f" && e.proto is Expr.Acc && e.args.size==0)
     }
     @Test
     fun expr_call3() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
         val e = parser.exprSufs().let { assert(it is Expr.Block); (it as Expr.Block).es[0] }
-        assert(e is Expr.Call && e.f is Expr.Block && e.args.size==0)
+        assert(e is Expr.Call && e.proto is Expr.Block && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
@@ -385,7 +384,7 @@ class TParser {
         val l = lexer("func (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Func && e.args.size==2)
+        assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "func (a,b) {\n10\n}") { e.tostr() }
     }
 

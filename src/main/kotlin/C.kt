@@ -36,6 +36,12 @@ fun Coder.main (): String {
         struct CEU_Frame;        
         struct CEU_Block;        
 
+        typedef struct CEU_Value (*CEU_Proto) (
+            struct CEU_Frame* frame,
+            int n,
+            struct CEU_Value* args[]
+        );
+
         typedef struct CEU_Value {
             CEU_VALUE tag;
             union {
@@ -44,7 +50,7 @@ fun Coder.main (): String {
                 int Bool;
                 double Number;
                 void* Pointer;
-                struct CEU_Frame* Frame;    // Func/Task 
+                CEU_Proto Proto;            // Func/Task 
                 struct CEU_Dynamic* Dyn;    // Tuple/Dict/Coro/Coros: allocates memory
             };
         } CEU_Value;
@@ -58,15 +64,14 @@ fun Coder.main (): String {
             struct CEU_Frame* up;   // frame above me
             int depth;              // number of frames above me
             void* mem;              // my local variables
-            struct CEU_Value (*func) (
-                struct CEU_Frame* frame,
-                int n,
-                struct CEU_Value* args[]
-            );
-            struct { // only for task frame
-                int size; // local mem must be allocated for each coro
-                struct CEU_Dynamic* coro;
-            } Task;
+            CEU_Proto proto;
+            union {
+                // void Func
+                struct { // only for task frame
+                    int size; // local mem must be allocated for each coro
+                    struct CEU_Dynamic* coro;
+                } Task;
+            };
         } CEU_Frame;
     """ +
     """ // TAGS
@@ -83,14 +88,13 @@ fun Coder.main (): String {
             struct CEU_Tags* next;
         } CEU_Tags;
         
-        CEU_Value ceu_tags_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_tags (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
         }
 
         static CEU_Tags* CEU_TAGS = NULL;
         int CEU_TAGS_MAX = 0;        
-        CEU_Frame ceu_tags = { NULL, -1, NULL, ceu_tags_f, {} };
         ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
 
         char* ceu_tag_to_string (int tag) {
@@ -301,7 +305,7 @@ fun Coder.main (): String {
                         if (cur->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED) {
                             CEU_Value arg = { CEU_VALUE_NIL };
                             CEU_Value* args[] = { &arg };
-                            cur->Bcast.Coro.frame.func(&cur->Bcast.Coro.frame, 1, args);
+                            cur->Bcast.Coro.proto(cur->Bcast.Coro.frame, 1, args);
                         }
                     }
                     break;
@@ -346,13 +350,19 @@ fun Coder.main (): String {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Frame->Task.size);
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
-            task->Frame->mem = coro->Bcast.Coro.__mem;
-            task->Frame->Task.coro = coro;
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, {
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,NULL,NULL,*(task->Frame),0} } }
+                    .Bcast = { NULL, {
+                        .Coro = {
+                            CEU_CORO_STATUS_YIELDED,
+                            NULL, NULL,
+                            task->Proto,
+                            NULL,0,
+                            { CEU_VALUE_NIL }
+                        }
+                    } }
                 }
             };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
@@ -367,13 +377,19 @@ fun Coder.main (): String {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic) + task->Frame->Task.size);
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
-            task->Frame->mem = coro->Bcast.Coro.__mem;
-            task->Frame->Task.coro = coro;
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
-                    .Bcast = { NULL, {.Coro = {CEU_CORO_STATUS_YIELDED,coros,NULL,*(task->Frame),0} } }
+                    .Bcast = { NULL, {
+                        .Coro = {
+                            CEU_CORO_STATUS_YIELDED,
+                            NULL, NULL,
+                            task->Proto,
+                            NULL,0,
+                            { CEU_VALUE_NIL }
+                        }
+                    } }
                 }
             };
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
@@ -465,10 +481,10 @@ fun Coder.main (): String {
                     printf("]");
                     break;
                 case CEU_VALUE_FUNC:
-                    printf("func: %p", &v->Frame);
+                    printf("func: %p", &v->Proto);
                     break;
                 case CEU_VALUE_TASK:
-                    printf("task: %p", &v->Frame);
+                    printf("task: %p", &v->Proto);
                     break;
                 case CEU_VALUE_CORO:
                     printf("coro: %p", &v->Dyn);
@@ -480,7 +496,7 @@ fun Coder.main (): String {
                     assert(0 && "bug found");
             }
         }
-        CEU_Value ceu_print_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_print (CEU_Frame* _1, int n, CEU_Value* args[]) {
             for (int i=0; i<n; i++) {
                 if (i > 0) {
                     printf("\t");
@@ -489,17 +505,15 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Frame ceu_print = { NULL, -1, NULL, ceu_print_f, {} };
-        CEU_Value ceu_println_f (CEU_Frame* func, int n, CEU_Value* args[]) {
-            ceu_print.func(func, n, args);
+        CEU_Value ceu_println (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            ceu_print(frame, n, args);
             printf("\n");
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Frame ceu_println = { NULL, -1, NULL, ceu_println_f, {} };
     """ +
     """
         // EQ-NEQ
-        CEU_Value ceu_op_eq_eq_f (CEU_Frame* func, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_eq_eq (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
@@ -530,7 +544,7 @@ fun Coder.main (): String {
                             if (v) {
                                 for (int i=0; i<e1->Dyn->Tuple.n; i++) {
                                     CEU_Value* xs[] = { &e1->Dyn->Tuple.mem[i], &e2->Dyn->Tuple.mem[i] };
-                                    v = ceu_op_eq_eq_f(func, 2, xs).Bool;
+                                    v = ceu_op_eq_eq(frame, 2, xs).Bool;
                                     if (!v) {
                                         break;
                                     }
@@ -550,13 +564,11 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
         }
-        CEU_Frame ceu_op_eq_eq = { NULL, -1, NULL, ceu_op_eq_eq_f, {} };
-        CEU_Value ceu_op_div_eq_f (CEU_Frame* func, int n, CEU_Value* args[]) {
-            CEU_Value v = ceu_op_eq_eq.func(func, n, args);
+        CEU_Value ceu_op_div_eq (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            CEU_Value v = ceu_op_eq_eq(frame, n, args);
             v.Bool = !v.Bool;
             return v;
         }
-        CEU_Frame ceu_op_div_eq = { NULL, -1, NULL, ceu_op_div_eq_f, {} };
     """ +
     """ // TUPLE / DICT
         void ceu_max_depth (CEU_Dynamic* dyn, int n, CEU_Value* childs) {
@@ -612,7 +624,7 @@ fun Coder.main (): String {
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.n; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
-                if (ceu_op_eq_eq_f(&ceu_op_eq_eq, 2, args).Bool) {
+                if (ceu_op_eq_eq(NULL, 2, args).Bool) {
                     return i;
                 }
             }
@@ -671,11 +683,11 @@ fun Coder.main (): String {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {
-                    ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_tags}      };
-                    ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_print}     };
-                    ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_println}   };            
-                    ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_op_eq_eq}  };
-                    ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_op_div_eq} };
+                    ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_tags}      };
+                    ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_print}     };
+                    ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_println}   };            
+                    ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_eq_eq}  };
+                    ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Proto=&ceu_op_div_eq} };
                 }
                 ${this.code}
                 return 0;

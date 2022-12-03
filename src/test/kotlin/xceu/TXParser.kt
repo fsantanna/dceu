@@ -50,7 +50,7 @@ class TXParser {
         val l = lexer("func () {}")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Func && e.args.size==0)
+        assert(e is Expr.Proto && e.args.size==0)
         assert(e.tostr() == "func () {\nnil\n}") { e.tostr() }
     }
     @Test

@@ -40,7 +40,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Func   (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
+    data class Proto   (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Block  (val tk_: Tk, val isFake: Boolean, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
@@ -70,7 +70,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val f: Expr, val args: List<Expr>): Expr(N++, tk_)
+    data class Call   (val tk_: Tk, val proto: Expr, val args: List<Expr>): Expr(N++, tk_)
         // calls must be enclosed with a "fake" block, which is a normal block is not output in tostr()
         // the block is required to create a separate environment for the call arguments such that
         // `evt` is allowed to be passed forward
