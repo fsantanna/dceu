@@ -136,10 +136,10 @@ fun Coder.main (): String {
                             enum CEU_CORO_STATUS status;
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
-                            struct CEU_Frame task;      // task->Task
+                            struct CEU_Frame frame;      // frame->Task
                             int pc;                     // next line to execute
                             CEU_Value pub;
-                            char __mem[0];              // beginning of locals, will be allocated here, but accessed through this->task->mem
+                            char __mem[0];              // beginning of locals, will be allocated here, but accessed through this->frame->mem
                         } Coro;
                         struct {
                             uint8_t max;                // max number of instances
@@ -301,7 +301,7 @@ fun Coder.main (): String {
                         if (cur->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED) {
                             CEU_Value arg = { CEU_VALUE_NIL };
                             CEU_Value* args[] = { &arg };  // any depth works?
-                            cur->Bcast.Coro.task.func(&cur->Bcast.Coro.task, 0, 1, args);
+                            cur->Bcast.Coro.frame.func(&cur->Bcast.Coro.frame, 0, 1, args);
                         }
                     }
                     break;

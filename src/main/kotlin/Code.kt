@@ -12,7 +12,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return ups.func(this).let {
             when {
                 (it == null) -> "NULL"
-                (it.tk.str == "task") -> "(& ceu_frame->Task.coro->Bcast.Coro.task)"
+                (it.tk.str == "task") -> "(& ceu_frame->Task.coro->Bcast.Coro.frame)"
                 else -> "ceu_frame"
             }
         }
@@ -111,7 +111,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         assert( ceu_frame->Task.coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
                          ceu_frame->Task.coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Func_$n* ceu_mem = (CEU_Func_$n*)  ceu_frame->Task.coro->Bcast.Coro.__mem;
-                        // ceu_frame->Task.coro->Bcast.Coro.task.mem = ceu_mem; // ceu_coro_create does this
+                        // ceu_frame->Task.coro->Bcast.Coro.frame.mem = ceu_mem; // ceu_coro_create does this
                     """}}
                     CEU_Func_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
@@ -699,7 +699,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
 
-                val frame = if (iscall) "(ceu_f_$n.Frame)" else "(&ceu_coro_$n.Dyn->Bcast.Coro.task)"
+                val frame = if (iscall) "(ceu_f_$n.Frame)" else "(&ceu_coro_$n.Dyn->Bcast.Coro.frame)"
 
                 val (sets,args) = this.args.let {
                     Pair (
