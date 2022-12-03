@@ -140,7 +140,7 @@ fun Coder.main (): String {
                             enum CEU_CORO_STATUS status;
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
-                            CEU_Proto proto;            // needed on bcast
+                            CEU_Proto proto;            // needed on spawn/resume/bcast
                             int pc;                     // next line to execute
                             CEU_Value pub;
                             struct CEU_Frame* frame;    // frame is malloc'ed
@@ -305,7 +305,7 @@ fun Coder.main (): String {
                         if (cur->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED) {
                             CEU_Value arg = { CEU_VALUE_NIL };
                             CEU_Value* args[] = { &arg };
-                            cur->Bcast.Coro.proto(cur->Bcast.Coro.frame, 1, args);
+                            cur->Bcast.Coro.proto(cur, NULL, 1, args);
                         }
                     }
                     break;
