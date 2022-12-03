@@ -358,10 +358,14 @@ fun Coder.main (): String {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
+            
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
+            char* mem = malloc(task->Proto->Task.n);
+            assert(mem != NULL);
+            
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, {
                     .Bcast = { NULL, {
@@ -371,8 +375,9 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { task->Proto, depth, NULL, {.Task={coro}} };
+            *frame = (CEU_Frame) { task->Proto, depth, mem, {.Task={coro}} };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            
             return NULL;
         }
 
@@ -384,10 +389,14 @@ fun Coder.main (): String {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
+            
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
+            char* mem = malloc(task->Proto->Task.n);
+            assert(mem != NULL);
+
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
                     .Bcast = { NULL, {
@@ -397,9 +406,10 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { task->Proto, depth, NULL, {.Task={coro}} };
-            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            *frame = (CEU_Frame) { task->Proto, depth, mem, {.Task={coro}} };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            
+            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
             coros->Bcast.Coros.cur++;
             return NULL;
         }

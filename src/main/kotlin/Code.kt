@@ -96,18 +96,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_frame->mem = (char*) ceu_mem;
                     """}}
                     ${istask.cond{"""
+                        CEU_Dynamic* ceu_coro = ceu_frame->Task.coro;
                         assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
-
-                        CEU_Frame* ceu_frame = ceu_coro->Bcast.Coro.frame;
-                        if (ceu_frame == NULL) {
-                            ceu_frame = ceu_coro->Bcast.Coro.frame = malloc(sizeof(CEU_Frame));
-                            assert(ceu_frame != NULL);
-                            ceu_frame->up = ceu_up;
-                            ceu_frame->mem = malloc(sizeof(CEU_Proto_Mem_$n));
-                            assert(ceu_frame->mem != NULL);
-                        }
-                        CEU_Proto_Mem_$n* ceu_mem = ceu_frame->mem;
+                        CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                     """}}
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
                     CEU_Value ceu_$n = { CEU_VALUE_NIL };
@@ -162,7 +154,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 assrc_dst.cond {
                     """
                     static CEU_Proto ceu_proto_$n;
-                    ceu_proto_$n = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {} };
+                    ceu_proto_$n = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {.Task={sizeof(CEU_Proto_Mem_$n)}} };
                     $it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&ceu_proto_$n} });
                     """
                 }
@@ -688,6 +680,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
+                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
 
                 val (sets,args) = this.args.let {
                     Pair (
@@ -761,8 +754,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args_$n[] = { $args };
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
-                    ${if (iscall) "(ceu_proto_$n.Proto->f)" else "(ceu_coro_$n.Dyn->Bcast.Coro.proto)"} (
-                        &ceu_frame_$n,
+                    $frame->proto->f (
+                        $frame,
                         ${this.args.size},
                         ceu_args_$n
                     );
