@@ -381,16 +381,19 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Bcast -> {
                 """
                 { // BCAST ${this.tk.dump()}
-                    ${this.xin.code("ceu_mem->in_$n",false,null) }
-                    CEU_Value ceu_evt_$n;
-                    ${this.evt.code("ceu_evt_$n", true, null)}
-                    char* ceu_err_$n = ceu_block_set(&ceu_evt_block, &ceu_evt_$n);
-                    if (ceu_mem->in_$n.tag != CEU_VALUE_CORO) {
-                        ${if (this.xin is Expr.Tag) {
-                            "ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_evt_$n);"
-                        } else {
-                            "ceu_err_$n = ceu_bcast_dyn(ceu_mem->in_$n.Dyn, &ceu_evt_$n);"
-                        }}
+                    ${this.evt.code("ceu_mem->evt_$n", true, null)}
+                    CEU_Value ceu_in_$n;
+                    ${this.xin.code("ceu_in_$n",false,null) }
+                    char* ceu_err_$n = ceu_block_set(&ceu_evt_block, &ceu_mem->evt_$n);
+                    if (ceu_in_$n.tag == CEU_VALUE_CORO) {
+                        ceu_err_$n = ceu_bcast_dyn(ceu_in_$n.Dyn, &ceu_mem->evt_$n);
+                    } else if (ceu_in_$n.tag == CEU_VALUE_TAG) {
+                        ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
+                    } else {
+                        ceu_has_throw = 1;
+                        ceu_err = &CEU_ERR_ERROR;
+                        strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
+                        continue; // escape enclosing block;
                     }
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;

@@ -644,7 +644,7 @@ class TTask {
     // BCAST / CORO
 
     @Test
-    fun bcast_coro1() {
+    fun bcast_in1() {
         val out = ceu.all(
             """
             var T
@@ -662,9 +662,9 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bcast_coro2_err() {
+    fun bcast_in2_err() {
         val out = ceu.all(" broadcast in nil, nil")
-        assert(out == "anon : (lin 1, col 14) : broadcast error : expected coroutine\n") { out }
+        assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n") { out }
     }
 
     // POOL

@@ -77,7 +77,7 @@ fun Expr.mem (): String {
             """
         is Expr.Bcast -> """
             struct { // BCAST
-                CEU_Value in_$n;
+                CEU_Value evt_$n;
                 union {
                     ${this.xin.mem()}
                     ${this.evt.mem()}
