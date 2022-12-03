@@ -373,6 +373,22 @@ class TTask {
         """)
         assert(out == "anon : (lin 6, col 21) : throw error : uncaught exception\n") { out }
     }
+    @Test
+    fun throw4_err() {
+        val out = all("""
+            broadcast in :task, nil
+        """)
+        assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n") { out }
+    }
+    @Test
+    fun throw5_err() {
+        val out = all("""
+            spawn (task :nopub () {
+                broadcast in :task, nil
+            }) ()
+        """)
+        assert(out == "anon : (lin 3, col 30) : broadcast error : invalid target\n") { out }
+    }
 
     // BCAST / BROADCAST
 

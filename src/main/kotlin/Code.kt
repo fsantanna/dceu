@@ -47,14 +47,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return this.aux(0)
     }
 
-    fun Expr.fupc (): String {
+    fun Expr.fupc (): String? {
         var n = 0
-        var fup = ups.func(this)!!
-        while (fup.isFake) {
+        var fup = ups.func(this)
+        while (fup!=null && fup.isFake) {
             n++
-            fup = ups.func(fup)!!
+            fup = ups.func(fup)
         }
-        return "((& ceu_frame->Task.coro->Bcast.Coro.task) ${"->up".repeat(n)})"
+        return if (fup == null) null else "(ceu_frame${"->up".repeat(n)})"
     }
 
     // assrc_dst: calling expr is a source and here's its destination
@@ -171,11 +171,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """}}
                 ${istask.cond{"""
                     static CEU_Frame ceu_task_$n;
-                    ceu_task_$n = (CEU_Frame) {
-                        ${this.top()}, NULL, {
-                            .Task = { ceu_f_$n, sizeof(CEU_Func_$n) }
-                        }
-                    };
+                    ceu_task_$n = (CEU_Frame) { ${this.top()}, NULL, ceu_f_$n, { sizeof(CEU_Func_$n), NULL } };
                     ${assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
                 """}}
                 """
@@ -411,7 +407,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_in_$n.Tag == CEU_TAG_local) {
                             ceu_err_$n = ceu_bcast_blocks(${ups.block(this)!!.toc(true)}, &ceu_mem->evt_$n);
                         } else if (ceu_in_$n.Tag == CEU_TAG_task) {
-                            ceu_err_$n = ceu_bcast_dyn(${this.fupc()}, &ceu_mem->evt_$n);
+                            ${this.fupc().let {
+                                if (it == null) {
+                                    "ceu_ok_$n = 0;"
+                                } else {
+                                    "ceu_err_$n = ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
+                                } 
+                            }}
                         } else {
                             ceu_ok_$n = 0;
                         }
