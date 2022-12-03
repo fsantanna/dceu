@@ -26,7 +26,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     //println(id)
                     //println(this)
                     val blk = if (this is Expr.Proto) this.n else fup!!.n
-                    "(((CEU_Proto_Mem_$blk*) ceu_frame->proto ${"->up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Proto) -> bup!!.aux(n+1)
@@ -43,7 +43,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             n++
             fup = ups.func(fup)
         }
-        return if (fup == null) null else "(ceu_frame${"->up".repeat(n)})"
+        return if (fup == null) null else "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
     // assrc_dst: calling expr is a source and here's its destination
@@ -393,7 +393,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 if (it == null) {
                                     "ceu_ok_$n = 0;"
                                 } else {
-                                    "ceu_err_$n = ceu_bcast_dyn($it->Coro, &ceu_mem->evt_$n);"
+                                    "ceu_err_$n = ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
                                 } 
                             }}
                         } else {
@@ -719,12 +719,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
-                        ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
+                        ceu_coro_create(&ceu_task_$n, $bupc->depth+1, &ceu_coro_$n);
                         ${SET("ceu_coro_$n", ups.block(ups.block(this)!!)!!.toc(true))} // , false
                         """
                     } else {
                         """
-                        ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, &ceu_coro_$n);
+                        ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, $bupc->depth+1, &ceu_coro_$n);
                         ${assrc_dst.cond { "$it = ceu_ok_$n;" }}
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok
