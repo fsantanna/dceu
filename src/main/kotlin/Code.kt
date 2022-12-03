@@ -385,6 +385,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_in_$n;
                     ${this.xin.code("ceu_in_$n",false,null) }
                     char* ceu_err_$n = ceu_block_set(&ceu_evt_block, &ceu_mem->evt_$n);
+                    if (ceu_err_$n != NULL) {
+                        ceu_has_throw = 1;
+                        ceu_err = &CEU_ERR_ERROR;
+                        snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                        continue; // escape enclosing block;
+                    }
                     if (ceu_in_$n.tag == CEU_VALUE_CORO) {
                         ceu_err_$n = ceu_bcast_dyn(ceu_in_$n.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_in_$n.tag == CEU_VALUE_TAG) {
@@ -393,12 +399,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
-                        continue; // escape enclosing block;
-                    }
-                    if (ceu_err_$n != NULL) {
-                        ceu_has_throw = 1;
-                        ceu_err = &CEU_ERR_ERROR;
-                        snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     if (ceu_has_throw_clear()) {
