@@ -8,23 +8,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     val mem: String = outer.mem()
     val code: String = outer.code(null, false, null)
 
-    fun Expr.top (): String {
-        return ups.func(this).let {
-            when {
-                (it == null) -> "NULL"
-                (it.tk.str == "task") -> "(& ceu_frame->Task.coro->Bcast.Coro.frame)"
-                else -> "ceu_frame"
-            }
-        }
-    }
-
     fun Expr.Block.toc (isptr: Boolean): String {
         return "ceu_mem->block_${this.n}".let {
             if (isptr) "(&($it))" else it
         }
     }
     fun Expr.Block.id2c (id: String): String {
-        val top = this.top()
         fun Expr.aux (n: Int): String {
             val xblock = ups.xblocks[this]!!
             val bup = ups.func_or_block(this)
@@ -37,7 +26,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     //println(id)
                     //println(this)
                     val blk = if (this is Expr.Func) this.n else fup!!.n
-                    "(((CEU_Func_$blk*) ($top) ${"->up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Func_$blk*) ceu_frame ${"->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Func) -> bup!!.aux(n+1)
@@ -98,7 +87,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val func = """ // BODY ${this.tk.dump()}
                 CEU_Value ceu_f_$n (
                     CEU_Frame* ceu_frame,
-                    int ceu_depth,
                     int ceu_n,
                     CEU_Value* ceu_args[]
                 ) {
@@ -127,7 +115,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
                                         continue; // from BCAST-CLEAR: escape enclosing block
                                     }
-                                    ceu_evt_block.depth = ceu_depth + 1;  // no block depth yet
+                                    ceu_evt_block.depth = ceu_frame->depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
                             int ceu_i = 0;
@@ -163,15 +151,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
                 tops.add(Pair(type,func))
+                val ceu_frame = if (ups.func(this)==null) "NULL" else "ceu_frame"
                 """ // STATIC
                 ${isfunc.cond{"""
                     static CEU_Frame ceu_func_$n;
-                    ceu_func_$n = (CEU_Frame) { ${this.top()}, NULL, ceu_f_$n, {} };
+                    ceu_func_$n = (CEU_Frame) { $ceu_frame, -1, NULL, ceu_f_$n, {} };
                     ${assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_FUNC, {.Frame=&ceu_func_$n} });" }}
                 """}}
                 ${istask.cond{"""
                     static CEU_Frame ceu_task_$n;
-                    ceu_task_$n = (CEU_Frame) { ${this.top()}, NULL, ceu_f_$n, { sizeof(CEU_Func_$n), NULL } };
+                    ceu_task_$n = (CEU_Frame) { $ceu_frame, -1, NULL, ceu_f_$n, { sizeof(CEU_Func_$n), NULL } };
                     ${assrc_dst.cond { "$it = ((CEU_Value) { CEU_VALUE_TASK, {.Frame=&ceu_task_$n} });" }}
                 """}}
                 """
@@ -181,7 +170,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val f_b = ups.func_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Func) -> "(ceu_depth + 1)"
+                    (f_b is Expr.Func) -> "(ceu_frame->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, X ->
@@ -202,7 +191,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }.joinToString("")
                 """
                 { // BLOCK ${this.tk.dump()}
-                    assert($depth <= UINT8_MAX);
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
                     ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
                         " ceu_frame->Task.coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
@@ -770,11 +758,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         $sets
                     }
                     CEU_Value* ceu_args_$n[] = { $args };
+                    $frame->depth = ${bup.toc(false)}.depth + 1;
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
                     $frame->func(
                         $frame,
-                        ${bup.toc(false)}.depth,
                         ${this.args.size},
                         ceu_args_$n
                     );

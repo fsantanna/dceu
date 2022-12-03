@@ -434,10 +434,10 @@ class Parser (lexer_: Lexer)
                 when {
                     (clk != null) -> this.nest("""
                         ${pre0}do {
-                            var ceu_ms = ${clk.ms}
-                            while ceu_ms > 0 {
+                            var ceu_ms_$N = ${clk.ms}
+                            while ceu_ms_$N > 0 {
                                 await evt[:type]==:timer
-                                set ceu_ms = ceu_ms - evt[:dt]
+                                set ceu_ms_$N = ceu_ms_$N - evt[:dt]
                             }
                         }
                     """)//.let { println(it.tostr()); it }
