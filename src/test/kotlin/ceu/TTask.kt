@@ -641,7 +641,7 @@ class TTask {
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 
-    // BCAST / CORO
+    // BCAST / SCOPE
 
     @Test
     fun bcast_in1() {
@@ -665,6 +665,75 @@ class TTask {
     fun bcast_in2_err() {
         val out = ceu.all(" broadcast in nil, nil")
         assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n") { out }
+    }
+    @Test
+    fun bcast_in3_err() {
+        val out = ceu.all(" broadcast in :xxx, nil")
+        assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n") { out }
+    }
+    @Test
+    fun bcast_in4() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task (v) {
+                yield nil
+                println(v)
+            }
+            var t1
+            set t1 = spawn T (1)
+            do {
+                var t2
+                set t2 = spawn T (2)
+                broadcast in :local, nil
+            }
+        """
+        )
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun bcast_in5() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task (v) {
+                spawn (task () {
+                    yield nil
+                    println(:ok)
+                }) ()
+                broadcast in :global, :ok
+            }
+            spawn T (2)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun bcast_in6() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task (v) {
+                spawn (task :nopub () {
+                    yield nil
+                    println(v, evt)
+                }) ()
+                spawn (task :nopub () {
+                    do {
+                        broadcast in :task, :ok
+                    }
+                }) ()
+                yield nil
+            }
+            spawn (task () {
+                yield nil
+                println(999)
+            }) ()
+            spawn T (1)
+            spawn T (2)
+        """
+        )
+        assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
 
     // POOL

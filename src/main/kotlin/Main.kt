@@ -21,7 +21,8 @@ val TAGS = listOf (
     "func", "task",
     "tuple", "dict",
     "coro", "coros",
-    "clear", "error",      // bcast-clear
+    "clear", "error",           // bcast-clear
+    "global", "local", //"task"   // bcast scope
 )
 
 val GLOBALS = setOf (

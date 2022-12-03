@@ -47,6 +47,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return this.aux(0)
     }
 
+    fun Expr.fupc (): String {
+        var n = 0
+        var fup = ups.func(this)!!
+        while (fup.isFake) {
+            n++
+            fup = ups.func(fup)!!
+        }
+        return "((&ceu_coro->Bcast.Coro.task) ${"->up".repeat(n)})"
+    }
+
     // assrc_dst: calling expr is a source and here's its destination
     // assrc_hld: calling expr destination hold block is set, do not call ceu_block_set here, otherwise call it and hold in enclosing block
     // asdst_src: calling expr is a destination and here's its source
@@ -391,11 +401,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
+                    int ceu_ok_$n = 0;
                     if (ceu_in_$n.tag == CEU_VALUE_CORO) {
                         ceu_err_$n = ceu_bcast_dyn(ceu_in_$n.Dyn, &ceu_mem->evt_$n);
+                        ceu_ok_$n = 1;
                     } else if (ceu_in_$n.tag == CEU_VALUE_TAG) {
-                        ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
-                    } else {
+                        ceu_ok_$n = 1;
+                        if (ceu_in_$n.Tag == CEU_TAG_global) {
+                            ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
+                        } else if (ceu_in_$n.Tag == CEU_TAG_local) {
+                            ceu_err_$n = ceu_bcast_blocks(${ups.block(this)!!.toc(true)}, &ceu_mem->evt_$n);
+                        } else if (ceu_in_$n.Tag == CEU_TAG_task) {
+                            ceu_err_$n = ceu_bcast_dyn(${this.fupc()}, &ceu_mem->evt_$n);
+                        } else {
+                            ceu_ok_$n = 0;
+                        }
+                    }
+                    if (!ceu_ok_$n) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
@@ -436,21 +458,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ceu_coro_$n.Dyn->Bcast.Coro.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_CORO_STATUS_YIELDED : CEU_CORO_STATUS_TOGGLED);
                 """
             is Expr.Pub -> {
-                val X: Int? = if (this.coro != null) null else {
-                    var n = 0
-                    var fup = ups.func(this)!!
-                    while (fup.isFake) {
-                        n++
-                        fup = ups.func(fup)!!
-                    }
-                    n
-                }
                 """
                 { // PUB
                     CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
                         """
-                        char* ceu_ptr_$n = ((&ceu_coro->Bcast.Coro.task) ${"->up".repeat(X!!)}->mem);
+                        char* ceu_ptr_$n = (${this.fupc()}->mem);
                         ceu_dyn_$n = (CEU_Dynamic*) (ceu_ptr_$n - offsetof(struct CEU_Dynamic, Bcast.Coro.__mem));
                         """
                     } else { """

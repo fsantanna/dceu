@@ -300,16 +300,16 @@ fun Coder.main (): String {
         void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
-                    if (cur->Bcast.Coro.status != CEU_CORO_STATUS_YIELDED) {
-                        // skip
-                    } else {
+                    if (cur->Bcast.Coro.status==CEU_CORO_STATUS_YIELDED || cur->Bcast.Coro.status==CEU_CORO_STATUS_RESUMED) {
                         assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                         ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
                         // if nested block threw uncaught exception, awake myself next to catch it
                         //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                        CEU_Value arg = { CEU_VALUE_NIL };
-                        CEU_Value* args[] = { &arg };  // any depth works?
-                        cur->Bcast.Coro.task.Task.f(cur, 0, 1, args);
+                        if (cur->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED) {
+                            CEU_Value arg = { CEU_VALUE_NIL };
+                            CEU_Value* args[] = { &arg };  // any depth works?
+                            cur->Bcast.Coro.task.Task.f(cur, 0, 1, args);
+                        }
                     }
                     break;
                 }
