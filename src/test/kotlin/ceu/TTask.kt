@@ -383,7 +383,7 @@ class TTask {
     @Test
     fun throw5_err() {
         val out = all("""
-            spawn (task :nopub () {
+            spawn (task :fake () {
                 broadcast in :task, nil
             }) ()
         """)
@@ -730,11 +730,11 @@ class TTask {
             """
             var T
             set T = task (v) {
-                spawn (task :nopub () {
+                spawn (task :fake () {
                     yield nil
                     println(v, evt)
                 }) ()
-                spawn (task :nopub () {
+                spawn (task :fake () {
                     do {
                         broadcast in :task, :ok
                     }
@@ -1475,7 +1475,7 @@ class TTask {
         val out = all("""
             spawn (task () {
                 set pub = 1
-                spawn (task :nopub () {
+                spawn (task :fake () {
                     println(pub)
                 }) ()
             }) ()
@@ -1488,7 +1488,7 @@ class TTask {
             spawn (task () {
                 set pub = []
                 var x
-                spawn (task :nopub () {
+                spawn (task :fake () {
                     set x = pub
                 }) ()
                 println(x)
@@ -1499,7 +1499,7 @@ class TTask {
     @Test
     fun pub10_fake_err() {
         val out = all("""
-            spawn (task :nopub () {
+            spawn (task :fake () {
                 pub
             }) ()
         """, true)

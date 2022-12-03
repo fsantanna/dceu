@@ -560,10 +560,10 @@ class TParser {
     @Test
     fun task3_err() {
         val l = lexer("""
-            func :nopub () {}
+            func :fake () {}
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid func : unexpected \":nopub\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid func : unexpected \":fake\"")
     }
     @Test
     fun task4_err() {

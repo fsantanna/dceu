@@ -183,7 +183,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val isFake = this.acceptEnu("Tag")
                 if (isFake) {
-                    if (tk0.str=="func" || this.tk0.str!=":nopub") {
+                    if (tk0.str=="func" || this.tk0.str!=":fake") {
                         err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
                     }
                 }
@@ -225,7 +225,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task :nopub () {
+                            ${tk0.pos.pre()}spawn (task :fake () {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)
