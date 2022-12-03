@@ -26,7 +26,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     //println(id)
                     //println(this)
                     val blk = if (this is Expr.Proto) this.n else fup!!.n
-                    "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Proto_Mem_$blk*) ceu_frame->proto ${"->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Proto) -> bup!!.aux(n+1)
@@ -85,18 +85,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 } CEU_Proto_Mem_$n;
                 """
                 val func = """ // BODY ${this.tk.dump()}
-                CEU_Value ceu_proto_$n (
-                    CEU_Dynamic* ceu_coro,
-                    CEU_Frame* ceu_up,
+                CEU_Value ceu_proto_f_$n (
+                    CEU_Frame* ceu_frame,
                     int ceu_n,
                     CEU_Value* ceu_args[]
                 ) {
                     ${isfunc.cond{"""
                         CEU_Proto_Mem_$n _ceu_mem_;
                         CEU_Proto_Mem_$n* ceu_mem = &_ceu_mem_;
-                        CEU_Frame _ceu_frame_ = { ceu_up, ceu_mem };
-                        CEU_Frame* ceu_frame = &_ceu_frame_;
-                        ceu_frame->mem = ceu_mem;
+                        ceu_frame->mem = (char*) ceu_mem;
                     """}}
                     ${istask.cond{"""
                         assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
@@ -126,7 +123,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
                                         continue; // from BCAST-CLEAR: escape enclosing block
                                     }
-                                    ceu_evt_block.depth = ceu_depth(ceu_frame) + 1;  // no block depth yet
+                                    ceu_evt_block.depth = ceu_frame->depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
                             int ceu_i = 0;
@@ -163,7 +160,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 tops.add(Pair(type,func))
                 assrc_dst.cond {
-                    "$it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&ceu_proto_$n} });"
+                    """
+                    static CEU_Proto ceu_proto_$n;
+                    ceu_proto_$n = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {} };
+                    $it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&ceu_proto_$n} });
+                    """
                 }
             }
             is Expr.Block -> {
@@ -171,7 +172,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val f_b = ups.func_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Proto) -> "(ceu_depth(ceu_frame) + 1)"
+                    (f_b is Expr.Proto) -> "(ceu_frame->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val es = this.es.mapIndexed { i, X ->
@@ -325,7 +326,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_task_$n;
                     CEU_Value ceu_coro_$n;
                     ${this.task.code("ceu_task_$n", false, null)}
-                    char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, &ceu_coro_$n);
+                    char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, ${ups.block(this)!!.toc(true)}->depth+1, &ceu_coro_$n);
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = &CEU_ERR_ERROR;
@@ -682,6 +683,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Call -> {
                 val up1 = ups.ups[this]
                 val up2 = ups.ups[up1]
+                val bupc = ups.block(this)!!.toc(true)
                 val resume = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Resume) up2 else null)
                 val spawn  = (if (up1 is Expr.Block && up1.isFake && up2 is Expr.Spawn)  up2 else null)
                 val iscall = (resume==null && spawn==null)
@@ -693,7 +695,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             x.code("ceu_mem->arg_${i}_$n", true, null) +
                             """
                             { // check scopes of args
-                                char* ceu_err_$n = ceu_block_set(${ups.block(this)!!.toc(true)}, &ceu_mem->arg_${i}_$n);
+                                char* ceu_err_$n = ceu_block_set($bupc, &ceu_mem->arg_${i}_$n);
                                 if (ceu_err_$n != NULL) {
                                     snprintf(ceu_err_error_msg, 256, "${x.tk.pos.file} : (lin ${x.tk.pos.lin}, col ${x.tk.pos.col}) : %s", ceu_err_$n);
                                     continue;
@@ -713,6 +715,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.tag != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";
                     }
+                    CEU_Frame ceu_frame_$n = { ceu_proto_$n.Proto, $bupc->depth+1, NULL, {} };
                 """} +
                 spawn.cond{"""
                 { // SPAWN/CORO ${this.tk.dump()}
@@ -758,9 +761,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args_$n[] = { $args };
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
-                    ${if (iscall) "(ceu_proto_$n.Proto)" else "(ceu_coro_$n.Dyn->Bcast.Coro.proto)"} (
-                        ${if (iscall) "NULL" else "(ceu_coro_$n.Dyn)"},
-                        ceu_frame,
+                    ${if (iscall) "(ceu_proto_$n.Proto->f)" else "(ceu_coro_$n.Dyn->Bcast.Coro.proto)"} (
+                        &ceu_frame_$n,
                         ${this.args.size},
                         ceu_args_$n
                     );
