@@ -172,7 +172,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (i == this.es.size-1) {
                         X.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
                         // would fail later, but memory is reclaimed here, so need to check before return
-                        if ($assrc_dst.tag>=CEU_VALUE_TUPLE && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
+                        if ($assrc_dst.tag>CEU_VALUE_DYNAMIC && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
                             // scope of dyn ret must still be NULL or at most outer depth
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;

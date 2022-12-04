@@ -19,6 +19,7 @@ fun Coder.main (): String {
             CEU_VALUE_POINTER,
             CEU_VALUE_FUNC,     // func frame
             CEU_VALUE_TASK,     // task frame
+            CEU_VALUE_DYNAMIC,  // all below are dynamic
             CEU_VALUE_TUPLE,
             CEU_VALUE_DICT,
             CEU_VALUE_CORO,     // spawned task
@@ -602,7 +603,7 @@ fun Coder.main (): String {
             int max = -1;
             for (int i=0; i<n; i++) {
                 CEU_Value* cur = &childs[i];
-                if (cur->tag>=CEU_VALUE_TUPLE && cur->Dyn->hold!=NULL) {
+                if (cur->tag>CEU_VALUE_DYNAMIC && cur->Dyn->hold!=NULL) {
                     if (max < cur->Dyn->hold->depth) {
                         max = cur->Dyn->hold->depth;
                         hld = cur->Dyn->hold;
