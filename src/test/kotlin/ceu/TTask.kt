@@ -185,6 +185,15 @@ class TTask {
     @Test
     fun task16_nest() {
         val out = all("""
+            spawn (task (v1) {
+                println(v1)
+            }) (1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun task17_nest() {
+        val out = all("""
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
@@ -1016,7 +1025,7 @@ class TTask {
             set ok1 = spawn in ts, T()
             var ok2
             set ok2 = spawn in ts, T()
-             broadcast in :global, nil
+            broadcast in :global, nil
             var ok3
             set ok3 = spawn in ts, T()
             var ok4
