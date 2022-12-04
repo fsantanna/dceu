@@ -676,7 +676,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Call -> {
                 val up = ups.ups[this]
-                val bupc = ups.block(this.args)!!.toc(true) // depth after args block
+                val bupc1 = ups.block(this)!!.toc(true)
                 val resume = (if (up is Expr.Resume) up else null)
                 val spawn  = (if (up is Expr.Spawn)  up else null)
                 val iscall = (resume==null && spawn==null)
@@ -686,15 +686,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val (args_sets,args_vs) = this.args.let {
                     Pair (
                         it.code(n.toString(), false, null) +
-                            it.es.mapIndexed { i,e -> """
+                            it.es.mapIndexed { i,e ->
+                                val bupc2 = ups.block(e)!!.toc(true)
+                                """
                                 { // check scopes of args
-                                    char* ceu_err_$n = ceu_block_set($bupc, &ceu_mem->arg_${i}_$n);
+                                    char* ceu_err_$n = ceu_block_set($bupc2, &ceu_mem->arg_${i}_$n);
                                     if (ceu_err_$n != NULL) {
                                         snprintf(ceu_err_error_msg, 256, "${e.tk.pos.file} : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col}) : %s", ceu_err_$n);
                                         continue;
                                     }
                                 }
-                            """ }.joinToString(""),
+                                """
+                            }.joinToString(""),
                         it.es.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                     )
                 }
@@ -707,7 +710,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.tag != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc->depth+1, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc1->depth, NULL, {} };
                 """} +
                 spawn.cond{"""
                 { // SPAWN/CORO ${this.tk.dump()}
@@ -718,12 +721,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
-                        ceu_coro_create(&ceu_task_$n, $bupc->depth+1, &ceu_coro_$n);
+                        ceu_coro_create(&ceu_task_$n, $bupc1->depth, &ceu_coro_$n);
                         ${SET("ceu_coro_$n")} // , false
                         """
                     } else {
                         """
-                        ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, $bupc->depth+1, &ceu_coro_$n);
+                        ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, $bupc1->depth, &ceu_coro_$n);
                         ${assrc_dst.cond { "$it = ceu_ok_$n;" }}
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok

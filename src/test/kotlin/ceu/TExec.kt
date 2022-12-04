@@ -87,6 +87,19 @@ class TExec {
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
     @Test
+    fun print34() {
+        val out = all("""
+            var f
+            set f = (func () { nil })
+            do {
+                var g
+                set g = f
+            }
+            println(f)
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
+    @Test
     fun print_err1() {
         val out = all("""
             println(1)
@@ -1360,6 +1373,7 @@ class TExec {
             }
             println(smallerc(3)(1))
         """)
-        assert(out == "3\n") { out }
+        //assert(out == "3\n") { out }
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 }
