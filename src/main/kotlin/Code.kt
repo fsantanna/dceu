@@ -137,16 +137,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${istask.cond{"}\n}\n"}}
                     } while (0);
                     """ +
-                        """ // TERMINATE
-                    ${istask.cond{"""
-                         ceu_coro->Bcast.Coro.pc = -1;
-                         ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
-                        if ( ceu_coro->Bcast.Coro.coros != NULL) {
-                            if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                ceu_coros_destroy( ceu_coro->Bcast.Coro.coros, ceu_coro);
+                    """ // TERMINATE
+                        ${istask.cond{"""
+                            ceu_coro->Bcast.Coro.pc = -1;
+                            ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
+                            if (ceu_coro->Bcast.Coro.coros != NULL) {
+                                if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                    ceu_coros_destroy( ceu_coro->Bcast.Coro.coros, ceu_coro);
+                                }
                             }
-                        }
-                    """}}
+                        """}}
                     return ceu_$n;
                 }
                 """

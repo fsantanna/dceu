@@ -401,7 +401,7 @@ fun Coder.main (): String {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
                     .Bcast = { NULL, {
                         .Coro = {
-                            CEU_CORO_STATUS_YIELDED, NULL, NULL, frame, 0, { CEU_VALUE_NIL }
+                            CEU_CORO_STATUS_YIELDED, coros, NULL, frame, 0, { CEU_VALUE_NIL }
                         }
                     } }
                 }
