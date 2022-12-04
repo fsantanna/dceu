@@ -178,6 +178,9 @@ fun Coder.main (): String {
                 CEU_Dynamic* cur = block->tofree;
                 if (cur->tag == CEU_VALUE_DICT) {
                     free(cur->Dict.mem);
+                } else if (cur->tag == CEU_VALUE_CORO) {
+                    free(cur->Bcast.Coro.frame->mem);
+                    free(cur->Bcast.Coro.frame);
                 }
                 block->tofree = block->tofree->next;
                 free(cur);
@@ -430,6 +433,8 @@ fun Coder.main (): String {
                 prv->Bcast.next = coro->Bcast.next;
             }
             assert(cur == coro);
+            free(coro->Bcast.Coro.frame->mem);
+            free(coro->Bcast.Coro.frame);
             free(coro);
             coros->Bcast.Coros.cur--;
         }
