@@ -330,7 +330,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    ${SET("ceu_coro_$n")}
+                    ${SET("ceu_coro_$n", false)}
                 }
                 """
             }
@@ -693,6 +693,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     char* ceu_err_$n = ceu_block_set($bupc2, &ceu_mem->arg_${i}_$n);
                                     if (ceu_err_$n != NULL) {
                                         snprintf(ceu_err_error_msg, 256, "${e.tk.pos.file} : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col}) : %s", ceu_err_$n);
+                                        ceu_block_free(&ceu_mem->block_${this.args.n});
                                         continue;
                                     }
                                 }
@@ -761,6 +762,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.args.es.size},
                             ceu_args_$n
                         );
+                    ceu_block_free(&ceu_mem->block_${this.args.n});
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }

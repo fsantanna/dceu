@@ -204,6 +204,25 @@ class TTask {
         """)
         assert(out == "1\t2\t3\n") { out }
     }
+    @Test
+    fun task18_defer() {
+        val out = all("""
+            var T
+            set T = task () {
+                defer {
+                    println(3)
+                }
+                println(1)
+                yield nil   ;; never awakes
+                println(2)
+            }
+            var t
+            set t = coroutine T
+            resume t ()
+            println(4)
+        """)
+        assert(out == "1\n3\n4\n") { out }
+    }
 
     // SPAWN
 
@@ -1176,8 +1195,8 @@ class TTask {
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
-             broadcast in :global, nil
-             broadcast in :global, nil
+            broadcast in :global, nil
+            broadcast in :global, nil
             println(999)
         """
         )
@@ -1591,6 +1610,6 @@ class TTask {
             }
             println(f())
         """, true)
-        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 }

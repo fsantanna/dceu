@@ -204,15 +204,14 @@ fun Coder.main (): String {
                 case CEU_VALUE_TASK: // must be set as soon as they are created
                 case CEU_VALUE_CORO: // with SET(x,bup,true)
                 case CEU_VALUE_COROS:               
-                    //assert(src->Dyn->hold != NULL);
                     break;
                 default:
                     return NULL;    // nothing to be done for non-dyn
             }
             if (src->Dyn->hold == NULL) {
                 src->Dyn->hold = dst;
-                if (src->tag == CEU_VALUE_FUNC) {
-                    // do not enqueue: global functions use hold=NULL and are not malloc'ed
+                if (src->tag==CEU_VALUE_FUNC && src->Dyn->Proto.up==NULL) {
+                    // do not enqueue: global functions use up=NULL and are not malloc'ed
                 } else {
                     src->Dyn->next = dst->tofree;
                     dst->tofree = src->Dyn;
