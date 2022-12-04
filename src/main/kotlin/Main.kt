@@ -71,7 +71,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val proto: Expr, val args: Expr.Block): Expr(N++, tk_)
+    data class Call   (val tk_: Tk, val proto: Expr, val args: List<Expr>): Expr(N++, tk_)
         // call args must be enclosed with a "fake" block, which is a normal block is not output in tostr()
         // the block is required to create a separate environment for the call arguments such that
         // `evt` is allowed to be passed forward

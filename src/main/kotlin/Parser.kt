@@ -265,10 +265,10 @@ class Parser (lexer_: Lexer)
                         err(coro.tk, "invalid toggle : expected argument")
                     }
                     coro as Expr.Call
-                    if (coro.args.es.size != 1) {
+                    if (coro.args.size != 1) {
                         err(coro.tk, "invalid toggle : expected single argument")
                     }
-                    Expr.Toggle(tk0, coro.proto, coro.args.es[0])
+                    Expr.Toggle(tk0, coro.proto, coro.args[0])
                 } else {
                     this.acceptFix_err("->")
                     val (off,on) = Pair(coro, this.expr())
@@ -496,7 +496,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Fix
                 e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), Expr.Block(op, listOf(e)))
+                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))
             }
         }
         return e
@@ -528,7 +528,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, Expr.Block(e.tk, (list0(")"){this.expr()})))
+                    e = Expr.Call(e.tk, e, list0(")"){this.expr()})
                 }
                 else -> break
             }
@@ -555,7 +555,7 @@ class Parser (lexer_: Lexer)
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
-                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), Expr.Block(op, listOf(e,e2)))
+                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }
         }
         return e
