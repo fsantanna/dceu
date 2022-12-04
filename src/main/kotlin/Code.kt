@@ -445,10 +445,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // PUB
                     CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
-                        """
-                        char* ceu_ptr_$n = (${this.fupc()}->mem);
-                        ceu_dyn_$n = (CEU_Dynamic*) (ceu_ptr_$n - offsetof(struct CEU_Dynamic, Bcast.Coro.__mem));
-                        """
+                        "ceu_dyn_$n = ${this.fupc()}->Task.coro;"
                     } else { """
                         CEU_Value ceu_coro_$n;
                         ${this.coro.code("ceu_coro_$n", false, null)}
