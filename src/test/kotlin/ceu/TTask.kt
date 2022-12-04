@@ -1579,4 +1579,18 @@ class TTask {
         """)
         assert(out == "1\n2\n10\n") { out }
     }
+
+    // ESCAPE
+
+    @Test
+    fun esc1() {
+        val out = all("""
+            var f
+            set f = func () {
+                coroutine(task() {nil})
+            }
+            println(f())
+        """, true)
+        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
+    }
 }

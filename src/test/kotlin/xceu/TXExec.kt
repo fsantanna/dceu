@@ -587,7 +587,7 @@ class TXExec {
                 }
             }
             spawn T()
-             broadcast in :global, nil
+            broadcast in :global, nil
         """)
         assert(out == "10\n10\n") { out }
     }

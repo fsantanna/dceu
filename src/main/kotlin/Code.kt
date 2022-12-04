@@ -30,7 +30,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Proto) -> bup!!.aux(n+1)
-                else -> TODO("bug found")
+                else -> error("bug found")
             }
         }
         return this.aux(0)
@@ -47,7 +47,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     }
 
     // assrc_dst: calling expr is a source and here's its destination
-    // assrc_hld: calling expr destination hold block is set, do not call ceu_block_set here, otherwise call it and hold in enclosing block
+    // assrc_hld: calling expr destination will hold src, do not call ceu_block_set here, otherwise hold src in enclosing block
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
         fun SET (v: String, bup: String, hld: Boolean=assrc_hld): String {

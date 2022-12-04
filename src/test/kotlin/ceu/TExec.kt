@@ -1290,6 +1290,23 @@ class TExec {
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
 
+    // ESCAPE / FUNC
+
+    @Test
+    fun todo_closure_esc1() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                func () {
+                    println(v)
+                }
+            }
+            println(f(10)())
+        """, true)
+        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
+    }
+
+
     // MISC
 
     @Test
@@ -1303,7 +1320,6 @@ class TExec {
     }
 
     @Test
-    @Ignore
     fun todo_closure() {    // TODO: solution: pass tuple that is compared on return
         val out = all("""
             var smallerc
