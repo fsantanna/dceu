@@ -691,11 +691,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 """
                                 { // check scopes of args
                                     char* ceu_err_$n = ceu_block_set($bupc2, &ceu_mem->arg_${i}_$n);
+                                    assert(ceu_err_$n == NULL);
+                                    #if 0 // impossible b/c most nested block will accept anything
                                     if (ceu_err_$n != NULL) {
                                         snprintf(ceu_err_error_msg, 256, "${e.tk.pos.file} : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col}) : %s", ceu_err_$n);
                                         ceu_block_free(&ceu_mem->block_${this.args.n});
                                         continue;
                                     }
+                                    #endif
                                 }
                                 """
                             }.joinToString(""),
