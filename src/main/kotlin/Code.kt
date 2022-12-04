@@ -171,7 +171,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     when {
                         (ups.ups[this] is Expr.Call) -> {
                             // each arg is assigned to each block expr
-                            X.code("ceu_mem->arg_${i}_$assrc_dst", false, null)
+                            // true: set scope on arg site
+                            X.code("ceu_mem->arg_${i}_$assrc_dst", true, null)
                         }
                         (i == this.es.size-1) -> {
                             X.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
@@ -675,7 +676,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Call -> {
                 val up = ups.ups[this]
-                val bupc = ups.block(this)!!.toc(true)
+                val bupc = ups.block(this.args)!!.toc(true) // depth after args block
                 val resume = (if (up is Expr.Resume) up else null)
                 val spawn  = (if (up is Expr.Spawn)  up else null)
                 val iscall = (resume==null && spawn==null)
@@ -684,7 +685,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 val (args_sets,args_vs) = this.args.let {
                     Pair (
-                        it.code(n.toString(), false, null),
+                        it.code(n.toString(), false, null) +
+                            it.es.mapIndexed { i,e -> """
+                                { // check scopes of args
+                                    char* ceu_err_$n = ceu_block_set($bupc, &ceu_mem->arg_${i}_$n);
+                                    if (ceu_err_$n != NULL) {
+                                        snprintf(ceu_err_error_msg, 256, "${e.tk.pos.file} : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col}) : %s", ceu_err_$n);
+                                        continue;
+                                    }
+                                }
+                            """ }.joinToString(""),
                         it.es.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
                     )
                 }
@@ -743,11 +753,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args_$n[] = { $args_vs };
                     ${iscall.cond { "CEU_Value ceu_$n = " }}
                     ${resume.cond { "CEU_Value ceu_$n = " }}
-                    $frame->proto->f (
-                        $frame,
-                        ${this.args.es.size},
-                        ceu_args_$n
-                    );
+                        $frame->proto->f (
+                            $frame,
+                            ${this.args.es.size},
+                            ceu_args_$n
+                        );
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
