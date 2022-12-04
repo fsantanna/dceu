@@ -210,10 +210,10 @@ fun Coder.main (): String {
                     return NULL;    // nothing to be done for non-dyn
             }
             if (src->Dyn->hold == NULL) {
+                src->Dyn->hold = dst;
                 if (src->tag == CEU_VALUE_FUNC) {
                     // do not enqueue: global functions use hold=NULL and are not malloc'ed
                 } else {
-                    src->Dyn->hold = dst;
                     src->Dyn->next = dst->tofree;
                     dst->tofree = src->Dyn;
                     if (src->tag >= CEU_VALUE_CORO) {  // any Coro/Coros

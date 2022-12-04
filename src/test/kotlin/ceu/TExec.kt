@@ -774,6 +774,14 @@ class TExec {
         """)
         assert(out == "false\n") { out }
     }
+    @Test
+    fun func17_ff() {
+        val out = all("""
+            var f
+            f()()
+        """)
+        assert(out == "anon : (lin 3, col 13) : call error : expected function\n") { out }
+    }
 
     // WHILE
 
@@ -1303,6 +1311,20 @@ class TExec {
     @Test
     fun todo_closure_esc1() {
         val out = all("""
+            var g
+            var f
+            set f = func (v) {
+                set g = func () {
+                    println(v)
+                }
+            }
+            println(f(10)())
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun todo_closure_esc2() {
+        val out = all("""
             var f
             set f = func (v) {
                 func () {
@@ -1310,8 +1332,8 @@ class TExec {
                 }
             }
             println(f(10)())
-        """, true)
-        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
+        """)
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
 
 
