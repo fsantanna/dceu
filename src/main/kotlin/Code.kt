@@ -151,14 +151,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
                 tops.add(Pair(type,func))
-                val proto = if (isfunc) "ceu_proto_$n" else "ceu_mem->proto_$n"
-                assrc_dst.cond {
-                    """
-                    ${isfunc.cond { "static CEU_Proto $proto;" }}
-                    $proto = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {.Task={sizeof(CEU_Proto_Mem_$n)}} };
-                    $it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&$proto} });
-                    """
-                }
+                """
+                CEU_Dynamic* ceu_proto_$n = ceu_proto_create(CEU_VALUE_${this.tk.str.uppercase()}, ceu_frame, ceu_proto_f_$n, sizeof(CEU_Proto_Mem_$n));
+                assert(ceu_proto_$n != NULL);
+                // false = must hold straight away, b/c of upvalues, cannot escape
+                ${SET("((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} })", ups.block(this)!!.toc(true), false)}
+                """
             }
             is Expr.Block -> {
                 val bup = ups.block(this)
@@ -706,7 +704,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.tag != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";
                     }
-                    CEU_Frame ceu_frame_$n = { ceu_proto_$n.Proto, $bupc->depth+1, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc->depth+1, NULL, {} };
                 """} +
                 spawn.cond{"""
                 { // SPAWN/CORO ${this.tk.dump()}

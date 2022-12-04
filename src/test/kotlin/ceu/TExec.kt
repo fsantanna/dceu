@@ -766,6 +766,15 @@ class TExec {
         """)
         assert(out == "10\n10\n") { out }
     }
+    @Test
+    fun func16_print() {
+        val out = all("""
+            var f
+            set f = println
+            f(false)
+        """)
+        assert(out == "false\n") { out }
+    }
 
     // WHILE
 

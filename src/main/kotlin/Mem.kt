@@ -1,8 +1,5 @@
 fun Expr.mem (): String {
     return when (this) {
-        is Expr.Proto -> """
-            ${(this.tk.str=="task").cond { "CEU_Proto proto_$n;" }}
-            """
         is Expr.Block -> {
             fun List<Expr>.seq (i: Int): String {
                 return (i != this.size).cond {
@@ -137,6 +134,6 @@ fun Expr.mem (): String {
             """
 
         is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> ""
-        is Expr.XSeq -> ""
+        is Expr.XSeq, is Expr.Proto -> ""
     }
 }
