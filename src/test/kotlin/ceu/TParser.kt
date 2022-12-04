@@ -97,21 +97,21 @@ class TParser {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.exprSufs()
-        assert(e is Expr.Block && e.es[0].let { it is Expr.Call && it.tk.str=="f" && it.proto is Expr.Acc && it.args.size==2 })
+        assert(e is Expr.Call && e.tk.str=="f" && e.proto is Expr.Acc && e.args.es.size==2)
     }
     @Test
     fun expr_call2() {
         val l = lexer(" f() ")
         val parser = Parser(l)
-        val e = parser.exprSufs().let { assert(it is Expr.Block); (it as Expr.Block).es[0] }
-        assert(e is Expr.Call && e.proto.tk.str=="f" && e.proto is Expr.Acc && e.args.size==0)
+        val e = parser.exprSufs()
+        assert(e is Expr.Call && e.proto.tk.str=="f" && e.proto is Expr.Acc && e.args.es.size==0)
     }
     @Test
     fun expr_call3() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
-        val e = parser.exprSufs().let { assert(it is Expr.Block); (it as Expr.Block).es[0] }
-        assert(e is Expr.Call && e.proto is Expr.Block && e.args.size==0)
+        val e = parser.exprSufs()
+        assert(e is Expr.Call && e.proto is Expr.Call && e.args.es.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
@@ -255,7 +255,7 @@ class TParser {
         val l = lexer("f ()")
         val parser = Parser(l)
         val es = parser.exprs()
-        assert(es.size==1 && es[0] is Expr.Block && es[0].tostr() == "f()")
+        assert(es.size==1 && es[0] is Expr.Call && es[0].tostr() == "f()")
         assert(es.tostr() == "f()\n")
     }
     @Test
@@ -468,7 +468,7 @@ class TParser {
         val l = lexer("10+1")
         val parser = Parser(l)
         val e = parser.exprBins()
-        assert(e is Expr.Block && e.isFake)
+        assert(e is Expr.Call)
         assert(e.tostr() == "{+}(10,1)") { e.tostr() }
     }
     @Test
@@ -476,7 +476,7 @@ class TParser {
         val l = lexer("10/=1")
         val parser = Parser(l)
         val e = parser.exprBins()
-        assert(e is Expr.Block && e.isFake)
+        assert(e is Expr.Call)
         assert(e.tostr() == "{/=}(10,1)") { e.tostr() }
     }
     @Test
@@ -484,7 +484,7 @@ class TParser {
         val l = lexer("- - 1")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Block && e.isFake)
+        assert(e is Expr.Call)
         assert(e.tostr() == "{-}({-}(1))") { e.tostr() }
     }
     @Test
@@ -492,7 +492,7 @@ class TParser {
         val l = lexer("1 + 2 + 3")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Block && e.isFake)
+        assert(e is Expr.Call)
         assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
     }
     @Test

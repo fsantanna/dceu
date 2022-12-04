@@ -127,9 +127,8 @@ fun Expr.mem (): String {
             """
         is Expr.Call -> """
             struct { // CALL
-                ${this.proto.mem()} // TODO: move to union above?
-                ${this.args.map { it.mem() }.joinToString("")}
-                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                ${this.args.mem()}
+                ${this.args.es.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
             };
             """
 

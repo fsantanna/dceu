@@ -41,8 +41,8 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto   (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
-    data class Block  (val tk_: Tk, val isFake: Boolean, val es: List<Expr>) : Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
+    data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
@@ -53,11 +53,11 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
-    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Block): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Call): Expr(N++, tk_)
     data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val call: Expr.Block): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val coro: Expr?): Expr(N++, tk_)
 
@@ -71,8 +71,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Dict   (val tk_: Tk.Fix, val args: List<Pair<Expr,Expr>>): Expr(N++, tk_)
     data class Index  (val tk_: Tk, val col: Expr, val idx: Expr): Expr(N++, tk_)
-    data class Call   (val tk_: Tk, val proto: Expr, val args: List<Expr>): Expr(N++, tk_)
-        // calls must be enclosed with a "fake" block, which is a normal block is not output in tostr()
+    data class Call   (val tk_: Tk, val proto: Expr, val args: Expr.Block): Expr(N++, tk_)
+        // call args must be enclosed with a "fake" block, which is a normal block is not output in tostr()
         // the block is required to create a separate environment for the call arguments such that
         // `evt` is allowed to be passed forward
 
@@ -105,7 +105,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         return e.message!! + "\n"
     }
     val c = try {
-        val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), false, es)
+        val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups = Ups(outer)
         val coder = Coder(outer, ups)
         coder.main()

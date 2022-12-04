@@ -111,7 +111,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Block(tk0, false, es)
+        return Expr.Block(tk0, es)
     }
 
     fun clk_or_expr (): Pair<Tk.Clk?,Expr?> {
@@ -161,7 +161,7 @@ class Parser (lexer_: Lexer)
                     if (this.acceptFix("else")) {
                         this.block()
                     } else {
-                        Expr.Block(tk0, false, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Block(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -174,7 +174,7 @@ class Parser (lexer_: Lexer)
                         err(e.tk, "invalid while : expected identifier")
                     }
                     Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
-                        Expr.Block(tk0, true, listOf(Expr.Dcl(e.tk,false), this.block())))
+                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
                 } else {
                     Expr.While(tk0, e, this.block())
                 }
@@ -218,10 +218,10 @@ class Parser (lexer_: Lexer)
                         val coros = this.expr()
                         this.acceptFix_err(",")
                         val call = this.expr()
-                        if (call !is Expr.Block || call.es[0] !is Expr.Call) {
+                        if (call !is Expr.Call) {
                             err(tk1, "invalid spawn : expected call")
                         }
-                        Expr.Spawn(tk0, coros, call as Expr.Block)
+                        Expr.Spawn(tk0, coros, call as Expr.Call)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
@@ -232,10 +232,10 @@ class Parser (lexer_: Lexer)
                     }
                     else -> {
                         val call = this.expr()
-                        if (call !is Expr.Block || call.es[0] !is Expr.Call) {
+                        if (call !is Expr.Call) {
                             err(tk1, "invalid spawn : expected call")
                         }
-                        Expr.Spawn(tk0, null, call as Expr.Block)
+                        Expr.Spawn(tk0, null, call as Expr.Call)
                     }
                 }
             }
@@ -251,26 +251,24 @@ class Parser (lexer_: Lexer)
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
-                if (call !is Expr.Block || call.es[0] !is Expr.Call) {
+                if (call !is Expr.Call) {
                     err(tk1, "invalid resume : expected call")
-
                 }
-                Expr.Resume(tk0, call as Expr.Block)
+                Expr.Resume(tk0, call as Expr.Call)
             }
             this.acceptFix("toggle") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
                 val coro = this.expr()
-                val iscall = coro is Expr.Block && coro.isFake && coro.es[0] is Expr.Call
-                if (!XCEU || (iscall && !(XCEU && this.checkFix("->")))) {
-                    if (!iscall) {
+                if (!XCEU || (coro is Expr.Call && !(XCEU && this.checkFix("->")))) {
+                    if (coro !is Expr.Call) {
                         err(coro.tk, "invalid toggle : expected argument")
                     }
-                    val call = (coro as Expr.Block).es[0] as Expr.Call
-                    if (call.args.size != 1) {
-                        err(call.tk, "invalid toggle : expected single argument")
+                    coro as Expr.Call
+                    if (coro.args.es.size != 1) {
+                        err(coro.tk, "invalid toggle : expected single argument")
                     }
-                    Expr.Toggle(tk0, call.proto, call.args[0])
+                    Expr.Toggle(tk0, coro.proto, coro.args.es[0])
                 } else {
                     this.acceptFix_err("->")
                     val (off,on) = Pair(coro, this.expr())
@@ -330,13 +328,13 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
                 val e1 = this.expr()
                 this.acceptFix_err("->")
-                val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
+                val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                 var ifs = "${pre0}if ${e1.tostr(true)} ${b1.tostr(true)}else {\n"
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
                         this.acceptFix_err("->")
-                        val be = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
+                        val be = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                         ifs += be.es.map { it.tostr(true)+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
@@ -344,7 +342,7 @@ class Parser (lexer_: Lexer)
                     val pre1 = this.tk0.pos.pre()
                     val ei = this.expr()
                     this.acceptFix_err("->")
-                    val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0,false,listOf(this.expr()))
+                    val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                     ifs += """
                         ${pre1}if ${ei.tostr(true)} ${bi.tostr(true)}
                         else {
@@ -498,7 +496,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Fix
                 e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
-                e = Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e))))
+                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), Expr.Block(op, listOf(e)))
             }
         }
         return e
@@ -530,7 +528,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Block(e.tk, true, listOf(Expr.Call(e.tk, e, (list0(")"){this.expr()}))))
+                    e = Expr.Call(e.tk, e, Expr.Block(e.tk, (list0(")"){this.expr()})))
                 }
                 else -> break
             }
@@ -557,7 +555,7 @@ class Parser (lexer_: Lexer)
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
-                else  -> Expr.Block(op, true, listOf(Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))))
+                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), Expr.Block(op, listOf(e,e2)))
             }
         }
         return e
