@@ -1,7 +1,7 @@
 fun Expr.mem (): String {
     return when (this) {
         is Expr.Proto -> """
-            CEU_Proto proto_$n;     // TODO: only task
+            ${(this.tk.str=="task").cond { "CEU_Proto proto_$n;" }}
             """
         is Expr.Block -> {
             fun List<Expr>.seq (i: Int): String {
@@ -129,12 +129,10 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Call -> """
-            union { // CALL
+            struct { // CALL
                 ${this.proto.mem()}
-                struct {
-                    ${this.args.map { it.mem() }.joinToString("")}
-                    ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                };
+                ${this.args.map { it.mem() }.joinToString("")}
+                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
             };
             """
 

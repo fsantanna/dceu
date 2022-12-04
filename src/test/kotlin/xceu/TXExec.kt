@@ -576,7 +576,7 @@ class TXExec {
         assert(out == "1\n1\n") { out }
     }
     @Test
-    fun task6_pub_fake() {
+    fun todo_valgrind_task6_pub_fake() {
         val out = all("""
             task T () {
                 set pub = 10

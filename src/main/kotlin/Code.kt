@@ -151,10 +151,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
                 tops.add(Pair(type,func))
+                val proto = if (isfunc) "ceu_proto_$n" else "ceu_mem->proto_$n"
                 assrc_dst.cond {
                     """
-                    ceu_mem->proto_$n = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {.Task={sizeof(CEU_Proto_Mem_$n)}} };
-                    $it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&ceu_mem->proto_$n} });
+                    ${isfunc.cond { "static CEU_Proto $proto;" }}
+                    $proto = (CEU_Proto) { ceu_frame, ceu_proto_f_$n, {.Task={sizeof(CEU_Proto_Mem_$n)}} };
+                    $it = ((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Proto=&$proto} });
                     """
                 }
             }
