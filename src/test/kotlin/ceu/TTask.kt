@@ -1728,13 +1728,32 @@ class TTask {
     // ESCAPE
 
     @Test
-    fun todo_esc1() {
+    fun esc1() {
         val out = all("""
             var f
             set f = func () {
                 coroutine(task() {nil})
             }
             println(f())
+        """, true)
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+    }
+
+    // TRACK
+
+    @Test
+    fun track1() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var x
+            {
+                var t
+                set t = coroutine T
+                set x = track t
+                println(x)
+            }
+            println(x)
         """, true)
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }

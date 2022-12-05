@@ -9,7 +9,7 @@ var N = 1
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task",
-    "throw", "toggle", "true", "var", "yield", "while"
+    "throw", "toggle", "track", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "break", "every", "ifs", "not", "or", "par", "parand", "paror", "with", "where"
 )).toSortedSet()
