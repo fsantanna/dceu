@@ -22,6 +22,7 @@ fun Coder.main (): String {
             CEU_VALUE_TASK,     // task frame
             CEU_VALUE_TUPLE,
             CEU_VALUE_DICT,
+            CEU_VALUE_BCAST,    // all below are bcast
             CEU_VALUE_CORO,     // spawned task
             CEU_VALUE_COROS     // pool of spawned tasks
         } CEU_VALUE;
@@ -315,18 +316,19 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_DYN
         void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
+            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED || cur->Bcast.status==CEU_CORO_STATUS_TERMINATED) {
+                return;     // toggled or terminated
+            }
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
-                    if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || cur->Bcast.status==CEU_CORO_STATUS_RESUMED) {
-                        assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                        ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                        // if nested block threw uncaught exception, awake myself next to catch it
-                        //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                        if (cur->Bcast.status == CEU_CORO_STATUS_YIELDED) {
-                            CEU_Value arg = { CEU_VALUE_NIL };
-                            CEU_Value* args[] = { &arg };
-                            cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);
-                        }
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
+                    // if nested block threw uncaught exception, awake myself next to catch it
+                    //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    if (cur->Bcast.status == CEU_CORO_STATUS_YIELDED) {
+                        CEU_Value arg = { CEU_VALUE_NIL };
+                        CEU_Value* args[] = { &arg };
+                        cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);
                     }
                     break;
                 }

@@ -18,9 +18,10 @@ val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%'
 
 val TAGS = listOf (
     "nil", "tag", "bool", "number", "pointer",
-    "func", "task",
     "dynamic",
+    "func", "task",
     "tuple", "dict",
+    "bcast",
     "coro", "coros",
     "clear", "error",           // bcast-clear
     "global", "local", //"task"   // bcast scope
