@@ -316,8 +316,13 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_DYN
         void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
-            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED || cur->Bcast.status==CEU_CORO_STATUS_TERMINATED) {
-                return;     // toggled or terminated
+            if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+                // do not awake terminated/running coro
+                return;
+            }
+            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt!=&CEU_EVT_CLEAR) {
+                // do not awake toggled coro, unless it is a CLEAR event
+                return;
             }
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
@@ -325,7 +330,7 @@ fun Coder.main (): String {
                     ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
                     // if nested block threw uncaught exception, awake myself next to catch it
                     //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
-                    if (cur->Bcast.status == CEU_CORO_STATUS_YIELDED) {
+                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // on resume, only awake blocks
                         CEU_Value arg = { CEU_VALUE_NIL };
                         CEU_Value* args[] = { &arg };
                         cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);

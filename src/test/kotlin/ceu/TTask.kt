@@ -1683,6 +1683,47 @@ class TTask {
         """)
         assert(out == "1\n2\n10\n") { out }
     }
+    @Test
+    fun toggle5_defer() {
+        val out = all("""
+            var T
+            set T = task () {
+                defer {
+                    println(10)
+                }
+                yield nil
+                println(999)
+            }
+            var t
+            set t = spawn T()
+            toggle t (false)
+            println(1)
+            broadcast in :global, nil
+            println(2)
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
+    @Test
+    fun toggle6_defer_coros() {
+        val out = all("""
+            var T
+            set T = task () {
+                defer {
+                    println(10)
+                }
+                yield nil
+                println(999)
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            toggle ts (false)
+            println(1)
+            broadcast in :global, nil
+            println(2)
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
 
     // ESCAPE
 
