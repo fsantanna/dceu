@@ -569,10 +569,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """
                     { // EVT/ERR - SET
                         char* ceu_err_$n = ceu_block_set(&ceu_${this.tk.str}_blk, &$asdst_src);
+                        assert(ceu_err_$n != NULL && "bug found: add test and fix");
+                        #if 0
                         if (ceu_err_$n != NULL) {
                             snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                             continue;
                         }
+                        #endif
                         ceu_${this.tk.str} = &$asdst_src;
                     }
                     """

@@ -191,13 +191,13 @@ fun Coder.main (): String {
             switch (src->tag) {
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Dyn->Tuple.n; i++) {
-                        ceu_block_set(dst, &src->Dyn->Tuple.mem[i]);
+                        assert(NULL == ceu_block_set(dst, &src->Dyn->Tuple.mem[i]) && "bug found: add test and fix");
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dyn->Dict.n; i++) {
-                        ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][0]);
-                        ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][1]);
+                        assert(NULL == ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][0]) && "bug found: add test and fix");
+                        assert(NULL == ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][1]) && "bug found: add test and fix");
                     }
                     break;
                 case CEU_VALUE_FUNC: // these values cannot be moved
@@ -241,9 +241,12 @@ fun Coder.main (): String {
         void* ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
             assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
             char* err = ceu_block_set(&ceu_evt_block, evt);
+            assert(err == NULL && "bug found: add test and fix");
+            #if 0
             if (err != NULL) {
                 return err;
             }
+            #endif
             *prv = ceu_evt;
             ceu_has_bcast++;
             ceu_evt = evt;
