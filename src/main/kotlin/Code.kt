@@ -77,7 +77,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     ${this.args.map {
-                    """
+                        """
                         CEU_Value ${it.str};
                         CEU_Block* _${it.str}_;
                         """
@@ -119,6 +119,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     ceu_evt_block.depth = ceu_frame->depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
+                            // no block yet, set now, will be reset in body
                             int ceu_i = 0;
                             ${this.args.map {
                             val id = it.str.noSpecial()
@@ -678,24 +679,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
 
-                val (args_sets,args_vs) = this.args.let {
+                val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
-                        it.mapIndexed { i,e ->
-                            val bupc2 = ups.block(e)!!.toc(true)
-                            e.code("ceu_mem->arg_${i}_$n", true, null) +
-                            """
-                            { // check scopes of args
-        // TODO: move to call rcpt
-                                char* ceu_err_$n = ceu_block_set($bupc2, &ceu_mem->arg_${i}_$n);
-                                if (ceu_err_$n != NULL) {
-                                    snprintf(ceu_err_error_msg, 256, "${e.tk.pos.file} : (lin ${e.tk.pos.lin}, col ${e.tk.pos.col}) : %s", ceu_err_$n);
-                                    continue;
-                                }
-                            }
-                            """
-                            }.joinToString(""),
-                        it.mapIndexed { i,_ -> "&ceu_mem->arg_${i}_$n" }.joinToString(",")
+                        """
+                        ${e.code("ceu_mem->arg_${i}_$n", true, null)}
+                        assert(NULL == ceu_block_set(&ceu_block_$n, &ceu_mem->arg_${i}_$n));
+                        """,
+                        "&ceu_mem->arg_${i}_$n"
                     )
+                }.unzip().let {
+                    Pair(it.first.joinToString(""), it.second.joinToString(", "))
                 }
 
                 iscall.cond{"""
@@ -746,6 +739,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.proto.tk.pos.file} : (lin ${this.proto.tk.pos.lin}, col ${this.proto.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
+                    // this block is responsible to hold all orphan args and is freed after the call
+                    CEU_Block ceu_block_$n = (CEU_Block) { $bupc->depth+1, NULL, {NULL,NULL} };
                     { // SETS
                         $args_sets
                     }
@@ -757,6 +752,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.args.size},
                             ceu_args_$n
                         );
+                    ceu_block_free(&ceu_block_$n);
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
