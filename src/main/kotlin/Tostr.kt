@@ -23,6 +23,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Resume -> "resume " + this.call.tostr(pre)
         is Expr.Toggle -> "toggle " + this.coro.tostr(pre) + "(" + this.on.tostr() + ")"
         is Expr.Pub    -> if (this.coro == null) "pub" else (this.coro.tostr(pre) + ".pub")
+        is Expr.Track  -> "track " + this.coro.tostr(pre)
 
         is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str

@@ -716,4 +716,16 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
     }
+
+    // TRACK
+
+    @Test
+    fun track1() {
+        val l = lexer("""
+            track x
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "track x\n") { e.tostr() }
+    }
 }

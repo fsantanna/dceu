@@ -63,6 +63,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk, val coro: Expr?): Expr(N++, tk_)
+    data class Track  (val tk_: Tk.Fix, val coro: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
