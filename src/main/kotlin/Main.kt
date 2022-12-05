@@ -11,7 +11,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task",
     "throw", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "await", "awaiting", "every", "ifs", "not", "or", "par", "parand", "paror", "with", "where"
+    "and", "await", "awaiting", "break", "every", "ifs", "not", "or", "par", "parand", "paror", "with", "where"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
@@ -24,6 +24,8 @@ val TAGS = listOf (
     "coro", "coros",
     "clear", "error",           // bcast-clear
     "global", "local", //"task"   // bcast scope
+) + if (!XCEU) setOf() else setOf(
+    "break"
 )
 
 val GLOBALS = setOf (

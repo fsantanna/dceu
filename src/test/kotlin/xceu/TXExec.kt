@@ -640,6 +640,53 @@ class TXExec {
         assert(out == "0\n1\n2\n") { out }
     }
 
+    // WHILE / BREAK
+
+    @Test
+    fun break1() {
+        val out = all("""
+            while true {
+                break
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun break2() {
+        val out = all("""
+            while false {
+                while true {
+                    break
+                }
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun todo_return_break3() {
+        val out = all("""
+            var x = while true {
+                break 1
+            }
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun todo_return_break4() {
+        val out = all("""
+            var x = while false {
+                while true {
+                    break 1
+                }
+            }
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test

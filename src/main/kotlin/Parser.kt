@@ -177,6 +177,11 @@ class Parser (lexer_: Lexer)
                         Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
                 } else {
                     Expr.While(tk0, e, this.block())
+                }.let {
+                    if (!XCEU) it else {
+                        val cnd = this.nest("${tk0.pos.pre()}(err==:break)")
+                        Expr.Catch(tk0, cnd, Expr.Block(tk0, listOf(it)))
+                    }
                 }
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
@@ -323,6 +328,10 @@ class Parser (lexer_: Lexer)
                 }
             }
 
+            (XCEU && this.acceptFix("break")) -> {
+                val tk0 = this.tk0
+                this.nest("${tk0.pos.pre()}throw :break")
+            }
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
                 this.acceptFix_err("{")
