@@ -795,6 +795,19 @@ class TExec {
         """)
         assert(out == "anon : (lin 3, col 13) : call error : expected function\n") { out }
     }
+    @Test
+    fun todo_use_bef_dcl_func18() {
+        val out = all("""
+            var f
+            set f = func () {
+                println(v)
+            }
+            var v
+            set v = 10
+            f()
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // WHILE
 

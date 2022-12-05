@@ -297,11 +297,61 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
+    fun spawn6_err() {
+        val out = all("""
+            var x
+            set x = do {
+                spawn (task() {nil}) ()
+            }
+            println(2)
+        """)
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun spawn67_err() {
+        val out = all("""
+            var t
+            set t = task () {
+                nil
+            }
+            var co
+            set co = if true { spawn t() } else { nil }
+        """)
+        assert(out == "anon : (lin 7, col 32) : return error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun spawn7_err() {
+        val out = all("""
+            var f
+            set f = func () {
+                spawn t()
+            }
+            var t
+            set t = task () { nil }
+            f()
+        """)
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun spawn8_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                spawn (task :fake () {
+                    nil
+                }) ()
+            }
+            spawn T()
+        """)
+        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+    }
+    @Test
     fun spawn6() {
         val out = all("""
             var x
             set x = do {
                 spawn (task() {println(1)}) ()
+                nil
             }
             println(2)
         """)
@@ -321,7 +371,7 @@ class TTask {
                 println(4)
             }
             var co
-            set co = if true { spawn t() } else { nil }
+            set co = spawn (if true { t } else { nil }) ()
             resume co()
             println(5)
         """)
@@ -332,7 +382,7 @@ class TTask {
         val out = all("""
             var f
             set f = func () {
-                spawn t()
+                t
             }
             var t
             set t = task () {
@@ -345,11 +395,24 @@ class TTask {
                 println(4)
             }
             var co
-            set co = f()
+            set co = spawn f() ()
             resume co()
             println(5)
         """)
         assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun spawn9_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                (task :fake () {
+                    nil
+                })
+            }
+            spawn T()
+        """)
+        assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
     }
 
     // THROW
