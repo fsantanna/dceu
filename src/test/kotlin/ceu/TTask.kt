@@ -1635,7 +1635,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
+        assert(out.contains("Assertion `ceu_coro->Bcast.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
     }
     @Test
     fun toggle2_err() {
@@ -1645,7 +1645,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled task\n") { out }
     }
     @Test
-    fun toggle3() {
+    fun toggle3_coro() {
         val out = all("""
             var T
             set T = task () {
@@ -1658,6 +1658,26 @@ class TTask {
             println(1)
             broadcast in :global, nil
             toggle t (true)
+            println(2)
+            broadcast in :global, nil
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
+    @Test
+    fun toggle4_coros() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield nil
+                println(10)
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            toggle ts (false)
+            println(1)
+            broadcast in :global, nil
+            toggle ts (true)
             println(2)
             broadcast in :global, nil
         """)

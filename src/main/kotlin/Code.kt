@@ -98,8 +98,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """}}
                     ${istask.cond{"""
                         CEU_Dynamic* ceu_coro = ceu_frame->Task.coro;
-                        assert(ceu_coro->Bcast.Coro.status == CEU_CORO_STATUS_YIELDED);
-                        ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_RESUMED;
+                        assert(ceu_coro->Bcast.status == CEU_CORO_STATUS_YIELDED);
+                        ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                     """}}
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
@@ -142,7 +142,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ // TERMINATE
                         ${istask.cond{"""
                             ceu_coro->Bcast.Coro.pc = -1;
-                            ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_TERMINATED;
+                            ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
                                 if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                     ceu_coros_destroy( ceu_coro->Bcast.Coro.coros, ceu_coro);
@@ -306,7 +306,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     assert(ceu_$n != NULL);
                     *ceu_$n = (CEU_Dynamic) {
                         CEU_VALUE_COROS, NULL, NULL, {
-                            .Bcast = { NULL, {.Coros = {${if (this.max==null) 0 else "ceu_max_$n.Number"}, 0, 0, NULL}} }
+                            .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                                .Coros = { ${if (this.max==null) 0 else "ceu_max_$n.Number"}, 0, 0, NULL}
+                            } }
                         }
                     };
                     ${SET("((CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} })")}
@@ -417,7 +419,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // YIELD ${this.tk.dump()}
                     ${this.arg.code("ceu_${ups.func(this)!!.n}", false, null)}
                      ceu_coro->Bcast.Coro.pc = $n;      // next resume
-                     ceu_coro->Bcast.Coro.status = CEU_CORO_STATUS_YIELDED;
+                     ceu_coro->Bcast.status = CEU_CORO_STATUS_YIELDED;
                     return ceu_${ups.func(this)!!.n};
                 case $n:                    // resume here
                     if (ceu_has_throw_clear()) {
@@ -433,13 +435,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${this.on.code("ceu_mem->on_$n", false, null)}
                 CEU_Value ceu_coro_$n;
                 ${this.coro.code("ceu_coro_$n", false, null)}
-                if (ceu_coro_$n.tag!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                if (ceu_coro_$n.tag!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                     ceu_has_throw = 1;
                     ceu_err = &CEU_ERR_ERROR;
                     strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : toggle error : expected yielded/toggled task", 256);
                     continue; // escape enclosing block;
                 }
-                ceu_coro_$n.Dyn->Bcast.Coro.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_CORO_STATUS_YIELDED : CEU_CORO_STATUS_TOGGLED);
+                ceu_coro_$n.Dyn->Bcast.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_CORO_STATUS_YIELDED : CEU_CORO_STATUS_TOGGLED);
                 """
             is Expr.Pub -> {
                 """
@@ -731,7 +733,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_coro_$n;
                     ${this.proto.code("ceu_coro_$n", false, null)}
                     char* ceu_err_$n = NULL;
-                    if (ceu_coro_$n.tag!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.Coro.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                    if (ceu_coro_$n.tag!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                         ceu_err_$n = "resume error : expected yielded task";
                     }
                 """} +
