@@ -159,10 +159,11 @@ class TTask {
                 yield nil   ;; never awakes
                 println(2)
             }
+            println(0)
             resume (coroutine T) ()
             println(4)
         """)
-        assert(out == "1\n3\n4\n") { out }
+        assert(out == "0\n1\n4\n3\n") { out }
     }
     @Test
     fun yield14_err() {
@@ -218,10 +219,11 @@ class TTask {
             }
             var t
             set t = coroutine T
+            println(0)
             resume t ()
             println(4)
         """)
-        assert(out == "1\n3\n4\n") { out }
+        assert(out == "0\n1\n4\n3\n") { out }
     }
 
     // SPAWN
