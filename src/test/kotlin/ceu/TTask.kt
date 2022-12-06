@@ -1619,6 +1619,52 @@ class TTask {
         """)
         assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun todo_pub12_index_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var t
+            set t = coroutine T
+            resume t()
+            var x
+            set x = t.pub   ;; no expose
+        """)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun todo_pub13_index_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var t
+            set t = coroutine T
+            resume t()
+            println(t.pub)   ;; no expose
+        """)
+        assert(out == "anon : (lin 10, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+    }
+    @Test
+    fun todo_pub14_index_err() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [[@[(:x,10)]]]
+                yield nil
+            }
+            var t
+            set t = coroutine T
+            resume t()
+            println(t.pub[0][:x])   ;; no expose
+        """)
+        assert(out == "anon : (lin 10, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+    }
 
     // TOGGLE
 

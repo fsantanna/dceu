@@ -460,9 +460,22 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_dyn_$n = ceu_coro_$n.Dyn;
                     """ }}
                     ${when {
-                        (assrc_dst != null) -> """ // PUB - read
-                            $assrc_dst = ceu_dyn_$n->Bcast.Coro.frame->Task.pub;
+                        (assrc_dst != null) -> {
+                            val inidx = (ups.pred(this) { it is Expr.Index } != null)
                             """
+                            { // PUB - read
+                                ${(!inidx).cond { """
+                                    if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
+                                        ceu_has_throw = 1;
+                                        ceu_err = &CEU_ERR_ERROR;
+                                        strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid pub : cannot expose dynamic public field", 256);
+                                        continue; // escape enclosing block;
+                                    }                                    
+                                """ }}
+                                $assrc_dst = ceu_dyn_$n->Bcast.Coro.frame->Task.pub;
+                            }
+                            """
+                        }
                         (asdst_src != null) -> """ // PUB - SET
                             char* ceu_err_$n = ceu_block_set(ceu_dyn_$n->hold, &$asdst_src);
                             if (ceu_err_$n != NULL) {
@@ -651,6 +664,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             }
             is Expr.Index -> {
+                fun Expr.Index.has_pub (): Boolean {
+                    val up = ups.ups[this]
+                    return when {
+                        (this.col is Expr.Pub) -> true
+                        (up == null) -> false
+                        (up !is Expr.Index) -> false
+                        else -> up.has_pub()
+                    }
+                }
+                val haspub = this.has_pub()
+
                 """
                 { // INDEX  ${this.tk.dump()}
                     CEU_Value ceu_col_$n;
@@ -670,7 +694,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         case CEU_VALUE_TUPLE:                
                             ${when {
                                 (asdst_src != null) -> "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;"
-                                (assrc_dst != null) -> "$assrc_dst = ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
+                                (assrc_dst != null) -> """
+                                    ${haspub.cond { """
+                                        if (ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
+                                            ceu_has_throw = 1;
+                                            ceu_err = &CEU_ERR_ERROR;
+                                            strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic public field", 256);
+                                            continue; // escape enclosing block;
+                                        }
+                                    """}}
+                                    $assrc_dst = ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];
+                                """
                                 else -> "" //"ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];"
                             }}
                             break;

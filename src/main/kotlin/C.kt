@@ -795,17 +795,17 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_div_eq_f, {0} }
                         }
                     };
-                    static CEU_Dynamic ceu_deref = { 
-                        CEU_VALUE_FUNC, NULL, NULL, {
-                            .Proto = { NULL, ceu_deref_f, {0} }
-                        }
-                    };
+                    //static CEU_Dynamic ceu_deref = { 
+                    //    CEU_VALUE_FUNC, NULL, NULL, {
+                    //        .Proto = { NULL, ceu_deref_f, {0} }
+                    //    }
+                    //};
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}     };
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
-                    ceu_mem->deref     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_deref}     };
+                    //ceu_mem->deref     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_deref}     };
                 }
                 ${this.code}
                 return 0;

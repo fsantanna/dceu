@@ -1,5 +1,9 @@
 # NEXT
 
+- track may hold normal coro
+  - bcast to awake on termination
+- pub childs cannot be assigned
+  - not even ahead b/c of coros which may kill pub
 - count memory
 - kill task
 - await task
