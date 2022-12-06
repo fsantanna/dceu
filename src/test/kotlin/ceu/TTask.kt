@@ -1642,7 +1642,7 @@ class TTask {
         val out = all("""
             toggle 1 (true)
         """)
-        assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled task\n") { out }
+        assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled coroutine\n") { out }
     }
     @Test
     fun toggle3_coro() {
