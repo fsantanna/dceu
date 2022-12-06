@@ -205,6 +205,8 @@ fun Coder.main (): String {
                         assert(NULL == ceu_block_set(dst, &(*src->Dyn->Dict.mem)[i][1]) && "bug found: add test and fix");
                     }
                     break;
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
                 case CEU_VALUE_CORO:
                 case CEU_VALUE_COROS:
                 case CEU_VALUE_TRACK:
