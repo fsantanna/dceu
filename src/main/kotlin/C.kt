@@ -24,7 +24,8 @@ fun Coder.main (): String {
             CEU_VALUE_DICT,
             CEU_VALUE_BCAST,    // all below are bcast
             CEU_VALUE_CORO,     // spawned task
-            CEU_VALUE_COROS     // pool of spawned tasks
+            CEU_VALUE_COROS,    // pool of spawned tasks
+            CEU_VALUE_TRACK
         } CEU_VALUE;
         
         typedef enum CEU_CORO_STATUS {
@@ -160,6 +161,9 @@ fun Coder.main (): String {
                             uint8_t open;               // number of open iterators
                             struct CEU_Dynamic* first;  // coro->Bcast.Coro, first coro to bcast/free
                         } Coros;
+                        struct {
+                            struct CEU_Dynamic* coro;   // starts as CORO and may fall to NIL
+                        } Track;
                     };
                 } Bcast;
             };
@@ -477,6 +481,19 @@ fun Coder.main (): String {
             };
             return ret;
         }
+        
+        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) {
+                CEU_VALUE_TRACK, NULL, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                        .Track = coro
+                    } }
+                }
+            };
+            return ret;
+        }
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Value* v) {
@@ -539,6 +556,9 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_COROS:
                     printf("coros: %p", &v->Dyn);
+                    break;
+                case CEU_VALUE_TRACK:
+                    printf("track: %p", &v->Dyn);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -616,6 +636,17 @@ fun Coder.main (): String {
             CEU_Value v = ceu_op_eq_eq_f(frame, n, args);
             v.Bool = !v.Bool;
             return v;
+        }
+    """ +
+    """ // DEREF
+        CEU_Value ceu_deref_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* track = args[0];
+            if (track->Dyn->Bcast.Track.coro == NULL) {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            } else {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
         }
     """ +
     """ // TUPLE / DICT

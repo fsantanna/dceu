@@ -1738,23 +1738,96 @@ class TTask {
         """, true)
         assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
     }
+    @Test
+    fun esc2() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var xxx
+            do {
+                var t
+                set t = coroutine T
+                set xxx = t ;; error
+            }
+        """)
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+    }
 
     // TRACK
 
     @Test
-    fun track1() {
+    fun track1_err() {
+        val out = all("""
+            track nil
+        """)
+        assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n") { out }
+    }
+    @Test
+    fun track2_err() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var t
+            set t = coroutine T
+            resume t()
+            var x
+            set x = track t ;; error: dead coro
+            println(x)
+        """)
+        assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n") { out }
+    }
+    @Test
+    fun track3() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var t
+            set t = coroutine T
+            var x
+            set x = track t
+            var y
+            set y = deref(x)    ;; error 
+        """)
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun track4() {
         val out = all("""
             var T
             set T = task () { nil }
             var x
-            {
+            do {
                 var t
                 set t = coroutine T
                 set x = track t
                 println(x)
+                println(deref(x))
+                resume t ()
+                println(x)
+                println(deref(x))
             }
             println(x)
-        """, true)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+            println(deref(x))
+        """)
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun track5() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var x
+            do {
+                var t
+                set t = coroutine T
+                set x = track t
+            }
+            println(x)
+            println(deref(x))
+            broadcast in :global, nil 
+            println(x)
+            println(deref(x))
+        """)
+        assert(out == "TODO\n") { out }
     }
 }

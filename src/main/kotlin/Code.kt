@@ -475,8 +475,26 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }}
                 }
                 """
-            }
-            is Expr.Track -> TODO()
+            is Expr.Track -> """
+                { // TRACK
+                    CEU_Value ceu_coro_$n;
+                    ${this.coro.code("ceu_coro_$n", false, null)}
+                    if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
+                        ceu_has_throw = 1;
+                        ceu_err = &CEU_ERR_ERROR;
+                        strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected coroutine", 256);
+                        continue; // escape enclosing block;
+                    } else if (ceu_coro_$n.Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
+                        ceu_has_throw = 1;
+                        ceu_err = &CEU_ERR_ERROR;
+                        strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected unterminated coroutine", 256);
+                        continue; // escape enclosing block;
+                    }
+                    CEU_Dynamic* ceu_$n = ceu_track_create(ceu_coro_$n.Dyn);
+                    assert(ceu_$n != NULL);
+                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_$n} })")}
+                }
+                """
 
             is Expr.Nat -> {
                 val bup = ups.block(this)!!
