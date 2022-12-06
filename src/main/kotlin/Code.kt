@@ -108,7 +108,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ // WHILE
                     do { // FUNC
                         ${istask.cond{"""
-                            switch (ceu_coro->Bcast.Coro.pc) {
+                            switch (ceu_frame->Task.pc) {
                                 case -1:
                                     assert(0 && "bug found");
                                     break;
@@ -141,7 +141,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ +
                     """ // TERMINATE
                         ${istask.cond{"""
-                            ceu_coro->Bcast.Coro.pc = -1;
+                            ceu_frame->Task.pc = -1;
                             ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
                                 if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
@@ -418,7 +418,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Yield -> """
                 { // YIELD ${this.tk.dump()}
                     ${this.arg.code("ceu_${ups.func(this)!!.n}", false, null)}
-                     ceu_coro->Bcast.Coro.pc = $n;      // next resume
+                     ceu_frame->Task.pc = $n;      // next resume
                      ceu_coro->Bcast.status = CEU_CORO_STATUS_YIELDED;
                     return ceu_${ups.func(this)!!.n};
                 case $n:                    // resume here
@@ -461,7 +461,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ }}
                     ${when {
                         (assrc_dst != null) -> """ // PUB - read
-                            $assrc_dst = ceu_dyn_$n->Bcast.Coro.pub;
+                            $assrc_dst = ceu_dyn_$n->Bcast.Coro.frame->Task.pub;
                             """
                         (asdst_src != null) -> """ // PUB - SET
                             char* ceu_err_$n = ceu_block_set(ceu_dyn_$n->hold, &$asdst_src);
@@ -469,7 +469,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                                 continue;
                             }
-                            ceu_dyn_$n->Bcast.Coro.pub = $asdst_src;
+                            ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
                             """
                         else -> "// PUB - useless"
                     }}

@@ -79,7 +79,9 @@ fun Coder.main (): String {
             char* mem;
             union {
                 struct {
-                    struct CEU_Dynamic* coro;
+                    struct CEU_Dynamic* coro;   // coro/frame point to each other
+                    int pc;                     // next line to execute
+                    CEU_Value pub;              // public value
                 } Task;
             };
         } CEU_Frame;
@@ -152,8 +154,6 @@ fun Coder.main (): String {
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             CEU_Frame* frame;
-                            int pc;                     // next line to execute
-                            CEU_Value pub;
                         } Coro;
                         struct {
                             uint8_t max;                // max number of instances
@@ -683,13 +683,13 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = {
-                            NULL, NULL, frame, 0, { CEU_VALUE_NIL }
-                        }
+                        .Coro = { NULL, NULL, frame }
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
+            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {
+                .Task = { coro, 0, { CEU_VALUE_NIL } }
+            } };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             
             return NULL;
@@ -714,13 +714,13 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, { // no free
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = {
-                            coros, NULL, frame, 0, { CEU_VALUE_NIL }
-                        }
+                        .Coro = { coros, NULL, frame }
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
+            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {
+                .Task = { coro, 0, { CEU_VALUE_NIL } }
+            } };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
