@@ -379,66 +379,6 @@ fun Coder.main (): String {
         }
     """ +
     """ // COROS
-        char* ceu_coro_create (CEU_Value* task, int depth, CEU_Value* ret) {
-            if (task->tag != CEU_VALUE_TASK) {
-                return "coroutine error : expected task";
-            }
-            
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
-            assert(coro != NULL);
-            CEU_Frame* frame = malloc(sizeof(CEU_Frame));
-            assert(frame != NULL);
-            char* mem = malloc(task->Dyn->Proto.Task.n);
-            assert(mem != NULL);
-            
-            *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, NULL, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = {
-                            NULL, NULL, frame, 0, { CEU_VALUE_NIL }
-                        }
-                    } }
-                }
-            };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
-            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
-            
-            return NULL;
-        }
-
-        char* ceu_coros_create (int* ok, CEU_Dynamic* coros, CEU_Value* task, int depth, CEU_Value* ret) {
-            if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
-                *ok = 0;
-                return NULL;
-            }
-            if (task->tag != CEU_VALUE_TASK) {
-                return "coroutine error : expected task";
-            }
-            
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
-            assert(coro != NULL);
-            CEU_Frame* frame = malloc(sizeof(CEU_Frame));
-            assert(frame != NULL);
-            char* mem = malloc(task->Dyn->Proto.Task.n);
-            assert(mem != NULL);
-
-            *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, coros->hold, { // no free
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = {
-                            coros, NULL, frame, 0, { CEU_VALUE_NIL }
-                        }
-                    } }
-                }
-            };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
-            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
-            
-            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
-            coros->Bcast.Coros.cur++;
-            return NULL;
-        }
-
         void ceu_coros_destroy (CEU_Dynamic* coros, CEU_Dynamic* coro) {
             CEU_Dynamic* cur = coros->Bcast.Coros.first;
             if (cur == coro) {
@@ -473,29 +413,6 @@ fun Coder.main (): String {
             }
         }
 
-        CEU_Dynamic* ceu_proto_create (int tag, CEU_Frame* frame, CEU_Proto_F f, int n) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
-            assert(ret != NULL);
-            *ret = (CEU_Dynamic) {
-                tag, NULL, NULL, {
-                    .Proto = { frame, f, {.Task={n}} }
-                }
-            };
-            return ret;
-        }
-        
-        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
-            assert(ret != NULL);
-            *ret = (CEU_Dynamic) {
-                CEU_VALUE_TRACK, NULL, NULL, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Track = coro
-                    } }
-                }
-            };
-            return ret;
-        }
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Value* v) {
@@ -672,28 +589,6 @@ fun Coder.main (): String {
             }
         }
 
-        CEU_Dynamic* ceu_tuple_create (int n, CEU_Value* args) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
-            assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, NULL, NULL, {.Tuple={n,{}}} };
-            memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-            ceu_max_depth(ret, n, args);
-            return ret;
-        }
-
-        CEU_Dynamic* ceu_dict_create (int n, CEU_Value (*args)[][2]) {
-            int min = (n < 4) ? 4 : n; 
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
-            assert(ret != NULL);
-            CEU_Value (*mem)[][2] = malloc(min*2*sizeof(CEU_Value));
-            assert(mem != NULL);
-            memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
-            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, NULL, NULL, {.Dict={min,mem}} };
-            memcpy(mem, args, n*2*sizeof(CEU_Value));
-            ceu_max_depth(ret, n*2, (CEU_Value*)args);
-            return ret;
-        }
-
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.n; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
@@ -737,6 +632,113 @@ fun Coder.main (): String {
                 }
             }
             return NULL;
+        }
+    """ +
+    """ // CREATES
+        CEU_Dynamic* ceu_proto_create (int tag, CEU_Frame* frame, CEU_Proto_F f, int n) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) {
+                tag, NULL, NULL, {
+                    .Proto = { frame, f, {.Task={n}} }
+                }
+            };
+            return ret;
+        }
+        
+        CEU_Dynamic* ceu_tuple_create (int n, CEU_Value* args) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, NULL, NULL, {.Tuple={n,{}}} };
+            memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
+            ceu_max_depth(ret, n, args);
+            return ret;
+        }
+
+        CEU_Dynamic* ceu_dict_create (int n, CEU_Value (*args)[][2]) {
+            int min = (n < 4) ? 4 : n; 
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+            assert(ret != NULL);
+            CEU_Value (*mem)[][2] = malloc(min*2*sizeof(CEU_Value));
+            assert(mem != NULL);
+            memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
+            *ret = (CEU_Dynamic) { CEU_VALUE_DICT, NULL, NULL, {.Dict={min,mem}} };
+            memcpy(mem, args, n*2*sizeof(CEU_Value));
+            ceu_max_depth(ret, n*2, (CEU_Value*)args);
+            return ret;
+        }
+
+        char* ceu_coro_create (CEU_Value* task, int depth, CEU_Value* ret) {
+            if (task->tag != CEU_VALUE_TASK) {
+                return "coroutine error : expected task";
+            }
+            
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
+            assert(coro != NULL);
+            CEU_Frame* frame = malloc(sizeof(CEU_Frame));
+            assert(frame != NULL);
+            char* mem = malloc(task->Dyn->Proto.Task.n);
+            assert(mem != NULL);
+            
+            *coro = (CEU_Dynamic) {
+                CEU_VALUE_CORO, NULL, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                        .Coro = {
+                            NULL, NULL, frame, 0, { CEU_VALUE_NIL }
+                        }
+                    } }
+                }
+            };
+            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
+            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            
+            return NULL;
+        }
+
+        char* ceu_coros_create (int* ok, CEU_Dynamic* coros, CEU_Value* task, int depth, CEU_Value* ret) {
+            if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
+                *ok = 0;
+                return NULL;
+            }
+            if (task->tag != CEU_VALUE_TASK) {
+                return "coroutine error : expected task";
+            }
+            
+            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
+            assert(coro != NULL);
+            CEU_Frame* frame = malloc(sizeof(CEU_Frame));
+            assert(frame != NULL);
+            char* mem = malloc(task->Dyn->Proto.Task.n);
+            assert(mem != NULL);
+
+            *coro = (CEU_Dynamic) {
+                CEU_VALUE_CORO, NULL, coros->hold, { // no free
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                        .Coro = {
+                            coros, NULL, frame, 0, { CEU_VALUE_NIL }
+                        }
+                    } }
+                }
+            };
+            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {.Task={coro}} };
+            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            
+            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            coros->Bcast.Coros.cur++;
+            return NULL;
+        }
+
+        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro) {
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) {
+                CEU_VALUE_TRACK, NULL, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                        .Track = coro
+                    } }
+                }
+            };
+            return ret;
         }
     """ +
     """ // FUNCS
