@@ -460,7 +460,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             if (ceu_coro_$n.tag == CEU_VALUE_TRACK) {
                                 ceu_coro_$n = ceu_track_to_coro(&ceu_coro_$n);
                                 if (ceu_coro_$n.tag != CEU_VALUE_CORO) {
-                                    $assrc_dst = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} };
+                                    ${assrc_dst.cond { "$it =(CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} };" }}
                                     goto CEU_PUB_$n;    // special case, skip everything else
                                 }
                             }

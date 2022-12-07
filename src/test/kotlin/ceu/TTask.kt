@@ -1705,7 +1705,7 @@ class TTask {
         val out = all("""
             status
         """, true)
-        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
     }
     @Test
     fun status3_err() {
@@ -1950,7 +1950,7 @@ class TTask {
             set x = track t
             println(x.pub)      ;; expose
         """)
-        assert(out == "anon : (lin 12, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun track6_err() {
