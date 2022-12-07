@@ -557,26 +557,6 @@ fun Coder.main (): String {
             return v;
         }
     """ +
-    """ // DEREF
-        CEU_Value ceu_deref_f (CEU_Block* block, CEU_Frame* frame, int n, CEU_Value* args[]) {
-            assert(n == 1);
-            CEU_Value* track = args[0];
-            if (track->Dyn->Bcast.Track.coro == NULL) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            } else {
-                CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
-                assert(coro != NULL);
-                *coro = (CEU_Dynamic) {
-                    CEU_VALUE_CORO, NULL, NULL, {
-                        .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                            .Coro = { NULL, NULL, frame }
-                        } }
-                    }
-                };
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-        }
-    """ +
     """ // TUPLE / DICT
         void ceu_max_depth (CEU_Dynamic* dyn, int n, CEU_Value* childs) {
             // new dyn should have at least the maximum depth among its children
@@ -749,6 +729,14 @@ fun Coder.main (): String {
             };
             return ret;
         }
+
+        CEU_Value ceu_track_to_coro (CEU_Value* track) {
+            if (track->tag == CEU_VALUE_TRACK) {
+                return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track.coro} };
+            } else {
+                return *track;
+            }
+        }
     """ +
     """ // FUNCS
         typedef struct {
@@ -795,17 +783,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_div_eq_f, {0} }
                         }
                     };
-                    //static CEU_Dynamic ceu_deref = { 
-                    //    CEU_VALUE_FUNC, NULL, NULL, {
-                    //        .Proto = { NULL, ceu_deref_f, {0} }
-                    //    }
-                    //};
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}     };
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
-                    //ceu_mem->deref     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_deref}     };
                 }
                 ${this.code}
                 return 0;

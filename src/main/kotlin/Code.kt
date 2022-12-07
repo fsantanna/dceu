@@ -451,6 +451,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } else { """
                         CEU_Value ceu_coro_$n;
                         ${this.coro.code("ceu_coro_$n", false, null)}
+                        ceu_coro_$n = ceu_track_to_coro(&ceu_coro_$n);
                         if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;

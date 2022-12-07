@@ -1592,6 +1592,20 @@ class TTask {
         assert(out == "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
+    fun pub9_10_fake_task() {
+        val out = all("""
+            spawn (task () {
+                set pub = [10]
+                var x
+                spawn (task :fake () {
+                    set x = pub[0]
+                }) ()
+                println(x)
+            }) ()
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
     fun pub10_fake_err() {
         val out = all("""
             spawn (task :fake () {
@@ -1812,6 +1826,19 @@ class TTask {
         assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n") { out }
     }
     @Test
+    fun track2() {
+        val out = all("""
+            var T
+            set T = task () { nil }
+            var t
+            set t = coroutine T
+            var x
+            set x = track t
+            println(t, x)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+    @Test
     fun track3_err() {
         val out = all("""
             var T
@@ -1838,8 +1865,36 @@ class TTask {
             var x
             set x = track t
             println(x.pub) 
+            resume t()
+            println(x.pub) 
         """)
-        assert(out == "TODO\n") { out }
+        assert(out == "nil\n10\n") { out }
+    }
+    @Test
+    fun track5_err() {
+        val out = all("""
+            var x
+            set x = nil
+            println(x.pub)  ;; not coro/track 
+        """)
+        assert(out == "anon : (lin 4, col 21) : pub error : expected coroutine\n") { out }
+    }
+    @Test
+    fun track5() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var t
+            set t = coroutine T
+            resume t()
+            var x
+            set x = track t
+            println(x.pub)      ;; expose
+        """)
+        assert(out == "anon : (lin 12, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun track6() {
@@ -1851,11 +1906,7 @@ class TTask {
                 var t
                 set t = coroutine T
                 set x = track t
-                println(x)
-                println(deref(x))
                 resume t ()
-                println(x)
-                println(deref(x))
             }
             println(x)
             println(deref(x))
@@ -1880,5 +1931,66 @@ class TTask {
             println(deref(x))
         """)
         assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun track8() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var t
+            set t = coroutine T
+            resume t ()
+            var x
+            set x = track t
+            println(x.pub[0])
+            broadcast in :global, nil
+            println(x)
+        """)
+        assert(out == "10\nnil\n") { out }
+    }
+    @Test
+    fun track9() {
+        val out = all("""
+            var T
+            set T = task () {
+                set pub = [10]
+                yield nil
+            }
+            var x
+            do {
+                var t
+                set t = coroutine T
+                resume t ()
+                set x = track t
+                println(x.pub[0])
+            }
+            println(x)
+        """)
+        assert(out == "10\nnil\n") { out }
+    }
+    @Test
+    fun track10() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                set pub = [v]
+                yield nil
+            }
+            var x
+            var ts
+            set ts = coroutines()
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            while t in ts {
+                set x = t
+            }
+            println(x.pub[0])   ;; 2
+            broadcast in :global, nil
+            println(x)          ;; nil
+        """)
+        assert(out == "2\nnil\n") { out }
     }
 }
