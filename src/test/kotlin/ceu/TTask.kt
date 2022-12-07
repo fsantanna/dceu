@@ -1439,7 +1439,7 @@ class TTask {
             var a
             a.pub
         """, true)
-        assert(out == "anon : (lin 3, col 13) : pub error : expected coroutine\n") { out }
+        assert(out == "anon : (lin 3, col 15) : pub error : expected coroutine\n") { out }
     }
     @Test
     fun pub2_err() {
@@ -1486,7 +1486,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 11, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub5() {
@@ -1563,7 +1563,7 @@ class TTask {
             println(999)
         """)
         //assert(out == "20\n") { out }
-        assert(out == "anon : (lin 12, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 12, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub8_fake_task() {
@@ -1615,7 +1615,7 @@ class TTask {
         assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
     }
     @Test
-    fun todo_pub11_err() {
+    fun pub11_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1634,7 +1634,7 @@ class TTask {
             println(999)
         """)
         //assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 13, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub12_index_err() {
@@ -1650,10 +1650,10 @@ class TTask {
             var x
             set x = t.pub   ;; no expose
         """)
-        assert(out == "anon : (lin 11, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
-    fun todo_pub13_index_err() {
+    fun pub13_index_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1665,7 +1665,7 @@ class TTask {
             resume t()
             println(t.pub)   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun todo_pub14_index_err() {
@@ -1701,14 +1701,14 @@ class TTask {
         assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
     }
     @Test
-    fun status3() {
+    fun status3_err() {
         val out = all("""
             var t
             set t = task () {
                 set status = nil     ;; error: cannot assign to status
             }
         """, true)
-        assert(out == "TODO\n") { out }
+        assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination\n") { out }
     }
     @Test
     fun status4() {
@@ -1729,7 +1729,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 11, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
     }
 
     // TOGGLE

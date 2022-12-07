@@ -477,7 +477,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                         continue; // escape enclosing block;
                                     }                                    
                                 """ }}
-                                $assrc_dst = ceu_dyn_$n->Bcast.Coro.frame->Task.pub;
+                                $assrc_dst = ${if (this.tk.str=="pub") {
+                                    "ceu_dyn_$n->Bcast.Coro.frame->Task.pub"
+                                } else {
+                                    "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_resumed} }"
+                                }};
                             }
                             """
                         }
