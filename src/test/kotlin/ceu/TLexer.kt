@@ -52,8 +52,9 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer(" if aaa throw coroutines evt nil pub task track XXX defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true func b10 in false")
+        val l = lexer("status if aaa throw coroutines evt nil pub task track XXX defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true func b10 in false")
         val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Fix && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
         assert(tks.next().let { it is Tk.Fix && it.str == "throw" })

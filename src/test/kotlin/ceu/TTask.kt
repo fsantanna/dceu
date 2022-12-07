@@ -1683,6 +1683,55 @@ class TTask {
         assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic public field\n") { out }
     }
 
+    // STATUS
+
+    @Test
+    fun status1_err() {
+        val out = all("""
+            var a
+            a.status
+        """, true)
+        assert(out == "anon : (lin 3, col 13) : status error : expected coroutine\n") { out }
+    }
+    @Test
+    fun status2_err() {
+        val out = all("""
+            status
+        """, true)
+        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
+    }
+    @Test
+    fun status3() {
+        val out = all("""
+            var t
+            set t = task () {
+                set status = nil     ;; error: cannot assign to status
+            }
+        """, true)
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun status4() {
+        val out = all("""
+            var t
+            set t = task () {
+                println(10, status)
+                yield nil
+                println(20, status)
+            }
+            var a
+            set a = coroutine t
+            println(1, a.status)
+            resume a()
+            println(2, a.status)
+            resume a()
+            println(3, a.status)
+        """)
+        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 11, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
+    }
+
     // TOGGLE
 
     @Test
@@ -1925,9 +1974,9 @@ class TTask {
             set x = track t
             println(x.pub[0])
             broadcast in :global, nil
-            println(x.pub)
+            println(x.status)
         """)
-        assert(out == "10\nnil\n") { out }
+        assert(out == "10\n:destroyed\n") { out }
     }
     @Test
     fun track8_err() {

@@ -145,7 +145,7 @@ class Parser (lexer_: Lexer)
                 val dst = this.expr()
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (!(dst is Expr.Acc || dst is Expr.Index || dst is Expr.Pub)) {
+                if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                     err(tk0, "invalid set : invalid destination")
                 }
                 Expr.Set(tk0, dst, src)
@@ -296,7 +296,7 @@ class Parser (lexer_: Lexer)
                     """)//.let { println(it.tostr()); it }
                 }
             }
-            this.acceptFix("pub") -> Expr.Pub(this.tk0, null)
+            this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, null)
             this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
@@ -523,7 +523,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix(".") -> {
                     e = when {
-                        this.acceptFix("pub") -> Expr.Pub(e.tk, e)
+                        this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, e)
                         (XCEU && this.acceptEnu("Id")) -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
                         (XCEU && this.acceptEnu("Num")) -> Expr.Index(e.tk, e, Expr.Num(this.tk0 as Tk.Num))
                         XCEU -> {

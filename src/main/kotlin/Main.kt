@@ -8,8 +8,8 @@ var N = 1
 
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
-    "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "task",
-    "throw", "toggle", "track", "true", "var", "yield", "while"
+    "false", "func", "if", "in", "native", "nil", "pub", "resume", "set", "spawn", "status",
+    "task", "throw", "toggle", "track", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "break", "every", "ifs", "not", "or", "par", "parand", "paror", "with", "where"
 )).toSortedSet()
@@ -25,6 +25,7 @@ val TAGS = listOf (
     "coro", "coros",
     "clear", "error",           // bcast-clear
     "global", "local", //"task"   // bcast scope
+    "resumed", "yielded", "toggled", "terminated", "destroyed"
 ) + if (!XCEU) setOf() else setOf(
     "break"
 )
@@ -62,7 +63,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)
-    data class Pub    (val tk_: Tk, val coro: Expr?): Expr(N++, tk_)
+    data class Pub    (val tk_: Tk.Fix, val coro: Expr?): Expr(N++, tk_)
     data class Track  (val tk_: Tk.Fix, val coro: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
