@@ -26,6 +26,7 @@
 
 # BACK
 
+- power assert
 - native `:pre`
 - emit local
     - imply outer task?

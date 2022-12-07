@@ -347,6 +347,11 @@ fun Coder.main (): String {
                     assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
                     ceu_bcast_dyns(cur->Bcast.Coros.first);
                     break;
+                case CEU_VALUE_TRACK:
+                    if (ceu_evt->tag==CEU_VALUE_POINTER && cur->Bcast.Track.coro==ceu_evt->Pointer) {
+                        cur->Bcast.Track.coro = NULL; // tracked coro is terminating
+                    }
+                    break;
                 }
             }
         }
@@ -732,7 +737,11 @@ fun Coder.main (): String {
 
         CEU_Value ceu_track_to_coro (CEU_Value* track) {
             if (track->tag == CEU_VALUE_TRACK) {
-                return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track.coro} };
+                if (track->Dyn->Bcast.Track.coro == NULL) {
+                    return (CEU_Value) { CEU_VALUE_NIL };
+                } else {
+                    return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track.coro} };
+                }
             } else {
                 return *track;
             }

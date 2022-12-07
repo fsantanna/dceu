@@ -1897,7 +1897,7 @@ class TTask {
         assert(out == "anon : (lin 12, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
-    fun track6() {
+    fun track6_err() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -1905,35 +1905,13 @@ class TTask {
             do {
                 var t
                 set t = coroutine T
-                set x = track t
-                resume t ()
+                set x = track t         ;; error scope
             }
-            println(x)
-            println(deref(x))
         """)
-        assert(out == "TODO\n") { out }
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track7() {
-        val out = all("""
-            var T
-            set T = task () { nil }
-            var x
-            do {
-                var t
-                set t = coroutine T
-                set x = track t
-            }
-            println(x)
-            println(deref(x))
-            broadcast in :global, nil 
-            println(x)
-            println(deref(x))
-        """)
-        assert(out == "TODO\n") { out }
-    }
-    @Test
-    fun track8() {
         val out = all("""
             var T
             set T = task () {
@@ -1947,12 +1925,12 @@ class TTask {
             set x = track t
             println(x.pub[0])
             broadcast in :global, nil
-            println(x)
+            println(x.pub)
         """)
         assert(out == "10\nnil\n") { out }
     }
     @Test
-    fun track9() {
+    fun track8_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1964,15 +1942,16 @@ class TTask {
                 var t
                 set t = coroutine T
                 resume t ()
-                set x = track t
+                set x = track t         ;; scope x < t
                 println(x.pub[0])
             }
             println(x)
         """)
-        assert(out == "10\nnil\n") { out }
+        //assert(out == "10\nnil\n") { out }
+        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun track10() {
+    fun todo_track9() {
         val out = all("""
             var T
             set T = task (v) {
@@ -1990,6 +1969,54 @@ class TTask {
             println(x.pub[0])   ;; 2
             broadcast in :global, nil
             println(x)          ;; nil
+        """)
+        assert(out == "2\nnil\n") { out }
+    }
+    @Test
+    fun todo_track10() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                set pub = [v]
+                yield nil
+            }
+            var x
+            var ts
+            set ts = coroutines()
+            do {
+                spawn in ts, T(1)
+                spawn in ts, T(2)
+                while t in ts {
+                    set x = t
+                }
+                println(x.pub[0])   ;; 2
+                broadcast in :global, nil
+                println(x)          ;; nil
+            }
+        """)
+        assert(out == "2\nnil\n") { out }
+    }
+    @Test
+    fun todo_track11_err() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                set pub = [v]
+                yield nil
+            }
+            var x
+            do {
+                var ts
+                set ts = coroutines()
+                spawn in ts, T(1)
+                spawn in ts, T(2)
+                while t in ts {
+                    set x = t
+                }
+                println(x.pub[0])   ;; 2
+                broadcast in :global, nil
+                println(x)          ;; nil
+            }
         """)
         assert(out == "2\nnil\n") { out }
     }
