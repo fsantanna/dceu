@@ -97,7 +97,7 @@ class Ups (val outer: Expr.Block) {
                         up = func(up)
                     }
                     if (!ok) {
-                        err(this.tk, "pub error : expected enclosing task")
+                        err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }
                 }
                 this.coro?.check()

@@ -455,11 +455,22 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } else { """
                         CEU_Value ceu_coro_$n;
                         ${this.coro.code("ceu_coro_$n", false, null)}
+                        ${(this.tk.str=="status").cond { """
+                            // track with destroyed coro: status -> :destroyed
+                            if (ceu_coro_$n.tag == CEU_VALUE_TRACK) {
+                                ceu_coro_$n = ceu_track_to_coro(&ceu_coro_$n);
+                                if (ceu_coro_$n.tag != CEU_VALUE_CORO) {
+                                    $assrc_dst = (CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} };
+                                    goto CEU_PUB_$n;    // special case, skip everything else
+                                }
+                            }
+                            """
+                         }}
                         ceu_coro_$n = ceu_track_to_coro(&ceu_coro_$n);
                         if (ceu_coro_$n.tag != CEU_VALUE_CORO) {                
                             ceu_has_throw = 1;
                             ceu_err = &CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected coroutine", 256);
+                            strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine", 256);
                             continue; // escape enclosing block;
                         }
                         ceu_dyn_$n = ceu_coro_$n.Dyn;
@@ -473,7 +484,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
                                         ceu_has_throw = 1;
                                         ceu_err = &CEU_ERR_ERROR;
-                                        strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid pub : cannot expose dynamic public field", 256);
+                                        strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic public field", 256);
                                         continue; // escape enclosing block;
                                     }                                    
                                 """ }}
@@ -495,6 +506,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             """
                         else -> "// PUB - useless"
                     }}
+                    CEU_PUB_$n:;
                 }
                 """
             is Expr.Track -> """

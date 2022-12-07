@@ -531,8 +531,8 @@ class TTask {
                 println(v)
                 println(evt)
                 set v = yield nil
-                println(v)                
-                println(evt)                
+                println(v)
+                println(evt)
             }
             var co1
             set co1 = coroutine tk
@@ -542,7 +542,8 @@ class TTask {
              broadcast in :global, 2
              broadcast in :global, 3
         """)
-        assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
+        //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
+        assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\npointer: 0x")) { out }
     }
     @Test
     fun bcast2() {
@@ -651,14 +652,15 @@ class TTask {
                  broadcast in :global, 3
             }
         """)
-        assert(out == "2\n2\n") { out }
+        //assert(out == "2\n2\n") { out }
+        assert(out.contains("2\npointer: 0x")) { out }
     }
     @Test
     fun bcast8() {
         val out = all("""
             var tk
             set tk = task (v) {
-                yield nil
+                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
                 println(evt)                
             }
             var co1
@@ -708,9 +710,11 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                yield nil
+                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield nil
                 println(evt)                
-                yield nil
+                do { var ok2; set ok2=true; while ok2 { yield nil; if tags(evt)/=:pointer { set ok2=false } else { nil } } }
+                ;;yield nil
                 println(evt)                
             }
             var co1
@@ -723,9 +727,9 @@ class TTask {
                     resume co1(10)
                     resume co2(10)
                     println(2)
-                     broadcast in :global, [20]
+                    broadcast in :global, [20]
                     println(3)
-                     broadcast in :global, @[(30,30)]
+                    broadcast in :global, @[(30,30)]
                 }()
             }
         """
@@ -758,7 +762,8 @@ class TTask {
             """
             var T
             set T = task (v) {
-                yield nil
+                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield nil
                 println(v)
             }
             var t1
@@ -1131,9 +1136,11 @@ class TTask {
                 defer {
                     println(20)
                 }
-                yield nil
+                do { var ok1; set ok1=true; while ok1 { yield nil; if tags(evt)/=:pointer { set ok1=false } else { nil } } }
+                ;;yield nil
                 if v {
-                    yield nil
+                    do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                    ;;yield nil
                 } else {
                     nil
                 }
@@ -1691,14 +1698,14 @@ class TTask {
             var a
             a.status
         """, true)
-        assert(out == "anon : (lin 3, col 13) : status error : expected coroutine\n") { out }
+        assert(out == "anon : (lin 3, col 15) : status error : expected coroutine\n") { out }
     }
     @Test
     fun status2_err() {
         val out = all("""
             status
         """, true)
-        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task\n") { out }
     }
     @Test
     fun status3_err() {
@@ -1708,7 +1715,7 @@ class TTask {
                 set status = nil     ;; error: cannot assign to status
             }
         """, true)
-        assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination\n") { out }
+        assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination") { out }
     }
     @Test
     fun status4() {
@@ -1926,10 +1933,10 @@ class TTask {
             set x = nil
             println(x.pub)  ;; not coro/track 
         """)
-        assert(out == "anon : (lin 4, col 21) : pub error : expected coroutine\n") { out }
+        assert(out == "anon : (lin 4, col 23) : pub error : expected coroutine\n") { out }
     }
     @Test
-    fun track5() {
+    fun track5_err2() {
         val out = all("""
             var T
             set T = task () {
@@ -2046,7 +2053,7 @@ class TTask {
         assert(out == "2\nnil\n") { out }
     }
     @Test
-    fun todo_track11_err() {
+    fun track11_err() {
         val out = all("""
             var T
             set T = task (v) {
@@ -2058,15 +2065,11 @@ class TTask {
                 var ts
                 set ts = coroutines()
                 spawn in ts, T(1)
-                spawn in ts, T(2)
                 while t in ts {
-                    set x = t
+                    set x = t       ;; err: escope 
                 }
-                println(x.pub[0])   ;; 2
-                broadcast in :global, nil
-                println(x)          ;; nil
             }
         """)
-        assert(out == "2\nnil\n") { out }
+        assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
     }
 }

@@ -246,7 +246,7 @@ fun Coder.main (): String {
     """ // BCAST
         void ceu_bcast_dyns (CEU_Dynamic* cur);
         void* ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
-            assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR);
+            assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR || evt->tag==CEU_VALUE_POINTER);
             char* err = ceu_block_set(&ceu_evt_block, evt);
             assert(err == NULL && "bug found: add test and fix");
             #if 0
@@ -257,7 +257,7 @@ fun Coder.main (): String {
             *prv = ceu_evt;
             ceu_has_bcast++;
             ceu_evt = evt;
-            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || evt->tag==CEU_VALUE_POINTER);
             return NULL;
         }
         void* ceu_bcast_pos (CEU_Value** prv, CEU_Value* evt) {
@@ -292,11 +292,11 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_BLOCKS
         void ceu_bcast_blocks_aux (CEU_Block* cur) {
-            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
-                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
                     ceu_bcast_dyns(dyn);
                     if (ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR) {
                         // ok
@@ -344,7 +344,7 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_COROS: {
-                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
                     ceu_bcast_dyns(cur->Bcast.Coros.first);
                     break;
                 case CEU_VALUE_TRACK:
@@ -367,7 +367,7 @@ fun Coder.main (): String {
         }
         
         void ceu_bcast_dyns (CEU_Dynamic* cur) {
-            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+            assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 ceu_bcast_dyn_aux(cur);
