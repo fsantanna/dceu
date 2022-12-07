@@ -9,6 +9,21 @@ fun Coder.main (): String {
         #include <assert.h>
         #include <stdarg.h>
         #include <math.h>
+
+        struct CEU_Value;
+            struct CEU_Dynamic;
+            struct CEU_Frame;        
+            struct CEU_Block;
+            struct CEU_Proto;
+            
+        int ceu_as_bool (struct CEU_Value* v);
+            
+        struct CEU_Tags;
+        static struct CEU_Tags* CEU_TAGS = NULL;
+        int CEU_TAGS_MAX = 0;
+        struct CEU_Value ceu_tags_f (struct CEU_Frame* _2, int n, struct CEU_Value* args[]);
+        char* ceu_tag_to_string (int tag);
+           
     """ +
     """ // CEU_Value
         typedef enum CEU_VALUE {
@@ -35,11 +50,6 @@ fun Coder.main (): String {
             CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;        
 
-        struct CEU_Dynamic;
-        struct CEU_Frame;        
-        struct CEU_Block;
-        struct CEU_Proto;
-           
         typedef struct CEU_Value {
             CEU_VALUE tag;
             union {
@@ -105,8 +115,6 @@ fun Coder.main (): String {
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
         }
 
-        static CEU_Tags* CEU_TAGS = NULL;
-        int CEU_TAGS_MAX = 0;        
         ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
 
         char* ceu_tag_to_string (int tag) {
@@ -321,6 +329,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST_DYN
+        void ceu_coros_cleanup (CEU_Dynamic* coros);
         void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
             if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
                 // do not awake terminated/running coro
@@ -345,7 +354,12 @@ fun Coder.main (): String {
                 }
                 case CEU_VALUE_COROS: {
                     assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
+                    cur->Bcast.Coros.open++;
                     ceu_bcast_dyns(cur->Bcast.Coros.first);
+                    cur->Bcast.Coros.open--;
+                    if (cur->Bcast.Coros.open == 0) {
+                        ceu_coros_cleanup(cur);
+                    }
                     break;
                 case CEU_VALUE_TRACK:
                     if (ceu_evt->tag==CEU_VALUE_POINTER && cur->Bcast.Track.coro==ceu_evt->Pointer) {

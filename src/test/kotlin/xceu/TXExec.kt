@@ -559,7 +559,7 @@ class TXExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 5, col 33) : pub error : expected enclosing task\n") { out }
+        assert(out == "anon : (lin 5, col 33) : pub error : expected enclosing task") { out }
     }
     @Test
     fun task5_pub_fake() {
