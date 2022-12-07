@@ -50,8 +50,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     // assrc_hld: calling expr destination will hold src, do not call ceu_block_set here, otherwise hold src in enclosing block
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
-        fun SET (v: String, hld: Boolean=assrc_hld): String {
-            val bupc = ups.block(this)!!.toc(true)
+        fun SET (v: String, bupc_: String?=null, hld: Boolean=assrc_hld): String {
+            val bupc = bupc_ ?: ups.block(this)!!.toc(true)
             return """
             {
                 CEU_Value ceu_tmp_$n = $v;
@@ -142,11 +142,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ // TERMINATE
                         ${istask.cond{"""
                             ceu_frame->Task.pc = -1;
-                            ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                             {
                                 CEU_Value ceu_evt_$n = { CEU_VALUE_POINTER, {.Pointer=ceu_coro} };
                                 ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                             }
+                            ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
                                 if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                     ceu_coros_destroy( ceu_coro->Bcast.Coro.coros, ceu_coro);
@@ -161,7 +161,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create(CEU_VALUE_${this.tk.str.uppercase()}, ceu_frame, ceu_proto_f_$n, sizeof(CEU_Proto_Mem_$n));
                 assert(ceu_proto_$n != NULL);
                 // false = must hold straight away, b/c of upvalues, cannot escape
-                ${SET("((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} })", false)}
+                ${SET("((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} })", null, false)}
                 """
             }
             is Expr.Block -> {
@@ -332,7 +332,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    ${SET("ceu_coro_$n", false)}
+                    ${SET("ceu_coro_$n", null, false)}
                 }
                 """
             }
@@ -524,9 +524,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected unterminated coroutine", 256);
                         continue; // escape enclosing block;
                     }
-                    CEU_Dynamic* ceu_$n = ceu_track_create(ceu_coro_$n.Dyn);
-                    assert(ceu_$n != NULL);
-                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_$n} })")}
+                    CEU_Dynamic* ceu_dyn_$n = ceu_track_create(ceu_coro_$n.Dyn);
+                    assert(ceu_dyn_$n != NULL);
+                    CEU_Block* ceu_hld_$n = (ceu_coro_$n.Dyn->Bcast.Coro.coros == NULL) ? ceu_coro_$n.Dyn->hold : ceu_coro_$n.Dyn->Bcast.Coro.coros->hold;
+                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_dyn_$n} })", "ceu_hld_$n", false)}
                 }
                 """
 
@@ -789,7 +790,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, $bupc->depth, &ceu_coro_$n);
-                        ${SET("ceu_coro_$n", false)}
+                        ${SET("ceu_coro_$n", null,false)}
                         """
                     } else {
                         """

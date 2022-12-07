@@ -2043,7 +2043,7 @@ class TTask {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
                 while t in ts {
-                    set x = track(t)
+                    set x = track(t)    ;; track(t) hold in
                 }
                 println(x.pub[0])   ;; 2
                 broadcast in :global, nil

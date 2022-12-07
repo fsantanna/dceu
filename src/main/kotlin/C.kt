@@ -623,17 +623,13 @@ fun Coder.main (): String {
         CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
-            CEU_Block* hld = (coro->Bcast.Coro.coros == NULL) ? coro->hold : coro->Bcast.Coro.coros->hold;
             *ret = (CEU_Dynamic) {
-                CEU_VALUE_TRACK, NULL, hld, {
+                CEU_VALUE_TRACK, NULL, NULL, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
                         .Track = coro
                     } }
                 }
             };
-            // enqueue here to avoid ceu_block_set, allowing us to set hld here and to call SET(true) outside
-            // hld may be enclosing block of coro or coros
-            ceu_bcast_enqueue(&hld->bcast.dyn, ret);
             return ret;
         }
         
