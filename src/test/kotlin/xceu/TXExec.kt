@@ -128,14 +128,15 @@ class TXExec {
         val out = all("""
             var tk = task () {
                 println(evt)
-                yield ()
+                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield ()
                 println(evt)                
             }
             var co1 = coroutine tk
             var co2 = coroutine tk
-             broadcast in :global, 1
-             broadcast in :global, 2
-             broadcast in :global, 3
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
         """)
         assert(out == "1\n1\n2\n2\n") { out }
     }
@@ -147,11 +148,14 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    yield ()
-                    yield ()
+                    do { var ok1; set ok1=true; while ok1 { yield nil; if tags(evt)/=:pointer { set ok1=false } else { nil } } }
+                    ;;yield ()
+                    do { var ok2; set ok2=true; while ok2 { yield nil; if tags(evt)/=:pointer { set ok2=false } else { nil } } }
+                    ;;yield ()
                     println(1)
                 } with {
-                    yield ()
+                    do { var ok3; set ok3=true; while ok3 { yield nil; if tags(evt)/=:pointer { set ok3=false } else { nil } } }
+                    ;;yield ()
                     println(2)
                 } with {
                     println(3)
@@ -377,7 +381,7 @@ class TXExec {
     // INDEX: TUPLE / DICT
 
     @Test
-    fun todo_ndex1_tuple() {
+    fun todo_index1_tuple() {
         val out = all("""
             var t = [1,2,3]
             println(t.a, t.c)
@@ -544,7 +548,7 @@ class TXExec {
         assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"") { out }
     }
     @Test
-    fun todo_task4_pub_fake_err() {
+    fun task4_pub_fake_err() {
         val out = all("""
             spawn {
                 awaiting evt==:a {
@@ -555,7 +559,7 @@ class TXExec {
             }
             println(1)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 5, col 33) : pub error : expected enclosing task\n") { out }
     }
     @Test
     fun task5_pub_fake() {
@@ -623,18 +627,18 @@ class TXExec {
         val out = all("""
             task T (v) {
                 set pub = v
-                toggle evt.type==:hide -> evt.type==:show {
+                toggle evt==:hide -> evt==:show {
                     println(pub)
-                    every evt.type==:draw {
+                    every tags(evt)==:dict and evt.type==:draw {
                         println(evt.v)
                     }
                 }
             }
             spawn T (0)
              broadcast in :global, @[(:type,:draw),(:v,1)]
-             broadcast in :global, @[(:type,:hide)]
+             broadcast in :global, :hide
              broadcast in :global, @[(:type,:draw),(:v,99)]
-             broadcast in :global, @[(:type,:show)]
+             broadcast in :global, :show
              broadcast in :global, @[(:type,:draw),(:v,2)]
         """)
         assert(out == "0\n1\n2\n") { out }

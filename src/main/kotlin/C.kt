@@ -332,7 +332,7 @@ fun Coder.main (): String {
             }
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
-                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
+                    assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR || ceu_evt->tag==CEU_VALUE_POINTER);
                     ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
                     // if nested block threw uncaught exception, awake myself next to catch it
                     //assert(ceu_has_throw==0 || ceu_evt==&CEU_EVT_CLEAR);
