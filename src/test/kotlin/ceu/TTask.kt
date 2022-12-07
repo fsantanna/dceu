@@ -1485,7 +1485,8 @@ class TTask {
             println(x)
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 11, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub5() {
@@ -1545,7 +1546,7 @@ class TTask {
         assert(out == "20\n") { out }
     }
     @Test
-    fun todo_pub7_pool_err() {
+    fun pub7_pool_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1561,7 +1562,8 @@ class TTask {
             }
             println(999)
         """)
-        assert(out == "20\n") { out }
+        //assert(out == "20\n") { out }
+        assert(out == "anon : (lin 12, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub8_fake_task() {
@@ -1587,7 +1589,7 @@ class TTask {
                 println(x)
             }) ()
         """, true)
-        assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun pub10_fake_err() {
@@ -1612,15 +1614,16 @@ class TTask {
                 set t = coroutine(T)
                 resume t ()
                 var x
-                set x = t.pub
+                set x = t.pub  ;; pub expose
                 set y = t.pub  ;; incompatible scopes
             }
             println(999)
         """)
-        assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 13, col 25) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
-    fun todo_pub12_index_err() {
+    fun pub12_index_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1633,7 +1636,7 @@ class TTask {
             var x
             set x = t.pub   ;; no expose
         """)
-        assert(out == "20\n") { out }
+        assert(out == "anon : (lin 11, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
     }
     @Test
     fun todo_pub13_index_err() {
@@ -1663,7 +1666,7 @@ class TTask {
             resume t()
             println(t.pub[0][:x])   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 21) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic public field\n") { out }
     }
 
     // TOGGLE
@@ -1681,7 +1684,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_coro->Bcast.status == CEU_CORO_STATUS_YIELDED' failed")) { out }
+        assert(out.contains("Assertion `ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR)' failed")) { out }
     }
     @Test
     fun toggle2_err() {
@@ -1809,7 +1812,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n") { out }
     }
     @Test
-    fun track2_err() {
+    fun track3_err() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -1823,21 +1826,23 @@ class TTask {
         assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n") { out }
     }
     @Test
-    fun track3() {
+    fun track4() {
         val out = all("""
             var T
-            set T = task () { nil }
+            set T = task () {
+                set pub = 10
+                yield nil
+            }
             var t
             set t = coroutine T
             var x
             set x = track t
-            var y
-            set y = deref(x)    ;; error 
+            println(x.pub) 
         """)
         assert(out == "TODO\n") { out }
     }
     @Test
-    fun track4() {
+    fun track6() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -1858,7 +1863,7 @@ class TTask {
         assert(out == "TODO\n") { out }
     }
     @Test
-    fun track5() {
+    fun track7() {
         val out = all("""
             var T
             set T = task () { nil }

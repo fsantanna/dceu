@@ -98,7 +98,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """}}
                     ${istask.cond{"""
                         CEU_Dynamic* ceu_coro = ceu_frame->Task.coro;
-                        assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED);
+                        assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                     """}}
