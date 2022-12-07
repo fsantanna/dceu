@@ -526,7 +526,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     CEU_Dynamic* ceu_$n = ceu_track_create(ceu_coro_$n.Dyn);
                     assert(ceu_$n != NULL);
-                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_$n} })", false)}
+                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_$n} })")}
                 }
                 """
 

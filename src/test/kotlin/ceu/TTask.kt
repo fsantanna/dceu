@@ -2007,7 +2007,7 @@ class TTask {
         assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun todo_track9() {
+    fun track9() {
         val out = all("""
             var T
             set T = task (v) {
@@ -2020,16 +2020,16 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             while t in ts {
-                set x = t
+                set x = track(t)
             }
             println(x.pub[0])   ;; 2
             broadcast in :global, nil
-            println(x)          ;; nil
+            println(x.status)   ;; nil
         """)
-        assert(out == "2\nnil\n") { out }
+        assert(out == "2\n:destroyed\n") { out }
     }
     @Test
-    fun todo_track10() {
+    fun track10() {
         val out = all("""
             var T
             set T = task (v) {
@@ -2043,14 +2043,14 @@ class TTask {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
                 while t in ts {
-                    set x = t
+                    set x = track(t)
                 }
                 println(x.pub[0])   ;; 2
                 broadcast in :global, nil
-                println(x)          ;; nil
+                println(x.status)   ;; nil
             }
         """)
-        assert(out == "2\nnil\n") { out }
+        assert(out == "2\n:destroyed\n") { out }
     }
     @Test
     fun track11_err() {
