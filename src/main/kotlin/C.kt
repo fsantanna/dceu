@@ -186,9 +186,9 @@ fun Coder.main (): String {
         ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
 
         int ceu_has_throw = 0;
-        CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_err = &CEU_ERR_NIL;
+        const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
+        const CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
+        CEU_Value ceu_err = CEU_ERR_NIL;
         char ceu_err_error_msg[256];
         CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
         
@@ -275,7 +275,7 @@ fun Coder.main (): String {
                 }
             } else if (src->Dyn->hold->depth > dst->depth) {
                 ceu_has_throw = 1;
-                ceu_err = &CEU_ERR_ERROR;
+                ceu_err = CEU_ERR_ERROR;
                 return "set error : incompatible scopes";
             }
             return NULL;
@@ -508,18 +508,18 @@ fun Coder.main (): String {
         char* ceu_col_check (CEU_Value* col, CEU_Value* idx) {
             if (col->tag!=CEU_VALUE_TUPLE && col->tag!=CEU_VALUE_DICT) {                
                 ceu_has_throw = 1;
-                ceu_err = &CEU_ERR_ERROR;
+                ceu_err = CEU_ERR_ERROR;
                 return "index error : expected collection";
             }
             if (col->tag == CEU_VALUE_TUPLE) {
                 if (idx->tag != CEU_VALUE_NUMBER) {
                     ceu_has_throw = 1;
-                    ceu_err = &CEU_ERR_ERROR;
+                    ceu_err = CEU_ERR_ERROR;
                     return "index error : expected number";
                 }
                 if (col->Dyn->Tuple.n <= idx->Number) {                
                     ceu_has_throw = 1;
-                    ceu_err = &CEU_ERR_ERROR;
+                    ceu_err = CEU_ERR_ERROR;
                     return "index error : out of bounds";
                 }
             }
@@ -844,7 +844,7 @@ fun Coder.main (): String {
             } while (0);
             fprintf(stderr, "%s\n", ceu_err_error_msg);
             ceu_block_free(&ceu_err_block);
-            ceu_err = &CEU_ERR_NIL;
+            ceu_err = CEU_ERR_NIL;
             return 1;
         }
     """)
