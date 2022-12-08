@@ -2072,4 +2072,27 @@ class TTask {
         """)
         assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun track12_throw() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                set pub = [v]
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            var x = catch true {
+                while t in ts {
+                    throw track(t)
+                }
+            }
+            println(x.pub[0])   ;; 2
+            broadcast in :global, nil
+            println(x.status)   ;; nil
+        """)
+        assert(out == "2\n:destroyed\n") { out }
+    }
 }
