@@ -1,5 +1,10 @@
 # NEXT
 
+- fake catch around while should not be in tostr
+- test throw/break across fake task
+- throw (err,val)
+- while in bs, b
+- parand/or as await task
 - track may hold normal coro
   - bcast to awake on termination
 - pub childs cannot be assigned
@@ -19,15 +24,22 @@
     - 1 ~= "1"
     - #x ~= #x.y
     - str ~= ".*"
+    - await/awaiting/every :type
 - xceu
     - ifs exp as it { it==1 {} }
     - iter xs as x
     - do exp as it {}
+- unify test/error/continue (macro or func?)
 
 # BACK
 
+- copy x (deep copy)
+- y = do { move x }
+- same iface to all *create, no assert on malloc fail, all possible checks there
 - power assert
-- native `:pre`
+- native
+    - `:pre`
+    - `${complex-expr}` (nested parsing in w/ XCEU?)
 - emit local
     - imply outer task?
     - explicit #tag?
