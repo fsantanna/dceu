@@ -189,10 +189,8 @@ fun Coder.main (): String {
 
         int ceu_has_throw = 0;
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        const CEU_Value CEU_ERR_NIL = { CEU_VALUE_NIL };
-        CEU_Value ceu_err = CEU_ERR_NIL;
+        CEU_Value ceu_err = { CEU_VALUE_NIL };
         char ceu_err_error_msg[256];
-        CEU_Block ceu_err_block = { 0, NULL, {NULL,NULL} };
         
             //  - can pass further
             //  - cannot pass back
@@ -203,9 +201,8 @@ fun Coder.main (): String {
 
         int ceu_has_bcast = 0;
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
-        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL };
-        CEU_Value* ceu_evt = &CEU_EVT_NIL;
-        CEU_Block ceu_evt_block = { 0, NULL, {NULL,NULL} };           
+        
+        CEU_Value ceu_acc;
     """ +
     """ // IMPLS
         int ceu_as_bool (CEU_Value* v) {
@@ -660,7 +657,7 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, depth, mem, {
+            *frame = (CEU_Frame) { &task->Dyn->Proto, up, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });

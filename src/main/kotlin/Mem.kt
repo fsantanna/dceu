@@ -19,20 +19,14 @@ fun Expr.mem (): String {
             };
             """
         }
-        is Expr.Dcl -> {
-            val id = this.tk_.fromOp().noSpecial()
-            """
-            struct { // DCL
-                CEU_Value $id;
-                CEU_Block* _${id}_; // can't be static b/c recursion
-            };
-            """
-        }
+        is Expr.Dcl -> "CEU_Value ${this.tk_.fromOp().noSpecial()}; // DCL"
         is Expr.Set -> """
             struct { // SET
                 CEU_Value set_$n;
-                ${this.dst.mem()}
-                ${this.src.mem()}
+                union {
+                    ${this.dst.mem()}
+                    ${this.src.mem()}
+                };
             };
             """
         is Expr.If -> """
@@ -42,12 +36,7 @@ fun Expr.mem (): String {
                 ${this.f.mem()}
             };
             """
-        is Expr.While -> """
-            union { // WHILE
-                ${this.cnd.mem()}
-                ${this.body.mem()}
-            };
-            """
+        is Expr.While -> this.body.mem()
         is Expr.Catch -> """
             union { // CATCH
                 ${this.cnd.mem()}
@@ -100,21 +89,25 @@ fun Expr.mem (): String {
 
         is Expr.Tuple -> """
             struct { // TUPLE
-                ${this.args.map { it.mem() }.joinToString("")}
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                union {
+                    ${this.args.map { it.mem() }.joinToString("")}
+                };
             };
             """
         is Expr.Dict -> """
             struct { // DICT
-                ${this.args.map {
-                    listOf(it.first.mem(),it.second.mem())
-                }.flatten().joinToString("")}
                 ${this.args.mapIndexed { i,_ ->
                     """
                     CEU_Value arg_${i}_a_$n;
                     CEU_Value arg_${i}_b_$n;
                     """
                 }.joinToString("")}
+                union {
+                    ${this.args.map {
+                        listOf(it.first.mem(),it.second.mem())
+                    }.flatten().joinToString("")}
+                };
             };
             """
         is Expr.Index -> """
@@ -127,11 +120,12 @@ fun Expr.mem (): String {
             };
             """
         is Expr.Call -> """
-            union { // CALL
-                ${this.proto.mem()}
-                struct {
+            struct { // CALL
+                CEU_Value frame_$n;
+                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                union {
+                    ${this.proto.mem()}
                     ${this.args.map { it.mem() }.joinToString("")}
-                    ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 };
             };
             """

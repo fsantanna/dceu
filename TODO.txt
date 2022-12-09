@@ -1,3 +1,7 @@
+# BUGS
+
+- catch cannot yield on condition, add test
+
 # NEXT
 
 - fake catch around while should not be in tostr
