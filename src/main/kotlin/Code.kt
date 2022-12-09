@@ -16,7 +16,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.Block.id2c (id: String): String {
         fun Expr.aux (n: Int): String {
             val xblock = ups.xblocks[this]!!
-            val bup = ups.func_or_block(this)
+            val bup = ups.proto_or_block(this)
             val fup = ups.func(this)
             val ok = xblock.syms.contains(id)
             return when {
@@ -130,20 +130,19 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 }
                             }
                         """}}
-                    return ceu_ret_$n;
+                    return ceu_acc;
                 }
                 """
                 tops.add(Pair(type,func))
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create(CEU_VALUE_${this.tk.str.uppercase()}, ceu_frame, ceu_proto_f_$n, sizeof(CEU_Proto_Mem_$n));
                 assert(ceu_proto_$n != NULL);
-                // false = must hold straight away, b/c of upvalues, cannot escape
                 ceu_acc = (CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} };
                 """
             }
             is Expr.Block -> {
                 val bup = ups.block(this)
-                val f_b = ups.func_or_block(this)
+                val f_b = ups.proto_or_block(this)
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
                     (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
@@ -153,21 +152,34 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 { // BLOCK ${this.tk.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
-                    ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
+                    ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
-                    ${(f_b!=null && f_b !is Expr.Proto).cond {
+                    ${(f_b is Expr.Block).cond {
                         "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"}
                     }
                     do {
                         $es
                     } while (0);
+                    ${(f_b != null).cond {
+                        val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                        """
+                        if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                            char* ceu_err_$n = ceu_block_set($up, ceu_acc.Dyn, 0);
+                            if (ceu_err_$n != NULL) {
+                                // ${this.tk}
+                                snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                                continue;
+                            }
+                        }
+                        """
+                    }}
                     ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
                     { // DEFERS ${this.tk.dump()}
                         ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                     }
-                    ${(f_b!=null && f_b !is Expr.Proto).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
-                    ${ups.func_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
+                    ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
+                    ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
                     ceu_block_free(&ceu_mem->block_$n);
                     if (ceu_has_throw_clear()) {
                         continue;   // escape to end of enclosing block

@@ -212,11 +212,22 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
+    fun tuple56_free() {
+        val out = all("""
+            var x
+            set x = do {
+                [1]
+            }
+            println(x)
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
     fun tuple6_free() {
         val out = all("""
             var f
             set f = func (v) {
-                println(v)
+                ;;println(v)
                 if v > 0 {
                     [f(v-1)]
                 } else {
@@ -242,7 +253,8 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 26) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 29) : return error : incompatible scopes\n") { out }
     }
     @Test
@@ -261,10 +273,11 @@ class TExec {
             println(f(3))
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 26) : return error : incompatible scopes\n") { out }
     }
     @Test
-    fun tuple9_hold() {
+    fun tuple9_hold_err() {
         val out = all("""
             do {
                 var x
@@ -273,7 +286,8 @@ class TExec {
             }
             println(1)
         """, true)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 2, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple10_hold_err() {
@@ -281,11 +295,12 @@ class TExec {
             println(do {
                 var x
                 set x = [0]
-                x   ;; escape but no access
+                x
             })
         """)
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 24) : set error : incompatible scopes\n") { out }
     }
 
     // DICT

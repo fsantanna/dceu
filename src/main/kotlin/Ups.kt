@@ -23,13 +23,13 @@ class Ups (val outer: Expr.Block) {
     fun func (e: Expr): Expr.Proto? {
         return this.pred(e) { it is Expr.Proto } as Expr.Proto?
     }
-    fun func_or_block (e: Expr): Expr? {
+    fun proto_or_block (e: Expr): Expr? {
         return this.pred(e) { it is Expr.Proto || it is Expr.Block }
     }
 
     fun isDeclared (e: Expr, id: String): Boolean {
         val xblock = this.xblocks[e]!!
-        val up = this.func_or_block(e)
+        val up = this.proto_or_block(e)
         return (xblock.syms.contains(id) || (up!=null && this.isDeclared(up,id)))
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {

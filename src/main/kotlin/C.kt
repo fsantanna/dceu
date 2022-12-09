@@ -246,25 +246,32 @@ fun Coder.main (): String {
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.n; i++) {
                         if (src->Tuple.mem[i].tag > CEU_VALUE_DYNAMIC) {
-                            assert(NULL == ceu_block_set(dst, src->Tuple.mem[i].Dyn, isperm) && "bug found: add test and fix");
+                            char* err = ceu_block_set(dst, src->Tuple.mem[i].Dyn, isperm);
+                            if (err != NULL) {
+                                return err;
+                            }
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dict.n; i++) {
                         if (src->Dict.mem[i][0]->tag > CEU_VALUE_DYNAMIC) {
-                            assert(NULL == ceu_block_set(dst, (*src->Dict.mem)[i][0].Dyn, isperm) && "bug found: add test and fix");
+                            char* err = ceu_block_set(dst, (*src->Dict.mem)[i][0].Dyn, isperm);
+                            if (err != NULL) {
+                                return err;
+                            }
                         }
                         if (src->Dict.mem[i][1]->tag > CEU_VALUE_DYNAMIC) {
-                            assert(NULL == ceu_block_set(dst, (*src->Dict.mem)[i][1].Dyn, isperm) && "bug found: add test and fix");
+                            char* err = ceu_block_set(dst, (*src->Dict.mem)[i][1].Dyn, isperm);
+                            if (err != NULL) {
+                                return err;
+                            }
                         }
                     }
                     break;
                 default:
                     // do not recurse b/c they never move
-                    if (!isperm) {
-                        assert(0 && "TODO");
-                    }
+                    assert((isperm || src->isperm) && "TODO");
                     break;
             }
             if (dst == src->hold) {
@@ -568,10 +575,11 @@ fun Coder.main (): String {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
-                tag, NULL, NULL, {
+                tag, NULL, NULL, 0, {
                     .Proto = { frame, f, {.Task={n}} }
                 }
             };
+            assert(NULL == ceu_block_set(frame->up, ret, 1));  // 1=cannot escape this block b/c of upvalues
             return ret;
         }
         
