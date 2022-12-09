@@ -216,6 +216,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (v) {
+                println(v)
                 if v > 0 {
                     [f(v-1)]
                 } else {
