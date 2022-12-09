@@ -50,25 +50,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     // assrc_hld: calling expr destination will hold src, do not call ceu_block_set here, otherwise hold src in enclosing block
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code(assrc_dst: String?, assrc_hld: Boolean, asdst_src: String?): String {
-        fun SET (v: String, bupc_: String?=null, hld: Boolean=assrc_hld): String {
-            val bupc = bupc_ ?: ups.block(this)!!.toc(true)
-            return """
-            {
-                CEU_Value ceu_tmp_$n = $v;
-                ${when {
-                    (assrc_dst == null) -> """ // nothing to set, hold in local block
-                        assert(NULL == ceu_block_set($bupc, &ceu_tmp_$n));
-                        """
-                    hld -> """ // do not set block yet
-                        $assrc_dst = ceu_tmp_$n;
-                        """
-                    else -> """ // assign and set local block (nowhere else to hold)
-                        assert(NULL == ceu_block_set($bupc, &ceu_tmp_$n));
-                        $assrc_dst = ceu_tmp_$n;
-                        """
-                }}
-            }
-            """
+        fun SET (src: String): String { // TODO: inline in calls
+            return assrc_dst.cond { "$it = $src;" }
         }
         return when (this) {
             is Expr.Proto -> {
@@ -103,7 +86,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                     """}}
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
-                    CEU_Value ceu_$n = { CEU_VALUE_NIL };
+                    CEU_Value ceu_ret_$n = { CEU_VALUE_NIL };
                     """ +
                     """ // WHILE
                     do { // FUNC
@@ -135,7 +118,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }.joinToString("")}
                         }
                         // BODY
-                        ${this.body.code("ceu_$n", assrc_hld, null)}
+                        ${this.body.code("ceu_ret_$n", assrc_hld, null)}
                         ${istask.cond{"}\n}\n"}}
                     } while (0);
                     """ +
@@ -153,7 +136,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 }
                             }
                         """}}
-                    return ceu_$n;
+                    return ceu_ret_$n;
                 }
                 """
                 tops.add(Pair(type,func))
@@ -161,7 +144,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create(CEU_VALUE_${this.tk.str.uppercase()}, ceu_frame, ceu_proto_f_$n, sizeof(CEU_Proto_Mem_$n));
                 assert(ceu_proto_$n != NULL);
                 // false = must hold straight away, b/c of upvalues, cannot escape
-                ${SET("((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} })", null, false)}
+                ${SET("((CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} })")}
                 """
             }
             is Expr.Block -> {
@@ -174,16 +157,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 val es = this.es.mapIndexed { i, X ->
                     if (i == this.es.size-1) {
-                        X.code(assrc_dst, assrc_hld, null) + assrc_hld.cond { """
-                        // would fail later, but memory is reclaimed here, so need to check before return
-                        if ($assrc_dst.tag>CEU_VALUE_DYNAMIC && $assrc_dst.Dyn->hold!=NULL && $assrc_dst.Dyn->hold->depth>=$depth) {
-                            // scope of dyn ret must still be NULL or at most outer depth
-                            ceu_has_throw = 1;
-                            ceu_err = CEU_ERR_ERROR;
-                            strncpy(ceu_err_error_msg, "${X.tk.pos.file} : (lin ${X.tk.pos.lin}, col ${X.tk.pos.col}) : return error : incompatible scopes", 256);
-                            continue;   // escape to end of enclosing block
-                        }                        
-                        """}
+                        X.code(assrc_dst, assrc_hld, null)
                     } else {
                         X.code(null, false, null) + "\n"
                     }
@@ -330,7 +304,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    ${SET("ceu_coro_$n", null, false)}
+                    ${SET("ceu_coro_$n")}
                 }
                 """
             }
@@ -603,10 +577,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ups.assertIsDeclared(bup, "_${id}_", this.tk)
                         """
                         { // ACC - SET
-                            char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, &$asdst_src);
-                            if (ceu_err_$n != NULL) {
-                                snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
-                                continue;
+                            if ($asdst_src.tag > CEU_VALUE_DYNAMIC) {
+                                char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, $asdst_src.Dyn, 1);
+                                if (ceu_err_$n != NULL) {
+                                    snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                                    continue;
+                                }
                             }
                             ${bup.id2c(id)} = $asdst_src;
                         }
@@ -659,9 +635,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_args_$n[${this.args.size}] = {
                         ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = ceu_tuple_create(${this.args.size}, ceu_args_$n);
-                    assert(ceu_$n != NULL);
-                    ${SET("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_$n} })")}
+                    CEU_Dynamic* ceu_tup_$n = ceu_tuple_create(${ups.block(this)!!.toc(true)}, ${this.args.size}, ceu_args_$n);
+                    assert(ceu_tup_$n != NULL);
+                    ${SET("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup_$n} })")}
                 }
                 """
             }
@@ -758,10 +734,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
-                        """
-                        ${e.code("ceu_mem->arg_${i}_$n", true, null)}
-                        assert(NULL == ceu_block_set(&ceu_block_$n, &ceu_mem->arg_${i}_$n));
-                        """,
+                        e.code("ceu_mem->arg_${i}_$n", true, null),
                         "&ceu_mem->arg_${i}_$n"
                     )
                 }.unzip().let {
@@ -788,7 +761,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ${if (!iscoros) {
                         """
                         ceu_coro_create(&ceu_task_$n, $bupc->depth, &ceu_coro_$n);
-                        ${SET("ceu_coro_$n", null,false)}
+                        ${SET("ceu_coro_$n")}
                         """
                     } else {
                         """
@@ -816,8 +789,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         snprintf(ceu_err_error_msg, 256, "${this.proto.tk.pos.file} : (lin ${this.proto.tk.pos.lin}, col ${this.proto.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    // this block is responsible to hold all orphan args and is freed after the call
-                    CEU_Block ceu_block_$n = (CEU_Block) { $bupc->depth+1, NULL, {NULL,NULL} };
                     { // SETS
                         $args_sets
                     }
@@ -829,7 +800,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.args.size},
                             ceu_args_$n
                         );
-                    ceu_block_free(&ceu_block_$n);
                     if (ceu_has_throw_clear()) {
                         continue; // escape enclosing block
                     }
