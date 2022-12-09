@@ -94,7 +94,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
                                         continue; // from BCAST-CLEAR: escape enclosing block
                                     }
-                                    ceu_evt_block.depth = ceu_frame->depth + 1;  // no block depth yet
                         """}}
                         { // ARGS
                             // no block yet, set now, will be reset in body
@@ -173,19 +172,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_has_throw_clear()) {
                         continue;   // escape to end of enclosing block
                     }
-                    // may yield in inner block, need to reset evt depth here
-                    ceu_evt_block.depth = ceu_mem->block_$n.depth;
                 }
                 """
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val (x,_x_) = Pair("(ceu_mem->$id)","(ceu_mem->_${id}_)")
                 """
                 { // DCL ${this.tk.dump()}
                     ${this.init.cond{"ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };"}}
                     ceu_mem->_${id}_ = ${ups.block(this)!!.toc(true)};   // can't be static b/c recursion
-                    ceu_acc = $id;
+                    ceu_acc = ceu_mem->$id;
                 }
                 """
             }
@@ -630,43 +626,43 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     char* ceu_err_$n = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
                     ${asdst_src.cond { """
                         if (ceu_err_$n == NULL) {
-                            ceu_err_$n = ceu_block_set(ceu_col_$n.Dyn->hold, &$it, 1);
+                            ceu_err_$n = ceu_block_set(ceu_acc.Dyn->hold, &$it, 1);
                         }
                     """}}
                     if (ceu_err_$n != NULL) {                
                         snprintf(ceu_err_error_msg, 256, "${this.col.tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
-                    switch (ceu_col_$n.tag) { // OK
+                    switch (ceu_acc.tag) { // OK
                         case CEU_VALUE_TUPLE:                
                             ${if (asdst_src != null) {
-                                "ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;\n"
+                                "ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;\n"
                             } else {
                                 """
                                 ${haspub.cond { """
-                                    if (ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
+                                    if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
                                         ceu_has_throw = 1;
                                         ceu_err = CEU_ERR_ERROR;
                                         strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic public field", 256);
                                         continue; // escape enclosing block;
                                     }
                                 """}}
-                                ceu_acc = ceu_col_$n.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];
+                                ceu_acc = ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number];
                                 """
                             }}
                             break;
                         case CEU_VALUE_DICT: {
-                            int idx = ceu_dict_key_index(ceu_col_$n.Dyn, &ceu_mem->idx_$n);
+                            int idx = ceu_dict_key_index(ceu_acc.Dyn, &ceu_mem->idx_$n);
                             ${if (asdst_src != null) {
                                     """ // SET
                                     if (idx == -1) {
-                                        idx = ceu_dict_empty_index(ceu_col_$n.Dyn);
-                                        (*ceu_col_$n.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                        idx = ceu_dict_empty_index(ceu_acc.Dyn);
+                                        (*ceu_acc.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
                                     }
-                                    (*ceu_col_$n.Dyn->Dict.mem)[idx][1] = $asdst_src;
+                                    (*ceu_acc.Dyn->Dict.mem)[idx][1] = $asdst_src;
                                     """
                             } else {
-                                "ceu_acc = ((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_col_$n.Dyn->Dict.mem)[idx][1]);\n"
+                                "ceu_acc = ((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_acc.Dyn->Dict.mem)[idx][1]);\n"
                             }}
                             break;
                         }
@@ -707,7 +703,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.tag != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";
                     }
-                    ceu_mem->frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
                 """} +
 
                 spawn.cond{"""

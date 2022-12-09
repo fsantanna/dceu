@@ -19,7 +19,15 @@ fun Expr.mem (): String {
             };
             """
         }
-        is Expr.Dcl -> "CEU_Value ${this.tk_.fromOp().noSpecial()}; // DCL"
+        is Expr.Dcl -> {
+            val id = this.tk_.fromOp().noSpecial()
+            """
+            struct { // DCL
+                CEU_Value $id;
+                CEU_Block* _${id}_; // can't be static b/c recursion
+            };
+            """
+        }
         is Expr.Set -> """
             struct { // SET
                 CEU_Value set_$n;

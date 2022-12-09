@@ -19,7 +19,8 @@ fun Coder.main (): String {
         struct CEU_Block;
             
         int ceu_as_bool (struct CEU_Value* v);
-        
+        int ceu_has_throw_clear (void);
+                
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
             CEU_Tags ceu_tag_##id = { str, NULL };
@@ -29,8 +30,6 @@ fun Coder.main (): String {
             CEU_TAGS_MAX++;            
         struct CEU_Value ceu_tags_f (struct CEU_Frame* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
-        
-        int ceu_has_throw_clear (void);
         
         void ceu_block_free (struct CEU_Block* block);
         char* ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
@@ -189,7 +188,7 @@ fun Coder.main (): String {
 
         int ceu_has_throw = 0;
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        CEU_Value ceu_err = { CEU_VALUE_NIL };
+        CEU_Value ceu_err;
         char ceu_err_error_msg[256];
         
             //  - can pass further
@@ -200,7 +199,11 @@ fun Coder.main (): String {
             //      - must deallocate at the end
 
         int ceu_has_bcast = 0;
+        CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL }; 
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
+        CEU_Value* ceu_evt = &CEU_EVT_NIL;
+            // set initial b/c of ceu_bcast_pre/pos
+            // must be a pointer b/c it is mutable b/w bcast/yield
         
         CEU_Value ceu_acc;
     """ +
@@ -218,8 +221,7 @@ fun Coder.main (): String {
                 cur = cur->next;
             }
             return cur->name;
-        }              
-
+        }
         int ceu_has_throw_clear (void) {
             return (ceu_has_throw > 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
         }
@@ -312,13 +314,6 @@ fun Coder.main (): String {
     """ // BCAST
         void* ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
             assert(ceu_has_throw==0 || evt==&CEU_EVT_CLEAR || evt->tag==CEU_VALUE_POINTER);
-            char* err = ceu_block_set(&ceu_evt_block, evt);
-            assert(err == NULL && "bug found: add test and fix");
-            #if 0
-            if (err != NULL) {
-                return err;
-            }
-            #endif
             *prv = ceu_evt;
             ceu_has_bcast++;
             ceu_evt = evt;
@@ -336,9 +331,6 @@ fun Coder.main (): String {
                 // must not clean up now
                 // stop now, clean up comes soon form :clear
                 return NULL;
-            }
-            if (ceu_has_bcast == 0) {
-                ceu_block_free(&ceu_evt_block);
             }
             return NULL;
         }
@@ -890,8 +882,6 @@ fun Coder.main (): String {
                 return 0;
             } while (0);
             fprintf(stderr, "%s\n", ceu_err_error_msg);
-            ceu_block_free(&ceu_err_block);
-            ceu_err = CEU_ERR_NIL;
             return 1;
         }
     """)
