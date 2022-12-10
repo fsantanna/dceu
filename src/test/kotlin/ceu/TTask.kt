@@ -198,7 +198,7 @@ class TTask {
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
-                        ;;println(v1,v2,v3)
+                        nil ;;println(v1,v2,v3)
                     }(3)
                 }(2)
             }(1)
@@ -319,7 +319,7 @@ class TTask {
             var co
             set co = if true { spawn t() } else { nil }
         """)
-        assert(out == "anon : (lin 7, col 30) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn7_err() {

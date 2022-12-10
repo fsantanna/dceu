@@ -290,16 +290,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             continue; // escape enclosing block;
                         }
                     """}}
-                    CEU_Dynamic* ceu_$n = malloc(sizeof(CEU_Dynamic));
-                    assert(ceu_$n != NULL);
-                    *ceu_$n = (CEU_Dynamic) {
-                        CEU_VALUE_COROS, NULL, NULL, {
-                            .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                                .Coros = { ${if (this.max==null) 0 else "ceu_acc.Number"}, 0, 0, NULL}
-                            } }
-                        }
-                    };
-                    ceu_acc = (CEU_Value) { CEU_VALUE_COROS, {.Dyn=ceu_$n} };
+                    ceu_coros_create (
+                        ${ups.block(this)!!.toc(true)},
+                        ${if (this.max==null) 0 else "ceu_acc.Number"},
+                        &ceu_acc
+                    );
                 }
                 """
             }
@@ -360,31 +355,27 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
                     ceu_mem->evt_$n = ceu_acc;
-                    assert(NULL == ceu_block_set($bupc, &ceu_mem->evt_$n, 1);
+                    if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                        assert(NULL == ceu_block_set($bupc, ceu_mem->evt_$n.Dyn, 1));
+                    }
                     ${this.xin.code(true, null)}
-                    int ceu_ok_$n = 0;
+                    char* ceu_err_$n = NULL;
                     if (ceu_acc.tag == CEU_VALUE_CORO) {
                         ceu_err_$n = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
-                        ceu_ok_$n = 1;
                     } else if (ceu_acc.tag == CEU_VALUE_TAG) {
-                        ceu_ok_$n = 1;
                         if (ceu_acc.Tag == CEU_TAG_global) {
                             ceu_err_$n = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_err_$n = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${this.fupc().let {
-                                if (it == null) {
-                                    "ceu_ok_$n = 0;"
-                                } else {
+                                it.cond {
                                     "ceu_err_$n = ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
-                                } 
+                                }
                             }}
-                        } else {
-                            ceu_ok_$n = 0;
                         }
                     }
-                    if (!ceu_ok_$n) {
+                    if (ceu_err_$n != NULL) {
                         ceu_throw(CEU_ERR_ERROR);
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         continue; // escape enclosing block;
@@ -735,7 +726,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 spawn.cond{"""
                 // SPAWN/CORO ${this.tk.dump()}
-                    ${iscoros.cond{spawn!!.coros!!.code(true, null)}}
+                    ${iscoros.cond {
+                        spawn!!.coros!!.code(true, null) + """
+                        ceu_mem->coros_${spawn!!.n} = ceu_acc;
+                        """
+                    }}
                     ${this.proto.code(true, null)}
                     CEU_Value ceu_task_$n = ceu_acc;
                     CEU_Value ceu_coro_$n;
@@ -746,7 +741,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         """
                     } else {
                         """
-                        char* ceu_err_$n = ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, $bupc->depth, &ceu_coro_$n);
+                        char* ceu_err_$n = ceu_coro_create_in (
+                            &ceu_ok_$n.Bool,
+                            ceu_mem->coros_${spawn!!.n}.Dyn,
+                            &ceu_task_$n,
+                            $bupc,
+                            &ceu_coro_$n
+                        );
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok
                         //} // closes below

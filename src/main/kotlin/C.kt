@@ -36,8 +36,9 @@ fun Coder.main (): String {
         
         void  ceu_coros_cleanup (struct CEU_Dynamic* coros);
         void  ceu_coros_destroy (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
+        char* ceu_coros_create  (struct CEU_Block* up, int max, struct CEU_Value* ret); 
         char* ceu_coro_create   (struct CEU_Value* task, struct CEU_Block* up, struct CEU_Value* ret);
-        char* ceu_coros_create  (int* ok, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Block* up, struct CEU_Value* ret);
+        char* ceu_coro_create_in  (int* ok, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Block* up, struct CEU_Value* ret);
         
         void  ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void  ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
@@ -606,6 +607,27 @@ fun Coder.main (): String {
             return ret;
         }
         
+        char* ceu_coros_create (CEU_Block* up, int max, CEU_Value* ret) {
+            CEU_Dynamic* coros = malloc(sizeof(CEU_Dynamic));
+            assert(coros != NULL);
+            *coros = (CEU_Dynamic) {
+                CEU_VALUE_COROS, NULL, NULL, 0, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                        .Coros = { max, 0, 0, NULL}
+                    } }
+                }
+            };            
+            *ret = ((CEU_Value) { CEU_VALUE_COROS, {.Dyn=coros} });
+            
+            // up is the enclosing block of "coroutine T", not of T
+            // T would be the outermost possible scope, but we use up b/c
+            // we cannot express otherwise
+            
+            assert(NULL == ceu_block_set(up, coros, 1));  // 1=cannot escape this block b/c of tasks
+
+            return NULL;
+        }
+        
         char* ceu_coro_create (CEU_Value* task, CEU_Block* up, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
@@ -639,7 +661,10 @@ fun Coder.main (): String {
             return NULL;
         }
         
-        char* ceu_coros_create (int* ok, CEU_Dynamic* coros, CEU_Value* task, CEU_Block* up, CEU_Value* ret) {
+        char* ceu_coro_create_in (int* ok, CEU_Dynamic* coros, CEU_Value* task, CEU_Block* up, CEU_Value* ret) {
+            if (coros->tag != CEU_VALUE_COROS) {
+                return "coroutine error : expected coroutines";
+            }
             if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
                 *ok = 0;
                 return NULL;
