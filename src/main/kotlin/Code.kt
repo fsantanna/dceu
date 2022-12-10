@@ -385,7 +385,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ceu_frame->Task.pc = $n;      // next resume
                     ceu_coro->Bcast.status = CEU_CORO_STATUS_YIELDED;
                     if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                        ceu_block_set(ceu_frame->up, ceu_acc.Dyn, 0);
+                        char* ceu_err_$n = ceu_block_set(ceu_frame->up, ceu_acc.Dyn, 0);
+                        if (ceu_err_$n != NULL) {
+                            snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                            continue;
+                        }
                     }
                     return ceu_acc;
                 case $n:                    // resume here
@@ -603,7 +607,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Dict -> {
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block
-                    it.first.code()  + "ceu_mem->arg_${i}_a_$n = ceu_acc;\n"
+                    it.first.code()  + "ceu_mem->arg_${i}_a_$n = ceu_acc;\n" +
                     it.second.code() + "ceu_mem->arg_${i}_b_$n = ceu_acc;\n"
                 }.joinToString("")
                 """
@@ -612,9 +616,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_args_$n[${this.args.size}][2] = {
                         ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
                     };
-                    CEU_Dynamic* ceu_$n = ceu_dict_create(${this.args.size}, &ceu_args_$n);
-                    assert(ceu_$n != NULL);
-                    ceu_acc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_$n} };
+                    CEU_Dynamic* ceu_dict_$n = ceu_dict_create(${ups.block(this)!!.toc(true)}, ${this.args.size}, &ceu_args_$n);
+                    assert(ceu_dict_$n != NULL);
+                    ceu_acc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_$n} };
                 }
                 """
             }
