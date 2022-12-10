@@ -242,7 +242,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             continue; // escape enclosing block;
                         }
                         ceu_acc = ceu_err;
-                        ceu_err = { CEU_VALUE_NIL };
+                        ceu_err = (CEU_Value) { CEU_VALUE_NIL };
                     }
                 }
                 """
@@ -636,13 +636,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 """
                 { // INDEX  ${this.tk.dump()}
+                    // IDX
                     ${this.idx.code()}
                     ceu_mem->idx_$n = ceu_acc;
+                    // COL
                     ${this.col.code()}
                     char* ceu_err_$n = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
                     ${asdst_src.cond { """
-                        if (ceu_err_$n == NULL) {
-                            ceu_err_$n = ceu_block_set(ceu_acc.Dyn->hold, &$it, 1);
+                        if (ceu_err_$n==NULL && $it.tag>CEU_VALUE_DYNAMIC) {
+                            ceu_err_$n = ceu_block_set(ceu_acc.Dyn->hold, $it.Dyn, 0);
                         }
                     """}}
                     if (ceu_err_$n != NULL) {                

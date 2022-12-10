@@ -253,9 +253,10 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 5, col 26) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 29) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 26) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple8_hold_err() {
@@ -274,8 +275,8 @@ class TExec {
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 4, col 26) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 30) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold_err() {
@@ -511,7 +512,8 @@ class TExec {
                 set x = a
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 16) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope4() {
