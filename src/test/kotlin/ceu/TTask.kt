@@ -1880,7 +1880,8 @@ class TTask {
             }
             println(f())
         """, true)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun esc2() {

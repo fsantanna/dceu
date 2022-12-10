@@ -52,7 +52,7 @@ fun Coder.main (): String {
         char* ceu_col_check        (struct CEU_Value* col, struct CEU_Value* idx);
         struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n, struct CEU_Value* args);
         
-        struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro);        
+        struct CEU_Dynamic* ceu_track_create (struct CEU_Block* hld, struct CEU_Dynamic* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
         struct CEU_Value ceu_op_eq_eq_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
@@ -271,8 +271,10 @@ fun Coder.main (): String {
                         }
                     }
                     break;
+                case CEU_VALUE_TRACK:
+                    break;
                 default:
-                    // do not recurse b/c they never move
+                    // others never move
                     assert((isperm || src->isperm) && "TODO");
                     break;
             }
@@ -617,7 +619,7 @@ fun Coder.main (): String {
                     } }
                 }
             };            
-            *ret = ((CEU_Value) { CEU_VALUE_COROS, {.Dyn=coros} });
+            *ret = (CEU_Value) { CEU_VALUE_COROS, {.Dyn=coros} };
             
             // up is the enclosing block of "coroutine T", not of T
             // T would be the outermost possible scope, but we use up b/c
@@ -650,7 +652,7 @@ fun Coder.main (): String {
             *frame = (CEU_Frame) { &task->Dyn->Proto, up, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
             // up is the enclosing block of "coroutine T", not of T
             // T would be the outermost possible scope, but we use up b/c
@@ -681,7 +683,7 @@ fun Coder.main (): String {
             assert(mem != NULL);
         
             *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, coros->hold, { // no free
+                CEU_VALUE_CORO, NULL, coros->hold, 1, { // no free
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
                         .Coro = { coros, NULL, frame }
                     } }
@@ -690,24 +692,26 @@ fun Coder.main (): String {
             *frame = (CEU_Frame) { &task->Dyn->Proto, up, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
+            *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
             coros->Bcast.Coros.cur++;
             return NULL;
         }
         
-        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
-            assert(ret != NULL);
-            *ret = (CEU_Dynamic) {
-                CEU_VALUE_TRACK, NULL, NULL, {
+        CEU_Dynamic* ceu_track_create (CEU_Block* hld, CEU_Dynamic* coro, CEU_Value* ret) {
+            CEU_Dynamic* trk = malloc(sizeof(CEU_Dynamic));
+            assert(trk != NULL);
+            *trk = (CEU_Dynamic) {
+                CEU_VALUE_TRACK, NULL, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
                         .Track = coro
                     } }
                 }
             };
-            return ret;
+            assert(NULL == ceu_block_set(hld, trk, 0));
+            *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=coro} };
+            return NULL;
         }
         
         CEU_Value ceu_track_to_coro (CEU_Value* track) {

@@ -495,10 +495,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected unterminated coroutine", 256);
                         continue; // escape enclosing block;
                     }
-                    CEU_Dynamic* ceu_dyn_$n = ceu_track_create(ceu_acc.Dyn);
-                    assert(ceu_dyn_$n != NULL);
-                    CEU_Block* ceu_hld_$n = (ceu_coro_$n.Dyn->Bcast.Coro.coros == NULL) ? ceu_coro_$n.Dyn->hold : ceu_coro_$n.Dyn->Bcast.Coro.coros->hold;  // TODO!!!
-                    ${SET("((CEU_Value) { CEU_VALUE_TRACK, {.Dyn=ceu_dyn_$n} })")}
+                    {
+                        CEU_Value ceu_$n;
+                        assert(NULL == ceu_track_create(${ups.block(this)!!.toc(true)}, ceu_acc.Dyn, &ceu_$n));
+                        ${assrc("ceu_$n")}
+                    }
                 }
                 """
 
