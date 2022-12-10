@@ -179,7 +179,7 @@ fun Coder.main (): String {
         } CEU_Tags;        
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (int tag, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
+        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int tag, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
         struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
 
         static CEU_Tags* CEU_TAGS = NULL;
@@ -314,6 +314,8 @@ fun Coder.main (): String {
             } else if (src->hold->depth > dst->depth) {
                 ceu_throw(CEU_ERR_ERROR);
                 return "set error : incompatible scopes";
+            } else {
+                src->isperm = src->isperm || isperm;
             }
             return NULL;
         }
@@ -568,7 +570,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (int tag, CEU_Frame* frame, CEU_Proto_F f, int n) {
+        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int tag, CEU_Frame* frame, CEU_Proto_F f, int n) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
@@ -576,7 +578,7 @@ fun Coder.main (): String {
                     .Proto = { frame, f, {.Task={n}} }
                 }
             };
-            assert(NULL == ceu_block_set(frame->up, ret, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(NULL == ceu_block_set(hld, ret, 1));  // 1=cannot escape this block b/c of upvalues
             return ret;
         }
         

@@ -138,7 +138,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 tops.add(Pair(type,func))
                 """
-                CEU_Dynamic* ceu_proto_$n = ceu_proto_create(CEU_VALUE_${this.tk.str.uppercase()}, ceu_frame, ceu_proto_f_$n, sizeof(CEU_Proto_Mem_$n));
+                CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
+                    ${ups.block(this)!!.toc(true)},
+                    CEU_VALUE_${this.tk.str.uppercase()},
+                    ceu_frame,
+                    ceu_proto_f_$n,
+                    sizeof(CEU_Proto_Mem_$n)
+                );
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
@@ -169,12 +175,22 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${(f_b != null).cond {
                         val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                         """
-                        if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                            char* ceu_err_$n = ceu_block_set($up, ceu_acc.Dyn, 0);
-                            if (ceu_err_$n != NULL) {
-                                // ${this.tk}
-                                snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
-                                continue;
+                        { // move up dynamic ceu_acc, ceu_err
+                            if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                char* ceu_err_$n = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                if (ceu_err_$n != NULL) {
+                                    // ${this.tk}
+                                    snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                                    continue;
+                                }
+                            }
+                            if (ceu_err.tag > CEU_VALUE_DYNAMIC) {
+                                char* ceu_err_$n = ceu_block_set($up, ceu_err.Dyn, 0);
+                                if (ceu_err_$n != NULL) {
+                                    // ${this.tk}
+                                    snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
+                                    continue;
+                                }
                             }
                         }
                         """

@@ -193,17 +193,18 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun task17_nest() {
+    fun task17_nest_err() {
         val out = all("""
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
-                        println(v1,v2,v3)
+                        ;;println(v1,v2,v3)
                     }(3)
                 }(2)
             }(1)
         """)
-        assert(out == "1\t2\t3\n") { out }
+        //assert(out == "1\t2\t3\n") { out }
+        assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -305,7 +306,8 @@ class TTask {
             }
             println(2)
         """)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn67_err() {
@@ -317,7 +319,7 @@ class TTask {
             var co
             set co = if true { spawn t() } else { nil }
         """)
-        assert(out == "anon : (lin 7, col 32) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 30) : return error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn7_err() {
@@ -330,7 +332,8 @@ class TTask {
             set t = task () { nil }
             f()
         """)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn8_err() {
@@ -343,7 +346,8 @@ class TTask {
             }
             spawn T()
         """)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn6() {
@@ -407,12 +411,13 @@ class TTask {
             var T
             set T = task () {
                 (task :fake () {
-                    nil
+                    111
                 })
             }
             spawn T()
         """)
-        assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
 
     // THROW
