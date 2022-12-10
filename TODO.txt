@@ -2,7 +2,7 @@
 
 - catch cannot yield on condition, add test
 - preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt
-    - ou nao pertmirir x=evt exatamente como x=v.pub
+    - ou nao permitir x=evt exatamente como x=v.pub
 
 # NEXT
 

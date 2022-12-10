@@ -756,7 +756,8 @@ class TTask {
              broadcast in :global, []
         """
         )
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic event\n") { out }
     }
 
     // BCAST / SCOPE
@@ -967,7 +968,7 @@ class TTask {
                     throw 1     ;; never reached
                 }
             }
-             broadcast in :global, 2
+            broadcast in :global, 2
         """)
         assert(out == "1\n") { out }
     }
@@ -1315,10 +1316,25 @@ class TTask {
             }
             var co
             set co = coroutine tk
-             broadcast in :global, []
+            broadcast in :global, []
         """
         )
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic event\n") { out }
+    }
+    @Test
+    fun evt_hld1_1_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) {
+                set xxx = evt[0]
+            }
+            var co
+            set co = coroutine tk
+            broadcast in :global, [[]]
+        """
+        )
+        assert(out == "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
     }
     @Test
     fun evt_hld2_err() {
@@ -1336,7 +1352,8 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic event\n") { out }
     }
     @Test
     fun evt_hld3() {
@@ -1438,9 +1455,11 @@ class TTask {
             var x
             set x = []
             broadcast in :global, x
+            println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // PUB
@@ -1585,6 +1604,7 @@ class TTask {
                 spawn (task :fake () {
                     println(pub)
                 }) ()
+                nil
             }) ()
         """, true)
         assert(out == "1\n") { out }

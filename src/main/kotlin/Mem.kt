@@ -44,7 +44,12 @@ fun Expr.mem (): String {
                 ${this.f.mem()}
             };
             """
-        is Expr.While -> this.body.mem()
+        is Expr.While -> """
+            union { // WHILE
+                ${this.cnd.mem()}
+                ${this.body.mem()}
+            };
+            """
         is Expr.Catch -> """
             union { // CATCH
                 ${this.cnd.mem()}
