@@ -710,7 +710,7 @@ fun Coder.main (): String {
                 }
             };
             assert(NULL == ceu_block_set(hld, trk, 0));
-            *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=coro} };
+            *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
             return NULL;
         }
         
