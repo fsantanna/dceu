@@ -695,7 +695,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val spawn  = (if (up is Expr.Spawn)  up else null)
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
-                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_acc.Dyn->Bcast.Coro.frame)"
+                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
@@ -729,15 +729,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscoros.cond{spawn!!.coros!!.code()}}
                     ${this.proto.code()}
                     CEU_Value ceu_task_$n = ceu_acc;
+                    CEU_Value ceu_coro_$n;
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     ${if (!iscoros) {
                         """
-                        char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, $bupc, &ceu_acc);
+                        char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, $bupc, &ceu_coro_$n);
                         """
                     } else {
                         """
                         char* ceu_err_$n = ceu_coros_create(&ceu_ok_$n.Bool, ceu_mem->coros_${spawn!!.n}.Dyn, &ceu_task_$n, $bupc->depth, &ceu_coro_$n);
-                        ceu_acc = ceu_ok_$n;
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok
                         //} // closes below
@@ -774,6 +774,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         continue; // escape enclosing block
                     }
                     ${iscall.cond{ "ceu_acc = ceu_$n;" }}
+                    ${spawn.cond{ "ceu_acc = ${if (iscoros) "ceu_ok_$n" else "ceu_coro_$n" };" }}
                     ${iscoros.cond{"}"}}
                     ${resume.cond{ "ceu_acc = ceu_$n;" }}
                 } // CALL (close)

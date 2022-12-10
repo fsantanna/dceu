@@ -129,7 +129,6 @@ fun Expr.mem (): String {
             """
         is Expr.Call -> """
             struct { // CALL
-                CEU_Value frame_$n;
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 union {
                     ${this.proto.mem()}
