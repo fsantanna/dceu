@@ -107,7 +107,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun block (): Expr.Block {
-        val tk0 = this.tk0
+        val tk0 = if (this.tk0.str=="do") this.tk0 else this.tk1
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
