@@ -275,8 +275,8 @@ class TExec {
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold_err() {
@@ -288,8 +288,8 @@ class TExec {
             }
             println(1)
         """, true)
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple10_hold_err() {
