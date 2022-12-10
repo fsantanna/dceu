@@ -620,7 +620,7 @@ fun Coder.main (): String {
             assert(mem != NULL);
             
             *coro = (CEU_Dynamic) {
-                CEU_VALUE_CORO, NULL, NULL, {
+                CEU_VALUE_CORO, NULL, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
                         .Coro = { NULL, NULL, frame }
                     } }
@@ -631,6 +631,12 @@ fun Coder.main (): String {
             } };
             *ret = ((CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} });
             
+            // up is the enclosing block of "coroutine T", not of T
+            // T would be the outermost possible scope, but we use up b/c
+            // we cannot express otherwise
+            
+            assert(NULL == ceu_block_set(up, coro, 1));  // 1=cannot escape this block b/c of upvalues
+
             return NULL;
         }
         

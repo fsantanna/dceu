@@ -289,7 +289,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // CORO ${this.tk.dump()}
                     ${this.task.code()}
                     CEU_Value ceu_coro_$n;
-                    char* ceu_err_$n = ceu_coro_create(&ceu_acc, ${ups.block(this)!!.toc(true)}->depth+1, &ceu_coro_$n);
+                    char* ceu_err_$n = ceu_coro_create(&ceu_acc, ${ups.block(this)!!.toc(true)}, &ceu_coro_$n);
                     if (ceu_err_$n != NULL) {
                         ceu_has_throw = 1;
                         ceu_err = CEU_ERR_ERROR;
@@ -695,7 +695,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val spawn  = (if (up is Expr.Spawn)  up else null)
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
-                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
+                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_acc.Dyn->Bcast.Coro.frame)"
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
@@ -732,7 +732,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     ${if (!iscoros) {
                         """
-                        char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, $bupc->depth, &ceu_acc);
+                        char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, $bupc, &ceu_acc);
                         """
                     } else {
                         """
