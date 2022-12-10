@@ -254,8 +254,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Throw -> """
                 { // THROW ${this.tk.dump()}
                     ${this.ex.code(true, null)}
-                    ceu_err = ceu_acc;
-                    ceu_has_throw = 1;
+                    ceu_throw(ceu_acc);
                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception", 256);
                     continue; // escape enclosing block;
                 }
@@ -268,8 +267,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.max.cond { """
                         ${it.code(true, null)}
                         if (ceu_acc.tag!=CEU_VALUE_NUMBER || ceu_acc.Number<=0) {                
-                            ceu_has_throw = 1;
-                            ceu_err = CEU_ERR_ERROR;
+                            ceu_throw(CEU_ERR_ERROR);
                             strncpy(ceu_err_error_msg,
                                 "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number",
                                  256);
@@ -296,8 +294,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value ceu_coro_$n;
                     char* ceu_err_$n = ceu_coro_create(&ceu_acc, ${ups.block(this)!!.toc(true)}, &ceu_coro_$n);
                     if (ceu_err_$n != NULL) {
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
@@ -313,8 +310,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.coros.code(true, null)}
                     ceu_mem->coros_$n = ceu_acc;
                     if (ceu_mem->coros_$n.tag != CEU_VALUE_COROS) {                
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
                         continue; // escape enclosing block;
                     }
@@ -373,8 +369,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                     }
                     if (!ceu_ok_$n) {
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         continue; // escape enclosing block;
                     }
@@ -411,8 +406,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ceu_mem->on_$n = ceu_acc;
                 ${this.coro.code(true, null)}
                 if (ceu_acc.tag<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
-                    ceu_has_throw = 1;
-                    ceu_err = CEU_ERR_ERROR;
+                    ceu_throw(CEU_ERR_ERROR);
                     strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : toggle error : expected yielded/toggled coroutine", 256);
                     continue; // escape enclosing block;
                 }
@@ -438,8 +432,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                          }}
                         ceu_acc = ceu_track_to_coro(&ceu_acc);
                         if (ceu_acc.tag != CEU_VALUE_CORO) {                
-                            ceu_has_throw = 1;
-                            ceu_err = CEU_ERR_ERROR;
+                            ceu_throw(CEU_ERR_ERROR);
                             strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine", 256);
                             continue; // escape enclosing block;
                         }
@@ -460,17 +453,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         { // PUB - read
                             ${(!inidx).cond { """
                                 if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
-                                    ceu_has_throw = 1;
-                                    ceu_err = CEU_ERR_ERROR;
+                                    ceu_throw(CEU_ERR_ERROR);
                                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic public field", 256);
                                     continue; // escape enclosing block;
                                 }                                    
                             """ }}
-                            ceu_acc = ${if (this.tk.str=="pub") {
+                            ${assrc(if (this.tk.str=="pub") {
                                 "ceu_dyn_$n->Bcast.Coro.frame->Task.pub"
                             } else {
                                 "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_resumed} }"
-                            }};
+                            })}
                         }
                         """
                     }}
@@ -481,13 +473,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // TRACK
                     ${this.coro.code(true, null)}
                     if (ceu_acc.tag != CEU_VALUE_CORO) {                
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected coroutine", 256);
                         continue; // escape enclosing block;
                     } else if (ceu_acc.Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected unterminated coroutine", 256);
                         continue; // escape enclosing block;
                     }
@@ -663,8 +653,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 """
                                 ${haspub.cond { """
                                     if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
-                                        ceu_has_throw = 1;
-                                        ceu_err = CEU_ERR_ERROR;
+                                        ceu_throw(CEU_ERR_ERROR);
                                         strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic public field", 256);
                                         continue; // escape enclosing block;
                                     }
@@ -761,15 +750,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                 """
                     if (ceu_err_$n != NULL) {
-                        ceu_has_throw = 1;
-                        ceu_err = CEU_ERR_ERROR;
+                        ceu_throw(CEU_ERR_ERROR);
                         snprintf(ceu_err_error_msg, 256, "${this.proto.tk.pos.file} : (lin ${this.proto.tk.pos.lin}, col ${this.proto.tk.pos.col}) : %s", ceu_err_$n);
                         continue; // escape enclosing block;
                     }
                     CEU_Value* ceu_args_$n[] = { $args_vs };
-                    ${iscall.cond { "CEU_Value ceu_$n = " }}
-                    ${resume.cond { "CEU_Value ceu_$n = " }}
-                        $frame->proto->f (
+                    CEU_Value ceu_$n = $frame->proto->f (
                             $frame,
                             ${this.args.size},
                             ceu_args_$n

@@ -190,6 +190,7 @@ fun Coder.main (): String {
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         CEU_Value ceu_err;
         char ceu_err_error_msg[256];
+        #define ceu_throw(v) { ceu_has_throw=1; ceu_err=v; ceu_acc=(CEU_Value){CEU_VALUE_NIL}; }
         
             //  - can pass further
             //  - cannot pass back
@@ -311,8 +312,7 @@ fun Coder.main (): String {
                 src->hold = dst;
                 src->isperm = src->isperm || isperm;
             } else if (src->hold->depth > dst->depth) {
-                ceu_has_throw = 1;
-                ceu_err = CEU_ERR_ERROR;
+                ceu_throw(CEU_ERR_ERROR);
                 return "set error : incompatible scopes";
             }
             return NULL;
@@ -551,19 +551,16 @@ fun Coder.main (): String {
         
         char* ceu_col_check (CEU_Value* col, CEU_Value* idx) {
             if (col->tag!=CEU_VALUE_TUPLE && col->tag!=CEU_VALUE_DICT) {                
-                ceu_has_throw = 1;
-                ceu_err = CEU_ERR_ERROR;
+                ceu_throw(CEU_ERR_ERROR);
                 return "index error : expected collection";
             }
             if (col->tag == CEU_VALUE_TUPLE) {
                 if (idx->tag != CEU_VALUE_NUMBER) {
-                    ceu_has_throw = 1;
-                    ceu_err = CEU_ERR_ERROR;
+                    ceu_throw(CEU_ERR_ERROR);
                     return "index error : expected number";
                 }
                 if (col->Dyn->Tuple.n <= idx->Number) {                
-                    ceu_has_throw = 1;
-                    ceu_err = CEU_ERR_ERROR;
+                    ceu_throw(CEU_ERR_ERROR);
                     return "index error : out of bounds";
                 }
             }

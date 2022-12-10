@@ -275,8 +275,8 @@ class TExec {
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold_err() {
@@ -952,13 +952,13 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun catch8_err() {
+    fun catch8() {
         val out = ceu.all(
             """
             var x
             catch do {
                 set x = err
-                err==:x
+                err[0]==:x
             } {
                 throw [:x]
                 println(9)
@@ -966,7 +966,31 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "[:x]\n") { out }
+    }
+    @Test
+    fun catch89_err() {
+        val out = ceu.all(
+            """
+            var y
+            catch do {
+                set y = err
+                true
+            } {
+                catch do {
+                    var x
+                    set x = err
+                    false
+                } {
+                    throw [:x]
+                    println(9)
+                }
+            }
+            println(y)
+        """
+        )
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {
