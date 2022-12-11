@@ -11,6 +11,7 @@ import exec
 import main
 import org.junit.Ignore
 import org.junit.Test
+import tostr
 import java.io.File
 
 // search in tests output for

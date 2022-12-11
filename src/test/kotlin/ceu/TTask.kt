@@ -1131,6 +1131,27 @@ class TTask {
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
     @Test
+    fun pool16_17_term() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(2)
+            var T
+            set T = task () {
+                defer {
+                    println(20)
+                }
+                yield nil
+                throw nil
+            }
+            spawn in ts, T()
+            spawn in ts, T()
+            broadcast in :global, @[]
+        """
+        )
+        assert(out == "0\n10\n10\n1\n20\n2\n20\n3\n") { out }
+    }
+    @Test
     fun pool17_term() {
         val out = ceu.all(
             """
@@ -1155,9 +1176,9 @@ class TTask {
             spawn in ts, T(false)
             spawn in ts, T(true)
             println(1)
-             broadcast in :global, @[]
+            broadcast in :global, @[]
             println(2)
-             broadcast in :global, @[]
+            broadcast in :global, @[]
             println(3)
         """
         )
@@ -1989,8 +2010,11 @@ class TTask {
                 set t = coroutine T
                 set x = track t         ;; error scope
             }
+            println(x.status)
+            println(x)
         """)
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out.contains("terminated\ntrack: 0x")) { out }
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track7() {
@@ -2027,10 +2051,11 @@ class TTask {
                 set x = track t         ;; scope x < t
                 println(x.pub[0])
             }
+            println(x.status)
             println(x)
         """)
-        //assert(out == "10\nnil\n") { out }
-        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
+        assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
+        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track9() {
@@ -2110,7 +2135,8 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T(1)
             spawn in ts, T(2)
-            var x = catch true {
+            var x
+            set x = catch true {
                 while t in ts {
                     throw track(t)
                 }
