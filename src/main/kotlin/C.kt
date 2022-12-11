@@ -232,11 +232,14 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
-                if (cur->tag == CEU_VALUE_DICT) {
-                    free(cur->Dict.mem);
-                } else if (cur->tag == CEU_VALUE_CORO) {
-                    free(cur->Bcast.Coro.frame->mem);
-                    free(cur->Bcast.Coro.frame);
+                switch (cur->tag) {
+                    case CEU_VALUE_DICT:
+                        free(cur->Dict.mem);
+                        break;
+                    case CEU_VALUE_CORO:
+                        free(cur->Bcast.Coro.frame->mem);
+                        free(cur->Bcast.Coro.frame);
+                        break;
                 }
                 block->tofree = block->tofree->next;
                 free(cur);
@@ -286,21 +289,25 @@ fun Coder.main (): String {
                 } else {
                     { // remove from old block
                         if (src->hold != NULL) {
+                            CEU_Block* old = src->hold;
                             if (src->tag > CEU_VALUE_BCAST) {
                                 ceu_bcast_dequeue(&src->hold->bcast.dyn, src);
                             }
-                            CEU_Dynamic* prv = NULL;
-                            CEU_Dynamic* cur = src->hold->tofree;
-                            while (cur != NULL) {
-                                if (cur == src) {
-                                    if (prv == NULL) {
-                                        src->hold->tofree = NULL;
-                                    } else {
-                                        prv->next = cur->next;
+                            { // remove from free list
+                                CEU_Dynamic* prv = NULL;
+                                CEU_Dynamic* cur = src->hold->tofree;
+                                while (cur != NULL) {
+                                    if (cur == src) {
+                                        if (prv == NULL) {
+                                            src->hold->tofree = cur->next;
+                                        } else {
+                                            prv->next = cur->next;
+                                        }
+                                        cur->next = NULL;
                                     }
+                                    prv = cur;
+                                    cur = cur->next;
                                 }
-                                prv = cur;
-                                cur = cur->next;
                             }
                         }
                     }
