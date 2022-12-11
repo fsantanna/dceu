@@ -401,12 +401,11 @@ fun Coder.main (): String {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
                     ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                    CEU_BCAST_BREAK();
+                    // continue below even with throw, yield will awake and abort
                     if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // on resume, only awake blocks
                         CEU_Value arg = { CEU_VALUE_NIL };
                         CEU_Value* args[] = { &arg };
                         cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);
-                        CEU_BCAST_BREAK();
                     }
                     break;
                 }
@@ -417,7 +416,6 @@ fun Coder.main (): String {
                     if (cur->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(cur);
                     }
-                    CEU_BCAST_BREAK();
                     break;
                 case CEU_VALUE_TRACK:
                     if (ceu_evt->tag==CEU_VALUE_POINTER && cur->Bcast.Track.coro==ceu_evt->Pointer) {

@@ -487,6 +487,93 @@ class TTask {
         """)
         assert(out == "anon : (lin 3, col 30) : broadcast error : invalid target\n") { out }
     }
+    @Test
+    fun throw6() {
+        val out = all("""
+            var co
+            set co = coroutine task () {
+                catch :e1 {
+                    yield nil
+                    throw :e1
+                }
+                println(:e1)
+                yield nil
+                throw :e2
+            }
+            catch :e2 {
+                resume co()
+                resume co()
+                resume co()
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun throw7() {
+        val out = all("""
+            var co
+            set co = coroutine task () {
+                catch :e1 {
+                    coroutine task () {
+                        yield nil
+                        throw :e1
+                    }()
+                    while true {
+                        yield nil
+                    }
+                }
+                println(:e1)
+                yield nil
+                throw :e2
+            }
+            catch :e2 {
+                resume co()
+                broadcast in :global, nil
+                broadcast in :global, nil
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun throw8() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () {
+                catch err==:e1 {
+                    spawn task () {
+                        yield nil
+                        throw :e1
+                        println(:no)
+                    } ()
+                    while true { yield nil }
+                }
+                println(:ok1)
+                throw :e2
+                println(:no)
+            }
+            spawn (task () {
+                catch :e2 {
+                    spawn T()
+                    while true { yield nil }
+                }
+                println(:ok2)
+                throw :e3
+                println(:no)
+            }) ()
+            catch :e3 {
+                broadcast in :global, nil
+                println(:no)
+            }
+            println(:ok3)
+        """
+        )
+        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
+    }
 
     // BCAST / BROADCAST
 
@@ -1262,8 +1349,8 @@ class TTask {
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
-             broadcast in :global, nil
-             broadcast in :global, nil
+            broadcast in :global, nil
+            broadcast in :global, nil
             println(999)
         """
         )
@@ -2145,7 +2232,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\n:yielded\n:destroyed\n") { out }
+        assert(out == ":destroyed\n") { out }
     }
     @Test
     fun track13_throw() {
@@ -2165,11 +2252,11 @@ class TTask {
                     throw track(t)
                 }
             }
-            println(x.pub[0])   ;; 2
+            println(x.pub[0])   ;; 1
             println(x.status)   ;; :yielded
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\n:yielded\n:destroyed\n") { out }
+        assert(out == "1\n:yielded\n:destroyed\n") { out }
     }
 }
