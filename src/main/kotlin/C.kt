@@ -365,21 +365,21 @@ fun Coder.main (): String {
                 cur->Bcast.next = dyn;
             }
         }
-        
         void ceu_bcast_dequeue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
             if (*outer == dyn) {
+                dyn->Bcast.next = NULL;
                 *outer = dyn->Bcast.next;
             } else {
                 CEU_Dynamic* cur = *outer;
                 while (cur->Bcast.next != NULL) {
                     if (cur->Bcast.next == dyn) {
-                        cur->Bcast.next = cur->Bcast.next->Bcast.next;
+                        CEU_Dynamic* tmp = cur->Bcast.next->Bcast.next;
                         cur->Bcast.next->Bcast.next = NULL;
+                        cur->Bcast.next = tmp;
                         break;
                     }
                     cur = cur->Bcast.next;
                 }
-                cur->Bcast.next = dyn;
             }
         }
     """ +
