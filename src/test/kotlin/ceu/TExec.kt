@@ -1371,11 +1371,14 @@ class TExec {
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
     @Test
-    fun defer2_err() {
+    fun todo_defer2_err() {
         val out = all("""
-            defer {
-                yield nil
+            task () {
+                defer {
+                    yield nil   ;; no yield inside defer
+                }
             }
+            println(1)
         """)
         assert(out == "TODO") { out }
     }
@@ -1389,7 +1392,19 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "TODO") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun defer4_err() {
+        val out = all("""
+            do {
+                defer {
+                    throw nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 4, col 21) : throw error : uncaught exception\n") { out }
     }
 
     // ESCAPE / FUNC

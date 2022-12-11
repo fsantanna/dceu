@@ -2015,8 +2015,8 @@ class TTask {
             println(x.status)
             println(x)
         """)
-        assert(out.contains("terminated\ntrack: 0x")) { out }
-        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out.contains("terminated\ntrack: 0x")) { out }
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track7() {
@@ -2056,8 +2056,8 @@ class TTask {
             println(x.status)
             println(x)
         """)
-        assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
-        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
+        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track9() {
@@ -2104,6 +2104,7 @@ class TTask {
             }
         """)
         assert(out == "2\n:destroyed\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track11_err() {
@@ -2144,9 +2145,10 @@ class TTask {
                 }
             }
             println(x.pub[0])   ;; 2
+            println(x.status)   ;; :yielded
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\n:destroyed\n") { out }
+        assert(out == "2\n:yielded\n:destroyed\n") { out }
     }
 }

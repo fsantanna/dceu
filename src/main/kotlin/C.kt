@@ -52,7 +52,7 @@ fun Coder.main (): String {
         char* ceu_col_check        (struct CEU_Value* col, struct CEU_Value* idx);
         struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n, struct CEU_Value* args);
         
-        struct CEU_Dynamic* ceu_track_create (struct CEU_Block* hld, struct CEU_Dynamic* coro, struct CEU_Value* ret);
+        struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
         struct CEU_Value ceu_op_eq_eq_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
@@ -669,7 +669,7 @@ fun Coder.main (): String {
             return NULL;
         }
         
-        CEU_Dynamic* ceu_track_create (CEU_Block* hld, CEU_Dynamic* coro, CEU_Value* ret) {
+        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro, CEU_Value* ret) {
             CEU_Dynamic* trk = malloc(sizeof(CEU_Dynamic));
             assert(trk != NULL);
             *trk = (CEU_Dynamic) {
@@ -679,7 +679,9 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            assert(NULL == ceu_block_set(hld, trk, 0));
+            // at most coro->hld, same as pointer coro/coros, term bcast is limited to it
+            CEU_Block* hld = (coro->Bcast.Coro.coros == NULL) ? coro->hold : coro->Bcast.Coro.coros->hold;
+            assert(NULL == ceu_block_set(hld, trk, 1));
             *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
             return NULL;
         }

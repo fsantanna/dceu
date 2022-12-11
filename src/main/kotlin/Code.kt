@@ -509,7 +509,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     {
                         CEU_Value ceu_$n;
-                        assert(NULL == ceu_track_create(${ups.block(this)!!.toc(true)}, ceu_acc.Dyn, &ceu_$n));
+                        assert(NULL == ceu_track_create(ceu_acc.Dyn, &ceu_$n));
                         ${assrc("ceu_$n")}
                     }
                 }
