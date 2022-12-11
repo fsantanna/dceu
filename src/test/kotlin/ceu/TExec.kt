@@ -1434,7 +1434,8 @@ class TExec {
             }
             println(f(10)())
         """)
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
     }
 
 
@@ -1462,6 +1463,7 @@ class TExec {
             println(smallerc(3)(1))
         """)
         //assert(out == "3\n") { out }
-        assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 37) : set error : incompatible scopes\n") { out }
     }
 }

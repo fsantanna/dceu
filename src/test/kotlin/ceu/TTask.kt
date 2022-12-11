@@ -757,7 +757,7 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic event\n") { out }
+        assert(out == "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
 
     // BCAST / SCOPE
@@ -1342,7 +1342,7 @@ class TTask {
             broadcast in :global, []
         """
         )
-        assert(out == "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic event\n") { out }
+        assert(out == "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld1_1_err() {
@@ -1376,7 +1376,7 @@ class TTask {
         )
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic event\n") { out }
+        assert(out == "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld3() {
@@ -1540,7 +1540,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun pub5() {
@@ -1617,7 +1617,7 @@ class TTask {
             println(999)
         """)
         //assert(out == "20\n") { out }
-        assert(out == "anon : (lin 12, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 12, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun pub8_fake_task() {
@@ -1644,7 +1644,7 @@ class TTask {
                 println(x)
             }) ()
         """, true)
-        assert(out == "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun pub9_10_fake_task() {
@@ -1689,7 +1689,7 @@ class TTask {
             println(999)
         """)
         //assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun pub12_index_err() {
@@ -1705,7 +1705,7 @@ class TTask {
             var x
             set x = t.pub   ;; no expose
         """)
-        assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun pub13_index_err() {
@@ -1720,7 +1720,7 @@ class TTask {
             resume t()
             println(t.pub)   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun todo_pub14_index_err() {
@@ -1999,7 +1999,7 @@ class TTask {
             set x = track t
             println(x.pub)      ;; expose
         """)
-        assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
     fun track6_err() {

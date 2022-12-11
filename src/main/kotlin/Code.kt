@@ -483,7 +483,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${(!inidx && this.tk.str=="pub").cond { """
                                 if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
                                     ceu_throw(CEU_ERR_ERROR);
-                                    strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic public field", 256);
+                                    strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic \"pub\" field", 256);
                                     continue; // escape enclosing block;
                                 }                                    
                             """ }}
@@ -606,7 +606,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         (!inidx).cond { """
                             if (ceu_evt->tag > CEU_VALUE_DYNAMIC) {
                                 ceu_throw(CEU_ERR_ERROR);
-                                strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic event", 256);
+                                strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"", 256);
                                 continue; // escape enclosing block;
                             }                                    
                         """ } + assrc("(*ceu_evt)")
