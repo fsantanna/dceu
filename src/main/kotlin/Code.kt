@@ -197,7 +197,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }}
                     ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
                     { // DEFERS ${this.tk.dump()}
-                        ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                        int ceu_has_throw_old = ceu_has_throw;
+                        ceu_has_throw = 0;
+                        int ceu_has_bcast_old = ceu_has_bcast;
+                        ceu_has_bcast = 0;
+                        do {
+                            ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                        } while (0);
+                        ceu_has_bcast = ceu_has_bcast_old;
+                        ceu_has_throw = ceu_has_throw || ceu_has_throw_old;
                     }
                     ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
                     ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
@@ -385,7 +393,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     if (ceu_err_$n) {
                         ceu_throw(CEU_ERR_ERROR);
-                        strncpy}(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
+                        strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         continue; // escape enclosing block;
                     }
                     if (ceu_has_throw_clear()) {

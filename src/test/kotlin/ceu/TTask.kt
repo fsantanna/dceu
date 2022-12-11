@@ -1140,6 +1140,7 @@ class TTask {
             set T = task () {
                 defer {
                     println(20)
+                    println(30)
                 }
                 yield nil
                 throw nil
@@ -1149,7 +1150,7 @@ class TTask {
             broadcast in :global, @[]
         """
         )
-        assert(out == "0\n10\n10\n1\n20\n2\n20\n3\n") { out }
+        assert(out == "anon : (lin 11, col 17) : throw error : uncaught exception\n20\n30\n20\n30\n") { out }
     }
     @Test
     fun pool17_term() {
@@ -1162,6 +1163,7 @@ class TTask {
                 println(10)
                 defer {
                     println(20)
+                    println(30)
                 }
                 do { var ok1; set ok1=true; while ok1 { yield nil; if tags(evt)/=:pointer { set ok1=false } else { nil } } }
                 ;;yield nil
@@ -1182,7 +1184,7 @@ class TTask {
             println(3)
         """
         )
-        assert(out == "0\n10\n10\n1\n20\n2\n20\n3\n") { out }
+        assert(out == "0\n10\n10\n1\n20\n30\n2\n20\n30\n3\n") { out }
     }
     @Test
     fun pool18_throw() {
@@ -1733,7 +1735,7 @@ class TTask {
             resume t()
             println(t.pub[0][:x])   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic public field\n") { out }
+        assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n") { out }
     }
 
     // STATUS

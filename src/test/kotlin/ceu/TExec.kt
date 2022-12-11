@@ -1370,6 +1370,27 @@ class TExec {
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
+    @Test
+    fun defer2_err() {
+        val out = all("""
+            defer {
+                yield nil
+            }
+        """)
+        assert(out == "TODO") { out }
+    }
+    @Test
+    fun defer3() {
+        val out = all("""
+            catch err==nil {
+                defer {
+                    throw nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "TODO") { out }
+    }
 
     // ESCAPE / FUNC
 
