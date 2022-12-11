@@ -2131,6 +2131,27 @@ class TTask {
         val out = all("""
             var T
             set T = task (v) {
+                yield nil
+            }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T(1)
+            var x
+            set x = catch true {
+                while t in ts {
+                    throw track(t)
+                }
+            }
+            broadcast in :global, nil
+            println(x.status)   ;; nil
+        """)
+        assert(out == "2\n:yielded\n:destroyed\n") { out }
+    }
+    @Test
+    fun track13_throw() {
+        val out = all("""
+            var T
+            set T = task (v) {
                 set pub = [v]
                 yield nil
             }

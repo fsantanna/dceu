@@ -341,13 +341,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         if (ceu_mem->$loc.Dyn == NULL) {
                             continue; // escape enclosing block
                         }
-                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold; 
-                        ceu_mem->$loc.Dyn->hold = ${this.body.toc(true)};
+                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold;  
+                        ceu_mem->$loc.Dyn->hold = ${this.body.toc(true)}; // tmp coro.hold to nested block
                         ${this.body.code(false, null)}
-                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n; 
+                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
                         goto CEU_ITER_$n;
                     } while (0); // iter
+                    if (ceu_mem->$loc.Dyn != NULL) { // repeat in case body error
+                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
+                    }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
