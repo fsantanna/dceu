@@ -46,6 +46,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return if (fup == null) null else "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
+    fun Expr.gcall (): Boolean {
+        return ups.ups[this].let { it is Expr.Call && it.proto.let {
+            it is Expr.Acc && it.tk.str in listOf("print","println","tags","op_eq_eq","op_div_eq") }
+        }
+    }
+
     // assrc_dst: calling expr is a source and here's its destination
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code (issrc: Boolean, asdst_src: String?): String {
@@ -603,7 +609,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "err" -> assrc("ceu_err")
                     "evt" -> {
                         val inidx = (ups.pred(this) { it is Expr.Index } != null)
-                        (!inidx).cond { """
+                        (!inidx && !this.gcall()).cond { """
                             if (ceu_evt->tag > CEU_VALUE_DYNAMIC) {
                                 ceu_throw(CEU_ERR_ERROR);
                                 strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"", 256);
@@ -695,11 +701,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${if (asdst_src != null) {
                                 "ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;\n"
                             } else {
+                                val x = this.has_pub_evt()
                                 """
-                                ${this.has_pub_evt().cond { """
+                                ${(x!=null && !this.gcall()).cond { """
                                     if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
                                         ceu_throw(CEU_ERR_ERROR);
-                                        strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$it\" field", 256);
+                                        strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$x\" field", 256);
                                         continue; // escape enclosing block;
                                     }
                                 """}}
