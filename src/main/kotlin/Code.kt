@@ -48,7 +48,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
     fun Expr.gcall (): Boolean {
         return ups.ups[this].let { it is Expr.Call && it.proto.let {
-            it is Expr.Acc && it.tk.str in listOf("print","println","tags","op_eq_eq","op_div_eq") }
+            it is Expr.Acc && it.tk.str in listOf("print","println","tags","{==}","{/=}") }
         }
     }
 
