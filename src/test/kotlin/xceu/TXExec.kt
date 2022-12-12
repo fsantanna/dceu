@@ -691,6 +691,18 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun break5() {
+        val out = all("""
+            while true { {:break2}
+                while true { {:break1}
+                    throw :break2
+                }
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // THROW / CATCH
 

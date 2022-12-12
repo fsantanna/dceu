@@ -129,7 +129,8 @@ class Parser (lexer_: Lexer)
             return Pair({it}, blk)
         } else {
             val catch: (Expr)->Expr = {
-                Expr.Catch(tk0 as Tk.Fix, cnd, if (it is Expr.Block) it else Expr.Block(tk0,listOf(it)))
+                val xcnd = this.nest("(err == ${cnd.tostr(true)})")
+                Expr.Catch(tk0 as Tk.Fix, xcnd, if (it is Expr.Block) it else Expr.Block(tk0,listOf(it)))
             }
             return Pair(catch, blk)
         }
