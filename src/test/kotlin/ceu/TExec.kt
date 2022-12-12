@@ -34,6 +34,9 @@ fun all (inp: String, pre: Boolean=false): String {
     val es = try {
         parser.exprs()
     } catch (e: Throwable) {
+        if (THROW) {
+            throw e
+        }
         return e.message!!
     }
     //println(es.map { it.toString()+"\n" }.joinToString(""))

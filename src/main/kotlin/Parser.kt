@@ -114,6 +114,27 @@ class Parser (lexer_: Lexer)
         return Expr.Block(tk0, es)
     }
 
+    fun catch_block (): Pair<(Expr)->Expr,Expr.Block> {
+        val tk0 = if (this.tk0.str=="do") this.tk0 else this.tk1
+        this.acceptFix_err("{")
+        val cnd = if (!XCEU || !this.acceptFix("{")) null else {
+            val cnd = this.expr()
+            this.acceptFix_err("}")
+            cnd
+        }
+        val es = this.exprs()
+        this.acceptFix_err("}")
+        val blk = Expr.Block(tk0, es)
+        if (cnd == null) {
+            return Pair({it}, blk)
+        } else {
+            val catch: (Expr)->Expr = {
+                Expr.Catch(tk0 as Tk.Fix, cnd, if (it is Expr.Block) it else Expr.Block(tk0,listOf(it)))
+            }
+            return Pair(catch, blk)
+        }
+    }
+
     fun clk_or_expr (): Pair<Tk.Clk?,Expr?> {
         return if (this.acceptEnu("Clk")) {
             Pair(this.tk0 as Tk.Clk, null)
@@ -124,7 +145,7 @@ class Parser (lexer_: Lexer)
 
     fun exprPrim (): Expr {
         return when {
-            this.acceptFix("do") -> this.block()
+            this.acceptFix("do") -> this.catch_block().let { (C,b)->C(b) }
             this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptEnu_err("Id")
@@ -168,20 +189,18 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("while") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val e = this.expr()
                 if (this.acceptFix("in")) {
-                    if (e !is Expr.Acc) {
-                        err(e.tk, "invalid while : expected identifier")
+                    val col = this.expr()
+                    this.acceptFix_err(",")
+                    this.acceptEnu_err("Id")
+                    val i = this.tk0 as Tk.Id
+                    this.catch_block().let { (C,b) ->
+                        C(Expr.Iter(tk0, i, col,
+                            Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
                     }
-                    Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
-                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
                 } else {
-                    Expr.While(tk0, e, this.block())
-                }.let {
-                    if (!XCEU) it else {
-                        val cnd = this.nest("${tk0.pos.pre()}(err==:break)")
-                        Expr.Catch(tk0, cnd, Expr.Block(tk0, listOf(it)))
-                    }
+                    val cnd = this.expr()
+                    this.catch_block().let { (C,b)->C(Expr.While(tk0, cnd, b)) }
                 }
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
@@ -195,7 +214,9 @@ class Parser (lexer_: Lexer)
                 val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
-                val body = this.block()
+                val body = this.catch_block().let { (C,b) -> C(b) }.let {
+                    if (it is Expr.Block) it else Expr.Block(tk0,listOf(it))
+                }
                 val proto = Expr.Proto(tk0, isFake, args, body)
                 if (id == null) proto else {
                     this.nest("""

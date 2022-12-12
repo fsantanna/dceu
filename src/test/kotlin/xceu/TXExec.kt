@@ -650,8 +650,8 @@ class TXExec {
     @Test
     fun break1() {
         val out = all("""
-            while true {
-                break
+            while true { {:break}
+                throw :break
             }
             println(1)
         """)

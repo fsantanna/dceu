@@ -1051,7 +1051,7 @@ class TTask {
                     println(v)
                 }
                 spawn in ts, T(1)
-                while t in ts {
+                while in ts, t {
                     throw 1     ;; never reached
                 }
             }
@@ -1076,11 +1076,11 @@ class TTask {
     @Test
     fun pool8_err() {
         val out = all("""
-            while x in nil {
+            while in nil, x {
                 nil
             }
         """)
-        assert(out == "anon : (lin 2, col 24) : while error : expected coroutines\n") { out }
+        assert(out == "anon : (lin 2, col 22) : while error : expected coroutines\n") { out }
     }
     @Test
     fun pool9_term() {
@@ -1092,7 +1092,7 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while xxx in ts {
+            while in ts, xxx {
                 println(1)
                  broadcast in :global, 1
             }
@@ -1110,10 +1110,10 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while xxx in ts {
+            while in ts, xxx {
                 println(1)
                  broadcast in :global, 1
-                while yyy in ts {
+                while in ts, yyy {
                     println(2)
                 }
             }
@@ -1130,7 +1130,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var yyy
-            while xxx in ts {
+            while in ts, xxx {
                 set yyy = xxx
             }
         """)
@@ -1145,9 +1145,9 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while xxx in ts {
+            while in ts, xxx {
                 var yyy
-                while zzz in ts {
+                while in ts, zzz {
                     set yyy = zzz
                 }
                 set yyy = xxx
@@ -1165,9 +1165,9 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while xxx in ts {
+            while in ts, xxx {
                 var yyy
-                while zzz in ts {
+                while in ts, zzz {
                     nil
                 }
                 set yyy = xxx
@@ -1404,8 +1404,8 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             
-            while t1 in ts {
-                while t2 in ts {
+            while in ts, t1 {
+                while in ts, t2 {
                     println(t1.pub, t2.pub)
                 }
             }
@@ -1680,7 +1680,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var x
-            while t in ts {
+            while in ts, t {
                 println(t.pub[0]+t.pub[0])
             }
         """, true)
@@ -1698,7 +1698,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var x
-            while t in ts {
+            while in ts, t {
                 set x = t.pub   ;; TODO: incompatible scope
             }
             println(999)
@@ -1807,7 +1807,8 @@ class TTask {
             resume t()
             println(t.pub)   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun todo_pub14_index_err() {
@@ -2084,9 +2085,10 @@ class TTask {
             resume t()
             var x
             set x = track t
-            println(x.pub)      ;; expose
+            println(x.pub)      ;; expose (ok, global func)
         """)
-        assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun track6_err() {
@@ -2159,7 +2161,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while t in ts {
+            while in ts, t {
                 set x = track(t)
             }
             println(x.pub[0])   ;; 2
@@ -2182,7 +2184,7 @@ class TTask {
             do {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
-                while t in ts {
+                while in ts, t {
                     set x = track(t)    ;; track(t) hold in
                 }
                 println(x.pub[0])   ;; 2
@@ -2206,7 +2208,7 @@ class TTask {
                 var ts
                 set ts = coroutines()
                 spawn in ts, T(1)
-                while t in ts {
+                while in ts, t {
                     set x = t       ;; err: escope 
                 }
             }
@@ -2225,7 +2227,7 @@ class TTask {
             spawn in ts, T(1)
             var x
             set x = catch true {
-                while t in ts {
+                while in ts, t {
                     throw track(t)
                 }
             }
@@ -2248,7 +2250,7 @@ class TTask {
             spawn in ts, T(2)
             var x
             set x = catch true {
-                while t in ts {
+                while in ts, t {
                     throw track(t)
                 }
             }
