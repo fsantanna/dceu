@@ -486,7 +486,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         val inidx = (ups.pred(this) { it is Expr.Index } != null)
                         """
                         { // PUB - read
-                            ${(!inidx && this.tk.str=="pub").cond { """
+                            ${(!inidx && !this.gcall() && this.tk.str=="pub").cond { """
                                 if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
                                     ceu_throw(CEU_ERR_ERROR);
                                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic \"pub\" field", 256);

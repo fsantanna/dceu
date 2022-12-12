@@ -109,6 +109,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     } catch (e: Throwable) {
         return e.message!! + "\n"
     }
+    //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
         val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups = Ups(outer)
