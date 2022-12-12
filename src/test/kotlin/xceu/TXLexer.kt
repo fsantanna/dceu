@@ -18,7 +18,7 @@ class TXLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "with" })
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "every" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "break" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "break" })
         assert(tks.next().let { it is Tk.Fix && it.str == "await" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par" })
         assert(tks.next() is Tk.Eof)

@@ -350,10 +350,6 @@ class Parser (lexer_: Lexer)
                 }
             }
 
-            (XCEU && this.acceptFix("break")) -> {
-                val tk0 = this.tk0
-                this.nest("${tk0.pos.pre()}throw :break")
-            }
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
                 this.acceptFix_err("{")
