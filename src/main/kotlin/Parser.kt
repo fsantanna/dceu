@@ -133,11 +133,11 @@ class Parser (lexer_: Lexer)
                     val eq = this.tk0 as Tk.Fix
                     val e = this.expr()
                     Expr.XSeq(tk0, listOf(
-                        Expr.Dcl(id, false),
+                        Expr.Dcl(id),
                         Expr.Set(eq, Expr.Acc(id), e)
                     ))
                 } else {
-                    Expr.Dcl(this.tk0 as Tk.Id, true)
+                    Expr.Dcl(this.tk0 as Tk.Id)
                 }
             }
             this.acceptFix("set") -> {
@@ -174,7 +174,7 @@ class Parser (lexer_: Lexer)
                         err(e.tk, "invalid while : expected identifier")
                     }
                     Expr.Iter(tk0, e.tk as Tk.Id, this.expr(),
-                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk,false), this.block())))
+                        Expr.Block(tk0, listOf(Expr.Dcl(e.tk), this.block())))
                 } else {
                     Expr.While(tk0, e, this.block())
                 }.let {
