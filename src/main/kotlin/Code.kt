@@ -226,7 +226,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val id = this.tk_.fromOp().noSpecial()
                 """
                 { // DCL ${this.tk.dump()}
-                    ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                    ${this.init.cond{"ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };"}}
                     ceu_mem->_${id}_ = ${ups.block(this)!!.toc(true)};   // can't be static b/c recursion
                     ${assrc("ceu_mem->$id")}
                 }

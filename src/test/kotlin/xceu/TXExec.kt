@@ -185,6 +185,7 @@ class TXExec {
                 spawn {
                     println(1)
                 }
+                nil
             }
         """)
         assert(out == "1\n") { out }
