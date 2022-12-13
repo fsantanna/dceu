@@ -308,6 +308,39 @@ class TExec {
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun tuple11_copy() {
+        val out = all("""
+            var t1
+            set t1 = [1,2,3]
+            var t2
+            set t2 = copy(t1)
+            var t3
+            set t3 = t1
+            set t1[2] = 999
+            set t2[0] = 10
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
+    }
+    @Test
+    fun tuple12_free_copy() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                ;;println(v)
+                if v > 0 {
+                    copy([f(v-1)])
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "[[[0]]]\n") { out }
+    }
 
     // DICT
 
@@ -357,6 +390,24 @@ class TExec {
             println(t)
         """)
         assert(out == "@[(:x,1),(:y,2)]\n") { out }
+    }
+    @Test
+    fun dict6_copy() {
+        val out = all("""
+            var t1
+            set t1 = @[]
+            set t1[:x] = 1
+            var t2
+            set t2 = t1
+            var t3
+            set t3 = copy(t1)
+            set t1[:y] = 2
+            set t3[:y] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """)
+        assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
     }
 
     // DCL

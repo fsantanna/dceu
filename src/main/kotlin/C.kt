@@ -557,8 +557,10 @@ fun Coder.main (): String {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) { CEU_VALUE_TUPLE, NULL, NULL, 0, {.Tuple={n,{}}} };
-            memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
-            ceu_max_depth(ret, n, args);
+            if (args != NULL) {
+                memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
+                ceu_max_depth(ret, n, args);
+            }
             assert(NULL == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -571,8 +573,10 @@ fun Coder.main (): String {
             assert(mem != NULL);
             memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
             *ret = (CEU_Dynamic) { CEU_VALUE_DICT, NULL, NULL, 0, {.Dict={min,mem}} };
-            memcpy(mem, args, n*2*sizeof(CEU_Value));
-            ceu_max_depth(ret, n*2, (CEU_Value*)args);
+            if (args != NULL) {
+                memcpy(mem, args, n*2*sizeof(CEU_Value));
+                ceu_max_depth(ret, n*2, (CEU_Value*)args);
+            }
             assert(NULL == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -781,7 +785,7 @@ fun Coder.main (): String {
         }
     """ +
     """
-        // EQ-NEQ
+        // EQ-NEQ-COPY
         CEU_Value ceu_op_eq_eq_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
@@ -838,6 +842,36 @@ fun Coder.main (): String {
             v.Bool = !v.Bool;
             return v;
         }
+        CEU_Value ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* src = args[0];
+            switch (src->tag) {
+                case CEU_VALUE_TUPLE: {
+                    CEU_Dynamic* dyn = ceu_tuple_create(src->Dyn->hold, src->Dyn->Tuple.n, NULL);
+                    assert(dyn != NULL);
+                    CEU_Value ret = { CEU_VALUE_TUPLE, {.Dyn=dyn} };
+                    for (int i=0; i<src->Dyn->Tuple.n; i++) {
+                        CEU_Value* args[1] = { &src->Dyn->Tuple.mem[i] };
+                        ret.Dyn->Tuple.mem[i] = ceu_copy_f(frame, 1, args);
+                    }
+                    return ret;
+                }
+                case CEU_VALUE_DICT: {
+                    CEU_Dynamic* dyn = ceu_dict_create(src->Dyn->hold, src->Dyn->Dict.n, NULL);
+                    assert(dyn != NULL);
+                    CEU_Value ret = { CEU_VALUE_DICT, {.Dyn=dyn} };
+                    for (int i=0; i<src->Dyn->Dict.n; i++) {
+                        CEU_Value* args0[1] = { &(*src->Dyn->Dict.mem)[i][0] };
+                        (*ret.Dyn->Dict.mem)[i][0] = ceu_copy_f(frame, 1, args0);
+                        CEU_Value* args1[1] = { &(*src->Dyn->Dict.mem)[i][1] };
+                        (*ret.Dyn->Dict.mem)[i][1] = ceu_copy_f(frame, 1, args1);
+                    }
+                    return ret;
+                }
+                default:
+                    return *src;
+            }
+        }
     """ +
     """ // FUNCS
         typedef struct {
@@ -884,11 +918,17 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_div_eq_f, {0} }
                         }
                     };
+                    static CEU_Dynamic ceu_copy = { 
+                        CEU_VALUE_FUNC, NULL, NULL, 1, {
+                            .Proto = { NULL, ceu_copy_f, {0} }
+                        }
+                    };
                     ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}      };
                     ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}     };
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
+                    ceu_mem->copy      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}      };
                 }
                 ${this.code}
                 return 0;
