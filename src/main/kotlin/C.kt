@@ -34,11 +34,11 @@ fun Coder.main (): String {
         void ceu_block_free (struct CEU_Block* block);
         char* ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
         
-        void  ceu_coros_cleanup (struct CEU_Dynamic* coros);
-        void  ceu_coros_destroy (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
-        char* ceu_coros_create  (struct CEU_Block* up, int max, struct CEU_Value* ret); 
-        char* ceu_coro_create   (struct CEU_Value* task, struct CEU_Block* up, struct CEU_Value* ret);
-        char* ceu_coro_create_in  (int* ok, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Block* up, struct CEU_Value* ret);
+        void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
+        void  ceu_coros_destroy  (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
+        char* ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
+        char* ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        char* ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
         void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
@@ -577,7 +577,7 @@ fun Coder.main (): String {
             return ret;
         }
         
-        char* ceu_coros_create (CEU_Block* up, int max, CEU_Value* ret) {
+        char* ceu_coros_create (CEU_Block* hld, int max, CEU_Value* ret) {
             CEU_Dynamic* coros = malloc(sizeof(CEU_Dynamic));
             assert(coros != NULL);
             *coros = (CEU_Dynamic) {
@@ -589,16 +589,16 @@ fun Coder.main (): String {
             };            
             *ret = (CEU_Value) { CEU_VALUE_COROS, {.Dyn=coros} };
             
-            // up is the enclosing block of "coroutine T", not of T
-            // T would be the outermost possible scope, but we use up b/c
+            // hld is the enclosing block of "coroutines()", not of T
+            // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(NULL == ceu_block_set(up, coros, 1));  // 1=cannot escape this block b/c of tasks
+            assert(NULL == ceu_block_set(hld, coros, 1));  // 1=cannot escape this block b/c of tasks
 
             return NULL;
         }
         
-        char* ceu_coro_create (CEU_Value* task, CEU_Block* up, CEU_Value* ret) {
+        char* ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
             if (task->tag != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
@@ -617,21 +617,21 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, up, mem, {
+            *frame = (CEU_Frame) { &task->Dyn->Proto, hld, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
-            // up is the enclosing block of "coroutine T", not of T
-            // T would be the outermost possible scope, but we use up b/c
+            // hld is the enclosing block of "coroutine T", not of T
+            // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(NULL == ceu_block_set(up, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(NULL == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
 
             return NULL;
         }
         
-        char* ceu_coro_create_in (int* ok, CEU_Dynamic* coros, CEU_Value* task, CEU_Block* up, CEU_Value* ret) {
+        char* ceu_coro_create_in (CEU_Block* hld, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (coros->tag != CEU_VALUE_COROS) {
                 return "coroutine error : expected coroutines";
             }
@@ -657,7 +657,7 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Proto, up, mem, {
+            *frame = (CEU_Frame) { &task->Dyn->Proto, hld, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };

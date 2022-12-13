@@ -318,7 +318,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // CORO ${this.tk.dump()}
                     ${this.task.code(true, null)}
                     CEU_Value ceu_coro_$n;
-                    char* ceu_err_$n = ceu_coro_create(&ceu_acc, ${ups.block(this)!!.toc(true)}, &ceu_coro_$n);
+                    char* ceu_err_$n = ceu_coro_create(${ups.block(this)!!.toc(true)}, &ceu_acc, &ceu_coro_$n);
                     if (ceu_err_$n != NULL) {
                         ceu_throw(CEU_ERR_ERROR);
                         snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : %s", ceu_err_$n);
@@ -782,16 +782,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     ${if (!iscoros) {
                         """
-                        char* ceu_err_$n = ceu_coro_create(&ceu_task_$n, $bupc, &ceu_coro_$n);
+                        char* ceu_err_$n = ceu_coro_create($bupc, &ceu_task_$n, &ceu_coro_$n);
                         """
                     } else {
                         """
                         char* ceu_err_$n = ceu_coro_create_in (
-                            &ceu_ok_$n.Bool,
+                            $bupc,
                             ceu_mem->coros_${spawn!!.n}.Dyn,
                             &ceu_task_$n,
-                            $bupc,
-                            &ceu_coro_$n
+                            &ceu_coro_$n,
+                            &ceu_ok_$n.Bool
                         );
                         if (ceu_ok_$n.Bool) {
                             // call task only if ok

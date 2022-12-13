@@ -6,6 +6,7 @@
 
 # NEXT
 
+- tuple copy semantics
 - fake catch around while should not be in tostr
 - test throw/break across fake task
 - throw (err,val)
