@@ -25,7 +25,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pub    -> this.coro.cond { it.tostr(pre) + "." } + this.tk.str
         is Expr.Track  -> "track " + this.coro.tostr(pre)
 
-        is Expr.Nat    -> "native " + "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
+        is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk.str
         is Expr.EvtErr -> this.tk.str
         is Expr.Nil    -> this.tk.str

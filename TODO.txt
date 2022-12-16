@@ -3,14 +3,14 @@
 - catch cannot yield on condition, add test
 - preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt
     - ou nao permitir x=evt exatamente como x=v.pub
+- refcount: set rect = [orig.0, orig.1, orig.2, orig.3]
 
 # NEXT
 
+- Spawn in xceu
 - tuple copy semantics
-- fake catch around while should not be in tostr
 - test throw/break across fake task
 - throw (err,val)
-- while in bs, b
 - parand/or as await task
 - track may hold normal coro
   - bcast to awake on termination
@@ -98,3 +98,5 @@
     - is a coro itself (start from leaves, back to root)
 - contracts
 - android SDK
+- modelo sincrono permite copiar memória em aplicações simétricos
+    - Toda memória é gerenciada dict array task

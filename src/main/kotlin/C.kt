@@ -884,8 +884,9 @@ fun Coder.main (): String {
         //CEU_Proto _ceu_proto_ = { NULL, {}, {} };
         CEU_Frame _ceu_frame_ = { NULL, 0, (char*) &_ceu_mem_ };
         CEU_Frame* ceu_frame = &_ceu_frame_;
-        ${tops.map { it.first }.joinToString("")}
-        ${tops.map { it.second }.joinToString("")}
+        ${tops.first.joinToString("")}
+        ${tops.second.joinToString("")}
+        ${tops.third.joinToString("")}
     """ +
     """ // MAIN
         int main (void) {

@@ -1140,7 +1140,7 @@ class TExec {
         val out = all("""
             var x
             set x = `:pointer "ola"`
-            native ```
+            ```
                 puts(${D}x.Pointer);
             ```
         """)
@@ -1160,7 +1160,7 @@ class TExec {
         val out = all("""
             var x
             set x = 10
-            set x = native ```:number
+            set x =  ```:number
                 (printf(">>> %g\n", ${D}x.Number),
                 ${D}x.Number*2)
             ```
@@ -1198,7 +1198,7 @@ class TExec {
             set x = 0
             var f
             set f = func () {
-                native```
+                ```
                     ${D}x.Number = 20;
                 ```
             }
@@ -1210,31 +1210,31 @@ class TExec {
     @Test
     fun native9_err() {
         val out = all("""
-             native`
+             `
                 $D 
              `
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 7) : native error : (lin 2, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
     }
     @Test
     fun native10_err() {
         val out = all("""
-            native` ($D) `
+            ` ($D) `
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 7) : native error : (lin 1, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 4) : invalid identifier") { out }
     }
     @Test
     fun native11_pointer() {
         val out = all("""
             var f
             set f = func () {
-                native `:pointer
+                `:pointer
                     "ola"
                 `
             }
             var g
             set g = func (x) {
-                native `
+                `
                     printf("%s\n", (char*)${D}x.Pointer);
                 `
             }
@@ -1250,6 +1250,20 @@ class TExec {
             println(`:pointer"oi"`)
         """)
         assert(out.contains("pointer: 0x")) { out }
+    }
+    @Test
+    fun native13_pre() {
+        val out = all("""
+            ```:pre
+            int X = 1;
+            ```
+            var f
+            set f = func () {
+                `:number X`
+            }
+            println(f())
+        """)
+        assert(out.contains("1\n")) { out }
     }
 
     // OPERATORS

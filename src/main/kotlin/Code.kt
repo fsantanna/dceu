@@ -4,7 +4,7 @@ fun Tk.dump (): String {
 
 class Coder (val outer: Expr.Block, val ups: Ups) {
     val tags = TAGS.toMutableList()
-    val tops = mutableListOf<Pair<String,String>>()
+    val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code(false, null)
 
@@ -142,7 +142,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     return ceu_acc;
                 }
                 """
-                tops.add(Pair(type,func))
+                tops.second.add(type)
+                tops.third.add(func)
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
                     ${ups.block(this)!!.toc(true)},
@@ -566,21 +567,28 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     ret
                 }
-                """
-                //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
-                    ${if (this.tk_.tag == null) {
-                        body
-                    } else {
+                val (pre,pos) = when (this.tk_.tag) {
+                    null -> Pair(null, body)
+                    ":pre" -> Pair(body, "")
+                    else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
-                    }}
-                    if (ceu_has_throw_clear()) {
-                        continue; // escape enclosing block;
+                        val v = assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
+                        Pair(null, """
+                        //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
+                            $v
+                            if (ceu_has_throw_clear()) {
+                                continue; // escape enclosing block;
+                            }
+                        //}
+                        """)
                     }
-                //}
-                """
+                }
+                if (pre != null) {
+                    tops.first.add(pre)
+                }
+                pos
             }
             is Expr.Acc -> {
                 val bup = ups.block(this)!!
