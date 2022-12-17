@@ -68,6 +68,7 @@ fun Coder.main (): String {
             CEU_VALUE_FUNC,     // func frame
             CEU_VALUE_TASK,     // task frame
             CEU_VALUE_TUPLE,
+            CEU_VALUE_VECTOR,
             CEU_VALUE_DICT,
             CEU_VALUE_BCAST,    // all below are bcast
             CEU_VALUE_CORO,     // spawned task
@@ -136,6 +137,11 @@ fun Coder.main (): String {
                     int n;                  // number of items
                     CEU_Value mem[0];       // beginning of CEU_Value[n]
                 } Tuple;
+                struct {
+                    int n;                  // number of items
+                    CEU_VALUE tag;
+                    char mem[0];            // beginning of Unknown[n]
+                } Vector;
                 struct {
                     int n;                  // size of mem
                     CEU_Value (*mem)[0][2]; // beginning of CEU_Value[n][2]
@@ -252,6 +258,16 @@ fun Coder.main (): String {
                     for (int i=0; i<src->Tuple.n; i++) {
                         if (src->Tuple.mem[i].tag > CEU_VALUE_DYNAMIC) {
                             char* err = ceu_block_set(dst, src->Tuple.mem[i].Dyn, isperm);
+                            if (err != NULL) {
+                                return err;
+                            }
+                        }
+                    }
+                    break;
+                case CEU_VALUE_VECTOR:
+                    if (src->Vector.tag > CEU_VALUE_DYNAMIC) {
+                        for (int i=0; i<src->Vector.n; i++) {
+                            char* err = ceu_block_set(dst, (CEU_Dynamic*)&src->Tuple.mem[i], isperm);
                             if (err != NULL) {
                                 return err;
                             }
@@ -478,6 +494,34 @@ fun Coder.main (): String {
         }
     """ +
     """ // TUPLE / DICT
+        #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
+        int ceu_tag_to_size (int tag) {
+            switch (tag) {
+                case CEU_VALUE_NIL:
+                    return 0;
+                case CEU_VALUE_TAG:
+                    return ceu_sizeof(CEU_Value, Tag);
+                case CEU_VALUE_BOOL:
+                    return ceu_sizeof(CEU_Value, Bool);
+                case CEU_VALUE_NUMBER:
+                    return ceu_sizeof(CEU_Value, Number);
+                case CEU_VALUE_POINTER:
+                    return ceu_sizeof(CEU_Value, Pointer);
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
+                case CEU_VALUE_TUPLE:
+                case CEU_VALUE_VECTOR:
+                case CEU_VALUE_DICT:
+                case CEU_VALUE_BCAST:
+                case CEU_VALUE_CORO:
+                case CEU_VALUE_COROS:
+                case CEU_VALUE_TRACK:
+                    return ceu_sizeof(CEU_Value, Dyn);
+                default:
+                    assert(0 && "bug found");
+            }
+        }
+        
         void ceu_max_depth (CEU_Dynamic* dyn, int n, CEU_Value* childs) {
             // new dyn should have at least the maximum depth among its children
             CEU_Block* hld = NULL;
@@ -496,6 +540,13 @@ fun Coder.main (): String {
                 dyn->next = hld->tofree;
                 hld->tofree = dyn;
             }
+        }
+        
+        CEU_Value ceu_vector_get (CEU_Dynamic* vec, int i) {
+            int sz = ceu_tag_to_size(vec->Vector.tag);
+            CEU_Value ret = { vec->Vector.tag };
+            memcpy(&ret.Number, vec->Vector.mem+i*sz, sz);
+            return ret;
         }
         
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
@@ -561,6 +612,21 @@ fun Coder.main (): String {
                 memcpy(ret->Tuple.mem, args, n*sizeof(CEU_Value));
                 ceu_max_depth(ret, n, args);
             }
+            assert(NULL == ceu_block_set(hld, ret, 0));
+            return ret;
+        }
+        
+        CEU_Dynamic* ceu_vector_create (CEU_Block* hld, CEU_VALUE tag, int n, CEU_Value* args) {
+            int sz = ceu_tag_to_size(tag);
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sz + 1);  // +1 '\0'
+            assert(ret != NULL);
+            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,tag,{}}} };
+            ceu_max_depth(ret, n, args);
+            for (int i=0; i<n; i++) {
+                assert(args[i].tag == tag);
+                memcpy(ret->Vector.mem + i*sz, (char*)&args[i].Number, sz);
+            }
+            ret->Vector.mem[sizeof(CEU_Dynamic) + n*sz + 1] = '\0';
             assert(NULL == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -732,6 +798,17 @@ fun Coder.main (): String {
                     }                    
                     printf("]");
                     break;
+                case CEU_VALUE_VECTOR:
+                    printf("#[");
+                    for (int i=0; i<v->Dyn->Vector.n; i++) {
+                        if (i > 0) {
+                            printf(",");
+                        }
+                        CEU_Value x = ceu_vector_get(v->Dyn, i);
+                        ceu_print1(&x);
+                    }                    
+                    printf("]");
+                    break;
                 case CEU_VALUE_DICT:
                     printf("@[");
                     int comma = 0;
@@ -785,7 +862,7 @@ fun Coder.main (): String {
         }
     """ +
     """
-        // EQ-NEQ-COPY
+        // EQ-NEQ-LEN-COPY
         CEU_Value ceu_op_eq_eq_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
@@ -842,6 +919,13 @@ fun Coder.main (): String {
             v.Bool = !v.Bool;
             return v;
         }
+        
+        CEU_Value ceu_op_dollar (CEU_Frame* _1, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            assert(args[0]->tag == CEU_VALUE_VECTOR);
+            
+        }
+        
         CEU_Value ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];

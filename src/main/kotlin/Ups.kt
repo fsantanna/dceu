@@ -112,6 +112,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Bool   -> {}
             is Expr.Num    -> {}
             is Expr.Tuple  -> this.args.forEach{ it.check() }
+            is Expr.Vector -> this.args.forEach{ it.check() }
             is Expr.Dict   -> this.args.forEach { it.first.check() ; it.second.check() }
             is Expr.Index  -> { this.col.check() ; this.idx.check() }
             is Expr.Call   -> { this.proto.check() ; this.args.forEach { it.check() } }
@@ -153,6 +154,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Bool   -> emptyMap()
             is Expr.Num    -> emptyMap()
             is Expr.Tuple  -> this.map(this.args)
+            is Expr.Vector -> this.map(this.args)
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
             is Expr.Call   -> this.map(listOf(this.proto)) + this.map(this.args)

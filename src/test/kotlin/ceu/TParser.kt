@@ -199,6 +199,29 @@ class TParser {
         assert(e is Expr.Dict && e.args.size==1)
     }
 
+    // VECTOR
+
+    @Test
+    fun vector1() {
+        val l = lexer(" #[ 1,x , :number,2 ] ")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Vector && e.args.size==3)
+    }
+    @Test
+    fun vector2() {
+        val l = lexer("#[:dict,#[], :tuple,[1,2,3]]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "#[:dict,#[],:tuple,[1,2,3]]")
+    }
+    @Test
+    fun vector3_err() {
+        val l = lexer("#[({")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected expression : have \"{\"")
+    }
+
     // EXPR.INDEX / PUB
 
     @Test

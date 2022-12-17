@@ -108,6 +108,14 @@ fun Expr.mem (): String {
                 };
             };
             """
+        is Expr.Vector -> """
+            struct { // VECTOR
+                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                union {
+                    ${this.args.map { it.mem() }.joinToString("")}
+                };
+            };
+            """
         is Expr.Dict -> """
             struct { // DICT
                 ${this.args.mapIndexed { i,_ ->

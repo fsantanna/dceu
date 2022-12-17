@@ -410,6 +410,87 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
     }
 
+    // VECTOR
+
+    @Test
+    fun vector1() {
+        val out = all("""
+            println(#[])
+        """)
+        assert(out == "#[]\n") { out }
+    }
+    @Test
+    fun vector2() {
+        val out = all("""
+            println(tags(#[]))
+            println(#[1,2,3])
+        """)
+        assert(out == ":vector\n#[1,2,3]\n") { out }
+    }
+    @Test
+    fun vector3() {
+        val out = all("""
+            var v
+            set v = #[]
+            v[${D}v] = 10
+            println(v)
+            v[5] = 10   ;; error
+        """)
+        assert(out == "#[10]\nTODO\n") { out }
+    }
+    @Test
+    fun vector4() {
+        val out = all("""
+            println($(#[1,2,3]))
+        """)
+        assert(out == ":vector\n@[(1,2)]\n") { out }
+    }
+    @Test
+    fun vector5() {
+        val out = all("""
+            var v
+            set v = #[1,2,3]
+            println(${D}v, v)
+            set v[${D}] = 4
+            println(${D}v, v)
+            set v[${D}-1] = 4
+            println(${D}v, v)
+            set ${D}v = 2
+            println(${D}v, v)
+            set ${D}v = 20      ;; error
+            println(${D}v, v)
+        """)
+        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+    }
+    @Test
+    fun vector6_err() {
+        val out = all("""
+            #[1,nil,3]
+        """)
+        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
+    }
+    @Test
+    fun vector7_err() {
+        val out = all("""
+            ${D}1
+        """)
+        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
+    }
+    @Test
+    fun vector8() {
+        val out = all("""
+            var v
+            set v = #[]
+            println(${D}v, v)
+            set v[${D}${D}] = 1
+            set v[${D}${D}] = 2
+            println(${D}v, v)
+            set v[${D}${D}] = nil
+            println(${D}v, v)
+        """)
+        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+    }
+
     // DCL
 
     @Test

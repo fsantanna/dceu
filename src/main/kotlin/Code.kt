@@ -658,6 +658,40 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             }
+            is Expr.Vector -> {
+                val args = this.args.mapIndexed { i, it ->
+                    // allocate in the same scope of set (set.first) or use default block
+                    it.code(true, null) + """
+                    ceu_mem->arg_${i}_$n = ceu_acc;
+                    """
+                }.joinToString("")
+                """
+                { // VECTOR ${this.tk.dump()}
+                    $args
+                    CEU_Value ceu_args_$n[${this.args.size}] = {
+                        ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
+                    };
+                    int ceu_tag_$n = CEU_VALUE_NIL;
+                    { // check if vector is homogeneous
+                        for (int i=0; i<${this.args.size}; i++) {
+                            if (i == 0) {
+                                ceu_tag_$n = ceu_args_$n[i].tag;
+                            } else if (ceu_tag_$n != ceu_args_$n[i].tag) {
+                                ceu_throw(CEU_ERR_ERROR);
+                                strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : non homogeneous arguments", 256);
+                                break;
+                            }
+                        }
+                        if (ceu_has_throw_clear()) {
+                            continue;   // escape to end of enclosing block
+                        }
+                    }
+                    CEU_Dynamic* ceu_vec_$n = ceu_vector_create(${ups.block(this)!!.toc(true)}, ceu_tag_$n, ${this.args.size}, ceu_args_$n);
+                    assert(ceu_vec_$n != NULL);
+                    ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=ceu_vec_$n} }")}
+                }
+                """
+            }
             is Expr.Dict -> {
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block

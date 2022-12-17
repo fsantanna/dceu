@@ -332,6 +332,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
+            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]") {
                 this.acceptFix_err("(")
                 val k = this.expr()
@@ -512,6 +513,7 @@ class Parser (lexer_: Lexer)
         val ops = mutableListOf<Tk>()
         while (true) {
             when {
+                this.acceptFix("\$") -> ops.add(this.tk0)
                 this.acceptEnu("Op") -> ops.add(this.tk0)
                 (XCEU && this.acceptFix("not")) -> ops.add(this.tk0)
                 else -> break
