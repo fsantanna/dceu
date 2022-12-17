@@ -398,16 +398,15 @@ class TXExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun vector1() {
+    fun todo_vector1() {
         val out = all("""
-            var v
-            set v = #[]
-            println(${ceu.D}v, v)
-            set v[${ceu.D}${ceu.D}] = 1
-            set v[${ceu.D}${ceu.D}] = 2
-            println(${ceu.D}v, v)
-            set v[${ceu.D}${ceu.D}] = nil
-            println(${ceu.D}v, v)
+            var v = #[]
+            println(${D}v, v)
+            set v[#] = 1
+            set v[#] = 2
+            println(${D}v, v)
+            var top = (set v[#] = nil)
+            println(${D}v, v, v[#], top)
         """)
         assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
     }

@@ -490,6 +490,17 @@ class TExec {
         """)
         assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
     }
+    @Test
+    fun vector10_pop_todo() {
+        val out = all("""
+            var v
+            set v = #[1,2,3]
+            var x
+            set x = (set v[${D}v-1] = nil)
+            println(x)
+        """, true)
+        assert(out == "3\n") { out }
+    }
 
     // DCL
 

@@ -561,6 +561,13 @@ fun Coder.main (): String {
             if (v.tag == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Vector.n-1);
                 vec->Vector.n--;
+                #if 0
+                {   // popped value as return value to enclosing set (instead of nil)
+                    int sz = ceu_tag_to_size(vec->Vector.tag);
+                    ceu_acc = (CEU_Value) { vec->Vector.tag };
+                    memcpy(&ceu_acc.Number, vec->Vector.mem+i*sz, sz);
+                }
+                #endif
             } else {
                 if (i == 0) {
                     vec->Vector.tag = v.tag;
