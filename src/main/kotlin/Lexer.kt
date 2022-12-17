@@ -162,7 +162,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     yield(Tk.Tag(tag, pos))
                 }
-                (x.isLetter() || x in listOf('_','\'','?','!')) -> {
+                (x.isLetter() || x=='_') -> {
                     val id = x + read2While { (it.isLetterOrDigit() || it in listOf('_','\'','?','!')) }
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
@@ -310,6 +310,15 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         }
                         else -> error("bug found")
                     }
+                }
+                (x == '\'') -> {
+                    var c = '\''
+                    val v = read2Until {
+                        val brk = (it=='\'' && c!='\\')
+                        c = it
+                        brk
+                    }
+                    yield(Tk.Chr("'$v'", pos))
                 }
 
                 else -> {

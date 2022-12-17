@@ -91,7 +91,6 @@ class TLexer {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
-
     @Test
     fun ids2() {
         val l = lexer("and or not")
@@ -189,6 +188,18 @@ class TLexer {
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : expected \"}\"")
     }
+
+    @Test
+    fun chr1() {
+        val l = lexer("'x' '\\n' 'abc' '\\\''")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
+        assert(tks.next().let { it is Tk.Chr && it.str == "'\\n'" })
+        assert(tks.next().let { it is Tk.Chr && it.str == "'abc'" })
+        assert(tks.next().let { it is Tk.Chr && it.str == "'\\\''" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
+    }
+
 
     // INCLUDE
 

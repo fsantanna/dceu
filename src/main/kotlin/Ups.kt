@@ -110,6 +110,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
+            is Expr.Char   -> {}
             is Expr.Num    -> {}
             is Expr.Tuple  -> this.args.forEach{ it.check() }
             is Expr.Vector -> this.args.forEach{ it.check() }
@@ -152,6 +153,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Nil    -> emptyMap()
             is Expr.Tag    -> emptyMap()
             is Expr.Bool   -> emptyMap()
+            is Expr.Char   -> emptyMap()
             is Expr.Num    -> emptyMap()
             is Expr.Tuple  -> this.map(this.args)
             is Expr.Vector -> this.map(this.args)

@@ -53,6 +53,7 @@ class Parser (lexer_: Lexer)
             "Tag" -> this.tk1 is Tk.Tag
             "Op"  -> this.tk1 is Tk.Op
             "Id"  -> this.tk1 is Tk.Id
+            "Chr" -> this.tk1 is Tk.Chr
             "Num" -> this.tk1 is Tk.Num
             "Nat" -> this.tk1 is Tk.Nat
             "Clk" -> this.tk1 is Tk.Clk
@@ -330,6 +331,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
+            this.acceptEnu("Chr")  -> Expr.Char(this.tk0 as Tk.Chr)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() })

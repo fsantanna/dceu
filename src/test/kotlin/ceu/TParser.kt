@@ -89,6 +89,13 @@ class TParser {
         val e = parser.exprPrim()
         assert(e is Expr.Bool && e.tk.str == "false")
     }
+    @Test
+    fun expr_char() {
+        val l = lexer("'x'")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.Char && e.tk.str == "'x'")
+    }
 
     // EXPR.ECALL
 

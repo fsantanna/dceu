@@ -502,6 +502,22 @@ class TExec {
         assert(out == "3\n") { out }
     }
 
+    // STRINGS / CHAR
+
+    @Test
+    fun string1() {
+        val out = all("""
+            var v
+            set v = #['a','b','c']
+            set v[${D}v] = 'a'
+            set v[2] = 'b'
+            println(v[0])
+            `puts(${D}v.Dyn->Vector.mem);`
+            println(v)
+        """)
+        assert(out == "a\nabba\nabba\n") { out }
+    }
+
     // DCL
 
     @Test
@@ -1356,6 +1372,15 @@ class TExec {
             println(f())
         """)
         assert(out.contains("1\n")) { out }
+    }
+    @Test
+    fun native14_char() {
+        val out = all("""
+            var c
+            set c = `:char 'x'`
+            `putchar(${D}c.Char);`
+        """)
+        assert(out == "x") { out }
     }
 
     // OPERATORS

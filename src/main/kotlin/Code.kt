@@ -637,6 +637,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} })")
             }
             is Expr.Bool -> assrc("((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} })")
+            is Expr.Char -> assrc("((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} })")
             is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
 
             is Expr.Tuple -> {

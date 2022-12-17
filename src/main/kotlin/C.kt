@@ -62,6 +62,7 @@ fun Coder.main (): String {
             CEU_VALUE_NIL = 0,
             CEU_VALUE_TAG,
             CEU_VALUE_BOOL,
+            CEU_VALUE_CHAR,
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
             CEU_VALUE_DYNAMIC,  // all below are dynamic
@@ -89,6 +90,7 @@ fun Coder.main (): String {
                 //void nil;
                 int Tag;
                 int Bool;
+                char Char;
                 double Number;
                 void* Pointer;
                 struct CEU_Dynamic* Dyn;    // Func/Task/Tuple/Dict/Coro/Coros: allocates memory
@@ -507,6 +509,8 @@ fun Coder.main (): String {
                     return ceu_sizeof(CEU_Value, Tag);
                 case CEU_VALUE_BOOL:
                     return ceu_sizeof(CEU_Value, Bool);
+                case CEU_VALUE_CHAR:
+                    return ceu_sizeof(CEU_Value, Char);
                 case CEU_VALUE_NUMBER:
                     return ceu_sizeof(CEU_Value, Number);
                 case CEU_VALUE_POINTER:
@@ -829,6 +833,9 @@ fun Coder.main (): String {
                         printf("false");
                     }
                     break;
+                case CEU_VALUE_CHAR:
+                    putchar(v->Char);
+                    break;
                 case CEU_VALUE_NUMBER:
                     printf("%g", v->Number);
                     break;
@@ -846,15 +853,19 @@ fun Coder.main (): String {
                     printf("]");
                     break;
                 case CEU_VALUE_VECTOR:
-                    printf("#[");
-                    for (int i=0; i<v->Dyn->Vector.n; i++) {
-                        if (i > 0) {
-                            printf(",");
-                        }
-                        CEU_Value x = ceu_vector_get(v->Dyn, i);
-                        ceu_print1(&x);
-                    }                    
-                    printf("]");
+                    if (v->Dyn->Vector.tag == CEU_VALUE_CHAR) {
+                        printf("%s", v->Dyn->Vector.mem);
+                    } else {
+                        printf("#[");
+                        for (int i=0; i<v->Dyn->Vector.n; i++) {
+                            if (i > 0) {
+                                printf(",");
+                            }
+                            CEU_Value x = ceu_vector_get(v->Dyn, i);
+                            ceu_print1(&x);
+                        }                    
+                        printf("]");
+                    }
                     break;
                 case CEU_VALUE_DICT:
                     printf("@[");
@@ -925,6 +936,9 @@ fun Coder.main (): String {
                         break;
                     case CEU_VALUE_BOOL:
                         v = (e1->Bool == e2->Bool);
+                        break;
+                    case CEU_VALUE_CHAR:
+                        v = (e1->Char == e2->Char);
                         break;
                     case CEU_VALUE_NUMBER:
                         v = (e1->Number == e2->Number);

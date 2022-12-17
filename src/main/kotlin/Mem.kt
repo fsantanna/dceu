@@ -150,7 +150,7 @@ fun Expr.mem (): String {
             };
             """
 
-        is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> ""
+        is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
         is Expr.XSeq, is Expr.Proto -> ""
     }
 }

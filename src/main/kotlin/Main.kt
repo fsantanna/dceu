@@ -17,7 +17,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
 
 val TAGS = listOf (
-    "nil", "tag", "bool", "number", "pointer",
+    "nil", "tag", "bool", "char", "number", "pointer",
     "dynamic",
     "func", "task",
     "tuple", "vector", "dict",
@@ -39,6 +39,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Op  (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Id  (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Num (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
+    data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
     data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
@@ -70,6 +71,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Char   (val tk_: Tk.Chr): Expr(N++, tk_)
     data class Num    (val tk_: Tk.Num): Expr(N++, tk_)
     data class Tuple  (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
     data class Vector (val tk_: Tk.Fix, val args: List<Expr>): Expr(N++, tk_)
