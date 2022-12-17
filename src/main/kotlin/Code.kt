@@ -761,7 +761,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${if (asdst_src != null) {
                                     """ // SET
                                     if (idx == -1) {
-                                        idx = ceu_dict_empty_index(ceu_acc.Dyn);
+                                        idx = ceu_dict_new_index(ceu_acc.Dyn);
                                         (*ceu_acc.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
                                     }
                                     (*ceu_acc.Dyn->Dict.mem)[idx][1] = $asdst_src;

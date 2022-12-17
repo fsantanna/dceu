@@ -206,7 +206,7 @@ class TParser {
         val l = lexer(" #[ 1,x , :number,2 ] ")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Vector && e.args.size==3)
+        assert(e is Expr.Vector && e.args.size==4)
     }
     @Test
     fun vector2() {

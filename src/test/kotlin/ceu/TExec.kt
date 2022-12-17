@@ -432,11 +432,12 @@ class TExec {
         val out = all("""
             var v
             set v = #[]
-            v[${D}v] = 10
+            println(${D}v)
+            set v[${D}v] = 10
             println(v)
-            v[5] = 10   ;; error
+            set v[5] = 10   ;; error
         """)
-        assert(out == "#[10]\nTODO\n") { out }
+        assert(out == "0\n#[10]\nanon : (lin 7, col 17) : index error : out of bounds\n") { out }
     }
     @Test
     fun vector4() {
@@ -489,6 +490,15 @@ class TExec {
             println(${D}v, v)
         """)
         assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+    }
+    @Test
+    fun vector8_err() {
+        val out = all("""
+            var v
+            set v = [1,2,3]
+            v[${D}v] = 4    ;; err
+        """)
+        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
     }
 
     // DCL

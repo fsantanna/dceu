@@ -29,7 +29,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "deref", "tags", "print", "println", "op_eq_eq", "op_div_eq", "copy"
+    "deref", "tags", "print", "println", "op_eq_eq", "op_div_eq", "op_dollar", "copy"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {

@@ -48,7 +48,7 @@ fun Coder.main (): String {
         
         void  ceu_max_depth        (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
         int   ceu_dict_key_index   (struct CEU_Dynamic* col, struct CEU_Value* key);
-        int   ceu_dict_empty_index (struct CEU_Dynamic* col);
+        int   ceu_dict_new_index (struct CEU_Dynamic* col);
         char* ceu_col_check        (struct CEU_Value* col, struct CEU_Value* idx);
         struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n, struct CEU_Value* args);
         
@@ -138,12 +138,13 @@ fun Coder.main (): String {
                     CEU_Value mem[0];       // beginning of CEU_Value[n]
                 } Tuple;
                 struct {
+                    int max;                // size of mem
                     int n;                  // number of items
                     CEU_VALUE tag;
                     char mem[0];            // beginning of Unknown[n]
                 } Vector;
                 struct {
-                    int n;                  // size of mem
+                    int max;                // size of mem
                     CEU_Value (*mem)[0][2]; // beginning of CEU_Value[n][2]
                 } Dict;
                 struct {
@@ -275,7 +276,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_DICT:
-                    for (int i=0; i<src->Dict.n; i++) {
+                    for (int i=0; i<src->Dict.max; i++) {
                         if (src->Dict.mem[i][0]->tag > CEU_VALUE_DYNAMIC) {
                             char* err = ceu_block_set(dst, (*src->Dict.mem)[i][0].Dyn, isperm);
                             if (err != NULL) {
@@ -550,7 +551,7 @@ fun Coder.main (): String {
         }
         
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
-            for (int i=0; i<col->Dict.n; i++) {
+            for (int i=0; i<col->Dict.max; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
                 if (ceu_op_eq_eq_f(NULL, 2, args).Bool) {
                     return i;
@@ -558,15 +559,15 @@ fun Coder.main (): String {
             }
             return -1;
         }        
-        int ceu_dict_empty_index (CEU_Dynamic* col) {
-            for (int i=0; i<col->Dict.n; i++) {
+        int ceu_dict_new_index (CEU_Dynamic* col) {
+            for (int i=0; i<col->Dict.max; i++) {
                 if ((*col->Dict.mem)[i][0].tag == CEU_VALUE_NIL) {
                     return i;
                 }
             }
-            int old = col->Dict.n;
+            int old = col->Dict.max;
             int new = old * 2;
-            col->Dict.n = new;
+            col->Dict.max = new;
             col->Dict.mem = realloc(col->Dict.mem, new*2*sizeof(CEU_Value));
             assert(col->Dict.mem != NULL);
             memset(&(*col->Dict.mem)[old], 0, old*2*sizeof(CEU_Value));  // x[i]=nil
@@ -574,17 +575,21 @@ fun Coder.main (): String {
         }        
         
         char* ceu_col_check (CEU_Value* col, CEU_Value* idx) {
-            if (col->tag!=CEU_VALUE_TUPLE && col->tag!=CEU_VALUE_DICT) {                
+            if (col->tag<CEU_VALUE_TUPLE || col->tag>CEU_VALUE_DICT) {                
                 ceu_throw(CEU_ERR_ERROR);
                 return "index error : expected collection";
             }
-            if (col->tag == CEU_VALUE_TUPLE) {
+            if (col->tag != CEU_VALUE_DICT) {
                 if (idx->tag != CEU_VALUE_NUMBER) {
                     ceu_throw(CEU_ERR_ERROR);
                     return "index error : expected number";
                 }
-                if (col->Dyn->Tuple.n <= idx->Number) {                
+                if (col->tag==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
                     ceu_throw(CEU_ERR_ERROR);
+                    return "index error : out of bounds";
+                }
+                if (col->tag==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Tuple.n) {                
+                    ceu_throw(CEU_ERR_ERROR);       // accepts v[#v]
                     return "index error : out of bounds";
                 }
             }
@@ -620,7 +625,7 @@ fun Coder.main (): String {
             int sz = ceu_tag_to_size(tag);
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sz + 1);  // +1 '\0'
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,tag,{}}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,n,tag,{}}} };
             ceu_max_depth(ret, n, args);
             for (int i=0; i<n; i++) {
                 assert(args[i].tag == tag);
@@ -812,7 +817,7 @@ fun Coder.main (): String {
                 case CEU_VALUE_DICT:
                     printf("@[");
                     int comma = 0;
-                    for (int i=0; i<v->Dyn->Dict.n; i++) {
+                    for (int i=0; i<v->Dyn->Dict.max; i++) {
                         if ((*v->Dyn->Dict.mem)[i][0].tag != CEU_VALUE_NIL) {
                             if (comma != 0) {
                                 printf(",");
@@ -902,6 +907,8 @@ fun Coder.main (): String {
                             }
                         }
                         break;
+                    case CEU_VALUE_VECTOR:
+                    case CEU_VALUE_DICT:
                     case CEU_VALUE_FUNC:
                     case CEU_VALUE_TASK:
                     case CEU_VALUE_CORO:
@@ -920,10 +927,10 @@ fun Coder.main (): String {
             return v;
         }
         
-        CEU_Value ceu_op_dollar (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_dollar_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
             assert(args[0]->tag == CEU_VALUE_VECTOR);
-            
+            return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Vector.n} };
         }
         
         CEU_Value ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
@@ -941,10 +948,10 @@ fun Coder.main (): String {
                     return ret;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dynamic* dyn = ceu_dict_create(src->Dyn->hold, src->Dyn->Dict.n, NULL);
+                    CEU_Dynamic* dyn = ceu_dict_create(src->Dyn->hold, src->Dyn->Dict.max, NULL);
                     assert(dyn != NULL);
                     CEU_Value ret = { CEU_VALUE_DICT, {.Dyn=dyn} };
-                    for (int i=0; i<src->Dyn->Dict.n; i++) {
+                    for (int i=0; i<src->Dyn->Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*src->Dyn->Dict.mem)[i][0] };
                         (*ret.Dyn->Dict.mem)[i][0] = ceu_copy_f(frame, 1, args0);
                         CEU_Value* args1[1] = { &(*src->Dyn->Dict.mem)[i][1] };
@@ -1003,6 +1010,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_div_eq_f, {0} }
                         }
                     };
+                    static CEU_Dynamic ceu_op_dollar = { 
+                        CEU_VALUE_FUNC, NULL, NULL, 1, {
+                            .Proto = { NULL, ceu_op_dollar_f, {0} }
+                        }
+                    };
                     static CEU_Dynamic ceu_copy = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
                             .Proto = { NULL, ceu_copy_f, {0} }
@@ -1013,6 +1025,7 @@ fun Coder.main (): String {
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
+                    ceu_mem->op_dollar = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_dollar} };
                     ceu_mem->copy      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}      };
                 }
                 ${this.code}
