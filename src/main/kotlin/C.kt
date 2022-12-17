@@ -141,11 +141,11 @@ fun Coder.main (): String {
                     int max;                // size of mem
                     int n;                  // number of items
                     CEU_VALUE tag;
-                    char mem[0];            // beginning of Unknown[n]
+                    char* mem;              // resizable Unknown[n]
                 } Vector;
                 struct {
                     int max;                // size of mem
-                    CEU_Value (*mem)[0][2]; // beginning of CEU_Value[n][2]
+                    CEU_Value (*mem)[0][2]; // resizable CEU_Value[n][2]
                 } Dict;
                 struct {
                     enum CEU_CORO_STATUS status;
@@ -240,6 +240,9 @@ fun Coder.main (): String {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
                 switch (cur->tag) {
+                    case CEU_VALUE_VECTOR:
+                        free(cur->Vector.mem);
+                        break;
                     case CEU_VALUE_DICT:
                         free(cur->Dict.mem);
                         break;
@@ -544,10 +547,37 @@ fun Coder.main (): String {
         }
         
         CEU_Value ceu_vector_get (CEU_Dynamic* vec, int i) {
+            assert(i < vec->Vector.n);
             int sz = ceu_tag_to_size(vec->Vector.tag);
             CEU_Value ret = { vec->Vector.tag };
             memcpy(&ret.Number, vec->Vector.mem+i*sz, sz);
             return ret;
+        }
+        
+        CEU_Value ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
+            if (v.tag == CEU_VALUE_NIL) {           // pop
+                assert(i == vec->Vector.n-1);
+                vec->Vector.n--;
+            } else {
+                if (i == 0) {
+                    vec->Vector.tag = v.tag;
+                } else {
+                    assert(v.tag == vec->Vector.tag);
+                }
+                int sz = ceu_tag_to_size(vec->Vector.tag);
+                if (i == vec->Vector.n) {           // push
+                    if (i == vec->Vector.max) {
+                        vec->Vector.max *= 2;
+                        vec->Vector.mem = realloc(vec->Vector.mem, vec->Vector.max*sz + 1);
+                        assert(vec->Vector.mem != NULL);
+                        vec->Vector.mem[sz*vec->Vector.max + 1] = '\0';
+                    }
+                    vec->Vector.n++;
+                } else {                            // set
+                    assert(i < vec->Vector.n);
+                }
+                memcpy(vec->Vector.mem + i*sz, (char*)&v.Number, sz);
+            }
         }
         
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
@@ -623,15 +653,17 @@ fun Coder.main (): String {
         
         CEU_Dynamic* ceu_vector_create (CEU_Block* hld, CEU_VALUE tag, int n, CEU_Value* args) {
             int sz = ceu_tag_to_size(tag);
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sz + 1);  // +1 '\0'
+            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,n,tag,{}}} };
+            char* mem = malloc(n*sz + 1);  // +1 '\0'
+            assert(mem != NULL);
+            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,n,tag,mem}} };
             ceu_max_depth(ret, n, args);
             for (int i=0; i<n; i++) {
                 assert(args[i].tag == tag);
                 memcpy(ret->Vector.mem + i*sz, (char*)&args[i].Number, sz);
             }
-            ret->Vector.mem[sizeof(CEU_Dynamic) + n*sz + 1] = '\0';
+            ret->Vector.mem[n*sz + 1] = '\0';
             assert(NULL == ceu_block_set(hld, ret, 0));
             return ret;
         }

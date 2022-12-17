@@ -756,21 +756,31 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 """
                             }}
                             break;
+                        case CEU_VALUE_VECTOR: {
+                            ${if (asdst_src != null) {
+                                "ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $asdst_src);"
+                            } else {
+                                assrc("ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number)")
+                            }}
+                            break;
+                        }
                         case CEU_VALUE_DICT: {
                             int idx = ceu_dict_key_index(ceu_acc.Dyn, &ceu_mem->idx_$n);
                             ${if (asdst_src != null) {
-                                    """ // SET
-                                    if (idx == -1) {
-                                        idx = ceu_dict_new_index(ceu_acc.Dyn);
-                                        (*ceu_acc.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
-                                    }
-                                    (*ceu_acc.Dyn->Dict.mem)[idx][1] = $asdst_src;
-                                    """
+                                """ // SET
+                                if (idx == -1) {
+                                    idx = ceu_dict_new_index(ceu_acc.Dyn);
+                                    (*ceu_acc.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                }
+                                (*ceu_acc.Dyn->Dict.mem)[idx][1] = $asdst_src;
+                                """
                             } else {
                                 assrc("((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_acc.Dyn->Dict.mem)[idx][1])")
                             }}
                             break;
                         }
+                        default:
+                            assert(0 && "bug found");
                     }
                 }
                 """

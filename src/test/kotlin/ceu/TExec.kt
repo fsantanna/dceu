@@ -437,14 +437,14 @@ class TExec {
             println(v)
             set v[5] = 10   ;; error
         """)
-        assert(out == "0\n#[10]\nanon : (lin 7, col 17) : index error : out of bounds\n") { out }
+        assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n0\n#[10]\n") { out }
     }
     @Test
     fun vector4() {
         val out = all("""
             println($(#[1,2,3]))
         """)
-        assert(out == ":vector\n@[(1,2)]\n") { out }
+        assert(out == "3\n") { out }
     }
     @Test
     fun vector5() {
@@ -452,16 +452,13 @@ class TExec {
             var v
             set v = #[1,2,3]
             println(${D}v, v)
-            set v[${D}] = 4
+            set v[${D}v] = 4
             println(${D}v, v)
-            set v[${D}-1] = 4
+            set v[${D}v-1] = nil
             println(${D}v, v)
-            set ${D}v = 2
-            println(${D}v, v)
-            set ${D}v = 20      ;; error
-            println(${D}v, v)
-        """)
-        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+            ;;set ${D}v = 2       ;; error
+        """, true)
+        assert(out == "3\t#[1,2,3]\n4\t#[1,2,3,4]\n3\t#[1,2,3]\n") { out }
     }
     @Test
     fun vector6_err() {
@@ -496,7 +493,7 @@ class TExec {
         val out = all("""
             var v
             set v = [1,2,3]
-            v[${D}v] = 4    ;; err
+            v[${D}v]   ;; err
         """)
         assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
     }
