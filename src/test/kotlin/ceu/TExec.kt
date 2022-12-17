@@ -472,30 +472,23 @@ class TExec {
         val out = all("""
             ${D}1
         """)
-        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
-    }
-    @Test
-    fun vector8() {
-        val out = all("""
-            var v
-            set v = #[]
-            println(${D}v, v)
-            set v[${D}${D}] = 1
-            set v[${D}${D}] = 2
-            println(${D}v, v)
-            set v[${D}${D}] = nil
-            println(${D}v, v)
-        """)
-        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+        assert(out == "core library : length error : not a vector\n") { out }
     }
     @Test
     fun vector8_err() {
         val out = all("""
             var v
-            set v = [1,2,3]
-            v[${D}v]   ;; err
+            set v = #[1,2,3]
+            println(v[${D}v])   ;; err
         """)
-        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n") { out }
+        assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
+    }
+    @Test
+    fun vector9_err() {
+        val out = all("""
+            set ${D}v = 0
+        """)
+        assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
     }
 
     // DCL

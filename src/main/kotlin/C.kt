@@ -497,7 +497,7 @@ fun Coder.main (): String {
             }
         }
     """ +
-    """ // TUPLE / DICT
+    """ // TUPLE / VECTOR / DICT
         #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
         int ceu_tag_to_size (int tag) {
             switch (tag) {
@@ -547,7 +547,10 @@ fun Coder.main (): String {
         }
         
         CEU_Value ceu_vector_get (CEU_Dynamic* vec, int i) {
-            assert(i < vec->Vector.n);
+            if (i >= vec->Vector.n) {
+                ceu_throw(CEU_ERR_ERROR);   // message in call site
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
             int sz = ceu_tag_to_size(vec->Vector.tag);
             CEU_Value ret = { vec->Vector.tag };
             memcpy(&ret.Number, vec->Vector.mem+i*sz, sz);
@@ -961,7 +964,11 @@ fun Coder.main (): String {
         
         CEU_Value ceu_op_dollar_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
-            assert(args[0]->tag == CEU_VALUE_VECTOR);
+            if (args[0]->tag != CEU_VALUE_VECTOR) {
+                strncpy(ceu_err_error_msg, "core library : length error : not a vector", 256);
+                ceu_throw(CEU_ERR_ERROR);
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
             return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Vector.n} };
         }
         

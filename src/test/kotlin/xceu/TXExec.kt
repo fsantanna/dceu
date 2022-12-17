@@ -379,7 +379,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
 
-    // INDEX: TUPLE / DICT
+    // TUPLE / VECTOR / DICT
 
     @Test
     fun todo_index1_tuple() {
@@ -396,6 +396,20 @@ class TXExec {
             println(t.x, t.y)
         """)
         assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun vector1() {
+        val out = all("""
+            var v
+            set v = #[]
+            println(${ceu.D}v, v)
+            set v[${ceu.D}${ceu.D}] = 1
+            set v[${ceu.D}${ceu.D}] = 2
+            println(${ceu.D}v, v)
+            set v[${ceu.D}${ceu.D}] = nil
+            println(${ceu.D}v, v)
+        """)
+        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
     }
 
     // AWAIT / EVERY

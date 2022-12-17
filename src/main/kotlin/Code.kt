@@ -760,7 +760,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${if (asdst_src != null) {
                                 "ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $asdst_src);"
                             } else {
-                                assrc("ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number)")
+                                """
+                                CEU_Value ceu_$n = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
+                                if (ceu_has_throw_clear()) {   // may throw w/o message
+                                    strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
+                                    continue;   // escape to end of enclosing block
+                                }
+                                ${assrc("ceu_$n")}
+                                """
                             }}
                             break;
                         }
