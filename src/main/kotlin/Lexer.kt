@@ -320,6 +320,33 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     yield(Tk.Chr("'$v'", pos))
                 }
+                XCEU && (x == '"') -> {
+                    var c = '"'
+                    val v = read2Until {
+                        val brk = (it=='"' && c!='\\')
+                        c = it
+                        brk
+                    }
+                    yield(Tk.Fix("#[", pos))
+                    var i = 0
+                    while (i < v!!.length) {
+                        if (i > 0) {
+                            yield(Tk.Fix(",", pos))
+                        }
+                        val z = v[i]
+                        val zz = when {
+                            (z == '\'') -> "\\'"
+                            (z != '\\') -> z.toString()
+                            else -> {
+                                i++
+                                z.toString() + v[i]
+                            }
+                        }
+                        yield(Tk.Chr("'$zz'", pos))
+                        i++
+                    }
+                    yield(Tk.Fix("]", pos))
+                }
 
                 else -> {
                     TODO("$x - $pos")

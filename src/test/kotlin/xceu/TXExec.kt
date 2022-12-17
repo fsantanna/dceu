@@ -421,6 +421,16 @@ class TXExec {
         """)
         assert(out == "a\nabba\n") { out }
     }
+    @Test
+    fun string3() {
+        val out = all("""
+            println("")
+            println("a\tb")
+            println("a\nb")
+            println("a'\"b")
+        """)
+        assert(out == "#[]\na\tb\na\nb\na'\"b\n") { out }
+    }
 
     // AWAIT / EVERY
 
