@@ -123,10 +123,12 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 (x in listOf('}','(',')','[',']', ',','.', '\$')) -> yield(Tk.Fix(x.toString(), pos))
                 (x=='@' || x=='#') -> {
                     val (n1,x1) = read2()
-                    if (x1 != '[') {
-                        err(pos, "operator error : expected \"$x[\"")
+                    when {
+                        (x1 == '[') -> yield(Tk.Fix("$x[", pos))
+                        (x == '@') -> err(pos, "operator error : expected \"@[\"")
+                        (x == '#') -> { yield(Tk.Fix("#", pos)); unread2(n1) }
+                        else -> error("impossible case")
                     }
-                    yield(Tk.Fix("$x[", pos))
                 }
                 (x in OPERATORS) -> {
                     val op = x + read2While { it in OPERATORS }

@@ -432,8 +432,8 @@ class TExec {
         val out = all("""
             var v
             set v = #[]
-            println(${D}v)
-            set v[${D}v] = 10
+            println(#v)
+            set v[#v] = 10
             println(v)
             set v[5] = 10   ;; error
         """)
@@ -442,7 +442,7 @@ class TExec {
     @Test
     fun vector4() {
         val out = all("""
-            println($(#[1,2,3]))
+            println(#(#[1,2,3]))
         """)
         assert(out == "3\n") { out }
     }
@@ -451,14 +451,15 @@ class TExec {
         val out = all("""
             var v
             set v = #[1,2,3]
-            println(${D}v, v)
-            set v[${D}v] = 4
-            println(${D}v, v)
-            set v[${D}v-1] = nil
-            println(${D}v, v)
-            ;;set ${D}v = 2       ;; error
+            println(#v, v)
+            set v[#v] = 4
+            set v[#v] = 5
+            println(#v, v)
+            set v[#v-1] = nil
+            println(#v, v)
+            ;;set #v = 2       ;; error
         """, true)
-        assert(out == "3\t#[1,2,3]\n4\t#[1,2,3,4]\n3\t#[1,2,3]\n") { out }
+        assert(out == "3\t#[1,2,3]\n5\t#[1,2,3,4,5]\n4\t#[1,2,3,4]\n") { out }
     }
     @Test
     fun vector6_err() {
@@ -470,7 +471,7 @@ class TExec {
     @Test
     fun vector7_err() {
         val out = all("""
-            ${D}1
+            #1
         """)
         assert(out == "core library : length error : not a vector\n") { out }
     }
@@ -479,24 +480,24 @@ class TExec {
         val out = all("""
             var v
             set v = #[1,2,3]
-            println(v[${D}v])   ;; err
+            println(v[#v])   ;; err
         """)
         assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
     }
     @Test
     fun vector9_err() {
         val out = all("""
-            set ${D}v = 0
+            set #v = 0
         """)
         assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
     }
     @Test
-    fun vector10_pop_todo() {
+    fun todo_vector10_pop() {
         val out = all("""
             var v
             set v = #[1,2,3]
             var x
-            set x = (set v[${D}v-1] = nil)
+            set x = (set v[#v-1] = nil)
             println(x)
         """, true)
         assert(out == "3\n") { out }
@@ -509,7 +510,7 @@ class TExec {
         val out = all("""
             var v
             set v = #['a','b','c']
-            set v[${D}v] = 'a'
+            set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
             `puts(${D}v.Dyn->Vector.mem);`

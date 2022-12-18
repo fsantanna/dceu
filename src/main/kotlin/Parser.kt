@@ -515,7 +515,7 @@ class Parser (lexer_: Lexer)
         val ops = mutableListOf<Tk>()
         while (true) {
             when {
-                this.acceptFix("\$") -> ops.add(this.tk0)
+                this.acceptFix("#") -> ops.add(this.tk0)
                 this.acceptEnu("Op") -> ops.add(this.tk0)
                 (XCEU && this.acceptFix("not")) -> ops.add(this.tk0)
                 else -> break

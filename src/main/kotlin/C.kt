@@ -983,7 +983,7 @@ fun Coder.main (): String {
             return v;
         }
         
-        CEU_Value ceu_op_dollar_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
             if (args[0]->tag != CEU_VALUE_VECTOR) {
                 strncpy(ceu_err_error_msg, "core library : length error : not a vector", 256);
@@ -1070,9 +1070,9 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_div_eq_f, {0} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_dollar = { 
+                    static CEU_Dynamic ceu_op_hash = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_dollar_f, {0} }
+                            .Proto = { NULL, ceu_op_hash_f, {0} }
                         }
                     };
                     static CEU_Dynamic ceu_copy = { 
@@ -1085,7 +1085,7 @@ fun Coder.main (): String {
                     ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
-                    ceu_mem->op_dollar = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_dollar} };
+                    ceu_mem->op_hash   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash}   };
                     ceu_mem->copy      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}      };
                 }
                 ${this.code}
