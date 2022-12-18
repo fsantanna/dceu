@@ -6,14 +6,14 @@ fun Tk.Id.fromOp (): String {
     val MAP = mapOf(
         Pair('+', "plus"),
         Pair('-', "minus"),
-        Pair('*', "mul"),
-        Pair('/', "div"),
-        Pair('>', "gt"),
-        Pair('<', "lt"),
-        Pair('=', "eq"),
-        Pair('!', "not"),
-        Pair('|', "or"),
-        Pair('&', "and"),
+        Pair('*', "asterisk"),
+        Pair('/', "slash"),
+        Pair('>', "greater"),
+        Pair('<', "less"),
+        Pair('=', "equals"),
+        Pair('!', "exclaim"),
+        Pair('|', "bar"),
+        Pair('&', "ampersand"),
         Pair('#', "hash"),
     )
     return if (this.str[0] != '{') this.str else {

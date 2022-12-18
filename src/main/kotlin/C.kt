@@ -55,7 +55,7 @@ fun Coder.main (): String {
         struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
-        struct CEU_Value ceu_op_eq_eq_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
+        struct CEU_Value ceu_op_equals_equals_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
     """ +
     """ // CEU_Value
         typedef enum CEU_VALUE {
@@ -597,7 +597,7 @@ fun Coder.main (): String {
         int ceu_dict_key_index (CEU_Dynamic* col, CEU_Value* key) {
             for (int i=0; i<col->Dict.max; i++) {
                 CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
-                if (ceu_op_eq_eq_f(NULL, 2, args).Bool) {
+                if (ceu_op_equals_equals_f(NULL, 2, args).Bool) {
                     return i;
                 }
             }
@@ -921,7 +921,7 @@ fun Coder.main (): String {
     """ +
     """
         // EQ-NEQ-LEN-COPY
-        CEU_Value ceu_op_eq_eq_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_Value ceu_op_equals_equals_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
@@ -955,7 +955,7 @@ fun Coder.main (): String {
                             if (v) {
                                 for (int i=0; i<e1->Dyn->Tuple.n; i++) {
                                     CEU_Value* xs[] = { &e1->Dyn->Tuple.mem[i], &e2->Dyn->Tuple.mem[i] };
-                                    v = ceu_op_eq_eq_f(frame, 2, xs).Bool;
+                                    v = ceu_op_equals_equals_f(frame, 2, xs).Bool;
                                     if (!v) {
                                         break;
                                     }
@@ -977,8 +977,8 @@ fun Coder.main (): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
         }
-        CEU_Value ceu_op_div_eq_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
-            CEU_Value v = ceu_op_eq_eq_f(frame, n, args);
+        CEU_Value ceu_op_slash_equals_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            CEU_Value v = ceu_op_equals_equals_f(frame, n, args);
             v.Bool = !v.Bool;
             return v;
         }
@@ -1107,14 +1107,14 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_println_f, {0} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_eq_eq = { 
+                    static CEU_Dynamic ceu_op_equals_equals = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_eq_eq_f, {0} }
+                            .Proto = { NULL, ceu_op_equals_equals_f, {0} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_div_eq = { 
+                    static CEU_Dynamic ceu_op_slash_equals = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_div_eq_f, {0} }
+                            .Proto = { NULL, ceu_op_slash_equals_f, {0} }
                         }
                     };
                     static CEU_Dynamic ceu_op_hash = { 
@@ -1132,14 +1132,14 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_copy_f, {0} }
                         }
                     };
-                    ceu_mem->tags      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}      };
-                    ceu_mem->print     = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}     };
-                    ceu_mem->println   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}   };            
-                    ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
-                    ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
-                    ceu_mem->op_hash   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash}   };
-                    ceu_mem->move      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}      };
-                    ceu_mem->copy      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}      };
+                    ceu_mem->tags    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}    };
+                    ceu_mem->print   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}   };
+                    ceu_mem->println = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println} };            
+                    ceu_mem->op_hash = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash} };
+                    ceu_mem->move    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}    };
+                    ceu_mem->copy    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}    };
+                    ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_equals_equals} };
+                    ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_slash_equals}  };
                 }
                 ${this.code}
                 return 0;

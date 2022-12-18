@@ -72,6 +72,7 @@
         - ?
     - reject anything after throw (last stmt)
     - reject yield with no direct enclosing task
+    - reject yield/bcast in defer
 - closures
     - only accept dyns as upvalue
     - has same scope as upval

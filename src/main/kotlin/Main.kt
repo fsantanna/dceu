@@ -30,7 +30,7 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "copy", "deref", "move", "print", "println", "tags",
-    "op_div_eq", "op_eq_eq", "op_hash"
+    "op_slash_equals", "op_equals_equals", "op_hash"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {
