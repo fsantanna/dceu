@@ -88,9 +88,20 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun checkLine (tk: Tk, e: Expr): Expr {
+    fun checkOp (str: String): Boolean {
+        return (this.tk1 is Tk.Op && this.tk1.str == str)
+    }
+    fun acceptOp (str: String): Boolean {
+        val ret = this.checkOp(str)
+        if (ret) {
+            this.lex()
+        }
+        return ret
+    }
+
+    fun noline (tk: Tk, e: Expr): Expr {
         if (!tk.pos.isSameLine(e.tk.pos)) {
-            err(tk, "${tk.str} error : line break before expression")
+            err(tk, "${tk.str} error : unexpected line break before expression")
         }
         return e
     }
@@ -227,7 +238,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
-            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             this.acceptFix("coroutines") -> {
@@ -238,7 +249,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err(")")
                 Expr.Coros(this.tk0 as Tk.Fix, max)
             }
-            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 when {
@@ -275,7 +286,7 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
@@ -320,7 +331,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, null)
-            this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, checkLine(this.tk0, this.expr()))
+            this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
             this.acceptEnu("Nat") -> {
@@ -356,11 +367,25 @@ class Parser (lexer_: Lexer)
 
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
-                this.acceptFix_err("{")
-                val e1 = this.expr()
+
+                val noexp = this.acceptFix("{")
+                val cnd = if (noexp) null else {
+                    val e = this.expr()
+                    this.acceptFix_err("{")
+                    e
+                }
+                var ifs = cnd.cond { """
+                    ${pre0}do {
+                        var ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
+                """ }
+
+                val eq1 = (cnd!=null && this.acceptOp("=="))
+                val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} == ${it.tostr(true)})" }
                 this.acceptFix_err("->")
                 val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
-                var ifs = "${pre0}if ${e1.tostr(true)} ${b1.tostr(true)}else {\n"
+                ifs += """
+                    ${pre0}if $e1 ${b1.tostr(true)} else {
+                """
                 var n = 1
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
@@ -371,17 +396,19 @@ class Parser (lexer_: Lexer)
                         break
                     }
                     val pre1 = this.tk0.pos.pre()
-                    val ei = this.expr()
+                    val eqi = (cnd!=null && this.acceptOp("=="))
+                    val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} == ${it.tostr(true)})" }
                     this.acceptFix_err("->")
                     val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                     ifs += """
-                        ${pre1}if ${ei.tostr(true)} ${bi.tostr(true)}
+                        ${pre1}if $ei ${bi.tostr(true)}
                         else {
                     """
                     n++
                 }
                 ifs += "}\n".repeat(n)
-                //println(es)
+                ifs += cnd.cond { "}" }
+                //println(ifs)
                 this.nest(ifs)
             }
             (XCEU && this.acceptFix("par")) -> {
@@ -569,7 +596,10 @@ class Parser (lexer_: Lexer)
     }
     fun exprBins (): Expr {
         var e = this.exprPres()
-        while ((this.acceptEnu("Op") || (XCEU && this.acceptFix("or") || this.acceptFix("and")))) {
+        while (
+            this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
+            (this.acceptEnu("Op") || (XCEU && this.acceptFix("or") || this.acceptFix("and")))
+        ) {
             val op = this.tk0
             val e2 = this.exprPres()
             e = when (op.str) {

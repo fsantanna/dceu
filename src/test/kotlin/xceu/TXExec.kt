@@ -92,6 +92,54 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun ifs3() {
+        val out = all("""
+            var x = ifs 20 {
+                == 10 -> false
+                == 20 -> true
+                else  -> false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun ifs4() {
+        val out = all("""
+            var x = ifs 20 {
+                == 10 -> false
+                true  -> true
+                == 20 -> false
+                else  -> false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun ifs5() {
+        val out = all("""
+            var x = ifs 20 {
+                == 10 -> false
+                else -> true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun todo_ifs6() {
+        val out = all("""
+            var x = ifs 20 {
+                true -> ifs {
+                    == 20 -> true   ;; err: no ifs expr
+                }
+            }
+            println(x)
+        """)
+        assert(out == "ERROR\n") { out }
+    }
 
     // OPS: not, and, or
 
