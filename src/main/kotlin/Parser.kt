@@ -238,7 +238,13 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
-            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
+            this.acceptFix("throw") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val e = this.expr()
+                this.acceptFix_err(")")
+                Expr.Throw(tk0, e)
+            }
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             this.acceptFix("coroutines") -> {

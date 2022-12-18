@@ -27,7 +27,7 @@ set {+} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number ($v1.Number + $v2.Number)`
     }
@@ -43,7 +43,7 @@ set {-} = func (v1, v2) {
         `:number (- $v1.Number)`
     } else {
         if (t1 /= :number) || (t2 /= :number) {
-            throw :error
+            throw(:error)
         } else {
             `:number ($v1.Number - $v2.Number)`
         }
@@ -57,7 +57,7 @@ set {*} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number ($v1.Number * $v2.Number)`
     }
@@ -70,7 +70,7 @@ set {**} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number powf($v1.Number, $v2.Number)`
     }
@@ -83,7 +83,7 @@ set {/} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number ($v1.Number / $v2.Number)`
     }
@@ -96,7 +96,7 @@ set {//} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number powf($v1.Number, 1/$v2.Number)`
     }
@@ -109,7 +109,7 @@ set {%} = func (v1, v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= :number) || (t2 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:number fmod($v1.Number, $v2.Number)`
     }
@@ -124,7 +124,7 @@ set {>=} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:bool ($v1.Number >= $v2.Number)`
     }
@@ -137,7 +137,7 @@ set {>} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:bool ($v1.Number > $v2.Number)`
     }
@@ -150,7 +150,7 @@ set {<=} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:bool ($v1.Number <= $v2.Number)`
     }
@@ -163,7 +163,7 @@ set {<} = func (v1,v2) {
     var t2
     set t2 = tags(v2)
     if (t1 /= t2) || (t1 /= :number) {
-        throw :error
+        throw(:error)
     } else {
         `:bool ($v1.Number < $v2.Number)`
     }

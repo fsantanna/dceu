@@ -1081,7 +1081,7 @@ class TExec {
     fun catch1() {
         val out = all("""
             catch err==:x {
-                throw :x
+                throw(:x)
                 println(9)
             }
             println(1)
@@ -1092,7 +1092,7 @@ class TExec {
     fun catch2_err() {
         val out = all("""
             catch err==:x {
-                throw :y
+                throw(:y)
                 println(9)
             }
             println(1)
@@ -1105,7 +1105,7 @@ class TExec {
             var f
             set f = func () {
                 catch err==:xxx {
-                    throw :yyy
+                    throw(:yyy)
                     println(91)
                 }
                 println(9)
@@ -1125,7 +1125,7 @@ class TExec {
     fun catch4() {
         val out = all("""
             catch err==:x {
-                throw []
+                throw([])
                 println(9)
             }
             println(1)
@@ -1141,13 +1141,13 @@ class TExec {
                     catch err==:e3 {
                         catch err==:e4 {
                             println(1)
-                            throw :e3
+                            throw(:e3)
                             println(99)
                         }
                         println(99)
                     }
                     println(2)
-                    throw :e1
+                    throw(:e1)
                     println(99)
                 }
                 println(99)
@@ -1160,7 +1160,7 @@ class TExec {
     fun catch6_err() {
         val out = all("""
             catch true {
-                throw :y
+                throw(:y)
                 println(9)
             }
             println(1)
@@ -1175,7 +1175,7 @@ class TExec {
             catch do {
                 err==:x
             } {
-                throw :x
+                throw(:x)
                 println(9)
             }
             println(1)
@@ -1192,7 +1192,7 @@ class TExec {
                 set x = err
                 err[0]==:x
             } {
-                throw [:x]
+                throw([:x])
                 println(9)
             }
             println(x)
@@ -1211,7 +1211,7 @@ class TExec {
                     set x = err
                     false
                 } {
-                    throw [:x]
+                    throw([:x])
                     println(9)
                 }
             }
@@ -1228,7 +1228,7 @@ class TExec {
                 set x = err
                 err==:x
             } {
-                throw :x
+                throw(:x)
                 println(9)
             }
             println(x)
@@ -1241,7 +1241,7 @@ class TExec {
         val out = ceu.all(
             """
             catch err[0]==:x {
-                throw [:x]
+                throw([:x])
                 println(9)
             }
             println(err)
@@ -1254,7 +1254,7 @@ class TExec {
         val out = ceu.all(
             """
             catch false {
-                throw :xxx
+                throw(:xxx)
                 println(9)
             }
             println(1)
@@ -1267,7 +1267,7 @@ class TExec {
         val out = all(
             """
             catch err==[] {
-                throw []
+                throw([])
                 println(9)
             }
             println(1)
@@ -1641,7 +1641,7 @@ class TExec {
         val out = all("""
             catch err==nil {
                 defer {
-                    throw nil
+                    throw(nil)
                 }
             }
             println(:ok)
@@ -1653,7 +1653,7 @@ class TExec {
         val out = all("""
             do {
                 defer {
-                    throw nil
+                    throw(nil)
                 }
             }
             println(:ok)

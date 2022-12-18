@@ -4,7 +4,7 @@ func {+} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number ($v1.Number + $v2.Number)`
 }
@@ -17,7 +17,7 @@ func {-} (v1, v2) {
             `:number (- $v1.Number)`
         }
         (t1 /= :number) or (t2 /= :number) -> {
-            throw :error
+            throw(:error)
         }
         else -> {
             `:number ($v1.Number - $v2.Number)`
@@ -29,7 +29,7 @@ func {*} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number ($v1.Number * $v2.Number)`
 }
@@ -38,7 +38,7 @@ func {**} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number powf($v1.Number, $v2.Number)`
 }
@@ -47,7 +47,7 @@ func {/} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number ($v1.Number / $v2.Number)`
 }
@@ -56,7 +56,7 @@ func {//} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number powf($v1.Number, 1/$v2.Number)`
 }
@@ -65,7 +65,7 @@ func {%} (v1, v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= :number) or (t2 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:number fmod($v1.Number, $v2.Number)`
 }
@@ -76,7 +76,7 @@ func {>=} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:bool ($v1.Number >= $v2.Number)`
 }
@@ -85,7 +85,7 @@ func {>} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:bool ($v1.Number > $v2.Number)`
 }
@@ -94,7 +94,7 @@ func {<=} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:bool ($v1.Number <= $v2.Number)`
 }
@@ -103,7 +103,7 @@ func {<} (v1,v2) {
     var t1 = tags(v1)
     var t2 = tags(v2)
     if (t1 /= t2) or (t1 /= :number) {
-        throw :error
+        throw(:error)
     }
     `:bool ($v1.Number < $v2.Number)`
 }

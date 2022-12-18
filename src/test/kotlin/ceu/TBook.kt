@@ -279,7 +279,7 @@ class TBook {
             var fact
             set fact = func (x) {
                 if x < 0 {
-                    throw :error
+                    throw(:error)
                 } else {nil}
                 if x == 0 {
                     1
@@ -296,8 +296,8 @@ class TBook {
     fun todo_pg_31_short() {    // TODO: user and/or
         val out = all(
             """
-            println(if false { throw :error } else { true })
-            println(if true { true } else { throw :error })
+            println(if false { throw(:error) } else { true })
+            println(if true { true } else { throw(:error) })
         """, true
         )
         assert(out == "true\ntrue\n") { out }

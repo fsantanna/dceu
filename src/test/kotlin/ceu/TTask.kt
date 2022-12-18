@@ -427,7 +427,7 @@ class TTask {
         val out = all("""
             var co
             set co = coroutine task (x,y) {
-                throw :e2
+                throw(:e2)
             }
             catch :e2 {
                 resume co(1,2)
@@ -443,7 +443,7 @@ class TTask {
             var co
             set co = coroutine task (x,y) {
                 yield nil
-                throw :e2
+                throw(:e2)
             }
             catch :e2 {
                 resume co(1,2)
@@ -462,7 +462,7 @@ class TTask {
             set T = task () {
                 spawn task () {
                     yield nil
-                    throw :error 
+                    throw(:error )
                 }()
                 yield nil
             }
@@ -494,11 +494,11 @@ class TTask {
             set co = coroutine task () {
                 catch :e1 {
                     yield nil
-                    throw :e1
+                    throw(:e1)
                 }
                 println(:e1)
                 yield nil
-                throw :e2
+                throw(:e2)
             }
             catch :e2 {
                 resume co()
@@ -518,7 +518,7 @@ class TTask {
                 catch :e1 {
                     coroutine task () {
                         yield nil
-                        throw :e1
+                        throw(:e1)
                     }()
                     while true {
                         yield nil
@@ -526,7 +526,7 @@ class TTask {
                 }
                 println(:e1)
                 yield nil
-                throw :e2
+                throw(:e2)
             }
             catch :e2 {
                 resume co()
@@ -547,13 +547,13 @@ class TTask {
                 catch err==:e1 {
                     spawn task () {
                         yield nil
-                        throw :e1
+                        throw(:e1)
                         println(:no)
                     } ()
                     while true { yield nil }
                 }
                 println(:ok1)
-                throw :e2
+                throw(:e2)
                 println(:no)
             }
             spawn (task () {
@@ -562,7 +562,7 @@ class TTask {
                     while true { yield nil }
                 }
                 println(:ok2)
-                throw :e3
+                throw(:e3)
                 println(:no)
             }) ()
             catch :e3 {
@@ -664,7 +664,7 @@ class TTask {
                 var co2
                 set co2 = coroutine task () {
                     yield nil
-                    throw :error
+                    throw(:error)
                 }
                 resume co2 ()
                 yield nil
@@ -774,7 +774,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 set v = yield nil
-                throw :1                
+                throw(:1                )
             }
             var co1
             set co1 = coroutine tk
@@ -1052,7 +1052,7 @@ class TTask {
                 }
                 spawn in ts, T(1)
                 while in ts, t {
-                    throw 1     ;; never reached
+                    throw(1)    ;; never reached
                 }
             }
             broadcast in :global, 2
@@ -1230,7 +1230,7 @@ class TTask {
                     println(30)
                 }
                 yield nil
-                throw nil
+                throw(nil)
             }
             spawn in ts, T()
             spawn in ts, T()
@@ -1284,7 +1284,7 @@ class TTask {
                     println(3)
                     yield nil
                     println(6)
-                    throw :ok
+                    throw(:ok)
                 } ()
                 spawn task () {
                     catch :ok {
@@ -1337,7 +1337,7 @@ class TTask {
                     spawn task () {
                         yield nil
                         if v == 1 {
-                            throw :ok
+                            throw(:ok)
                         } else {
                             nil
                         }
@@ -1371,7 +1371,7 @@ class TTask {
                     spawn task () {
                         yield nil
                         if v == 2 {
-                            throw :ok
+                            throw(:ok)
                         } else {
                             nil
                         }
@@ -2228,7 +2228,7 @@ class TTask {
             var x
             set x = catch true {
                 while in ts, t {
-                    throw track(t)
+                    throw(track(t))
                 }
             }
             broadcast in :global, nil
@@ -2251,7 +2251,7 @@ class TTask {
             var x
             set x = catch true {
                 while in ts, t {
-                    throw track(t)
+                    throw(track(t))
                 }
             }
             println(x.pub[0])   ;; 1
