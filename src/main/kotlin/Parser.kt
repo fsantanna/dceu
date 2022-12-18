@@ -106,6 +106,26 @@ class Parser (lexer_: Lexer)
         return e
     }
 
+    fun expr_in_parens (req: Boolean, nil: Boolean): Expr? {
+        this.acceptFix_err("(")
+        val e = when {
+            (req || !this.checkFix(")")) -> {
+                val e = this.expr()
+                this.acceptFix_err(")")
+                e
+            }
+            nil -> {
+                this.acceptFix_err(")")
+                Expr.Nil(Tk.Fix("nil", this.tk0.pos))
+            }
+            else -> {
+                this.acceptFix_err(")")
+                null
+            }
+        }
+        return e
+    }
+
     fun <T> list0 (close: String, func: ()->T): List<T> {
         val l = mutableListOf<T>()
         while (!this.checkFix(close)) {
@@ -238,24 +258,11 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
-            this.acceptFix("throw") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val e = this.expr()
-                this.acceptFix_err(")")
-                Expr.Throw(tk0, e)
-            }
+            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU,XCEU)!!)
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
-            this.acceptFix("coroutines") -> {
-                this.acceptFix_err("(")
-                val max = if (this.checkFix(")")) null else {
-                    this.expr()
-                }
-                this.acceptFix_err(")")
-                Expr.Coros(this.tk0 as Tk.Fix, max)
-            }
-            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
+            this.acceptFix("coroutines") -> Expr.Coros(this.tk0 as Tk.Fix, this.expr_in_parens(false,false))
+            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, this.expr_in_parens(true,false)!!)
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 when {
@@ -292,18 +299,7 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-            this.acceptFix("yield") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("(")
-                val e = if (XCEU && this.acceptFix(")")) {
-                    Expr.Nil(Tk.Fix("nil", tk0.pos))
-                } else {
-                    val e = this.expr()
-                    this.acceptFix_err(")")
-                    e
-                }
-                Expr.Yield(tk0, e)
-            }
+            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU,XCEU)!!)
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
@@ -348,7 +344,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, null)
-            this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
+            this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, this.expr_in_parens(true,false)!!)
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
             this.acceptEnu("Nat")  -> {
@@ -371,11 +367,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix(")")
                 Pair(k,v)
             })
-            this.acceptFix("(") -> {
-                val e = this.expr()
-                this.acceptFix_err(")")
-                e
-            }
+            this.checkFix("(") -> this.expr_in_parens(true,false)!!
 
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()

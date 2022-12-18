@@ -566,7 +566,7 @@ class TParser {
                 set v = yield((1)) 
                 yield((2)) 
             }
-            coroutine t
+            coroutine(t)
             set v = resume a(1)
             resume a(2)
         """)
@@ -577,7 +577,7 @@ class TParser {
             set v = yield(1)
             yield(2)
             }
-            coroutine t
+            coroutine(t)
             set v = resume a(1)
             resume a(2)
             
@@ -778,10 +778,10 @@ class TParser {
     @Test
     fun track1() {
         val l = lexer("""
-            track x
+            track(x)
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "track x\n") { e.tostr() }
+        assert(e.tostr() == "track(x)\n") { e.tostr() }
     }
 }

@@ -187,8 +187,8 @@ class TXExec {
                 ;;yield()
                 println(evt)                
             }
-            var co1 = coroutine tk
-            var co2 = coroutine tk
+            var co1 = coroutine(tk)
+            var co2 = coroutine(tk)
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3

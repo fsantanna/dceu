@@ -19,7 +19,7 @@ class TTask {
                 v+1
             }
             var a
-            set a = coroutine t
+            set a = coroutine(t)
             var v
             set v = resume a(1)
             println(v)              ;; 2
@@ -33,7 +33,7 @@ class TTask {
     @Test
     fun task2_err() {
         val out = all("""
-            coroutine func () {nil}
+            coroutine(func () {nil})
         """.trimIndent())
         assert(out == "anon : (lin 1, col 11) : coroutine error : expected task\n") { out }
     }
@@ -49,7 +49,7 @@ class TTask {
     fun task4_err() {
         val out = all("""
             var co
-            set co = coroutine task () {nil}
+            set co = coroutine(task () {nil})
             resume co()
             resume co()
         """.trimIndent())
@@ -59,8 +59,8 @@ class TTask {
     fun task5_err() {
         val out = all("""
             var co
-            set co = coroutine task () { nil
-            }
+            set co = coroutine(task () { nil
+            })
             resume co()
             resume co(1,2)
         """)
@@ -70,10 +70,10 @@ class TTask {
     fun task6() {
         val out = all("""
             var co
-            set co = coroutine task (v) {
+            set co = coroutine(task (v) {
                 set v = yield(nil) 
                 println(v)
-            }
+            })
             resume co(1)
             resume co(2)
         """)
@@ -83,9 +83,9 @@ class TTask {
     fun task7() {
         val out = all("""
             var co
-            set co = coroutine task (v) {
+            set co = coroutine(task (v) {
                 println(v)
-            }
+            })
             println(1)
             resume co(99)
             println(2)
@@ -104,9 +104,9 @@ class TTask {
     fun task9_mult() {
         val out = all("""
             var co
-            set co = coroutine task (x,y) {
+            set co = coroutine(task (x,y) {
                 println(x,y)
-            }
+            })
             resume co(1,2)
         """)
         assert(out == "1\t2\n") { out }
@@ -115,9 +115,9 @@ class TTask {
     fun task10_err() {
         val out = all("""
             var co
-            set co = coroutine task () {
+            set co = coroutine(task () {
                 yield(nil)
-            }
+            })
             resume co()
             resume co(1,2)
         """)
@@ -130,7 +130,7 @@ class TTask {
             set T = task (x,y) {
                 println(x,y)
             }
-            resume (coroutine T) (1,2)
+            resume (coroutine(T)) (1,2)
         """)
         assert(out == "1\t2\n") { out }
     }
@@ -142,7 +142,7 @@ class TTask {
                 [1,2,3]
                 yield(nil)
             }
-            resume (coroutine T) ()
+            resume (coroutine(T)) ()
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -160,7 +160,7 @@ class TTask {
                 println(2)
             }
             println(0)
-            resume (coroutine T) ()
+            resume (coroutine(T)) ()
             println(4)
         """)
         assert(out == "0\n1\n4\n3\n") { out }
@@ -219,7 +219,7 @@ class TTask {
                 println(2)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             println(0)
             resume t ()
             println(4)
@@ -426,9 +426,9 @@ class TTask {
     fun throw1() {
         val out = all("""
             var co
-            set co = coroutine task (x,y) {
+            set co = coroutine(task (x,y) {
                 throw(:e2)
-            }
+            })
             catch :e2 {
                 resume co(1,2)
                 println(99)
@@ -441,10 +441,10 @@ class TTask {
     fun throw2() {
         val out = all("""
             var co
-            set co = coroutine task (x,y) {
+            set co = coroutine(task (x,y) {
                 yield(nil)
                 throw(:e2)
-            }
+            })
             catch :e2 {
                 resume co(1,2)
                 println(1)
@@ -491,7 +491,7 @@ class TTask {
     fun throw6() {
         val out = all("""
             var co
-            set co = coroutine task () {
+            set co = coroutine (task () {
                 catch :e1 {
                     yield(nil)
                     throw(:e1)
@@ -499,7 +499,7 @@ class TTask {
                 println(:e1)
                 yield(nil)
                 throw(:e2)
-            }
+            })
             catch :e2 {
                 resume co()
                 resume co()
@@ -514,12 +514,12 @@ class TTask {
     fun throw7() {
         val out = all("""
             var co
-            set co = coroutine task () {
+            set co = coroutine (task () {
                 catch :e1 {
-                    coroutine task () {
+                    coroutine (task () {
                         yield(nil)
                         throw(:e1)
-                    }()
+                    })()
                     while true {
                         yield(nil)
                     }
@@ -527,7 +527,7 @@ class TTask {
                 println(:e1)
                 yield(nil)
                 throw(:e2)
-            }
+            })
             catch :e2 {
                 resume co()
                 broadcast in :global, nil
@@ -608,7 +608,7 @@ class TTask {
                 println(v, evt)
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
              broadcast in :global, 1
              broadcast in :global, 2
              broadcast in :global, 3
@@ -627,9 +627,9 @@ class TTask {
                 println(evt)
             }
             var co1
-            set co1 = coroutine tk
+            set co1 = coroutine(tk)
             var co2
-            set co2 = coroutine tk
+            set co2 = coroutine(tk)
              broadcast in :global, 1
              broadcast in :global, 2
              broadcast in :global, 3
@@ -641,16 +641,16 @@ class TTask {
     fun bcast2() {
         val out = all("""
             var co1
-            set co1 = coroutine task () {
+            set co1 = coroutine (task () {
                 var co2
-                set co2 = coroutine task () {
+                set co2 = coroutine (task () {
                     yield(nil)
                     println(2)
-                }
+                })
                 resume co2 ()
                 yield(nil)
                 println(1)
-            }
+            })
             resume co1 ()
              broadcast in :global, nil
         """)
@@ -660,16 +660,16 @@ class TTask {
     fun bcast3() {
         val out = all("""
             var co1
-            set co1 = coroutine task () {
+            set co1 = coroutine(task () {
                 var co2
-                set co2 = coroutine task () {
+                set co2 = coroutine(task () {
                     yield(nil)
                     throw(:error)
-                }
+                })
                 resume co2 ()
                 yield(nil)
                 println(1)
-            }
+            })
             resume co1 ()
              broadcast in :global, nil
         """)
@@ -692,7 +692,7 @@ class TTask {
                 }
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
              broadcast in :global, 1
              broadcast in :global, 2
              broadcast in :global, 3
@@ -710,7 +710,7 @@ class TTask {
                 println(evt)
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
             resume co(1)
              broadcast in :global, 2
         """)
@@ -735,9 +735,9 @@ class TTask {
                 println(evt)                
             }
             var co1
-            set co1 = coroutine tk
+            set co1 = coroutine(tk)
             var co2
-            set co2 = coroutine tk
+            set co2 = coroutine(tk)
             do {
                  broadcast in :global, 1
                  broadcast in :global, 2
@@ -756,9 +756,9 @@ class TTask {
                 println(evt)                
             }
             var co1
-            set co1 = coroutine tk
+            set co1 = coroutine(tk)
             var co2
-            set co2 = coroutine tk
+            set co2 = coroutine(tk)
             func () {
                  broadcast in :global, 1
                  broadcast in :global, 2
@@ -777,9 +777,9 @@ class TTask {
                 throw(:1                )
             }
             var co1
-            set co1 = coroutine tk
+            set co1 = coroutine(tk)
             var co2
-            set co2 = coroutine tk
+            set co2 = coroutine(tk)
             catch err==:1 {
                 func () {
                     println(1)
@@ -810,9 +810,9 @@ class TTask {
                 println(evt)                
             }
             var co1
-            set co1 = coroutine tk
+            set co1 = coroutine(tk)
             var co2
-            set co2 = coroutine tk
+            set co2 = coroutine(tk)
             catch err==:1 {
                 func () {
                     println(1)
@@ -839,7 +839,7 @@ class TTask {
                 }
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
              broadcast in :global, []
         """
         )
@@ -1425,7 +1425,7 @@ class TTask {
                 set xxx = evt
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
             broadcast in :global, []
         """
         )
@@ -1440,7 +1440,7 @@ class TTask {
                 set xxx = evt[0]
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
             broadcast in :global, [[]]
         """
         )
@@ -1456,7 +1456,7 @@ class TTask {
                 set xxx = evt
             }
             var co
-            set co = coroutine tk
+            set co = coroutine(tk)
              broadcast in :global, 1
              broadcast in :global, []
         """
@@ -1600,7 +1600,7 @@ class TTask {
                 set pub = pub + v2
             }
             var a
-            set a = coroutine t
+            set a = coroutine(t)
             println(a.pub)
             resume a(1)
             println(a.pub)
@@ -1619,7 +1619,7 @@ class TTask {
             var x
             do {
                 var a
-                set a = coroutine t
+                set a = coroutine(t)
                 resume a()
                 set x = a.pub
             }
@@ -1637,7 +1637,7 @@ class TTask {
                 set pub = 10
             }
             var a
-            set a = coroutine t
+            set a = coroutine(t)
             resume a()
             println(a.pub + a.pub)
         """, true)
@@ -1787,7 +1787,7 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t()
             var x
             set x = t.pub   ;; no expose
@@ -1803,7 +1803,7 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t()
             println(t.pub)   ;; no expose
         """)
@@ -1819,7 +1819,7 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t()
             println(t.pub[0][:x])   ;; no expose
         """)
@@ -1863,7 +1863,7 @@ class TTask {
                 println(20, status)
             }
             var a
-            set a = coroutine t
+            set a = coroutine(t)
             println(1, a.status)
             resume a()
             println(2, a.status)
@@ -2002,7 +2002,7 @@ class TTask {
             var xxx
             do {
                 var t
-                set t = coroutine T
+                set t = coroutine(T)
                 set xxx = t ;; error
             }
         """)
@@ -2014,7 +2014,7 @@ class TTask {
     @Test
     fun track1_err() {
         val out = all("""
-            track nil
+            track(nil)
         """)
         assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n") { out }
     }
@@ -2024,9 +2024,9 @@ class TTask {
             var T
             set T = task () { nil }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             var x
-            set x = track t
+            set x = track(t)
             println(t, x)
         """)
         assert(out.contains("track: 0x")) { out }
@@ -2037,10 +2037,10 @@ class TTask {
             var T
             set T = task () { nil }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t()
             var x
-            set x = track t ;; error: dead coro
+            set x = track(t) ;; error: dead coro
             println(x)
         """)
         assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n") { out }
@@ -2054,9 +2054,9 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             var x
-            set x = track t
+            set x = track(t)
             println(x.pub) 
             resume t()
             println(x.pub) 
@@ -2068,7 +2068,7 @@ class TTask {
         val out = all("""
             var x
             set x = nil
-            println(x.pub)  ;; not coro/track 
+            println(x.pub)  ;; not coro/track()
         """)
         assert(out == "anon : (lin 4, col 23) : pub error : expected coroutine\n") { out }
     }
@@ -2081,10 +2081,10 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t()
             var x
-            set x = track t
+            set x = track(t)
             println(x.pub)      ;; expose (ok, global func)
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
@@ -2098,8 +2098,8 @@ class TTask {
             var x
             do {
                 var t
-                set t = coroutine T
-                set x = track t         ;; error scope
+                set t = coroutine(T)
+                set x = track(t)         ;; error scope
             }
             println(x.status)
             println(x)
@@ -2116,10 +2116,10 @@ class TTask {
                 yield(nil)
             }
             var t
-            set t = coroutine T
+            set t = coroutine(T)
             resume t ()
             var x
-            set x = track t
+            set x = track(t)
             println(x.pub[0])
             broadcast in :global, nil
             println(x.status)
@@ -2137,9 +2137,9 @@ class TTask {
             var x
             do {
                 var t
-                set t = coroutine T
+                set t = coroutine(T)
                 resume t ()
-                set x = track t         ;; scope x < t
+                set x = track(t)         ;; scope x < t
                 println(x.pub[0])
             }
             println(x.status)
