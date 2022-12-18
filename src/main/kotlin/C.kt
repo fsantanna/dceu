@@ -584,7 +584,7 @@ fun Coder.main (): String {
                         vec->Vector.max *= 2;
                         vec->Vector.mem = realloc(vec->Vector.mem, vec->Vector.max*sz + 1);
                         assert(vec->Vector.mem != NULL);
-                        vec->Vector.mem[sz*vec->Vector.max + 1] = '\0';
+                        vec->Vector.mem[sz*vec->Vector.max] = '\0';
                     }
                     vec->Vector.n++;
                 } else {                            // set
@@ -632,7 +632,7 @@ fun Coder.main (): String {
                     ceu_throw(CEU_ERR_ERROR);
                     return "index error : out of bounds";
                 }
-                if (col->tag==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Tuple.n) {                
+                if (col->tag==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
                     ceu_throw(CEU_ERR_ERROR);       // accepts v[#v]
                     return "index error : out of bounds";
                 }
@@ -677,7 +677,7 @@ fun Coder.main (): String {
                 assert(args[i].tag == tag);
                 memcpy(ret->Vector.mem + i*sz, (char*)&args[i].Number, sz);
             }
-            ret->Vector.mem[n*sz + 1] = '\0';
+            ret->Vector.mem[n*sz] = '\0';
             assert(NULL == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -1004,6 +1004,18 @@ fun Coder.main (): String {
                     for (int i=0; i<src->Dyn->Tuple.n; i++) {
                         CEU_Value* args[1] = { &src->Dyn->Tuple.mem[i] };
                         ret.Dyn->Tuple.mem[i] = ceu_copy_f(frame, 1, args);
+                    }
+                    return ret;
+                }
+                case CEU_VALUE_VECTOR: {
+                    CEU_Dynamic* dyn = ceu_vector_create(src->Dyn->hold, src->Dyn->Vector.tag, 0, NULL);
+                    assert(dyn != NULL);
+                    CEU_Value ret = { CEU_VALUE_VECTOR, {.Dyn=dyn} };
+                    // TODO: memcpy if tag!=DYN
+                    for (int i=0; i<src->Dyn->Vector.n; i++) {
+                        CEU_Value v = ceu_vector_get(src->Dyn, i);
+                        CEU_Value* args[1] = { &v };
+                        ceu_vector_set(dyn, i, ceu_copy_f(frame, 1, args));
                     }
                     return ret;
                 }
