@@ -534,6 +534,16 @@ class TExec {
             var t1
             set t1 = #[]
             set t1[#t1] = 1
+            println(t1)
+        """, true)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun vector12_copy() {
+        val out = all("""
+            var t1
+            set t1 = #[]
+            set t1[#t1] = 1
             var t2
             set t2 = t1
             var t3
