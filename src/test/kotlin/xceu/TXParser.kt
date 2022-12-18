@@ -130,7 +130,7 @@ class TXParser {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar ceu_5\nset ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nvar _ceu_5\nset _ceu_5 = 1\nif _ceu_5 {\n_ceu_5\n} else {\n2\n}\n}") { e.tostr() }
     }
     @Test
     fun bin2_and() {
@@ -138,7 +138,7 @@ class TXParser {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar ceu_5\nset ceu_5 = 1\nif ceu_5 {\n2\n} else {\nceu_5\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nvar _ceu_5\nset _ceu_5 = 1\nif _ceu_5 {\n2\n} else {\n_ceu_5\n}\n}") { e.tostr() }
     }
     @Test
     fun bin3_not_or_and() {
@@ -148,22 +148,22 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            var ceu_72
-            set ceu_72 = do {
-            var ceu_24
-            set ceu_24 = if true {
+            var _ceu_72
+            set _ceu_72 = do {
+            var _ceu_24
+            set _ceu_24 = if true {
             false
             } else {
             true
             }
-            if ceu_24 {
+            if _ceu_24 {
             false
             } else {
-            ceu_24
+            _ceu_24
             }
             }
-            if ceu_72 {
-            ceu_72
+            if _ceu_72 {
+            _ceu_72
             } else {
             true
             }

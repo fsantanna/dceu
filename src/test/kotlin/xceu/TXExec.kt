@@ -125,7 +125,7 @@ class TXExec {
         val out = all("""
             println(true and [] or [])
         """)
-        assert(out == "1\n2\nnil\n2\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // YIELD
@@ -421,10 +421,10 @@ class TXExec {
     fun string2() {
         val out = all("""
             var v = "abc"
-            set v[${ceu.D}v] = 'a'
+            set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
-            `puts(${ceu.D}v.Dyn->Vector.mem);`
+            `puts(${D}v.Dyn->Vector.mem);`
         """)
         assert(out == "a\nabba\n") { out }
     }
