@@ -598,10 +598,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     assrc(bup.id2c(id)) // ACC ${this.tk.dump()}
                 } else {
                     ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                    val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
                         if ($asdst_src.tag > CEU_VALUE_DYNAMIC) {
-                            char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, $asdst_src.Dyn, 1);
+                            char* ceu_err_$n = ceu_block_set(${bup.id2c("_${id}_")}, $asdst_src.Dyn, $isperm);
                             if (ceu_err_$n != NULL) {
                                 snprintf(ceu_err_error_msg, 256, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : %s", ceu_err_$n);
                                 continue;

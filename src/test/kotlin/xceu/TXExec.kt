@@ -120,6 +120,13 @@ class TXExec {
         """)
         assert(out == "1\n2\nnil\n2\n") { out }
     }
+    @Test
+    fun op3_or_and() {
+        val out = all("""
+            println(true and [] or [])
+        """)
+        assert(out == "1\n2\nnil\n2\n") { out }
+    }
 
     // YIELD
 

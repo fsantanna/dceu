@@ -575,16 +575,16 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
-                        var ceu_${e.n}
-                        set ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
+                        var _ceu_${e.n}
+                        set _ceu_${e.n} = ${e.tostr(true)} 
+                        if _ceu_${e.n} { _ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
-                        var ceu_${e.n}
-                        set ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
+                        var _ceu_${e.n}
+                        set _ceu_${e.n} = ${e.tostr(true)} 
+                        if _ceu_${e.n} { ${e2.tostr(true)} } else { _ceu_${e.n} }
                     }
                 """)
                 else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))

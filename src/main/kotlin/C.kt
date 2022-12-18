@@ -993,6 +993,41 @@ fun Coder.main (): String {
             return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Vector.n} };
         }
         
+        CEU_Value ceu_move_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* src = args[0];
+            switch (src->tag) {
+                case CEU_VALUE_TUPLE: {
+                    src->Dyn->isperm = 0;
+                    for (int i=0; i<src->Dyn->Tuple.n; i++) {
+                        CEU_Value* args[1] = { &src->Dyn->Tuple.mem[i] };
+                        ceu_move_f(frame, 1, args);
+                    }
+                    return *src;
+                }
+                case CEU_VALUE_VECTOR: {
+                    src->Dyn->isperm = 0;
+                    for (int i=0; i<src->Dyn->Vector.n; i++) {
+                        CEU_Value v = ceu_vector_get(src->Dyn, i);
+                        CEU_Value* args[1] = { &v };
+                        ceu_move_f(frame, 1, args);
+                    }
+                    return *src;
+                }
+                case CEU_VALUE_DICT: {
+                    src->Dyn->isperm = 0;
+                    for (int i=0; i<src->Dyn->Dict.max; i++) {
+                        CEU_Value* args0[1] = { &(*src->Dyn->Dict.mem)[i][0] };
+                        ceu_move_f(frame, 1, args0);
+                        CEU_Value* args1[1] = { &(*src->Dyn->Dict.mem)[i][1] };
+                        ceu_move_f(frame, 1, args1);
+                    }
+                    return *src;
+                }
+                default:
+                    return *src;
+            }
+        }
         CEU_Value ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
@@ -1087,6 +1122,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_op_hash_f, {0} }
                         }
                     };
+                    static CEU_Dynamic ceu_move = { 
+                        CEU_VALUE_FUNC, NULL, NULL, 1, {
+                            .Proto = { NULL, ceu_move_f, {0} }
+                        }
+                    };
                     static CEU_Dynamic ceu_copy = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
                             .Proto = { NULL, ceu_copy_f, {0} }
@@ -1098,6 +1138,7 @@ fun Coder.main (): String {
                     ceu_mem->op_eq_eq  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_eq_eq}  };
                     ceu_mem->op_div_eq = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_div_eq} };
                     ceu_mem->op_hash   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash}   };
+                    ceu_mem->move      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}      };
                     ceu_mem->copy      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}      };
                 }
                 ${this.code}

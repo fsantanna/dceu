@@ -341,6 +341,32 @@ class TExec {
         """, true)
         assert(out == "[[[0]]]\n") { out }
     }
+    @Test
+    fun tuple13_copy_out() {
+        val out = all("""
+            var out
+            set out = do {
+                var ins
+                set ins = [1,2,3]
+                copy(ins)
+            }
+            println(out)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun tuple14_move_out() {
+        val out = all("""
+            var out
+            set out = do {
+                var ins
+                set ins = [1,2,3]
+                move(ins)
+            }
+            println(out)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
 
     // DICT
 
@@ -501,6 +527,24 @@ class TExec {
             println(x)
         """, true)
         assert(out == "3\n") { out }
+    }
+    @Test
+    fun vector11_copy() {
+        val out = all("""
+            var t1
+            set t1 = #[]
+            set t1[#t1] = 1
+            var t2
+            set t2 = t1
+            var t3
+            set t3 = copy(t1)
+            set t1[#t1] = 2
+            set t3[#t3] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
     }
 
     // STRINGS / CHAR
@@ -735,6 +779,20 @@ class TExec {
             println(xs)
         """)
         assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun scope8_underscore() {
+        val out = all("""
+            var x
+            do {
+                var _a
+                set _a = [1,2,3]
+                set x = _a
+            }
+            println(x)
+        """)
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
 
     // IF
