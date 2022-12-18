@@ -563,8 +563,8 @@ class TParser {
     fun task1() {
         val l = lexer("""
             set t = task (v) {
-                set v = yield (1) 
-                yield (2) 
+                set v = yield((1)) 
+                yield((2)) 
             }
             coroutine t
             set v = resume a(1)
@@ -574,8 +574,8 @@ class TParser {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = task (v) {
-            set v = yield 1
-            yield 2
+            set v = yield(1)
+            yield(2)
             }
             coroutine t
             set v = resume a(1)
@@ -598,8 +598,8 @@ class TParser {
             1
         """.trimIndent())
         val parser = Parser(l)
-        //assert(ceu.trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
+        assert(ceu.trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
     @Test
     fun yield2_err() {
@@ -608,7 +608,9 @@ class TParser {
             (1)
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
+        val e = parser.expr()
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
+        assert(e.tostr() == "yield(1)")
     }
     @Test
     fun task3_err() {

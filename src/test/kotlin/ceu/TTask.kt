@@ -12,9 +12,9 @@ class TTask {
             var t
             set t = task (v) {
                 println(v)          ;; 1
-                set v = yield (v+1) 
+                set v = yield((v+1)) 
                 println(v)          ;; 3
-                set v = yield v+1 
+                set v = yield(v+1) 
                 println(v)          ;; 5
                 v+1
             }
@@ -71,7 +71,7 @@ class TTask {
         val out = all("""
             var co
             set co = coroutine task (v) {
-                set v = yield nil 
+                set v = yield(nil) 
                 println(v)
             }
             resume co(1)
@@ -116,7 +116,7 @@ class TTask {
         val out = all("""
             var co
             set co = coroutine task () {
-                yield nil
+                yield(nil)
             }
             resume co()
             resume co(1,2)
@@ -140,7 +140,7 @@ class TTask {
             var T
             set T = task () {
                 [1,2,3]
-                yield nil
+                yield(nil)
             }
             resume (coroutine T) ()
             println(1)
@@ -156,7 +156,7 @@ class TTask {
                     println(3)
                 }
                 println(1)
-                yield nil   ;; never awakes
+                yield(nil)   ;; never awakes
                 println(2)
             }
             println(0)
@@ -168,7 +168,7 @@ class TTask {
     @Test
     fun yield14_err() {
         val out = all("""
-            yield nil
+            yield(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
@@ -177,7 +177,7 @@ class TTask {
         val out = all("""
             task () {
                 func () {
-                    yield nil
+                    yield(nil)
                 }
             }
         """)
@@ -215,7 +215,7 @@ class TTask {
                     println(3)
                 }
                 println(1)
-                yield nil   ;; never awakes
+                yield(nil)   ;; never awakes
                 println(2)
             }
             var t
@@ -235,9 +235,9 @@ class TTask {
             var t
             set t = task (v) {
                 println(v)          ;; 1
-                set v = yield (v+1) 
+                set v = yield((v+1)) 
                 println(v)          ;; 3
-                set v = yield v+1 
+                set v = yield(v+1) 
                 println(v)          ;; 5
                 v+1
             }
@@ -285,7 +285,7 @@ class TTask {
                 println(1)
                 do {
                     println(2)
-                    yield nil
+                    yield(nil)
                     println(3)
                 }
                 println(4)
@@ -369,7 +369,7 @@ class TTask {
                 println(1)
                 do {
                     println(2)
-                    yield nil
+                    yield(nil)
                     println(3)
                 }
                 println(4)
@@ -393,7 +393,7 @@ class TTask {
                 println(1)
                 do {
                     println(2)
-                    yield nil
+                    yield(nil)
                     println(3)
                 }
                 println(4)
@@ -442,7 +442,7 @@ class TTask {
         val out = all("""
             var co
             set co = coroutine task (x,y) {
-                yield nil
+                yield(nil)
                 throw(:e2)
             }
             catch :e2 {
@@ -461,10 +461,10 @@ class TTask {
             var T
             set T = task () {
                 spawn task () {
-                    yield nil
+                    yield(nil)
                     throw(:error )
                 }()
-                yield nil
+                yield(nil)
             }
             spawn in coroutines(), T()
             broadcast in :global, nil
@@ -493,11 +493,11 @@ class TTask {
             var co
             set co = coroutine task () {
                 catch :e1 {
-                    yield nil
+                    yield(nil)
                     throw(:e1)
                 }
                 println(:e1)
-                yield nil
+                yield(nil)
                 throw(:e2)
             }
             catch :e2 {
@@ -517,15 +517,15 @@ class TTask {
             set co = coroutine task () {
                 catch :e1 {
                     coroutine task () {
-                        yield nil
+                        yield(nil)
                         throw(:e1)
                     }()
                     while true {
-                        yield nil
+                        yield(nil)
                     }
                 }
                 println(:e1)
-                yield nil
+                yield(nil)
                 throw(:e2)
             }
             catch :e2 {
@@ -546,11 +546,11 @@ class TTask {
             set T = task () {
                 catch err==:e1 {
                     spawn task () {
-                        yield nil
+                        yield(nil)
                         throw(:e1)
                         println(:no)
                     } ()
-                    while true { yield nil }
+                    while true { yield(nil) }
                 }
                 println(:ok1)
                 throw(:e2)
@@ -559,7 +559,7 @@ class TTask {
             spawn (task () {
                 catch :e2 {
                     spawn T()
-                    while true { yield nil }
+                    while true { yield(nil) }
                 }
                 println(:ok2)
                 throw(:e3)
@@ -590,7 +590,7 @@ class TTask {
             """
             spawn task () {
                 println(1)
-                yield nil
+                yield(nil)
                 println(2)
             }()
              broadcast in :global, nil
@@ -604,7 +604,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v, evt)
-                set v = yield nil
+                set v = yield(nil)
                 println(v, evt)
             }
             var co
@@ -622,7 +622,7 @@ class TTask {
             set tk = task (v) {
                 println(v)
                 println(evt)
-                set v = yield nil
+                set v = yield(nil)
                 println(v)
                 println(evt)
             }
@@ -644,11 +644,11 @@ class TTask {
             set co1 = coroutine task () {
                 var co2
                 set co2 = coroutine task () {
-                    yield nil
+                    yield(nil)
                     println(2)
                 }
                 resume co2 ()
-                yield nil
+                yield(nil)
                 println(1)
             }
             resume co1 ()
@@ -663,11 +663,11 @@ class TTask {
             set co1 = coroutine task () {
                 var co2
                 set co2 = coroutine task () {
-                    yield nil
+                    yield(nil)
                     throw(:error)
                 }
                 resume co2 ()
-                yield nil
+                yield(nil)
                 println(1)
             }
             resume co1 ()
@@ -682,12 +682,12 @@ class TTask {
             set tk = task () {
                 do {
                     println(evt)
-                    yield nil
+                    yield(nil)
                     println(evt)
                 }
                 do {
                     println(evt)
-                    yield nil
+                    yield(nil)
                     println(evt)
                 }
             }
@@ -706,7 +706,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                yield nil
+                yield(nil)
                 println(evt)
             }
             var co
@@ -731,7 +731,7 @@ class TTask {
         val out = all("""
             var tk
             set tk = task () {
-                yield nil
+                yield(nil)
                 println(evt)                
             }
             var co1
@@ -752,7 +752,7 @@ class TTask {
         val out = all("""
             var tk
             set tk = task (v) {
-                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:pointer { set ok=false } else { nil } } }
                 println(evt)                
             }
             var co1
@@ -773,7 +773,7 @@ class TTask {
             """
             var tk
             set tk = task (v) {
-                set v = yield nil
+                set v = yield(nil)
                 throw(:1                )
             }
             var co1
@@ -802,11 +802,11 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
-                ;;yield nil
+                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield(nil)
                 println(evt)                
-                do { var ok2; set ok2=true; while ok2 { yield nil; if tags(evt)/=:pointer { set ok2=false } else { nil } } }
-                ;;yield nil
+                do { var ok2; set ok2=true; while ok2 { yield(nil;) if tags(evt)/=:pointer { set ok2=false } else { nil } } }
+                ;;yield(nil)
                 println(evt)                
             }
             var co1
@@ -855,8 +855,8 @@ class TTask {
             """
             var T
             set T = task (v) {
-                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
-                ;;yield nil
+                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield(nil)
                 println(v)
             }
             var t1
@@ -884,7 +884,7 @@ class TTask {
             """
             var T
             set T = task (v) {
-                yield nil
+                yield(nil)
                 println(v)
             }
             var t1
@@ -905,7 +905,7 @@ class TTask {
             var T
             set T = task (v) {
                 spawn (task () {
-                    yield nil
+                    yield(nil)
                     println(:ok)
                 }) ()
                 broadcast in :global, :ok
@@ -922,7 +922,7 @@ class TTask {
             var T
             set T = task (v) {
                 spawn (task :fake () {
-                    yield nil
+                    yield(nil)
                     println(v, evt)
                 }) ()
                 spawn (task :fake () {
@@ -930,10 +930,10 @@ class TTask {
                         broadcast in :task, :ok
                     }
                 }) ()
-                yield nil
+                yield(nil)
             }
             spawn (task () {
-                yield nil
+                yield(nil)
                 println(999)
             }) ()
             spawn T (1)
@@ -978,7 +978,7 @@ class TTask {
             var T
             set T = task (v) {
                 println(v)
-                yield nil
+                yield(nil)
                 println(evt)
             }
             do {
@@ -994,7 +994,7 @@ class TTask {
             var T
             set T = task () {
                 [1,2,3]
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1012,7 +1012,7 @@ class TTask {
                 defer {
                     println(v)
                 }
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1031,7 +1031,7 @@ class TTask {
                 var T
                 set T = task (v) {
                     println(v)
-                    set v = yield nil
+                    set v = yield(nil)
                     println(v)
                 }
                 spawn in ts, T(1)
@@ -1064,7 +1064,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1087,7 +1087,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1105,7 +1105,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1125,7 +1125,7 @@ class TTask {
     fun pool11_err_scope() {
         val out = all("""
             var T
-            set T = task () { yield nil }
+            set T = task () { yield(nil) }
             var ts
             set ts = coroutines()
             spawn in ts, T()
@@ -1141,7 +1141,7 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task () { yield nil }
+            set T = task () { yield(nil) }
             var ts
             set ts = coroutines()
             spawn in ts, T()
@@ -1161,7 +1161,7 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task () { yield nil }
+            set T = task () { yield(nil) }
             var ts
             set ts = coroutines()
             spawn in ts, T()
@@ -1202,7 +1202,7 @@ class TTask {
             var ts
             set ts = coroutines(1)
             var T
-            set T = task () { yield nil }
+            set T = task () { yield(nil) }
             var ok1
             set ok1 = spawn in ts, T()
             var ok2
@@ -1229,7 +1229,7 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                yield nil
+                yield(nil)
                 throw(nil)
             }
             spawn in ts, T()
@@ -1252,11 +1252,11 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=true; while ok1 { yield nil; if tags(evt)/=:pointer { set ok1=false } else { nil } } }
-                ;;yield nil
+                do { var ok1; set ok1=true; while ok1 { yield(nil;) if tags(evt)/=:pointer { set ok1=false } else { nil } } }
+                ;;yield(nil)
                 if v {
-                    do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
-                    ;;yield nil
+                    do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                    ;;yield(nil)
                 } else {
                     nil
                 }
@@ -1282,14 +1282,14 @@ class TTask {
                 println(2)
                 spawn task () {
                     println(3)
-                    yield nil
+                    yield(nil)
                     println(6)
                     throw(:ok)
                 } ()
                 spawn task () {
                     catch :ok {
                         println(4)
-                        yield nil
+                        yield(nil)
                     }
                     println(999)
                 } ()
@@ -1310,10 +1310,10 @@ class TTask {
             set T = task (v) {
                 spawn task () {
                     println(v)
-                    yield nil
+                    yield(nil)
                     println(v)
                 } ()
-                while true { yield nil }
+                while true { yield(nil) }
             }
             spawn T(1)
             spawn T(2)
@@ -1335,15 +1335,15 @@ class TTask {
                 }
                 catch err==:ok {
                     spawn task () {
-                        yield nil
+                        yield(nil)
                         if v == 1 {
                             throw(:ok)
                         } else {
                             nil
                         }
-                        while true { yield nil }
+                        while true { yield(nil) }
                     } ()
-                    while true { yield nil }
+                    while true { yield(nil) }
                 }
                 println(v)
             }
@@ -1369,15 +1369,15 @@ class TTask {
                 }
                 catch err==:ok {
                     spawn task () {
-                        yield nil
+                        yield(nil)
                         if v == 2 {
                             throw(:ok)
                         } else {
                             nil
                         }
-                        while true { yield nil }
+                        while true { yield(nil) }
                     } ()
-                    while true { yield nil }
+                    while true { yield(nil) }
                 }
                 println(v)
             }
@@ -1399,7 +1399,7 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = v
-                set v = yield nil
+                set v = yield(nil)
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
@@ -1452,7 +1452,7 @@ class TTask {
             """
             var tk
             set tk = task (xxx) {
-                yield nil
+                yield(nil)
                 set xxx = evt
             }
             var co
@@ -1472,9 +1472,9 @@ class TTask {
             var fff
             set fff = func (x) { x }
             spawn task () {
-                yield nil
+                yield(nil)
                 while evt[:type]/=:x {
-                    yield nil
+                    yield(nil)
                 }
                 println(99)
             }()
@@ -1496,7 +1496,7 @@ class TTask {
                 println(1)
                 do {
                     println(2)
-                    yield nil
+                    yield(nil)
                     println(3)
                 }
                 println(4)
@@ -1516,7 +1516,7 @@ class TTask {
             """
             spawn task () {
                 println(111)
-                yield nil
+                yield(nil)
                 println(222)
             }()
             println(1)
@@ -1533,7 +1533,7 @@ class TTask {
             spawn task () {
                 while (true) {
                     println(evt)
-                    yield nil
+                    yield(nil)
                 }
             }()
             broadcast in :global, @[]
@@ -1548,7 +1548,7 @@ class TTask {
             spawn task () {
                 while (true) {
                     do {
-                        yield nil
+                        yield(nil)
                     }
                     println(evt)
                 }
@@ -1596,7 +1596,7 @@ class TTask {
             set t = task (v1) {
                 set pub = v1
                 var v2
-                set v2 = yield nil
+                set v2 = yield(nil)
                 set pub = pub + v2
             }
             var a
@@ -1674,7 +1674,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1692,7 +1692,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -1762,7 +1762,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var y
             do {
@@ -1784,7 +1784,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -1800,7 +1800,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -1816,7 +1816,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [[@[(:x,10)]]]
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -1859,7 +1859,7 @@ class TTask {
             var t
             set t = task () {
                 println(10, status)
-                yield nil
+                yield(nil)
                 println(20, status)
             }
             var a
@@ -1882,7 +1882,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
                 println(10)
             }
             var t
@@ -1904,7 +1904,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
                 println(10)
             }
             var t
@@ -1923,7 +1923,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                yield nil
+                yield(nil)
                 println(10)
             }
             var ts
@@ -1946,7 +1946,7 @@ class TTask {
                 defer {
                     println(10)
                 }
-                yield nil
+                yield(nil)
                 println(999)
             }
             var t
@@ -1966,7 +1966,7 @@ class TTask {
                 defer {
                     println(10)
                 }
-                yield nil
+                yield(nil)
                 println(999)
             }
             var ts
@@ -2051,7 +2051,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = 10
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -2078,7 +2078,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -2113,7 +2113,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var t
             set t = coroutine T
@@ -2132,7 +2132,7 @@ class TTask {
             var T
             set T = task () {
                 set pub = [10]
-                yield nil
+                yield(nil)
             }
             var x
             do {
@@ -2154,7 +2154,7 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = [v]
-                yield nil
+                yield(nil)
             }
             var x
             var ts
@@ -2176,7 +2176,7 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = [v]
-                yield nil
+                yield(nil)
             }
             var x
             var ts
@@ -2201,7 +2201,7 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = [v]
-                yield nil
+                yield(nil)
             }
             var x
             do {
@@ -2220,7 +2220,7 @@ class TTask {
         val out = all("""
             var T
             set T = task (v) {
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()
@@ -2242,7 +2242,7 @@ class TTask {
             var T
             set T = task (v) {
                 set pub = [v]
-                yield nil
+                yield(nil)
             }
             var ts
             set ts = coroutines()

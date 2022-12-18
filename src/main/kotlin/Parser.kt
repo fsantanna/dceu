@@ -292,7 +292,18 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
+            this.acceptFix("yield") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("(")
+                val e = if (XCEU && this.acceptFix(")")) {
+                    Expr.Nil(Tk.Fix("nil", tk0.pos))
+                } else {
+                    val e = this.expr()
+                    this.acceptFix_err(")")
+                    e
+                }
+                Expr.Yield(tk0, e)
+            }
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
@@ -340,7 +351,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("track") -> Expr.Track(this.tk0 as Tk.Fix, noline(this.tk0, this.expr()))
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
-            this.acceptEnu("Nat") -> {
+            this.acceptEnu("Nat")  -> {
                 Expr.Nat(this.tk0 as Tk.Nat)
             }
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
@@ -361,14 +372,9 @@ class Parser (lexer_: Lexer)
                 Pair(k,v)
             })
             this.acceptFix("(") -> {
-                val tk0 = this.tk0
-                if (XCEU && this.acceptFix(")")) {
-                    Expr.Nil(Tk.Fix("nil", tk0.pos))
-                } else {
-                    val e = this.expr()
-                    this.acceptFix_err(")")
-                    e
-                }
+                val e = this.expr()
+                this.acceptFix_err(")")
+                e
             }
 
             (XCEU && this.acceptFix("ifs")) -> {
@@ -452,7 +458,7 @@ class Parser (lexer_: Lexer)
                         ${it.es.tostr(true)}
                         set ceu_n_$n = ceu_n_$n + 1
                         if ceu_n_$n == ${pars.size} {
-                            throw :ceu_parand_$n
+                            throw(:ceu_parand_$n)
                         }
                     }
                 """}.joinToString("")
@@ -479,7 +485,7 @@ class Parser (lexer_: Lexer)
                 val spws = pars.map { """
                     ${it.tk.pos.pre()}spawn {
                         ${it.es.tostr(true)}
-                        throw :ceu_paror_$n
+                        throw(:ceu_paror_$n)
                     }
                 """}.joinToString("")
                 //println(spws)

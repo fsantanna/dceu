@@ -161,7 +161,7 @@ class TXExec {
     @Test
     fun op2_or_and() {
         val out = all("""
-            println(1 or throw 5)
+            println(1 or throw(5))
             println(1 and 2)
             println(nil and 2)
             println(nil or 2)
@@ -183,8 +183,8 @@ class TXExec {
         val out = all("""
             var tk = task () {
                 println(evt)
-                do { var ok; set ok=true; while ok { yield nil; if tags(evt)/=:pointer { set ok=false } else { nil } } }
-                ;;yield ()
+                do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                ;;yield()
                 println(evt)                
             }
             var co1 = coroutine tk
@@ -203,20 +203,20 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    do { var ok1; set ok1=true; while ok1 { yield nil; if tags(evt)/=:pointer { set ok1=false } else { nil } } }
-                    ;;yield ()
-                    do { var ok2; set ok2=true; while ok2 { yield nil; if tags(evt)/=:pointer { set ok2=false } else { nil } } }
-                    ;;yield ()
+                    do { var ok1; set ok1=true; while ok1 { yield(nil); if tags(evt)/=:pointer { set ok1=false } else { nil } } }
+                    ;;yield()
+                    do { var ok2; set ok2=true; while ok2 { yield(nil); if tags(evt)/=:pointer { set ok2=false } else { nil } } }
+                    ;;yield()
                     println(1)
                 } with {
-                    do { var ok3; set ok3=true; while ok3 { yield nil; if tags(evt)/=:pointer { set ok3=false } else { nil } } }
-                    ;;yield ()
+                    do { var ok3; set ok3=true; while ok3 { yield(nil); if tags(evt)/=:pointer { set ok3=false } else { nil } } }
+                    ;;yield()
                     println(2)
                 } with {
                     println(3)
                 }
             } ()
-             broadcast in :global, ()
+            broadcast in :global, nil
         """)
         assert(out == "3\n2\n") { out }
     }
@@ -225,11 +225,11 @@ class TXExec {
         val out = all("""
             spawn {
                 println(1)
-                yield ()
+                yield()
                 println(3)
             }
             println(2)
-             broadcast in :global, ()
+            broadcast in :global, nil
         """)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -261,12 +261,12 @@ class TXExec {
         val out = all("""
             spawn task () {
                 paror {
-                    yield ()
+                    yield()
                     println(1)
                 } with {
                     println(2)
                 } with {
-                    yield ()
+                    yield()
                     println(3)
                 }
                 println(999)
@@ -280,16 +280,16 @@ class TXExec {
             spawn task () {
                 paror {
                     defer { println(1) }
-                    yield ()
-                    yield ()
+                    yield()
+                    yield()
                     println(1)
                 } with {
-                    yield ()
+                    yield()
                     println(2)
                 } with {
                     defer { println(3) }
-                    yield ()
-                    yield ()
+                    yield()
+                    yield()
                     println(3)
                 }
                 println(999)
@@ -303,12 +303,12 @@ class TXExec {
         val out = all("""
             spawn task () {
                 parand {
-                    yield ()
+                    yield()
                     println(1)
                 } with {
                     println(2)
                 } with {
-                    yield ()
+                    yield()
                     println(3)
                 }
                 println(999)
@@ -323,16 +323,16 @@ class TXExec {
             spawn task () {
                 parand {
                     defer { println(1) }
-                    yield ()
-                    yield ()
+                    yield()
+                    yield()
                     println(1)
                 } with {
-                    yield ()
+                    yield()
                     println(2)
                 } with {
                     defer { println(3) }
-                    yield ()
-                    yield ()
+                    yield()
+                    yield()
                     println(3)
                 }
                 println(999)
@@ -348,7 +348,7 @@ class TXExec {
             spawn task () {
                 awaiting evt==1 {
                     defer { println(2) }
-                    yield ()
+                    yield()
                     println(1)
                 }
                 println(999)
@@ -411,10 +411,10 @@ class TXExec {
     fun all9() {
         val out = all("""
             spawn task () {
-                ^[9,29]yield nil                                          
+                ^[9,29]yield(nil)                                          
             }()                                                       
             spawn task () {                                           
-                ^[9,29]yield nil                       
+                ^[9,29]yield(nil)                       
             }()
             println(1)
         """)
@@ -424,7 +424,7 @@ class TXExec {
     fun todo_all10() {
         val out = all("""
             task T () {
-                awaiting (throw :error) {
+                awaiting (throw(:error)) {
                     await false
                 }
             }            
@@ -740,7 +740,7 @@ class TXExec {
     fun break1() {
         val out = all("""
             while true { {:break}
-                throw :break
+                throw(:break)
             }
             println(1)
         """)
@@ -751,7 +751,7 @@ class TXExec {
         val out = all("""
             while false {
                 while true { {:break}
-                    throw :break
+                    throw(:break)
                 }
             }
             println(1)
@@ -785,7 +785,7 @@ class TXExec {
         val out = all("""
             while true { {:break2}
                 while true { {:break1}
-                    throw :break2
+                    throw(:break2)
                 }
             }
             println(1)
@@ -801,7 +801,7 @@ class TXExec {
             var x
             set x = catch :x {
                 catch 2 {
-                    throw (:x,10)
+                    throw((:x,10))
                     println(9)
                 }
                 println(9)
@@ -816,7 +816,7 @@ class TXExec {
             catch :x {
                 var x
                 set x = []
-                throw (:x, x)
+                throw((:x,) x)
                 println(9)
             }
             println(1)
@@ -828,7 +828,7 @@ class TXExec {
         val out = all("""
             do {
                 println(catch :x {
-                    throw (:x,[10])
+                    throw((:x,[10]))
                     println(9)
                 })
             }
@@ -842,7 +842,7 @@ class TXExec {
             set x = catch :x {
                 var y
                 set y = catch :y {
-                    throw (:y,[10])
+                    throw((:y,[10]))
                     println(9)
                 }
                 ;;println(1)
@@ -856,7 +856,7 @@ class TXExec {
     fun todo_catch10() {
         val out = all("""
             catch :e1 {
-                throw []
+                throw([])
                 println(9)
             }
             println(1)
@@ -866,21 +866,21 @@ class TXExec {
     @Test
     fun todo_while1() {
         val out = all("""
-            println(catch :x { while true { throw (:x,1) }})
+            println(catch :x { while true { throw((:x,1)) }})
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun todo_while2() {
         val out = all("""
-            println(catch :x { while true { []; throw (:x,1) }})
+            println(catch :x { while true { []; throw((:x,1)) }})
         """)
         assert(out == "1\n") { out }
     }
     @Test
     fun todo_while3() {
         val out = all("""
-            println(catch 2 { while true { throw (2,[1]) }})
+            println(catch 2 { while true { throw((2,[1])) }})
         """)
         assert(out == "[1]\n") { out }
     }
@@ -890,7 +890,7 @@ class TXExec {
             println(catch 2 { while true {
                 var x
                 set x = [1] ;; memory released
-                throw (2,1)
+                throw((2,1))
             }})
         """)
         assert(out == "1\n") { out }
@@ -901,7 +901,7 @@ class TXExec {
             println(catch 2 { while true {
                 var x
                 set x = [1]
-                throw (2,x)
+                throw((2,x))
             }})
         """.trimIndent())
         assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
