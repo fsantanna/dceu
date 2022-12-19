@@ -102,7 +102,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 case 0: {
                                     // started with BCAST-CLEAR
                                     // from BCAST-CLEAR: escape enclosing block
-                                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                                    CEU_CONTINUE_ON_THROW_CLEAR();
                         """}}
                         { // ARGS
                             // no block yet, set now, will be reset in body
@@ -217,7 +217,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
                     ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
                     ceu_block_free(&ceu_mem->block_$n);
-                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                    CEU_CONTINUE_ON_THROW_CLEAR();
                 }
                 """
             }
@@ -360,7 +360,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
-                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                    CEU_CONTINUE_ON_THROW_CLEAR();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -402,7 +402,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         continue; // escape enclosing block;
                     }
-                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                    CEU_CONTINUE_ON_THROW_CLEAR();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -421,7 +421,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     return ceu_acc;
                 case $n:                    // resume here
-                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                    CEU_CONTINUE_ON_THROW_CLEAR();
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ${assrc("*ceu_args[0]")} // resume single argument
                 }
@@ -570,7 +570,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         Pair(null, """
                         //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
                             $v
-                            CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                            CEU_CONTINUE_ON_THROW_CLEAR();
                         //}
                         """)
                     }
@@ -674,7 +674,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 break;
                             }
                         }
-                        CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                        CEU_CONTINUE_ON_THROW_CLEAR();
                     }
                     CEU_Dynamic* ceu_vec_$n = ceu_vector_create(${ups.block(this)!!.toc(true)}, ceu_tag_$n, ${this.args.size}, ceu_args_$n);
                     assert(ceu_vec_$n != NULL);
@@ -752,7 +752,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             } else {
                                 """
                                 CEU_Value ceu_$n = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
-                                CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                                CEU_CONTINUE_ON_THROW_CLEAR();
                                 ${assrc("ceu_$n")}
                                 """
                             }}
@@ -868,7 +868,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.args.size},
                             ceu_args_$n
                         );
-                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
+                    CEU_CONTINUE_ON_THROW_CLEAR();
                     ${iscoros.cond{"}"}}
                     ${iscall.cond{ assrc("ceu_$n") }}
                     ${spawn.cond{ assrc(if (iscoros) "ceu_ok_$n" else "ceu_coro_$n") }}

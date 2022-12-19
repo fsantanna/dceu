@@ -2,6 +2,8 @@ package ceu
 
 import org.junit.Test
 
+val yield = "do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:coro { set ok=false } else { nil } } }"
+
 class TTask {
 
     // TASK / COROUTINE / RESUME / YIELD
@@ -942,6 +944,20 @@ class TTask {
         )
         assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
+    @Test
+    fun bcast_in7() {
+        val out = all("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    broadcast in :global, nil
+                }) ()
+                yield(nil)
+            }) ()
+            broadcast in :global, nil
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
 
     // POOL
 
@@ -1412,6 +1428,25 @@ class TTask {
              broadcast in :global, 2
         """)
         assert(out == ":coros\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+    }
+    @Test
+    fun pool23_throw() {
+        val out = ceu.all(
+            """
+            spawn (task () {
+                catch err==:ok {
+                    spawn task () {
+                        yield(nil)
+                        throw(:ok)
+                    } ()
+                    while true { yield(nil) }
+                }
+            })()
+            broadcast in :global, nil
+            println(999)
+        """
+        )
+        assert(out == "999\n") { out }
     }
 
     // EVT

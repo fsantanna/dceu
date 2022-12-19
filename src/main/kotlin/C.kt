@@ -21,7 +21,8 @@ fun Coder.main (): String {
         int ceu_as_bool (struct CEU_Value* v);
         int ceu_has_throw_clear (void);
                 
-        #define CEU_CONTINUE_ON_THROW_OR_CLEAR() { if (ceu_has_throw_clear()) { continue; } }
+        #define CEU_CONTINUE_ON_THROW_CLEAR() { if (ceu_has_throw!=0 || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR)) { continue; } }
+        #define CEU_RETURN_ON_FREED() { if (ceu_freed) { return ceu_acc; } }
         #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
 
         #define CEU_TAG_DEFINE(id,str)              \
@@ -236,9 +237,6 @@ fun Coder.main (): String {
             }
             return cur->name;
         }
-        int ceu_has_throw_clear (void) {
-            return (ceu_has_throw != 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
-        }
     """ +
     """ // BLOCK
         void ceu_block_free (CEU_Block* block) {
@@ -414,6 +412,10 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_DYN
         void ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
+            if (ceu_evt->tag==CEU_VALUE_CORO && ceu_evt->Dyn==cur) {
+                // do not nest my own termination
+                return;
+            }
             if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
                 // do not awake terminated/running coro
                 return;
@@ -425,8 +427,13 @@ fun Coder.main (): String {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
                     ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                    // continue below even with throw, yield will awake and abort
-                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // on resume, only awake blocks
+                        // may find pending throw: still continue below, yield will awake and abort
+                        // may terminate itself: do not continue
+                    if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+                        return;
+                    }
+                    //if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || cur->Bcast.status==CEU_CORO_STATUS_TOGGLED) {
+                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // when resumed, only awake blocks
                         CEU_Value arg = { CEU_VALUE_NIL };
                         CEU_Value* args[] = { &arg };
                         cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);

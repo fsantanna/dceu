@@ -600,6 +600,44 @@ class TXExec {
         assert(out == "0\n10\n10\n1") { out }
     }
     @Test
+    fun await8X_task() {
+        val out = all("""
+            spawn {
+                await spawn { 1 }
+            }
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun await8Y_task() {
+        val out = all("""
+            spawn {
+                spawn {
+                    yield ()
+                }
+                yield ()
+            }
+            println("bcast")
+            broadcast in :global, nil
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun await8Z_task() {
+        val out = all("""
+            spawn {
+                spawn {
+                    yield ()
+                    broadcast in :global, nil
+                }
+                yield ()
+            }
+            println("bcast")
+            broadcast in :global, nil
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
     fun await8_task() {
         val out = all("""
             spawn {
