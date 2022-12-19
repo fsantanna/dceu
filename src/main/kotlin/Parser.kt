@@ -490,8 +490,24 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val (clk,cnd) = this.clk_or_expr()
+                val spw = this.checkFix("spawn")
+                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
                 when {
+                    spw -> {
+                        val e = this.expr()
+                        assert(e is Expr.Spawn && e.coros==null)
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_spw_$N = ${e.tostr(true)}
+                                if (ceu_spw_$N.status /= :terminated) {
+                                    println("waiting...")
+                                    ${pre0}await evt==ceu_spw_$N or do{println(evt);false}
+                                    println("awoke")
+                                }
+                                1
+                            }
+                        """) //.let { println(it.tostr());it }
+                    }
                     (clk != null) -> this.nest("""
                         ${pre0}do {
                             var ceu_ms_$N = ${clk.ms}

@@ -599,6 +599,35 @@ class TXExec {
         """, true)
         assert(out == "0\n10\n10\n1") { out }
     }
+    @Test
+    fun await8_task() {
+        val out = all("""
+            spawn {
+                var x = await spawn { 1 }
+                println(111)
+                var y = await spawn {
+                    yield ()
+                    println(999)
+                    2
+                }
+                println(222)
+                task T () { 3 }
+                var z = await spawn T()
+                println(333)
+                println(x,y,z)
+            }
+            println("bcast")
+            broadcast in :global, nil
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun await9_task_err() {
+        val out = all("""
+            var x = await spawn in nil, nil
+        """)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
 
     // FUNC / TASK
 
