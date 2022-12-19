@@ -22,7 +22,6 @@ fun Coder.main (): String {
         int ceu_has_throw_clear (void);
                 
         #define CEU_CONTINUE_ON_THROW_CLEAR() { if (ceu_has_throw!=0 || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR)) { continue; } }
-        #define CEU_RETURN_ON_FREED() { if (ceu_freed) { return ceu_acc; } }
         #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
 
         #define CEU_TAG_DEFINE(id,str)              \

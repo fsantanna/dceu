@@ -956,7 +956,7 @@ class TTask {
             }) ()
             broadcast in :global, nil
         """)
-        assert(out == "1\t2\t3\n") { out }
+        assert(out == "TODO: valgrind") { out }
     }
 
     // POOL
