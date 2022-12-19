@@ -100,9 +100,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     assert(0 && "bug found");
                                     break;
                                 case 0: {
-                                    if (ceu_has_throw_clear()) { // started with BCAST-CLEAR
-                                        continue; // from BCAST-CLEAR: escape enclosing block
-                                    }
+                                    // started with BCAST-CLEAR
+                                    // from BCAST-CLEAR: escape enclosing block
+                                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                         """}}
                         { // ARGS
                             // no block yet, set now, will be reset in body
@@ -134,8 +134,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }
                             ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                if ( ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                    ceu_coros_destroy( ceu_coro->Bcast.Coro.coros, ceu_coro);
+                                if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                    ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
                             }
                         """}}
@@ -217,9 +217,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
                     ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
                     ceu_block_free(&ceu_mem->block_$n);
-                    if (ceu_has_throw_clear()) {
-                        continue;   // escape to end of enclosing block
-                    }
+                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                 }
                 """
             }
@@ -271,7 +269,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         // do not catch anything while clearing up
                         continue; // escape enclosing block;
                     }
-                    if (ceu_has_throw_clear()) {
+                    if (ceu_has_throw != 0) {
                         ceu_has_throw = 0;
                         ${this.cnd.code(true, null)}
                         if (!ceu_as_bool(&ceu_acc)) {
@@ -362,9 +360,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
-                    if (ceu_has_throw_clear()) {
-                        continue; // escape enclosing block
-                    }
+                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -406,9 +402,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         continue; // escape enclosing block;
                     }
-                    if (ceu_has_throw_clear()) {
-                        continue; // escape enclosing block
-                    }
+                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -427,9 +421,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     return ceu_acc;
                 case $n:                    // resume here
-                    if (ceu_has_throw_clear()) {
-                        continue; // escape enclosing block
-                    }
+                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ${assrc("*ceu_args[0]")} // resume single argument
                 }
@@ -578,9 +570,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         Pair(null, """
                         //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
                             $v
-                            if (ceu_has_throw_clear()) {
-                                continue; // escape enclosing block;
-                            }
+                            CEU_CONTINUE_ON_THROW_OR_CLEAR();
                         //}
                         """)
                     }
@@ -684,9 +674,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 break;
                             }
                         }
-                        if (ceu_has_throw_clear()) {
-                            continue;   // escape to end of enclosing block
-                        }
+                        CEU_CONTINUE_ON_THROW_OR_CLEAR();
                     }
                     CEU_Dynamic* ceu_vec_$n = ceu_vector_create(${ups.block(this)!!.toc(true)}, ceu_tag_$n, ${this.args.size}, ceu_args_$n);
                     assert(ceu_vec_$n != NULL);
@@ -764,10 +752,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             } else {
                                 """
                                 CEU_Value ceu_$n = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
-                                if (ceu_has_throw_clear()) {   // may throw w/o message
-                                    strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : index error : out of bounds", 256);
-                                    continue;   // escape to end of enclosing block
-                                }
+                                CEU_CONTINUE_ON_THROW_OR_CLEAR();
                                 ${assrc("ceu_$n")}
                                 """
                             }}
@@ -883,9 +868,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.args.size},
                             ceu_args_$n
                         );
-                    if (ceu_has_throw_clear()) {
-                        continue; // escape enclosing block
-                    }
+                    CEU_CONTINUE_ON_THROW_OR_CLEAR();
                     ${iscoros.cond{"}"}}
                     ${iscall.cond{ assrc("ceu_$n") }}
                     ${spawn.cond{ assrc(if (iscoros) "ceu_ok_$n" else "ceu_coro_$n") }}

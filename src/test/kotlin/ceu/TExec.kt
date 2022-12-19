@@ -507,7 +507,8 @@ class TExec {
             set v = #[1,2,3]
             println(v[#v])   ;; err
         """)
-        assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
+        //assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
+        assert(out == "core library : index error : out of bounds\n") { out }
     }
     @Test
     fun vector9_err() {

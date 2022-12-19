@@ -21,6 +21,9 @@ fun Coder.main (): String {
         int ceu_as_bool (struct CEU_Value* v);
         int ceu_has_throw_clear (void);
                 
+        #define CEU_CONTINUE_ON_THROW_OR_CLEAR() { if (ceu_has_throw_clear()) { continue; } }
+        #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
+
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
             CEU_Tags ceu_tag_##id = { str, NULL };
@@ -234,7 +237,7 @@ fun Coder.main (): String {
             return cur->name;
         }
         int ceu_has_throw_clear (void) {
-            return (ceu_has_throw > 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
+            return (ceu_has_throw != 0) || (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR);
         }
     """ +
     """ // BLOCK
@@ -383,7 +386,6 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST_BLOCKS
-        #define CEU_BCAST_BREAK() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
         void ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
             *prv = ceu_evt;
             ceu_has_bcast++;
@@ -398,7 +400,7 @@ fun Coder.main (): String {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
                     ceu_bcast_dyns(dyn);
-                    CEU_BCAST_BREAK();
+                    CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR();
                 }
                 cur = cur->bcast.block;
             }
@@ -459,7 +461,7 @@ fun Coder.main (): String {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 ceu_bcast_dyn_aux(cur);
-                CEU_BCAST_BREAK();
+                CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR();
                 cur = nxt;
             }
         }
@@ -552,6 +554,7 @@ fun Coder.main (): String {
         
         CEU_Value ceu_vector_get (CEU_Dynamic* vec, int i) {
             if (i >= vec->Vector.n) {
+                strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
                 ceu_throw(CEU_ERR_ERROR);   // message in call site
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
