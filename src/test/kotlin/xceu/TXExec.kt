@@ -183,7 +183,7 @@ class TXExec {
         val out = all("""
             var tk = task () {
                 println(evt)
-                do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:pointer { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:coro { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
@@ -203,13 +203,13 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    do { var ok1; set ok1=true; while ok1 { yield(nil); if tags(evt)/=:pointer { set ok1=false } else { nil } } }
+                    do { var ok1; set ok1=true; while ok1 { yield(nil); if tags(evt)/=:coro { set ok1=false } else { nil } } }
                     ;;yield()
-                    do { var ok2; set ok2=true; while ok2 { yield(nil); if tags(evt)/=:pointer { set ok2=false } else { nil } } }
+                    do { var ok2; set ok2=true; while ok2 { yield(nil); if tags(evt)/=:coro { set ok2=false } else { nil } } }
                     ;;yield()
                     println(1)
                 } with {
-                    do { var ok3; set ok3=true; while ok3 { yield(nil); if tags(evt)/=:pointer { set ok3=false } else { nil } } }
+                    do { var ok3; set ok3=true; while ok3 { yield(nil); if tags(evt)/=:coro { set ok3=false } else { nil } } }
                     ;;yield()
                     println(2)
                 } with {
@@ -594,7 +594,7 @@ class TXExec {
                 }
             }()
             println(0)
-             broadcast in :global, @[(:type,:timer),(:dt,20000)]
+            broadcast in :global, @[(:type,:timer),(:dt,20000)]
             println(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
@@ -907,7 +907,6 @@ class TXExec {
         assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
     }
 
-
     @Test
     @Ignore
     fun todo_scope_func6() {
@@ -936,5 +935,4 @@ class TXExec {
         """)
         assert(out == "[1,2,3]") { out }
     }
-
 }

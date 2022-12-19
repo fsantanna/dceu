@@ -129,7 +129,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${istask.cond{"""
                             ceu_frame->Task.pc = -1;
                             {
-                                CEU_Value ceu_evt_$n = { CEU_VALUE_POINTER, {.Pointer=ceu_coro} };
+                                CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                                 ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                             }
                             ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;

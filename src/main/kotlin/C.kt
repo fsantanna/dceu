@@ -440,7 +440,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_TRACK:
-                    if (ceu_evt->tag==CEU_VALUE_POINTER && cur->Bcast.Track.coro==ceu_evt->Pointer) {
+                    if (ceu_evt->tag==CEU_VALUE_CORO && cur->Bcast.Track.coro==ceu_evt->Dyn) {
                         cur->Bcast.Track.coro = NULL; // tracked coro is terminating
                     }
                     break;
