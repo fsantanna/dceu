@@ -132,6 +132,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ + istask.cond{ """
                     CEU_Value ceu_acc_$n = ceu_acc;
                     { // TERMINATE
+                        int iscoros = (ceu_coro->Bcast.Coro.coros != NULL);
                         ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATING, ceu_coro->Bcast.status);
                         if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
                             // 1. bcasted above
@@ -145,22 +146,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_coro->Bcast.Coro.bcasting = 1;
                             ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                             ceu_coro->Bcast.Coro.bcasting = 0;
-                            if (ceu_coro->Bcast.Coro.coros != NULL) {
+                            if (iscoros) {
+                                ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                                 if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                     ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
                             }
                         }
                         // destroyed from bcast
-                        if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                        if (!iscoros && ceu_coro->Bcast.status==CEU_CORO_STATUS_DESTROYED) {
+                            ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                             free(ceu_coro->Bcast.Coro.frame->mem);
                             free(ceu_coro->Bcast.Coro.frame);
                             free(ceu_coro);
                         }
-                        ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                     }
-                    """} + """
                     ceu_acc = ceu_acc_$n;
+                    """} + """
                     return ceu_ret;
                 }
                 """
@@ -367,6 +369,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
                     ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
+                    ceu_ret = CEU_RET_RETURN;
                     do { // iter
                 CEU_ITER_$n:;
                         if (ceu_mem->$loc.Dyn == NULL) {
