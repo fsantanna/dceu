@@ -184,32 +184,38 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     {
                         CEU_RET   ceu_ret_$n = ceu_ret; // CEU_RET: must be restored on final return
                         CEU_Value ceu_acc_$n = ceu_acc; // CEU_ACC: must be restored on final return
-                        ${(f_b != null).cond {
-                            val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
-                            """
-                            // move up dynamic ceu_acc (return or error)
-                            if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                                ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
-                                CEU_CONTINUE_ON_THROW();
-                            }
-                            """
-                        }}
-                        ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
+                        { // cleanup active nested spawns in this block
+                            //ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR);
+                        }
                         { // DEFERS ${this.tk.dump()}
-                            int ceu_has_bcast_old = ceu_has_bcast;
-                            ceu_has_bcast = 0;
-    
                             do {
                                 ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                             } while (0);
                             assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
                             CEU_CONTINUE_ON_THROW();
                         }
-                        ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
-                        ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
-                        ceu_block_free(&ceu_mem->block_$n);
+                        { // relink blocks
+                            ${(f_b is Expr.Block).cond{
+                                "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
+                            }}
+                            ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{
+                                "ceu_coro->Bcast.Coro.block = NULL;"
+                            }}
+                            ceu_block_free(&ceu_mem->block_$n);
+                        }
                         ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
                         ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
+                        { // move up dynamic ceu_acc (return or error)
+                            ${(f_b != null).cond {
+                                val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                """
+                                if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                    ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                    CEU_CONTINUE_ON_THROW();
+                                }
+                                """
+                            }}
+                        }
                         CEU_CONTINUE_ON_THROW();
                         CEU_CONTINUE_ON_CLEAR();
                     }
