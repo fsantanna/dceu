@@ -582,6 +582,33 @@ class TTask {
         )
         assert(out == ":ok1\n:ok2\n:ok3\n") { out }
     }
+    @Test
+    fun throw9_fake() {
+        val out = all("""
+            catch err==:err {
+                spawn (task :fake () {
+                    throw(:err)
+                }) ()
+            }
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun throw10_fake() {
+        val out = all("""
+            catch err == :err {
+                spawn task () {
+                    yield(nil)
+                }()
+                spawn task () {
+                    throw(:err)
+                }()
+            }
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // BCAST / BROADCAST
 
@@ -2150,7 +2177,8 @@ class TTask {
             println(x)
         """)
         //assert(out.contains("terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track7() {
@@ -2191,7 +2219,8 @@ class TTask {
             println(x)
         """)
         //assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track9() {
@@ -2258,7 +2287,8 @@ class TTask {
                 }
             }
         """)
-        assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track12_throw() {

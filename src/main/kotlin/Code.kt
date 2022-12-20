@@ -107,21 +107,21 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             case 0: {
                                 CEU_CONTINUE_ON_CLEAR(); // may start with clear w/ coroutine() w/o resume
                         """}}
-                                if (ceu_n != -1) {
-                                    int ceu_i = 0;
-                                    ${this.args.map {
-                                        val id = it.str.noSpecial()
-                                        """
-                                        ceu_mem->_${id}_ = ${this.body.toc(true)};
-                                        if (ceu_i < ceu_n) {
-                                            ceu_mem->$id = *ceu_args[ceu_i];
-                                        } else {
-                                            ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
-                                        }
-                                        ceu_i++;
-                                        """
-                                    }.joinToString("")}
-                                }
+                            if (ceu_n != -1) {
+                                int ceu_i = 0;
+                                ${this.args.map {
+                                    val id = it.str.noSpecial()
+                                    """
+                                    ceu_mem->_${id}_ = ${this.body.toc(true)};
+                                    if (ceu_i < ceu_n) {
+                                        ceu_mem->$id = *ceu_args[ceu_i];
+                                    } else {
+                                        ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                                    }
+                                    ceu_i++;
+                                    """
+                                }.joinToString("")}
+                            }
                             // BODY
                             ${this.body.code(true, null)}
                         ${istask.cond{"}\n}\n"}}

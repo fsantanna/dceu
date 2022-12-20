@@ -66,6 +66,7 @@ fun Coder.main (): String {
         struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
+        void ceu_print1 (struct CEU_Value* v);
         CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
     """ +
     """ // CEU_Value

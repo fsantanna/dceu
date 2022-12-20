@@ -2,6 +2,7 @@ package xceu
 
 import ceu.all
 import ceu.lexer
+import ceu.yield
 import org.junit.Ignore
 import org.junit.Test
 
@@ -261,12 +262,12 @@ class TXExec {
         val out = all("""
             spawn task () {
                 paror {
-                    yield()
+                    $yield
                     println(1)
                 } with {
                     println(2)
                 } with {
-                    yield()
+                    $yield
                     println(3)
                 }
                 println(999)
