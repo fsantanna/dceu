@@ -165,14 +165,16 @@ class TExec {
         val out = all("""
             println(1[1])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
+        //assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
+        assert(out == "core library : index error : expected collection\n") { out }
     }
     @Test
     fun index_err2() {
         val out = all("""
             println([1][[]])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
+        //assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
+        assert(out == "core library : index error : expected number\n") { out }
     }
     @Test
     fun index23() {
@@ -186,7 +188,8 @@ class TExec {
         val out = all("""
             println([1][2])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
+        //assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
+        assert(out == "core library : index error : out of bounds\n") { out }
     }
     @Test
     fun tuple4_free() {
@@ -258,8 +261,9 @@ class TExec {
         """, true)
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 29) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 26) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple8_hold_err() {
@@ -279,7 +283,8 @@ class TExec {
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 7, col 21) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 4, col 26) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple9_hold_err() {
@@ -305,7 +310,8 @@ class TExec {
         """)
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun tuple11_copy() {

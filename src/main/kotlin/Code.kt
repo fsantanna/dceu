@@ -725,17 +725,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             break;
                         }
                         case CEU_VALUE_DICT: {
-                            int idx = ceu_dict_key_index(ceu_acc.Dyn, &ceu_mem->idx_$n);
+                            CEU_Value ceu_dict = ceu_acc;
+                            int idx = ceu_dict_key_index(ceu_dict.Dyn, &ceu_mem->idx_$n);
                             ${if (asdst_src != null) {
                                 """ // SET
                                 if (idx == -1) {
-                                    idx = ceu_dict_new_index(ceu_acc.Dyn);
-                                    (*ceu_acc.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
+                                    idx = ceu_dict_new_index(ceu_dict.Dyn);
+                                    (*ceu_dict.Dyn->Dict.mem)[idx][0] = ceu_mem->idx_$n;
                                 }
-                                (*ceu_acc.Dyn->Dict.mem)[idx][1] = $asdst_src;
+                                (*ceu_dict.Dyn->Dict.mem)[idx][1] = $asdst_src;
                                 """
                             } else {
-                                assrc("((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_acc.Dyn->Dict.mem)[idx][1])")
+                                assrc("((idx==-1) ? (CEU_Value) { CEU_VALUE_NIL } : (*ceu_dict.Dyn->Dict.mem)[idx][1])")
                             }}
                             break;
                         }
