@@ -129,16 +129,30 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ +
                     """ // TERMINATE
                         ${istask.cond{"""
-                            ceu_frame->Task.pc = -1;
-                            {
+                            if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                                // 1. bcasted above
+                                //    terminated from clear bcast
+                                //    now back here again from bcast cont
+                            } else {
+                                // 1. clear bcast (bcasting maybe = 1, from above/below)
+                                // 2. terminating from normal resume
+                                ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
+                                ceu_frame->Task.pc = -1;
                                 CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                                ceu_coro->Bcast.Coro.bcasting = 1;
                                 ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
-                            }
-                            ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
-                            if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                    ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
+                                ceu_coro->Bcast.Coro.bcasting = 0;
+                                if (ceu_coro->Bcast.Coro.coros != NULL) {
+                                    if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                        ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
+                                    }
                                 }
+                            }
+                            // destroyed from bcast
+                            if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                                free(ceu_coro->Bcast.Coro.frame->mem);
+                                free(ceu_coro->Bcast.Coro.frame);
+                                free(ceu_coro);
                             }
                         """}}
                     return ceu_ret;
@@ -365,6 +379,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.block(this)!!.toc(true)
+                val intask = (ups.func(this)?.tk?.str == "task")
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
@@ -374,6 +389,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     ${this.xin.code(true, null)}
                     int ceu_err_$n = 0;
+                    ${intask.cond { "ceu_coro->Bcast.Coro.bcasting = 1;" }}
                     if (ceu_acc.tag == CEU_VALUE_CORO) {
                         ceu_ret = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.tag == CEU_VALUE_TAG) {
@@ -395,6 +411,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } else {
                         ceu_err_$n = 1;
                     }
+                    ${intask.cond { "ceu_coro->Bcast.Coro.bcasting = 0;" }}
                     if (ceu_err_$n) {
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         CEU_THROW_DO(CEU_ERR_ERROR, continue);

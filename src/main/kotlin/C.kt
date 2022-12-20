@@ -100,7 +100,8 @@ fun Coder.main (): String {
             CEU_CORO_STATUS_RESUMED = 0,
             CEU_CORO_STATUS_YIELDED,
             CEU_CORO_STATUS_TOGGLED,
-            CEU_CORO_STATUS_TERMINATED
+            CEU_CORO_STATUS_TERMINATED,
+            CEU_CORO_STATUS_DESTROYED
         } CEU_CORO_STATUS;        
 
         typedef struct CEU_Value {
@@ -176,6 +177,7 @@ fun Coder.main (): String {
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             CEU_Frame* frame;
+                            int bcasting;               // 0,1: not reentrant
                         } Coro;
                         struct {
                             uint8_t max;                // max number of instances
@@ -249,20 +251,29 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
+                block->tofree = block->tofree->next;
                 switch (cur->tag) {
                     case CEU_VALUE_VECTOR:
                         free(cur->Vector.mem);
+                        free(cur);
                         break;
                     case CEU_VALUE_DICT:
                         free(cur->Dict.mem);
+                        free(cur);
                         break;
                     case CEU_VALUE_CORO:
-                        free(cur->Bcast.Coro.frame->mem);
-                        free(cur->Bcast.Coro.frame);
+                        cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
+                        if (cur->Bcast.Coro.bcasting == 0) {
+                            // pending bcast inside coro, let it free later
+                            free(cur->Bcast.Coro.frame->mem);
+                            free(cur->Bcast.Coro.frame);
+                            free(cur);
+                        }
+                        break;
+                    default:
+                        free(cur);
                         break;
                 }
-                block->tofree = block->tofree->next;
-                free(cur);
             }
         }
         
@@ -474,9 +485,13 @@ fun Coder.main (): String {
                 prv->Bcast.next = coro->Bcast.next;
             }
             assert(cur == coro);
-            free(coro->Bcast.Coro.frame->mem);
-            free(coro->Bcast.Coro.frame);
-            free(coro);
+            cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
+            if (coro->Bcast.Coro.bcasting == 0) {
+                // pending bcast inside coro, let it free later
+                free(coro->Bcast.Coro.frame->mem);
+                free(coro->Bcast.Coro.frame);
+                free(coro);
+            }
             coros->Bcast.Coros.cur--;
         }
         
@@ -728,7 +743,7 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = { NULL, NULL, frame }
+                        .Coro = { NULL, NULL, frame, 0 }
                     } }
                 }
             };
@@ -768,7 +783,7 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, 1, { // no free
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = { coros, NULL, frame }
+                        .Coro = { coros, NULL, frame, 0 }
                     } }
                 }
             };
