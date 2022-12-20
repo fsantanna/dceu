@@ -430,7 +430,7 @@ fun Coder.main (): String {
                         // CEU_RET_THROW: step (5) may 'catch' 
                     
                     // step (5)
-                    if (cur->Bcast.status == CEU_CORO_STATUS_YIELDED) {
+                    if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR) {
                         int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                         CEU_Value* args[] = { evt };
                         ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);

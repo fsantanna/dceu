@@ -26,7 +26,7 @@ val TAGS = listOf (
     "coro", "coros",
     "clear", "error",           // bcast-clear
     "global", "local", //"task"   // bcast scope
-    "resumed", "yielded", "toggled", "terminated", "destroyed"
+    "yielded", "toggled", "resumed", "terminating", "terminated", "destroyed"
 )
 
 val GLOBALS = setOf (

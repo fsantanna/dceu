@@ -1350,19 +1350,19 @@ class TTask {
                 println(2)
                 spawn task () {
                     println(3)
-                    yield(nil)
+                    $yield
                     println(6)
                     throw(:ok)
                 } ()
                 spawn task () {
                     catch :ok {
                         println(4)
-                        yield(nil)
+                        $yield
                     }
                     println(999)
                 } ()
                 println(5)
-                 broadcast in :global, nil
+                broadcast in :global, nil
                 println(9999)
             }
             println(7)
@@ -1959,7 +1959,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
+        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminating\n") { out }
     }
 
     // TOGGLE
@@ -2033,7 +2033,7 @@ class TTask {
                 defer {
                     println(10)
                 }
-                yield(nil)
+                $yield
                 println(999)
             }
             var t
