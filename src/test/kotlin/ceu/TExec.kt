@@ -459,7 +459,7 @@ class TExec {
         assert(out == ":vector\n#[1,2,3]\n") { out }
     }
     @Test
-    fun vector3() {
+    fun vector3_err() {
         val out = all("""
             var v
             set v = #[]
@@ -468,7 +468,8 @@ class TExec {
             println(v)
             set v[5] = 10   ;; error
         """)
-        assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n0\n#[10]\n") { out }
+        //assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n0\n#[10]\n") { out }
+        assert(out == "core library : index error : out of bounds\n0\n#[10]\n") { out }
     }
     @Test
     fun vector4() {
@@ -736,8 +737,9 @@ class TExec {
                 set x = a
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope4() {
@@ -769,7 +771,8 @@ class TExec {
             }
             println(x)
         """)
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope6() {
