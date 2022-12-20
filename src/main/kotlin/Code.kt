@@ -89,6 +89,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
+                        CEU_Value* ceu_evt = NULL;
+                        if (ceu_n == -1) {
+                            ceu_evt = ceu_args[0];     // bcast if ceu_n=-1
+                        }
                     """}}
                     CEU_RET ceu_ret = CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
@@ -101,13 +105,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 assert(0 && "bug found");
                                 break;
                             case 0: {
-                                // started with BCAST-CLEAR (coroutine() w/o resume)
-                                CEU_CONTINUE_ON_CLEAR();
+                                CEU_CONTINUE_ON_CLEAR(); // may start with clear w/ coroutine() w/o resume
                         """}}
-                                if (ceu_n == -1) {  // BCAST
-                                    assert(0 && "TODO");    // must be before CEU_CONTINUE_ON_CLEAR()
-                                } else { // ARGS
-                                    // no block yet, set now, will be reset in body
+                                if (ceu_n != -1) {
                                     int ceu_i = 0;
                                     ${this.args.map {
                                         val id = it.str.noSpecial()
@@ -210,7 +210,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_block_free(&ceu_mem->block_$n);
                         ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
                         ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
-                        CEU_CONTINUE_ON_THROW_CLEAR();
+                        CEU_CONTINUE_ON_THROW();
+                        CEU_CONTINUE_ON_CLEAR();
                     }
                 }
                 """
@@ -346,6 +347,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
                         goto CEU_ITER_$n;
                     } while (0); // iter
+                    assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in iter");
                     if (ceu_mem->$loc.Dyn != NULL) { // repeat in case body error
                         ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
                     }
@@ -353,7 +355,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
-                    CEU_CONTINUE_ON_THROW_CLEAR();
+                    CEU_CONTINUE_ON_THROW();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -394,7 +396,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         strncpy(ceu_err_error_msg, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target", 256);
                         CEU_THROW_DO(CEU_ERR_ERROR, continue);
                     }
-                    CEU_CONTINUE_ON_THROW_CLEAR();
+                    CEU_CONTINUE_ON_THROW();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -410,7 +412,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     return CEU_RET_YIELD;
                 case $n:                    // resume here
-                    CEU_CONTINUE_ON_THROW_CLEAR();
+                    CEU_CONTINUE_ON_CLEAR();
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                     ${assrc("*ceu_args[0]")} // resume single argument
                 }
@@ -551,7 +553,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         Pair(null, """
                         //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
                             $v
-                            CEU_CONTINUE_ON_THROW_CLEAR();
                         //}
                         """)
                     }
@@ -650,7 +651,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 CEU_THROW_DO(CEU_ERR_ERROR, break);
                             }
                         }
-                        CEU_CONTINUE_ON_THROW_CLEAR();
+                        CEU_CONTINUE_ON_THROW();
                     }
                     CEU_Dynamic* ceu_vec_$n = ceu_vector_create(${ups.block(this)!!.toc(true)}, ceu_tag_$n, ${this.args.size}, ceu_args_$n);
                     assert(ceu_vec_$n != NULL);
@@ -725,7 +726,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             } else {
                                 """
                                 ceu_ret = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
-                                CEU_CONTINUE_ON_THROW_CLEAR();
+                                CEU_CONTINUE_ON_THROW();
                                 """
                             }}
                             break;

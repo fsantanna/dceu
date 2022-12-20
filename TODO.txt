@@ -1,6 +1,5 @@
 # BUGS
 
-- catch cannot yield on condition, add test
 - preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt
     - ou nao permitir x=evt exatamente como x=v.pub
 - refcount: set rect = [orig.0, orig.1, orig.2, orig.3]
@@ -72,7 +71,6 @@
         - ?
     - reject anything after throw (last stmt)
     - reject yield with no direct enclosing task
-    - reject yield/bcast in defer
 - closures
     - only accept dyns as upvalue
     - has same scope as upval

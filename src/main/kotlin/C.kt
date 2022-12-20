@@ -30,11 +30,9 @@ fun Coder.main (): String {
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
-        #define CEU_CONTINUE_ON_THROW_CLEAR() { CEU_CONTINUE_ON_THROW(); }
+        #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
 
 #if 0
-        #define CEU_CONTINUE_ON_CLEAR() { if (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
-        #define CEU_CONTINUE_ON_THROW_CLEAR() { CEU_CONTINUE_ON_THROW(); CEU_CONTINUE_ON_CLEAR(); }
         #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
 #endif
 
@@ -216,22 +214,14 @@ fun Coder.main (): String {
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         char ceu_err_error_msg[256];
         
-            //  - can pass further
-            //  - cannot pass back
-            //  - each catch condition:
-            //      - must set its depth at the beginning 
-            //      - must not yield
-            //      - must deallocate at the end
-
-        int ceu_has_bcast = 0;
         CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL }; 
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
         CEU_Value* ceu_evt = &CEU_EVT_NIL;
-            // set initial b/c of ceu_bcast_pre/pos
-            // must be a pointer b/c it is mutable b/w bcast/yield
+        int ceu_has_bcast = 0;
         
         CEU_RET ceu_ret = CEU_RET_RETURN;
         CEU_Value ceu_acc;
+        const int ceu_n = 0;
     """ +
     """ // IMPLS
         int ceu_as_bool (CEU_Value* v) {
