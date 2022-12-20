@@ -1156,7 +1156,8 @@ class TTask {
                 set yyy = xxx
             }
         """)
-        assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool12_err_scope() {
@@ -1176,7 +1177,8 @@ class TTask {
             }
         """
         )
-        assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool13_scope() {
@@ -2024,7 +2026,7 @@ class TTask {
     // ESCAPE
 
     @Test
-    fun esc1() {
+    fun esc1_err() {
         val out = all("""
             var f
             set f = func () {
@@ -2033,7 +2035,8 @@ class TTask {
             println(f())
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun esc2() {
@@ -2047,7 +2050,8 @@ class TTask {
                 set xxx = t ;; error
             }
         """)
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
 
     // TRACK

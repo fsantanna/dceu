@@ -89,7 +89,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
-                        CEU_Value* ceu_evt = NULL;
+                        CEU_Value* ceu_evt = &CEU_EVT_NIL;
                         if (ceu_n == -1) {
                             ceu_evt = ceu_args[0];     // bcast if ceu_n=-1
                         }

@@ -218,7 +218,7 @@ fun Coder.main (): String {
 
         // TODO: remove (only here b/c we do not test CEU_CONTINUE_ON_CLEAR at compile time)
         const int ceu_n = 0;
-        const CEU_Value* ceu_evt = &CEU_EVT_NIL;
+        const CEU_Value* ceu_evt = &CEU_EVT_NIL;    // also b/c of `evt` outside task
     """ +
     """ // IMPLS
         int ceu_as_bool (CEU_Value* v) {
