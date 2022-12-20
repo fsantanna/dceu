@@ -181,34 +181,37 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     do { // block
                         $es
                     } while (0); // block
-                    ${(f_b != null).cond {
-                        val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
-                        """
-                        // move up dynamic ceu_acc (return or error)
-                        if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                    {
+                        CEU_RET   ceu_ret_$n = ceu_ret; // CEU_RET: must be restored on final return
+                        CEU_Value ceu_acc_$n = ceu_acc; // CEU_ACC: must be restored on final return
+                        ${(f_b != null).cond {
+                            val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                            """
+                            // move up dynamic ceu_acc (return or error)
+                            if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                CEU_CONTINUE_ON_THROW();
+                            }
+                            """
+                        }}
+                        ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
+                        { // DEFERS ${this.tk.dump()}
+                            int ceu_has_bcast_old = ceu_has_bcast;
+                            ceu_has_bcast = 0;
+    
+                            do {
+                                ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                            } while (0);
+                            assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
                             CEU_CONTINUE_ON_THROW();
                         }
-                        """
-                    }}
-                    ceu_bcast_blocks(&ceu_mem->block_$n, &CEU_EVT_CLEAR);
-                    { // DEFERS ${this.tk.dump()}
-                        int ceu_has_bcast_old = ceu_has_bcast;
-                        ceu_has_bcast = 0;
-
-                        int ceu_ret_old = ceu_ret;
-                        do {
-                            ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
-                        } while (0);
-                        assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
-                        ceu_ret = (ceu_ret == CEU_RET_THROW) ? CEU_RET_THROW : ceu_ret_old;
-
-                        ceu_has_bcast = ceu_has_bcast_old;
+                        ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
+                        ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
+                        ceu_block_free(&ceu_mem->block_$n);
+                        ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
+                        ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
+                        CEU_CONTINUE_ON_THROW_CLEAR();
                     }
-                    ${(f_b is Expr.Block).cond{"ceu_mem->block_${bup!!.n}.bcast.block = NULL;"}}
-                    ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{" ceu_coro->Bcast.Coro.block = NULL;"}}
-                    ceu_block_free(&ceu_mem->block_$n);
-                    CEU_CONTINUE_ON_THROW_CLEAR();
                 }
                 """
             }
@@ -263,7 +266,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_ret == CEU_RET_THROW) {
                         ceu_ret = CEU_RET_RETURN;
                         CEU_Value ceu_err = ceu_acc;
-                        ${this.cnd.code(true, null)} // TODO: cannot yield
+                        do {
+                            ${this.cnd.code(true, null)}
+                        } while (0);
+                        assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in catch condition");
+                        CEU_CONTINUE_ON_THROW();
                         if (!ceu_as_bool(&ceu_acc)) {
                             CEU_THROW_DO(ceu_err, continue); // uncaught, rethrow
                         }
