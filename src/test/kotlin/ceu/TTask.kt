@@ -206,7 +206,8 @@ class TTask {
             }(1)
         """)
         //assert(out == "1\t2\t3\n") { out }
-        assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -309,7 +310,8 @@ class TTask {
             println(2)
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn67_err() {
@@ -321,7 +323,8 @@ class TTask {
             var co
             set co = if true { spawn t() } else { nil }
         """)
-        assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn7_err() {
@@ -335,7 +338,8 @@ class TTask {
             f()
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn8_err() {
@@ -349,7 +353,8 @@ class TTask {
             spawn T()
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn6() {
@@ -419,7 +424,8 @@ class TTask {
             spawn T()
         """)
         //assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
 
     // THROW

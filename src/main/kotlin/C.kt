@@ -57,9 +57,10 @@ fun Coder.main (): String {
         
         void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
-        CEU_RET ceu_bcast_dyns    (struct CEU_Dynamic* cur);
-        void ceu_bcast_blocks  (struct CEU_Block* cur, struct CEU_Value* evt);
-        void ceu_bcast_dyn     (struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        
+        CEU_RET ceu_bcast_dyns   (struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_blocks (struct CEU_Block* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_dyn    (struct CEU_Dynamic* cur, struct CEU_Value* evt);
         
         void ceu_max_depth     (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
         int ceu_dict_key_index (struct CEU_Dynamic* col, struct CEU_Value* key);
@@ -401,16 +402,18 @@ fun Coder.main (): String {
                 }
                 cur = cur->bcast.block;
             }
+            return CEU_RET_RETURN;
         }
-        void ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
             CEU_Value* prv;
             ceu_bcast_pre(&prv, evt);
-            ceu_bcast_blocks_aux(cur);
+            int ret = ceu_bcast_blocks_aux(cur);
             ceu_bcast_pos(&prv, evt);
+            return ret;
         }
     """ +
     """ // BCAST_DYN
-        CEU_RET ceu_bcast_dyn_aux (CEU_Dynamic* cur) {
+        CEU_RET ceu_bcast_dyn_aux (CEU_Dynamic* cur, CEU_Value* evt) {
             if (ceu_evt->tag==CEU_VALUE_CORO && ceu_evt->Dyn==cur) {
                 // do not nest my own termination
                 return CEU_RET_RETURN;
@@ -425,18 +428,23 @@ fun Coder.main (): String {
             }
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
-                    int ret = ceu_bcast_blocks_aux(cur->Bcast.Coro.block);
-                    assert(ret == CEU_RET_RETURN);
-                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // when resumed, only awake blocks
-                        CEU_Value arg = { CEU_VALUE_NIL };
-                        CEU_Value* args[] = { &arg };
-                        ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, 1, args);
+                    // step (1)
+                    if (CEU_RET_THROW == ceu_bcast_blocks_aux(cur->Bcast.Coro.block)) {
+                        return CEU_RET_THROW;
                     }
-                    return ret;
+                    
+                    // step (5)
+                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // when resumed, only awake blocks
+                        CEU_Value* args[] = { evt };
+                        if (CEU_RET_THROW == cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, -1, args)) {
+                            return CEU_RET_THROW;
+                        }
+                    }
+                    return CEU_RET_RETURN;
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;
-                    int ret = ceu_bcast_dyns(cur->Bcast.Coros.first);
+                    int ret = ceu_bcast_dyns(cur->Bcast.Coros.first, evt);
                     cur->Bcast.Coros.open--;
                     if (cur->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(cur);
@@ -452,21 +460,23 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        void ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
             CEU_Value* prv;
             ceu_bcast_pre(&prv, evt);
-            ceu_bcast_dyn_aux(cur);
+            int ret = ceu_bcast_dyn_aux(cur, evt);
             ceu_bcast_pos(&prv, evt);
+            return ret;
         }
         
-        CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur) {
+        CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
-                if (ceu_bcast_dyn_aux(cur) == CEU_RET_THROW) {
+                if (ceu_bcast_dyn_aux(cur,evt) == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
             }
+            return CEU_RET_RETURN;
         }
     """ +
     """ // COROS

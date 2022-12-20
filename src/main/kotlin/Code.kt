@@ -196,9 +196,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }}
                         }
                         { // cleanup active nested spawns in this block
-                            //ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR);
+                            assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
                         }
                         { // DEFERS ${this.tk.dump()}
+                            ceu_ret = CEU_RET_RETURN;
                             do {
                                 ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                             } while (0);
@@ -378,18 +379,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.xin.code(true, null)}
                     int ceu_err_$n = 0;
                     if (ceu_acc.tag == CEU_VALUE_CORO) {
-                        ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
+                        ceu_ret = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.tag == CEU_VALUE_TAG) {
                         if (ceu_acc.Tag == CEU_TAG_global) {
-                            ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
-                            ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${this.fupc().let {
                                 if (it == null) {
                                     "ceu_err_$n = 1;"
                                 } else {
-                                    "ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
+                                    "ceu_ret = ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
                                 }
                             }}
                         } else {
