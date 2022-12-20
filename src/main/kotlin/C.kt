@@ -23,13 +23,20 @@ fun Coder.main (): String {
             CEU_RET_RETURN,
             CEU_RET_YIELD
         } CEU_RET;
-        
+
+        typedef enum {
+            CEU_ARG_ERR = -2,
+            CEU_ARG_EVT = -1,
+            CEU_ARG_ARGS = 0    // 0,1,...
+        } CEU_ARG;
+
         int ceu_as_bool (struct CEU_Value* v);
                 
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
+        #define CEU_CONTINUE_ON_CLEAR_THROW() { CEU_CONTINUE_ON_CLEAR(); CEU_CONTINUE_ON_THROW(); }
 
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
@@ -410,18 +417,16 @@ fun Coder.main (): String {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
                     // step (1)
-                    if (CEU_RET_THROW == ceu_bcast_blocks(cur->Bcast.Coro.block,evt)) {
-                        return CEU_RET_THROW;
-                    }
+                    int ret = ceu_bcast_blocks(cur->Bcast.Coro.block, evt);
+                        // CEU_RET_THROW: step (5) may 'catch' 
                     
                     // step (5)
                     if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // when resumed, only awake blocks
+                        int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                         CEU_Value* args[] = { evt };
-                        if (CEU_RET_THROW == cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, -1, args)) {
-                            return CEU_RET_THROW;
-                        }
+                        ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
                     }
-                    return CEU_RET_RETURN;
+                    return ret;
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;

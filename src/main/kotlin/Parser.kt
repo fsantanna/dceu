@@ -486,7 +486,7 @@ class Parser (lexer_: Lexer)
                         $spws
                         await false
                     }
-                """)
+                """) //.let { println(it.tostr(false));it }
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()

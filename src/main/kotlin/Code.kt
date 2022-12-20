@@ -90,11 +90,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
-                        if (ceu_n == -1) {
-                            ceu_evt = ceu_args[0];     // bcast if ceu_n=-1
+                        if (ceu_n == CEU_ARG_EVT) {
+                            ceu_evt = ceu_args[0];
                         }
                     """}}
-                    CEU_RET ceu_ret = CEU_RET_RETURN;
+                    CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
                     """ +
                     """ // WHILE
@@ -105,9 +105,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 assert(0 && "bug found");
                                 break;
                             case 0: {
-                                CEU_CONTINUE_ON_CLEAR(); // may start with clear w/ coroutine() w/o resume
+                                CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
                         """}}
-                            if (ceu_n != -1) {
+                            if (ceu_n >= CEU_ARG_ARGS) {
                                 int ceu_i = 0;
                                 ${this.args.map {
                                     val id = it.str.noSpecial()
@@ -217,8 +217,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
                         ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
-                        CEU_CONTINUE_ON_THROW();
-                        CEU_CONTINUE_ON_CLEAR();
+                        CEU_CONTINUE_ON_CLEAR_THROW();
                     }
                 }
                 """
@@ -416,11 +415,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     return CEU_RET_YIELD;
                 case $n:                    // resume here
-                    CEU_CONTINUE_ON_CLEAR();
-                    assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                    if (ceu_n == -1) {
+                    CEU_CONTINUE_ON_CLEAR_THROW();
+                    if (ceu_n == CEU_ARG_EVT) {
                         ${assrc("(CEU_Value) { CEU_VALUE_NIL }")} // resume single argument
                     } else {
+                        assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                         ${assrc("*ceu_args[0]")} // resume single argument
                     }
                 }

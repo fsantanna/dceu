@@ -295,7 +295,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-             broadcast in :global, nil
+            broadcast in :global, nil
         """)
         assert(out == "2\n1\n3\n999\n") { out }
     }

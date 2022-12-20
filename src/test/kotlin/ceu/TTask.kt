@@ -609,6 +609,23 @@ class TTask {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun throw11_fake() {
+        val out = all("""
+            spawn task () { 
+                catch {==}(err,:err) {
+                    spawn task :fake () {
+                        yield(nil)
+                        throw(:err)
+                    }()
+                    yield(nil)
+                }
+            }() 
+            broadcast in :global, nil 
+            println(10)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // BCAST / BROADCAST
 
