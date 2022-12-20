@@ -184,6 +184,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     {
                         CEU_RET   ceu_ret_$n = ceu_ret; // CEU_RET: must be restored on final return
                         CEU_Value ceu_acc_$n = ceu_acc; // CEU_ACC: must be restored on final return
+                        { // move up dynamic ceu_acc (return or error)
+                            ${(f_b != null).cond {
+                                val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                """
+                                if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                    ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                    CEU_CONTINUE_ON_THROW();
+                                }
+                                """
+                            }}
+                        }
                         { // cleanup active nested spawns in this block
                             //ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR);
                         }
@@ -205,17 +216,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
                         ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
-                        { // move up dynamic ceu_acc (return or error)
-                            ${(f_b != null).cond {
-                                val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
-                                """
-                                if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                                    ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
-                                    CEU_CONTINUE_ON_THROW();
-                                }
-                                """
-                            }}
-                        }
                         CEU_CONTINUE_ON_THROW();
                         CEU_CONTINUE_ON_CLEAR();
                     }
