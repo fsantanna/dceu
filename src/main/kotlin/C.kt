@@ -29,11 +29,14 @@ fun Coder.main (): String {
                 
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
-
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
+        #define CEU_CONTINUE_ON_THROW_CLEAR() { CEU_CONTINUE_ON_THROW(); }
+
+#if 0
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_has_bcast>0 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
         #define CEU_CONTINUE_ON_THROW_CLEAR() { CEU_CONTINUE_ON_THROW(); CEU_CONTINUE_ON_CLEAR(); }
         #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
+#endif
 
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
@@ -227,7 +230,7 @@ fun Coder.main (): String {
             // set initial b/c of ceu_bcast_pre/pos
             // must be a pointer b/c it is mutable b/w bcast/yield
         
-        CEU_RET ceu_ret;
+        CEU_RET ceu_ret = CEU_RET_RETURN;
         CEU_Value ceu_acc;
     """ +
     """ // IMPLS

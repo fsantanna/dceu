@@ -90,7 +90,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                     """}}
-                    CEU_RET ceu_ret = CEU_RET_YIELD;
+                    CEU_RET ceu_ret = CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
                     """ +
                     """ // WHILE
@@ -209,7 +209,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         int ceu_has_bcast_old = ceu_has_bcast;
                         ceu_has_bcast = 0;
 
-                        int ceu_ret_old = ceu_ret_old;
+                        int ceu_ret_old = ceu_ret;
                         do {
                             ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                         } while (0);
@@ -418,7 +418,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             continue;
                         }
                     }
-                    return ceu_acc;
+                    return CEU_RET_YIELD;
                 case $n:                    // resume here
                     CEU_CONTINUE_ON_THROW_CLEAR();
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
