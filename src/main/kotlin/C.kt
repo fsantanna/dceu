@@ -379,7 +379,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST_BLOCKS
-        CEU_RET ceu_bcast_blocks_aux (CEU_Block* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
@@ -391,13 +391,9 @@ fun Coder.main (): String {
             }
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
-            int ret = ceu_bcast_blocks_aux(cur, evt);
-            return ret;
-        }
     """ +
     """ // BCAST_DYN
-        CEU_RET ceu_bcast_dyn_aux (CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
             if (evt->tag==CEU_VALUE_CORO && evt->Dyn==cur) {
                 // do not nest my own termination
                 return CEU_RET_RETURN;
@@ -413,7 +409,7 @@ fun Coder.main (): String {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
                     // step (1)
-                    if (CEU_RET_THROW == ceu_bcast_blocks_aux(cur->Bcast.Coro.block,evt)) {
+                    if (CEU_RET_THROW == ceu_bcast_blocks(cur->Bcast.Coro.block,evt)) {
                         return CEU_RET_THROW;
                     }
                     
@@ -444,15 +440,10 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
-            int ret = ceu_bcast_dyn_aux(cur, evt);
-            return ret;
-        }
-        
         CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
-                if (ceu_bcast_dyn_aux(cur,evt) == CEU_RET_THROW) {
+                if (ceu_bcast_dyn(cur,evt) == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
