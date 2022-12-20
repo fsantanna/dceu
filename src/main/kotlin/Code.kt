@@ -421,7 +421,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 case $n:                    // resume here
                     CEU_CONTINUE_ON_CLEAR();
                     assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                    ${assrc("*ceu_args[0]")} // resume single argument
+                    if (ceu_n == -1) {
+                        ${assrc("(CEU_Value) { CEU_VALUE_NIL }")} // resume single argument
+                    } else {
+                        ${assrc("*ceu_args[0]")} // resume single argument
+                    }
                 }
                 """
             is Expr.Resume -> this.call.code(issrc, null)

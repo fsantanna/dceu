@@ -392,11 +392,11 @@ fun Coder.main (): String {
             ceu_has_bcast--;
             ceu_evt = *prv;
         }
-        CEU_RET ceu_bcast_blocks_aux (CEU_Block* cur) {
+        CEU_RET ceu_bcast_blocks_aux (CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
                 if (dyn != NULL) {
-                    if (ceu_bcast_dyns(dyn) == CEU_RET_THROW) {
+                    if (ceu_bcast_dyns(dyn,evt) == CEU_RET_THROW) {
                         return CEU_RET_THROW;
                     }
                 }
@@ -407,7 +407,7 @@ fun Coder.main (): String {
         CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
             CEU_Value* prv;
             ceu_bcast_pre(&prv, evt);
-            int ret = ceu_bcast_blocks_aux(cur);
+            int ret = ceu_bcast_blocks_aux(cur, evt);
             ceu_bcast_pos(&prv, evt);
             return ret;
         }
@@ -429,7 +429,7 @@ fun Coder.main (): String {
             switch (cur->tag) {
                 case CEU_VALUE_CORO: {
                     // step (1)
-                    if (CEU_RET_THROW == ceu_bcast_blocks_aux(cur->Bcast.Coro.block)) {
+                    if (CEU_RET_THROW == ceu_bcast_blocks_aux(cur->Bcast.Coro.block,evt)) {
                         return CEU_RET_THROW;
                     }
                     

@@ -638,9 +638,9 @@ class TTask {
             set co1 = coroutine(tk)
             var co2
             set co2 = coroutine(tk)
-             broadcast in :global, 1
-             broadcast in :global, 2
-             broadcast in :global, 3
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
         assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\ncoro: 0x")) { out }
