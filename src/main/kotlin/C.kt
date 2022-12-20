@@ -25,16 +25,11 @@ fun Coder.main (): String {
         } CEU_RET;
         
         int ceu_as_bool (struct CEU_Value* v);
-        int ceu_has_throw_clear (void);
                 
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
-
-#if 0
-        #define CEU_BCAST_RETURN_ON_THROW_BUT_NOT_CLEAR() { if (ceu_has_throw==1 && ceu_evt!=&CEU_EVT_CLEAR) { return; } }
-#endif
 
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
@@ -217,12 +212,13 @@ fun Coder.main (): String {
         
         CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL }; 
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
-        CEU_Value* ceu_evt = &CEU_EVT_NIL;
-        int ceu_has_bcast = 0;
         
         CEU_RET ceu_ret = CEU_RET_RETURN;
         CEU_Value ceu_acc;
+
+        // TODO: remove (only here b/c we do not test CEU_CONTINUE_ON_CLEAR at compile time)
         const int ceu_n = 0;
+        const CEU_Value* ceu_evt = &CEU_EVT_NIL;
     """ +
     """ // IMPLS
         int ceu_as_bool (CEU_Value* v) {
@@ -383,15 +379,6 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST_BLOCKS
-        void ceu_bcast_pre (CEU_Value** prv, CEU_Value* evt) {
-            *prv = ceu_evt;
-            ceu_has_bcast++;
-            ceu_evt = evt;
-        }
-        void ceu_bcast_pos (CEU_Value** prv, CEU_Value* evt) {
-            ceu_has_bcast--;
-            ceu_evt = *prv;
-        }
         CEU_RET ceu_bcast_blocks_aux (CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.dyn;
@@ -405,16 +392,13 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
-            CEU_Value* prv;
-            ceu_bcast_pre(&prv, evt);
             int ret = ceu_bcast_blocks_aux(cur, evt);
-            ceu_bcast_pos(&prv, evt);
             return ret;
         }
     """ +
     """ // BCAST_DYN
         CEU_RET ceu_bcast_dyn_aux (CEU_Dynamic* cur, CEU_Value* evt) {
-            if (ceu_evt->tag==CEU_VALUE_CORO && ceu_evt->Dyn==cur) {
+            if (evt->tag==CEU_VALUE_CORO && evt->Dyn==cur) {
                 // do not nest my own termination
                 return CEU_RET_RETURN;
             }
@@ -422,7 +406,7 @@ fun Coder.main (): String {
                 // do not awake terminated/running coro
                 return CEU_RET_RETURN;
             }
-            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt!=&CEU_EVT_CLEAR) {
+            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
                 // do not awake toggled coro, unless it is a CLEAR event
                 return CEU_RET_RETURN;
             }
@@ -451,7 +435,7 @@ fun Coder.main (): String {
                     }
                     return ret;
                 case CEU_VALUE_TRACK:
-                    if (ceu_evt->tag==CEU_VALUE_CORO && cur->Bcast.Track.coro==ceu_evt->Dyn) {
+                    if (evt->tag==CEU_VALUE_CORO && cur->Bcast.Track.coro==evt->Dyn) {
                         cur->Bcast.Track.coro = NULL; // tracked coro is terminating
                     }
                     return CEU_RET_RETURN;
@@ -461,10 +445,7 @@ fun Coder.main (): String {
         }
 
         CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
-            CEU_Value* prv;
-            ceu_bcast_pre(&prv, evt);
             int ret = ceu_bcast_dyn_aux(cur, evt);
-            ceu_bcast_pos(&prv, evt);
             return ret;
         }
         
