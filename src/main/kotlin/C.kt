@@ -10,6 +10,8 @@ fun Coder.main (): String {
         #include <stdarg.h>
         #include <math.h>
 
+        #define MAX(x,y) (x > y ? x : y)
+        
         struct CEU_Value;
             struct CEU_Dynamic;
             struct CEU_Frame;        
@@ -31,7 +33,7 @@ fun Coder.main (): String {
         } CEU_ARG;
 
         int ceu_as_bool (struct CEU_Value* v);
-                
+
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
@@ -97,9 +99,10 @@ fun Coder.main (): String {
         } CEU_VALUE;
         
         typedef enum CEU_CORO_STATUS {
-            CEU_CORO_STATUS_RESUMED = 0,
-            CEU_CORO_STATUS_YIELDED,
+            CEU_CORO_STATUS_YIELDED = 1,
             CEU_CORO_STATUS_TOGGLED,
+            CEU_CORO_STATUS_RESUMED,
+            CEU_CORO_STATUS_TERMINATING,
             CEU_CORO_STATUS_TERMINATED,
             CEU_CORO_STATUS_DESTROYED
         } CEU_CORO_STATUS;        
@@ -251,7 +254,7 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
-                block->tofree = block->tofree->next;
+                block->tofree = cur->next;
                 switch (cur->tag) {
                     case CEU_VALUE_VECTOR:
                         free(cur->Vector.mem);
@@ -413,12 +416,7 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_DYN
         CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
-            if (evt->tag==CEU_VALUE_CORO && evt->Dyn==cur) {
-                // do not nest my own termination
-                return CEU_RET_RETURN;
-            }
-            if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
-                // do not awake terminated/running coro
+            if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATING) {
                 return CEU_RET_RETURN;
             }
             if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
@@ -432,7 +430,7 @@ fun Coder.main (): String {
                         // CEU_RET_THROW: step (5) may 'catch' 
                     
                     // step (5)
-                    if (cur->Bcast.status != CEU_CORO_STATUS_RESUMED) { // when resumed, only awake blocks
+                    if (cur->Bcast.status == CEU_CORO_STATUS_YIELDED) {
                         int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                         CEU_Value* args[] = { evt };
                         ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);

@@ -87,6 +87,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${istask.cond{"""
                         CEU_Dynamic* ceu_coro = ceu_frame->Task.coro;
                         assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
+                        #ifdef XXX
+                        printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_coro->Bcast.status, ceu_coro);
+                        #endif
                         ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
@@ -126,35 +129,38 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.body.code(true, null)}
                         ${istask.cond{"}\n}\n"}}
                     } while (0); // func
-                    """ +
-                    """ // TERMINATE
-                        ${istask.cond{"""
-                            if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
-                                // 1. bcasted above
-                                //    terminated from clear bcast
-                                //    now back here again from bcast cont
-                            } else {
-                                // 1. clear bcast (bcasting maybe = 1, from above/below)
-                                // 2. terminating from normal resume
-                                ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
-                                ceu_frame->Task.pc = -1;
-                                CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                                ceu_coro->Bcast.Coro.bcasting = 1;
-                                ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
-                                ceu_coro->Bcast.Coro.bcasting = 0;
-                                if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                    if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                        ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
-                                    }
+                    """ + istask.cond{ """
+                    CEU_Value ceu_acc_$n = ceu_acc;
+                    { // TERMINATE
+                        ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATING, ceu_coro->Bcast.status);
+                        if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                            // 1. bcasted above
+                            //    terminated from clear bcast
+                            //    now back here again from bcast cont
+                        } else {
+                            // 1. clear bcast (bcasting maybe = 1, from above/below)
+                            // 2. terminating from normal resume
+                            ceu_frame->Task.pc = -1;
+                            CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                            ceu_coro->Bcast.Coro.bcasting = 1;
+                            ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                            ceu_coro->Bcast.Coro.bcasting = 0;
+                            if (ceu_coro->Bcast.Coro.coros != NULL) {
+                                if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                    ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
                             }
-                            // destroyed from bcast
-                            if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
-                                free(ceu_coro->Bcast.Coro.frame->mem);
-                                free(ceu_coro->Bcast.Coro.frame);
-                                free(ceu_coro);
-                            }
-                        """}}
+                        }
+                        // destroyed from bcast
+                        if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                            free(ceu_coro->Bcast.Coro.frame->mem);
+                            free(ceu_coro->Bcast.Coro.frame);
+                            free(ceu_coro);
+                        }
+                        ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
+                    }
+                    """} + """
+                    ceu_acc = ceu_acc_$n;
                     return ceu_ret;
                 }
                 """
@@ -195,44 +201,53 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     do { // block
                         $es
                     } while (0); // block
-                    {
-                        CEU_RET   ceu_ret_$n = ceu_ret; // CEU_RET: must be restored on final return
-                        CEU_Value ceu_acc_$n = ceu_acc; // CEU_ACC: must be restored on final return
-                        { // move up dynamic ceu_acc (return or error)
-                            ${(f_b != null).cond {
-                                val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
-                                """
-                                if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                                    ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
-                                    CEU_CONTINUE_ON_THROW();
+                    { // ceu_ret/ceu_acc: save/restore
+                        CEU_RET   ceu_ret_$n = ceu_ret;
+                        CEU_Value ceu_acc_$n = ceu_acc;
+                        {
+                            int ceu_err = 0;
+                            { // move up dynamic ceu_acc (return or error)
+                                ${(f_b != null).cond {
+                                    val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                    """
+                                    if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                        ceu_err = (CEU_RET_THROW == ceu_block_set($up, ceu_acc.Dyn, 0));
+                                        //CEU_CONTINUE_ON_THROW();
+                                    }
+                                    """
+                                }}
+                            }
+                            { // cleanup active nested spawns in this block
+                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
+                            }
+                            { // DEFERS ${this.tk.dump()}
+                                ceu_ret = CEU_RET_RETURN;
+                                do {
+                                    ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                                } while (0);
+                                assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
+                                //CEU_CONTINUE_ON_THROW();
+                            }
+                            { // relink blocks
+                                ${(f_b is Expr.Block).cond{
+                                    "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
+                                }}
+                                ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{
+                                    "ceu_coro->Bcast.Coro.block = NULL;"
+                                }}
+                                ceu_block_free(&ceu_mem->block_$n);
+                            }
+                            if (ceu_err || ceu_ret==CEU_RET_THROW) {
+                                if (ceu_err) {
+                                    ceu_ret = CEU_RET_THROW;
                                 }
-                                """
-                            }}
+                                continue;
+                            }
                         }
-                        { // cleanup active nested spawns in this block
-                            assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
-                        }
-                        { // DEFERS ${this.tk.dump()}
-                            ceu_ret = CEU_RET_RETURN;
-                            do {
-                                ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
-                            } while (0);
-                            assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
-                            CEU_CONTINUE_ON_THROW();
-                        }
-                        { // relink blocks
-                            ${(f_b is Expr.Block).cond{
-                                "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
-                            }}
-                            ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{
-                                "ceu_coro->Bcast.Coro.block = NULL;"
-                            }}
-                            ceu_block_free(&ceu_mem->block_$n);
-                        }
-                        ceu_acc = ceu_acc_$n; // CEU_ACC: restored ok
-                        ceu_ret = ceu_ret_$n; // CEU_RET: restored ok
+                        ceu_acc = ceu_acc_$n;
+                        ceu_ret = ceu_ret_$n;
                         CEU_CONTINUE_ON_CLEAR_THROW();
-                    }
+                    } // ceu_ret/ceu_acc: save/restore
                 }
                 """
             }

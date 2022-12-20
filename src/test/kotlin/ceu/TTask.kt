@@ -597,12 +597,12 @@ class TTask {
     @Test
     fun throw10_fake() {
         val out = all("""
-            catch err == :err {
+            catch err == :xxx {
                 spawn task () {
                     yield(nil)
                 }()
                 spawn task () {
-                    throw(:err)
+                    throw(:xxx)
                 }()
             }
             println(10)

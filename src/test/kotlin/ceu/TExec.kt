@@ -304,9 +304,9 @@ class TExec {
     fun tuple10_hold_err() {
         val out = all("""
             println(do {
-                var x
-                set x = [0]
-                x
+                var xxx
+                set xxx = [0]
+                xxx
             })
         """)
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
