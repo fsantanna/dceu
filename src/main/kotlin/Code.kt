@@ -146,8 +146,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_coro->Bcast.Coro.bcasting = 1;
                             ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                             ceu_coro->Bcast.Coro.bcasting = 0;
+                            ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                             if (iscoros) {
-                                ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                                 if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                     ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
@@ -155,7 +155,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         // destroyed from bcast
                         if (!iscoros && ceu_coro->Bcast.status==CEU_CORO_STATUS_DESTROYED) {
-                            ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                             free(ceu_coro->Bcast.Coro.frame->mem);
                             free(ceu_coro->Bcast.Coro.frame);
                             free(ceu_coro);

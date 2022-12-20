@@ -1959,7 +1959,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminating\n") { out }
+        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
     }
 
     // TOGGLE
@@ -2130,6 +2130,7 @@ class TTask {
             resume t()
             var x
             set x = track(t) ;; error: dead coro
+            ;;println(t.status)
             println(x)
         """)
         assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n") { out }
