@@ -260,15 +260,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         // do not catch anything while clearing up
                         continue; // escape enclosing block;
                     }
-                    if (ceu_has_throw != 0) {
-                        ceu_has_throw = 0;
-                        ${this.cnd.code(true, null)}
+                    if (ceu_ret == CEU_RET_THROW) {
+                        ceu_ret = CEU_RET_RETURN;
+                        CEU_Value ceu_err = ceu_acc;
+                        ${this.cnd.code(true, null)} // TODO: cannot yield
                         if (!ceu_as_bool(&ceu_acc)) {
-                            ceu_has_throw = 1; // UNCAUGHT: escape to outer
-                            continue; // escape enclosing block;
+                            CEU_THROW_DO(ceu_err, continue); // uncaught, rethrow
                         }
                         ${assrc("ceu_acc = ceu_err")}
-                        ceu_err = (CEU_Value) { CEU_VALUE_NIL };
                     }
                 }
                 """
