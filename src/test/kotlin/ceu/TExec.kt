@@ -1226,7 +1226,8 @@ class TExec {
             }
         """
         )
-        assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch9() {
@@ -1246,7 +1247,7 @@ class TExec {
         assert(out == ":x\n") { out }
     }
     @Test
-    fun catch10() {
+    fun catch10_err() {
         val out = ceu.all(
             """
             catch err[0]==:x {
@@ -1256,7 +1257,8 @@ class TExec {
             println(err)
         """
         )
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
     }
     @Test
     fun catch11() {
@@ -1297,7 +1299,8 @@ class TExec {
             """
         )
         //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
     }
 
     // NATIVE
