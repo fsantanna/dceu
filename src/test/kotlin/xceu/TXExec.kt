@@ -434,6 +434,20 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun paror11() {
+        val out = all("""
+            spawn {
+                var x = paror {
+                    1
+                } with {
+                    999
+                }
+                println(x)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 

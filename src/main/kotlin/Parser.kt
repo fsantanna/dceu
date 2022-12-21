@@ -476,15 +476,19 @@ class Parser (lexer_: Lexer)
                 }
                 val spws = pars.map { """
                     ${it.tk.pos.pre()}spawn {
-                        ${it.es.tostr(true)}
+                        set ceu_ret_$n = ${it.es.tostr(true)}
                         throw(:ceu.paror.$n)
                     }
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
-                    ${pre0}catch err==:ceu.paror.$n {
-                        $spws
-                        await false
+                    ${pre0}do {
+                        var ceu_ret_$n
+                        ${pre0}catch err==:ceu.paror.$n {
+                            $spws
+                            await false
+                        }
+                        ceu_ret_$n
                     }
                 """) //.let { println(it.tostr(false));it }
             }
