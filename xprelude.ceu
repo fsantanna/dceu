@@ -1,20 +1,18 @@
 ;; ARITHMETIC:  +  -  *  /  %  **  //
 
 func {+} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number ($v1.Number + $v2.Number)`
 }
 
 func {-} (v1, v2) {
-    var t1 = type(v1)
-    var t2 = type(v2)
     ifs {
-        (t1 == :number) and (t2 == :nil) -> {
+        (v1 is :number) and (v2 is :nil) -> {
             `:number (- $v1.Number)`
         }
-        (t1 /= :number) or (t2 /= :number) -> {
+        (v1 isnot :number) or (v2 isnot :number) -> {
             throw(:error)
         }
         else -> {
@@ -24,35 +22,35 @@ func {-} (v1, v2) {
 }
 
 func {*} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number ($v1.Number * $v2.Number)`
 }
 
 func {**} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number powf($v1.Number, $v2.Number)`
 }
 
 func {/} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number ($v1.Number / $v2.Number)`
 }
 
 func {//} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number powf($v1.Number, 1/$v2.Number)`
 }
 
 func {%} (v1, v2) {
-    if (type(v1) /= :number) or (type(v2) /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:number fmod($v1.Number, $v2.Number)`
@@ -61,32 +59,28 @@ func {%} (v1, v2) {
 ;; RELATIONAL:  >=  >  <=  <
 
 func {>=} (v1,v2) {
-    var t1 = type(v1)
-    if (t1 /= type(v2)) or (t1 /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:bool ($v1.Number >= $v2.Number)`
 }
 
 func {>} (v1,v2) {
-    var t1 = type(v1)
-    if (t1 /= type(v2)) or (t1 /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:bool ($v1.Number > $v2.Number)`
 }
 
 func {<=} (v1,v2) {
-    var t1 = type(v1)
-    if (t1 /= type(v2)) or (t1 /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:bool ($v1.Number <= $v2.Number)`
 }
 
 func {<} (v1,v2) {
-    var t1 = type(v1)
-    if (t1 /= type(v2)) or (t1 /= :number) {
+    if (v1 isnot :number) or (v2 isnot :number) {
         throw(:error)
     }
     `:bool ($v1.Number < $v2.Number)`

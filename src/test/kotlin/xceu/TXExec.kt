@@ -184,7 +184,7 @@ class TXExec {
         val out = all("""
             var tk = task () {
                 println(evt)
-                do { var ok; set ok=true; while ok { yield(nil); if type(evt)/=:coro { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :coro) { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
@@ -880,17 +880,17 @@ class TXExec {
                 set pub = v
                 toggle evt==:hide -> evt==:show {
                     println(pub)
-                    every type(evt)==:dict and evt.type==:draw {
+                    every (evt is :dict) and evt.sub==:draw {
                         println(evt.v)
                     }
                 }
             }
             spawn T (0)
-             broadcast in :global, @[(:type,:draw),(:v,1)]
+             broadcast in :global, @[(:sub,:draw),(:v,1)]
              broadcast in :global, :hide
-             broadcast in :global, @[(:type,:draw),(:v,99)]
+             broadcast in :global, @[(:sub,:draw),(:v,99)]
              broadcast in :global, :show
-             broadcast in :global, @[(:type,:draw),(:v,2)]
+             broadcast in :global, @[(:sub,:draw),(:v,2)]
         """)
         assert(out == "0\n1\n2\n") { out }
     }

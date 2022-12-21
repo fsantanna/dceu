@@ -517,7 +517,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_ms_$N = ${clk.ms}
                                 while ceu_ms_$N > 0 {
-                                    await type(evt)==:dict and evt[:type]==:timer
+                                    await (evt is :dict) and evt.sub==:timer
                                     set ceu_ms_$N = ceu_ms_$N - evt[:dt]
                                 }
                             }
@@ -626,7 +626,9 @@ class Parser (lexer_: Lexer)
         var e = this.exprPres()
         while (
             this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
-            (this.acceptEnu("Op") || (XCEU && this.acceptFix("or") || this.acceptFix("and")))
+            (this.acceptEnu("Op") || (XCEU &&
+                (this.acceptFix("or") || this.acceptFix("and") || this.acceptFix("is") || this.acceptFix("isnot")))
+            )
         ) {
             val op = this.tk0
             val e2 = this.exprPres()
@@ -644,6 +646,12 @@ class Parser (lexer_: Lexer)
                         set _ceu_${e.n} = ${e.tostr(true)} 
                         if _ceu_${e.n} { ${e2.tostr(true)} } else { _ceu_${e.n} }
                     }
+                """)
+                "is" -> this.nest("""
+                    ${op.pos.pre()}(type(${e.tostr(true)}) == ${e2.tostr(true)})
+                """)
+                "isnot" -> this.nest("""
+                    ${op.pos.pre()}(type(${e.tostr(true)}) /= ${e2.tostr(true)})
                 """)
                 else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }
