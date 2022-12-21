@@ -698,6 +698,19 @@ class TXExec {
         """)
         assert(out == "1\t[2]\t3\n") { out }
     }
+    @Test
+    fun await15_task() {
+        val out = all("""
+            task Main_Menu () {
+                await false
+            }            
+            spawn {
+                await spawn Main_Menu ()
+                println(333)
+            }
+        """)
+        assert(out == "1\t[2]\t3\n") { out }
+    }
 
     // FUNC / TASK
 

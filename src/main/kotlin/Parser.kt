@@ -502,9 +502,8 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
                                 if (ceu_spw_$N.status /= :terminated) {
-                                    ${pre0}await evt==ceu_spw_$N or do{println(evt);false}
+                                    ${pre0}await evt==ceu_spw_$N
                                 }
-                                ;;println(ceu_spw_$N.pub)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
                             }
                         """) //.let { println(it.tostr());it }
@@ -520,7 +519,7 @@ class Parser (lexer_: Lexer)
                             }
                         """)//.let { println(it.tostr()); it }
                     }
-                    (cnd != null) -> {  // await evt=:x
+                    (cnd != null) -> {  // await evt=x
                         this.nest("""
                             ${pre0}do {
                                 ${pre0}yield ()

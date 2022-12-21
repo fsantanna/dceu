@@ -895,19 +895,19 @@ fun Coder.main (): String {
                     printf("]");
                     break;
                 case CEU_VALUE_FUNC:
-                    printf("func: %p", &v->Dyn->Proto);
+                    printf("func: %p", v->Dyn);
                     break;
                 case CEU_VALUE_TASK:
-                    printf("task: %p", &v->Dyn->Proto);
+                    printf("task: %p", v->Dyn);
                     break;
                 case CEU_VALUE_CORO:
-                    printf("coro: %p", &v->Dyn);
+                    printf("coro: %p", v->Dyn);
                     break;
                 case CEU_VALUE_COROS:
-                    printf("coros: %p", &v->Dyn);
+                    printf("coros: %p", v->Dyn);
                     break;
                 case CEU_VALUE_TRACK:
-                    printf("track: %p", &v->Dyn);
+                    printf("track: %p", v->Dyn);
                     break;
                 default:
                     assert(0 && "bug found");

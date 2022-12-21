@@ -359,7 +359,7 @@ class TTask {
         assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun spawn6() {
+    fun spawn9() {
         val out = all("""
             var x
             set x = do {
@@ -371,7 +371,7 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun spawn67() {
+    fun spawn10() {
         val out = all("""
             var t
             set t = task () {
@@ -391,7 +391,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun spawn7() {
+    fun spawn11() {
         val out = all("""
             var f
             set f = func () {
@@ -415,7 +415,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun spawn9_err() {
+    fun spawn12_err() {
         val out = all("""
             var T
             set T = task () {
@@ -428,6 +428,53 @@ class TTask {
         //assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
         assert(out == "core library : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun spawn13_await() {
+        val out = all("""
+            var Main_Menu 
+            set Main_Menu = task () { 
+                do {
+                    yield(nil)
+                    println(10,evt)     
+                    while if false {     
+                        false     
+                    } else {     
+                        true     
+                    } {     
+                        yield(nil)     
+                        println(20,evt)     
+                    }    
+                }
+                println(1234)
+            } 
+            println(nil)
+            spawn task :fake () { 
+                do {
+                    var ceu_spw_125
+                    set ceu_spw_125 = spawn Main_Menu()     
+                            println(evt,ceu_spw_125)     
+                    if {/=}(ceu_spw_125.status,:terminated) {     
+                            println(evt,ceu_spw_125)     
+                        do {         
+                            yield(nil)         
+                            println(1,evt,ceu_spw_125)     
+                            while if {==}(evt,ceu_spw_125){false}else{true} {             
+                                yield(nil)             
+                                println(2,evt,ceu_spw_125)     
+                            }
+                            println(999)
+                        }         
+                    } else {     
+                        nil     
+                    }     
+                    ```  ceu_acc = ceu_mem->ceu_spw_125.Dyn->Bcast.Coro.frame->Task.pub;``` 
+                }        
+                println(333)
+            }()
+            println(88888)
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
     }
 
     // THROW
