@@ -1605,6 +1605,18 @@ class TExec {
         """)
         assert(out == ":xxx\n:xxx\n") { out }
     }
+    @Test
+    fun tag4() {
+        val out = all("""
+            func () {
+                println(:Xxx.Yyy)
+            }()
+            func () {
+                println(:1.2.3)
+            }()
+        """)
+        assert(out == ":Xxx.Yyy\n:1.2.3\n") { out }
+    }
 
     // DEFER
 

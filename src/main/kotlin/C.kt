@@ -220,7 +220,7 @@ fun Coder.main (): String {
 
         static CEU_Tags* CEU_TAGS = NULL;
         int CEU_TAGS_MAX = 0;
-        ${this.tags.map { "CEU_TAG_DEFINE($it,\":$it\")\n" }.joinToString("")}
+        ${this.tags.map { "CEU_TAG_DEFINE(${it.second},\"${it.first}\")\n" }.joinToString("")}
 
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         char ceu_err_error_msg[256];
@@ -1114,7 +1114,7 @@ fun Coder.main (): String {
     """ +
     """ // MAIN
         int main (void) {
-            ${this.tags.map { "CEU_TAG_INIT($it,\":$it\")\n" }.joinToString("")}
+            ${this.tags.map { "CEU_TAG_INIT(${it.second},\"${it.first}\")\n" }.joinToString("")}
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {

@@ -20,15 +20,15 @@ val KEYWORDS: SortedSet<String> = (setOf (
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%')
 
 val TAGS = listOf (
-    "nil", "tag", "bool", "char", "number", "pointer",
-    "dynamic",
-    "func", "task",
-    "tuple", "vector", "dict",
-    "bcast",
-    "coro", "coros",
-    "clear", "error",           // bcast-clear
-    "global", "local", //"task"   // bcast scope
-    "yielded", "toggled", "resumed", "terminating", "terminated", "destroyed"
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+    ":dynamic",
+    ":func", ":task",
+    ":tuple", ":vector", ":dict",
+    ":bcast",
+    ":coro", ":coros",
+    ":clear", ":error",           // bcast-clear
+    ":global", ":local", //":task"   // bcast scope
+    ":yielded", ":toggled", ":resumed", ":terminating", ":terminated", ":destroyed"
 )
 
 val GLOBALS = setOf (

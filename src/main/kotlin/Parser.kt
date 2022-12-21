@@ -450,7 +450,7 @@ class Parser (lexer_: Lexer)
                         ${it.es.tostr(true)}
                         set ceu_n_$n = ceu_n_$n + 1
                         if ceu_n_$n == ${pars.size} {
-                            throw(:ceu_parand_$n)
+                            throw(:ceu.parand.$n)
                         }
                     }
                 """}.joinToString("")
@@ -458,7 +458,7 @@ class Parser (lexer_: Lexer)
                 this.nest("""
                     ${pre0}do {
                         var ceu_n_$n = 0
-                        ${pre0}catch err==:ceu_parand_$n {
+                        ${pre0}catch err==:ceu.parand.$n {
                             $spws
                             await false
                         }
@@ -477,12 +477,12 @@ class Parser (lexer_: Lexer)
                 val spws = pars.map { """
                     ${it.tk.pos.pre()}spawn {
                         ${it.es.tostr(true)}
-                        throw(:ceu_paror_$n)
+                        throw(:ceu.paror.$n)
                     }
                 """}.joinToString("")
                 //println(spws)
                 this.nest("""
-                    ${pre0}catch err==:ceu_paror_$n {
+                    ${pre0}catch err==:ceu.paror.$n {
                         $spws
                         await false
                     }

@@ -3,7 +3,7 @@ fun Tk.dump (): String {
 }
 
 class Coder (val outer: Expr.Block, val ups: Ups) {
-    val tags = TAGS.toMutableList()
+    val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code(false, null)
@@ -651,11 +651,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Nil -> assrc("((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
-                val tag = this.tk.str.drop(1)
-                if (!tags.contains(tag)) {
-                    tags.add(tag)
+                val tag = this.tk.str
+                val ctag = tag.drop(1).replace('.','_')
+                if (tags.none { it.first==tag }) {
+                    tags.add(Pair(tag,ctag))
                 }
-                assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$tag} })")
+                assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$ctag} })")
             }
             is Expr.Bool -> assrc("((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} })")
             is Expr.Char -> assrc("((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} })")
