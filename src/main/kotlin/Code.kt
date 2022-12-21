@@ -144,7 +144,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_frame->Task.pc = -1;
                             CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                             ceu_coro->Bcast.Coro.bcasting = 1;
-                            ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                            if (ceu_coro->hold->bcast.up != NULL) {
+                                // enclosing coro of enclosing block
+                                ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
+                            } else {
+                                // enclosing block
+                                ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                            }
                             ceu_coro->Bcast.Coro.bcasting = 0;
                             ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                             if (iscoros) {
@@ -190,9 +196,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val es = this.es.mapIndexed { i,it ->
                     it.code(issrc && i==this.es.size-1, null)
                 }.joinToString("")
+                val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {NULL,NULL} };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {$coro,NULL,NULL} };
                     ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
@@ -396,7 +403,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.block(this)!!.toc(true)
-                val intask = (ups.func(this)?.tk?.str == "task")
+                val intask = ups.intask(this)
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}

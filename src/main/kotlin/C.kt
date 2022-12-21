@@ -201,6 +201,7 @@ fun Coder.main (): String {
             int depth;                      // compare on set
             CEU_Dynamic* tofree;                // list of allocated data to free on exit
             struct {
+                struct CEU_Dynamic* up;         // enclosing active coro
                 struct CEU_Block* block;        // nested block active
                 struct CEU_Dynamic* dyn;        // first coro/coros in this block
             } bcast;

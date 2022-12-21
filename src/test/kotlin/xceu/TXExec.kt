@@ -262,12 +262,12 @@ class TXExec {
         val out = all("""
             spawn task () {
                 paror {
-                    $yield
+                    ${yield()}
                     println(1)
                 } with {
                     println(2)
                 } with {
-                    $yield
+                    ${yield()}
                     println(3)
                 }
                 println(999)
@@ -281,16 +281,16 @@ class TXExec {
             spawn task () {
                 paror {
                     defer { println(1) }
-                    yield()
-                    yield()
+                    ${yield("ok1")}
+                    ${yield("ok2")}
                     println(1)
                 } with {
-                    yield()
+                    ${yield()}
                     println(2)
                 } with {
                     defer { println(3) }
-                    yield()
-                    yield()
+                    ${yield("ok1")}
+                    ${yield("ok2")}
                     println(3)
                 }
                 println(999)
@@ -324,16 +324,16 @@ class TXExec {
             spawn task () {
                 parand {
                     defer { println(1) }
-                    yield()
-                    yield()
+                    ${yield("ok1")}
+                    ${yield("ok2")}
                     println(1)
                 } with {
-                    yield()
+                    ${yield()}
                     println(2)
                 } with {
                     defer { println(3) }
-                    yield()
-                    yield()
+                    ${yield("ok1")}
+                    ${yield("ok2")}
                     println(3)
                 }
                 println(999)

@@ -26,6 +26,9 @@ class Ups (val outer: Expr.Block) {
     fun proto_or_block (e: Expr): Expr? {
         return this.pred(e) { it is Expr.Proto || it is Expr.Block }
     }
+    fun intask (e: Expr): Boolean {
+        return (this.func(e)?.tk?.str == "task")
+    }
 
     fun isDeclared (e: Expr, id: String): Boolean {
         val xblock = this.xblocks[e]!!
@@ -78,7 +81,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Iter   -> { this.coros.check() ; this.body.check() }
             is Expr.Bcast  -> this.evt.check()
             is Expr.Yield  -> {
-                if (func(this)?.tk?.str != "task") {
+                if (!intask(this)) {
                     err(this.tk, "yield error : expected enclosing task")
                 }
                 this.arg.check()

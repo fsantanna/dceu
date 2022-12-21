@@ -2,7 +2,9 @@ package ceu
 
 import org.junit.Test
 
-val yield = "do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:coro { set ok=false } else { nil } } }"
+fun yield (ok: String = "ok"): String {
+    return "do { var $ok; set $ok=true; while $ok { yield(nil); if tags(evt)/=:coro { set $ok=false } else { nil } } }"
+}
 
 class TTask {
 
@@ -615,10 +617,10 @@ class TTask {
             spawn task () { 
                 catch {==}(err,:err) {
                     spawn task :fake () {
-                        yield(nil)
+                        ${yield()}
                         throw(:err)
                     }()
-                    yield(nil)
+                    ${yield()}
                 }
             }() 
             broadcast in :global, nil 
@@ -715,11 +717,11 @@ class TTask {
             set co1 = coroutine(task () {
                 var co2
                 set co2 = coroutine(task () {
-                    yield(nil)
+                    ${yield()}
                     throw(:error)
                 })
                 resume co2 ()
-                yield(nil)
+                ${yield()}
                 println(1)
             })
             resume co1 ()
@@ -1005,8 +1007,9 @@ class TTask {
                 yield(nil)
             }) ()
             broadcast in :global, nil
+            println(1)
         """)
-        assert(out == "TODO: valgrind") { out }
+        assert(out == "1\n") { out }
     }
 
     // POOL
@@ -1350,14 +1353,14 @@ class TTask {
                 println(2)
                 spawn task () {
                     println(3)
-                    $yield
+                    ${yield()}
                     println(6)
                     throw(:ok)
                 } ()
                 spawn task () {
                     catch :ok {
                         println(4)
-                        $yield
+                        ${yield()}
                     }
                     println(999)
                 } ()
@@ -2033,7 +2036,7 @@ class TTask {
                 defer {
                     println(10)
                 }
-                $yield
+                ${yield()}
                 println(999)
             }
             var t
