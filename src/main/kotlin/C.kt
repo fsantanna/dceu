@@ -109,7 +109,7 @@ fun Coder.main (): String {
         } CEU_CORO_STATUS;        
 
         typedef struct CEU_Value {
-            CEU_VALUE tag;
+            CEU_VALUE type;
             union {
                 //void nil;
                 int Tag;
@@ -153,7 +153,7 @@ fun Coder.main (): String {
     """ +
     """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
-            CEU_VALUE tag;                  // required to switch over free/bcast
+            CEU_VALUE type;                  // required to switch over free/bcast
             struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
             struct CEU_Block*   hold;       // holding block to compare on set/move
             int isperm;                     // if hold is permanent and may not be reset to outer block
@@ -166,7 +166,7 @@ fun Coder.main (): String {
                 struct {
                     int max;                // size of mem
                     int n;                  // number of items
-                    CEU_VALUE tag;
+                    CEU_VALUE type;
                     char* mem;              // resizable Unknown[n]
                 } Vector;
                 struct {
@@ -215,7 +215,7 @@ fun Coder.main (): String {
         } CEU_Tags;        
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int tag, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
+        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int type, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
         struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
 
         static CEU_Tags* CEU_TAGS = NULL;
@@ -237,11 +237,11 @@ fun Coder.main (): String {
     """ +
     """ // IMPLS
         int ceu_as_bool (CEU_Value* v) {
-            return !(v->tag==CEU_VALUE_NIL || (v->tag==CEU_VALUE_BOOL && !v->Bool));
+            return !(v->type==CEU_VALUE_NIL || (v->type==CEU_VALUE_BOOL && !v->Bool));
         }
         CEU_RET ceu_tags_f (CEU_Frame* _2, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
-            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->tag} };
+            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->type} };
             return CEU_RET_RETURN;
         }
         char* ceu_tag_to_string (int tag) {
@@ -257,7 +257,7 @@ fun Coder.main (): String {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
                 block->tofree = cur->next;
-                switch (cur->tag) {
+                switch (cur->type) {
                     case CEU_VALUE_VECTOR:
                         free(cur->Vector.mem);
                         free(cur);
@@ -283,10 +283,10 @@ fun Coder.main (): String {
         }
         
         CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
-            switch (src->tag) {
+            switch (src->type) {
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.n; i++) {
-                        if (src->Tuple.mem[i].tag > CEU_VALUE_DYNAMIC) {
+                        if (src->Tuple.mem[i].type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, src->Tuple.mem[i].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
@@ -294,7 +294,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_VECTOR:
-                    if (src->Vector.tag > CEU_VALUE_DYNAMIC) {
+                    if (src->Vector.type > CEU_VALUE_DYNAMIC) {
                         for (int i=0; i<src->Vector.n; i++) {
                             if (CEU_RET_THROW == ceu_block_set(dst, (CEU_Dynamic*)&src->Tuple.mem[i], isperm)) {
                                 return CEU_RET_THROW;
@@ -304,12 +304,12 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dict.max; i++) {
-                        if (src->Dict.mem[i][0]->tag > CEU_VALUE_DYNAMIC) {
+                        if (src->Dict.mem[i][0]->type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, (*src->Dict.mem)[i][0].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
-                        if (src->Dict.mem[i][1]->tag > CEU_VALUE_DYNAMIC) {
+                        if (src->Dict.mem[i][1]->type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, (*src->Dict.mem)[i][1].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
@@ -326,13 +326,13 @@ fun Coder.main (): String {
             if (dst == src->hold) {
                 src->isperm = src->isperm || isperm;
             } else if (src->hold==NULL || (!src->isperm && dst->depth<src->hold->depth)) {
-                if (src->tag==CEU_VALUE_FUNC && src->Proto.up==NULL) {
+                if (src->type==CEU_VALUE_FUNC && src->Proto.up==NULL) {
                     // do not enqueue: global functions use up=NULL and are not malloc'ed
                 } else {
                     { // remove from old block
                         if (src->hold != NULL) {
                             CEU_Block* old = src->hold;
-                            if (src->tag > CEU_VALUE_BCAST) {
+                            if (src->type > CEU_VALUE_BCAST) {
                                 ceu_bcast_dequeue(&src->hold->bcast.dyn, src);
                             }
                             { // remove from free list
@@ -356,7 +356,7 @@ fun Coder.main (): String {
                     { // add to new block
                         src->next = dst->tofree;
                         dst->tofree = src;
-                        if (src->tag > CEU_VALUE_BCAST) {
+                        if (src->type > CEU_VALUE_BCAST) {
                             ceu_bcast_enqueue(&dst->bcast.dyn, src);
                         }
                     }
@@ -425,7 +425,7 @@ fun Coder.main (): String {
                 // do not awake toggled coro, unless it is a CLEAR event
                 return CEU_RET_RETURN;
             }
-            switch (cur->tag) {
+            switch (cur->type) {
                 case CEU_VALUE_CORO: {
                     // step (1)
                     int ret = ceu_bcast_blocks(cur->Bcast.Coro.block, evt);
@@ -448,7 +448,7 @@ fun Coder.main (): String {
                     }
                     return ret;
                 case CEU_VALUE_TRACK:
-                    if (evt->tag==CEU_VALUE_CORO && cur->Bcast.Track.coro==evt->Dyn) {
+                    if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track.coro==evt->Dyn) {
                         cur->Bcast.Track.coro = NULL; // tracked coro is terminating
                     }
                     return CEU_RET_RETURN;
@@ -509,8 +509,8 @@ fun Coder.main (): String {
     """ +
     """ // TUPLE / VECTOR / DICT
         #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
-        int ceu_tag_to_size (int tag) {
-            switch (tag) {
+        int ceu_tag_to_size (int type) {
+            switch (type) {
                 case CEU_VALUE_NIL:
                     return 0;
                 case CEU_VALUE_TAG:
@@ -544,7 +544,7 @@ fun Coder.main (): String {
             int max = -1;
             for (int i=0; i<n; i++) {
                 CEU_Value* cur = &childs[i];
-                if (cur->tag>CEU_VALUE_DYNAMIC && cur->Dyn->hold!=NULL) {
+                if (cur->type>CEU_VALUE_DYNAMIC && cur->Dyn->hold!=NULL) {
                     if (max < cur->Dyn->hold->depth) {
                         max = cur->Dyn->hold->depth;
                         hld = cur->Dyn->hold;
@@ -563,30 +563,30 @@ fun Coder.main (): String {
                 strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            int sz = ceu_tag_to_size(vec->Vector.tag);
-            ceu_acc = (CEU_Value) { vec->Vector.tag };
+            int sz = ceu_tag_to_size(vec->Vector.type);
+            ceu_acc = (CEU_Value) { vec->Vector.type };
             memcpy(&ceu_acc.Number, vec->Vector.mem+i*sz, sz);
             return CEU_RET_RETURN;
         }
         
         CEU_Value ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
-            if (v.tag == CEU_VALUE_NIL) {           // pop
+            if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Vector.n-1);
                 vec->Vector.n--;
                 #if 0
                 {   // popped value as return value to enclosing set (instead of nil)
-                    int sz = ceu_tag_to_size(vec->Vector.tag);
-                    ceu_acc = (CEU_Value) { vec->Vector.tag };
+                    int sz = ceu_tag_to_size(vec->Vector.type);
+                    ceu_acc = (CEU_Value) { vec->Vector.type };
                     memcpy(&ceu_acc.Number, vec->Vector.mem+i*sz, sz);
                 }
                 #endif
             } else {
                 if (i == 0) {
-                    vec->Vector.tag = v.tag;
+                    vec->Vector.type = v.type;
                 } else {
-                    assert(v.tag == vec->Vector.tag);
+                    assert(v.type == vec->Vector.type);
                 }
-                int sz = ceu_tag_to_size(vec->Vector.tag);
+                int sz = ceu_tag_to_size(vec->Vector.type);
                 if (i == vec->Vector.n) {           // push
                     if (i == vec->Vector.max) {
                         vec->Vector.max = vec->Vector.max*2 + 1;    // +1 if max=0
@@ -614,7 +614,7 @@ fun Coder.main (): String {
         }        
         int ceu_dict_new_index (CEU_Dynamic* col) {
             for (int i=0; i<col->Dict.max; i++) {
-                if ((*col->Dict.mem)[i][0].tag == CEU_VALUE_NIL) {
+                if ((*col->Dict.mem)[i][0].type == CEU_VALUE_NIL) {
                     return i;
                 }
             }
@@ -628,20 +628,20 @@ fun Coder.main (): String {
         }        
         
         CEU_RET ceu_col_check (CEU_Value* col, CEU_Value* idx) {
-            if (col->tag<CEU_VALUE_TUPLE || col->tag>CEU_VALUE_DICT) {                
+            if (col->type<CEU_VALUE_TUPLE || col->type>CEU_VALUE_DICT) {                
                 strncpy(ceu_err_error_msg, "core library : index error : expected collection", 256);
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            if (col->tag != CEU_VALUE_DICT) {
-                if (idx->tag != CEU_VALUE_NUMBER) {
+            if (col->type != CEU_VALUE_DICT) {
+                if (idx->type != CEU_VALUE_NUMBER) {
                     strncpy(ceu_err_error_msg, "core library : index error : expected number", 256);
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                if (col->tag==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
+                if (col->type==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
                     strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                if (col->tag==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
+                if (col->type==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
                     strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
                     CEU_THROW_RET(CEU_ERR_ERROR); // accepts v[#v]
                 }
@@ -650,11 +650,11 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int tag, CEU_Frame* frame, CEU_Proto_F f, int n) {
+        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int type, CEU_Frame* frame, CEU_Proto_F f, int n) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
-                tag, NULL, NULL, 0, {
+                type, NULL, NULL, 0, {
                     .Proto = { frame, f, {.Task={n}} }
                 }
             };
@@ -674,16 +674,16 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_vector_create (CEU_Block* hld, CEU_VALUE tag, int n, CEU_Value* args) {
-            int sz = ceu_tag_to_size(tag);
+        CEU_Dynamic* ceu_vector_create (CEU_Block* hld, CEU_VALUE type, int n, CEU_Value* args) {
+            int sz = ceu_tag_to_size(type);
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             char* mem = malloc(n*sz + 1);  // +1 '\0'
             assert(mem != NULL);
-            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,n,tag,mem}} };
+            *ret = (CEU_Dynamic) { CEU_VALUE_VECTOR, NULL, NULL, 0, {.Vector={n,n,type,mem}} };
             ceu_max_depth(ret, n, args);
             for (int i=0; i<n; i++) {
-                assert(args[i].tag == tag);
+                assert(args[i].type == type);
                 memcpy(ret->Vector.mem + i*sz, (char*)&args[i].Number, sz);
             }
             ret->Vector.mem[n*sz] = '\0';
@@ -729,7 +729,7 @@ fun Coder.main (): String {
         }
         
         char* ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
-            if (task->tag != CEU_VALUE_TASK) {
+            if (task->type != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
             
@@ -762,14 +762,14 @@ fun Coder.main (): String {
         }
         
         char* ceu_coro_create_in (CEU_Block* hld, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
-            if (coros->tag != CEU_VALUE_COROS) {
+            if (coros->type != CEU_VALUE_COROS) {
                 return "coroutine error : expected coroutines";
             }
             if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
                 *ok = 0;
                 return NULL;
             }
-            if (task->tag != CEU_VALUE_TASK) {
+            if (task->type != CEU_VALUE_TASK) {
                 return "coroutine error : expected task";
             }
             
@@ -815,7 +815,7 @@ fun Coder.main (): String {
         }
         
         CEU_Value ceu_track_to_coro (CEU_Value* track) {
-            if (track->tag == CEU_VALUE_TRACK) {
+            if (track->type == CEU_VALUE_TRACK) {
                 if (track->Dyn->Bcast.Track.coro == NULL) {
                     return (CEU_Value) { CEU_VALUE_NIL };
                 } else {
@@ -828,7 +828,7 @@ fun Coder.main (): String {
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Value* v) {
-            switch (v->tag) {
+            switch (v->type) {
                 case CEU_VALUE_NIL:
                     printf("nil");
                     break;
@@ -862,7 +862,7 @@ fun Coder.main (): String {
                     printf("]");
                     break;
                 case CEU_VALUE_VECTOR:
-                    if (v->Dyn->Vector.tag == CEU_VALUE_CHAR) {
+                    if (v->Dyn->Vector.type == CEU_VALUE_CHAR) {
                         printf("%s", v->Dyn->Vector.mem);
                     } else {
                         printf("#[");
@@ -880,7 +880,7 @@ fun Coder.main (): String {
                     printf("@[");
                     int comma = 0;
                     for (int i=0; i<v->Dyn->Dict.max; i++) {
-                        if ((*v->Dyn->Dict.mem)[i][0].tag != CEU_VALUE_NIL) {
+                        if ((*v->Dyn->Dict.mem)[i][0].type != CEU_VALUE_NIL) {
                             if (comma != 0) {
                                 printf(",");
                             }
@@ -936,9 +936,9 @@ fun Coder.main (): String {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
-            int v = (e1->tag == e2->tag);
+            int v = (e1->type == e2->type);
             if (v) {
-                switch (e1->tag) {
+                switch (e1->type) {
                     case CEU_VALUE_NIL:
                         v = 1;
                         break;
@@ -997,7 +997,7 @@ fun Coder.main (): String {
         
         CEU_RET ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
-            if (args[0]->tag != CEU_VALUE_VECTOR) {
+            if (args[0]->type != CEU_VALUE_VECTOR) {
                 strncpy(ceu_err_error_msg, "core library : length error : not a vector", 256);
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1008,7 +1008,7 @@ fun Coder.main (): String {
         CEU_RET ceu_move_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
-            switch (src->tag) {
+            switch (src->type) {
                 case CEU_VALUE_TUPLE: {
                     src->Dyn->isperm = 0;
                     for (int i=0; i<src->Dyn->Tuple.n; i++) {
@@ -1048,7 +1048,7 @@ fun Coder.main (): String {
         CEU_RET ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
-            switch (src->tag) {
+            switch (src->type) {
                 case CEU_VALUE_TUPLE: {
                     CEU_Dynamic* dyn = ceu_tuple_create(src->Dyn->hold, src->Dyn->Tuple.n, NULL);
                     assert(dyn != NULL);
@@ -1062,10 +1062,10 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dynamic* dyn = ceu_vector_create(src->Dyn->hold, src->Dyn->Vector.tag, 0, NULL);
+                    CEU_Dynamic* dyn = ceu_vector_create(src->Dyn->hold, src->Dyn->Vector.type, 0, NULL);
                     assert(dyn != NULL);
                     CEU_Value ret = { CEU_VALUE_VECTOR, {.Dyn=dyn} };
-                    // TODO: memcpy if tag!=DYN
+                    // TODO: memcpy if type!=DYN
                     for (int i=0; i<src->Dyn->Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(src->Dyn, i));
                         CEU_Value* args[1] = { &ceu_acc };

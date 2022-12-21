@@ -228,7 +228,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ${(f_b != null).cond {
                                     val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
-                                    if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                         ceu_retx = ceu_block_set($up, ceu_acc.Dyn, 0);
                                         //CEU_CONTINUE_ON_THROW();
                                     }
@@ -341,7 +341,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // COROS ${this.tk.dump()}
                     ${this.max.cond { """
                         ${it.code(true, null)}
-                        if (ceu_acc.tag!=CEU_VALUE_NUMBER || ceu_acc.Number<=0) {                
+                        if (ceu_acc.type!=CEU_VALUE_NUMBER || ceu_acc.Number<=0) {                
                             strncpy(ceu_err_error_msg,
                                 "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number",
                                  256);
@@ -377,7 +377,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // ITER ${this.tk.dump()}
                     ${this.coros.code(true, null)}
                     ceu_mem->coros_$n = ceu_acc;
-                    if (ceu_mem->coros_$n.tag != CEU_VALUE_COROS) {                
+                    if (ceu_mem->coros_$n.type != CEU_VALUE_COROS) {                
                         strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines", 256);
                         CEU_THROW_DO(CEU_ERR_ERROR, continue);
                     }
@@ -416,15 +416,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
                     ceu_mem->evt_$n = ceu_acc;
-                    if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                         assert(CEU_RET_RETURN == ceu_block_set($bupc, ceu_mem->evt_$n.Dyn, 1));
                     }
                     ${this.xin.code(true, null)}
                     int ceu_err_$n = 0;
                     ${intask.cond { "ceu_coro->Bcast.Coro.bcasting = 1;" }}
-                    if (ceu_acc.tag == CEU_VALUE_CORO) {
+                    if (ceu_acc.type == CEU_VALUE_CORO) {
                         ceu_ret = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
-                    } else if (ceu_acc.tag == CEU_VALUE_TAG) {
+                    } else if (ceu_acc.type == CEU_VALUE_TAG) {
                         if (ceu_acc.Tag == CEU_TAG_global) {
                             ceu_ret = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
@@ -458,7 +458,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.arg.code(true, null)}
                     ceu_frame->Task.pc = $n;      // next resume
                     ceu_coro->Bcast.status = CEU_CORO_STATUS_YIELDED;
-                    if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
+                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                         ceu_ret = ceu_block_set(ceu_frame->up, ceu_acc.Dyn, 0);
                         CEU_CONTINUE_ON_THROW();
                     }
@@ -478,7 +478,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${this.on.code(true, null)}
                 ceu_mem->on_$n = ceu_acc;
                 ${this.coro.code(true, null)}
-                if (ceu_acc.tag<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                if (ceu_acc.type<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                     strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : toggle error : expected yielded/toggled coroutine", 256);
                     CEU_THROW_DO(CEU_ERR_ERROR, continue);
                 }
@@ -493,9 +493,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${this.coro.code(true, null)}
                         ${(this.tk.str=="status").cond { """
                             // track with destroyed coro: status -> :destroyed
-                            if (ceu_acc.tag == CEU_VALUE_TRACK) {
+                            if (ceu_acc.type == CEU_VALUE_TRACK) {
                                 ceu_acc = ceu_track_to_coro(&ceu_acc);
-                                if (ceu_acc.tag != CEU_VALUE_CORO) {
+                                if (ceu_acc.type != CEU_VALUE_CORO) {
                                     ${assrc("(CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} }")}
                                     goto CEU_PUB_$n;    // special case, skip everything else
                                 }
@@ -503,7 +503,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             """
                          }}
                         ceu_acc = ceu_track_to_coro(&ceu_acc);
-                        if (ceu_acc.tag != CEU_VALUE_CORO) {                
+                        if (ceu_acc.type != CEU_VALUE_CORO) {                
                             strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine", 256);
                             CEU_THROW_DO(CEU_ERR_ERROR, continue);
                         }
@@ -511,7 +511,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """ }}
                     ${if (asdst_src != null) {
                             """ // PUB - SET
-                            if ($asdst_src.tag > CEU_VALUE_DYNAMIC) {
+                            if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
                                 ceu_ret = ceu_block_set(ceu_dyn_$n->hold, $asdst_src.Dyn, 0);
                                 CEU_CONTINUE_ON_THROW();
                             }
@@ -522,7 +522,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         """
                         { // PUB - read
                             ${(!inidx && !this.gcall() && this.tk.str=="pub").cond { """
-                                if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.tag > CEU_VALUE_DYNAMIC) {
+                                if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.type > CEU_VALUE_DYNAMIC) {
                                     strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic \"pub\" field", 256);
                                     CEU_THROW_DO(CEU_ERR_ERROR, continue);
                                 }                                    
@@ -541,7 +541,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Track -> """
                 { // TRACK
                     ${this.coro.code(true, null)}
-                    if (ceu_acc.tag != CEU_VALUE_CORO) {                
+                    if (ceu_acc.type != CEU_VALUE_CORO) {                
                         strncpy(ceu_err_error_msg, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected coroutine", 256);
                         CEU_THROW_DO(CEU_ERR_ERROR, continue);
                     } else if (ceu_acc.Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
@@ -629,7 +629,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
-                        if ($asdst_src.tag > CEU_VALUE_DYNAMIC) {
+                        if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set(${bup.id2c("_${id}_")}, $asdst_src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW();
                         }
@@ -644,7 +644,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "evt" -> {
                         val inidx = (ups.pred(this) { it is Expr.Index } != null)
                         /*(!inidx && !this.gcall()).cond { """
-                            if (ceu_evt->tag > CEU_VALUE_DYNAMIC) {
+                            if (ceu_evt->type > CEU_VALUE_DYNAMIC) {
                                 strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"", 256);
                                 CEU_THROW_DO(CEU_ERR_ERROR, continue);
                             }                                    
@@ -703,8 +703,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     { // check if vector is homogeneous
                         for (int i=0; i<${this.args.size}; i++) {
                             if (i == 0) {
-                                ceu_tag_$n = ceu_args_$n[i].tag;
-                            } else if (ceu_tag_$n != ceu_args_$n[i].tag) {
+                                ceu_tag_$n = ceu_args_$n[i].type;
+                            } else if (ceu_tag_$n != ceu_args_$n[i].type) {
                                 strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : non homogeneous arguments", 256);
                                 CEU_THROW_DO(CEU_ERR_ERROR, break);
                             }
@@ -756,12 +756,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ceu_ret = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
                     CEU_CONTINUE_ON_THROW()
                     ${asdst_src.cond { """
-                        if ($it.tag > CEU_VALUE_DYNAMIC) {
+                        if ($it.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set(ceu_acc.Dyn->hold, $it.Dyn, 0);
                             CEU_CONTINUE_ON_THROW()
                         }
                     """}}
-                    switch (ceu_acc.tag) { // OK
+                    switch (ceu_acc.type) { // OK
                         case CEU_VALUE_TUPLE:                
                             ${if (asdst_src != null) {
                                 "ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;\n"
@@ -769,7 +769,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 val x = this.has_pub_evt()
                                 """
                                 ${(x!=null && !this.gcall()).cond { """
-                                    if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].tag > CEU_VALUE_DYNAMIC) {
+                                    if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
                                         strncpy(ceu_err_error_msg, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$x\" field", 256);
                                         CEU_THROW_DO(CEU_ERR_ERROR, continue);
                                     }
@@ -841,7 +841,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.proto.code(true, null)}
                     CEU_Value ceu_proto_$n = ceu_acc;
                     char* ceu_err_$n = NULL;
-                    if (ceu_proto_$n.tag != CEU_VALUE_FUNC) {
+                    if (ceu_proto_$n.type != CEU_VALUE_FUNC) {
                         ceu_err_$n = "call error : expected function";
                     }
                     CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
@@ -883,7 +883,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${this.proto.code(true, null)}
                     CEU_Value ceu_coro_$n = ceu_acc;
                     char* ceu_err_$n = NULL;
-                    if (ceu_coro_$n.tag<CEU_VALUE_BCAST || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                    if (ceu_coro_$n.type<CEU_VALUE_BCAST || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                         ceu_err_$n = "resume error : expected yielded task";
                     }
                 """} +
