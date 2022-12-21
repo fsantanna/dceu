@@ -48,7 +48,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
     fun Expr.gcall (): Boolean {
         return ups.ups[this].let { it is Expr.Call && it.proto.let {
-            it is Expr.Acc && it.tk.str in listOf("print","println","tags","{==}","{/=}") }
+            it is Expr.Acc && it.tk.str in EXPOSE }
         }
     }
 
@@ -639,12 +639,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "err" -> assrc("ceu_err")
                     "evt" -> {
                         val inidx = (ups.pred(this) { it is Expr.Index } != null)
-                        (!inidx && !this.gcall()).cond { """
+                        /*(!inidx && !this.gcall()).cond { """
                             if (ceu_evt->tag > CEU_VALUE_DYNAMIC) {
                                 strncpy(ceu_err_error_msg, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"", 256);
                                 CEU_THROW_DO(CEU_ERR_ERROR, continue);
                             }                                    
-                        """ } + assrc("(*ceu_evt)")
+                        """ } +*/
+                        assrc("(*ceu_evt)")
                     }
                     else -> error("impossible case")
                 }

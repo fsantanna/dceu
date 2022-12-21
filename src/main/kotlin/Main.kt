@@ -36,6 +36,10 @@ val GLOBALS = setOf (
     "op_slash_equals", "op_equals_equals", "op_hash"
 )
 
+val EXPOSE = setOf (
+    "print", "println", "tags", "{==}", "{/=}"
+)
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
