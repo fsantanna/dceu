@@ -184,7 +184,7 @@ class TXExec {
         val out = all("""
             var tk = task () {
                 println(evt)
-                do { var ok; set ok=true; while ok { yield(nil); if tags(evt)/=:coro { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil); if type(evt)/=:coro { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
@@ -204,13 +204,13 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    do { var ok1; set ok1=true; while ok1 { yield(nil); if tags(evt)/=:coro { set ok1=false } else { nil } } }
+                    do { var ok1; set ok1=true; while ok1 { yield(nil); if type(evt)/=:coro { set ok1=false } else { nil } } }
                     ;;yield()
-                    do { var ok2; set ok2=true; while ok2 { yield(nil); if tags(evt)/=:coro { set ok2=false } else { nil } } }
+                    do { var ok2; set ok2=true; while ok2 { yield(nil); if type(evt)/=:coro { set ok2=false } else { nil } } }
                     ;;yield()
                     println(1)
                 } with {
-                    do { var ok3; set ok3=true; while ok3 { yield(nil); if tags(evt)/=:coro { set ok3=false } else { nil } } }
+                    do { var ok3; set ok3=true; while ok3 { yield(nil); if type(evt)/=:coro { set ok3=false } else { nil } } }
                     ;;yield()
                     println(2)
                 } with {
@@ -880,7 +880,7 @@ class TXExec {
                 set pub = v
                 toggle evt==:hide -> evt==:show {
                     println(pub)
-                    every tags(evt)==:dict and evt.type==:draw {
+                    every type(evt)==:dict and evt.type==:draw {
                         println(evt.v)
                     }
                 }

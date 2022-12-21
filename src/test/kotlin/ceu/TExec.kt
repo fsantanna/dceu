@@ -380,7 +380,7 @@ class TExec {
     @Test
     fun dict1() {
         val out = all("""
-            println(tags(@[(1,2)]))
+            println(type(@[(1,2)]))
             println(@[(1,2)])
         """)
         assert(out == ":dict\n@[(1,2)]\n") { out }
@@ -455,7 +455,7 @@ class TExec {
     @Test
     fun vector2() {
         val out = all("""
-            println(tags(#[]))
+            println(type(#[]))
             println(#[1,2,3])
         """)
         assert(out == ":vector\n#[1,2,3]\n") { out }
@@ -897,7 +897,7 @@ class TExec {
         val out = all("""
             var f
             set f = func (xxx) {
-                ;;println(tags(xxx))
+                ;;println(type(xxx))
                 xxx
             }
             var yyy
@@ -975,7 +975,7 @@ class TExec {
             println(func (x) {
                 var fff
                 set fff = func (xxx) {
-                    println(tags(xxx))
+                    println(type(xxx))
                     xxx
                 }
                 fff(x)
@@ -989,7 +989,7 @@ class TExec {
             """
             var fff
             set fff = func (xxx) {
-                println(tags(xxx))
+                println(type(xxx))
                 xxx
             }
             println(func () {
@@ -1019,7 +1019,7 @@ class TExec {
             println(func (x) {
                 var fff
                 set fff = func (xxx) {
-                    println(tags(xxx))
+                    println(type(xxx))
                     xxx
                 }
                 fff(x)
@@ -1559,10 +1559,10 @@ class TExec {
     fun tag1() {
         val out = all("""
             var t
-            set t = tags(1)
+            set t = type(1)
             println(t)
-            println(tags(t))
-            println(tags(tags(t)))
+            println(type(t))
+            println(type(type(t)))
         """)
         assert(out == ":number\n:tag\n:tag\n") { out }
     }

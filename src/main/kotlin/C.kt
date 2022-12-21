@@ -48,7 +48,7 @@ fun Coder.main (): String {
             ceu_tag_##id.next = CEU_TAGS;           \
             CEU_TAGS = &ceu_tag_##id;               \
             CEU_TAGS_MAX++;            
-        CEU_RET ceu_tags_f (struct CEU_Frame* _2, int n, struct CEU_Value* args[]);
+        CEU_RET ceu_type_f (struct CEU_Frame* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
         void ceu_block_free (struct CEU_Block* block);
@@ -239,7 +239,7 @@ fun Coder.main (): String {
         int ceu_as_bool (CEU_Value* v) {
             return !(v->type==CEU_VALUE_NIL || (v->type==CEU_VALUE_BOOL && !v->Bool));
         }
-        CEU_RET ceu_tags_f (CEU_Frame* _2, int n, CEU_Value* args[]) {
+        CEU_RET ceu_type_f (CEU_Frame* _2, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->type} };
             return CEU_RET_RETURN;
@@ -1118,9 +1118,9 @@ fun Coder.main (): String {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {
-                    static CEU_Dynamic ceu_tags = { 
+                    static CEU_Dynamic ceu_type = { 
                         CEU_VALUE_FUNC, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_tags_f, {0} }
+                            .Proto = { NULL, ceu_type_f, {0} }
                         }
                     };
                     static CEU_Dynamic ceu_print = { 
@@ -1158,7 +1158,7 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_copy_f, {0} }
                         }
                     };
-                    ceu_mem->tags    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}    };
+                    ceu_mem->type    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_type}    };
                     ceu_mem->print   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}   };
                     ceu_mem->println = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println} };            
                     ceu_mem->op_hash = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash} };

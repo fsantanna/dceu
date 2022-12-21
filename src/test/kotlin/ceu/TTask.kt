@@ -3,7 +3,7 @@ package ceu
 import org.junit.Test
 
 fun yield (ok: String = "ok"): String {
-    return "do { var $ok; set $ok=true; while $ok { yield(nil); if tags(evt)/=:coro { set $ok=false } else { nil } } }"
+    return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:coro { set $ok=false } else { nil } } }"
 }
 
 class TTask {
@@ -248,7 +248,7 @@ class TTask {
             }
             var a
             set a = spawn t(1)
-            println(tags(a))
+            println(type(a))
             var v
             set v = resume a(3)
             println(v)              ;; 4
@@ -806,7 +806,7 @@ class TTask {
         val out = all("""
             var tk
             set tk = task (v) {
-                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:coro { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
                 println(evt)                
             }
             var co1
@@ -856,10 +856,10 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:coro { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
-                do { var ok2; set ok2=true; while ok2 { yield(nil;) if tags(evt)/=:coro { set ok2=false } else { nil } } }
+                do { var ok2; set ok2=true; while ok2 { yield(nil;) if type(evt)/=:coro { set ok2=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
             }
@@ -909,7 +909,7 @@ class TTask {
             """
             var T
             set T = task (v) {
-                do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:coro { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(v)
             }
@@ -1043,7 +1043,7 @@ class TTask {
         val out = all("""
             var ts
             set ts = coroutines()
-            println(tags(ts))
+            println(type(ts))
             var T
             set T = task (v) {
                 println(v)
@@ -1323,10 +1323,10 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=true; while ok1 { yield(nil;) if tags(evt)/=:coro { set ok1=false } else { nil } } }
+                do { var ok1; set ok1=true; while ok1 { yield(nil;) if type(evt)/=:coro { set ok1=false } else { nil } } }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=true; while ok { yield(nil;) if tags(evt)/=:coro { set ok=false } else { nil } } }
+                    do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -1466,7 +1466,7 @@ class TTask {
         val out = all("""
             var ts
             set ts = coroutines()
-            println(tags(ts))
+            println(type(ts))
             var T
             set T = task (v) {
                 set pub = v

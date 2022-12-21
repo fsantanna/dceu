@@ -22,12 +22,12 @@ class TTag {
     @Test
     fun tag2() {
         val out = all("""
-            println(tags(:number))
-            println(tags(1))
-            println(tags(1) == tags(2))
-            println(tags([]))
-            tags([], :nil, :coro)
-            println(tags([1,2,3]))
+            println(type(:number))
+            println(type(1))
+            println(type(1) == type(2))
+            println(type([]))
+            type([], :nil, :coro)
+            println(type([1,2,3]))
         """)
         assert(out == "[]\n[:number]\ntrue\n[]\n[:nil,:coro]\n") { out }
     }
