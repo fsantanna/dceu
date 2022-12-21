@@ -493,39 +493,44 @@ class Parser (lexer_: Lexer)
                 val spw = this.checkFix("spawn")
                 val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
                 when {
-                    spw -> {
+                    spw -> { // await spawn T()
                         val e = this.expr()
-                        assert(e is Expr.Spawn && e.coros==null)
+                        if (!(e is Expr.Spawn && e.coros==null)) {
+                            err_expected(e.tk, "non-pool spawn")
+                        }
                         this.nest("""
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
                                 if (ceu_spw_$N.status /= :terminated) {
-                                    println("waiting...")
                                     ${pre0}await evt==ceu_spw_$N or do{println(evt);false}
-                                    println("awoke")
                                 }
-                                1
+                                ;;println(ceu_spw_$N.pub)
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
                             }
                         """) //.let { println(it.tostr());it }
                     }
-                    (clk != null) -> this.nest("""
-                        ${pre0}do {
-                            var ceu_ms_$N = ${clk.ms}
-                            while ceu_ms_$N > 0 {
-                                await tags(evt)==:dict and evt[:type]==:timer
-                                set ceu_ms_$N = ceu_ms_$N - evt[:dt]
+                    (clk != null) -> { // await 5s
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_ms_$N = ${clk.ms}
+                                while ceu_ms_$N > 0 {
+                                    await tags(evt)==:dict and evt[:type]==:timer
+                                    set ceu_ms_$N = ceu_ms_$N - evt[:dt]
+                                }
                             }
-                        }
-                    """)//.let { println(it.tostr()); it }
-                    (cnd != null) -> this.nest("""
-                        ${pre0}do {
-                            ${pre0}yield ()
-                            ;;println(evt)
-                            while not (${cnd.tostr(true)}) {
-                                yield ()
+                        """)//.let { println(it.tostr()); it }
+                    }
+                    (cnd != null) -> {  // await evt=:x
+                        this.nest("""
+                            ${pre0}do {
+                                ${pre0}yield ()
+                                ;;println(evt)
+                                while not (${cnd.tostr(true)}) {
+                                    yield ()
+                                }
                             }
-                        }
-                    """)//.let { println(it.tostr()); it }
+                        """)//.let { println(it.tostr()); it }
+                    }
                     else -> error("bug found")
                 }
             }

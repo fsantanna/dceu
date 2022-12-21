@@ -134,6 +134,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     { // TERMINATE
                         int iscoros = (ceu_coro->Bcast.Coro.coros != NULL);
                         ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATING, ceu_coro->Bcast.status);
+                        ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
                         if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
                             // 1. bcasted above
                             //    terminated from clear bcast
@@ -144,12 +145,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_frame->Task.pc = -1;
                             CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                             ceu_coro->Bcast.Coro.bcasting = 1;
+                            int ret;
                             if (ceu_coro->hold->bcast.up != NULL) {
                                 // enclosing coro of enclosing block
-                                ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
+                                ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
                             } else {
                                 // enclosing block
-                                ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                                ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                            }
+                            if (ret == CEU_RET_THROW) {
+                                ceu_ret = ret;
+                                ceu_acc_$n = ceu_acc;
                             }
                             ceu_coro->Bcast.Coro.bcasting = 0;
                             ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
@@ -213,13 +219,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         CEU_RET   ceu_ret_$n = ceu_ret;
                         CEU_Value ceu_acc_$n = ceu_acc;
                         {
-                            int ceu_err = 0;
+                            CEU_RET ceu_retx = CEU_RET_RETURN;
                             { // move up dynamic ceu_acc (return or error)
                                 ${(f_b != null).cond {
                                     val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
                                     if (ceu_acc.tag > CEU_VALUE_DYNAMIC) {
-                                        ceu_err = (CEU_RET_THROW == ceu_block_set($up, ceu_acc.Dyn, 0));
+                                        ceu_retx = ceu_block_set($up, ceu_acc.Dyn, 0);
                                         //CEU_CONTINUE_ON_THROW();
                                     }
                                     """
@@ -245,10 +251,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 }}
                                 ceu_block_free(&ceu_mem->block_$n);
                             }
-                            if (ceu_err || ceu_ret==CEU_RET_THROW) {
-                                if (ceu_err) {
-                                    ceu_ret = CEU_RET_THROW;
-                                }
+                            ceu_ret = MIN(ceu_ret, ceu_retx);
+                            if (ceu_ret == CEU_RET_THROW) {
                                 continue;
                             }
                         }

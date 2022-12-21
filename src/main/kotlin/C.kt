@@ -11,6 +11,7 @@ fun Coder.main (): String {
         #include <math.h>
 
         #define MAX(x,y) (x > y ? x : y)
+        #define MIN(x,y) (x < y ? x : y)
         
         struct CEU_Value;
             struct CEU_Dynamic;
@@ -22,8 +23,8 @@ fun Coder.main (): String {
             
         typedef enum {
             CEU_RET_THROW = 0,
-            CEU_RET_RETURN,
-            CEU_RET_YIELD
+            CEU_RET_YIELD,
+            CEU_RET_RETURN
         } CEU_RET;
 
         typedef enum {

@@ -1915,6 +1915,27 @@ class TTask {
         """)
         assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n") { out }
     }
+    @Test
+    fun pub15_task() {
+        val out = all("""
+        spawn task :fake () { 
+            var y
+            set y = do {     
+                var ceu_spw_54     
+                set ceu_spw_54 = spawn task :fake () {         
+                    yield(nil)         
+                    [2]             
+                }()        
+                yield(nil)     
+                ;;println(ceu_spw_54.pub)     
+                ceu_spw_54.pub        
+            }     
+            println(y) 
+        }() 
+        broadcast in :global, nil 
+        """)
+        assert(out == "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
 
     // STATUS
 

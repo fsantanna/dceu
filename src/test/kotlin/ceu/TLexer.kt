@@ -1,10 +1,9 @@
 package ceu
 
+import D
 import Lexer
 import Tk
 import org.junit.Test
-
-val D = "\$"
 
 fun trap (f: ()->Unit): String {
     try {

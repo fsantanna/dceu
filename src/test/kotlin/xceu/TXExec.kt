@@ -601,71 +601,102 @@ class TXExec {
         assert(out == "0\n10\n10\n1") { out }
     }
     @Test
-    fun await8X_task() {
-        val out = all("""
-            spawn {
-                await spawn { 1 }
-            }
-        """)
-        assert(out == "1\t2\t3\n") { out }
-    }
-    @Test
-    fun await8Y_task() {
-        val out = all("""
-            spawn {
-                spawn {
-                    yield ()
-                }
-                yield ()
-            }
-            println("bcast")
-            broadcast in :global, nil
-        """)
-        assert(out == "1\t2\t3\n") { out }
-    }
-    @Test
-    fun await8Z_task() {
-        val out = all("""
-            spawn {
-                spawn {
-                    yield ()
-                    broadcast in :global, nil
-                }
-                yield ()
-            }
-            println("bcast")
-            broadcast in :global, nil
-        """)
-        assert(out == "1\t2\t3\n") { out }
-    }
-    @Test
     fun await8_task() {
         val out = all("""
             spawn {
-                var x = await spawn { 1 }
-                println(111)
-                var y = await spawn {
-                    yield ()
-                    println(999)
-                    2
-                }
-                println(222)
-                task T () { 3 }
-                var z = await spawn T()
-                println(333)
-                println(x,y,z)
+                await spawn { 1 }
+                println(1)
             }
-            println("bcast")
-            broadcast in :global, nil
+            println(2)
         """)
-        assert(out == "1\t2\t3\n") { out }
+        assert(out == "1\n2\n") { out }
     }
     @Test
-    fun await9_task_err() {
+    fun await9_task() {
         val out = all("""
-            var x = await spawn in nil, nil
+            spawn {
+                spawn {
+                    yield ()
+                    println(1)
+                }
+                yield ()
+                println(2)
+            }
+            broadcast in :global, nil
         """)
-        assert(out == "0\n1\n2\n99\n3\n") { out }
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun await10_task() {
+        val out = all("""
+            spawn {
+                spawn {
+                    yield ()
+                    println(1)
+                    broadcast in :global, nil
+                    println(3)
+                }
+                yield ()
+                println(2)
+            }
+            broadcast in :global, nil
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun await11_task_rets() {
+        val out = all("""
+            spawn {
+                var y = await spawn {
+                    yield ()
+                    [2]
+                }
+                println(y)
+            }
+            broadcast in :global, nil
+        """)
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun await12_task_err() {
+        val out = all("""
+            var x = await spawn in nil, nil()
+        """)
+        assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
+    }
+    @Test
+    fun await13_task_rets() {
+        val out = all("""
+            spawn {
+                var x = await spawn {
+                    var y = []
+                    y
+                }
+                println(x)
+            }
+        """)
+        assert(out == "core library : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun await14_task_rets() {
+        val out = all("""
+            spawn {
+                var x = await spawn {
+                    1
+                }
+                var y = await spawn {
+                    yield ()
+                    [2]
+                }
+                task T () {
+                    3
+                }
+                var z = await spawn T()
+                println(x,y,z)
+            }
+            broadcast in :global, nil
+        """)
+        assert(out == "1\t[2]\t3\n") { out }
     }
 
     // FUNC / TASK

@@ -6,6 +6,8 @@ val XCEU = false
 //val XCEU = true
 var N = 1
 
+val D = "\$"
+
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
