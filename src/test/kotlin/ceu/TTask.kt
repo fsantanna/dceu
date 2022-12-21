@@ -2378,4 +2378,22 @@ class TTask {
         """)
         assert(out == "1\n:yielded\n:destroyed\n") { out }
     }
+
+    // XCEU
+
+    @Test
+    fun xceu1() {
+        val out = all("""
+            spawn task () {
+                spawn (task () {
+                    yield(nil)
+                }) ()
+                yield(nil)
+                throw(nil)
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
 }

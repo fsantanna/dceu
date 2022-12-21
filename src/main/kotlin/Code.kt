@@ -143,21 +143,25 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             // 1. clear bcast (bcasting maybe = 1, from above/below)
                             // 2. terminating from normal resume
                             ceu_frame->Task.pc = -1;
-                            CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                            ceu_coro->Bcast.Coro.bcasting = 1;
-                            int ret;
-                            if (ceu_coro->hold->bcast.up != NULL) {
-                                // enclosing coro of enclosing block
-                                ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
+                            if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
+                                // do not signal my termination b/c nobody would awake anyways
                             } else {
-                                // enclosing block
-                                ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                                CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                                ceu_coro->Bcast.Coro.bcasting = 1;
+                                int ret;
+                                if (ceu_coro->hold->bcast.up != NULL) {
+                                    // enclosing coro of enclosing block
+                                    ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
+                                } else {
+                                    // enclosing block
+                                    ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                                }
+                                if (ret == CEU_RET_THROW) {
+                                    ceu_ret = ret;
+                                    ceu_acc_$n = ceu_acc;
+                                }
+                                ceu_coro->Bcast.Coro.bcasting = 0;
                             }
-                            if (ret == CEU_RET_THROW) {
-                                ceu_ret = ret;
-                                ceu_acc_$n = ceu_acc;
-                            }
-                            ceu_coro->Bcast.Coro.bcasting = 0;
                             ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
                             if (iscoros) {
                                 if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {

@@ -435,7 +435,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun paror11() {
+    fun paror11_ret() {
         val out = all("""
             spawn {
                 var x = paror {
@@ -445,6 +445,41 @@ class TXExec {
                 }
                 println(x)
             }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun paror12_ret_func() {
+        val out = all("""
+            spawn {
+                task f () {
+                    paror {
+                        1
+                    } with {
+                        999
+                    }
+                }
+                var x = await spawn f()
+                println(x)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun paror13_ret_func() {
+        val out = all("""
+            task T () {
+                await evt==:x
+            }
+            spawn {
+                paror {
+                    await spawn T()
+                } with {
+                    await spawn T()
+                }
+            }
+            broadcast in :global, :x
+            println(1)
         """)
         assert(out == "1\n") { out }
     }
