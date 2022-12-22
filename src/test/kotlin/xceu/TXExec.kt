@@ -300,7 +300,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-        """)
+        """, true)
         assert(out == "2\n999\n") { out }
     }
     @Test
@@ -324,7 +324,7 @@ class TXExec {
                 println(999)
             } ()
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "2\n1\n3\n999\n") { out }
     }
     @Test
@@ -384,7 +384,7 @@ class TXExec {
             } ()
              broadcast in :global, nil
              broadcast in :global, 1
-        """)
+        """, true)
         assert(out == "1\n2\n999\n") { out }
     }
     @Test
@@ -399,9 +399,9 @@ class TXExec {
                 println(999)
             } ()
             println(0)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(1)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(2)
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
@@ -418,7 +418,7 @@ class TXExec {
                 }
             }            
             println(1)
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
@@ -473,7 +473,7 @@ class TXExec {
                 }
                 println(x)
             }
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
@@ -490,7 +490,7 @@ class TXExec {
                 var x = await spawn f()
                 println(x)
             }
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
@@ -508,7 +508,7 @@ class TXExec {
             }
             broadcast in :global, :x
             println(1)
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
 
@@ -638,9 +638,9 @@ class TXExec {
                 }
             }()
             println(0)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(1)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
@@ -654,11 +654,11 @@ class TXExec {
                 }
             }()
             println(0)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(1)
-             broadcast in :global, @[(:type,:timer),(:dt,5000)]
+            broadcast in :global, tags([5000], :frame, true)
             println(2)
-             broadcast in :global, @[(:type,:timer),(:dt,10000)]
+            broadcast in :global, tags([10000], :frame, true)
             println(3)
         """, true)
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
@@ -783,10 +783,11 @@ class TXExec {
             }            
             spawn {
                 await spawn Main_Menu ()
-                println(333)
+                println(999)
             }
+            println(1)
         """)
-        assert(out == "1\t[2]\t3\n") { out }
+        assert(out == "1\n") { out }
     }
 
     // FUNC / TASK
