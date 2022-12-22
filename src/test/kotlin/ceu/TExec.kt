@@ -1641,12 +1641,12 @@ class TExec {
             set x1 = tags(t,:x,true)
             var x2
             set x2 = tags(t,:x,true)
-            println(x1, x2)
+            println(x1, x2, x1==t)
             set x1 = tags(t,:x,false)
             set x2 = tags(t,:x,false)
-            println(x1, x2)
+            println(x1, x2, x1==t)
         """)
-        assert(out == "true\tfalse\ntrue\tfalse\n") { out }
+        assert(out == "[]\tnil\ttrue\n[]\tnil\ttrue\n") { out }
     }
 
     // DEFER

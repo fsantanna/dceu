@@ -277,24 +277,25 @@ fun Coder.main (): String {
                 assert(bool->type == CEU_VALUE_BOOL);
                 if (bool->Bool) {   // add
                     ceu_tags_f(frame, 2, args);
-                    int has = ceu_acc.Bool;
-                    ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=!has} };
-                    if (!has) {
+                    if (ceu_acc.Bool) {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    } else {
                         CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
                         assert(v != NULL);
                         v->tag = tag->Tag;
                         v->next = dyn->Dyn->tags;
                         dyn->Dyn->tags = v;
+                        ceu_acc = *dyn;
                     }
                 } else {            // rem
-                    ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     CEU_Tags_List** cur = &dyn->Dyn->tags;
                     while (*cur != NULL) {
                         if ((*cur)->tag == tag->Tag) {
                             CEU_Tags_List* v = *cur;
                             *cur = v->next;
                             free(v);
-                            ceu_acc.Bool = 1;
+                            ceu_acc = *dyn;
                             break;
                         }
                         *cur = (*cur)->next;
