@@ -177,6 +177,33 @@ class TXExec {
         assert(out == "[]\n") { out }
     }
 
+    // is, isnot
+
+    @Test
+    fun is1() {
+        val out = all("""
+            println([] is :bool)
+            println([] is :tuple)
+            println(1 isnot :tuple)
+            println(1 isnot :number)
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun is2() {
+        val out = all("""
+            var t
+            set t = []
+            tags(t,:x,true)
+            println(t is :x)
+            tags(t,:y,true)
+            println(t isnot :y)
+            tags(t,:x,false)
+            println(t isnot :x)
+        """, true)
+        assert(out == "true\nfalse\ntrue\n") { out }
+    }
+
     // YIELD
 
     @Test

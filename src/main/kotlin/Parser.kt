@@ -517,7 +517,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_ms_$N = ${clk.ms}
                                 while ceu_ms_$N > 0 {
-                                    await (evt is :dict) and evt.sub==:timer
+                                    await (evt is :dict) and (evt is :timer)
                                     set ceu_ms_$N = ceu_ms_$N - evt[:dt]
                                 }
                             }
@@ -633,27 +633,23 @@ class Parser (lexer_: Lexer)
             val op = this.tk0
             val e2 = this.exprPres()
             e = when (op.str) {
-                "or" -> this.nest("""
+                "or"    -> this.nest("""
                     ${op.pos.pre()}do {
                         var _ceu_${e.n}
                         set _ceu_${e.n} = ${e.tostr(true)} 
                         if _ceu_${e.n} { _ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
-                "and" -> this.nest("""
+                "and"   -> this.nest("""
                     ${op.pos.pre()}do {
                         var _ceu_${e.n}
                         set _ceu_${e.n} = ${e.tostr(true)} 
                         if _ceu_${e.n} { ${e2.tostr(true)} } else { _ceu_${e.n} }
                     }
                 """)
-                "is" -> this.nest("""
-                    ${op.pos.pre()}(type(${e.tostr(true)}) == ${e2.tostr(true)})
-                """)
-                "isnot" -> this.nest("""
-                    ${op.pos.pre()}(type(${e.tostr(true)}) /= ${e2.tostr(true)})
-                """)
-                else  -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
+                "is"    -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "isnot" -> this.nest("isnot'(${e.tostr(true)}, ${e2.tostr(true)})")
+                else    -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }
         }
         return e

@@ -32,7 +32,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "deref", "move", "print", "println", "type",
+    "copy", "deref", "move", "print", "println", "tags", "type",
     "op_slash_equals", "op_equals_equals", "op_hash"
 )
 

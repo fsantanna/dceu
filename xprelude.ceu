@@ -85,3 +85,16 @@ func {<} (v1,v2) {
     }
     `:bool ($v1.Number < $v2.Number)`
 }
+
+func is' (v1,v2) {
+    ifs {
+        (type(v2) /= :tag) -> false
+        (type(v1) == v2)   -> true
+        tags(v1,v2)        -> true
+        else -> false
+    }
+}
+
+func isnot' (v1,v2) {
+    not is'(v1,v2)
+}

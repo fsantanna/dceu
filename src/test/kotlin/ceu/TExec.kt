@@ -1553,10 +1553,10 @@ class TExec {
         assert(out == "8\n2\n2\n") { out }
     }
 
-    // TAGS
+    // TYPE
 
     @Test
-    fun tag1() {
+    fun type1() {
         val out = all("""
             var t
             set t = type(1)
@@ -1566,24 +1566,11 @@ class TExec {
         """)
         assert(out == ":number\n:tag\n:tag\n") { out }
     }
+
+    // TAGS
+
     @Test
-    @Ignore
-    fun todo_tag2_err() {
-        val out = all("""
-            tags()
-        """)
-        assert(out == "-10\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_tag3_err() {
-        val out = all("""
-            tags(1,2)
-        """)
-        assert(out == "-10\n") { out }
-    }
-    @Test
-    fun tag2() {
+    fun tags1() {
         val out = all("""
             println(:xxx)
             println(:xxx == :yyy)
@@ -1594,7 +1581,7 @@ class TExec {
         assert(out == ":xxx\nfalse\ntrue\ntrue\nfalse\n") { out }
     }
     @Test
-    fun tag3() {
+    fun tags2() {
         val out = all("""
             func () {
                 println(:xxx)
@@ -1606,7 +1593,7 @@ class TExec {
         assert(out == ":xxx\n:xxx\n") { out }
     }
     @Test
-    fun tag4() {
+    fun tags3() {
         val out = all("""
             func () {
                 println(:Xxx.Yyy)
@@ -1616,6 +1603,50 @@ class TExec {
             }()
         """)
         assert(out == ":Xxx.Yyy\n:1.2.3\n") { out }
+    }
+    @Test
+    fun todo_tags4_err() {
+        val out = all("""
+            tags([])
+        """)
+        assert(out.contains("ceu_tags_f: Assertion `n >= 2' failed")) { out }
+    }
+    @Test
+    fun tags5_err() {
+        val out = all("""
+            tags(1,2)
+        """)
+        assert(out.contains("Assertion `dyn->type > CEU_VALUE_DYNAMIC'")) { out }
+    }
+    @Test
+    fun tags6_err() {
+        val out = all("""
+            tags([],2)
+        """)
+        assert(out.contains("Assertion `tag->type == CEU_VALUE_TAG'")) { out }
+    }
+    @Test
+    fun tags7_err() {
+        val out = all("""
+            tags([],:x,nil)
+        """)
+        assert(out.contains("Assertion `bool->type == CEU_VALUE_BOOL' failed")) { out }
+    }
+    @Test
+    fun tags8() {
+        val out = all("""
+            var t
+            set t = []
+            var x1
+            set x1 = tags(t,:x,true)
+            var x2
+            set x2 = tags(t,:x,true)
+            println(x1, x2)
+            set x1 = tags(t,:x,false)
+            set x2 = tags(t,:x,false)
+            println(x1, x2)
+        """)
+        assert(out == "true\tfalse\ntrue\tfalse\n") { out }
     }
 
     // DEFER
