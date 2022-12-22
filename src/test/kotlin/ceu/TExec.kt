@@ -527,7 +527,7 @@ class TExec {
         assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
     }
     @Test
-    fun todo_vector10_pop() {
+    fun todo_vector10_pop_acc() {
         val out = all("""
             var v
             set v = #[1,2,3]
@@ -1748,7 +1748,6 @@ class TExec {
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
     }
-
 
     // MISC
 

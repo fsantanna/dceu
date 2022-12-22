@@ -239,11 +239,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
                             }
                             { // DEFERS ${this.tk.dump()}
-                                ceu_ret = CEU_RET_RETURN;
-                                do {
-                                    ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
-                                } while (0);
-                                assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in defer");
+                                ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                                 //CEU_CONTINUE_ON_THROW();
                             }
                             { // relink blocks
