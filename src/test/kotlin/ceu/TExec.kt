@@ -1237,7 +1237,11 @@ class TExec {
         """
         )
         //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 0, col 0) : return error\n" +
+                "anon : (lin 2, col 13) : return error\n" +
+                "core library : set error : incompatible scopes\n" +
+                "anon : (lin 7, col 19) : return error\n" +
+                "anon : (lin 8, col 21) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun catch9() {
