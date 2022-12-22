@@ -21,7 +21,8 @@ fun Coder.main (): String {
         struct CEU_Tags_List;
         struct CEU_Tags_Names;
         struct CEU_Block;
-            
+        struct CEU_Error_List;
+
         typedef enum {
             CEU_RET_THROW = 0,
             CEU_RET_YIELD,
@@ -39,6 +40,16 @@ fun Coder.main (): String {
 
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
+        #define CEU_CONTINUE_ON_THROW_CAT(msg) {            \
+            if (ceu_ret == CEU_RET_THROW) {                 \
+                static CEU_Error_List err = { msg, NULL };  \
+                if (ceu_error_list != NULL) {               \
+                    err.next = ceu_error_list;              \
+                }                                           \
+                ceu_error_list = &err;                      \
+                continue;                                   \
+            }                                               \
+        }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR_THROW() { CEU_CONTINUE_ON_CLEAR(); CEU_CONTINUE_ON_THROW(); }
@@ -220,7 +231,12 @@ fun Coder.main (): String {
         typedef struct CEU_Tags_List {
             int tag;
             struct CEU_Tags_List* next;
-        } CEU_Tags_List;        
+        } CEU_Tags_List;
+
+        typedef struct CEU_Error_List {
+            char* msg;
+            struct CEU_Error_List* next;
+        } CEU_Error_List;
     """ +
     """ // GLOBALS
         struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int type, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
@@ -231,7 +247,7 @@ fun Coder.main (): String {
         ${this.tags.map { "CEU_TAG_DEFINE(${it.second},\"${it.first}\")\n" }.joinToString("")}
 
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
-        char ceu_err_error_msg[256];
+        CEU_Error_List* ceu_error_list = NULL;
         
         CEU_Value CEU_EVT_NIL = { CEU_VALUE_NIL }; 
         CEU_Value CEU_EVT_CLEAR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_clear} };
@@ -424,7 +440,8 @@ fun Coder.main (): String {
                 src->hold = dst;
                 src->isperm = src->isperm || isperm;
             } else if (src->hold->depth > dst->depth) {
-                strncpy(ceu_err_error_msg, "core library : set error : incompatible scopes", 256);
+                static CEU_Error_List err = { "core library : set error : incompatible scopes", NULL };
+                ceu_error_list = &err;
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {
                 src->isperm = src->isperm || isperm;
@@ -620,7 +637,8 @@ fun Coder.main (): String {
         
         CEU_RET ceu_vector_get (CEU_Dynamic* vec, int i) {
             if (i >= vec->Vector.n) {
-                strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
+                static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
+                ceu_error_list = &err;
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             int sz = ceu_tag_to_size(vec->Vector.type);
@@ -689,20 +707,23 @@ fun Coder.main (): String {
         
         CEU_RET ceu_col_check (CEU_Value* col, CEU_Value* idx) {
             if (col->type<CEU_VALUE_TUPLE || col->type>CEU_VALUE_DICT) {                
-                strncpy(ceu_err_error_msg, "core library : index error : expected collection", 256);
+                static CEU_Error_List err = { "core library : index error : expected collection", NULL };
+                ceu_error_list = &err;
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             if (col->type != CEU_VALUE_DICT) {
                 if (idx->type != CEU_VALUE_NUMBER) {
-                    strncpy(ceu_err_error_msg, "core library : index error : expected number", 256);
+                    static CEU_Error_List err = { "core library : index error : expected number", NULL };
+                    ceu_error_list = &err;
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 if (col->type==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
-                    strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
-                    CEU_THROW_RET(CEU_ERR_ERROR);
+                    static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
+                    ceu_error_list = &err;
                 }
                 if (col->type==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
-                    strncpy(ceu_err_error_msg, "core library : index error : out of bounds", 256);
+                    static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
+                    ceu_error_list = &err;
                     CEU_THROW_RET(CEU_ERR_ERROR); // accepts v[#v]
                 }
             }
@@ -1058,7 +1079,8 @@ fun Coder.main (): String {
         CEU_RET ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
             if (args[0]->type != CEU_VALUE_VECTOR) {
-                strncpy(ceu_err_error_msg, "core library : length error : not a vector", 256);
+                static CEU_Error_List err = { "core library : length error : not a vector", NULL };
+                ceu_error_list = &err;
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Vector.n} };
@@ -1236,7 +1258,10 @@ fun Coder.main (): String {
                 ${this.code}
                 return 0;
             } while (0);
-            fprintf(stderr, "%s\n", ceu_err_error_msg);
+            while (ceu_error_list != NULL) {
+                fprintf(stderr, "%s\n", ceu_error_list->msg);
+                ceu_error_list = ceu_error_list->next;
+            }
             return 1;
         }
     """)
