@@ -290,7 +290,8 @@ class TBook {
             println(fact(-1))
         """, true
         )
-        assert(out == "anon : (lin 5, col 21) : throw error : uncaught exception\n") { out }
+        assert(out == "anon : (lin 13, col 21) : call error\n" +
+                "anon : (lin 5, col 21) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun todo_pg_31_short() {    // TODO: user and/or

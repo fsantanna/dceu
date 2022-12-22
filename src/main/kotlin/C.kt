@@ -38,17 +38,21 @@ fun Coder.main (): String {
         CEU_RET ceu_type_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
         int ceu_as_bool (struct CEU_Value* v);
 
+        #define CEU_THROW_MSG(msg) {                    \
+            static CEU_Error_List err = { msg, NULL };  \
+            if (ceu_error_list != NULL) {               \
+                err.next = ceu_error_list;              \
+            }                                           \
+            ceu_error_list = &err;                      \
+        }
+        #define CEU_THROW_DO_MSG(v,s,msg) { CEU_THROW_MSG(msg); CEU_THROW_DO(v,s); }
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
         #define CEU_THROW_RET(v) { ceu_acc=v; return CEU_RET_THROW; }
-        #define CEU_CONTINUE_ON_THROW_CAT(msg) {            \
-            if (ceu_ret == CEU_RET_THROW) {                 \
-                static CEU_Error_List err = { msg, NULL };  \
-                if (ceu_error_list != NULL) {               \
-                    err.next = ceu_error_list;              \
-                }                                           \
-                ceu_error_list = &err;                      \
-                continue;                                   \
-            }                                               \
+        #define CEU_CONTINUE_ON_THROW_MSG(msg) {    \
+            if (ceu_ret == CEU_RET_THROW) {         \
+                CEU_THROW_MSG(msg);                  \
+                continue;                           \
+            }                                       \
         }
         #define CEU_CONTINUE_ON_THROW() { if (ceu_ret==CEU_RET_THROW) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
@@ -69,9 +73,9 @@ fun Coder.main (): String {
         
         void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
         void  ceu_coros_destroy  (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
-        char* ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
-        char* ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        char* ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        CEU_RET ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
+        CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
         void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
@@ -440,8 +444,7 @@ fun Coder.main (): String {
                 src->hold = dst;
                 src->isperm = src->isperm || isperm;
             } else if (src->hold->depth > dst->depth) {
-                static CEU_Error_List err = { "core library : set error : incompatible scopes", NULL };
-                ceu_error_list = &err;
+                CEU_THROW_MSG("core library : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {
                 src->isperm = src->isperm || isperm;
@@ -637,8 +640,7 @@ fun Coder.main (): String {
         
         CEU_RET ceu_vector_get (CEU_Dynamic* vec, int i) {
             if (i >= vec->Vector.n) {
-                static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
-                ceu_error_list = &err;
+                CEU_THROW_MSG("core library : index error : out of bounds");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             int sz = ceu_tag_to_size(vec->Vector.type);
@@ -707,23 +709,20 @@ fun Coder.main (): String {
         
         CEU_RET ceu_col_check (CEU_Value* col, CEU_Value* idx) {
             if (col->type<CEU_VALUE_TUPLE || col->type>CEU_VALUE_DICT) {                
-                static CEU_Error_List err = { "core library : index error : expected collection", NULL };
-                ceu_error_list = &err;
+                CEU_THROW_MSG("core library : index error : expected collection");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             if (col->type != CEU_VALUE_DICT) {
                 if (idx->type != CEU_VALUE_NUMBER) {
-                    static CEU_Error_List err = { "core library : index error : expected number", NULL };
-                    ceu_error_list = &err;
+                    CEU_THROW_MSG("core library : index error : expected number");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 if (col->type==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
-                    static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
-                    ceu_error_list = &err;
+                    CEU_THROW_MSG("core library : index error : out of bounds");
+                    CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 if (col->type==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
-                    static CEU_Error_List err = { "core library : index error : out of bounds", NULL };
-                    ceu_error_list = &err;
+                    CEU_THROW_MSG("core library : index error : out of bounds");
                     CEU_THROW_RET(CEU_ERR_ERROR); // accepts v[#v]
                 }
             }
@@ -788,7 +787,7 @@ fun Coder.main (): String {
             return ret;
         }
         
-        char* ceu_coros_create (CEU_Block* hld, int max, CEU_Value* ret) {
+        CEU_RET ceu_coros_create (CEU_Block* hld, int max, CEU_Value* ret) {
             CEU_Dynamic* coros = malloc(sizeof(CEU_Dynamic));
             assert(coros != NULL);
             *coros = (CEU_Dynamic) {
@@ -806,12 +805,13 @@ fun Coder.main (): String {
             
             assert(CEU_RET_RETURN == ceu_block_set(hld, coros, 1));  // 1=cannot escape this block b/c of tasks
 
-            return NULL;
+            return CEU_RET_RETURN;
         }
         
-        char* ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
+        CEU_RET ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
             if (task->type != CEU_VALUE_TASK) {
-                return "coroutine error : expected task";
+                CEU_THROW_MSG("core library : coroutine error : expected task");
+                CEU_THROW_RET(CEU_ERR_ERROR);
             }
             
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
@@ -839,19 +839,21 @@ fun Coder.main (): String {
             
             assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
 
-            return NULL;
+            return CEU_RET_RETURN;
         }
         
-        char* ceu_coro_create_in (CEU_Block* hld, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
+        CEU_RET ceu_coro_create_in (CEU_Block* hld, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (coros->type != CEU_VALUE_COROS) {
-                return "coroutine error : expected coroutines";
+                CEU_THROW_MSG("core library : coroutine error : expected coroutines");
+                CEU_THROW_RET(CEU_ERR_ERROR);
             }
             if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.cur==coros->Bcast.Coros.max) {
                 *ok = 0;
-                return NULL;
+                return CEU_RET_RETURN;
             }
             if (task->type != CEU_VALUE_TASK) {
-                return "coroutine error : expected task";
+                CEU_THROW_MSG("core library : coroutine error : expected task");
+                CEU_THROW_RET(CEU_ERR_ERROR);
             }
             
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
@@ -875,7 +877,7 @@ fun Coder.main (): String {
             
             ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
             coros->Bcast.Coros.cur++;
-            return NULL;
+            return CEU_RET_RETURN;
         }
         
         CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro, CEU_Value* ret) {
@@ -1079,8 +1081,7 @@ fun Coder.main (): String {
         CEU_RET ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
             assert(n == 1);
             if (args[0]->type != CEU_VALUE_VECTOR) {
-                static CEU_Error_List err = { "core library : length error : not a vector", NULL };
-                ceu_error_list = &err;
+                CEU_THROW_MSG("core library : length error : not a vector");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Vector.n} };

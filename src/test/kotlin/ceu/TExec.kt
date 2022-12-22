@@ -189,7 +189,8 @@ class TExec {
             println([1][2])
         """.trimIndent())
         //assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
-        assert(out == "core library : index error : out of bounds\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error\n" +
+                "core library : index error : out of bounds\n") { out }
     }
     @Test
     fun tuple4_free() {
