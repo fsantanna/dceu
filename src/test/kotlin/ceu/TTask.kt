@@ -1,5 +1,6 @@
 package ceu
 
+import org.junit.Ignore
 import org.junit.Test
 
 fun yield (ok: String = "ok"): String {
@@ -39,8 +40,7 @@ class TTask {
         val out = all("""
             coroutine(func () {nil})
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 11)\n" +
-                "core library : coroutine error : expected task\n") { out }
+        assert(out == "anon : (lin 1, col 11) : coroutine error : expected task\n") { out }
     }
     @Test
     fun task3_err() {
@@ -210,9 +210,8 @@ class TTask {
         """)
         //assert(out == "1\t2\t3\n") { out }
         //assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 19) : call error\n" +
-                "anon : (lin 3, col 23) : call error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 19) : return error\n" +
+                "anon : (lin 3, col 23) : return error : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -276,8 +275,7 @@ class TTask {
         val out = all("""
             spawn (func () {nil}) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : spawn error\n" +
-                "core library : coroutine error : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 20) : coroutine error : expected task\n") { out }
     }
     @Test
     fun spawn4_err() {
@@ -317,7 +315,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn67_err() {
@@ -330,7 +328,7 @@ class TTask {
             set co = if true { spawn t() } else { nil }
         """)
         //assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn7_err() {
@@ -345,8 +343,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 13) : call error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 13) : return error : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn8_err() {
@@ -361,8 +358,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 19) : call error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 19) : return error : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn9() {
@@ -433,8 +429,7 @@ class TTask {
         """)
         //assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 19) : call error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 19) : return error : set error : incompatible scopes\n") { out }
     }
 
     // THROW
@@ -503,7 +498,7 @@ class TTask {
                 broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : call error\n" +
+        assert(out == "anon : (lin 2, col 20) : return error\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n") { out }
     }
     @Test
@@ -1214,8 +1209,7 @@ class TTask {
             }
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 9, col 21) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool12_err_scope() {
@@ -1236,8 +1230,7 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 10, col 25) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pool13_scope() {
@@ -1300,6 +1293,7 @@ class TTask {
         )
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
+    @Ignore
     @Test
     fun pool16_17_term() {
         val out = ceu.all(
@@ -1834,8 +1828,8 @@ class TTask {
                 println(x)
             }) ()
         """, true)
-        assert(out == "anon : (lin 2, col 20) : call error\n" +
-                "anon : (lin 5, col 24) : call error\n" +
+        assert(out == "anon : (lin 2, col 20) : return error\n" +
+                "anon : (lin 5, col 24) : return error\n" +
                 "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
@@ -2120,8 +2114,7 @@ class TTask {
         """, true)
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : call error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : return error : set error : incompatible scopes\n") { out }
     }
     @Test
     fun esc2() {
@@ -2135,8 +2128,7 @@ class TTask {
                 set xxx = t ;; error
             }
         """)
-        assert(out == "anon : (lin 8, col 21) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
 
     // TRACK
@@ -2236,8 +2228,7 @@ class TTask {
             println(x)
         """)
         //assert(out.contains("terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 8, col 21) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track7() {
@@ -2278,8 +2269,7 @@ class TTask {
             println(x)
         """)
         //assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 12, col 21) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track9() {
@@ -2347,8 +2337,7 @@ class TTask {
             }
         """)
         //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 13, col 25) : access error\n" +
-                "core library : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun track12_throw() {

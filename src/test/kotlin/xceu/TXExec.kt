@@ -788,7 +788,7 @@ class TXExec {
                 println(x)
             }
         """)
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
     @Test
     fun await16_task_rets() {
@@ -1026,7 +1026,7 @@ class TXExec {
             println(1)
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
     @Test
     fun catch7() {
@@ -1056,7 +1056,7 @@ class TXExec {
             println(x)
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
     @Test
     fun while1() {
@@ -1100,7 +1100,7 @@ class TXExec {
             }})
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == "core library : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n") { out }
     }
 
 }
