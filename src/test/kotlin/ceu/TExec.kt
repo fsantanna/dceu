@@ -1612,11 +1612,11 @@ class TExec {
         assert(out.contains("ceu_tags_f: Assertion `n >= 2' failed")) { out }
     }
     @Test
-    fun tags5_err() {
+    fun tags5() {
         val out = all("""
-            tags(1,2)
+            println(tags(1,:2))
         """)
-        assert(out.contains("Assertion `dyn->type > CEU_VALUE_DYNAMIC'")) { out }
+        assert(out == "false\n") { out }
     }
     @Test
     fun tags6_err() {

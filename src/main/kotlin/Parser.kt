@@ -517,8 +517,8 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_ms_$N = ${clk.ms}
                                 while ceu_ms_$N > 0 {
-                                    await (evt is :dict) and (evt is :timer)
-                                    set ceu_ms_$N = ceu_ms_$N - evt[:dt]
+                                    await (evt is :frame)
+                                    set ceu_ms_$N = ceu_ms_$N - evt.0
                                 }
                             }
                         """)//.let { println(it.tostr()); it }

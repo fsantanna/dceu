@@ -142,6 +142,7 @@ class TXExec {
         assert(out == "ERROR\n") { out }
     }
 
+
     // OPS: not, and, or
 
     @Test
@@ -220,7 +221,7 @@ class TXExec {
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3
-        """)
+        """, true)
         assert(out == "1\n1\n2\n2\n") { out }
     }
 
@@ -918,7 +919,7 @@ class TXExec {
              broadcast in :global, @[(:sub,:draw),(:v,99)]
              broadcast in :global, :show
              broadcast in :global, @[(:sub,:draw),(:v,2)]
-        """)
+        """, true)
         assert(out == "0\n1\n2\n") { out }
     }
 
