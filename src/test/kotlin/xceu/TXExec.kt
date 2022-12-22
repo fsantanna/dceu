@@ -130,7 +130,7 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun todo_ifs6() {
+    fun todo_ifs6_nocnd() {
         val out = all("""
             var x = ifs 20 {
                 true -> ifs {
@@ -458,9 +458,9 @@ class TXExec {
                 }
             }            
             spawn in coroutines(), T()
-             broadcast in :global, nil
-        """)
-        assert(out == "1\n") { out }
+            broadcast in :global, nil
+        """, true)
+        assert(out == "anon : (lin 3, col 27) : throw error : uncaught exception\n") { out }
     }
     @Test
     fun paror11_ret() {
@@ -523,7 +523,7 @@ class TXExec {
         assert(out == "1\t3\n") { out }
     }
     @Test
-    fun todo_index2_dict() {
+    fun index2_dict() {
         val out = all("""
             var t = @[ (:x,1), (:y,2) ]
             println(t.x, t.y)
@@ -531,7 +531,7 @@ class TXExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_vector1() {
+    fun todo_vector1_size() {
         val out = all("""
             var v = #[]
             println(${D}v, v)
@@ -577,23 +577,59 @@ class TXExec {
             }
             do {
                 println(1)
-                 broadcast in :global, @[(:type,:y)]
+                broadcast in :global, @[(:type,:y)]
                 println(2)
-                 broadcast in :global, @[(:type,:x)]
+                broadcast in :global, @[(:type,:x)]
                 println(3)
             }
         """)
         assert(out == "0\n1\n2\n99\n3\n") { out }
     }
     @Test
-    fun await2_err() {
+    fun await2() {
+        val out = all("""
+            spawn {
+                println(0)
+                await evt is :x
+                println(99)
+            }
+            do {
+                println(1)
+                broadcast in :global, tags([], :y, true)
+                println(2)
+                broadcast in :global, tags([], :x, true)
+                println(3)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun await3() {
+        val out = all("""
+            spawn {
+                println(0)
+                await :x
+                println(99)
+            }
+            do {
+                println(1)
+                broadcast in :global, tags([], :y, true)
+                println(2)
+                broadcast in :global, tags([], :x, true)
+                println(3)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun await4_err() {
         val out = all("""
             await f()
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
     @Test
-    fun await3() {
+    fun await5() {
         val out = ceu.all(
             """
             spawn task () {
@@ -608,28 +644,28 @@ class TXExec {
         assert(out == "@[]\n") { out }
     }
     @Test
-    fun every4() {
+    fun every6() {
         val out = all("""
             spawn {
                 println(0)
-                every evt[:type]==:x {
-                    println(evt[:v])
+                every :x {
+                    println(evt.0)
                 }
             }
             do {
                 println(1)
-                 broadcast in :global, @[(:type,:x),(:v,10)]
+                broadcast in :global, tags([10], :x, true)
                 println(2)
-                 broadcast in :global, @[(:type,:y),(:v,20)]
+                broadcast in :global, tags([20], :y, true)
                 println(3)
-                 broadcast in :global, @[(:type,:x),(:v,30)]
+                broadcast in :global, tags([30], :x, true)
                 println(4)
             }
-        """)
+        """, true)
         assert(out == "0\n1\n10\n2\n3\n30\n4\n") { out }
     }
     @Test
-    fun await5_clk() {
+    fun await7_clk() {
         val out = ceu.all("""
             spawn task () {
                 while (true) {
@@ -646,7 +682,7 @@ class TXExec {
         assert(out == "0\n1\n999\n2\n") { out }
     }
     @Test
-    fun every6_clk() {
+    fun every8_clk() {
         val out = ceu.all("""
             spawn task () {
                 every 10s {
@@ -664,7 +700,7 @@ class TXExec {
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
     }
     @Test
-    fun todo_every7_clk() { // awake twice from single bcast
+    fun todo_every9_clk_multi() { // awake twice from single bcast
         val out = ceu.all("""
             spawn task () {
                 every 10s {
@@ -672,13 +708,13 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast in :global, @[(:type,:timer),(:dt,20000)]
+            broadcast in :global, tags([20000], :frame, true)
             println(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
     }
     @Test
-    fun await8_task() {
+    fun await10_task() {
         val out = all("""
             spawn {
                 await spawn { 1 }
@@ -689,7 +725,7 @@ class TXExec {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun await9_task() {
+    fun await11_task() {
         val out = all("""
             spawn {
                 spawn {
@@ -704,7 +740,7 @@ class TXExec {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun await10_task() {
+    fun await12_task() {
         val out = all("""
             spawn {
                 spawn {
@@ -721,7 +757,7 @@ class TXExec {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun await11_task_rets() {
+    fun await13_task_rets() {
         val out = all("""
             spawn {
                 var y = await spawn {
@@ -735,14 +771,14 @@ class TXExec {
         assert(out == "[2]\n") { out }
     }
     @Test
-    fun await12_task_err() {
+    fun await14_task_err() {
         val out = all("""
             var x = await spawn in nil, nil()
         """)
         assert(out == "anon : (lin 2, col 27) : expected non-pool spawn : have \"spawn\"") { out }
     }
     @Test
-    fun await13_task_rets() {
+    fun await15_task_rets() {
         val out = all("""
             spawn {
                 var x = await spawn {
@@ -755,7 +791,7 @@ class TXExec {
         assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun await14_task_rets() {
+    fun await16_task_rets() {
         val out = all("""
             spawn {
                 var x = await spawn {
@@ -776,7 +812,7 @@ class TXExec {
         assert(out == "1\t[2]\t3\n") { out }
     }
     @Test
-    fun await15_task() {
+    fun await17_task() {
         val out = all("""
             task Main_Menu () {
                 await false
@@ -856,11 +892,11 @@ class TXExec {
              broadcast in :global, :b
              broadcast in :global, :a
              broadcast in :global, :b
-        """)
+        """, true)
         assert(out == "1\n1\n") { out }
     }
     @Test
-    fun todo_valgrind_task6_pub_fake() {
+    fun task6_pub_fake() {
         val out = all("""
             task T () {
                 set pub = 10
@@ -915,11 +951,11 @@ class TXExec {
                 }
             }
             spawn T (0)
-             broadcast in :global, @[(:sub,:draw),(:v,1)]
-             broadcast in :global, :hide
-             broadcast in :global, @[(:sub,:draw),(:v,99)]
-             broadcast in :global, :show
-             broadcast in :global, @[(:sub,:draw),(:v,2)]
+            broadcast in :global, @[(:sub,:draw),(:v,1)]
+            broadcast in :global, :hide
+            broadcast in :global, @[(:sub,:draw),(:v,99)]
+            broadcast in :global, :show
+            broadcast in :global, @[(:sub,:draw),(:v,2)]
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -949,29 +985,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_return_break3() {
-        val out = all("""
-            var x = while true {
-                break 1
-            }
-            println(x)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun todo_return_break4() {
-        val out = all("""
-            var x = while false {
-                while true {
-                    break 1
-                }
-            }
-            println(x)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun break5() {
+    fun break3() {
         val out = all("""
             while true { {:break2}
                 while true { {:break1}
@@ -986,143 +1000,107 @@ class TXExec {
     // THROW / CATCH
 
     @Test
-    fun todo_catch3() {
+    fun catch3() {
         val out = all("""
             var x
             set x = catch :x {
-                catch 2 {
-                    throw((:x,10))
+                catch :2 {
+                    throw(tags([10], :x, true))
                     println(9)
                 }
                 println(9)
-            }
+            }.0
             println(x)
-        """)
+        """, true)
         assert(out == "10\n") { out }
     }
     @Test
-    fun todo_catch6_err() {
+    fun catch6_err() {
         val out = all("""
             catch :x {
                 var x
                 set x = []
-                throw((:x,) x)
+                throw(tags(x,:x,true))
                 println(9)
             }
             println(1)
-        """.trimIndent())
-        assert(out == "anon : (lin 4, col 15) : set error : incompatible scopes\n") { out }
+        """, true)
+        //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun todo_catch7() {
+    fun catch7() {
         val out = all("""
             do {
                 println(catch :x {
-                    throw((:x,[10]))
+                    throw(tags([10],:x,true))
                     println(9)
                 })
             }
-        """)
+        """, true)
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun todo_catch8() {
+    fun catch8() {
         val out = all("""
             var x
             set x = catch :x {
                 var y
                 set y = catch :y {
-                    throw((:y,[10]))
+                    throw(tags([10],:y,true))
                     println(9)
                 }
                 ;;println(1)
                 y
             }
             println(x)
-        """.trimIndent())
-        assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
+        """.trimIndent(), true)
+        //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun todo_catch10() {
+    fun while1() {
         val out = all("""
-            catch :e1 {
-                throw([])
-                println(9)
-            }
-            println(1)
-        """)
+            println(catch :x { while true { throw(tags([1],:x,true)) }}.0)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_while1() {
+    fun while2() {
         val out = all("""
-            println(catch :x { while true { throw((:x,1)) }})
-        """)
+            println(catch :x { while true { throw(tags([1],:x,true)) }}.0)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_while2() {
+    fun while3() {
         val out = all("""
-            println(catch :x { while true { []; throw((:x,1)) }})
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun todo_while3() {
-        val out = all("""
-            println(catch 2 { while true { throw((2,[1])) }})
-        """)
+            println(catch :2 { while true { throw(tags([1],:2,true)) }})
+        """, true)
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun todo_while4() {
+    fun while4() {
         val out = all("""
-            println(catch 2 { while true {
+            println(catch :x { while true {
                 var x
                 set x = [1] ;; memory released
-                throw((2,1))
-            }})
-        """)
+                throw(tags([1],:x,true))
+            }}.0)
+        """, true)
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_while5_err() {
+    fun while5_err() {
         val out = all("""
-            println(catch 2 { while true {
+            println(catch :x { while true {
                 var x
                 set x = [1]
-                throw((2,x))
+                throw(tags(x,:x,true))
             }})
-        """.trimIndent())
-        assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
+        """.trimIndent(), true)
+        //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
+        assert(out == "core library : set error : incompatible scopes\n") { out }
     }
 
-    @Test
-    @Ignore
-    fun todo_scope_func6() {
-        val out = all("""
-            var f
-            set f = func (x,s) {
-                [x]:s
-            }
-            var x
-            set x = f(10)
-            println(x)
-        """)
-        assert(out == "[10]\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_scope_scope3() {
-        val out = all("""
-            var x
-            do {
-                var a
-                set a = [1,2,3] :x
-                set x = a
-            }
-            println(x)
-        """)
-        assert(out == "[1,2,3]") { out }
-    }
 }

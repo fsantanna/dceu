@@ -257,7 +257,15 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("catch") -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
+            this.acceptFix("catch") -> {
+                val cnd = this.expr()
+                val blk = this.block()
+                if (XCEU && (cnd is Expr.Tag)) {   // catch :err
+                    this.nest("catch (err is ${cnd.tostr(true)}) ${blk.tostr(true)}")
+                } else {
+                    Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
+                }
+            }
             this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU,XCEU)!!)
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
@@ -498,6 +506,9 @@ class Parser (lexer_: Lexer)
                 val spw = this.checkFix("spawn")
                 val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
                 when {
+                    (cnd is Expr.Tag) -> {   // await :key
+                        this.nest("await evt is ${cnd.tk.str}")
+                    }
                     spw -> { // await spawn T()
                         val e = this.expr()
                         if (!(e is Expr.Spawn && e.coros==null)) {
