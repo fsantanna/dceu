@@ -3,7 +3,6 @@ package xceu
 import ceu.all
 import ceu.lexer
 import ceu.yield
-import org.junit.Ignore
 import org.junit.Test
 
 class TXExec {
@@ -47,28 +46,6 @@ class TXExec {
         """.trimIndent())
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
-    }
-
-    // NO BLOCK
-    @Test
-    @Ignore
-    fun todo_if5_noblk() {
-        val out = all("""
-            var x
-            set x = 10
-            set x = if false 1
-            println(x)
-        """)
-        assert(out == "nil\n") { out }
-    }
-    @Test
-    @Ignore
-    fun todo_if6_noblk() {
-        val out = all("""
-            var x = if (true) 1 else 0
-            println(x)
-        """)
-        assert(out == "1\n") { out }
     }
 
     // IFS
@@ -942,6 +919,7 @@ class TXExec {
                     println(pub)
                     await false
                 }
+                nil
             }
             spawn T()
             broadcast in :global, nil
@@ -1075,10 +1053,10 @@ class TXExec {
     @Test
     fun catch6_err() {
         val out = all("""
-            catch :x {
+            catch err==[] {
                 var x
                 set x = []
-                throw(tags(x,:x,true))
+                throw(x)
                 println(9)
             }
             println(1)
@@ -1150,7 +1128,6 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
-    @Ignore
     @Test
     fun while5_err() {
         val out = all("""

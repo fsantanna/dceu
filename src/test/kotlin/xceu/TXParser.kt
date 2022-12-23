@@ -5,7 +5,6 @@ import N
 import Parser
 import ceu.lexer
 import ceu.trap
-import org.junit.Ignore
 import org.junit.Test
 import tostr
 
@@ -60,24 +59,6 @@ class TXParser {
         val e = parser.exprPrim()
         assert(e is Expr.While && e.body.es[0] is Expr.Nil)
         assert(e.tostr() == "while true {\nnil\n}") { e.tostr() }
-    }
-    @Test
-    @Ignore
-    fun todo_if3_noblk() {
-        val l = lexer("if true 1")
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.If)
-        assert(e.tostr() == "if true 1 else nil\n") { e.tostr() }
-    }
-    @Test
-    @Ignore
-    fun todo_if4_noblk() {
-        val l = lexer("if true 1 else 2")
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.If)
-        assert(e.tostr() == "if true 1 else 2\n") { e.tostr() }
     }
 
     // IFS

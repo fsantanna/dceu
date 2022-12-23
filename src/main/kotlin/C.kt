@@ -38,12 +38,13 @@ fun Coder.main (): String {
         CEU_RET ceu_type_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
         int ceu_as_bool (struct CEU_Value* v);
 
-        #define CEU_THROW_MSG(msg) {                    \
-            static CEU_Error_List err = { msg, NULL };  \
-            if (ceu_error_list != NULL) {               \
-                err.next = ceu_error_list;              \
-            }                                           \
-            ceu_error_list = &err;                      \
+        #define CEU_THROW_MSG(msg) {                       \
+            static CEU_Error_List err = { msg, 0, NULL };  \
+            err.shown = 0;                                 \
+            if (ceu_error_list != NULL) {                  \
+                err.next = ceu_error_list;                 \
+            }                                              \
+            ceu_error_list = &err;                         \
         }
         #define CEU_THROW_DO_MSG(v,s,msg) { CEU_THROW_MSG(msg); CEU_THROW_DO(v,s); }
         #define CEU_THROW_DO(v,s) { ceu_ret=CEU_RET_THROW; ceu_acc=v; s; }
@@ -239,6 +240,7 @@ fun Coder.main (): String {
 
         typedef struct CEU_Error_List {
             char* msg;
+            int shown;
             struct CEU_Error_List* next;
         } CEU_Error_List;
     """ +
@@ -1273,6 +1275,11 @@ fun Coder.main (): String {
                     } else {
                         fprintf(stderr, "%s\n", msg);
                     }
+                    if (cur->shown) {
+                        fprintf(stderr, "-=- duplicate exception : stop now -=-\n");
+                        break;
+                    }
+                    cur->shown = 1;
                     cur = cur->next;
                 }
             }

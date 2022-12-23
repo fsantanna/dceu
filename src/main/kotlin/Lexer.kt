@@ -350,7 +350,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     yield(Tk.Fix("]", pos))
                 }
-
                 else -> {
                     TODO("$x - $pos")
                 }

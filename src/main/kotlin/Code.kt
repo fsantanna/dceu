@@ -230,7 +230,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     """
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                         ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
-                                        if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                        if (ceu_ret == CEU_RET_THROW) {
+                                            // prioritize scope error over whatever there is now
                                             ceu_acc_$n = ceu_acc;
                                         }
                                         ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);

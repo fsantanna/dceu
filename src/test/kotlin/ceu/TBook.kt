@@ -101,7 +101,6 @@ class TBook {
         assert(out == "3\n8\n") { out }
     }
     @Test
-    @Ignore
     fun todo_pg_12_twice_quad() {
         val out = all(
             """
@@ -115,7 +114,7 @@ class TBook {
             }
             var quad
             set quad = func (x) {
-                twice(square)
+                twice(square,x)
             }
             println(twice(square, 2), quad(2))
         """, true

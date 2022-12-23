@@ -1293,29 +1293,6 @@ class TTask {
         )
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
-    @Ignore
-    @Test
-    fun pool16_17_term() {
-        val out = ceu.all(
-            """
-            var ts
-            set ts = coroutines(2)
-            var T
-            set T = task () {
-                defer {
-                    println(20)
-                    println(30)
-                }
-                yield(nil)
-                throw(nil)
-            }
-            spawn in ts, T()
-            spawn in ts, T()
-            broadcast in :global, @[]
-        """
-        )
-        assert(out == "anon : (lin 11, col 17) : throw error : uncaught exception\n20\n30\n20\n30\n") { out }
-    }
     @Test
     fun pool17_term() {
         val out = ceu.all(
@@ -1508,6 +1485,25 @@ class TTask {
         """
         )
         assert(out == "999\n") { out }
+    }
+    @Test
+    fun pool24_term() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () {
+                yield(nil)
+                throw(nil)
+            }
+            spawn T()
+            spawn T()
+            broadcast in :global, @[]
+        """
+        )
+        assert(out == "anon : (lin 9, col 13) : broadcast error\n" +
+                "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
+                "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
+                "-=- duplicate exception : stop now -=-\n") { out }
     }
 
     // EVT

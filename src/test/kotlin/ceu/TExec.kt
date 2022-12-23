@@ -10,7 +10,6 @@ import Ups
 import XCEU
 import exec
 import main
-import org.junit.Ignore
 import org.junit.Test
 import tostr
 import java.io.File
@@ -1305,6 +1304,20 @@ class TExec {
         //assert(out == "1\n") { out }
         assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
     }
+    @Test
+    fun catch14() {
+        val out = all("""
+            catch err==[] {
+                var xxx
+                set xxx = []
+                throw(xxx)
+            }
+            println(1)
+        """, true)
+        //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
+        assert(out == " : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : throw error : uncaught exception\n") { out }
+    }
 
     // NATIVE
 
@@ -1490,8 +1503,8 @@ class TExec {
         """, true)
         assert(out == "-4\n") { out }
     }
-    @Ignore
-    fun todo_scope_op_id2() {
+    @Test
+    fun todo_op_id2() {
         val out = all("""
             set (+) = (-)
             println((+)(10,4))
