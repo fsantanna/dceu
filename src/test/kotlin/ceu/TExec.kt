@@ -1649,6 +1649,20 @@ class TExec {
         """)
         assert(out == "[]\tnil\ttrue\n[]\tnil\ttrue\n") { out }
     }
+    @Test
+    fun tags9() {
+        val out = all("""
+            var t
+            set t = []
+            tags(t,:x,true)
+            println(tags(t, :x))
+            tags(t,:y,true)
+            println(tags(t, :y))
+            tags(t,:x,false)
+            println(tags(t, :x))
+        """, true)
+        assert(out == "true\ntrue\nfalse\n") { out }
+    }
 
     // DEFER
 

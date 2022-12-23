@@ -2443,4 +2443,17 @@ class TTask {
         assert(out == "10\n10\n20\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun xceu4() {
+        val out = all("""
+            catch true {
+                spawn task :fake () {
+                    throw([tags([],:x,true)])
+                }()
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
 }

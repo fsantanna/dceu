@@ -318,7 +318,7 @@ fun Coder.main (): String {
                             ceu_acc = *dyn;
                             break;
                         }
-                        *cur = (*cur)->next;
+                        cur = &(*cur)->next;
                     }
                 }
             }
@@ -337,6 +337,11 @@ fun Coder.main (): String {
             while (block->tofree != NULL) {
                 CEU_Dynamic* cur = block->tofree;
                 block->tofree = cur->next;
+                while (cur->tags != NULL) {
+                    CEU_Tags_List* x = cur->tags;
+                    cur->tags = x->next;
+                    free(x);
+                }
                 switch (cur->type) {
                     case CEU_VALUE_VECTOR:
                         free(cur->Vector.mem);

@@ -1150,6 +1150,7 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Ignore
     @Test
     fun while5_err() {
         val out = all("""
