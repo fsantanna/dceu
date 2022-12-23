@@ -156,10 +156,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     // enclosing block
                                     ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                                 }
-                                if (ret == CEU_RET_THROW) {
-                                    ceu_ret = ret;
+                                if (ret!=CEU_RET_THROW || ceu_ret==CEU_RET_THROW) {
+                                    // keep the old error
+                                } else {
                                     ceu_acc_$n = ceu_acc;
                                 }
+                                ceu_ret = MIN(ceu_ret, ret);
                                 ceu_coro->Bcast.Coro.bcasting = 0;
                             }
                             ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
