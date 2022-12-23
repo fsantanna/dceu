@@ -2403,4 +2403,44 @@ class TTask {
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun xceu2() {
+        val out = all("""
+            spawn task () {
+                yield(nil)
+                println(evt)
+                spawn (task () {
+                    while (true) {
+                        println(evt)    ;; lost reference
+                        yield()
+                    }
+                }) ()
+                yield()
+            }()
+            broadcast in :global, 10
+            broadcast in :global, 20
+        """)
+        assert(out == "10\nnil\n20\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun xceu3() {
+        val out = all("""
+            spawn task () {
+                yield(nil)
+                println(evt)
+                spawn (task :fake () {
+                    while (true) {
+                        println(evt)    ;; kept reference
+                        yield()
+                    }
+                }) ()
+                yield()
+            }()
+            broadcast in :global, 10
+            broadcast in :global, 20
+        """)
+        assert(out == "10\n10\n20\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
 }

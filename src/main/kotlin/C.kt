@@ -1261,7 +1261,7 @@ fun Coder.main (): String {
             } while (0);
             {
                 CEU_Error_List* cur = ceu_error_list;
-                while (ceu_error_list != NULL) {
+                while (cur != NULL) {
                     char* msg = (cur->msg[0] == '\0') ? cur->msg+1 : cur->msg;
                     if (cur->next!=NULL && cur->next->msg[0]=='\0') {
                         fprintf(stderr, "%s", msg);

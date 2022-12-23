@@ -798,6 +798,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
+                val pass_evt = (this.proto is Expr.Proto) && this.proto.isFake && (this.args.size == 0)
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
@@ -868,10 +869,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """} +
 
                 """
-                    CEU_Value* ceu_args_$n[] = { $args_vs };
+                    CEU_Value* ceu_args_$n[] = { ${if (pass_evt) "ceu_evt" else args_vs} };
                     ceu_ret = $frame->proto->f (
                         $frame,
-                        ${this.args.size},
+                        ${if (pass_evt) -1 else this.args.size},
                         ceu_args_$n
                     );
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : return error");
