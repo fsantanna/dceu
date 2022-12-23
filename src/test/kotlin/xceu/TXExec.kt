@@ -304,6 +304,41 @@ class TXExec {
         assert(out == "2\n999\n") { out }
     }
     @Test
+    fun paror1a() {
+        val out = all("""
+            spawn task () {
+                paror {
+                    ${yield()}
+                    println(1)
+                } with {
+                    defer { println(3) }
+                    ${yield()}
+                    println(2)
+                }
+                println(999)
+            } ()
+            broadcast in :global, nil
+        """, true)
+        assert(out == "1\n3\n999\n") { out }
+    }
+    @Test
+    fun paror1b() {
+        val out = all("""
+            spawn task () {
+                paror {
+                    defer { println(3) }
+                    ${yield()}
+                    println(1)
+                } with {
+                    println(2)
+                }
+                println(999)
+            } ()
+            broadcast in :global, nil
+        """, true)
+        assert(out == "2\n3\n999\n") { out }
+    }
+    @Test
     fun paror2() {
         val out = all("""
             spawn task () {
@@ -961,6 +996,27 @@ class TXExec {
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
+    @Test
+    fun toggle3() {
+        val out = all("""
+            task T (v) {
+                set pub = v
+                toggle :hide -> :show {
+                    println(pub)
+                    every :draw {
+                        println(evt.0)
+                    }
+                }
+            }
+            spawn T (0)
+            broadcast in :global, tags([1], :draw, true)
+            broadcast in :global, tags([], :hide, true)
+            broadcast in :global, tags([99], :draw, true)
+            broadcast in :global, tags([], :show, true)
+            broadcast in :global, tags([2], :draw, true)
+        """, true)
+        assert(out == "0\n1\n2\n") { out }
+    }
 
     // WHILE / BREAK
 
@@ -1108,4 +1164,5 @@ class TXExec {
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n") { out }
     }
 
+    // ERROR MESSAGES
 }

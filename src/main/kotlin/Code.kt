@@ -48,8 +48,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
     fun Expr.gcall (): Boolean {
         return ups.ups[this].let { it is Expr.Call && it.proto.let {
-            it is Expr.Acc && it.tk.str in EXPOSE }
-        }
+            it is Expr.Acc && it.tk.str in EXPOSE
+        } }
     }
 
     // assrc_dst: calling expr is a source and here's its destination
@@ -129,9 +129,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ${this.body.code(true, null)}
                         ${istask.cond{"}\n}\n"}}
                     } while (0); // func
-                    """ + istask.cond{ """
-                    CEU_Value ceu_acc_$n = ceu_acc;
-                    { // TERMINATE
+                    """ + istask.cond{ """  // TERMINATE
+                    { // ceu_ret/ceu_acc: save/restore
+                        CEU_RET   ceu_ret_$n = ceu_ret;
+                        CEU_Value ceu_acc_$n = ceu_acc;
                         int iscoros = (ceu_coro->Bcast.Coro.coros != NULL);
                         ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATING, ceu_coro->Bcast.status);
                         ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
@@ -148,20 +149,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             } else {
                                 CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                                 ceu_coro->Bcast.Coro.bcasting = 1;
-                                int ret;
                                 if (ceu_coro->hold->bcast.up != NULL) {
                                     // enclosing coro of enclosing block
-                                    ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
+                                    ceu_ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
                                 } else {
                                     // enclosing block
-                                    ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
+                                    ceu_ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
                                 }
-                                if (ret!=CEU_RET_THROW || ceu_ret==CEU_RET_THROW) {
-                                    // keep the old error
-                                } else {
+                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                     ceu_acc_$n = ceu_acc;
                                 }
-                                ceu_ret = MIN(ceu_ret, ret);
+                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 ceu_coro->Bcast.Coro.bcasting = 0;
                             }
                             ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
@@ -177,8 +175,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             free(ceu_coro->Bcast.Coro.frame);
                             free(ceu_coro);
                         }
-                    }
-                    ceu_acc = ceu_acc_$n;
+                        ceu_acc = ceu_acc_$n;
+                        ceu_ret = ceu_ret_$n;
+                    } // ceu_ret/ceu_acc: save/restore
                     """} + """
                     return ceu_ret;
                 }
@@ -225,14 +224,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         CEU_RET   ceu_ret_$n = ceu_ret;
                         CEU_Value ceu_acc_$n = ceu_acc;
                         {
-                            CEU_RET ceu_retx = CEU_RET_RETURN;
                             { // move up dynamic ceu_acc (return or error)
                                 ${(f_b != null).cond {
                                     val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_retx = ceu_block_set($up, ceu_acc.Dyn, 0);
-                                        //CEU_CONTINUE_ON_THROW();
+                                        ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                        if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                            ceu_acc_$n = ceu_acc;
+                                        }
+                                        ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                     }
                                     """
                                 }}
@@ -242,7 +243,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }
                             { // DEFERS ${this.tk.dump()}
                                 ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
-                                //CEU_CONTINUE_ON_THROW();
+                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                    ceu_acc_$n = ceu_acc;
+                                }
+                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                             }
                             { // relink blocks
                                 ${(f_b is Expr.Block).cond{
@@ -252,10 +256,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     "ceu_coro->Bcast.Coro.block = NULL;"
                                 }}
                                 ceu_block_free(&ceu_mem->block_$n);
-                            }
-                            ceu_ret = MIN(ceu_ret, ceu_retx);
-                            if (ceu_ret == CEU_RET_THROW) {
-                                continue;
                             }
                         }
                         ceu_acc = ceu_acc_$n;
@@ -627,12 +627,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "err" -> assrc("ceu_err")
                     "evt" -> {
                         val inidx = (ups.pred(this) { it is Expr.Index } != null)
-                        /*(!inidx && !this.gcall()).cond { """
+                        (!inidx && !this.gcall()).cond { """
                             if (ceu_evt->type > CEU_VALUE_DYNAMIC) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"");
                             }                                    
-                        """ } +*/
-                        assrc("(*ceu_evt)")
+                        """ } + assrc("(*ceu_evt)")
                     }
                     else -> error("impossible case")
                 }

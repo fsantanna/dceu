@@ -903,7 +903,7 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 10, col 13) : broadcast error\nanon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
 
     // BCAST / SCOPE
@@ -1525,7 +1525,7 @@ class TTask {
             broadcast in :global, []
         """
         )
-        assert(out == "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 8, col 13) : broadcast error\nanon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld1_1_err() {
@@ -1560,7 +1560,7 @@ class TTask {
         )
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 10, col 14) : broadcast error\nanon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld3() {

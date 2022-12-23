@@ -32,12 +32,12 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "deref", "move", "print", "println", "tags", "type",
+    "copy", "move", "print", "println", "tags", "type",
     "op_slash_equals", "op_equals_equals", "op_hash"
 )
 
 val EXPOSE = setOf (
-    "print", "println", "type", "{==}", "{/=}"
+    "is'", "isnot'", "print", "println", "type", "{==}", "{/=}"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {
