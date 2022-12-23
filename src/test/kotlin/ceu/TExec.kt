@@ -14,7 +14,7 @@ import org.junit.Test
 import java.io.File
 
 // search in tests output for
-//  definitely|Invalid read|uninitialized
+//  definitely|Invalid read|uninitialised|uninitialized
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value

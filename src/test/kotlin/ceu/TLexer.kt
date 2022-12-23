@@ -111,12 +111,12 @@ class TLexer {
     }
 
     @Test
-    fun comments() {
+    fun comments1() {
         val l = lexer("""
             x - y - z ;;
             var ;;x
             ;;
-            val ;;; x
+            val ;; x
             ;; -
             -
         """.trimIndent())
@@ -130,6 +130,52 @@ class TLexer {
         assert(tks.next().let { it is Tk.Id && it.pos.lin==4 && it.pos.col==1 && it.str == "val" })
         assert(tks.next().let { it is Tk.Op && it.pos.lin==6 && it.pos.col==1 && it.str == "-" })
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==6 && it.pos.col==2 })
+    }
+    @Test
+    fun comments2() {
+        val l = lexer("""
+            x ;;;
+            var ;;x
+            val ;;; y
+            z
+        """.trimIndent())
+        val tks = l.lex().iterator()
+        //println(tks.next())
+        assert(tks.next().let { it is Tk.Id && it.pos.lin==1 && it.pos.col==1 && it.str == "x" })
+        assert(tks.next().let { it is Tk.Id && it.pos.lin==3 && it.pos.col==9 && it.str == "y" })
+        assert(tks.next().let { it is Tk.Id && it.pos.lin==4 && it.pos.col==1 && it.str == "z" })
+    }
+    @Test
+    fun comments3() {
+        val l = lexer("""
+            x
+            ;;;
+            ;;;;
+            ;;;
+            ;;
+            ;;;;
+            ;;;;
+            ;;;
+            ;;;;
+            ;;;
+            y
+        """.trimIndent())
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.str == "x" })
+        assert(tks.next().let { it is Tk.Id && it.str == "y" })
+    }
+    @Test
+    fun comments4_err() {
+        val l = lexer("""
+            x
+            ;;;
+            ;;;;
+            ;;;
+            y
+        """.trimIndent())
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.str == "x" })
+        assert(tks.next().let { it is Tk.Eof })
     }
 
     @Test

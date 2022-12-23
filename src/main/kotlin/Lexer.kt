@@ -12,6 +12,7 @@ fun Lex.toPos (): Pos {
 
 class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
     val stack = ArrayDeque<Lex>()
+    val comms = ArrayDeque<String>()
 
     init {
         for (inp in inps) {
@@ -92,7 +93,28 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 ';' -> {
                     val (n2,x2) = read2()
                     if (x2 == ';') {
-                        read2Until('\n')
+                        val x3 = ";;" + read2While(';')
+                        if (x3 == ";;") {
+                            read2Until('\n')
+                        } else {
+                            var x4 = x3
+                            outer@ while (true) {
+                                if (this.comms.firstOrNull() == x4) {
+                                    this.comms.removeFirst()
+                                    if (this.comms.size == 0) {
+                                        break
+                                    }
+                                } else {
+                                    this.comms.addFirst(x4)
+                                }
+                                do {
+                                    if (read2Until(';') == null) {
+                                        break@outer
+                                    }
+                                    x4 = ";" + read2While(';')
+                                } while (x4.length<=2)
+                            }
+                        }
                     } else {
                         unread2(n2)
                     }
