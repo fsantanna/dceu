@@ -231,6 +231,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                         ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
                                         if (ceu_ret == CEU_RET_THROW) {
+                                            CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                             // prioritize scope error over whatever there is now
                                             ceu_acc_$n = ceu_acc;
                                         }
@@ -438,7 +439,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_err_$n) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target");
                     }
-                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : broadcast error");
+                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
@@ -877,7 +878,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${if (pass_evt) -1 else this.args.size},
                         ceu_args_$n
                     );
-                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : return error");
+                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${iscoros.cond{"}"}}
                     ${spawn.cond{ assrc(if (iscoros) "ceu_ok_$n" else "ceu_coro_$n") }}
                 } // CALL (close)

@@ -472,7 +472,7 @@ class TXExec {
             spawn in coroutines(), T()
             broadcast in :global, nil
         """, true)
-        assert(out == "anon : (lin 8, col 13) : broadcast error\n" +
+        assert(out == "anon : (lin 8, col 13) : broadcast in :global, nil\n" +
                 "anon : (lin 3, col 27) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -801,8 +801,9 @@ class TXExec {
                 println(x)
             }
         """)
-        assert(out == "anon : (lin 2, col 20) : return error\n" +
-                "anon : (lin 3, col 38) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task :fake () { var x set x = do { var ceu_sp...)\n" +
+                "anon : (lin 3, col 38) : task :fake () { var y set y = [] y }()\n" +
+                "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun await16_task_rets() {
@@ -1062,7 +1063,7 @@ class TXExec {
             println(1)
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
-        assert(out == " : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
                 "anon : (lin 5, col 17) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -1093,7 +1094,7 @@ class TXExec {
             println(x)
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-        assert(out == " : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
                 "anon : (lin 5, col 9) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -1138,7 +1139,7 @@ class TXExec {
             }})
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == " : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 1, col 31) : set error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n") { out }
     }
 

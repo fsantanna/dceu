@@ -210,8 +210,9 @@ class TTask {
         """)
         //assert(out == "1\t2\t3\n") { out }
         //assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 19) : return error\n" +
-                "anon : (lin 3, col 23) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
+                "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
+                "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -313,9 +314,7 @@ class TTask {
             }
             println(2)
         """)
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == " : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn67_err() {
@@ -327,8 +326,7 @@ class TTask {
             var co
             set co = if true { spawn t() } else { nil }
         """)
-        //assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == " : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn7_err() {
@@ -341,9 +339,8 @@ class TTask {
             set t = task () { nil }
             f()
         """)
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 13) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 13) : f()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn8_err() {
@@ -356,9 +353,8 @@ class TTask {
             }
             spawn T()
         """)
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 19) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn9() {
@@ -427,9 +423,8 @@ class TTask {
             }
             spawn T()
         """)
-        //assert(out == "anon : (lin 4, col 18) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 19) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
 
     // THROW
@@ -481,7 +476,7 @@ class TTask {
             spawn in coroutines(), T()
             broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 11, col 13) : broadcast error\n" +
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, nil\n" +
                 "anon : (lin 6, col 21) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -498,7 +493,7 @@ class TTask {
                 broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : return error\n" +
+        assert(out == "anon : (lin 2, col 20) : task :fake () { broadcast in :task, nil }()\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n") { out }
     }
     @Test
@@ -731,7 +726,7 @@ class TTask {
             resume co1 ()
              broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 14, col 14) : broadcast error\n" +
+        assert(out == "anon : (lin 14, col 14) : broadcast in :global, nil\n" +
                 "anon : (lin 7, col 21) : throw error : uncaught exception\n") { out }
     }
     @Test
@@ -902,8 +897,8 @@ class TTask {
             broadcast in :global, []
         """
         )
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 10, col 13) : broadcast error\nanon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 10, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
 
     // BCAST / SCOPE
@@ -1500,7 +1495,7 @@ class TTask {
             broadcast in :global, @[]
         """
         )
-        assert(out == "anon : (lin 9, col 13) : broadcast error\n" +
+        assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
                 "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
                 "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
                 "-=- duplicate exception : stop now -=-\n") { out }
@@ -1521,7 +1516,8 @@ class TTask {
             broadcast in :global, []
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast error\nanon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 8, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld1_1_err() {
@@ -1536,7 +1532,7 @@ class TTask {
             broadcast in :global, [[]]
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast error\n" +
+        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
                 "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
     }
     @Test
@@ -1554,9 +1550,8 @@ class TTask {
              broadcast in :global, []
         """
         )
-        //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 10, col 14) : broadcast error\nanon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
+        assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n") { out }
     }
     @Test
     fun evt_hld3() {
@@ -1824,8 +1819,8 @@ class TTask {
                 println(x)
             }) ()
         """, true)
-        assert(out == "anon : (lin 2, col 20) : return error\n" +
-                "anon : (lin 5, col 24) : return error\n" +
+        assert(out == "anon : (lin 2, col 20) : task () { set pub = [] var x spawn task :fake...)\n" +
+                "anon : (lin 5, col 24) : task :fake () { set x = pub }()\n" +
                 "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
     @Test
@@ -1939,7 +1934,7 @@ class TTask {
         }() 
         broadcast in :global, nil 
         """)
-        assert(out == "anon : (lin 16, col 9) : broadcast error\n" +
+        assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
                 "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
 
@@ -2108,9 +2103,8 @@ class TTask {
             }
             println(f())
         """, true)
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : f()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun esc2() {
