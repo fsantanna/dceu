@@ -2412,10 +2412,10 @@ class TTask {
                 spawn (task () {
                     while (true) {
                         println(evt)    ;; lost reference
-                        yield()
+                        yield(nil)
                     }
                 }) ()
-                yield()
+                yield(nil)
             }()
             broadcast in :global, 10
             broadcast in :global, 20
@@ -2432,10 +2432,10 @@ class TTask {
                 spawn (task :fake () {
                     while (true) {
                         println(evt)    ;; kept reference
-                        yield()
+                        yield(nil)
                     }
                 }) ()
-                yield()
+                yield(nil)
             }()
             broadcast in :global, 10
             broadcast in :global, 20
