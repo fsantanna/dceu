@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             case 0: {
                                 CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
                         """}}
-                            if (ceu_n >= CEU_ARG_ARGS) {
+                            { // initialize parameters
                                 int ceu_i = 0;
                                 ${this.args.map {
                                     val id = it.str.noSpecial()

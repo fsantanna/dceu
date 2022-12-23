@@ -1751,7 +1751,7 @@ class TExec {
             }
             println(f(10)())
         """)
-        assert(out == "anon : (lin 9, col 21) : return error\n" +
+        assert(out == "anon : (lin 9, col 21) : f(10)\n" +
                 "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1765,9 +1765,8 @@ class TExec {
             }
             println(f(10)())
         """)
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 21) : return error : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 21) : f(10)\n" +
+                "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
     }
 
     // MISC
@@ -1794,6 +1793,7 @@ class TExec {
         """)
         //assert(out == "3\n") { out }
         //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 3, col 37) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 8, col 21) : smallerc(3)\n" +
+                "anon : (lin 3, col 37) : set error : incompatible scopes\n") { out }
     }
 }

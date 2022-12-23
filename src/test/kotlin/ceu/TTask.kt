@@ -662,9 +662,9 @@ class TTask {
             }
             var co
             set co = coroutine(tk)
-             broadcast in :global, 1
-             broadcast in :global, 2
-             broadcast in :global, 3
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
         """)
         assert(out == "nil\t1\nnil\t2\n") { out }
     }

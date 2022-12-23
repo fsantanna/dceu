@@ -679,7 +679,7 @@ fun Coder.main (): String {
                         vec->Vector.max = vec->Vector.max*2 + 1;    // +1 if max=0
                         vec->Vector.mem = realloc(vec->Vector.mem, vec->Vector.max*sz + 1);
                         assert(vec->Vector.mem != NULL);
-                        vec->Vector.mem[sz*vec->Vector.max] = '\0';
+                        vec->Vector.mem[sz*vec->Vector.n+1] = '\0';
                     }
                     vec->Vector.n++;
                 } else {                            // set
