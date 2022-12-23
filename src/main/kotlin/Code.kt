@@ -798,7 +798,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
-                val pass_evt = (this.proto is Expr.Proto) && this.proto.isFake && (this.args.size == 0)
+                val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && this.proto.isFake && (this.args.size == 0)
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (
