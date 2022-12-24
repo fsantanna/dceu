@@ -55,7 +55,7 @@ class TXExec {
         val out = all("""
             var x = ifs {
                 10 < 1 -> 99
-                5+5==0 -> { 99 }
+                (5+5)==0 -> { 99 }
                 else -> 10
             }
             println(x)
@@ -150,7 +150,7 @@ class TXExec {
     @Test
     fun op3_or_and() {
         val out = all("""
-            println(true and [] or [])
+            println(true and ([] or []))
         """)
         assert(out == "[]\n") { out }
     }
@@ -961,7 +961,7 @@ class TXExec {
                 set pub = v
                 toggle evt==:hide -> evt==:show {
                     println(pub)
-                    every (evt is :dict) and evt.sub==:draw {
+                    every (evt is :dict) and (evt.sub==:draw) {
                         println(evt.v)
                     }
                 }

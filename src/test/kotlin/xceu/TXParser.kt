@@ -124,27 +124,27 @@ class TXParser {
     @Test
     fun bin3_not_or_and() {
         N = 1
-        val l = lexer("not true and false or true")
+        val l = lexer("((not true) and false) or true")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            var _ceu_72
-            set _ceu_72 = do {
-            var _ceu_24
-            set _ceu_24 = if true {
+            var _ceu_75
+            set _ceu_75 = do {
+            var _ceu_26
+            set _ceu_26 = if true {
             false
             } else {
             true
             }
-            if _ceu_24 {
+            if _ceu_26 {
             false
             } else {
-            _ceu_24
+            _ceu_26
             }
             }
-            if _ceu_72 {
-            _ceu_72
+            if _ceu_75 {
+            _ceu_75
             } else {
             true
             }
