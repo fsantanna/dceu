@@ -37,7 +37,7 @@ val GLOBALS = setOf (
 )
 
 val EXPOSE = setOf (
-    "is'", "isnot'", "print", "println", "type", "{==}", "{/=}"
+    "copy", "is'", "isnot'", "print", "println", "type", "{==}", "{/=}"
 )
 
 sealed class Tk (val str: String, val pos: Pos) {

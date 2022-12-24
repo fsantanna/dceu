@@ -244,6 +244,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
                             }
                             { // DEFERS ${this.tk.dump()}
+                                ceu_ret = CEU_RET_RETURN;
                                 ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
                                 if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                     ceu_acc_$n = ceu_acc;

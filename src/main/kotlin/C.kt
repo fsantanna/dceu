@@ -25,8 +25,8 @@ fun Coder.main (): String {
 
         typedef enum {
             CEU_RET_THROW = 0,
-            CEU_RET_YIELD,
-            CEU_RET_RETURN
+            CEU_RET_RETURN,
+            CEU_RET_YIELD
         } CEU_RET;
 
         typedef enum {
@@ -524,7 +524,7 @@ fun Coder.main (): String {
                         CEU_Value* args[] = { evt };
                         ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
                     }
-                    return ret;
+                    return MIN(ret, CEU_RET_RETURN);
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;
@@ -1140,15 +1140,15 @@ fun Coder.main (): String {
             CEU_Value* src = args[0];
             switch (src->type) {
                 case CEU_VALUE_TUPLE: {
-                    CEU_Dynamic* dyn = ceu_tuple_create(src->Dyn->hold, src->Dyn->Tuple.n, NULL);
-                    assert(dyn != NULL);
-                    CEU_Value ret = { CEU_VALUE_TUPLE, {.Dyn=dyn} };
+                    CEU_Value args1[src->Dyn->Tuple.n];
                     for (int i=0; i<src->Dyn->Tuple.n; i++) {
-                        CEU_Value* args[1] = { &src->Dyn->Tuple.mem[i] };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
-                        ret.Dyn->Tuple.mem[i] = ceu_acc;
+                        CEU_Value* args2[1] = { &src->Dyn->Tuple.mem[i] };
+                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args2));
+                        args1[i] = ceu_acc;
                     }
-                    ceu_acc = ret;
+                    CEU_Dynamic* dyn = ceu_tuple_create(src->Dyn->hold, src->Dyn->Tuple.n, args1);
+                    assert(dyn != NULL);
+                    ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=dyn} };
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
