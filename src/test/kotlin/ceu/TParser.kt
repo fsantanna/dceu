@@ -543,7 +543,7 @@ class TParser {
     }
     @Test
     fun bin4() {
-        val l = lexer("1 + 2 + 3")
+        val l = lexer("(1 + 2) + 3")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)

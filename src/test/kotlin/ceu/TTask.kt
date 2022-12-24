@@ -1496,9 +1496,7 @@ class TTask {
         """
         )
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n" +
-                "-=- duplicate exception : stop now -=-\n") { out }
+                "anon : (lin 5, col 17) : throw error : uncaught exception\n") { out }
     }
 
     // EVT

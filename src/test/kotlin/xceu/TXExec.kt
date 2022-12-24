@@ -524,6 +524,39 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun paror14() {
+        val out = all("""
+            spawn {
+                paror {
+                    await true
+                } with {
+                    await true
+                }
+            }
+            broadcast in :global, true
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun paror15() {
+        val out = all("""
+            spawn {
+                paror {
+                    await true
+                } with {
+                    await true
+                }
+            }
+            do {
+                broadcast in :global, tags([40], :frame, true)
+                broadcast in :global, tags([], :draw, true)
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 
@@ -1143,5 +1176,24 @@ class TXExec {
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n") { out }
     }
 
-    // ERROR MESSAGES
+    // ALL
+
+    @Test
+    fun all1() {
+        val out = all("""
+            task T (pos) {
+                await true
+                println(pos)
+            }
+            spawn {
+                var ts = coroutines()
+                do {
+                    spawn in ts, T([])
+                }
+                await false
+            }
+            broadcast in :global, nil
+        """, true)
+        assert(out == "1\n") { out }
+    }
 }

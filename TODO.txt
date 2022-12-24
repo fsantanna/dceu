@@ -99,3 +99,5 @@
 - android SDK
 - modelo sincrono permite copiar memória em aplicações simétricos
     - Toda memória é gerenciada dict array task
+- pico-sdl
+    - image/font cache

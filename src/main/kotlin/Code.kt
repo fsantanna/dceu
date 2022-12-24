@@ -145,8 +145,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             // 2. terminating from normal resume
                             ceu_frame->Task.pc = -1;
                             if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
-                                // do not signal my termination b/c nobody would awake anyways
+                                // do not signal termination: clear comes from clearing enclosing block,
+                                // which also clears all possible interested awaits
+                            } else if (ceu_ret == CEU_RET_THROW) {
+                                // do not signal termination: throw clears enclosing block,
+                                // which also clears all possible interested awaits
                             } else {
+                                // only signal on normal termination
                                 CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                                 ceu_coro->Bcast.Coro.bcasting = 1;
                                 if (ceu_coro->hold->bcast.up != NULL) {

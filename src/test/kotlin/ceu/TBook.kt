@@ -61,7 +61,7 @@ class TBook {
             """
             var delta
             set delta = func (a,b,c) {
-                ((b**2) - (4*a*c)) // 2
+                ((b**2) - (4*(a*c))) // 2
             }
             println(delta(4.2,7,2.3))
         """, true
@@ -316,10 +316,10 @@ class TBook {
             """
             var leapyear?
             set leapyear? = func (y) {
-                if (y % 100 == 0) {
-                    (y % 400 == 0)
+                if ((y % 100) == 0) {
+                    ((y % 400) == 0)
                 } else {
-                    (y % 4 == 0)
+                    ((y % 4) == 0)
                 }
             }
             println(leapyear?(1980))
@@ -334,7 +334,7 @@ class TBook {
             """
             var leapyear?
             set leapyear? = func (y) {
-                (y % 100 == 0) && (y % 400 == 0) || (y % 4 == 0)
+                ((y % 100) == 0) && ((y % 400) == 0) || ((y % 4) == 0)
             }
             println(leapyear?(1980))
             println(leapyear?(1979))
@@ -352,7 +352,7 @@ class TBook {
              :Err
              var analyse
              set analyse = func (x,y,z) {
-                if x+y <= z {
+                if (x+y) <= z {
                     :Err
                 } else {
                     if x == z {
