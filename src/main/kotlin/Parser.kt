@@ -636,6 +636,7 @@ class Parser (lexer_: Lexer)
     }
     fun exprBins (): Expr {
         var e = this.exprPres()
+        var pre: Tk? = null
         while (
             this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
             (this.acceptEnu("Op") || (XCEU &&
@@ -643,6 +644,9 @@ class Parser (lexer_: Lexer)
             )
         ) {
             val op = this.tk0
+            if (pre==null || pre.str==")" || this.tk1.str==")") {} else {
+                err(op, "binary operation error : expected surrounding parentheses")
+            }
             val e2 = this.exprPres()
             e = when (op.str) {
                 "or"    -> this.nest("""
@@ -663,6 +667,7 @@ class Parser (lexer_: Lexer)
                 "isnot" -> this.nest("isnot'(${e.tostr(true)}, ${e2.tostr(true)})")
                 else    -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(e,e2))
             }
+            pre = this.tk0
         }
         return e
     }

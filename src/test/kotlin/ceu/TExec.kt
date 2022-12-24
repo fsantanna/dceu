@@ -1490,7 +1490,7 @@ class TExec {
     @Test
     fun op_arithX() {
         val out = all("""
-            println((10 + -20*2)/5)
+            println(((10 + -20)*2)/5)
         """, true)
         assert(out == "-4\n") { out }
     }
@@ -1523,9 +1523,16 @@ class TExec {
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun op_assoc() {
+    fun op_assoc_err() {
         val out = all("""
             println(2 * 3 - 1)
+        """, true)
+        assert(out == "anon : (lin 2, col 27) : binary operation error : expected surrounding parentheses") { out }
+    }
+    @Test
+    fun op_assoc() {
+        val out = all("""
+            println((2 * 3) - 1)
         """, true)
         assert(out == "5\n") { out }
     }
