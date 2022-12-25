@@ -2491,6 +2491,6 @@ class TTask {
             })()
             broadcast in :global, nil
         """)
-        assert(out == "TODO\n") { out }
+        assert(out == "[]\n") { out }
     }
 }

@@ -117,7 +117,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     """
                                     ${istask.cond { """
                                         if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                            ceu_mem->_${id}_ = ceu_coro->Bcast.Coro.coros;
+                                            ceu_mem->_${id}_ = ceu_coro->hold;
                                         } else
                                     """}}
                                     { // else

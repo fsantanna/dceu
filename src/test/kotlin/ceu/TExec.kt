@@ -378,8 +378,8 @@ class TExec {
             set x = f([10])
             println(x)
         """, true)
-        assert(out == "anon : (lin 7, col 21) : f([10])\n" +
-                "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        assert(out == "[10]\n") { out }
     }
 
     // DICT
