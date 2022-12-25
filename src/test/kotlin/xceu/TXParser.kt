@@ -221,21 +221,4 @@ class TXParser {
         println(e.tostr())
         assert(e.tostr() == "spawn task :fake () {\n1\n}()") { e.tostr() }
     }
-
-    // CATCH
-
-    @Test
-    fun todo_catch1() {
-        val l = lexer("""
-            set x = catch :e1 {
-                throw :e1
-                throw (:e1,10)
-                throw (:e1)
-            }
-            
-        """)
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e.tostr() == "set x = catch 1 {\nthrow (1,nil)\nthrow (1,10)\nthrow (1,nil)\n}\n") { e.tostr() }
-    }
 }

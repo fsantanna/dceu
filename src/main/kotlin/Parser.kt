@@ -541,8 +541,14 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 ${pre0}yield ()
-                                ;;println(evt)
-                                while not (${cnd.tostr(true)}) {
+                                while (do {
+                                    var ceu_cnd_$N = ${cnd.tostr(true)}
+                                    if (type(ceu_cnd_$N) == :track) {
+                                        (ceu_cnd_$N.status /= :destroyed)
+                                    } else {
+                                        (not ceu_cnd_$N)
+                                    }
+                                }) {
                                     yield ()
                                 }
                             }

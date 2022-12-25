@@ -569,6 +569,32 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun awaiting16_track() {
+        val out = all("""
+            task T () {
+                set pub = [10]
+                await :evt
+            }
+            var t = coroutine(T)
+            resume t ()
+            var x = track(t)
+            spawn {
+                awaiting x {
+                    println(x.pub[0])
+                    broadcast in :global, nil
+                    println(x.pub[0])
+                    broadcast in :global, :evt
+                    println(x.pub[0])   ;; never printed
+                    await false
+                }
+                println(x.status)
+            }
+            println(:ok)
+        """, true)
+        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+    }
+
 
     // TUPLE / VECTOR / DICT / STRING
 
