@@ -126,7 +126,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     }
                                     if (ceu_i < ceu_n) {
                                         if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_args[ceu_i]->Dyn, 1);
+                                            ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
                                         ceu_mem->$id = *ceu_args[ceu_i];
