@@ -1194,6 +1194,6 @@ class TXExec {
             }
             broadcast in :global, nil
         """, true)
-        assert(out == "1\n") { out }
+        assert(out == "[]\n") { out }
     }
 }

@@ -115,8 +115,20 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ${this.args.map {
                                     val id = it.str.noSpecial()
                                     """
-                                    ceu_mem->_${id}_ = ${this.body.toc(true)};
+                                    ${istask.cond { """
+                                        if (ceu_coro->Bcast.Coro.coros != NULL) {
+                                            ceu_mem->_${id}_ = ceu_coro->Bcast.Coro.coros;
+                                        } else
+                                    """}}
+                                    { // else
+                                        ceu_mem->_${id}_ = ${this.body.toc(true)};
+                                        ceu_mem->_${id}_->depth = ceu_frame->up->depth + 1;
+                                    }
                                     if (ceu_i < ceu_n) {
+                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                            ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_args[ceu_i]->Dyn, 1);
+                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        }
                                         ceu_mem->$id = *ceu_args[ceu_i];
                                     } else {
                                         ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
@@ -182,6 +194,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         ceu_acc = ceu_acc_$n;
                         ceu_ret = ceu_ret_$n;
+                        //ceu_print1(&ceu_acc);
+                        //printf(" <<< %d / %p\n", ceu_ret, ceu_coro);
                     } // ceu_ret/ceu_acc: save/restore
                     """} + """
                     return ceu_ret;

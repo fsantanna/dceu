@@ -367,6 +367,20 @@ class TExec {
         """, true)
         assert(out == "[1,2,3]\n") { out }
     }
+    @Test
+    fun tuple15_call_scope() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                v
+            }
+            var x
+            set x = f([10])
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 7, col 21) : f([10])\n" +
+                "anon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+    }
 
     // DICT
 

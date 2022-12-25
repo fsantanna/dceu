@@ -2444,4 +2444,53 @@ class TTask {
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun xceu5() {
+        val out = all("""
+            spawn task () {
+                catch err==:or {
+                    spawn task () {
+                        yield(nil)
+                        ;;println(:evt, evt)
+                        ;;println(111)
+                        throw(:or)
+                    }()
+                    spawn task () {
+                        yield(nil)
+                        ;;println(:evt, evt)
+                        ;;println(222)
+                        throw(:or)
+                    }()
+                    yield(nil)
+                    ;;println(:in)
+                }
+                ;;println(:out)
+            }()
+            broadcast in :global, nil
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun todo_xceu6() {
+        val out = all("""
+            var T
+            set T = task (pos) {
+                yield(nil)
+                println(pos)
+            }
+            spawn (task () {
+                var ts
+                set ts = coroutines()
+                do {
+                    spawn in ts, T([])  ;; pass [] to ts
+                }
+                yield(nil)
+                yield(nil)
+            })()
+            broadcast in :global, nil
+        """)
+        assert(out == "TODO\n") { out }
+    }
 }
