@@ -391,8 +391,9 @@ class Parser (lexer_: Lexer)
                         var ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
                 """ }
 
-                val eq1 = (cnd!=null && this.acceptOp("=="))
-                val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} == ${it.tostr(true)})" }
+                val eq1 = (cnd!=null && (this.acceptOp("==") || this.acceptFix("is")))
+                val eq1_op = this.tk0.str
+                val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eq1_op ${it.tostr(true)})" }
                 this.acceptFix_err("->")
                 val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                 ifs += """
@@ -408,8 +409,9 @@ class Parser (lexer_: Lexer)
                         break
                     }
                     val pre1 = this.tk0.pos.pre()
-                    val eqi = (cnd!=null && this.acceptOp("=="))
-                    val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} == ${it.tostr(true)})" }
+                    val eqi = (cnd!=null && (this.acceptOp("==") || this.acceptFix("is")))
+                    val eqi_op = this.tk0.str
+                    val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eqi_op ${it.tostr(true)})" }
                     this.acceptFix_err("->")
                     val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
                     ifs += """

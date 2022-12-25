@@ -128,7 +128,7 @@ class TXExec {
                 else  -> false
             }
             println(x)
-        """)
+        """, true)
         assert(out == "true\n") { out }
     }
 
