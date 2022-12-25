@@ -1020,12 +1020,12 @@ class TXExec {
         val out = ceu.all(
             """
             task T (v) {
-                ;;println(v)
+                println(v)
             }
             var t = (spawn T(v)) where { var v = 10 }
         """)
-        //assert(out == "10\n") { out }
-        assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun where3_err() {
@@ -1037,7 +1037,7 @@ class TXExec {
             (var t = spawn T(v)) where { var v = 10 }
             println(t)
         """)
-        assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared\n") { out }
+        assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared") { out }
     }
     @Test
     fun where4() {
@@ -1061,6 +1061,23 @@ class TXExec {
                 var v = 10
             }
             println(type(t))
+        """)
+        assert(out == "10\n:coro\n") { out }
+    }
+    @Test
+    fun where6() {
+        val out = ceu.all(
+            """
+            task T (v) {
+                println(v)
+            }
+            var ts = coroutines()
+            spawn in ts, T(v) where {
+                var v = 10
+            }
+            while in ts, t {
+                println(type(t))
+            }
         """)
         assert(out == "10\n:coro\n") { out }
     }

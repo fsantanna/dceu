@@ -99,13 +99,6 @@ class Parser (lexer_: Lexer)
         return ret
     }
 
-    fun noline (tk: Tk, e: Expr): Expr {
-        if (!tk.pos.isSameLine(e.tk.pos)) {
-            err(tk, "${tk.str} error : unexpected line break before expression")
-        }
-        return e
-    }
-
     fun expr_in_parens (req: Boolean, nil: Boolean): Expr? {
         this.acceptFix_err("(")
         val e = when {
@@ -179,6 +172,17 @@ class Parser (lexer_: Lexer)
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> this.catch_block().let { (C,b)->C(b) }
+            this.acceptFix("group") -> {
+                val tk0  = this.tk0 as Tk.Fix
+                val isHide = this.acceptEnu("Tag")
+                if (isHide) {
+                    if (this.tk0.str != ":hide") {
+                        err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
+                    }
+                }
+                val blk = this.block()
+                Expr.Group(tk0, isHide, blk.es)
+            }
             this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptEnu_err("Id")
@@ -186,7 +190,7 @@ class Parser (lexer_: Lexer)
                 if (XCEU && this.acceptFix("=")) {
                     val eq = this.tk0 as Tk.Fix
                     val e = this.expr()
-                    Expr.XSeq(tk0, listOf(
+                    Expr.Group(tk0, false, listOf(
                         Expr.Dcl(id, false),
                         Expr.Set(eq, Expr.Acc(id), e)
                     ))
@@ -278,10 +282,10 @@ class Parser (lexer_: Lexer)
                         val coros = this.expr()
                         this.acceptFix_err(",")
                         val call = this.expr()
-                        if (call !is Expr.Call) {
+                        if (call !is Expr.Call && !(call is Expr.Group && call.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
-                        Expr.Spawn(tk0, coros, call as Expr.Call)
+                        Expr.Spawn(tk0, coros, call)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
@@ -292,10 +296,10 @@ class Parser (lexer_: Lexer)
                     }
                     else -> {
                         val call = this.expr()
-                        if (call !is Expr.Call) {
+                        if (call !is Expr.Call && !(call is Expr.Group && call.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
-                        Expr.Spawn(tk0, null, call as Expr.Call)
+                        Expr.Spawn(tk0, null, call)
                     }
                 }
             }
@@ -688,7 +692,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0
                 val body = this.block()
                 this.nest("""
-                    ${tk0.pos.pre()}do {
+                    ${tk0.pos.pre()}group :hide {
                         ${body.es.tostr(true)}
                         ${e.tostr(true)}
                     }
@@ -700,12 +704,7 @@ class Parser (lexer_: Lexer)
     fun exprs (): List<Expr> {
         val ret = mutableListOf<Expr>()
         while (!this.checkFix("}") && !this.checkEnu("Eof")) {
-            val e = this.expr()
-            if (XCEU && e is Expr.XSeq) {
-                ret.addAll(e.es)
-            } else {
-                ret.add(e)
-            }
+            ret.add(this.expr())
         }
         if (ret.size == 0) {
             if (XCEU) {

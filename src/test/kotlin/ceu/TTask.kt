@@ -427,14 +427,30 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun spawn13() {
+    fun spawn13_err() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                nil ;;println(v)
+            }
+            var t
+            set t = do {
+                var v
+                set v = 10
+                spawn T(v)  ;; ERR: coro in nested scope cannot escape
+            }
+        """)
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun spawn14() {
         val out = all("""
             var T
             set T = task (v) {
                 println(v)
             }
             var t
-            set t = do {
+            set t = group :hide {
                 var v
                 set v = 10
                 spawn T(v)  

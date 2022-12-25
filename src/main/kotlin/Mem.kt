@@ -1,24 +1,28 @@
+fun List<Expr>.seq (i: Int): String {
+    return (i != this.size).cond {
+        val s = if (this[i].let { it is Expr.Block || (it is Expr.Group && it.isHide) }) "union" else "struct"
+        """
+            $s {
+                ${this[i].mem()}
+                ${this.seq(i+1)}
+            };
+        """
+    }
+}
+
 fun Expr.mem (): String {
     return when (this) {
-        is Expr.Block -> {
-            fun List<Expr>.seq (i: Int): String {
-                return (i != this.size).cond {
-                    val s = if (this[i] is Expr.Block) "union" else "struct"
-                    """
-                        $s {
-                            ${this[i].mem()}
-                            ${this.seq(i+1)}
-                        };
-                    """
-                }
-            }
-            """
+        is Expr.Block -> """
             struct { // BLOCK
                 CEU_Block block_$n;
                 ${es.seq(0)}
             };
-            """
-        }
+        """
+        is Expr.Group -> """
+            struct { // GROUP
+                ${es.seq(0)}
+            };
+        """
         is Expr.Dcl -> {
             val id = this.tk_.fromOp().noSpecial()
             """
@@ -151,6 +155,6 @@ fun Expr.mem (): String {
             """
 
         is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
-        is Expr.XSeq, is Expr.Proto -> ""
+        is Expr.Proto -> ""
     }
 }

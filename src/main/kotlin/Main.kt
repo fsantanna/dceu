@@ -10,7 +10,7 @@ val D = "\$"
 
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
-    "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
+    "false", "func", "group", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
     "task", "throw", "toggle", "track", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
@@ -26,6 +26,7 @@ val TAGS = listOf (
     ":tuple", ":vector", ":dict",
     ":bcast",
     ":coro", ":coros", ":track",
+    ":fake", ":hide",
     ":clear", ":error",           // bcast-clear
     ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminating", ":terminated", ":destroyed"
@@ -54,6 +55,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Group  (val tk_: Tk.Fix, val isHide: Boolean, val es: List<Expr>): Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
@@ -64,7 +66,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
-    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr.Call): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
     data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
@@ -89,8 +91,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
         // call args must be enclosed with a "fake" block, which is a normal block is not output in tostr()
         // the block is required to create a separate environment for the call arguments such that
         // `evt` is allowed to be passed forward
-
-    data class XSeq   (val tk_: Tk, val es: List<Expr>): Expr(N++, tk_)
 }
 
 fun exec (cmds: List<String>): Pair<Boolean,String> {

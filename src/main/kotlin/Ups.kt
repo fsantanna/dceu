@@ -10,15 +10,22 @@ class Ups (val outer: Expr.Block) {
     }
 
     fun pred (e: Expr, f: (Expr)->Boolean): Expr? {
+        return this.pred_stop(e, f) { false }
+    }
+    fun pred_stop (e: Expr, f: (Expr)->Boolean, g: (Expr)->Boolean): Expr? {
         val x = ups[e]
         return when {
             (x == null) -> null
             f(x) -> x
+            g(x) -> null
             else -> this.pred(x, f)
         }
     }
     fun block (e: Expr): Expr.Block? {
         return this.pred(e) { it is Expr.Block } as Expr.Block?
+    }
+    fun block_or_group (e: Expr): Expr? {
+        return this.pred(e) { it is Expr.Block || (it is Expr.Group && it.isHide) }
     }
     fun func (e: Expr): Expr.Proto? {
         return this.pred(e) { it is Expr.Proto } as Expr.Proto?
@@ -26,13 +33,17 @@ class Ups (val outer: Expr.Block) {
     fun proto_or_block (e: Expr): Expr? {
         return this.pred(e) { it is Expr.Proto || it is Expr.Block }
     }
+    fun proto_or_block_or_group (e: Expr): Expr? {
+        return this.pred(e) { it is Expr.Proto || it is Expr.Block || (it is Expr.Group && it.isHide) }
+    }
     fun intask (e: Expr): Boolean {
         return (this.func(e)?.tk?.str == "task")
     }
 
     fun isDeclared (e: Expr, id: String): Boolean {
         val xblock = this.xblocks[e]!!
-        val up = this.proto_or_block(e)
+        val up = this.proto_or_block_or_group(e)
+        //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
         return (xblock.syms.contains(id) || (up!=null && this.isDeclared(up,id)))
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
@@ -60,9 +71,16 @@ class Ups (val outer: Expr.Block) {
                 }
                 this.es.forEach { it.check() }
             }
+            is Expr.Group -> {
+                if (this.isHide) {
+                    xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
+                }
+                this.es.forEach { it.check() }
+            }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = block(this)!!
+                val bup = block_or_group(this)!!
+                //println(listOf("DCL", id, bup.javaClass.name))
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
                 xup.syms.add(id)
@@ -120,8 +138,6 @@ class Ups (val outer: Expr.Block) {
             is Expr.Dict   -> this.args.forEach { it.first.check() ; it.second.check() }
             is Expr.Index  -> { this.col.check() ; this.idx.check() }
             is Expr.Call   -> { this.proto.check() ; this.args.forEach { it.check() } }
-
-            is Expr.XSeq -> error("bug found")
         }
     }
     fun Expr.calc (): Map<Expr,Expr> {
@@ -131,6 +147,7 @@ class Ups (val outer: Expr.Block) {
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
             is Expr.Block  -> this.map(this.es)
+            is Expr.Group  -> this.map(this.es)
             is Expr.Dcl    -> emptyMap()
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
@@ -163,8 +180,6 @@ class Ups (val outer: Expr.Block) {
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
             is Expr.Call   -> this.map(listOf(this.proto)) + this.map(this.args)
-
-            is Expr.XSeq -> error("bug found")
         }
     }
 }

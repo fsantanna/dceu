@@ -13,10 +13,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             if (isptr) "(&($it))" else it
         }
     }
-    fun Expr.Block.id2c (id: String): String {
+    fun Expr.id2c (id: String): String {
         fun Expr.aux (n: Int): String {
             val xblock = ups.xblocks[this]!!
-            val bup = ups.proto_or_block(this)
+            val bup = ups.proto_or_block_or_group(this)
             val fup = ups.func(this)
             val ok = xblock.syms.contains(id)
             return when {
@@ -29,6 +29,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->mem)->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
+                (this is Expr.Group) -> bup!!.aux(n)
                 (this is Expr.Proto) -> bup!!.aux(n+1)
                 else -> error("bug found")
             }
@@ -287,6 +288,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 }
                 """
             }
+            is Expr.Group -> this.es.mapIndexed { i,it ->
+                it.code(issrc && i==this.es.size-1, null)
+            }.joinToString("")
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
                 """
@@ -563,7 +567,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
 
             is Expr.Nat -> {
-                val bup = ups.block(this)!!
+                val bup = ups.block_or_group(this)!!
                 val body = this.tk.str.let {
                     var ret = ""
                     var i = 0
@@ -625,7 +629,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 pos
             }
             is Expr.Acc -> {
-                val bup = ups.block(this)!!
+                val bup = ups.block_or_group(this)!!
                 val id = this.tk_.fromOp().noSpecial()
                 ups.assertIsDeclared(bup, id, this.tk)
                 if (asdst_src == null) {
@@ -814,10 +818,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             }
             is Expr.Call -> {
-                val up = ups.ups[this]
                 val bupc = ups.block(this)!!.toc(true)
-                val resume = (if (up is Expr.Resume) up else null)
-                val spawn  = (if (up is Expr.Spawn)  up else null)
+                //val up = ups.ups[this]
+                //val resume = (if (up is Expr.Resume) up else null)
+                val resume = ups.pred_stop(this, { it is Expr.Resume }, { it !is Expr.Group }).let {
+                    if (it == null) null else it as Expr.Resume
+                }
+                //println(resume?.tostr())
+                val spawn = ups.pred_stop(this, { it is Expr.Spawn }, { it !is Expr.Group }).let {
+                    if (it == null) null else it as Expr.Spawn
+                }
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
@@ -904,8 +914,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 } // CALL (close)
                 """
             }
-
-            is Expr.XSeq -> error("bug found")
         }
     }
 }

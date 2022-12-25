@@ -16,7 +16,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         //println(e)
-        assert(e is Expr.XSeq && e.es[1] is Expr.Set)
+        assert(e is Expr.Group && e.es[1] is Expr.Set)
     }
     @Test
     fun dcl2() {
