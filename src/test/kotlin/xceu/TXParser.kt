@@ -188,22 +188,6 @@ class TXParser {
     // SPAWN, PAR
 
     @Test
-    fun par1() {
-        val l = lexer("""
-            par {
-                1
-            } with {
-                2
-            } with {
-                3
-            }
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        println(e.tostr())
-        assert(e.tostr() == "do {\nspawn task :fake () {\n1\n}()\nspawn task :fake () {\n2\n}()\nspawn task :fake () {\n3\n}()\ndo {\nyield(nil)\nwhile if false {\nfalse\n} else {\ntrue\n} {\nyield(nil)\n}\n}\n}") { e.tostr() }
-    }
-    @Test
     fun par2_err() {
         val l = lexer("par {}")
         val parser = Parser(l)
