@@ -872,8 +872,8 @@ class TXExec {
                 println(x)
             }
         """)
-        assert(out == "anon : (lin 2, col 20) : task :fake () { var x set x = do { var ceu_sp...)\n" +
-                "anon : (lin 3, col 38) : task :fake () { var y set y = [] y }()\n" +
+        assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
+                "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1070,6 +1070,7 @@ class TXExec {
             """
             task T (v) {
                 println(v)
+                yield()
             }
             var ts = coroutines()
             spawn in ts, T(v) where {

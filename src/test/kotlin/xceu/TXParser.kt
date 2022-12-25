@@ -23,7 +23,7 @@ class TXParser {
         val l = lexer("do { var x = 1 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nvar x\nset x = 1\n}") { e.tostr() }
+        assert(e.tostr() == "do {\ngroup {\nvar x\nset x = 1\n}\n}") { e.tostr() }
     }
 
     // EMPTY BLOCKS
