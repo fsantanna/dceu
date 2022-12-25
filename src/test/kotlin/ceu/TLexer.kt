@@ -177,6 +177,20 @@ class TLexer {
         assert(tks.next().let { it is Tk.Id && it.str == "x" })
         assert(tks.next().let { it is Tk.Eof })
     }
+    @Test
+    fun comments5_err() {
+        val l = lexer("""
+            x
+            ;;;;
+            ;;;
+            ;;;;
+            y
+        """.trimIndent())
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.str == "x" })
+        assert(tks.next().let { it is Tk.Id && it.str == "y" })
+        assert(tks.next().let { it is Tk.Eof })
+    }
 
     @Test
     fun native() {

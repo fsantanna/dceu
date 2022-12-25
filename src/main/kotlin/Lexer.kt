@@ -112,7 +112,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                                         break@outer
                                     }
                                     x4 = ";" + read2While(';')
-                                } while (x4.length<=2)
+                                } while (x4.length<=2 || x4.length<this.comms.first().length)
                             }
                         }
                     } else {
