@@ -1050,6 +1050,20 @@ class TXExec {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun where5() {
+        val out = ceu.all(
+            """
+            task T (v) {
+                println(v)
+            }
+            var t = spawn T(v) where {
+                var v = 10
+            }
+            println(type(t))
+        """)
+        assert(out == "10\n:coro\n") { out }
+    }
 
     // TOGGLE
 

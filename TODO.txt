@@ -6,6 +6,14 @@
 
 # NEXT
 
+- do :fake, group stmts, w/o block: where, highlight steps
+    - group :hide { ... }
+        - hide vars, union on mem, but same depth
+    - group :nohide {...}
+        - DEFAULT
+        - keep vars, struct on mem, still same depth
+    - where is seq :hide
+    - allow in calls
 - Spawn in xceu
 - tuple copy semantics
 - test throw/break across fake task
