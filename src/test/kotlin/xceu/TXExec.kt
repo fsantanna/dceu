@@ -118,7 +118,19 @@ class TXExec {
         """)
         assert(out == "ERROR\n") { out }
     }
-
+    @Test
+    fun ifs7() {
+        val out = all("""
+            var x = ifs 20 {
+                is 10 -> false
+                true  -> true
+                is 20 -> false
+                else  -> false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // OPS: not, and, or
 
