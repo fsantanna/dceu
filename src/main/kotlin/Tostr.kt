@@ -39,7 +39,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
         is Expr.Call   -> this.proto.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
 
-        is Expr.XSeq -> error("bug found")
+        is Expr.XSeq -> this.es.map { it.tostr(pre) }.joinToString("")
     }.let { if (pre) this.tk.pos.pre()+it else it }
 }
 

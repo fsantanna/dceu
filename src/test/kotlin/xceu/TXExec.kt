@@ -1015,6 +1015,41 @@ class TXExec {
         """,true)
         assert(out == "1\n30\n") { out }
     }
+    @Test
+    fun where2() {
+        val out = ceu.all(
+            """
+            task T (v) {
+                ;;println(v)
+            }
+            var t = (spawn T(v)) where { var v = 10 }
+        """)
+        //assert(out == "10\n") { out }
+        assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun where3_err() {
+        val out = ceu.all(
+            """
+            task T (v) {
+                println(v)
+            }
+            (var t = spawn T(v)) where { var v = 10 }
+            println(t)
+        """)
+        assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared\n") { out }
+    }
+    @Test
+    fun where4() {
+        val out = ceu.all(
+            """
+            task T (v) {
+                println(v)
+            }
+            (var t = spawn T(v)) where { var v = 10 }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // TOGGLE
 

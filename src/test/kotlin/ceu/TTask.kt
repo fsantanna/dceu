@@ -426,6 +426,22 @@ class TTask {
         assert(out == "anon : (lin 8, col 19) : T()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun spawn13() {
+        val out = all("""
+            var T
+            set T = task (v) {
+                println(v)
+            }
+            var t
+            set t = do {
+                var v
+                set v = 10
+                spawn T(v)  
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // THROW
 
