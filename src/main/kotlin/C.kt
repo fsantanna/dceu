@@ -85,6 +85,7 @@ fun Coder.main (): String {
         CEU_RET ceu_bcast_blocks (struct CEU_Block* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_dyn    (struct CEU_Dynamic* cur, struct CEU_Value* evt);
         
+        int ceu_tag_to_size (int type);
         void ceu_max_depth     (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
         int ceu_dict_key_index (struct CEU_Dynamic* col, struct CEU_Value* key);
         int ceu_dict_new_index (struct CEU_Dynamic* col);
@@ -382,8 +383,9 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_VECTOR:
                     if (src->Vector.type > CEU_VALUE_DYNAMIC) {
+                        int sz = ceu_tag_to_size(src->Vector.type);
                         for (int i=0; i<src->Vector.n; i++) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, (CEU_Dynamic*)&src->Tuple.mem[i], isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dynamic**)(src->Vector.mem + i*sz), isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -391,12 +393,12 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dict.max; i++) {
-                        if (src->Dict.mem[i][0]->type > CEU_VALUE_DYNAMIC) {
+                        if ((*src->Dict.mem)[i][0].type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, (*src->Dict.mem)[i][0].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
-                        if (src->Dict.mem[i][1]->type > CEU_VALUE_DYNAMIC) {
+                        if ((*src->Dict.mem)[i][1].type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, (*src->Dict.mem)[i][1].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }

@@ -864,6 +864,57 @@ class TExec {
         assert(out == "[1,2,3]\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
+    @Test
+    fun scope9_err() {
+        val out = all("""
+            var x
+            do {
+                var a
+                set a = @[(1,[])]
+                set x = a
+            }
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope10_err() {
+        val out = all("""
+            var out
+            do {
+                var x
+                set x = []
+                set out = [x]
+            }
+            println(1)
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope11_err() {
+        val out = all("""
+            var out
+            do {
+                var x
+                set x = []
+                set out = #[x]
+            }
+            println(1)
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope12_err() {
+        val out = all("""
+            var out
+            do {
+                var x
+                set x = []
+                set out = @[(1,x)]
+            }
+            println(1)
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
 
     // IF
 
