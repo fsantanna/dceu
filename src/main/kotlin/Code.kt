@@ -37,10 +37,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         return this.aux(0)
     }
 
-    fun Expr.fupc (): String? {
+    fun Expr.fupc (tk: String?=null): String? {
         var n = 0
         var fup = ups.func(this)
-        while (fup!=null && fup.isFake) {
+        while (fup!=null && (fup.isFake || tk==null || fup.tk.str!=tk)) {
             n++
             fup = ups.func(fup)
         }
@@ -502,7 +502,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // PUB
                     CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
-                        "ceu_dyn_$n = ${this.fupc()}->Task.coro;"
+                        "ceu_dyn_$n = ${this.fupc("task")}->Task.coro;"
                     } else { """
                         ${this.coro.code(true, null)}
                         ${(this.tk.str=="status").cond { """
@@ -532,7 +532,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             """
                     } else {
                         val inidx  = (ups.pred(this) { it is Expr.Index } != null)
-                        val incall = (ups.pred(this) { it is Expr.Call  } != null)
+                        val incall = (ups.ups[this] is Expr.Call)
                         """
                         { // PUB - read
                             ${(!inidx && !incall && !this.gcall() && this.tk.str=="pub").cond { """

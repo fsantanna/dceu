@@ -2074,6 +2074,44 @@ class TTask {
         """)
         assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
+    @Test
+    fun pub20_func() {
+        val out = all("""
+            var t
+            set t = task (v) {
+                set pub = v
+                var f
+                set f = func () {
+                    pub
+                }
+                println(f())
+            }
+            var a
+            set a = coroutine(t)
+            resume a(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun pub21_func_expose() {
+        val out = all("""
+            var t
+            set t = task (v) {
+                set pub = v
+                var f
+                set f = func () {
+                    pub
+                }
+                println(f())
+            }
+            var a
+            set a = coroutine(t)
+            resume a([1])
+        """, true)
+        assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+                "anon : (lin 9, col 25) : f()\n" +
+                "anon : (lin 7, col 21) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
 
     // STATUS
 
