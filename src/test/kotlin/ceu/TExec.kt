@@ -1860,4 +1860,28 @@ class TExec {
         assert(out == "anon : (lin 8, col 21) : smallerc(3)\n" +
                 "anon : (lin 3, col 37) : set error : incompatible scopes\n") { out }
     }
+
+    // TEMPLATE
+
+    @Test
+    fun todo_tpl1() {
+        val out = all("""
+            template :T = [x,y]
+            var t :T
+            set t = [1,2]
+            println(t.x, t.y)
+        """, true)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun todo_tpl2() {
+        val out = all("""
+            template :T = [x,y]
+            template :S = [a:T,b:T]
+            var s :S
+            set s = [[1,2],[10,20]]
+            println(s.a, s.b.y)
+        """, true)
+        assert(out == "[1,2]\t20\n") { out }
+    }
 }

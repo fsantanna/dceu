@@ -1,3 +1,19 @@
+;; is', isnot'
+
+func is' (v1,v2) {
+    ifs {
+        (v1 == v2)         -> true
+        (type(v2) /= :tag) -> false
+        (type(v1) == v2)   -> true
+        tags(v1,v2)        -> true
+        else -> false
+    }
+}
+
+func isnot' (v1,v2) {
+    not is'(v1,v2)
+}
+
 ;; ARITHMETIC:  +  -  *  /  %  **  //
 
 func {+} (v1, v2) {
@@ -86,16 +102,12 @@ func {<} (v1,v2) {
     `:bool ($v1.Number < $v2.Number)`
 }
 
-func is' (v1,v2) {
-    ifs {
-        (v1 == v2)         -> true
-        (type(v2) /= :tag) -> false
-        (type(v1) == v2)   -> true
-        tags(v1,v2)        -> true
-        else -> false
-    }
+;; max, min
+
+func min (v1, v2) {
+    ((v1 < v2) and v1) or v2
 }
 
-func isnot' (v1,v2) {
-    not is'(v1,v2)
+func max (v1, v2) {
+    ((v1 > v2) and v1) or v2
 }

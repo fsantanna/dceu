@@ -203,9 +203,9 @@ fun Coder.main (): String {
                             int bcasting;               // 0,1: not reentrant
                         } Coro;
                         struct {
-                            uint8_t max;                // max number of instances
-                            uint8_t cur;                // cur number of instances
-                            uint8_t open;               // number of open iterators
+                            int max;                // max number of instances
+                            int cur;                // cur number of instances
+                            int open;               // number of open iterators
                             struct CEU_Dynamic* first;  // coro->Bcast.Coro, first coro to bcast/free
                         } Coros;
                         struct {

@@ -615,7 +615,7 @@ class TXExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_vector1_size() {
+    fun todo_vector3_size() {
         val out = all("""
             var v = #[]
             println(${D}v, v)
@@ -628,7 +628,7 @@ class TXExec {
         assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
     }
     @Test
-    fun string2() {
+    fun string4() {
         val out = all("""
             var v = "abc"
             set v[#v] = 'a'
@@ -639,7 +639,7 @@ class TXExec {
         assert(out == "a\nabba\n") { out }
     }
     @Test
-    fun string3() {
+    fun string5() {
         val out = all("""
             println("")
             println("a\tb")
@@ -647,6 +647,14 @@ class TXExec {
             println("a'\"b")
         """)
         assert(out == "#[]\na\tb\na\nb\na'\"b\n") { out }
+    }
+    @Test
+    fun dict6_init() {
+        val out = all("""
+            var t = @[x=1, y=2]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
     }
 
     // AWAIT / EVERY
