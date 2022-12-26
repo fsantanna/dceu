@@ -203,15 +203,15 @@ class TTask {
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
-                        println(v1,v2,v3)
+                        nil ;;println(v1,v2,v3)
                     }(3)
                 }(2)
             }(1)
         """)
-        assert(out == "1\t2\t3\n") { out }
-        //assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
-        //        "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
-        //        "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
+        //assert(out == "1\t2\t3\n") { out }
+        assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
+                "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
+                "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -347,14 +347,14 @@ class TTask {
             var T
             set T = task () {
                 spawn (task :fake () {
-                    println(1)
+                    nil ;;println(1)
                 }) ()
             }
             spawn T()
         """)
-        assert(out == "1\n")
-        //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "1\n")
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn9() {
@@ -424,9 +424,9 @@ class TTask {
             spawn T()
             println(1)
         """)
-        //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
-        assert(out == "1\n")
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn13_err() {
@@ -1779,7 +1779,9 @@ class TTask {
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 10, col 24) : a()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub5() {
@@ -1805,7 +1807,8 @@ class TTask {
             spawn T()
             println(1)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 6, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub562_pool() {
@@ -2040,7 +2043,9 @@ class TTask {
             set x = a.pub
             println(x)
         """)
-        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 8, col 20) : a()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub18_err_expose() {
@@ -2056,7 +2061,9 @@ class TTask {
             set x = a.pub
             println(x)
         """)
-        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 8, col 20) : a()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub19_err_expose() {
@@ -2072,7 +2079,8 @@ class TTask {
             set x = a.pub
             println(x)
         """)
-        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 8, col 20) : a()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun pub20_func() {
@@ -2111,6 +2119,57 @@ class TTask {
         assert(out == "anon : (lin 13, col 20) : a([1])\n" +
                 "anon : (lin 9, col 25) : f()\n" +
                 "anon : (lin 7, col 21) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
+    @Test
+    fun pub_22_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                set pub = func () {
+                    10
+                }
+            }
+            var T
+            set T = task (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 12, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pub_23_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                set pub = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 10, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun pub_24_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                var x
+                set x = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 11, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
 
     // STATUS

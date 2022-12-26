@@ -888,11 +888,11 @@ class TXExec {
                 println(x)
             }
         """)
-        //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
-        //        "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
-        //        "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
-                "anon : (lin 3, col 25) : set error : incompatible scopes\n")
+                "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
+                "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
+        //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun await16_task_rets() {
@@ -1358,7 +1358,8 @@ class TXExec {
             }
             spawn T (spawn U())
         """, true)
-        assert(out == "10\n10\n") { out }
+        assert(out == "anon : (lin 10, col 28) : U()\n" +
+                "anon : (lin 2, col 23) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun all5() {
@@ -1367,13 +1368,14 @@ class TXExec {
                 set pub = func () {
                     10
                 }
+                await false
             }
             task T (u) {
                 println(u.pub())
             }
             spawn T (spawn U())
         """, true)
-        assert(out == "10\n10\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun all6() {
@@ -1400,6 +1402,6 @@ class TXExec {
             }
             println(1)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "1\n") { out }
     }
 }

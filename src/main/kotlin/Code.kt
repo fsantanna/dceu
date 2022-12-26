@@ -248,6 +248,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ${(f_b != null).cond {
                                     val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
+                                    ${(f_b!!.tk.str=="task").cond {
+                                        "ceu_mem->block_$n.ispub = 0;"
+                                    }}
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                         ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
                                         if (ceu_ret == CEU_RET_THROW) {
@@ -525,7 +528,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${if (asdst_src != null) {
                             """ // PUB - SET
                             if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
-                                ceu_ret = ceu_block_set(ceu_dyn_$n->hold, $asdst_src.Dyn, 0);
+                                ceu_ret = ceu_block_set(&ceu_mem->block_${ups.task(this)!!.body.n}, $asdst_src.Dyn, 1);
                                 CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             }
                             ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
