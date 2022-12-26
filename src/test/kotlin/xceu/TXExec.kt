@@ -649,7 +649,15 @@ class TXExec {
         assert(out == "#[]\na\tb\na\nb\na'\"b\n") { out }
     }
     @Test
-    fun dict6_init() {
+    fun dict6_init_err() {
+        val out = all("""
+            var t = @[x,y]
+            println(t.x, t.y)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun dict7_init() {
         val out = all("""
             var t = @[x=1, y=2]
             println(t.x, t.y)

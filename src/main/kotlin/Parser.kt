@@ -372,11 +372,21 @@ class Parser (lexer_: Lexer)
             this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() })
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]") {
-                this.acceptFix_err("(")
-                val k = this.expr()
-                this.acceptFix(",")
+                val tk1 = this.tk1
+                val k = if (XCEU && this.acceptEnu("Id")) {
+                    val e = Expr.Tag(Tk.Tag(':'+tk1.str, tk1.pos))
+                    this.acceptFix_err("=")
+                    e
+                } else {
+                    this.acceptFix_err("(")
+                    val e = this.expr()
+                    this.acceptFix(",")
+                    e
+                }
                 val v = this.expr()
-                this.acceptFix(")")
+                if (tk1 !is Tk.Id) {
+                    this.acceptFix_err(")")
+                }
                 Pair(k,v)
             })
             this.checkFix("(") -> this.expr_in_parens(true,false)!!

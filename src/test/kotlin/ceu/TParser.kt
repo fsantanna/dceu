@@ -205,6 +205,12 @@ class TParser {
         val e = parser.exprSufs()
         assert(e is Expr.Dict && e.args.size==1)
     }
+    @Test
+    fun dict7_err() {
+        val l = lexer("@[(1,1]")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \")\" : have \"]\"")
+    }
 
     // VECTOR
 
