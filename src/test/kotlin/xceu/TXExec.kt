@@ -431,7 +431,7 @@ class TXExec {
         assert(out == "0\n1\n10\n999\n2\n") { out }
     }
     @Test
-    fun all7() {
+    fun watching7() {
         val out = ceu.all(
             """
             task Bird () {
@@ -446,7 +446,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun all8() {
+    fun par_every8() {
         val out = all("""
             spawn {
                 par {
@@ -461,7 +461,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun all9() {
+    fun par_tasks9() {
         val out = all("""
             spawn task () {
                 ^[9,29]yield(nil)                                          
@@ -474,7 +474,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun all10_err() {
+    fun wawaiting10_err() {
         val out = all("""
             task T () {
                 awaiting (throw(:error)) {
@@ -1344,5 +1344,62 @@ class TXExec {
         """, true)
         assert(out == "anon : (lin 8, col 19) : T()\n" +
                 "anon : (lin 5, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun all4() {
+        val out = all("""
+            task U () {
+                set pub = func () {
+                    10
+                }
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n10\n") { out }
+    }
+    @Test
+    fun all5() {
+        val out = all("""
+            task U () {
+                set pub = func () {
+                    10
+                }
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n10\n") { out }
+    }
+    @Test
+    fun all6() {
+        val out = all("""
+            task U () {
+                set pub = func () {
+                    10
+                }
+                await false
+            }
+            task T (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun all7() {
+        val out = all("""
+            func f () {}
+            spawn {
+                f() where {}
+            }
+            println(1)
+        """)
+        assert(out == "10\n") { out }
     }
 }

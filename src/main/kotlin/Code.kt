@@ -446,7 +446,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${this.fupc().let {
+                            ${this.fupc("task").let {
                                 if (it == null) {
                                     "ceu_err_$n = 1;"
                                 } else {
@@ -826,7 +826,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (it == null) null else it as Expr.Resume
                 }
                 //println(resume?.tostr())
-                val spawn = ups.pred_stop(this, { it is Expr.Spawn }, { it !is Expr.Group }).let {
+                val spawn = ups.pred_stop(this,
+                    { it is Expr.Spawn },
+                    { grp -> grp !is Expr.Group || grp.es.last() !is Expr.Call || !ups.ups[grp].let { it is Expr.Spawn && it.call==grp } }
+                ).let {
+                //val spawn = ups.pred_stop(this, { it is Expr.Spawn }, { it !is Expr.Group }).let {
                     if (it == null) null else it as Expr.Spawn
                 }
                 val iscall = (resume==null && spawn==null)
