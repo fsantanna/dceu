@@ -203,16 +203,15 @@ class TTask {
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
-                        nil ;;println(v1,v2,v3)
+                        println(v1,v2,v3)
                     }(3)
                 }(2)
             }(1)
         """)
-        //assert(out == "1\t2\t3\n") { out }
-        //assert(out == "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
-                "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
-                "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
+        assert(out == "1\t2\t3\n") { out }
+        //assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
+        //        "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
+        //        "anon : (lin 3, col 33) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun task18_defer() {
@@ -348,13 +347,14 @@ class TTask {
             var T
             set T = task () {
                 spawn (task :fake () {
-                    nil
+                    println(1)
                 }) ()
             }
             spawn T()
         """)
-        assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n")
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun spawn9() {
@@ -417,14 +417,16 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                (task :fake () {
-                    111
-                })
+                spawn (task :fake () {
+                    (999)
+                })()
             }
             spawn T()
+            println(1)
         """)
-        assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n") { out }
+        assert(out == "1\n")
     }
     @Test
     fun spawn13_err() {
@@ -1689,6 +1691,38 @@ class TTask {
         //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun todo_evt_hld8_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) {
+                set xxx = evt[0]
+            }
+            var co
+            set co = coroutine(tk)
+            broadcast in :global, #[[]]
+        """
+        )
+        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+                "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+    }
+    @Test
+    fun todo_evt_hld9_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) {
+                set xxx = evt[0]
+            }
+            var co
+            set co = coroutine(tk)
+            broadcast in :global, @[(1,[])]
+        """
+        )
+        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+                "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+    }
 
     // PUB
 
@@ -1966,6 +2000,79 @@ class TTask {
         """)
         assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
                 "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
+    @Test
+    fun pub16() {
+        val out = all("""
+            var t
+            set t = task (v) {
+                set pub = v
+                yield(nil)
+                var x
+                set x = [2]
+                set pub = x
+                var y
+                set y = yield(nil)
+                set pub = @[(:y,y)]
+            }
+            var a
+            set a = coroutine(t)
+            resume a([1])
+            println(a.pub)
+            resume a()
+            println(a.pub)
+            resume a([3])
+            println(a.pub)
+        """, true)
+        assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
+    }
+    @Test
+    fun pub17_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set pub = []
+            }
+            var a
+            set a = coroutine(t)
+            resume a()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
+    @Test
+    fun pub18_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set pub = @[]
+            }
+            var a
+            set a = coroutine(t)
+            resume a()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+    }
+    @Test
+    fun pub19_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set pub = #[]
+            }
+            var a
+            set a = coroutine(t)
+            resume a()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
     }
 
     // STATUS

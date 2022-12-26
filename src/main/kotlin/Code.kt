@@ -230,7 +230,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, NULL, {$coro,NULL,NULL} };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,NULL} };
                     ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
@@ -774,12 +774,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 "ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst_src;\n"
                             } else {
                                 val x = this.has_pub_evt()
-                                """
-                                ${(x!=null && !this.gcall()).cond { """
+                                (x!=null && !this.gcall()).cond { """
                                     if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$x\" field");
                                     }
-                                """}}
+                                """ } +
+                                """
                                 ${assrc("ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
                                 """
                             }}

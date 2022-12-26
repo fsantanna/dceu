@@ -219,7 +219,8 @@ fun Coder.main (): String {
     """ +
     """ // CEU_Block
         typedef struct CEU_Block {
-            int depth;                      // compare on set
+            int depth;                          // compare on set
+            int ispub;                          // is top block inside task?
             CEU_Dynamic* tofree;                // list of allocated data to free on exit
             struct {
                 struct CEU_Dynamic* up;         // enclosing active coro
@@ -452,7 +453,7 @@ fun Coder.main (): String {
                 }
                 src->hold = dst;
                 src->isperm = src->isperm || isperm;
-            } else if (src->hold->depth > dst->depth) {
+            } else if (src->hold->depth>dst->depth && !(src->hold->ispub && src->hold->depth-1==dst->depth)) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {

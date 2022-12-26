@@ -654,7 +654,7 @@ class TXExec {
             var t = @[x,y]
             println(t.x, t.y)
         """)
-        assert(out == "1\t2\n") { out }
+        assert(out == "anon : (lin 2, col 24) : expected \"=\" : have \",\"") { out }
     }
     @Test
     fun dict7_init() {
@@ -888,9 +888,11 @@ class TXExec {
                 println(x)
             }
         """)
+        //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
+        //        "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
+        //        "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
-                "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
-                "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
+                "anon : (lin 3, col 25) : set error : incompatible scopes\n")
     }
     @Test
     fun await16_task_rets() {
@@ -1316,5 +1318,17 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "[]\n") { out }
+    }
+    @Test
+    fun all2() {
+        val out = all("""
+            task T (pos) {
+                set pub = func () { pos }
+                await false
+            }
+            var t = spawn T ([1,2])
+            println(t.pub())
+        """, true)
+        assert(out == "[1,2]\n") { out }
     }
 }
