@@ -27,8 +27,11 @@ class Ups (val outer: Expr.Block) {
     fun block_or_group (e: Expr): Expr? {
         return this.pred(e) { it is Expr.Block || (it is Expr.Group && it.isHide) }
     }
-    fun func (e: Expr): Expr.Proto? {
+    fun func_or_task (e: Expr): Expr.Proto? {
         return this.pred(e) { it is Expr.Proto } as Expr.Proto?
+    }
+    fun task (e: Expr): Expr.Proto? {
+        return this.pred(e) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto?
     }
     fun proto_or_block (e: Expr): Expr? {
         return this.pred(e) { it is Expr.Proto || it is Expr.Block }
@@ -37,7 +40,7 @@ class Ups (val outer: Expr.Block) {
         return this.pred(e) { it is Expr.Proto || it is Expr.Block || (it is Expr.Group && it.isHide) }
     }
     fun intask (e: Expr): Boolean {
-        return (this.func(e)?.tk?.str == "task")
+        return (this.func_or_task(e)?.tk?.str == "task")
     }
 
     fun isDeclared (e: Expr, id: String): Boolean {
@@ -109,13 +112,13 @@ class Ups (val outer: Expr.Block) {
             is Expr.Pub    -> {
                 if (this.coro == null) {
                     var ok = false
-                    var up = func(this)
+                    var up = func_or_task(this)
                     while (up != null) {
                         if (up.tk.str=="task" && !up.isFake) {
                             ok = true
                             break
                         }
-                        up = func(up)
+                        up = func_or_task(up)
                     }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")

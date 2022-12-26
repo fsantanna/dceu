@@ -17,7 +17,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         fun Expr.aux (n: Int): String {
             val xblock = ups.xblocks[this]!!
             val bup = ups.proto_or_block_or_group(this)
-            val fup = ups.func(this)
+            val fup = ups.func_or_task(this)
             val ok = xblock.syms.contains(id)
             return when {
                 (ok && this==outer) -> "(ceu_mem_${outer.n}->$id)"
@@ -39,10 +39,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
     fun Expr.fupc (tk: String?=null): String? {
         var n = 0
-        var fup = ups.func(this)
+        var fup = ups.func_or_task(this)
         while (fup!=null && (fup.isFake || tk==null || fup.tk.str!=tk)) {
             n++
-            fup = ups.func(fup)
+            fup = ups.func_or_task(fup)
         }
         return if (fup == null) null else "(ceu_frame${"->proto->up".repeat(n)})"
     }
