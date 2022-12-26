@@ -531,10 +531,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
                             """
                     } else {
-                        val inidx = (ups.pred(this) { it is Expr.Index } != null)
+                        val inidx  = (ups.pred(this) { it is Expr.Index } != null)
+                        val incall = (ups.pred(this) { it is Expr.Call  } != null)
                         """
                         { // PUB - read
-                            ${(!inidx && !this.gcall() && this.tk.str=="pub").cond { """
+                            ${(!inidx && !incall && !this.gcall() && this.tk.str=="pub").cond { """
                                 if (ceu_dyn_$n->Bcast.Coro.frame->Task.pub.type > CEU_VALUE_DYNAMIC) {
                                     CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid ${this.tk.str} : cannot expose dynamic \"pub\" field");
                                 }                                    

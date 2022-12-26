@@ -1331,4 +1331,18 @@ class TXExec {
         """, true)
         assert(out == "[1,2]\n") { out }
     }
+    @Test
+    fun all3() {
+        val out = all("""
+            task T () {
+                do {
+                    var x = []
+                    set pub = func () { x }
+                }
+            }
+            spawn T ()
+        """, true)
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 5, col 25) : set error : incompatible scopes\n") { out }
+    }
 }
