@@ -444,7 +444,6 @@ fun Coder.main (): String {
                 } else {
                     { // remove from old block
                         if (src->hold != NULL) {
-                            CEU_Block* old = src->hold;
                             if (src->type > CEU_VALUE_BCAST) {
                                 ceu_bcast_dequeue(&src->hold->bcast.dyn, src);
                             }
@@ -545,7 +544,7 @@ fun Coder.main (): String {
                         // CEU_RET_THROW: step (5) may 'catch' 
                     
                     // step (5)
-                    if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR) {
+                    if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
                         int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                         CEU_Value* args[] = { evt };
                         ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
@@ -566,6 +565,8 @@ fun Coder.main (): String {
                     }
                     return CEU_RET_RETURN;
                 }
+                default:
+                    assert(0 && "bug found");
             }
             assert(0 && "bug found");
         }
@@ -688,7 +689,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_Value ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
+        void ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Vector.n-1);
                 vec->Vector.n--;
@@ -1288,52 +1289,52 @@ fun Coder.main (): String {
                 {
                     static CEU_Dynamic ceu_type = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_type_f, {0} }
+                            .Proto = { NULL, ceu_type_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_tags = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_tags_f, {0} }
+                            .Proto = { NULL, ceu_tags_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_print = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_print_f, {0} }
+                            .Proto = { NULL, ceu_print_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_println = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_println_f, {0} }
+                            .Proto = { NULL, ceu_println_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_op_equals_equals = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_equals_equals_f, {0} }
+                            .Proto = { NULL, ceu_op_equals_equals_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_op_slash_equals = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_slash_equals_f, {0} }
+                            .Proto = { NULL, ceu_op_slash_equals_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_op_hash = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_op_hash_f, {0} }
+                            .Proto = { NULL, ceu_op_hash_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_move = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_move_f, {0} }
+                            .Proto = { NULL, ceu_move_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_copy = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_copy_f, {0} }
+                            .Proto = { NULL, ceu_copy_f, {{0}} }
                         }
                     };
                     static CEU_Dynamic ceu_next = { 
                         CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
-                            .Proto = { NULL, ceu_next_f, {0} }
+                            .Proto = { NULL, ceu_next_f, {{0}} }
                         }
                     };
                     ceu_mem->type    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_type}    };
