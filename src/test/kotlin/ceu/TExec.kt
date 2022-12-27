@@ -574,8 +574,10 @@ class TExec {
     fun vector13_add() {
         val out = all("""
             do {       
-                var ceu_ifs_17 = true    
-                var v = #[]
+                var ceu_ifs_17
+                set ceu_ifs_17 = true    
+                var v
+                set v = #[]
                 if true {                                                           
                     set v[{#}(v)] = 10                                              
                 } else {                                                            
@@ -1726,6 +1728,36 @@ class TExec {
             println(8%3)
         """, true)
         assert(out == "8\n2\n2\n") { out }
+    }
+
+    // tonumber, tostring
+
+    @Test
+    fun tostring1() {
+        val out = all("""
+            var s
+            set s = tostring(10)
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun tonumber2() {
+        val out = all("""
+            var n
+            set n = tonumber(#['1','0'])
+            println(type(n), n)
+        """, true)
+        assert(out == ":number\t10\n") { out }
+    }
+    @Test
+    fun tonumber_tostring3() {
+        val out = all("""
+            var s
+            set s = tostring(tonumber(#['1','0']))
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
     }
 
     // TYPE
