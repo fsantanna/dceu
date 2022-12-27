@@ -1,11 +1,9 @@
 package xceu
 
 import ceu.all
-import ceu.lexer
-import ceu.yield
 import org.junit.Test
 
-class TXGens {
+class TXJS {
 
     // Summary:
     //  - Declaring a generator prototype:
