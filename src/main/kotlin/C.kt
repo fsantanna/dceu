@@ -123,7 +123,6 @@ fun Coder.main (): String {
             CEU_CORO_STATUS_YIELDED = 1,
             CEU_CORO_STATUS_TOGGLED,
             CEU_CORO_STATUS_RESUMED,
-            CEU_CORO_STATUS_TERMINATING,
             CEU_CORO_STATUS_TERMINATED,
             CEU_CORO_STATUS_DESTROYED
         } CEU_CORO_STATUS;        
@@ -532,7 +531,7 @@ fun Coder.main (): String {
     """ +
     """ // BCAST_DYN
         CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
-            if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATING) {
+            if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
                 return CEU_RET_RETURN;
             }
             if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
@@ -608,6 +607,9 @@ fun Coder.main (): String {
                 free(coro->Bcast.Coro.frame->mem);
                 free(coro->Bcast.Coro.frame);
                 free(coro);
+            } else {
+                coro->next = ceu_bcast_tofree;
+                ceu_bcast_tofree = coro;
             }
             coros->Bcast.Coros.cur--;
         }
@@ -616,7 +618,7 @@ fun Coder.main (): String {
             CEU_Dynamic* cur = coros->Bcast.Coros.first;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next;
-                if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+                if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
                     //assert(0 && "OK");
                     ceu_coros_destroy(coros, cur);
                 }
