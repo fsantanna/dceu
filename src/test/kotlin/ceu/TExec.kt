@@ -447,6 +447,25 @@ class TExec {
         """)
         assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
     }
+    @Test
+    fun todo_dict7_err() {
+        val out = all("""
+            var x
+            set x = @[(nil,10)]
+            println(x[nil])
+        """)
+        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
+    }
+    @Test
+    fun todo_dict8_err() {
+        val out = all("""
+            var x
+            set x = @[]
+            set x[nil] = 10
+            println(x[nil])
+        """)
+        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
+    }
 
     // VECTOR
 
