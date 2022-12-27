@@ -7,6 +7,20 @@ import org.junit.Test
 
 class TXGens {
 
+    // Summary:
+    //  - Declaring a generator prototype:
+    //      - JS:  function* genFunc (...) { ... }
+    //      - Ceu: task genFunc (...) { ... }
+    //  - Instantiating a generator:
+    //      - JS:  gen = genFunc()
+    //      - Ceu: gen = coroutine(genFunc)
+    //  - Resuming an instantiated generator:
+    //      - JS:  gen.next(...)
+    //      - Ceu: resume gen(...)
+    //  - Yielding from a generator:
+    //      - JS:  v = yield(...)
+    //      - Ceu: v = yield(...)
+
     // 22.1 Overview
 
     // 22.1.1 What are generators?
@@ -39,13 +53,13 @@ class TXGens {
             var co2 = coroutine(gen1)
             resume co2(2)
             
-            var dict3 = @[
+            var obj3 = @[
                 gen = task (v) { println(v) }
             ]
-            set obj3.co = coroutine(obj3.gen)
-            resume obj3.co(3)
+            var co3 = coroutine(obj3.gen)
+            resume co3(3)
             
-            ;; no gen4/co4
+            ;; no co4
         """)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -57,7 +71,7 @@ class TXGens {
         val out = all("""
             task objectEntries (obj) {
                 var key = next(obj)
-                while key != nil {
+                while key /= nil {
                     yield([key, obj[key]])
                     set key = next(obj,key)
                 }
@@ -67,10 +81,11 @@ class TXGens {
                 first = "Jane",
                 last  = "Doe",
             ]
-            while in (spawn objectEntries(jane)), v {
+            var co = spawn objectEntries(jane)
+            while in co, v {
                 println((v.0 ++ ": ") ++ v.1)
             }
-        """)
+        """, true)
         assert(out == "First\nSecond\n") { out }
     }
 }
