@@ -112,7 +112,7 @@ func max (v1, v2) {
     ((v1 > v2) and v1) or v2
 }
 
-;; tostring, tonumber
+;; tostring, tonumber, assert
 
 func tostring (v) {
     ifs v {
@@ -144,4 +144,31 @@ func tonumber (v) {
         }
         else -> v   ;; TODO
     }
+}
+
+func assert (v, msg) {
+    if not v {
+        print("assertion error : ")
+        println(msg or "no reason given")
+        throw(:assert)
+    }
+}
+
+;; (++) concat
+
+func {<++} (v1, v2) {
+    assert(type(v1) == :vector)
+    assert(type(v2) == :vector)
+    do {
+        var i = 0
+        while i < #v2 {
+            set v1[#v1] = v2[i]
+            set i = i + 1
+        }
+    }
+    v1
+}
+
+func {++} (v1, v2) {
+    (#[] <++ v1) <++ v2
 }

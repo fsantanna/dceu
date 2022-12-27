@@ -194,6 +194,20 @@ class TXExec {
         assert(out == "true\nfalse\ntrue\n") { out }
     }
 
+    // assert
+
+    @Test
+    fun assert1() {
+        val out = all("""
+            catch :assert {
+                assert([] is :bool, "ok")
+            }
+            assert(1 isnot :number)
+        """, true)
+        assert(out.contains("assertion error : ok\n" +
+                "assertion error : no reason given\n")) { out }
+    }
+
     // YIELD
 
     @Test
@@ -676,7 +690,18 @@ class TXExec {
             }
             println(v)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun vector9_concat() {
+        val out = all("""
+            var v1
+            set v1 = #[1,2,3]
+            var v2
+            set v2 = #[4,5,6]
+            println(v1 ++ v2)
+        """, true)
+        assert(out == "#[1,2,3,4,5,6]\n") { out }
     }
 
     // AWAIT / EVERY
