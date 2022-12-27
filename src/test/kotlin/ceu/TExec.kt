@@ -570,6 +570,22 @@ class TExec {
         """, true)
         assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
     }
+    @Test
+    fun vector13_add() {
+        val out = all("""
+            do {       
+                var ceu_ifs_17 = true    
+                var v = #[]
+                if true {                                                           
+                    set v[{#}(v)] = 10                                              
+                } else {                                                            
+                    nil
+                }
+                println(v)
+            }
+        """, true)
+        assert(out == "#[10]\n") { out }
+    }
 
     // STRINGS / CHAR
 

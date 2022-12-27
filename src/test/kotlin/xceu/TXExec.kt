@@ -664,6 +664,20 @@ class TXExec {
         """)
         assert(out == "1\t2\n") { out }
     }
+    @Test
+    fun vector8() {
+        val out = all("""
+            var v
+            set v = #[]
+            ifs true {
+                true -> {
+                    set v[#v] = 10
+                }
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // AWAIT / EVERY
 
@@ -1297,6 +1311,33 @@ class TXExec {
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 1, col 31) : set error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n") { out }
+    }
+
+    // tonumber, tostring
+
+    @Test
+    fun tostring1() {
+        val out = all("""
+            var s = tostring(10)
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun tonumber2() {
+        val out = all("""
+            var n = tonumber("10")
+            println(type(n), n)
+        """, true)
+        assert(out == ":number\t10\n") { out }
+    }
+    @Test
+    fun tonumber_tostring3() {
+        val out = all("""
+            var s = tostring(tonumber("10"))
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
     }
 
     // ALL
