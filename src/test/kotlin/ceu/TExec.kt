@@ -466,6 +466,45 @@ class TExec {
         """)
         assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
     }
+    @Test
+    fun dict9_next() {
+        val out = all("""
+            var t
+            set t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            var k
+            set k = next(t)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+        """)
+        assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
+    }
+    @Test
+    fun dict10_next() {
+        val out = all("""
+            var t
+            set t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            set t[:z] = 3
+            set t[:y] = nil
+            set t[:x] = nil
+            set t[:a] = 10
+            set t[:b] = 20
+            set t[:c] = 30
+            var k
+            set k = next(t)
+            while k /= nil {
+                println(k, t[k])
+                set k = next(t,k)
+            }
+        """)
+        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
+    }
 
     // VECTOR
 

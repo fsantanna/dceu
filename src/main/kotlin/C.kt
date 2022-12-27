@@ -87,6 +87,7 @@ fun Coder.main (): String {
         
         int ceu_tag_to_size (int type);
         void ceu_max_depth (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
+        int ceu_dict_key_to_index (struct CEU_Dynamic* col, struct CEU_Value* key, int* idx);
         struct CEU_Value ceu_dict_get (struct CEU_Dynamic* col, struct CEU_Value* key);
         CEU_RET ceu_dict_set (struct CEU_Dynamic* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
@@ -692,37 +693,71 @@ fun Coder.main (): String {
             }
         }
         
-        CEU_Value ceu_dict_get (CEU_Dynamic* col, CEU_Value* key) {
-            for (int i=0; i<col->Dict.max; i++) {
-                CEU_Value* args[] = { key, &(*col->Dict.mem)[i][0] };
+        CEU_RET ceu_next_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+            CEU_Value NIL = (CEU_Value) { CEU_VALUE_NIL };
+            assert(n==1 || n==2);
+            CEU_Value* col = args[0];
+            CEU_Value* key = (n == 1) ? &NIL : args[1];
+            assert(col->type == CEU_VALUE_DICT);
+            for (int i=0; i<col->Dyn->Dict.max; i++) {
+                CEU_Value* args[] = { key, &(*col->Dyn->Dict.mem)[i][0] };
                 assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, 2, args));
                 if (ceu_acc.Bool) {
-                    return (*col->Dict.mem)[i][1];
+                    key = &NIL;
+                } else if (key->type == CEU_VALUE_NIL) {
+                    ceu_acc = (*col->Dyn->Dict.mem)[i][0];
+                    return CEU_RET_RETURN;
                 }
             }
-            return (CEU_Value) { CEU_VALUE_NIL };
+            ceu_acc = NIL;
+            return CEU_RET_RETURN;
+        }        
+        int ceu_dict_key_to_index (CEU_Dynamic* col, CEU_Value* key, int* idx) {
+            *idx = -1;
+            for (int i=0; i<col->Dict.max; i++) {
+                CEU_Value* cur = &(*col->Dict.mem)[i][0];
+                CEU_Value* args[] = { key, cur };
+                assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, 2, args));
+                if (ceu_acc.Bool) {
+                    *idx = i;
+                    return 1;
+                } else {
+                    if (*idx==-1 && cur->type==CEU_VALUE_NIL) {
+                        *idx = i;
+                    }
+                }
+            }
+            return 0;
+        }        
+        CEU_Value ceu_dict_get (CEU_Dynamic* col, CEU_Value* key) {
+            int i;
+            int ok = ceu_dict_key_to_index(col, key, &i);
+            if (ok) {
+                return (*col->Dict.mem)[i][1];
+            } else {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
         }        
         CEU_RET ceu_dict_set (CEU_Dynamic* col, CEU_Value* key, CEU_Value* val) {
-            int I = -1;
-            for (int i=0; i<col->Dict.max; i++) {
-                if ((*col->Dict.mem)[i][0].type == CEU_VALUE_NIL) {
-                    I = i;
-                    break;
-                }
-            }
-            if (I == -1) {
-                I = col->Dict.max;
-                int J = I * 2;
-                col->Dict.max = J;
-                col->Dict.mem = realloc(col->Dict.mem, J*2*sizeof(CEU_Value));
-                assert(col->Dict.mem != NULL);
-                memset(&(*col->Dict.mem)[I], 0, I*2*sizeof(CEU_Value));  // x[i]=nil
-            }
-            assert(I != -1);
-            
             assert(key->type != CEU_VALUE_NIL);     // TODO
-            (*col->Dict.mem)[I][0] = *key;
-            (*col->Dict.mem)[I][1] = *val;
+            int old;
+            ceu_dict_key_to_index(col, key, &old);
+            if (old == -1) {
+                old = col->Dict.max;
+                int new = old * 2;
+                col->Dict.max = new;
+                col->Dict.mem = realloc(col->Dict.mem, new*2*sizeof(CEU_Value));
+                assert(col->Dict.mem != NULL);
+                memset(&(*col->Dict.mem)[old], 0, old*2*sizeof(CEU_Value));  // x[i]=nil
+            }
+            assert(old != -1);
+            
+            if (val->type == CEU_VALUE_NIL) {
+                (*col->Dict.mem)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
+            } else {
+                (*col->Dict.mem)[old][0] = *key;
+                (*col->Dict.mem)[old][1] = *val;
+            }
             
             return CEU_RET_RETURN;                  // TODO
         }        
@@ -1268,6 +1303,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_copy_f, {0} }
                         }
                     };
+                    static CEU_Dynamic ceu_next = { 
+                        CEU_VALUE_FUNC, NULL, NULL, NULL, 1, {
+                            .Proto = { NULL, ceu_next_f, {0} }
+                        }
+                    };
                     ceu_mem->type    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_type}    };
                     ceu_mem->tags    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}    };
                     ceu_mem->print   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}   };
@@ -1275,6 +1315,7 @@ fun Coder.main (): String {
                     ceu_mem->op_hash = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash} };
                     ceu_mem->move    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}    };
                     ceu_mem->copy    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}    };
+                    ceu_mem->next    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_next}    };
                     ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_equals_equals} };
                     ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_slash_equals}  };
                 }
