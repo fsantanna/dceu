@@ -6,6 +6,9 @@ import org.junit.Test
 fun yield (ok: String = "ok"): String {
     return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:coro { set $ok=false } else { nil } } }"
 }
+fun await (evt: String): String {
+    return "do { var ok; set ok=true; while ok { yield(nil); if $evt { set ok=false } else { nil } } }"
+}
 
 class TTask {
 
@@ -2215,6 +2218,38 @@ class TTask {
             println(2, a.status)
             resume a()
             println(3, a.status)
+        """)
+        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
+    }
+    @Test
+    fun todo_status5() {
+        val out = all("""
+            var T
+            set T = task (x) {
+                println(10, status)
+                yield(nil)
+                if x {
+                    yield(nil)
+                } else {
+                    nil
+                }
+                println(20, status)
+            }
+            spawn task () {
+                do {
+                    var t1
+                    set t1 = coroutine(T)
+                    resume t1(false)
+                    var t2
+                    set t2 = coroutine(T)
+                    resume t2(true)
+                    ${await("evt == t1")}
+                    println(:ok)
+                }
+            } ()
+            broadcast in :global, nil
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
