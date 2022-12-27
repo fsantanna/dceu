@@ -742,7 +742,7 @@ class TTask {
                 println(1)
             })
             resume co1 ()
-             broadcast in :global, nil
+            broadcast in :global, nil
         """)
         assert(out == "2\n1\n") { out }
     }

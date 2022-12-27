@@ -143,61 +143,50 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${istask.cond{"}\n}\n"}}
                     } while (0); // func
                     """ + istask.cond{ """  // TERMINATE
-                    { // ceu_ret/ceu_acc: save/restore
-                        CEU_RET   ceu_ret_$n = ceu_ret;
-                        CEU_Value ceu_acc_$n = ceu_acc;
-                        int iscoros = (ceu_coro->Bcast.Coro.coros != NULL);
-                        ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATING, ceu_coro->Bcast.status);
+                    if (ceu_coro->Bcast.status < CEU_CORO_STATUS_TERMINATED) {
+                        ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                         ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
-                        if (ceu_coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
-                            // 1. bcasted above
-                            //    terminated from clear bcast
-                            //    now back here again from bcast cont
+                        ceu_frame->Task.pc = -1;
+
+                        if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
+                            // do not signal termination: clear comes from clearing enclosing block,
+                            // which also clears all possible interested awaits
+                        } else if (ceu_ret == CEU_RET_THROW) {
+                            // do not signal termination: throw clears enclosing block,
+                            // which also clears all possible interested awaits
                         } else {
-                            // 1. clear bcast (bcasting maybe = 1, from above/below)
-                            // 2. terminating from normal resume
-                            ceu_frame->Task.pc = -1;
-                            if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
-                                // do not signal termination: clear comes from clearing enclosing block,
-                                // which also clears all possible interested awaits
-                            } else if (ceu_ret == CEU_RET_THROW) {
-                                // do not signal termination: throw clears enclosing block,
-                                // which also clears all possible interested awaits
+                            // only signal on normal termination
+
+                            // ceu_ret/ceu_acc: save/restore
+                            CEU_RET   ceu_ret_$n = ceu_ret;
+                            CEU_Value ceu_acc_$n = ceu_acc;
+
+                            CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                            ceu_bcasting++;
+                            if (ceu_coro->hold->bcast.up != NULL) {
+                                // enclosing coro of enclosing block
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n));
                             } else {
-                                // only signal on normal termination
-                                CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                                ceu_coro->Bcast.Coro.bcasting = 1;
-                                if (ceu_coro->hold->bcast.up != NULL) {
-                                    // enclosing coro of enclosing block
-                                    ceu_ret = ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n);
-                                } else {
-                                    // enclosing block
-                                    ceu_ret = ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n);
-                                }
-                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
-                                    ceu_acc_$n = ceu_acc;
-                                }
-                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
-                                ceu_coro->Bcast.Coro.bcasting = 0;
+                                // enclosing block
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n));
                             }
-                            ceu_coro->Bcast.status = MAX(CEU_CORO_STATUS_TERMINATED, ceu_coro->Bcast.status);
-                            if (iscoros) {
+                            ceu_bcasting--;
+                        
+                            if (ceu_coro->Bcast.Coro.coros != NULL) {
                                 if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                     ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
                             }
+
+                            ceu_bcast_free();
+
+                            if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
+                                ceu_acc = ceu_acc_$n;
+                            } else {
+                                // do not restore acc: we were ok, but now we did throw
+                            }
                         }
-                        // destroyed from bcast
-                        if (!iscoros && ceu_coro->Bcast.status==CEU_CORO_STATUS_DESTROYED) {
-                            free(ceu_coro->Bcast.Coro.frame->mem);
-                            free(ceu_coro->Bcast.Coro.frame);
-                            free(ceu_coro);
-                        }
-                        ceu_acc = ceu_acc_$n;
-                        ceu_ret = ceu_ret_$n;
-                        //ceu_print1(&ceu_acc);
-                        //printf(" <<< %d / %p\n", ceu_ret, ceu_coro);
-                    } // ceu_ret/ceu_acc: save/restore
+                    }
                     """} + """
                     return ceu_ret;
                 }
@@ -264,7 +253,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 }}
                             }
                             { // cleanup active nested spawns in this block
+                                ceu_bcasting++;
                                 assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
+                                ceu_bcasting--;
+                                ceu_bcast_free();
                             }
                             { // DEFERS ${this.tk.dump()}
                                 ceu_ret = CEU_RET_RETURN;
@@ -281,7 +273,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ${ups.proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{
                                     "ceu_coro->Bcast.Coro.block = NULL;"
                                 }}
-                                ceu_block_free(&ceu_mem->block_$n);
+                                ceu_dyns_free(ceu_mem->block_$n.tofree);
                             }
                         }
                         ceu_acc = ceu_acc_$n;
@@ -430,7 +422,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.block(this)!!.toc(true)
-                val intask = ups.intask(this)
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
@@ -440,7 +431,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     }
                     ${this.xin.code(true, null)}
                     int ceu_err_$n = 0;
-                    ${intask.cond { "ceu_coro->Bcast.Coro.bcasting = 1;" }}
+                    ceu_bcasting++;
                     if (ceu_acc.type == CEU_VALUE_CORO) {
                         ceu_ret = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.type == CEU_VALUE_TAG) {
@@ -462,7 +453,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     } else {
                         ceu_err_$n = 1;
                     }
-                    ${intask.cond { "ceu_coro->Bcast.Coro.bcasting = 0;" }}
+                    ceu_bcasting--;
+                    ceu_bcast_free();
                     if (ceu_err_$n) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target");
                     }

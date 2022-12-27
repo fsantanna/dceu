@@ -69,7 +69,6 @@ fun Coder.main (): String {
         CEU_RET ceu_tags_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
-        void ceu_block_free (struct CEU_Block* block);
         CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
         
         void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
@@ -80,6 +79,7 @@ fun Coder.main (): String {
         
         void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
+        void ceu_bcast_free (void);
         
         CEU_RET ceu_bcast_dyns   (struct CEU_Dynamic* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_blocks (struct CEU_Block* cur, struct CEU_Value* evt);
@@ -263,6 +263,9 @@ fun Coder.main (): String {
         
         CEU_RET ceu_ret = CEU_RET_RETURN;
         CEU_Value ceu_acc;
+        
+        int ceu_bcasting = 0;
+        CEU_Dynamic* ceu_bcast_tofree = NULL;
 
         // TODO: remove (only here b/c we do not test CEU_CONTINUE_ON_CLEAR at compile time)
         const int ceu_n = 0;
@@ -338,40 +341,60 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
-        void ceu_block_free (CEU_Block* block) {
-            while (block->tofree != NULL) {
-                CEU_Dynamic* cur = block->tofree;
-                block->tofree = cur->next;
-                while (cur->tags != NULL) {
-                    CEU_Tags_List* x = cur->tags;
-                    cur->tags = x->next;
-                    free(x);
-                }
+        void ceu_dyns_free (CEU_Dynamic* cur) {
+            CEU_Dynamic* nxt = cur;
+            while (nxt != NULL) {
+                CEU_Dynamic* cur = nxt;
+                nxt = cur->next;
+
                 switch (cur->type) {
+                    case CEU_VALUE_FUNC:
+                    case CEU_VALUE_TASK:
+                    case CEU_VALUE_TUPLE:
+                    case CEU_VALUE_COROS:
+                    case CEU_VALUE_TRACK:
+                        break;
                     case CEU_VALUE_VECTOR:
                         free(cur->Vector.mem);
-                        free(cur);
                         break;
                     case CEU_VALUE_DICT:
                         free(cur->Dict.mem);
-                        free(cur);
                         break;
                     case CEU_VALUE_CORO:
                         cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
-                        if (cur->Bcast.Coro.bcasting == 0) {
-                            // pending bcast inside coro, let it free later
+                        if (ceu_bcasting == 0) {
                             free(cur->Bcast.Coro.frame->mem);
                             free(cur->Bcast.Coro.frame);
-                            free(cur);
                         }
                         break;
                     default:
-                        free(cur);
-                        break;
+                        assert(0 && "bug found");
+                }
+                
+                if (cur->type<CEU_VALUE_BCAST || ceu_bcasting==0) {
+                    while (cur->tags != NULL) {
+                        CEU_Tags_List* x = cur->tags;
+                        cur->tags = x->next;
+                        free(x);
+                    }
+                    //printf(">>> %d\n", cur->type);
+                    free(cur);
+                } else {
+                    cur->next = ceu_bcast_tofree;
+                    ceu_bcast_tofree = cur;
                 }
             }
         }
-        
+
+        void ceu_bcast_free (void) {
+            if (ceu_bcasting > 0) {
+                // do not free anything yet
+            } else {
+                ceu_dyns_free(ceu_bcast_tofree);
+                ceu_bcast_tofree = NULL;
+            }
+        }
+
         CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
             switch (src->type) {
                 case CEU_VALUE_TUPLE:
@@ -463,7 +486,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
     """ +
-    """ // BCAST - ENQUEUE - DEQUEUE
+    """ // BCAST - ENQUEUE - DEQUEUE - FREE
         void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
             if (*outer == NULL) {
                 *outer = dyn;
@@ -561,6 +584,9 @@ fun Coder.main (): String {
     """ +
     """ // COROS
         void ceu_coros_destroy (CEU_Dynamic* coros, CEU_Dynamic* coro) {
+            if (coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
+                return;
+            }
             CEU_Dynamic* cur = coros->Bcast.Coros.first;
             if (cur == coro) {
                 coros->Bcast.Coros.first = coro->Bcast.next;
@@ -577,7 +603,7 @@ fun Coder.main (): String {
             }
             assert(cur == coro);
             cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
-            if (coro->Bcast.Coro.bcasting == 0) {
+            if (ceu_bcasting == 0) {
                 // pending bcast inside coro, let it free later
                 free(coro->Bcast.Coro.frame->mem);
                 free(coro->Bcast.Coro.frame);
