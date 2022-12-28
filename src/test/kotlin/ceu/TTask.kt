@@ -1050,6 +1050,7 @@ class TTask {
     }
 
     // POOL
+    // COROS ITERATOR
 
     @Test
     fun pool0() {
@@ -1534,6 +1535,24 @@ class TTask {
         )
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
                 "anon : (lin 5, col 17) : throw error : uncaught exception\n") { out }
+    }
+
+    // CORO ITERATOR
+
+    @Test
+    fun iter1() {
+        val out = all("""
+            var T
+            set T = task () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            while in :coro, (spawn T()), i {
+                println(i)
+            }
+        """)
+        assert(out == "1\n2\n3\n") { out }
     }
 
     // EVT

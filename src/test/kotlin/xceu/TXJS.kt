@@ -80,7 +80,7 @@ class TXJS {
                 last  = "Doe",
             ]
             var co = spawn objectEntries(jane)
-            while in :coro, cos, v {
+            while in :coro, co, v {
                 println((v.0 ++ ": ") ++ v.1)
             }
         """, true)
