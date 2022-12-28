@@ -108,14 +108,14 @@ func max (v1, v2) {
 
 func ctostring (v) {
     assert(type(v) == :pointer)
-        var i = 0
-        var n = `:number strlen($v.Pointer)`
-        var str = #[]
-        while i < n {
-            set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
-            set i = i + 1
-        }
-        move(str)
+    var i = 0
+    var n = `:number strlen($v.Pointer)`
+    var str = #[]
+    while i < n {
+        set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
+        set i = i + 1
+    }
+    move(str)
 }
 
 func tostring (v) {
@@ -167,4 +167,18 @@ func {<++} (v1, v2) {
 
 func {++} (v1, v2) {
     (#[] <++ v1) <++ v2
+}
+
+;; tovector
+
+func tovector (v) {
+    ifs v {
+        is :coro -> {
+            var ret = #[]
+            while in :coro, v, i {
+                set ret[#ret] = i
+            }
+            move(ret)
+        }
+    }
 }

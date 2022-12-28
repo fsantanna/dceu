@@ -5,6 +5,7 @@ import org.junit.Test
 
 class TXJS {
 
+    //////////////////////////////////////////////////////////////////////////
     // Summary:
     //  - Declaring a generator prototype:
     //      - JS:  function* genFunc (...) { ... }
@@ -19,7 +20,11 @@ class TXJS {
     //      - JS:  v = yield(...)
     //      - Ceu: v = yield(...)
     //
-    // 22.1.3: spawn vs coroutine
+    // 22.1.3 Use case: implementing iterables
+    //      - spawn vs coroutine
+    // 22.3.2 Returning from a generator
+    //      - no return in Ceu, no done in Ceu, expects nil or :terminated
+    //////////////////////////////////////////////////////////////////////////
 
     // 22.1 Overview
 
@@ -124,7 +129,7 @@ class TXJS {
         assert(out.contains("uncaught exception\njson :good")) { out }
     }
 
-    // 22.3 Generators as iterators (data production) #
+    // 22.3 Generators as iterators (data production)
 
     @Test
     fun x5() {
@@ -139,5 +144,38 @@ class TXJS {
             println(resume genObj())
         """, true)
         assert(out == "a\nb\nnil\n") { out }
+    }
+
+    // 22.3.1 Ways of iterating over a generator
+
+    @Test
+    fun x6() {
+        val out = all("""
+            task genFunc() {
+                yield('a')
+                yield('b')
+            }
+            var arr = tovector(coroutine(genFunc))
+            println(arr)
+            
+            ;; var [x,y] = ...  ;; TODO: destructor
+        """, true)
+        assert(out == "ab\n") { out }
+    }
+
+    // 22.3.2 Returning from a generator
+
+    // 22.3.3 Throwing an exception from a generator
+
+    @Test
+    fun x7() {
+        val out = all("""
+            task genFunc() {
+                throw(:problem)
+            }
+            var genObj = coroutine(genFunc)
+            resume genObj()
+        """, true)
+        assert(out == "ab\n") { out }
     }
 }
