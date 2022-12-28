@@ -1249,6 +1249,23 @@ class TXExec {
         assert(out == "1\n") { out }
     }
 
+    // TASK ITERATOR
+
+    @Test
+    fun iter1() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            while in :coros, (spawn T()), i {
+                println(i)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test

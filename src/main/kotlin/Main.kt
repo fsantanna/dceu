@@ -41,6 +41,10 @@ val EXPOSE = setOf (
     "copy", "is'", "isnot'", "print", "println", "type", "{==}", "{/=}"
 )
 
+val ITERS = setOf (
+    ":coros"
+) + if (!XCEU) emptySet() else setOf(":coro")
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
@@ -67,7 +71,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
-    data class Iter   (val tk_: Tk.Tag, val col: Expr, val loc: Tk.Id, val body: Block): Expr(N++, tk_)
+    data class Iter   (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)

@@ -389,13 +389,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val loc = this.loc.str
                 """
                 { // ITER ${this.tk.dump()}
-                    ${this.col.code(true, null)}
-                    ceu_mem->col_$n = ceu_acc;
-                    if (ceu_mem->col_$n.type != CEU_VALUE_COROS) {                
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.col.tk.pos.lin}, col ${this.col.tk.pos.col}) : while error : expected coroutines");
+                    ${this.coros.code(true, null)}
+                    ceu_mem->coros_$n = ceu_acc;
+                    if (ceu_mem->coros_$n.type != CEU_VALUE_COROS) {                
+                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines");
                     }
-                    ceu_mem->col_$n.Dyn->Bcast.Coros.open++;
-                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->col_$n.Dyn->Bcast.Coros.first} };
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
+                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
                     ceu_ret = CEU_RET_RETURN;
                     do { // iter
                 CEU_ITER_$n:;
@@ -413,9 +413,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_mem->$loc.Dyn != NULL) { // repeat in case body error
                         ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
                     }
-                    ceu_mem->col_$n.Dyn->Bcast.Coros.open--;
-                    if (ceu_mem->col_$n.Dyn->Bcast.Coros.open == 0) {
-                        ceu_coros_cleanup(ceu_mem->col_$n.Dyn);
+                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
+                    if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
+                        ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
                     }
                     CEU_CONTINUE_ON_THROW();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
@@ -867,7 +867,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 // SPAWN/CORO ${this.tk.dump()}
                     ${iscoros.cond {
                         spawn!!.coros!!.code(true, null) + """
-                        ceu_mem->col_${spawn!!.n} = ceu_acc;
+                        ceu_mem->coros_${spawn!!.n} = ceu_acc;
                         """
                     }}
                     ${this.proto.code(true, null)}
@@ -883,7 +883,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         """
                         ceu_ret = ceu_coro_create_in (
                             $bupc,
-                            ceu_mem->col_${spawn!!.n}.Dyn,
+                            ceu_mem->coros_${spawn!!.n}.Dyn,
                             &ceu_task_$n,
                             &ceu_coro_$n,
                             &ceu_ok_$n.Bool
