@@ -10,9 +10,9 @@ fun Coder.main (): String {
         #include <stdarg.h>
         #include <math.h>
 
-        #define MAX(x,y) (x > y ? x : y)
-        #define MIN(x,y) (x < y ? x : y)
-        
+        #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+        #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+
         struct CEU_Value;
             struct CEU_Dynamic;
             struct CEU_Frame;        
@@ -209,9 +209,7 @@ fun Coder.main (): String {
                             int open;               // number of open iterators
                             struct CEU_Dynamic* first;  // coro->Bcast.Coro, first coro to bcast/free
                         } Coros;
-                        struct {
-                            struct CEU_Dynamic* coro;   // starts as CORO and may fall to NIL
-                        } Track;
+                        struct CEU_Dynamic* Track;   // starts as CORO and may fall to NIL
                     };
                 } Bcast;
             };
@@ -560,8 +558,8 @@ fun Coder.main (): String {
                     }
                     return ret;
                 case CEU_VALUE_TRACK:
-                    if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track.coro==evt->Dyn) {
-                        cur->Bcast.Track.coro = NULL; // tracked coro is terminating
+                    if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track==evt->Dyn) {
+                        cur->Bcast.Track = NULL; // tracked coro is terminating
                     }
                     return CEU_RET_RETURN;
                 }
@@ -985,10 +983,10 @@ fun Coder.main (): String {
         
         CEU_Value ceu_track_to_coro (CEU_Value* track) {
             if (track->type == CEU_VALUE_TRACK) {
-                if (track->Dyn->Bcast.Track.coro == NULL) {
+                if (track->Dyn->Bcast.Track == NULL) {
                     return (CEU_Value) { CEU_VALUE_NIL };
                 } else {
-                    return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track.coro} };
+                    return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track} };
                 }
             } else {
                 return *track;

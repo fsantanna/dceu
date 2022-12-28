@@ -1,6 +1,7 @@
 package xceu
 
 import ceu.all
+import ceu.await
 import ceu.lexer
 import ceu.yield
 import org.junit.Test
@@ -587,8 +588,9 @@ class TXExec {
     fun awaiting16_track() {
         val out = all("""
             task T () {
-                set pub = [10]
+                set pub = [:pub]
                 await :evt
+                println(:awake)
             }
             var t = coroutine(T)
             resume t ()
@@ -599,16 +601,44 @@ class TXExec {
                     broadcast in :global, nil
                     println(x.pub[0])
                     broadcast in :global, :evt
+                    println(:noooo)
                     println(x.pub[0])   ;; never printed
                     await false
                 }
+                println(:awaiting)
                 println(x.status)
             }
             println(:ok)
         """, true)
         assert(out == "10\n10\n:destroyed\n:ok\n") { out }
     }
-
+    @Test
+    fun awaiting17_track() {
+        val out = all("""
+            task T () {
+                `printf("T = %p\n", ceu_coro);`
+                set pub = :pub
+                await evt==:evt
+                println(:T)
+            }
+            var t = spawn T()
+            var x = track(t)
+            println(:x, x)
+            spawn {
+                `printf("O = %p\n", ceu_coro);`
+                awaiting x {
+                    `printf("I = %p\n", ceu_coro);`
+                    broadcast in :global, :evt
+                    println(:aqui, `:number ceu_coro->Bcast.status`, `:pointer ceu_coro`)
+                    println(x.pub)   ;; never printed
+                    await false
+                }
+                println(:awaiting)
+            }
+            println(:ok)
+        """, true)
+        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 

@@ -7,7 +7,7 @@ fun yield (ok: String = "ok"): String {
     return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:coro { set $ok=false } else { nil } } }"
 }
 fun await (evt: String): String {
-    return "do { var ok; set ok=true; while ok { yield(nil); if $evt { set ok=false } else { nil } } }"
+    return "do { var ok; set ok=true; yield(nil); while ok { if $evt { set ok=false } else { yield(nil) } } }"
 }
 
 class TTask {
@@ -2001,8 +2001,8 @@ class TTask {
                 ceu_spw_54.pub        
             }     
             println(y) 
-        }() 
-        broadcast in :global, nil 
+        }()
+        broadcast in :global, nil
         """)
         assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
                 "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
@@ -2643,6 +2643,41 @@ class TTask {
             println(x.status)   ;; nil
         """)
         assert(out == "1\n:yielded\n:destroyed\n") { out }
+    }
+    @Test
+    fun track14() {
+        val out = all("""
+            var T
+            set T = task () {
+                `printf("T = %p\n", ceu_coro);`
+                set pub = :pub
+                ${await("evt==:evt")}
+                println(:T)
+            }
+            var t
+            set t = spawn T()
+            var x
+            set x = track(t)
+            println(:x, x)
+            spawn task () {
+                `printf("O = %p\n", ceu_coro);`
+                catch :paror {
+                    spawn task () {
+                        ${await("if x.status==:terminated { true } else { if x.status==:destroyed { true } else { yield(nil) } }")}
+                        throw(:paror)
+                    } ()
+                        
+                    `printf("I = %p\n", ceu_coro);`
+                    broadcast in :global, :evt
+                    println(:aqui, `:number ceu_coro->Bcast.status`, `:pointer ceu_coro`)
+                    println(x.pub)   ;; never printed
+                    ${await("false")}
+                }
+                println(:awaiting)
+            }()
+            println(:ok)
+        """)
+        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
     }
 
     // XCEU

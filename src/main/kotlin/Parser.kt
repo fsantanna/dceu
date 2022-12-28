@@ -533,7 +533,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
-                                if (ceu_spw_$N.status /= :terminated) {
+                                if (ceu_spw_$N.status < :terminated) {
                                     ${pre0}await evt==ceu_spw_$N
                                 }
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
@@ -551,14 +551,14 @@ class Parser (lexer_: Lexer)
                             }
                         """)//.let { println(it.tostr()); it }
                     }
-                    (cnd != null) -> {  // await evt=x
+                    (cnd != null) -> {  // await evt==x
                         this.nest("""
                             ${pre0}do {
                                 ${pre0}yield ()
                                 while (do {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
                                     if (type(ceu_cnd_$N) == :track) {
-                                        (ceu_cnd_$N.status /= :destroyed)
+                                        (ceu_cnd_$N.status >= :terminated)
                                     } else {
                                         (not ceu_cnd_$N)
                                     }
