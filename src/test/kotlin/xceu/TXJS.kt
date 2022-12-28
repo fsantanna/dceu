@@ -18,6 +18,8 @@ class TXJS {
     //  - Yielding from a generator:
     //      - JS:  v = yield(...)
     //      - Ceu: v = yield(...)
+    //
+    // 22.1.3: spawn vs coroutine
 
     // 22.1 Overview
 
@@ -68,6 +70,7 @@ class TXJS {
     fun x3() {
         val out = all("""
             task objectEntries (obj) {
+                yield()
                 var key = next(obj)
                 while key /= nil {
                     yield([key, obj[key]])
@@ -81,9 +84,9 @@ class TXJS {
             ]
             var co = spawn objectEntries(jane)
             while in :coro, co, v {
-                println((v.0 ++ ": ") ++ v.1)
+                println((tostring(v.0) ++ ": ") ++ v.1)
             }
         """, true)
-        assert(out == "First\nSecond\n") { out }
+        assert(out == ":first: Jane\n:last: Doe\n") { out }
     }
 }

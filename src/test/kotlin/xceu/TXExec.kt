@@ -1258,12 +1258,28 @@ class TXExec {
                 yield(1)
                 yield(2)
                 yield(3)
+                ;;nil
             }
-            while in :coros, (spawn T()), i {
+            while in :coro, coroutine(T), i {
                 println(i)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun iter2() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                yield(3)
+            }
+            while in :coro, coroutine(T), i { {:x}
+                println(i)
+                throw(:x)
+            }
+        """, true)
+        assert(out == "1\n") { out }
     }
 
     // THROW / CATCH

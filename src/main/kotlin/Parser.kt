@@ -229,18 +229,37 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 if (this.acceptFix("in")) {
                     this.acceptEnu_err("Tag")
-                    val tkt = this.tk0 as Tk.Tag
+                    val tktag = this.tk0 as Tk.Tag
                     this.acceptFix_err(",")
-                    if (tkt.str !in ITERS) {
-                        err(tk0, "invalid iterator : unexpected \"${tkt.str}\"")
+                    if (tktag.str !in ITERS) {
+                        err(tk0, "invalid iterator : unexpected \"${tktag.str}\"")
                     }
                     val col = this.expr()
                     this.acceptFix_err(",")
                     this.acceptEnu_err("Id")
                     val i = this.tk0 as Tk.Id
                     this.catch_block().let { (C,b) ->
-                        C(Expr.Iter(tk0, i, col,
-                            Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
+                        when {
+                            tktag.str == ":coros" -> {
+                                C(Expr.Iter(tk0, i, col,
+                                    Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
+                            }
+                            tktag.str == ":coro" -> {
+                                C(this.nest("""
+                                    do {
+                                        var ceu_col_$N = ${col.tostr(true)}
+                                        assert(type(ceu_col_$N) == :coro)
+                                        var ${i.str} = resume ceu_col_$N()
+                                        while (ceu_col_$N.status < :terminated) and (${i.str} /= nil) {
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = resume ceu_col_$N()
+                                        }
+                                    }
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            else -> error("impossible case")
+                        }
                     }
                 } else {
                     val cnd = this.expr()
