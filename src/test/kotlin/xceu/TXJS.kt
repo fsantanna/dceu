@@ -203,7 +203,6 @@ class TXJS {
         val out = all("""
             task genFunc () {
                 while in :vector, #['a','b'], i, v {
-                    println(i,v)
                     yield([i,v])
                 }
             }

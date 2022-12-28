@@ -379,6 +379,49 @@ class TExec {
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
         assert(out == "[10]\n") { out }
     }
+    @Test
+    fun tuple16_move() {
+        val out = all("""
+            var v
+            set v = do {
+                println([[1,2]])
+                ;;move([[1,2]])
+            }
+            println(v)
+        """)
+        assert(out == "[[1,2]]\n") { out }
+    }
+    @Test
+    fun vector17_move() {
+        val out = all("""
+            var v
+            set v = do {
+                println(#[#[1,2]])
+                ;;move(#[#[1,2]])
+            }
+            println(v)
+        """)
+        assert(out == "#[#[1,2]]\n") { out }
+    }
+    @Test
+    fun dict18_move() {
+        val out = all("""
+            var v
+            set v = do {
+                println(@[(:v,@[(:v,2)])])
+                ;;move(@[(:v,[1,2])])
+            }
+            println(v)
+        """)
+        assert(out == "#[[1,2]]\n") { out }
+    }
+    @Test
+    fun vector19_print() {
+        val out = all("""
+            println(#[[1,2]])
+        """)
+        assert(out == "#[#[1,2]]\n") { out }
+    }
 
     // DICT
 

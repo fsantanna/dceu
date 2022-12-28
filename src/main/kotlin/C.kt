@@ -1174,20 +1174,21 @@ fun Coder.main (): String {
         CEU_RET ceu_move_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
+            CEU_Dynamic* dyn = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_TUPLE: {
-                    src->Dyn->isperm = 0;
-                    for (int i=0; i<src->Dyn->Tuple.n; i++) {
-                        CEU_Value* args[1] = { &src->Dyn->Tuple.mem[i] };
+                    dyn->isperm = 0;
+                    for (int i=0; i<dyn->Tuple.n; i++) {
+                        CEU_Value* args[1] = { &dyn->Tuple.mem[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
                     }
                     ceu_acc = *src;
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    src->Dyn->isperm = 0;
-                    for (int i=0; i<src->Dyn->Vector.n; i++) {
-                        assert(CEU_RET_RETURN == ceu_vector_get(src->Dyn, i));
+                    dyn->isperm = 0;
+                    for (int i=0; i<dyn->Vector.n; i++) {
+                        assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value* args[1] = { &ceu_acc };
                         assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
                     }
@@ -1195,11 +1196,11 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    src->Dyn->isperm = 0;
-                    for (int i=0; i<src->Dyn->Dict.max; i++) {
-                        CEU_Value* args0[1] = { &(*src->Dyn->Dict.mem)[i][0] };
+                    dyn->isperm = 0;
+                    for (int i=0; i<dyn->Dict.max; i++) {
+                        CEU_Value* args0[1] = { &(*dyn->Dict.mem)[i][0] };
                         assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args0));
-                        CEU_Value* args1[1] = { &(*src->Dyn->Dict.mem)[i][1] };
+                        CEU_Value* args1[1] = { &(*dyn->Dict.mem)[i][1] };
                         assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args1));
                     }
                     ceu_acc = *src;
@@ -1214,42 +1215,43 @@ fun Coder.main (): String {
         CEU_RET ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
+            CEU_Dynamic* old = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_TUPLE: {
-                    CEU_Value args1[src->Dyn->Tuple.n];
-                    for (int i=0; i<src->Dyn->Tuple.n; i++) {
-                        CEU_Value* args2[1] = { &src->Dyn->Tuple.mem[i] };
+                    CEU_Value args1[old->Tuple.n];
+                    for (int i=0; i<old->Tuple.n; i++) {
+                        CEU_Value* args2[1] = { &old->Tuple.mem[i] };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args2));
                         args1[i] = ceu_acc;
                     }
-                    CEU_Dynamic* dyn = ceu_tuple_create(src->Dyn->hold, src->Dyn->Tuple.n, args1);
-                    assert(dyn != NULL);
-                    ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=dyn} };
+                    CEU_Dynamic* new = ceu_tuple_create(old->hold, old->Tuple.n, args1);
+                    assert(new != NULL);
+                    ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=new} };
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dynamic* dyn = ceu_vector_create(src->Dyn->hold, src->Dyn->Vector.type, 0, NULL);
-                    assert(dyn != NULL);
-                    CEU_Value ret = { CEU_VALUE_VECTOR, {.Dyn=dyn} };
+                    CEU_Dynamic* new = ceu_vector_create(old->hold, old->Vector.type, 0, NULL);
+                    assert(new != NULL);
+                    CEU_Value ret = { CEU_VALUE_VECTOR, {.Dyn=new} };
                     // TODO: memcpy if type!=DYN
-                    for (int i=0; i<src->Dyn->Vector.n; i++) {
-                        assert(CEU_RET_RETURN == ceu_vector_get(src->Dyn, i));
+                    for (int i=0; i<old->Vector.n; i++) {
+                        assert(CEU_RET_RETURN == ceu_vector_get(old, i));
                         CEU_Value* args[1] = { &ceu_acc };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
-                        ceu_vector_set(dyn, i, ceu_acc);
+                        ceu_vector_set(old, i, ceu_acc);
                     }
                     ceu_acc = ret;
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dynamic* dyn = ceu_dict_create(src->Dyn->hold, src->Dyn->Dict.max, NULL);
-                    assert(dyn != NULL);
-                    CEU_Value ret = { CEU_VALUE_DICT, {.Dyn=dyn} };
-                    for (int i=0; i<src->Dyn->Dict.max; i++) {
-                        CEU_Value* args0[1] = { &(*src->Dyn->Dict.mem)[i][0] };
+                    CEU_Dynamic* new = ceu_dict_create(old->hold, old->Dict.max, NULL);
+                    assert(new != NULL);
+                    CEU_Value ret = { CEU_VALUE_DICT, {.Dyn=new} };
+                    for (int i=0; i<old->Dict.max; i++) {
+                        CEU_Value* args0[1] = { &(*old->Dict.mem)[i][0] };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args0));
                         (*ret.Dyn->Dict.mem)[i][0] = ceu_acc;
-                        CEU_Value* args1[1] = { &(*src->Dyn->Dict.mem)[i][1] };
+                        CEU_Value* args1[1] = { &(*old->Dict.mem)[i][1] };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args1));
                         (*ret.Dyn->Dict.mem)[i][1] = ceu_acc;
                     }

@@ -731,8 +731,8 @@ class TXExec {
             while in :dict, t, k, v {
                 println(k,v)
             }
-        """)
-        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
+        """, true)
+        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
     }
     @Test
     fun vect11_iter() {
@@ -1440,7 +1440,7 @@ class TXExec {
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n:error\n") { out }
     }
 
-    // tonumber, tostring
+    // tonumber, tostring, tovector
 
     @Test
     fun tostring1() {
@@ -1465,6 +1465,18 @@ class TXExec {
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun tovector4() {
+        val out = all("""
+            task T() {
+                yield([1])
+            }
+            var t = coroutine(T)
+            var v = tovector(t)
+            println(v)
+        """, true)
+        assert(out == "[[1]]\n") { out }
     }
 
     // ALL
