@@ -7,6 +7,8 @@
 
 # NEXT
 
+- :error -> tag(:error,"message")
+- [x,y] = tup
 - refer(track) -> coro
 - do :fake, group stmts, w/o block: where, highlight steps
     - group :hide { ... }

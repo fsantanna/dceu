@@ -1364,6 +1364,8 @@ fun Coder.main (): String {
                     cur->shown = 1;
                     cur = cur->next;
                 }
+                ceu_print1(&ceu_acc);
+                puts("");
             }
             return 1;
         }
