@@ -488,9 +488,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${assrc("(CEU_Value) { CEU_VALUE_NIL }")} // resume single argument
                     } else {
                         assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                        ${assrc("*ceu_args[0]")} // resume single argument
+                        if (ceu_n == 0) {
+                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        } else {
+                            ${assrc("*ceu_args[0]")} // resume single argument
+                        }
                     }
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
             is Expr.Resume -> this.call.code(issrc, null)
