@@ -201,6 +201,7 @@ fun Coder.main (): String {
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             CEU_Frame* frame;
+                            // TODO: remove
                             int bcasting;               // 0,1: not reentrant
                         } Coro;
                         struct {

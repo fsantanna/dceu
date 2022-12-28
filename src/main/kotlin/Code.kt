@@ -95,8 +95,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         if (ceu_n == CEU_ARG_EVT) {
                             ceu_evt = ceu_args[0];
                         }
-                        assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
-                        ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
+                        //assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
+                        //if (ceu_evt != &CEU_EVT_CLEAR) {
+                            ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
+                        //}
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
@@ -422,6 +424,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.block(this)!!.toc(true)
+                val intask = ups.intask(this)
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
@@ -454,7 +457,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_err_$n = 1;
                     }
                     ceu_bcasting--;
+                    ${intask.cond {
+                        """
+                        int ceu_term = ceu_coro->Bcast.status>=CEU_CORO_STATUS_TERMINATED;
+                        //printf(">>> %d : %p\n", ceu_coro->Bcast.status, ceu_coro);
+                        """
+                    }}
                     ceu_bcast_free();
+                    ${intask.cond {
+                        "if (ceu_term) return CEU_RET_RETURN;"
+                    }}
                     if (ceu_err_$n) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target");
                     }
