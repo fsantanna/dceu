@@ -79,10 +79,8 @@ class TXJS {
         val out = all("""
             task objectEntries (obj) {
                 yield()
-                var key = next(obj)
-                while key /= nil {
-                    yield([key, obj[key]])
-                    set key = next(obj,key)
+                while in :dict, obj, k, v {
+                    yield([k, v])
                 }
             }
             
@@ -184,5 +182,34 @@ class TXJS {
         assert(out == "anon : (lin 6, col 20) : genObj()\n" +
                 "anon : (lin 3, col 17) : throw error : uncaught exception\n" +
                 ":problem\n") { out }
+    }
+
+    // 22.3.4 Example: iterating over properties
+    // (same as) 22.1.3 Use case: implementing iterables
+
+    @Test
+    fun x8() {
+        val out = all("""
+            task genFunc () {
+                func () {
+                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing task
+                }()
+            }
+        """, true)
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
+    }
+    @Test
+    fun x9() {
+        val out = all("""
+            task genFunc () {
+                while in :vector, #['a','b'], i, v {
+                    println(i,v)
+                    yield([i,v])
+                }
+            }
+            var arr = tovector(coroutine(genFunc))
+            println(arr)
+        """, true)
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
     }
 }

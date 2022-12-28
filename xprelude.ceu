@@ -175,10 +175,13 @@ func tovector (v) {
     ifs v {
         is :coro -> {
             var ret = #[]
-            while in :coro, v, i {
-                set ret[#ret] = i
+            while in :coro, v, vv {
+                println(v,vv)
+                set ret[#ret] = vv
+                println(v,vv)
             }
             move(ret)
         }
+        else -> throw(:TODO)
     }
 }

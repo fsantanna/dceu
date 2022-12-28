@@ -762,7 +762,7 @@ class TXExec {
                 println(k, v)
             }
         """, true)
-        assert(out == ":x\t1\n:y\t2\n:z\t3n") { out }
+        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
     }
     @Test
     fun dict14_iter_err() {
@@ -771,7 +771,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 34) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 2, col 34) : expected \",\" : have \"{\"") { out }
     }
 
     // AWAIT / EVERY
