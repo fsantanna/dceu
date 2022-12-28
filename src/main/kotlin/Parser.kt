@@ -66,6 +66,7 @@ class Parser (lexer_: Lexer)
             "Eof" -> "end of file"
             "Fix" -> "TODO"
             "Id"  -> "identifier"
+            "Tag" -> "tag"
             "Num" -> "number"
             else   -> TODO(this.toString())
         }
@@ -227,13 +228,18 @@ class Parser (lexer_: Lexer)
             this.acceptFix("while") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (this.acceptFix("in")) {
+                    this.acceptEnu_err("Tag")
+                    val tkt = this.tk0 as Tk.Tag
+                    this.acceptFix_err(",")
                     val col = this.expr()
                     this.acceptFix_err(",")
                     this.acceptEnu_err("Id")
                     val i = this.tk0 as Tk.Id
                     this.catch_block().let { (C,b) ->
-                        C(Expr.Iter(tk0, i, col,
-                            Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
+                        C(Expr.Iter(
+                            tkt, col, i,
+                            Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))
+                        ))
                     }
                 } else {
                     val cnd = this.expr()

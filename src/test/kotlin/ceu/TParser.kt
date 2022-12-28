@@ -739,37 +739,37 @@ class TParser {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in ts, t {
+            while in :coros, ts, t {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile in ts, t {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile in :coros, ts, t {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun coros2_err() {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in ts, 1 {
+            while in :coros, ts, 1 {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 26) : expected identifier : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 34) : expected identifier : have \"1\"")
     }
     @Test
     fun coros3_err() {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in x {
+            while in :coros, x {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 24) : expected \",\" : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 32) : expected \",\" : have \"{\"")
     }
     @Test
     fun coros4_err() {
@@ -802,6 +802,29 @@ class TParser {
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+    }
+
+    // ITER
+
+    @Test
+    fun iter1_err() {
+        val l = lexer("""
+            while in 1 {
+                nil
+            }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 22) : expected tag : have \"1\"")
+    }
+    @Test
+    fun iter2_err() {
+        val l = lexer("""
+            while in :coros {
+                nil
+            }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 29) : expected \",\" : have \"{\"")
     }
 
     // TRACK

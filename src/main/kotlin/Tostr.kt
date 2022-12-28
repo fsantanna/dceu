@@ -18,7 +18,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Coros  -> "coroutines(${this.max.cond { it.tostr(pre) }})"
         is Expr.Coro   -> "coroutine(" + this.task.tostr(pre) + ")"
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
-        is Expr.Iter   -> "while in ${this.coros.tostr(pre)}, ${this.loc.str} ${this.body.es[1].tostr(pre)}"
+        is Expr.Iter   -> "while in ${this.tk.str}, ${this.col.tostr(pre)}, ${this.loc.str} ${this.body.es[1].tostr(pre)}"
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "resume " + this.call.tostr(pre)

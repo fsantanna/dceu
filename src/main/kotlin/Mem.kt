@@ -67,7 +67,7 @@ fun Expr.mem (): String {
         is Expr.Coro -> this.task.mem()
         is Expr.Spawn -> """
             struct { // SPAWN
-                ${this.coros.cond{"CEU_Value coros_$n;"}}
+                ${this.coros.cond{"CEU_Value col_$n;"}}
                 union {
                     ${this.coros.cond { it.mem() }}
                     ${this.call.mem()}
@@ -76,7 +76,7 @@ fun Expr.mem (): String {
         """
         is Expr.Iter -> """
             struct { // ITER
-                CEU_Value coros_$n;
+                CEU_Value col_$n;
                 CEU_Block* hold_$n;
                 ${this.body.mem()}
             };
