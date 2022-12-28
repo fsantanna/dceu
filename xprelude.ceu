@@ -74,32 +74,24 @@ func {%} (v1, v2) {
 
 ;; RELATIONAL:  >=  >  <=  <
 
-func {>=} (v1,v2) {
-    if (v1 isnot :number) or (v2 isnot :number) {
-        throw(:error)
-    }
-    `:bool ($v1.Number >= $v2.Number)`
-}
-
 func {>} (v1,v2) {
-    if (v1 isnot :number) or (v2 isnot :number) {
-        throw(:error)
+    ifs {
+        (v1 is :tag)    and (v2 is :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
+        (v1 is :number) and (v2 is :number) -> `:bool ($v1.Number > $v2.Number)`
+        else -> throw(:error)
     }
-    `:bool ($v1.Number > $v2.Number)`
-}
-
-func {<=} (v1,v2) {
-    if (v1 isnot :number) or (v2 isnot :number) {
-        throw(:error)
-    }
-    `:bool ($v1.Number <= $v2.Number)`
 }
 
 func {<} (v1,v2) {
-    if (v1 isnot :number) or (v2 isnot :number) {
-        throw(:error)
-    }
-    `:bool ($v1.Number < $v2.Number)`
+    not ((v1 == v2) or (v1 > v2))
+}
+
+func {>=} (v1,v2) {
+    (v1 == v2) or (v1 > v2)
+}
+
+func {<=} (v1,v2) {
+    (v1 == v2) or (v1 < v2)
 }
 
 ;; max, min

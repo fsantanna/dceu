@@ -250,7 +250,7 @@ class TXExec {
                 }
             } ()
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "3\n2\n") { out }
     }
     @Test
@@ -588,9 +588,8 @@ class TXExec {
     fun awaiting16_track() {
         val out = all("""
             task T () {
-                set pub = [:pub]
+                set pub = [10]
                 await :evt
-                println(:awake)
             }
             var t = coroutine(T)
             resume t ()
@@ -601,11 +600,9 @@ class TXExec {
                     broadcast in :global, nil
                     println(x.pub[0])
                     broadcast in :global, :evt
-                    println(:noooo)
                     println(x.pub[0])   ;; never printed
                     await false
                 }
-                println(:awaiting)
                 println(x.status)
             }
             println(:ok)
@@ -616,28 +613,22 @@ class TXExec {
     fun awaiting17_track() {
         val out = all("""
             task T () {
-                `printf("T = %p\n", ceu_coro);`
                 set pub = :pub
                 await evt==:evt
-                println(:T)
             }
             var t = spawn T()
             var x = track(t)
-            println(:x, x)
             spawn {
-                `printf("O = %p\n", ceu_coro);`
                 awaiting x {
-                    `printf("I = %p\n", ceu_coro);`
                     broadcast in :global, :evt
-                    println(:aqui, `:number ceu_coro->Bcast.status`, `:pointer ceu_coro`)
                     println(x.pub)   ;; never printed
                     await false
                 }
-                println(:awaiting)
+                println(x.status)
             }
             println(:ok)
         """, true)
-        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+        assert(out == ":destroyed\n:ok\n") { out }
     }
 
     // TUPLE / VECTOR / DICT / STRING
@@ -751,7 +742,7 @@ class TXExec {
                 broadcast in :global, @[(:type,:x)]
                 println(3)
             }
-        """)
+        """, true)
         assert(out == "0\n1\n2\n99\n3\n") { out }
     }
     @Test
@@ -808,8 +799,7 @@ class TXExec {
                 }
             }()
              broadcast in :global, @[]
-        """
-        )
+        """, true)
         assert(out == "@[]\n") { out }
     }
     @Test
@@ -890,7 +880,7 @@ class TXExec {
                 println(1)
             }
             println(2)
-        """)
+        """, true)
         assert(out == "1\n2\n") { out }
     }
     @Test
@@ -922,7 +912,7 @@ class TXExec {
                 println(2)
             }
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
@@ -936,7 +926,7 @@ class TXExec {
                 println(y)
             }
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "[2]\n") { out }
     }
     @Test
@@ -956,7 +946,7 @@ class TXExec {
                 }
                 println(x)
             }
-        """)
+        """, true)
         assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
                 "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
@@ -981,7 +971,7 @@ class TXExec {
                 println(x,y,z)
             }
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "1\t[2]\t3\n") { out }
     }
     @Test
@@ -995,7 +985,7 @@ class TXExec {
                 println(999)
             }
             println(1)
-        """)
+        """, true)
         assert(out == "1\n") { out }
     }
 
@@ -1082,7 +1072,7 @@ class TXExec {
             }
             spawn T()
             broadcast in :global, nil
-        """)
+        """, true)
         assert(out == "10\n10\n") { out }
     }
 
@@ -1272,7 +1262,7 @@ class TXExec {
             while in (spawn T()), i {
                 println(i)
             }
-        """)
+        """, true)
         assert(out == "1\n2\n3\n") { out }
     }
 

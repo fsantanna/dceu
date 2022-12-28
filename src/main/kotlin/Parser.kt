@@ -558,7 +558,7 @@ class Parser (lexer_: Lexer)
                                 while (do {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
                                     if (type(ceu_cnd_$N) == :track) {
-                                        (ceu_cnd_$N.status >= :terminated)
+                                        (ceu_cnd_$N.status < :terminated)
                                     } else {
                                         (not ceu_cnd_$N)
                                     }

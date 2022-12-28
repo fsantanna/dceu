@@ -2649,31 +2649,27 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                `printf("T = %p\n", ceu_coro);`
-                set pub = :pub
+                set pub = [10]
                 ${await("evt==:evt")}
-                println(:T)
             }
             var t
             set t = spawn T()
             var x
             set x = track(t)
-            println(:x, x)
             spawn task () {
-                `printf("O = %p\n", ceu_coro);`
                 catch :paror {
                     spawn task () {
-                        ${await("if x.status==:terminated { true } else { if x.status==:destroyed { true } else { yield(nil) } }")}
+                        ${await("if x.status==:terminated { true } else { if x.status==:destroyed { true } else { false } }")}
                         throw(:paror)
                     } ()
-                        
-                    `printf("I = %p\n", ceu_coro);`
+                    println(x.pub[0])
+                    broadcast in :global, nil
+                    println(x.pub[0])
                     broadcast in :global, :evt
-                    println(:aqui, `:number ceu_coro->Bcast.status`, `:pointer ceu_coro`)
-                    println(x.pub)   ;; never printed
+                    println(x.pub[0]) ;; never printed
                     ${await("false")}
                 }
-                println(:awaiting)
+                println(x.status)
             }()
             println(:ok)
         """)

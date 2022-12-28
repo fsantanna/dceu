@@ -201,8 +201,6 @@ fun Coder.main (): String {
                             struct CEU_Dynamic* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             CEU_Frame* frame;
-                            // TODO: remove
-                            int bcasting;               // 0,1: not reentrant
                         } Coro;
                         struct {
                             int max;                // max number of instances
@@ -909,7 +907,7 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, NULL, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = { NULL, NULL, frame, 0 }
+                        .Coro = { NULL, NULL, frame }
                     } }
                 }
             };
@@ -951,7 +949,7 @@ fun Coder.main (): String {
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, NULL, coros->hold, NULL, 1, { // no free
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
-                        .Coro = { coros, NULL, frame, 0 }
+                        .Coro = { coros, NULL, frame }
                     } }
                 }
             };
