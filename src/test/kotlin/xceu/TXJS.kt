@@ -89,4 +89,55 @@ class TXJS {
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
     }
+
+    //  22.1.4 Use case: simpler asynchronous code
+
+    @Test
+    fun x4() {
+        val out = all("""
+            group { ;; mock functions
+                task fetch (url) {
+                    if url == :error {
+                        throw(:error)
+                    }
+                    url
+                }
+                task text (url) {
+                    tostring(url)
+                }
+                task json (txt) {
+                    "json " ++ txt
+                }
+            }
+            task fetchJson (url) {
+                var req = await spawn fetch(url)
+                var txt = await spawn text(req)
+                await spawn json(txt)
+            }
+            spawn {
+                var obj1 = await spawn fetchJson(:good)
+                println(obj1)   ;; json :good
+                var obj2 = await spawn fetchJson(:error)
+                println(obj2)   ;; never printed
+            }
+        """, true)
+        assert(out.contains("uncaught exception\njson :good")) { out }
+    }
+
+    // 22.3 Generators as iterators (data production) #
+
+    @Test
+    fun x5() {
+        val out = all("""
+            task genFunc() {
+                yield('a')
+                yield('b')
+            }
+            var genObj = coroutine(genFunc)
+            println(resume genObj())
+            println(resume genObj())
+            println(resume genObj())
+        """, true)
+        assert(out == "a\nb\nnil\n") { out }
+    }
 }
