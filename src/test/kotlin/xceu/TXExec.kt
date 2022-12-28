@@ -500,7 +500,7 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "anon : (lin 8, col 13) : broadcast in :global, nil\n" +
-                "anon : (lin 3, col 27) : throw error : uncaught exception\n") { out }
+                "anon : (lin 3, col 27) : throw error : uncaught exception\n:error\n") { out }
     }
     @Test
     fun paror11_ret() {
@@ -723,6 +723,55 @@ class TXExec {
             println(v1 ++ v2)
         """, true)
         assert(out == "#[1,2,3,4,5,6]\n") { out }
+    }
+    @Test
+    fun dict10_iter() {
+        val out = all("""
+            var t = @[x=1, y=2, z=3]
+            while in :dict, t, k, v {
+                println(k,v)
+            }
+        """)
+        assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
+    }
+    @Test
+    fun vect11_iter() {
+        val out = all("""
+            var t = #[1, 2, 3]
+            while in :vector, t, i, v {
+                println(i, v)
+            }
+        """, true)
+        assert(out == "0\t1\n1\t2\n2\t3\n") { out }
+    }
+    @Test
+    fun vect12_iter_err() {
+        val out = all("""
+            var t = #[1, 2, 3]
+            while in :vector, t, i {
+                println(i, v)
+            }
+        """, true)
+        assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
+    }
+    @Test
+    fun dict13_iter() {
+        val out = all("""
+            var t = @[x=1, y=2, z=3]
+            while in :dict, t, k, v {
+                println(k, v)
+            }
+        """, true)
+        assert(out == ":x\t1\n:y\t2\n:z\t3n") { out }
+    }
+    @Test
+    fun dict14_iter_err() {
+        val out = all("""
+            while in :dict, t, i {
+                println(i, v)
+            }
+        """, true)
+        assert(out == "anon : (lin 3, col 34) : expected \",\" : have \"{\"") { out }
     }
 
     // AWAIT / EVERY
@@ -949,7 +998,7 @@ class TXExec {
         """, true)
         assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
                 "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
-                "anon : (lin 3, col 52) : set error : incompatible scopes\n") { out }
+                "anon : (lin 3, col 52) : set error : incompatible scopes\n:error\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
@@ -1312,7 +1361,7 @@ class TXExec {
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n") { out }
+                "anon : (lin 5, col 17) : throw error : uncaught exception\n:error\n") { out }
     }
     @Test
     fun catch7() {
@@ -1343,7 +1392,7 @@ class TXExec {
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 9) : throw error : uncaught exception\n") { out }
+                "anon : (lin 5, col 9) : throw error : uncaught exception\n:error\n") { out }
     }
     @Test
     fun while1() {
@@ -1388,7 +1437,7 @@ class TXExec {
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 1, col 31) : set error : incompatible scopes\n" +
-                "anon : (lin 4, col 5) : throw error : uncaught exception\n") { out }
+                "anon : (lin 4, col 5) : throw error : uncaught exception\n:error\n") { out }
     }
 
     // tonumber, tostring
@@ -1462,7 +1511,7 @@ class TXExec {
             spawn T ()
         """, true)
         assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 5, col 25) : set error : incompatible scopes\n") { out }
+                "anon : (lin 5, col 25) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun all4() {
@@ -1478,7 +1527,7 @@ class TXExec {
             spawn T (spawn U())
         """, true)
         assert(out == "anon : (lin 10, col 28) : U()\n" +
-                "anon : (lin 2, col 23) : set error : incompatible scopes\n") { out }
+                "anon : (lin 2, col 23) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun all5() {

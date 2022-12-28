@@ -238,6 +238,11 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err(",")
                     this.acceptEnu_err("Id")
                     val i = this.tk0 as Tk.Id
+                    val v = if (tktag.str !in listOf(":vector",":dict")) null else {
+                        this.acceptFix_err(",")
+                        this.acceptEnu_err("Id")
+                        this.tk0 as Tk.Id
+                    }
                     this.catch_block().let { (C,b) ->
                         when {
                             tktag.str == ":coros" -> {
@@ -253,6 +258,40 @@ class Parser (lexer_: Lexer)
                                         while ${i.str} /= nil {
                                             ${b.es.tostr(true)}
                                             set ${i.str} = resume ceu_col_$N()
+                                        }
+                                    }
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            tktag.str == ":vector" -> {
+                                v!!
+                                C(this.nest("""
+                                    do {
+                                        var ceu_vec_$N = ${col.tostr(true)}
+                                        assert(type(ceu_vec_$N) == :vector)
+                                        var ${i.str} = 0
+                                        var ${v.str} = nil
+                                        while ${i.str} < #ceu_vec_$N {
+                                            set ${v.str} = ceu_vec_$N[${i.str}]
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = ${i.str} + 1
+                                        }
+                                    }
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            tktag.str == ":dict" -> {
+                                v!!
+                                C(this.nest("""
+                                    do {
+                                        var ceu_dict_$N = ${col.tostr(true)}
+                                        assert(type(ceu_dict_$N) == :dict)
+                                        var ${i.str} = next(ceu_dict_$N)
+                                        var ${v.str} = nil
+                                        while ${i.str} /= nil {
+                                            set ${v.str} = ceu_dict_$N[${i.str}]
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = next(ceu_dict_$N, ${i.str})
                                         }
                                     }
                                     """) //.let { println(it.tostr());it })

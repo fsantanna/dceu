@@ -24,6 +24,9 @@ class TXJS {
     //      - spawn vs coroutine
     // 22.3.2 Returning from a generator
     //      - no return in Ceu, no done in Ceu, expects nil or :terminated
+    // 22.3.3 Throwing an exception from a generator
+    //      - That means that next() can produce three different “results”:
+    //      - Ceu: value, nil, throw
     //////////////////////////////////////////////////////////////////////////
 
     // 22.1 Overview
@@ -175,7 +178,11 @@ class TXJS {
             }
             var genObj = coroutine(genFunc)
             resume genObj()
+                ;; anon : (lin 3, col 17) : throw error : uncaught exception
+                ;; :problem
         """, true)
-        assert(out == "ab\n") { out }
+        assert(out == "anon : (lin 6, col 20) : genObj()\n" +
+                "anon : (lin 3, col 17) : throw error : uncaught exception\n" +
+                ":problem\n") { out }
     }
 }

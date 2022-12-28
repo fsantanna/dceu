@@ -43,7 +43,7 @@ val EXPOSE = setOf (
 
 val ITERS = setOf (
     ":coros"
-) + if (!XCEU) emptySet() else setOf(":coro")
+) + if (!XCEU) emptySet() else setOf(":coro", ":vector", ":dict")
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)

@@ -531,7 +531,7 @@ class TTask {
             }) ()
         """)
         assert(out == "anon : (lin 2, col 20) : task :fake () { broadcast in :task, nil }()\n" +
-                "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n:error\n") { out }
+                "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
     fun throw6() {
@@ -1534,7 +1534,7 @@ class TTask {
         """
         )
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n:nil\n") { out }
+                "anon : (lin 5, col 17) : throw error : uncaught exception\nnil\n") { out }
     }
 
     // EVT
@@ -2388,8 +2388,7 @@ class TTask {
                 set xxx = t ;; error
             }
         """)
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n":error
-        ) { out }
+        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
 
     // TRACK
