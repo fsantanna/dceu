@@ -630,6 +630,20 @@ class TXExec {
         """, true)
         assert(out == ":destroyed\n:ok\n") { out }
     }
+    @Test
+    fun parand18_immediate() {
+        val out = all("""
+            spawn task () {
+                parand {
+                    println(1)
+                } with {
+                    println(2)
+                }
+                println(999)
+            } ()
+        """, true)
+        assert(out == "1\n2\n999\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 
@@ -798,9 +812,7 @@ class TXExec {
         val out = all("""
             var s = #[]
             s <++ #['1']
-            println(s)
             s <++ #['2']
-            println(s)
             s <++ #['3']
             println(s)
         """, true)

@@ -553,22 +553,20 @@ class Parser (lexer_: Lexer)
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
-                val spws = pars.map { """
-                    spawn {
-                        ${it.es.tostr(true)}
-                        set ceu_n_$n = ceu_n_$n + 1
-                        if ceu_n_$n == ${pars.size} {
-                            throw(:ceu.parand.$n)
-                        }
-                    }
-                """}.joinToString("")
                 //println(spws)
                 this.nest("""
                     ${pre0}do {
-                        var ceu_n_$n = 0
-                        ${pre0}catch err==:ceu.parand.$n {
-                            $spws
-                            await false
+                        ${pars.mapIndexed { i,body -> """
+                            var ceu_${i}_$n = spawn {
+                                ${body.es.tostr(true)}
+                            }
+                        """}.joinToString("")}
+                        while (
+                            ${pars.mapIndexed { i,_ -> """
+                                ((ceu_${i}_$n.status < :terminated) or
+                            """}.joinToString("")} false ${")".repeat(pars.size)}
+                        ) {
+                            yield ()
                         }
                     }
                 """)
@@ -582,24 +580,22 @@ class Parser (lexer_: Lexer)
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
-                val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn {
-                        throw(tags([do {
-                            ${it.es.tostr(true)}
-                        }], :ceu.paror.$n, true))
-                    }
-                """}.joinToString("")
-                //println(spws)
                 this.nest("""
                     ${pre0}do {
-                        var ceu_ret_$n =
-                            ${pre0}catch err is :ceu.paror.$n {
-                                $spws
-                                await false
+                        ${pars.mapIndexed { i,body -> """
+                            var ceu_${i}_$n = spawn {
+                                ${body.es.tostr(true)}
                             }
-                        ceu_ret_$n.0
+                        """}.joinToString("")}
+                        while (
+                            ${pars.mapIndexed { i,_ -> """
+                                ((ceu_${i}_$n.status < :terminated) and
+                            """}.joinToString("")} true ${")".repeat(pars.size)}
+                        ) {
+                            yield ()
+                        }
                     }
-                """) //.let { println(it.tostr(false));it }
+                """)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
@@ -671,11 +667,10 @@ class Parser (lexer_: Lexer)
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
-                    ${pre0}do {
-                        spawn {
-                            ${body.es.tostr(true)}
-                        }
+                    ${pre0}paror {
                         await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
+                    } with {
+                        ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
             }
