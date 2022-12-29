@@ -444,7 +444,8 @@ class TParser {
     fun group1_err() {
         val l = lexer("group :x {}")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 1) : invalid group : unexpected \":x\"")
+        //assert(trap { parser.exprPrim() } == "anon : (lin 1, col 1) : invalid group : unexpected \":x\"")
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 7) : expected \"{\" : have \":x\"")
     }
     @Test
     fun group2() {
@@ -664,7 +665,8 @@ class TParser {
             task :xxx () {}
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have \":xxx\"")
     }
 
     // BROADCAST

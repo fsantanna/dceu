@@ -89,6 +89,29 @@ class Parser (lexer_: Lexer)
         return true
     }
 
+    fun checkTag (str: String): Boolean {
+        return (this.tk1 is Tk.Tag && this.tk1.str == str)
+    }
+    fun checkTag_err (str: String): Boolean {
+        val ret = this.checkTag(str)
+        if (!ret) {
+            err_expected(this.tk1, '"'+str+'"')
+        }
+        return ret
+    }
+    fun acceptTag (str: String): Boolean {
+        val ret = this.checkTag(str)
+        if (ret) {
+            this.lex()
+        }
+        return ret
+    }
+    fun acceptTag_err (str: String): Boolean {
+        this.checkTag_err(str)
+        this.acceptTag(str)
+        return true
+    }
+
     fun checkOp (str: String): Boolean {
         return (this.tk1 is Tk.Op && this.tk1.str == str)
     }
@@ -175,12 +198,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("do") -> this.catch_block().let { (C,b)->C(b) }
             this.acceptFix("group") -> {
                 val tk0  = this.tk0 as Tk.Fix
-                val isHide = this.acceptEnu("Tag")
-                if (isHide) {
-                    if (this.tk0.str != ":hide") {
-                        err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
-                    }
-                }
+                val isHide = this.acceptTag(":hide")
                 val blk = this.block()
                 Expr.Group(tk0, isHide, blk.es)
             }
@@ -329,9 +347,9 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val isFake = this.acceptEnu("Tag")
+                val isFake = this.acceptTag(":fake")
                 if (isFake) {
-                    if (tk0.str=="func" || this.tk0.str!=":fake") {
+                    if (tk0.str == "func") {
                         err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
                     }
                 }
@@ -528,10 +546,7 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = (this.checkEnu("Tag") && this.tk1.str==":check.now")
-                if (now) {
-                    this.acceptEnu_err("Tag")
-                }
+                val now = this.acceptTag(":check.now")
                 val spw = this.checkFix("spawn")
                 val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
                 when {
@@ -670,10 +685,7 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = (this.checkEnu("Tag") && this.tk1.str==":check.now")
-                if (now) {
-                    this.acceptEnu_err("Tag")
-                }
+                val now = this.acceptTag(":check.now")
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
