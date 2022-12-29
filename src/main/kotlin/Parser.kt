@@ -721,21 +721,21 @@ class Parser (lexer_: Lexer)
                             when (op.str) {
                                 "=" -> this.nest("""
                                     group :hide { 
-                                        var ceu_col_$N = ${e.tostr(true)}
-                                        ceu_col_$N[(#ceu_col_$N)-1]
+                                        var _ceu_col_$N = ${e.tostr(true)}
+                                        _ceu_col_$N[(#_ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
                                     group :hide { 
-                                        var ceu_col_$N = ${e.tostr(true)}
-                                        ceu_col_$N[#ceu_col_$N]
+                                        var _ceu_col_$N = ${e.tostr(true)}
+                                        _ceu_col_$N[#_ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
                                     group :hide { 
-                                        var ceu_col_$N = ${e.tostr(true)}
-                                        var ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
-                                        set ceu_col_$N[(#ceu_col_$N)-1] = nil
+                                        var _ceu_col_$N = ${e.tostr(true)}
+                                        var ceu_i_$N = _ceu_col_$N[(#_ceu_col_$N)-1]
+                                        set _ceu_col_$N[(#_ceu_col_$N)-1] = nil
                                         ceu_i_$N
                                     }
                                 """)

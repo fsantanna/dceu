@@ -1,28 +1,18 @@
 # BUGS
 
 - checar todos os bcasts e testar se estou morto
+    - todo_status5
 - preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt
     - ou nao permitir x=evt exatamente como x=v.pub
 - refcount: set rect = [orig.0, orig.1, orig.2, orig.3]
 
 # NEXT
 
-- :error -> tag(:error,"message")
-- [x,y] = tup
-- refer(track) -> coro
-- do :fake, group stmts, w/o block: where, highlight steps
-    - group :hide { ... }
-        - where is seq :hide
-        - hide vars, union on mem, but same depth
-    - group :nohide {...}
-        - DEFAULT
-        - keep vars, struct on mem, still same depth
-    - allow in calls
-- Spawn in xceu
-- tuple copy semantics
-- test throw/break across fake task
-- throw (err,val)
 - parand/or as await task
+- :error -> tag(:error,"message")
+- [x,y] = tup (destructor)
+- refer(track) -> coro
+- test throw/break across fake task
 - track may hold normal coro
   - bcast to awake on termination
 - pub childs cannot be assigned
