@@ -281,4 +281,33 @@ class TXJS {
         """, true)
         assert(out == "abc\n") { out }
     }
+
+    // 22.3.6.2 Iterating over trees
+
+    @Test
+    fun x13() {
+        val out = all("""
+            var tree = @[
+                v = 'a',
+                l = @[
+                    v = 'b',
+                    l = @[v = 'c'],
+                    r = @[v = 'd'],
+                ],
+                r = @[v = 'e']
+            ]
+            task T (tree) {
+                yield()
+                yield(tree.v)
+                if tree.l {
+                    yield :all spawn T(tree.l)
+                }
+                if tree.r {
+                    yield :all spawn T(tree.r)
+                }
+            }
+            println(tovector(spawn T(tree)))
+        """, true)
+        assert(out == "abcde\n") { out }
+    }
 }
