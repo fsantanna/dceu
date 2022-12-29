@@ -13,8 +13,8 @@ class TXJS {
     //      - JS:  function* genFunc (...) { ... }
     //      - Ceu: task genFunc (...) { ... }
     //  - Instantiating a generator:
-    //      - JS:  gen = genFunc()
-    //      - Ceu: gen = coroutine(genFunc)
+    //      - JS:  gen = genFunc(...)
+    //      - Ceu: gen = coroutine(genFunc)     ;; cannot pass argument (like Lua), if arg is required, init yield() required
     //  - Resuming an instantiated generator:
     //      - JS:  gen.next(...)
     //      - Ceu: resume gen(...)
@@ -23,12 +23,14 @@ class TXJS {
     //      - Ceu: v = yield(...)
     //
     // 22.1.3 Use case: implementing iterables
-    //      - spawn vs coroutine
+    //      - spawn (pass parameter, but requires yield) vs coroutine (no parameter, no yield)
     // 22.3.2 Returning from a generator
     //      - no return in Ceu, no done in Ceu, expects nil or :terminated
     // 22.3.3 Throwing an exception from a generator
     //      - That means that next() can produce three different “results”:
     //      - Ceu: value, nil, throw
+    // 22.3.6.1 yield* considers end-of-iteration values
+    //      - Ceu: yield/return are the same
     //////////////////////////////////////////////////////////////////////////
 
     // 22.1 Overview
@@ -189,6 +191,8 @@ class TXJS {
     // 22.3.4 Example: iterating over properties
     // (same as) 22.1.3 Use case: implementing iterables
 
+    //  22.3.5 You can only yield in generators
+
     @Test
     fun x8() {
         val out = all("""
@@ -212,5 +216,74 @@ class TXJS {
             println(arr)
         """, true)
         assert(out == "#[[0,a],[1,b]]\n") { out }
+    }
+
+    // 22.3.6 Recursion via yield*
+
+    @Test
+    fun x10() {
+        val out = all("""
+            task foo () {
+                yield('a')
+                yield('b')
+            }
+            task bar () {
+                yield('x')
+                while in :coro, coroutine(foo), i {
+                    yield(i)
+                }
+                yield('y')
+            }
+            var arr = tovector(coroutine(bar))
+            println(arr)
+        """, true)
+        assert(out == "xaby\n") { out }
+    }
+
+    @Test
+    fun x11() {
+        val out = all("""
+            task foo () {
+                yield('a')
+                yield('b')
+            }
+            task bar () {
+                yield('x')
+                yield :all (coroutine(foo))
+                yield('y')
+            }
+            var arr = tovector(coroutine(bar))
+            println(arr)
+        """, true)
+        assert(out == "xaby\n") { out }
+    }
+
+    // 22.3.6.1 yield* considers end-of-iteration values
+    //  - In Ceu, like in Lua, yield/return are the same.
+    //  - The last expression is an implicit "return yield".
+    //      - Same in Lua, even w/o explicit return ("return yield" becomes nil).
+    //  - Return yield *always* happens, since it is implicit.
+    //  - To distinguish, may return tuple as [:next, v], [:return, v]
+
+    @Test
+    fun x12() {
+        val out = all("""
+            task genFuncWithReturn () {
+                yield('a')
+                yield('b')
+                'c'
+            }
+            task logReturned (genObj) {
+                yield()
+                ;;>>> yield :all
+                while in :coro, genObj, i {
+                    println(i)
+                    yield(i)
+                }
+                ;;<<< yield :all
+            }
+            println(tovector(spawn logReturned(coroutine(genFuncWithReturn))))
+        """, true)
+        assert(out == "xaby\n") { out }
     }
 }

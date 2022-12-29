@@ -1415,6 +1415,62 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun iter3() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            while in :coro, coroutine(T), i {
+                println(i)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun iter4() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                nil
+            }
+            while in :coro, coroutine(T), i {
+                println(i)
+            }
+        """, true)
+        assert(out == "1\n2\nnil\n") { out }
+    }
+    @Test
+    fun iter5() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            println(tovector(coroutine(T)))
+        """, true)
+        assert(out == "#[1,2,3]\n") { out }
+    }
+    @Test
+    fun iter6() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            var co = coroutine(T)
+            println(resume co())
+            println(resume co())
+            println(resume co())
+            println(resume co())
+        """, true)
+        assert(out == "anon : (lin 11, col 21) : resume error : expected yielded task\n1\n2\n3\n:error\n") { out }
+    }
 
     // THROW / CATCH
 

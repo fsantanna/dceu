@@ -273,10 +273,10 @@ class Parser (lexer_: Lexer)
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :coro)
-                                        var ${i.str} = resume ceu_col_$N()
-                                        while ${i.str} /= nil {
-                                            ${b.es.tostr(true)}
+                                        var ${i.str}
+                                        while ceu_col_$N.status < :terminated {
                                             set ${i.str} = resume ceu_col_$N()
+                                            ${b.es.tostr(true)}
                                         }
                                     }
                                     """) //.let { println(it.tostr());it })
