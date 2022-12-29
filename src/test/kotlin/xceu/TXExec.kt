@@ -1479,6 +1479,86 @@ class TXExec {
         assert(out == "[[1]]\n") { out }
     }
 
+    // PEEK, PUSH, POP
+
+    @Test
+    fun ppp1() {
+        val out = all("""
+            var v = #[1]
+            set v[=] = 10
+            println(v)
+        """, true)
+        assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun ppp2() {
+        val out = all("""
+            var v = #[10]
+            println(v[=])
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ppp3() {
+        val out = all("""
+            var v = #[]
+            set v[+] = 1
+            println(v)
+        """)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun ppp4_err() {
+        val out = all("""
+            var v = #[]
+            v[+]
+        """, true)
+        assert(out == "anon : (lin 4, col 41) : index error : out of bounds\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun ppp5() {
+        val out = all("""
+            var v = #[1]
+            var x = v[-]
+            println(#v, x)
+        """, true)
+        assert(out == "0\t1\n") { out }
+    }
+    @Test
+    fun ppp6_err() {
+        val out = all("""
+            var v = #[1]
+            set v[-] = 10
+            println(v)
+        """, true)
+        assert(out == "anon : (lin 6, col 41) : expected \"=\" : have \"ceu_i_5831\"") { out }
+    }
+    @Test
+    fun ppp7() {
+        val out = all("""
+            var v
+            set v = #[]
+            set v[+] = 1
+            set v[+] = 2
+            set v[=] = 20
+            set v[+] = 3
+            println(#v, v[=])
+            var x = v[-]
+            println(#v, v[=], x)
+        """, true)
+        assert(out == "3\t3\n2\t20\t3\n") { out }
+    }
+    @Test
+    fun ppp8_debug() {
+        val out = all("""
+            var v
+            set v = #[10]
+            println(v[#v-1])
+        """, true)
+        assert(out == "10\n") { out }
+    }
+
     // ALL
 
     @Test

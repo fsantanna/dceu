@@ -418,9 +418,18 @@ class TExec {
     @Test
     fun vector19_print() {
         val out = all("""
-            println(#[[1,2]])
+            println(#[#[1,2]])
         """)
         assert(out == "#[#[1,2]]\n") { out }
+    }
+    @Test
+    fun vector20() {
+        val out = all("""
+            var v
+            set v = #[10]
+            println(v[#v-1])
+        """, true)
+        assert(out == "10\n") { out }
     }
 
     // DICT
@@ -633,15 +642,20 @@ class TExec {
         assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
     }
     @Test
-    fun todo_vector10_pop_acc() {
+    fun vector10_pop_acc() {
         val out = all("""
             var v
             set v = #[1,2,3]
             var x
-            set x = (set v[#v-1] = nil)
-            println(x)
+            set x = group :hide {
+                var i
+                set i = v[#v-1]
+                set v[#v-1] = nil
+                i
+            }
+            println(x, #v)
         """, true)
-        assert(out == "3\n") { out }
+        assert(out == "3\t2\n") { out }
     }
     @Test
     fun vector11_copy() {

@@ -204,10 +204,23 @@ class Parser (lexer_: Lexer)
                 val dst = this.expr()
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
-                    err(tk0, "invalid set : invalid destination")
+                if (!XCEU || dst !is Expr.Group) {
+                    if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
+                        err(tk0, "invalid set : invalid destination")
+                    }
+                    Expr.Set(tk0, dst, src)
+                } else {
+                    val hack = dst.tostr(true).let {
+                        //println(it)
+                        val xx = it.substringBeforeLast("\n}")
+                        val x2 = it.substringAfterLast("\n}")
+                        val x0 = xx.substringBeforeLast("\n}\n")
+                        val x1 = xx.substringAfterLast("\n}\n")
+                        x0 + "\n}\n" + "set " + x1 + " = " + src.tostr(true) + "\n}\n"+ x2
+                    }
+                    //println(hack)
+                    this.nest(hack)
                 }
-                Expr.Set(tk0, dst, src)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -694,8 +707,45 @@ class Parser (lexer_: Lexer)
             when {
                 // INDEX / PUB / FIELD
                 this.acceptFix("[") -> {
-                    e = Expr.Index(e.tk, e, this.expr())
-                    this.acceptFix_err("]")
+                    e = if (XCEU && (this.acceptOp("+") || this.acceptOp("-") || this.acceptFix("="))) {
+                        val op = this.tk0
+                        val isclose = this.acceptFix("]")
+                        if (isclose) {
+                            when (op.str) {
+                                "=" -> this.nest("""
+                                    group :hide { 
+                                        var ceu_col_$N = ${e.tostr(true)}
+                                        ceu_col_$N[(#ceu_col_$N)-1]
+                                    }
+                                """)
+                                "+" -> this.nest("""
+                                    group :hide { 
+                                        var ceu_col_$N = ${e.tostr(true)}
+                                        ceu_col_$N[#ceu_col_$N]
+                                    }
+                                """) //.let { println(it.tostr());it }
+                                "-" -> this.nest("""
+                                    group :hide { 
+                                        var ceu_col_$N = ${e.tostr(true)}
+                                        var ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
+                                        set ceu_col_$N[(#ceu_col_$N)-1] = nil
+                                        ceu_i_$N
+                                    }
+                                """)
+                                else -> error("impossible case")
+                            }
+                        } else {
+                            val idx = this.expr()
+                            this.acceptFix_err("]")
+                            Expr.Index(e.tk, e,
+                                Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos)), listOf(idx))
+                            ) //.let { println(it.tostr());it }
+                        }
+                    } else {
+                        val idx = this.expr()
+                        this.acceptFix_err("]")
+                        Expr.Index(e.tk, e, idx)
+                    }
                 }
                 this.acceptFix(".") -> {
                     e = when {

@@ -234,6 +234,29 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 4) : expected expression : have \"{\"")
     }
+    @Test
+    fun vector4() {
+        val l = lexer("v[{#}(v)]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "v[{#}(v)]") { e.tostr() }
+    }
+    @Test
+    fun vector5() {
+        val l = lexer("""
+            group :hide {
+                group {
+                var ceu_col_5833
+                set ceu_col_5833 = v
+                }
+                set ceu_col_5833[{#}(ceu_col_5833)] = 1
+}            
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "v[{#}(v)]") { e.tostr() }
+    }
+
 
     // EXPR.INDEX / PUB
 
