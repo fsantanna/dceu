@@ -1441,7 +1441,7 @@ class TXExec {
                 println(i)
             }
         """, true)
-        assert(out == "1\n2\nnil\n") { out }
+        assert(out == "1\n2\n") { out }
     }
     @Test
     fun iter5() {
@@ -1611,7 +1611,7 @@ class TXExec {
     fun tovector4() {
         val out = all("""
             task T() {
-                yield([1])
+                [1]
             }
             var t = coroutine(T)
             var v = tovector(t)

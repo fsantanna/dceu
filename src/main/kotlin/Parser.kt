@@ -276,7 +276,10 @@ class Parser (lexer_: Lexer)
                                         var ${i.str}
                                         while ceu_col_$N.status < :terminated {
                                             set ${i.str} = resume ceu_col_$N()
-                                            ${b.es.tostr(true)}
+                                            ;; TODO: if i==nil break;
+                                            if ${i.str} /= nil {
+                                                ${b.es.tostr(true)}
+                                            }
                                         }
                                     }
                                     """) //.let { println(it.tostr());it })

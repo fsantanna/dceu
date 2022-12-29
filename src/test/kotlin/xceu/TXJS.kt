@@ -241,7 +241,7 @@ class TXJS {
     }
 
     @Test
-    fun x11() {
+    fun todo_x11() {
         val out = all("""
             task foo () {
                 yield('a')
@@ -277,13 +277,12 @@ class TXJS {
                 yield()
                 ;;>>> yield :all
                 while in :coro, genObj, i {
-                    println(i)
                     yield(i)
                 }
                 ;;<<< yield :all
             }
             println(tovector(spawn logReturned(coroutine(genFuncWithReturn))))
         """, true)
-        assert(out == "xaby\n") { out }
+        assert(out == "abc\n") { out }
     }
 }
