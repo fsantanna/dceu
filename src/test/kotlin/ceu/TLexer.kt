@@ -112,6 +112,22 @@ class TLexer {
     }
 
     @Test
+    fun vararg() {
+        val l = lexer(".. ... . .. ....")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "..." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "..." })
+        assert(tks.next().let { it is Tk.Fix && it.str == "." })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
+
+    @Test
     fun comments1() {
         val l = lexer("""
             x - y - z ;;

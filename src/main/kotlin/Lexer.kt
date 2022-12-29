@@ -42,7 +42,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
         pos.reader.unread(n)
         when {
             iseof(n) -> {}
-            (x == '\n') -> { pos.lin--; pos.col =0 }
+            (x == '\n') -> { pos.lin--; pos.col=0 }
             else -> pos.col--
         }
     }
@@ -87,7 +87,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
             val lex = this.stack.first()
             val pos = lex.toPos()
             val (n1,x1) = read2()
-            //println("$l + $c: $x1")
             when (x1) {
                 ' ', '\n' -> {}
                 ';' -> {
@@ -142,7 +141,23 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         break
                     }
                 }
-                (x in listOf('}','(',')','[',']', ',','.', '\$')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
+                (x == '.') -> {
+                    val (n1,x1) = read2()
+                    if (x1 == '.') {
+                        val (n2, x2) = read2()
+                        if (x2 == '.') {
+                            yield(Tk.Fix("...", pos))
+                        } else {
+                            yield(Tk.Fix(".", pos))
+                            yield(Tk.Fix(".", pos))
+                            unread2(n2)
+                        }
+                    } else {
+                        yield(Tk.Fix(".", pos))
+                        unread2(n1)
+                    }
+                }
                 (x=='@' || x=='#') -> {
                     val (n1,x1) = read2()
                     when {
