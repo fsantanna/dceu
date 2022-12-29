@@ -556,9 +556,10 @@ class Parser (lexer_: Lexer)
                 //println(spws)
                 this.nest("""
                     ${pre0}do {
+                        var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
                             var ceu_${i}_$n = spawn {
-                                ${body.es.tostr(true)}
+                                set _ceu_$n = ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
                         while (
@@ -568,6 +569,7 @@ class Parser (lexer_: Lexer)
                         ) {
                             yield ()
                         }
+                        _ceu_$n
                     }
                 """)
             }
@@ -582,9 +584,11 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     ${pre0}do {
+                        var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
                             var ceu_${i}_$n = spawn {
-                                ${body.es.tostr(true)}
+                                var _ceu_${i}_$n = ${body.es.tostr(true)}
+                                set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
                             }
                         """}.joinToString("")}
                         while (
@@ -594,6 +598,7 @@ class Parser (lexer_: Lexer)
                         ) {
                             yield ()
                         }
+                        _ceu_$n
                     }
                 """)
             }

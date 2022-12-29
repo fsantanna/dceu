@@ -332,15 +332,15 @@ class TXExec {
                 paror {
                     defer { println(3) }
                     ${yield()}
-                    println(1)
+                    println(999)
                 } with {
                     println(2)
                 }
-                println(999)
+                println(:ok)
             } ()
             broadcast in :global, nil
         """, true)
-        assert(out == "2\n3\n999\n") { out }
+        assert(out == "2\n3\n:ok\n") { out }
     }
     @Test
     fun paror2() {
@@ -350,7 +350,7 @@ class TXExec {
                     defer { println(1) }
                     ${yield("ok1")}
                     ${yield("ok2")}
-                    println(1)
+                    println(999)
                 } with {
                     ${yield()}
                     println(2)
@@ -358,7 +358,7 @@ class TXExec {
                     defer { println(3) }
                     ${yield("ok1")}
                     ${yield("ok2")}
-                    println(3)
+                    println(999)
                 }
                 println(999)
             } ()
@@ -509,12 +509,26 @@ class TXExec {
                 var x = paror {
                     1
                 } with {
-                    999
+                    2
                 }
                 println(x)
             }
         """, true)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun parand11_ret() {
+        val out = all("""
+            spawn {
+                var x = parand {
+                    1
+                } with {
+                    2
+                }
+                println(x)
+            }
+        """, true)
+        assert(out == "2\n") { out }
     }
     @Test
     fun paror12_ret_func() {
@@ -840,7 +854,7 @@ class TXExec {
         val out = all("""
             spawn {
                 println(0)
-                await evt[:type]==:x
+                await (evt/=nil) and (evt[:type]==:x)
                 println(99)
             }
             do {
