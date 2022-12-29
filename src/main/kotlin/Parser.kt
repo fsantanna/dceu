@@ -671,10 +671,11 @@ class Parser (lexer_: Lexer)
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
-                    ${pre0}paror {
+                    ${pre0}do {
+                        spawn {
+                            ${body.es.tostr(true)}
+                        }
                         await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
-                    } with {
-                        ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
             }
