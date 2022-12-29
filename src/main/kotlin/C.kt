@@ -1234,7 +1234,7 @@ fun Coder.main (): String {
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
-                        ceu_vector_set(old, i, ceu_acc);
+                        ceu_vector_set(new, i, ceu_acc);
                     }
                     ceu_acc = ret;
                     break;

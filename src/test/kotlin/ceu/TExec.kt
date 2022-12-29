@@ -384,8 +384,7 @@ class TExec {
         val out = all("""
             var v
             set v = do {
-                println([[1,2]])
-                ;;move([[1,2]])
+                move([[1,2]])
             }
             println(v)
         """)
@@ -667,12 +666,12 @@ class TExec {
     fun vector12_copy() {
         val out = all("""
             var t1
-            set t1 = #[]
+            set t1 = #[]        ;; [1,2]
             set t1[#t1] = 1
             var t2
-            set t2 = t1
+            set t2 = t1         ;; [1,2]
             var t3
-            set t3 = copy(t1)
+            set t3 = copy(t1)   ;; [1,20]
             set t1[#t1] = 2
             set t3[#t3] = 20
             println(t1)

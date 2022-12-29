@@ -368,11 +368,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number");
                         }
                     """}}
-                    CEU_Value ceu_accx = ceu_acc;
                     assert(CEU_RET_RETURN == ceu_coros_create (
                         ${ups.block(this)!!.toc(true)},
                         ${if (this.max==null) 0 else "ceu_acc.Number"},
-                        &ceu_accx
+                        &ceu_acc
                     ));
                 }
                 """
@@ -382,8 +381,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // CORO ${this.tk.dump()}
                     ${this.task.code(true, null)}
                     CEU_Value ceu_coro_$n;
-                    CEU_Value ceu_accx = ceu_acc;
-                    ceu_ret = ceu_coro_create(${ups.block(this)!!.toc(true)}, &ceu_accx, &ceu_coro_$n);
+                    ceu_ret = ceu_coro_create(${ups.block(this)!!.toc(true)}, &ceu_acc, &ceu_coro_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col})");
                     ${assrc("ceu_acc = ceu_coro_$n")}
                 }

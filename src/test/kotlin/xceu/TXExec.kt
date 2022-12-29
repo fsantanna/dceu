@@ -728,17 +728,37 @@ class TXExec {
     fun dict10_iter() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
-            while in :dict, t, k, v {
+            while in :dict, t, (k, v) {
                 println(k,v)
             }
         """, true)
         assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
     }
     @Test
-    fun vect11_iter() {
+    fun dict10_iter_err() {
+        val out = all("""
+            var t = @[x=1, y=2, z=3]
+            while in :dict, t, k, v {
+                println(k,v)
+            }
+        """, true)
+        assert(out == "anon : (lin 3, col 32) : expected \"(\" : have \"k\"") { out }
+    }
+    @Test
+    fun vect11_iter_err() {
         val out = all("""
             var t = #[1, 2, 3]
             while in :vector, t, i, v {
+                println(i, v)
+            }
+        """, true)
+        assert(out == "anon : (lin 3, col 34) : expected \"(\" : have \"i\"") { out }
+    }
+    @Test
+    fun vect11_iter() {
+        val out = all("""
+            var t = #[1, 2, 3]
+            while in :vector, t, (i, v) {
                 println(i, v)
             }
         """, true)
@@ -748,7 +768,7 @@ class TXExec {
     fun vect12_iter_err() {
         val out = all("""
             var t = #[1, 2, 3]
-            while in :vector, t, i {
+            while in :vector, t, (i {
                 println(i, v)
             }
         """, true)
@@ -758,7 +778,7 @@ class TXExec {
     fun dict13_iter() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
-            while in :dict, t, k, v {
+            while in :dict, t, (k, v) {
                 println(k, v)
             }
         """, true)
@@ -767,7 +787,7 @@ class TXExec {
     @Test
     fun dict14_iter_err() {
         val out = all("""
-            while in :dict, t, i {
+            while in :dict, t, (i {
                 println(i, v)
             }
         """, true)
@@ -1476,7 +1496,7 @@ class TXExec {
             var v = tovector(t)
             println(v)
         """, true)
-        assert(out == "[[1]]\n") { out }
+        assert(out == "#[[1]]\n") { out }
     }
 
     // PEEK, PUSH, POP

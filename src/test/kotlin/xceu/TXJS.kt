@@ -209,6 +209,6 @@ class TXJS {
             var arr = tovector(coroutine(genFunc))
             println(arr)
         """, true)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
+        assert(out == "#[[0,a],[1,b]]") { out }
     }
 }

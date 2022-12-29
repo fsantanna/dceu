@@ -249,12 +249,18 @@ class Parser (lexer_: Lexer)
                     }
                     val col = this.expr()
                     this.acceptFix_err(",")
-                    this.acceptEnu_err("Id")
-                    val i = this.tk0 as Tk.Id
-                    val v = if (tktag.str !in listOf(":vector",":dict")) null else {
+                    val (i,v) = if (tktag.str in listOf(":vector",":dict")) {
+                        this.acceptFix_err("(")
+                        this.acceptEnu_err("Id")
+                        val ii = this.tk0 as Tk.Id
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
-                        this.tk0 as Tk.Id
+                        val vv = this.tk0 as Tk.Id
+                        this.acceptFix_err(")")
+                        Pair(ii,vv)
+                    } else {
+                        this.acceptEnu_err("Id")
+                        Pair(this.tk0 as Tk.Id, null)
                     }
                     this.catch_block().let { (C,b) ->
                         when {
