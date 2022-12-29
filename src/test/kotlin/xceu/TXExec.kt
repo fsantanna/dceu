@@ -1532,7 +1532,7 @@ class TXExec {
             set v[-] = 10
             println(v)
         """, true)
-        assert(out == "anon : (lin 6, col 41) : expected \"=\" : have \"ceu_i_5831\"") { out }
+        assert(out.contains("anon : (lin 6, col 41) : expected \"=\" : have")) { out }
     }
     @Test
     fun ppp7() {
@@ -1557,6 +1557,15 @@ class TXExec {
             println(v[#v-1])
         """, true)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun ppp9_debug() {
+        val out = all("""
+            var v
+            set v = #[10]
+            println(v[-1+1])
+        """, true)
+        assert(out == "anon : (lin 4, col 24) : expected \"]\" : have \"1\"") { out }
     }
 
     // ALL

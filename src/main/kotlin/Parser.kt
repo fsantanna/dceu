@@ -709,7 +709,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix("[") -> {
                     e = if (XCEU && (this.acceptOp("+") || this.acceptOp("-") || this.acceptFix("="))) {
                         val op = this.tk0
-                        val isclose = this.acceptFix("]")
+                        val isclose = if (op.str=="-") this.acceptFix_err("]") else this.acceptFix("]")
                         if (isclose) {
                             when (op.str) {
                                 "=" -> this.nest("""

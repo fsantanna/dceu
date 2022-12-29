@@ -676,7 +676,7 @@ fun Coder.main (): String {
         }
         
         CEU_RET ceu_vector_get (CEU_Dynamic* vec, int i) {
-            if (i >= vec->Vector.n) {
+            if (i<0 || i>=vec->Vector.n) {
                 CEU_THROW_MSG("\0 : index error : out of bounds");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -690,13 +690,6 @@ fun Coder.main (): String {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Vector.n-1);
                 vec->Vector.n--;
-                #if 0
-                {   // popped value as return value to enclosing set (instead of nil)
-                    int sz = ceu_tag_to_size(vec->Vector.type);
-                    ceu_acc = (CEU_Value) { vec->Vector.type };
-                    memcpy(&ceu_acc.Number, vec->Vector.mem+i*sz, sz);
-                }
-                #endif
             } else {
                 if (i == 0) {
                     vec->Vector.type = v.type;
@@ -798,11 +791,11 @@ fun Coder.main (): String {
                     CEU_THROW_MSG("\0 : index error : expected number");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                if (col->type==CEU_VALUE_TUPLE && idx->Number>=col->Dyn->Tuple.n) {                
+                if (col->type==CEU_VALUE_TUPLE && (idx->Number<0 || idx->Number>=col->Dyn->Tuple.n)) {                
                     CEU_THROW_MSG("\0 : index error : out of bounds");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                if (col->type==CEU_VALUE_VECTOR && idx->Number>col->Dyn->Vector.n) {                
+                if (col->type==CEU_VALUE_VECTOR && (idx->Number<0 || idx->Number>col->Dyn->Vector.n)) {                
                     CEU_THROW_MSG("\0 : index error : out of bounds");
                     CEU_THROW_RET(CEU_ERR_ERROR); // accepts v[#v]
                 }
@@ -1037,7 +1030,8 @@ fun Coder.main (): String {
                                 printf(",");
                             }
                             assert(CEU_RET_RETURN == ceu_vector_get(v->Dyn, i));
-                            ceu_print1(&ceu_acc);
+                            CEU_Value ceu_accx = ceu_acc;
+                            ceu_print1(&ceu_accx);
                         }                    
                         printf("]");
                     }
@@ -1189,7 +1183,8 @@ fun Coder.main (): String {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
-                        CEU_Value* args[1] = { &ceu_acc };
+                        CEU_Value ceu_accx = ceu_acc;
+                        CEU_Value* args[1] = { &ceu_accx };
                         assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
                     }
                     ceu_acc = *src;
@@ -1236,7 +1231,8 @@ fun Coder.main (): String {
                     // TODO: memcpy if type!=DYN
                     for (int i=0; i<old->Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(old, i));
-                        CEU_Value* args[1] = { &ceu_acc };
+                        CEU_Value ceu_accx = ceu_acc;
+                        CEU_Value* args[1] = { &ceu_accx };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
                         ceu_vector_set(old, i, ceu_acc);
                     }
@@ -1366,7 +1362,8 @@ fun Coder.main (): String {
                     cur->shown = 1;
                     cur = cur->next;
                 }
-                ceu_print1(&ceu_acc);
+                CEU_Value ceu_accx = ceu_acc;
+                ceu_print1(&ceu_accx);
                 puts("");
             }
             return 1;

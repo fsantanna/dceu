@@ -309,7 +309,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.If -> """
                 { // IF ${this.tk.dump()}
                     ${this.cnd.code(true, null)}
-                    if (ceu_as_bool(&ceu_acc)) {
+                    CEU_Value ceu_accx = ceu_acc;
+                    if (ceu_as_bool(&ceu_accx)) {
                         ${this.t.code(issrc, null)}
                     } else {
                         ${this.f.code(issrc, null)}
@@ -320,7 +321,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // WHILE ${this.tk.dump()}
                 CEU_WHILE_START_$n:;
                     ${this.cnd.code(true, null)}
-                    if (ceu_as_bool(&ceu_acc)) {
+                    CEU_Value ceu_accx = ceu_acc;
+                    if (ceu_as_bool(&ceu_accx)) {
                         ${this.body.code(false, null)}
                         goto CEU_WHILE_START_$n;
                     }
@@ -341,7 +343,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } while (0);
                         assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in catch condition");
                         CEU_CONTINUE_ON_THROW();
-                        if (!ceu_as_bool(&ceu_acc)) {
+                        CEU_Value ceu_accx = ceu_acc;
+                        if (!ceu_as_bool(&ceu_accx)) {
                             CEU_THROW_DO(ceu_err, continue); // uncaught, rethrow
                         }
                         ${assrc("ceu_acc = ceu_err")}
@@ -365,10 +368,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number");
                         }
                     """}}
+                    CEU_Value ceu_accx = ceu_acc;
                     assert(CEU_RET_RETURN == ceu_coros_create (
                         ${ups.block(this)!!.toc(true)},
                         ${if (this.max==null) 0 else "ceu_acc.Number"},
-                        &ceu_acc
+                        &ceu_accx
                     ));
                 }
                 """
@@ -378,7 +382,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // CORO ${this.tk.dump()}
                     ${this.task.code(true, null)}
                     CEU_Value ceu_coro_$n;
-                    ceu_ret = ceu_coro_create(${ups.block(this)!!.toc(true)}, &ceu_acc, &ceu_coro_$n);
+                    CEU_Value ceu_accx = ceu_acc;
+                    ceu_ret = ceu_coro_create(${ups.block(this)!!.toc(true)}, &ceu_accx, &ceu_coro_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col})");
                     ${assrc("ceu_acc = ceu_coro_$n")}
                 }
@@ -516,7 +521,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${(this.tk.str=="status").cond { """
                             // track with destroyed coro: status -> :destroyed
                             if (ceu_acc.type == CEU_VALUE_TRACK) {
-                                ceu_acc = ceu_track_to_coro(&ceu_acc);
+                                CEU_Value ceu_accx = ceu_acc;
+                                ceu_acc = ceu_track_to_coro(&ceu_accx);
                                 if (ceu_acc.type != CEU_VALUE_CORO) {
                                     ${assrc("(CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} }")}
                                     goto CEU_PUB_$n;    // special case, skip everything else
@@ -524,7 +530,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }
                             """
                          }}
-                        ceu_acc = ceu_track_to_coro(&ceu_acc);
+                        CEU_Value ceu_accx = ceu_acc;
+                        ceu_acc = ceu_track_to_coro(&ceu_accx);
                         if (ceu_acc.type != CEU_VALUE_CORO) {                
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine");
                         }
@@ -769,7 +776,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ceu_mem->idx_$n = ceu_acc;
                     // COL
                     ${this.col.code(true, null)}
-                    ceu_ret = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
+                    CEU_Value ceu_accx = ceu_acc;
+                    ceu_ret = ceu_col_check(&ceu_accx, &ceu_mem->idx_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     ${asdst_src.cond { """
                         if ($it.type > CEU_VALUE_DYNAMIC) {

@@ -103,7 +103,7 @@
 - code NAV tree
 - lessmilk
 - 7 guis
-- IUP
+- IUP + canvas
 - doc pico-sdl/ceu
 - incremental GC
     - is a coro itself (start from leaves, back to root)

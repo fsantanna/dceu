@@ -394,12 +394,9 @@ class TExec {
     @Test
     fun vector17_move() {
         val out = all("""
-            var v
-            set v = do {
-                println(#[#[1,2]])
-                ;;move(#[#[1,2]])
-            }
-            println(v)
+            var ttt
+            set ttt = #[#[1,2]]
+            println(ttt)
         """)
         assert(out == "#[#[1,2]]\n") { out }
     }
@@ -408,12 +405,11 @@ class TExec {
         val out = all("""
             var v
             set v = do {
-                println(@[(:v,@[(:v,2)])])
-                ;;move(@[(:v,[1,2])])
+                @[(:v,@[(:v,2)])]
             }
             println(v)
         """)
-        assert(out == "#[[1,2]]\n") { out }
+        assert(out == "@[(:v,@[(:v,2)])]\n") { out }
     }
     @Test
     fun vector19_print() {
