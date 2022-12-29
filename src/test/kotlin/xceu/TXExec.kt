@@ -650,17 +650,17 @@ class TXExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_vector3_size() {
+    fun vector3_size() {
         val out = all("""
             var v = #[]
-            println(${D}v, v)
-            set v[#] = 1
-            set v[#] = 2
-            println(${D}v, v)
-            var top = (set v[#] = nil)
-            println(${D}v, v, v[#], top)
-        """)
-        assert(out == "3,#[1,2,3,4],#[1,2,3,4,?],#[1,2]\n") { out }
+            println(#v, v)
+            set v[+] = 1
+            set v[+] = 2
+            println(#v, v)
+            var top = v[-]
+            println(#v, v, v[=], top)
+        """, true)
+        assert(out == "0\t#[]\n2\t#[1,2]\n1\t#[1]\t1\t2\n") { out }
     }
     @Test
     fun string4() {
@@ -772,7 +772,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 37) : expected \",\" : have \"{\"") { out }
     }
     @Test
     fun dict13_iter() {
@@ -791,7 +791,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 34) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 2, col 35) : expected \",\" : have \"{\"") { out }
     }
 
     // AWAIT / EVERY

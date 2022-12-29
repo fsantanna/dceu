@@ -6,6 +6,8 @@ import org.junit.Test
 class TXJS {
 
     //////////////////////////////////////////////////////////////////////////
+    // TITLE
+    //  - https://exploringjs.com/es6/ch_generators.html
     // Summary:
     //  - Declaring a generator prototype:
     //      - JS:  function* genFunc (...) { ... }
@@ -79,7 +81,7 @@ class TXJS {
         val out = all("""
             task objectEntries (obj) {
                 yield()
-                while in :dict, obj, k, v {
+                while in :dict, obj, (k, v) {
                     yield([k, v])
                 }
             }
@@ -202,13 +204,13 @@ class TXJS {
     fun x9() {
         val out = all("""
             task genFunc () {
-                while in :vector, #['a','b'], i, v {
+                while in :vector, #['a','b'], (i, v) {
                     yield([i,v])
                 }
             }
             var arr = tovector(coroutine(genFunc))
             println(arr)
         """, true)
-        assert(out == "#[[0,a],[1,b]]") { out }
+        assert(out == "#[[0,a],[1,b]]\n") { out }
     }
 }
