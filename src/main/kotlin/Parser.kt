@@ -667,11 +667,15 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
+                val now = (this.checkEnu("Tag") && this.tk1.str==":check.now")
+                if (now) {
+                    this.acceptEnu_err("Tag")
+                }
                 val (clk,cnd) = this.clk_or_expr()
                 val body = this.block()
                 this.nest("""
                     ${pre0}paror {
-                        await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
+                        await ${now.cond{":check.now"}} ${if (clk!=null) clk.str else cnd!!.tostr(true) }
                     } with {
                         ${body.es.tostr(true)}
                     }

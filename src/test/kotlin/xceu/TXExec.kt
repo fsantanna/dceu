@@ -599,7 +599,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun awaiting16_track() {
+    fun todo_awaiting16_track() {
         val out = all("""
             task T () {
                 set pub = [10]
@@ -609,7 +609,7 @@ class TXExec {
             resume t ()
             var x = track(t)
             spawn {
-                awaiting x {
+                awaiting :check.now x {
                     println(x.pub[0])
                     broadcast in :global, nil
                     println(x.pub[0])
@@ -624,7 +624,7 @@ class TXExec {
         assert(out == "10\n10\n:destroyed\n:ok\n") { out }
     }
     @Test
-    fun awaiting17_track() {
+    fun todo_awaiting17_track() {
         val out = all("""
             task T () {
                 set pub = :pub
