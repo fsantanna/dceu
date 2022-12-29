@@ -416,7 +416,22 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU,XCEU)!!)
+            this.acceptFix("yield") -> {
+                val all = XCEU && this.acceptTag(":all")
+                if (!all) {
+                    Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU, XCEU)!!)
+                } else {
+                    val coro = this.expr()
+                    this.nest("""
+                        do {
+                            var ceu_coro_$N = ${coro.tostr(true)}
+                            while in :coro, ceu_coro_$N, ceu_i_$N {
+                                yield(ceu_i_$N)
+                            }
+                        }
+                    """)
+                }
+            }
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()

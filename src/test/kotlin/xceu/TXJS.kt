@@ -249,7 +249,7 @@ class TXJS {
             }
             task bar () {
                 yield('x')
-                yield :all (coroutine(foo))
+                yield :all coroutine(foo)
                 yield('y')
             }
             var arr = tovector(coroutine(bar))
@@ -275,11 +275,7 @@ class TXJS {
             }
             task logReturned (genObj) {
                 yield()
-                ;;>>> yield :all
-                while in :coro, genObj, i {
-                    yield(i)
-                }
-                ;;<<< yield :all
+                yield :all genObj
             }
             println(tovector(spawn logReturned(coroutine(genFuncWithReturn))))
         """, true)

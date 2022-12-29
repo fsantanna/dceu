@@ -228,6 +228,25 @@ class TXExec {
         """, true)
         assert(out == "1\n1\n2\n2\n") { out }
     }
+    // YIELD ALL
+
+    @Test
+    fun yieldall1() {
+        val out = all("""
+            task foo () {
+                yield('a')
+                yield('b')
+            }
+            task bar () {
+                yield('x')
+                yield :all coroutine(foo)
+                yield('y')
+            }
+            println(tovector(coroutine(bar)))
+        """, true)
+        assert(out == "xaby\n") { out }
+    }
+
 
     // SPAWN, PAR
 
