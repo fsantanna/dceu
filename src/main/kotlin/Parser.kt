@@ -523,6 +523,73 @@ class Parser (lexer_: Lexer)
                 //println(ifs)
                 this.nest(ifs)
             }
+            (XCEU && this.acceptFix("await")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val now = (this.checkEnu("Tag") && this.tk1.str==":check.now")
+                if (now) {
+                    this.acceptEnu_err("Tag")
+                }
+                val spw = this.checkFix("spawn")
+                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
+                when {
+                    (cnd is Expr.Tag) -> {   // await :key
+                        this.nest("await evt is ${cnd.tk.str}")
+                    }
+                    spw -> { // await spawn T()
+                        val e = this.expr()
+                        if (!(e is Expr.Spawn && e.coros==null)) {
+                            err_expected(e.tk, "non-pool spawn")
+                        }
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_spw_$N = ${e.tostr(true)}
+                                ${pre0}await :check.now (ceu_spw_$N.status >= :terminated)
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
+                            }
+                        """) //.let { println(it.tostr());it }
+                    }
+                    (clk != null) -> { // await 5s
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_ms_$N = ${clk.ms}
+                                while ceu_ms_$N > 0 {
+                                    await (evt is :frame)
+                                    set ceu_ms_$N = ceu_ms_$N - evt.0
+                                }
+                            }
+                        """)//.let { println(it.tostr()); it }
+                    }
+                    (cnd != null) -> {  // await evt==x
+                        this.nest("""
+                            ${pre0}do {
+                                ${pre0}${(!now).cond { "yield ()" }}
+                                while (do {
+                                    var ceu_cnd_$N = ${cnd.tostr(true)}
+                                    if (type(ceu_cnd_$N) == :track) {
+                                        (ceu_cnd_$N.status < :terminated)
+                                    } else {
+                                        (not ceu_cnd_$N)
+                                    }
+                                }) {
+                                    yield ()
+                                }
+                            }
+                        """)//.let { println(it.tostr()); it }
+                    }
+                    else -> error("bug found")
+                }
+            }
+            (XCEU && this.acceptFix("every")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val (clk,cnd) = this.clk_or_expr()
+                val body = this.block()
+                this.nest("""
+                    ${pre0}while true {
+                        await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
+                        ${body.es.tostr(true)}
+                    }
+                """)//.let { println(it.tostr()); it }
+            }
             (XCEU && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
@@ -562,13 +629,11 @@ class Parser (lexer_: Lexer)
                                 set _ceu_$n = ${body.es.tostr(true)}
                             }
                         """}.joinToString("")}
-                        while (
+                        await :check.now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status < :terminated) or
-                            """}.joinToString("")} false ${")".repeat(pars.size)}
-                        ) {
-                            yield ()
-                        }
+                                ((ceu_${i}_$n.status >= :terminated) and
+                            """}.joinToString("")} true ${")".repeat(pars.size)}
+                        )
                         _ceu_$n
                     }
                 """)
@@ -591,81 +656,14 @@ class Parser (lexer_: Lexer)
                                 set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
                             }
                         """}.joinToString("")}
-                        while (
+                        await :check.now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status < :terminated) and
-                            """}.joinToString("")} true ${")".repeat(pars.size)}
-                        ) {
-                            yield ()
-                        }
+                                ((ceu_${i}_$n.status >= :terminated) or
+                            """}.joinToString("")} false ${")".repeat(pars.size)}
+                        )
                         _ceu_$n
                     }
                 """)
-            }
-            (XCEU && this.acceptFix("await")) -> {
-                val pre0 = this.tk0.pos.pre()
-                val spw = this.checkFix("spawn")
-                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
-                when {
-                    (cnd is Expr.Tag) -> {   // await :key
-                        this.nest("await evt is ${cnd.tk.str}")
-                    }
-                    spw -> { // await spawn T()
-                        val e = this.expr()
-                        if (!(e is Expr.Spawn && e.coros==null)) {
-                            err_expected(e.tk, "non-pool spawn")
-                        }
-                        this.nest("""
-                            ${pre0}do {
-                                var ceu_spw_$N = ${e.tostr(true)}
-                                if (ceu_spw_$N.status < :terminated) {
-                                    ${pre0}await evt==ceu_spw_$N
-                                }
-                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
-                            }
-                        """) //.let { println(it.tostr());it }
-                    }
-                    (clk != null) -> { // await 5s
-                        this.nest("""
-                            ${pre0}do {
-                                var ceu_ms_$N = ${clk.ms}
-                                while ceu_ms_$N > 0 {
-                                    await (evt is :frame)
-                                    set ceu_ms_$N = ceu_ms_$N - evt.0
-                                }
-                            }
-                        """)//.let { println(it.tostr()); it }
-                    }
-                    (cnd != null) -> {  // await evt==x
-                        this.nest("""
-                            ${pre0}do {
-                                ${pre0}yield ()
-                                while (do {
-                                    var ceu_cnd_$N = ${cnd.tostr(true)}
-                                    if (type(ceu_cnd_$N) == :track) {
-                                        (ceu_cnd_$N.status < :terminated)
-                                    } else {
-                                        (not ceu_cnd_$N)
-                                    }
-                                }) {
-                                    yield ()
-                                }
-                            }
-                        """)//.let { println(it.tostr()); it }
-                    }
-                    else -> error("bug found")
-                }
-            }
-            (XCEU && this.acceptFix("every")) -> {
-                val pre0 = this.tk0.pos.pre()
-                val (clk,cnd) = this.clk_or_expr()
-                val body = this.block()
-                this.nest("""
-                    ${pre0}while true {
-                        await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
-                        ${body.es.tostr(true)}
-                    }
-                """)//.let { println(it.tostr()); it }
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()

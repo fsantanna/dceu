@@ -1110,6 +1110,18 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun await18_now() {
+        val out = all("""
+            spawn {
+                println(1)
+                await :check.now true
+                println(2)
+            }
+            println(3)
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
 
     // FUNC / TASK
 
