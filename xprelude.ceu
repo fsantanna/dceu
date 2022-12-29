@@ -112,7 +112,7 @@ func ctostring (v) {
     var n = `:number strlen($v.Pointer)`
     var str = #[]
     while i < n {
-        set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
+        set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
         set i = i + 1
     }
     move(str)
@@ -158,7 +158,7 @@ func {<++} (v1, v2) {
     do {
         var i = 0
         while i < #v2 {
-            set v1[#v1] = v2[i]
+            set v1[+] = v2[i]
             set i = i + 1
         }
     }
@@ -176,7 +176,7 @@ func tovector (v) {
         is :coro -> {
             var ret = #[]
             while in :coro, v, vv {
-                set ret[#ret] = vv
+                set ret[+] = vv
             }
             move(ret)
         }

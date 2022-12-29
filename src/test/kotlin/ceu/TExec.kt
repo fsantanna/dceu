@@ -1869,6 +1869,19 @@ class TExec {
         """, true)
         assert(out == ":vector\t10\n") { out }
     }
+    @Test
+    fun tostring4() {
+        val out = all("""
+            var s = #[]
+            s <++ #['1']
+            println(s)
+            s <++ #['2']
+            println(s)
+            s <++ #['3']
+            println(s)
+        """, true)
+        assert(out == "123\n") { out }
+    }
 
     // TYPE
 
