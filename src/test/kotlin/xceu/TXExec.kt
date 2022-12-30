@@ -791,6 +791,17 @@ class TXExec {
         assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
     }
     @Test
+    fun dict10a_iter() {
+        val out = all("""
+            var t = @[]
+            while in :dict t, (k, v) {
+                println(k,v)
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun dict10_iter_err() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
@@ -1507,11 +1518,9 @@ class TXExec {
                 println(i)
             }
         """, true)
-        assert(out == "anon : (lin 11, col 57) : resume error : expected yielded task\n" +
-                "1\n" +
-                "2\n" +
-                "3\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 12, col 57) : resume error : expected yielded task\n1\n2\n3\n:error\n") { out }
+        assert(out == "1\n2\n") { out }
+
     }
     @Test
     fun iter4() {

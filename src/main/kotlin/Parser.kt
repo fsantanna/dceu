@@ -293,16 +293,16 @@ class Parser (lexer_: Lexer)
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :coro)
-                                        if ceu_col_$N.status < :terminated {
-                                            until {
-                                                var ${i.str} = resume ceu_col_$N()
-                                                if ${i.str} /= nil {
+                                        until {
+                                            var ${i.str} = resume ceu_col_$N(${i.str})
+                                            var ceu_stop_$N = (ceu_col_$N.status >= :terminated)
+                                            if not ceu_stop_$N {
+                                                set ${i.str} = group {
                                                     ${b.es.tostr(true)}
                                                 }
-                                                (${i.str} == nil)
                                             }
+                                            ceu_stop_$N
                                         }
-                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )
@@ -320,7 +320,7 @@ class Parser (lexer_: Lexer)
                                             ${b.es.tostr(true)}
                                             set ${i.str} = ${i.str} + 1
                                         }
-                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
+                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )
@@ -332,13 +332,12 @@ class Parser (lexer_: Lexer)
                                         var ceu_dict_$N = ${col.tostr(true)}
                                         assert(type(ceu_dict_$N) == :dict)
                                         var ${i.str} = next(ceu_dict_$N)
-                                        until {
+                                        while ${i.str} /= nil {
                                             var ${v.str} = ceu_dict_$N[${i.str}]
                                             ${b.es.tostr(true)}
                                             set ${i.str} = next(ceu_dict_$N, ${i.str})
-                                            (${i.str} == nil)
                                         }
-                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
+                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )
@@ -425,16 +424,8 @@ class Parser (lexer_: Lexer)
                     this.nest("""
                         do {
                             var ceu_coro_$N = ${coro.tostr(true)}
-                            assert(type(ceu_coro_$N) == :coro)
-                            while ceu_coro_$N.status < :terminated {
-                                var ceu_i_$N = yield()
-                                until {
-                                    set ceu_i_$N = resume ceu_coro_$N(ceu_i_$N)
-                                    if ceu_i_$N /= nil {
-                                        set ceu_i_$N = yield(ceu_i_$N)
-                                    }
-                                    (ceu_i_$N == nil)
-                                }
+                            while in :coro ceu_coro_$N, ceu_i_$N {
+                                yield(ceu_i_$N)  ;; return of yield is used as arg to iter resume()
                             }
                         }
                     """)

@@ -576,7 +576,7 @@ class TXJS {
                 }
             }
             task caller () {
-                yield :all spawn callee()
+                yield :all coroutine(callee)
             }
             var co_caller = spawn caller ()
             println(:resume, resume co_caller('a'))
@@ -586,4 +586,8 @@ class TXJS {
     }
 
     // 22.5 Generators as coroutines (cooperative multitasking)
+
+    // 22.5.1 The full generator interface
+
+    // 22.5.2 Cooperative multitasking
 }
