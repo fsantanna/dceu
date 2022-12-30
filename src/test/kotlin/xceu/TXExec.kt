@@ -798,7 +798,7 @@ class TXExec {
                 println(k,v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 32) : expected \"(\" : have \"k\"") { out }
+        assert(out == "anon : (lin 3, col 31) : expected \"(\" : have \"k\"") { out }
     }
     @Test
     fun vect11_iter_err() {
@@ -808,7 +808,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 34) : expected \"(\" : have \"i\"") { out }
+        assert(out == "anon : (lin 3, col 33) : expected \"(\" : have \"i\"") { out }
     }
     @Test
     fun vect11_iter() {
@@ -828,7 +828,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 37) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
     }
     @Test
     fun dict13_iter() {
@@ -847,7 +847,7 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 35) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 2, col 34) : expected \",\" : have \"{\"") { out }
     }
     @Test
     fun string_concat15() {

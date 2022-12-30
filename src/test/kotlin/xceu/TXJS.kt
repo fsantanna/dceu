@@ -531,20 +531,27 @@ class TXJS {
             var co_print = spawn printLines()
             spawn {
                 while in :coro co_read, chars {
-                    while {
+                    until {
                         var line = if chars {
                             resume co_split(chars)
                         }
                         if line {
-                            line <++ resume co_nums(line)
-                            resume co_print(line)
+                            until {
+                                var nums = if line {
+                                    resume co_nums(line)
+                                }
+                                if nums {
+                                    resume co_print(nums)
+                                }
+                                (nums == nil)
+                            }
                         }
-                        (line /= nil)
+                        (line == nil)
                     }
                 }
             }
         """, true)
-        assert(out == "ab\nc\ndefg\n") { out }
+        assert(out == "1: ab\n2: c\n3: defg\n") { out }
     }
 
     @Test
