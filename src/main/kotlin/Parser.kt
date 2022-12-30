@@ -293,8 +293,9 @@ class Parser (lexer_: Lexer)
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :coro)
+                                        var ${i.str} = nil
                                         until {
-                                            var ${i.str} = resume ceu_col_$N(${i.str})
+                                            set ${i.str} = resume ceu_col_$N(${i.str})
                                             var ceu_stop_$N = (ceu_col_$N.status >= :terminated)
                                             if not ceu_stop_$N {
                                                 set ${i.str} = group {
