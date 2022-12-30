@@ -302,6 +302,7 @@ class Parser (lexer_: Lexer)
                                                 (${i.str} == nil)
                                             }
                                         }
+                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )
@@ -319,6 +320,7 @@ class Parser (lexer_: Lexer)
                                             ${b.es.tostr(true)}
                                             set ${i.str} = ${i.str} + 1
                                         }
+                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )
@@ -336,6 +338,7 @@ class Parser (lexer_: Lexer)
                                             set ${i.str} = next(ceu_dict_$N, ${i.str})
                                             (${i.str} == nil)
                                         }
+                                        nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
                                     """) //.let { println(it.tostr());it })
                                 )

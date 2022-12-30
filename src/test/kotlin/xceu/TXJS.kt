@@ -287,7 +287,8 @@ class TXJS {
             task genFuncWithReturn () {
                 yield('a')
                 yield('b')
-                'c'
+                yield('c')
+                nil
             }
             task logReturned (genObj) {
                 yield()
