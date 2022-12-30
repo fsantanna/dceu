@@ -185,13 +185,13 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         val (_,x2) = read2()
                         if (x2 != '}') {
                             if (op.length == 1) {
-                                yield(Tk.Id("{$op}", pos))
+                                yield(Tk.Id("{$op}", pos, false))
                                 unread2(1)
                             } else {
                                 err(pos, "operator error : expected \"}\"")
                             }
                         }
-                        yield(Tk.Id("{$op}", pos))
+                        yield(Tk.Id("{$op}", pos, false))
                     }
                 }
                 (x == ':') -> {
@@ -207,7 +207,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {
-                        yield(Tk.Id(id, pos))
+                        yield(Tk.Id(id, pos, false))
                     }
                 }
                 x.isDigit() -> {
@@ -270,85 +270,99 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     yield(Tk.Nat(nat, pos, tag))
                 }
                 (x == '^') -> {
-                    val (_,x2) = read2()
-                    if (x2 != '[') {
-                        err(pos, "token ^ error : expected \"[\"")
-                    }
-
-                    val (n3,x3) = read2()
-                    val file: String? = if (x3 == '"') {
-                        val f = read2Until('"')
-                        if (f == null) {
-                            err(pos, "token ^ error : unterminated \"")
-                        }
-                        f
-                    } else {
-                        unread2(n3)
-                        null
-                    }
-
-                    val lin: Int? = if (file == null) {
-                        read2While { it.isDigit() }.toIntOrNull()
-                    } else {
-                        val (n4,x4) = read2()
-                        if (x4 == ',') {
-                            read2While { it.isDigit() }.let {
-                                if (it.isEmpty()) {
-                                    err(pos, "invalid ^ token : expected number")
-                                }
-                                it.toInt()
-                            }
-                        } else {
-                            unread2(n4)
-                            null
-                        }
-                    }
-                    val col: Int? = if (lin == null) {
-                        null
-                    } else {
-                        val (n5,x5) = read2()
-                        if (x5 == ',') {
-                            read2While { it.isDigit() }.let {
-                                if (it.isEmpty()) {
-                                    err(pos, "invalid ^ token : expected number")
-                                }
-                                it.toInt()
-                            }
-                        } else {
-                            unread2(n5)
-                            null
-                        }
-                    }
-
-                    if (file==null && lin==null) {
-                        err(pos, "token ^ error")
-                    }
-
-                    val (_,x6) = read2()
-                    if (x6 != ']') {
-                        err(pos, "token ^ error : expected \"]\"")
-                    }
-                    val (n7,x7) = read2()
+                    val (n2,x2) = read2()
                     when {
-                        iseof(n7) -> unread2(n7)
-                        (x7 == '\n') -> {}  // skip leading \n
-                        else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
-                    }
-
-                    when {
-                        (file!=null && lin==null && col==null) -> {
-                            val f = File(file)
-                            if (!f.exists()) {
-                                err(pos, "token ^ error : file not found : $file")
+                        (x2.isLetter() || x2 == '_') -> {
+                            val id = x2 + read2While { (it.isLetterOrDigit() || it in listOf('_', '\'', '?', '!')) }
+                            if (KEYWORDS.contains(id)) {
+                                err(pos, "token ^ error : unexpected keyword")
+                                yield(Tk.Fix(id, pos))
+                            } else {
+                                yield(Tk.Id(id, pos, true))
                             }
-                            stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
                         }
-                        (lin != null) -> stack.first().let {
-                            it.file = if (file==null) it.file else file
-                            it.lin  = lin
-                            it.col  = if (col==null) 1 else col
+                        (x2 != '[') -> {
+                            err(pos, "token ^ error : expected \"[\"")
                         }
-                        else -> error("bug found")
+                        else -> {
+                            val (n3, x3) = read2()
+                            val file: String? = if (x3 == '"') {
+                                val f = read2Until('"')
+                                if (f == null) {
+                                    err(pos, "token ^ error : unterminated \"")
+                                }
+                                f
+                            } else {
+                                unread2(n3)
+                                null
+                            }
+
+                            val lin: Int? = if (file == null) {
+                                read2While { it.isDigit() }.toIntOrNull()
+                            } else {
+                                val (n4, x4) = read2()
+                                if (x4 == ',') {
+                                    read2While { it.isDigit() }.let {
+                                        if (it.isEmpty()) {
+                                            err(pos, "invalid ^ token : expected number")
+                                        }
+                                        it.toInt()
+                                    }
+                                } else {
+                                    unread2(n4)
+                                    null
+                                }
+                            }
+                            val col: Int? = if (lin == null) {
+                                null
+                            } else {
+                                val (n5, x5) = read2()
+                                if (x5 == ',') {
+                                    read2While { it.isDigit() }.let {
+                                        if (it.isEmpty()) {
+                                            err(pos, "invalid ^ token : expected number")
+                                        }
+                                        it.toInt()
+                                    }
+                                } else {
+                                    unread2(n5)
+                                    null
+                                }
+                            }
+
+                            if (file == null && lin == null) {
+                                err(pos, "token ^ error")
+                            }
+
+                            val (_, x6) = read2()
+                            if (x6 != ']') {
+                                err(pos, "token ^ error : expected \"]\"")
+                            }
+                            val (n7, x7) = read2()
+                            when {
+                                iseof(n7) -> unread2(n7)
+                                (x7 == '\n') -> {}  // skip leading \n
+                                else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
+                            }
+
+                            when {
+                                (file != null && lin == null && col == null) -> {
+                                    val f = File(file)
+                                    if (!f.exists()) {
+                                        err(pos, "token ^ error : file not found : $file")
+                                    }
+                                    stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
+                                }
+
+                                (lin != null) -> stack.first().let {
+                                    it.file = if (file == null) it.file else file
+                                    it.lin = lin
+                                    it.col = if (col == null) 1 else col
+                                }
+
+                                else -> error("bug found")
+                            }
+                        }
                     }
                 }
                 (x == '\'') -> {

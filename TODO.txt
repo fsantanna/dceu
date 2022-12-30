@@ -45,6 +45,12 @@
 - y = do { move x }
 - same iface to all *create, no assert on malloc fail, all possible checks there
 - power assert
+    group {
+        var x = 10
+        var y = f(x)
+        assert x < z            ;; default/power message
+        assert x > y, "error"   ;; custom message
+    }
 - native
     - `:pre`
     - `${complex-expr}` (nested parsing in w/ XCEU?)

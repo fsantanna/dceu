@@ -2049,36 +2049,91 @@ class TExec {
         assert(out == "anon : (lin 4, col 21) : throw error : uncaught exception\nnil\n") { out }
     }
 
-    // ESCAPE / FUNC
+    // CLOSURE / ESCAPE / FUNC
 
     @Test
-    fun todo_closure_esc1() {
+    fun clo1_err() {
         val out = all("""
-            var g
             var f
-            set f = func (v) {
-                set g = func () {
-                    println(v)
-                }
+            set f = func (x) {
+                func () {   ;; block_set(1)
+                    x       ;; because of x
+                }           ;; err: scope on return
             }
             println(f(10)())
         """)
-        assert(out == "anon : (lin 9, col 21) : f(10)\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "err\n") { out }
     }
     @Test
-    fun todo_closure_esc2() {
+    fun clo2_err() {
         val out = all("""
+            var g = 10
             var f
-            set f = func (v) {
+            set f = func (x) {  ;; err: 20 isnot dyn
+                func () {       ;; block_set(0)
+                    ^x + g      ;; all (non-global) upvals are marked
+                } ;; x must be dynamic, so that both up/dn point to the same value
+            }
+            println(f(20)())
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo3_err() {
+        val out = all("""
+            var g = 10
+            var f
+            set f = func (x) {
+                set x = []  ;; err: cannot reassign
                 func () {
-                    println(v)
+                    ^x + g
                 }
             }
-            println(f(10)())
+            println(f([]])())
         """)
-        assert(out == "anon : (lin 8, col 21) : f(10)\n" +
-                "anon : (lin 3, col 30) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo4_err() {
+        val out = all("""
+            var g = 10
+            var f
+            set f = func (x) {
+                func () {
+                    set ^x = []  ;; err: cannot reassign
+                    ^x + g
+                }
+            }
+            println(f([]])())
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo5() {
+        val out = all("""
+            var g = 10
+            var f
+            set f = func (x) {
+                func () {
+                    ^x.0 + g
+                }
+            }
+            println(f([20]])())
+        """)
+        assert(out == "30\n") { out }
+    }
+    @Test
+    fun clo6() {
+        val out = all("""
+            var f
+            set f = func (x) {
+                func (y) {
+                    [^x,y]
+                }
+            }
+            println(f([10])(20))
+        """)
+        assert(out == "[[10],20]\n") { out }
     }
 
     // MISC

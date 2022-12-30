@@ -369,6 +369,16 @@ class TLexer {
         assert(tks.next().let { it.pos.lin==2 && it.pos.col==10 && it.str=="x" })
     }
 
+    // UPVALS
+
+    @Test
+    fun up1() {
+        val l = lexer("^id ^if")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.up && it.str=="id" && it.pos.lin==1 && it.pos.col==1 })
+        assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : unexpected keyword")
+    }
+
     // TAGS
 
     @Test
