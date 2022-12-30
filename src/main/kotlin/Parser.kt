@@ -293,11 +293,13 @@ class Parser (lexer_: Lexer)
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :coro)
-                                        var ${i.str} = false
-                                        while (${i.str} /= nil) and (ceu_col_$N.status < :terminated) {
-                                            set ${i.str} = resume ceu_col_$N()
-                                            if ${i.str} /= nil {
-                                                ${b.es.tostr(true)}
+                                        if ceu_col_$N.status < :terminated {
+                                            until {
+                                                var ${i.str} = resume ceu_col_$N()
+                                                if ${i.str} /= nil {
+                                                    ${b.es.tostr(true)}
+                                                }
+                                                (${i.str} == nil)
                                             }
                                         }
                                     }
@@ -328,11 +330,11 @@ class Parser (lexer_: Lexer)
                                         var ceu_dict_$N = ${col.tostr(true)}
                                         assert(type(ceu_dict_$N) == :dict)
                                         var ${i.str} = next(ceu_dict_$N)
-                                        var ${v.str} = nil
-                                        while ${i.str} /= nil {
-                                            set ${v.str} = ceu_dict_$N[${i.str}]
+                                        until {
+                                            var ${v.str} = ceu_dict_$N[${i.str}]
                                             ${b.es.tostr(true)}
                                             set ${i.str} = next(ceu_dict_$N, ${i.str})
+                                            (${i.str} == nil)
                                         }
                                     }
                                     """) //.let { println(it.tostr());it })
@@ -418,6 +420,19 @@ class Parser (lexer_: Lexer)
                 } else {
                     val coro = this.expr()
                     this.nest("""
+                        ;;;
+                        do {
+                            var ceu_coro_$N = ${coro.tostr(true)}
+                            assert(type(ceu_coro_$N) == :coro)
+                            while ceu_coro_$N.status < :terminated {
+                                until {
+                                    var ceu_i_$N = resume ceu_coro_$N()
+                                    set ceu_i_$N = yield()
+                                    (ceu_i_$N == nil)
+                                }
+                            }
+                        }
+                        ;;;
                         do {
                             var ceu_coro_$N = ${coro.tostr(true)}
                             while in :coro ceu_coro_$N, ceu_i_$N {
@@ -604,17 +619,17 @@ class Parser (lexer_: Lexer)
                     }
                     (cnd != null) -> {  // await evt==x
                         this.nest("""
-                            ${pre0}do {
+                            ${pre0}group {
                                 ${pre0}${(!now).cond { "yield ()" }}
-                                while (do {
+                                until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
-                                    if (type(ceu_cnd_$N) == :track) {
-                                        (ceu_cnd_$N.status < :terminated)
-                                    } else {
-                                        (not ceu_cnd_$N)
+                                    if type(ceu_cnd_$N) == :track {
+                                        set ceu_cnd_$N = (ceu_cnd_$N.status < :terminated)
                                     }
-                                }) {
-                                    yield ()
+                                    if not ceu_cnd_$N {
+                                        yield ()
+                                    }
+                                    (ceu_cnd_$N == true)
                                 }
                             }
                         """)//.let { println(it.tostr()); it }

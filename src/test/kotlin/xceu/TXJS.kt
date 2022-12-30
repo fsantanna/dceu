@@ -555,13 +555,45 @@ class TXJS {
     }
 
     @Test
-    fun x21() {
+    fun todo_x21() {
         val out = all("""
-            readFile |> splitLines |> printLines
+            ((readFile |> splitLines) |> numLines) |> printLines
         """, true)
         assert(out == ":yes") { out }
     }
 
-    // TODO
-    // usar operador de pipe
+    // 22.4.7 yield*: the full story
+
+    @Test
+    fun x22() {
+        val out = all("""
+            task callee () {
+                while true {
+        println(:a)
+                    var x = yield()
+                    println(:callee, x)
+        println(:b)
+                }
+            }
+            task caller () {
+        println(:1)
+                ;;yield :all spawn callee()
+                var co_callee = spawn callee()
+        println(:2)
+                while in :coro co_callee, i {
+                    println(:i, i)
+                    yield(i)
+                }
+        println(:3)
+            }
+        println(:x)
+            var co_caller = spawn caller ()
+        println(:y)
+            println(:resume, resume co_caller('a'))
+        println(:z)
+            println(:resume, resume co_caller('b'))
+        """, true)
+        assert(out == ":yes") { out }
+    }
+
 }

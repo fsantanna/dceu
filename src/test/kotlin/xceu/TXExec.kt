@@ -1487,13 +1487,31 @@ class TXExec {
             task T () {
                 yield(1)
                 yield(2)
-                3
+                yield(3)
             }
             while in :coro coroutine(T), i {
                 println(i)
             }
         """, true)
         assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun iter3_err() {
+        val out = all("""
+            task T () {
+                yield(1)
+                yield(2)
+                3
+            }
+            while in :coro coroutine(T), i {
+                println(i)
+            }
+        """, true)
+        assert(out == "anon : (lin 11, col 57) : resume error : expected yielded task\n" +
+                "1\n" +
+                "2\n" +
+                "3\n" +
+                ":error\n") { out }
     }
     @Test
     fun iter4() {
@@ -1515,7 +1533,7 @@ class TXExec {
             task T () {
                 yield(1)
                 yield(2)
-                3
+                yield(3)
             }
             println(tovector(coroutine(T)))
         """, true)
@@ -1677,7 +1695,7 @@ class TXExec {
     fun tovector4() {
         val out = all("""
             task T() {
-                [1]
+                yield([1])
             }
             var t = coroutine(T)
             var v = tovector(t)
