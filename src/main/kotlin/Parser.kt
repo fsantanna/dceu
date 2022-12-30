@@ -390,7 +390,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task () :fake {
+                            ${tk0.pos.pre()}spawn (task () :fake :awakes {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)

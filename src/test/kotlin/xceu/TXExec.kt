@@ -214,7 +214,7 @@ class TXExec {
     @Test
     fun bcast1() {
         val out = all("""
-            var tk = task () {
+            var tk = task () :awakes {
                 println(evt)
                 do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :coro) { set ok=false } else { nil } } }
                 ;;yield()
@@ -228,6 +228,7 @@ class TXExec {
         """, true)
         assert(out == "1\n1\n2\n2\n") { out }
     }
+
     // YIELD ALL
 
     @Test
@@ -253,7 +254,7 @@ class TXExec {
     @Test
     fun par1() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 par {
                     do { var ok1; set ok1=true; while ok1 { yield(nil); if type(evt)/=:coro { set ok1=false } else { nil } } }
                     ;;yield()
@@ -329,7 +330,7 @@ class TXExec {
     @Test
     fun paror1a() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 paror {
                     ${yield()}
                     println(1)
@@ -364,7 +365,7 @@ class TXExec {
     @Test
     fun paror2() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 paror {
                     defer { println(1) }
                     ${yield("ok1")}
@@ -388,7 +389,7 @@ class TXExec {
     @Test
     fun parand3() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 parand {
                     yield()
                     println(1)
@@ -407,7 +408,7 @@ class TXExec {
     @Test
     fun parand4() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 parand {
                     defer { println(1) }
                     ${yield("ok1")}
@@ -432,7 +433,7 @@ class TXExec {
     @Test
     fun watching5() {
         val out = all("""
-            spawn task () {
+            spawn task () :awakes {
                 awaiting evt==1 {
                     defer { println(2) }
                     yield()
@@ -448,7 +449,7 @@ class TXExec {
     @Test
     fun watching6_clk() {
         val out = ceu.all("""
-            spawn task () {
+            spawn task () :awakes {
                 awaiting 10s {
                     defer { println(10) }
                     await false
@@ -510,7 +511,7 @@ class TXExec {
     @Test
     fun wawaiting10_err() {
         val out = all("""
-            task T () {
+            task T () :awakes {
                 awaiting (throw(:error)) {
                     await false
                 }
@@ -620,7 +621,7 @@ class TXExec {
     @Test
     fun todo_awaiting16_track() {
         val out = all("""
-            task T () {
+            task T () :awakes {
                 set pub = [10]
                 await :evt
             }
@@ -645,7 +646,7 @@ class TXExec {
     @Test
     fun todo_awaiting17_track() {
         val out = all("""
-            task T () {
+            task T () :awakes {
                 set pub = :pub
                 await evt==:evt
             }
@@ -933,7 +934,7 @@ class TXExec {
     fun await5() {
         val out = ceu.all(
             """
-            spawn task () {
+            spawn task () :awakes {
                 while (true) {
                     await true                    
                     println(evt)
@@ -967,7 +968,7 @@ class TXExec {
     @Test
     fun await7_clk() {
         val out = ceu.all("""
-            spawn task () {
+            spawn task () :awakes {
                 while (true) {
                     await 10s                    
                     println(999)
@@ -984,7 +985,7 @@ class TXExec {
     @Test
     fun every8_clk() {
         val out = ceu.all("""
-            spawn task () {
+            spawn task () :awakes {
                 every 10s {
                     println(10)
                 }
@@ -1002,7 +1003,7 @@ class TXExec {
     @Test
     fun todo_every9_clk_multi() { // awake twice from single bcast
         val out = ceu.all("""
-            spawn task () {
+            spawn task () :awakes {
                 every 10s {
                     println(10)
                 }
@@ -1088,8 +1089,8 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
-                "anon : (lin 3, col 38) : task :fake () { group { var y set y = [] } y ...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake :awakes { group { var x set x...)\n" +
+                "anon : (lin 3, col 38) : task () :fake :awakes { group { var y set y =...)\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n:error\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
@@ -1196,7 +1197,7 @@ class TXExec {
     @Test
     fun task5_pub_fake() {
         val out = all("""
-            spawn (task () {
+            spawn (task () :awakes {
                 set pub = 1
                 awaiting evt==:a {
                     every evt==:b {
@@ -1325,7 +1326,7 @@ class TXExec {
     @Test
     fun toggle2() {
         val out = all("""
-            task T (v) {
+            task T (v) :awakes {
                 set pub = v
                 toggle evt==:hide -> evt==:show {
                     println(pub)
@@ -1346,7 +1347,7 @@ class TXExec {
     @Test
     fun toggle3() {
         val out = all("""
-            task T (v) {
+            task T (v) :awakes {
                 set pub = v
                 toggle :hide -> :show {
                     println(pub)
@@ -1733,7 +1734,7 @@ class TXExec {
     @Test
     fun all1() {
         val out = all("""
-            task T (pos) {
+            task T (pos) :awakes {
                 await true
                 println(pos)
             }
