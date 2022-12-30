@@ -591,7 +591,7 @@ class TXJS {
     // 22.5.2 Cooperative multitasking
 
     // 22.5.2.1 Simplifying asynchronous computations via generators
-    // TODO: The following task reads the texts of two files, parses the JSON inside them and logs the result.
+    // TODO: uv, The following task reads the texts of two files, parses the JSON inside them and logs the result.
 
     // 22.5.3 The limitations of cooperative multitasking via generators
     // 22.5.3.1 The benefits of the limitations of generators
@@ -605,5 +605,26 @@ class TXJS {
     // 22.6.1.3.2 A generalized filter()
     // TODO: need interfaces now
 
+    // TODO: all, uv
     // 22.6.2 Generators for lazy evaluation
+    // 22.6.2.1 Lazy pull (generators as iterators)
+    //  - addNumbers(extractNumbers(tokenize(CHARS)))
+    // 22.6.2.1.1 Step 1 – tokenizing
+    // 22.6.2.1.2 Step 2 – extracting numbers
+    // 22.6.2.1.3 Step 3 – adding numbers
+    // 22.6.2.1.4 Pulling the output
+    // 22.6.2.2 Lazy push (generators as observables)
+    // 22.6.2.2.1 Step 1 – tokenize
+    // 22.6.2.2.2 Step 2 – extract numbers
+    // 22.6.2.2.3 Step 3 – add numbers
+    // 22.6.2.2.4 Pushing the input
+    //  - tokenize(extractNumbers(addNumbers(logItems())))
+
+    // 22.6.3 Cooperative multi-tasking via generators
+    // 22.6.3.1 Pausing long-running tasks
+    // 22.6.3.2 Cooperative multitasking with generators and Node.js-style callbacks
+    // 22.6.3.3 Communicating Sequential Processes (CSP)
+
+    // 22.7 Inheritance within the iteration API (including generators)
+    // ...
 }
