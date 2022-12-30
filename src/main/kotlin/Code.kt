@@ -40,7 +40,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.fupc (tk: String?=null): String? {
         var n = 0
         var fup = ups.func_or_task(this)
-        while (fup!=null && (fup.isFake || tk==null || fup.tk.str!=tk)) {
+        while (fup!=null && ((fup.task!=null && fup.task!!.first) || tk==null || fup.tk.str!=tk)) {
             n++
             fup = ups.func_or_task(fup)
         }
@@ -201,6 +201,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_VALUE_${this.tk.str.uppercase()},
                     ceu_frame,
                     ceu_proto_f_$n,
+                    ${if (istask && this.task!!.second) 1 else 0},
                     sizeof(CEU_Proto_Mem_$n)
                 );
                 assert(ceu_proto_$n != NULL);
@@ -845,7 +846,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
-                val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && this.proto.isFake && (this.args.size == 0)
+                val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && this.proto.task!!.first && (this.args.size == 0)
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
                     Pair (

@@ -114,7 +114,7 @@ class Ups (val outer: Expr.Block) {
                     var ok = false
                     var up = func_or_task(this)
                     while (up != null) {
-                        if (up.tk.str=="task" && !up.isFake) {
+                        if (up.tk.str=="task" && !up.task!!.first) {
                             ok = true
                             break
                         }

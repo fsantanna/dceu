@@ -26,7 +26,7 @@ val TAGS = listOf (
     ":tuple", ":vector", ":dict",
     ":bcast",
     ":coro", ":coros", ":track",
-    ":fake", ":hide", ":check.now", ":all",
+    ":fake", ":hide", ":check.now", ":all", ":awakes",
     ":clear", ":error",           // bcast-clear
     ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated", ":destroyed"
@@ -57,7 +57,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val isFake: Boolean, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
     data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val isHide: Boolean, val es: List<Expr>): Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id, val init: Boolean):  Expr(N++, tk_)  // init b/c of iter var

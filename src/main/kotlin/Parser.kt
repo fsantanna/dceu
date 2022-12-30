@@ -347,19 +347,16 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val isFake = this.acceptTag(":fake")
-                if (isFake) {
-                    if (tk0.str == "func") {
-                        err(tk0, "invalid ${tk0.str} : unexpected \"${this.tk0.str}\"")
-                    }
-                }
                 val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                 this.acceptFix_err("(")
                 val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
+                val task = if (tk0.str == "func") null else {
+                    Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
+                }
                 val body = this.catch_block().let { (C,b) -> C(b) }.let {
                     if (it is Expr.Block) it else Expr.Block(tk0,listOf(it))
                 }
-                val proto = Expr.Proto(tk0, isFake, args, body)
+                val proto = Expr.Proto(tk0, task, args, body)
                 if (id == null) proto else {
                     this.nest("""
                         ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 
@@ -394,7 +391,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task :fake () {
+                            ${tk0.pos.pre()}spawn (task () :fake {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)

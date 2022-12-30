@@ -480,6 +480,26 @@ class TParser {
         assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "func (a,b) {\n10\n}") { e.tostr() }
     }
+    @Test
+    fun expr_func3_err() {
+        val l = lexer("func (a,b) :awakes { 10 }")
+        val parser = Parser(l)
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":awakes\"")
+    }
+    @Test
+    fun expr_task4_err() {
+        val l = lexer("task (a,b) :xxx { 10 }")
+        val parser = Parser(l)
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":xxx\"")
+    }
+    @Test
+    fun expr_task5() {
+        val l = lexer("task (a,b) :awakes { 10 }")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.Proto && e.args.size==2)
+        assert(e.tostr() == "task (a,b) :awakes {\n10\n}") { e.tostr() }
+    }
 
     // WHILE
 
@@ -652,12 +672,12 @@ class TParser {
         assert(e.tostr() == "yield(1)")
     }
     @Test
-    fun task3_err() {
+    fun func3_err() {
         val l = lexer("""
-            func :fake () {}
+            func () :fake {}
         """.trimIndent())
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid func : unexpected \":fake\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":fake\"")
     }
     @Test
     fun task4_err() {

@@ -152,6 +152,7 @@ fun Coder.main (): String {
             CEU_Proto_F f;
             union {
                 struct {
+                    int awakes;     // if it should awake even from non-clear bcasts
                     int n;          // sizeof mem
                 } Task;
             };
@@ -244,7 +245,7 @@ fun Coder.main (): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int type, struct CEU_Frame* frame, CEU_Proto_F f, int n);        
+        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int type, struct CEU_Frame* frame, CEU_Proto_F f, int awakes, int n);        
         struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
 
         static CEU_Tags_Names* CEU_TAGS = NULL;
@@ -536,17 +537,21 @@ fun Coder.main (): String {
             }
             switch (cur->type) {
                 case CEU_VALUE_CORO: {
-                    // step (1)
-                    int ret = ceu_bcast_blocks(cur->Bcast.Coro.block, evt);
-                        // CEU_RET_THROW: step (5) may 'catch' 
-                    
-                    // step (5)
-                    if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
-                        int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
-                        CEU_Value* args[] = { evt };
-                        ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
+                    if (evt!=&CEU_EVT_CLEAR && !cur->Bcast.Coro.frame->proto->Task.awakes) {
+                        return CEU_RET_RETURN;
+                    } else {
+                        // step (1)
+                        int ret = ceu_bcast_blocks(cur->Bcast.Coro.block, evt);
+                            // CEU_RET_THROW: step (5) may 'catch' 
+                        
+                        // step (5)
+                        if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
+                            int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
+                            CEU_Value* args[] = { evt };
+                            ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
+                        }
+                        return MIN(ret, CEU_RET_RETURN);
                     }
-                    return MIN(ret, CEU_RET_RETURN);
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;
@@ -804,12 +809,12 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int type, CEU_Frame* frame, CEU_Proto_F f, int n) {
+        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int type, CEU_Frame* frame, CEU_Proto_F f, int awakes, int n) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
                 type, NULL, NULL, NULL, 0, {
-                    .Proto = { frame, f, {.Task={n}} }
+                    .Proto = { frame, f, {.Task={awakes,n}} }
                 }
             };
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 1));  // 1=cannot escape this block b/c of upvalues

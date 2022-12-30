@@ -922,7 +922,7 @@ class TExec {
             set f = func () {
                 nil
             }
-            spawn task :fake () {
+            spawn task () :fake {
                 group :hide {
                     f()
                 }
@@ -1400,7 +1400,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun catch4() {
+    fun todo_catch4_valgrind() {
         val out = all("""
             catch err==:x {
                 throw([])
