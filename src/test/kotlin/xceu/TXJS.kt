@@ -460,6 +460,15 @@ class TXJS {
                 }
             }
             
+            task numberLines (target) {
+                var n = 0
+                while true {
+                    var line = yield()
+                    set n = n + 1
+                    resume target((tostring(n) ++ ": ") ++ line)
+                }
+            }
+            
             task printLines () {
                 while true {
                     var line = yield()
@@ -468,10 +477,11 @@ class TXJS {
             }
             
             var co_print = spawn printLines()
-            var co_split = spawn splitLines(co_print)
+            var co_nums  = spawn numberLines(co_print)
+            var co_split = spawn splitLines(co_nums)
             readFile(nil, co_split) 
         """, true)
-        assert(out == "ab\nc\ndefg\n") { out }
+        assert(out == "1: ab\n2: c\n3: defg\n") { out }
     }
 
     @Test
@@ -499,6 +509,15 @@ class TXJS {
                 }
             }
             
+            task numberLines () {
+                var n = 0
+                while true {
+                    var line = yield()
+                    set n = n + 1
+                    yield((tostring(n) ++ ": ") ++ line)
+                }
+            }
+
             task printLines () {
                 while true {
                     var line = yield()
@@ -508,18 +527,20 @@ class TXJS {
             
             var co_read  = coroutine(readFile)
             var co_split = spawn splitLines()
+            var co_nums  = spawn numberLines()
             var co_print = spawn printLines()
             spawn {
                 while in :coro, co_read, chars {
-                    while (do {
+                    while {
                         var line = if chars {
                             resume co_split(chars)
                         }
                         if line {
+                            line <++ resume co_nums(line)
                             resume co_print(line)
                         }
                         (line /= nil)
-                    }) {}
+                    }
                 }
             }
         """, true)

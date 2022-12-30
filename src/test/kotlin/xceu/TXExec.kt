@@ -48,6 +48,14 @@ class TXExec {
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun if5() {
+        val out = all("""
+            println(if false { true })
+        """.trimIndent())
+        assert(out == "nil\n") { out }
+    }
+
 
     // IFS
 
@@ -1401,6 +1409,29 @@ class TXExec {
             println(1)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun while4_cnd() {
+        val out = all("""
+            while {
+                false
+            }
+            println(:1)
+        """)
+        assert(out == ":1\n") { out }
+    }
+    @Test
+    fun while5_cnd() {
+        val out = all("""
+            var x = 0
+            while {
+                set x = x + 1
+                println(x)
+                x < 3
+            }
+            println(99)
+        """, true)
+        assert(out == "1\n2\n3\n99\n") { out }
     }
 
     // TASK ITERATOR
