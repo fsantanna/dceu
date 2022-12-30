@@ -530,7 +530,7 @@ class TTask {
                 broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task :fake :awakes () { broadcast in :task, n...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake :awakes () { broadcast in :task, n...)\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
@@ -1891,7 +1891,7 @@ class TTask {
             }) ()
         """, true)
         assert(out == "anon : (lin 2, col 20) : task () :awakes { set pub = [] var x spawn ta...)\n" +
-                "anon : (lin 5, col 24) : task :fake () { set x = pub }()\n" +
+                "anon : (lin 5, col 24) : task :fake :awakes () { set x = pub }()\n" +
                 "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test

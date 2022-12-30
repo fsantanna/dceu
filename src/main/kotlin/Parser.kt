@@ -291,10 +291,9 @@ class Parser (lexer_: Lexer)
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :coro)
-                                        var ${i.str}
-                                        while ceu_col_$N.status < :terminated {
+                                        var ${i.str} = false
+                                        while (${i.str} /= nil) and (ceu_col_$N.status < :terminated) {
                                             set ${i.str} = resume ceu_col_$N()
-                                            ;; TODO: if i==nil break; (would need to kill it after)
                                             if ${i.str} /= nil {
                                                 ${b.es.tostr(true)}
                                             }

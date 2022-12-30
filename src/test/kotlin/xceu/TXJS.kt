@@ -22,6 +22,13 @@ class TXJS {
     //      - JS:  v = yield(...)
     //      - Ceu: v = yield(...)
     //
+    // Tradeoff JS:create=resume, Ceu:start=yield
+    // Ceu is better because coro knows if init yield is required or not.
+    // If func receives arg, use yield, otherwise no yield, no chnanes in caller side
+    // JS caller doesnt know about coro body implementation
+    // JS's coroutine constructor trick calls the first next automatically to advance the
+    // coro to the first yield.
+    //
     // 22.1.3 Use case: implementing iterables
     //      - spawn (pass parameter, but requires yield) vs coroutine (no parameter, no yield)
     // 22.3.2 Returning from a generator
@@ -31,6 +38,15 @@ class TXJS {
     //      - Ceu: value, nil, throw
     // 22.3.6.1 yield* considers end-of-iteration values
     //      - Ceu: yield/return are the same
+    // 22.4.1.1 The first next()
+    //      - JS:  the only purpose of the first invocation of next() is to start the observer
+    //             therefore, any input you send via the first next() is ignored
+    //      - Ceu: first resume is received as arg (in JS it is in the coro first creation)
+    // 22.4.3 return() and throw()
+    //      - Ceu: TODO: kill(coro), no throw (makes sense?)
+    //          - kill is also solved with scope
+    // 22.4.4.1 Preventing termination
+    //      - Ceu: not possible
     //////////////////////////////////////////////////////////////////////////
 
     // 22.1 Overview
@@ -241,7 +257,7 @@ class TXJS {
     }
 
     @Test
-    fun todo_x11() {
+    fun x11() {
         val out = all("""
             task foo () {
                 yield('a')
@@ -310,4 +326,222 @@ class TXJS {
         """, true)
         assert(out == "abcde\n") { out }
     }
+
+    // 22.4 Generators as observers (data consumption)
+
+    // 22.4.1 Sending values via next()
+
+    @Test
+    fun x14() {
+        val out = all("""
+            task dataConsumer () {
+                println(:started)
+                println(1, yield()) ;; (A)
+                println(2, yield())
+                :result
+            }
+            
+            var genObj = coroutine(dataConsumer)
+            println(resume genObj())
+            println(resume genObj('a'))
+            println(resume genObj('b'))
+        """, true)
+        assert(out == ":started\nnil\n1\ta\nnil\n2\tb\n:result\n") { out }
+    }
+
+    // 22.4.1.1 The first next()
+    // In Ceu, both inputs are received.
+
+    @Test
+    fun x15() {
+        val out = all("""
+            task gen (input) {
+                println(input)
+                while true {
+                    set input = yield() ;; (B)
+                    println(input)
+                }
+            }
+            var obj = coroutine(gen);
+            resume obj('a');
+            resume obj('b');
+        """, true)
+        assert(out == "a\nb\n") { out }
+    }
+
+    // 22.4.2 yield binds loosely
+    // 22.4.2.1 yield in the ES6 grammar
+    // In Ceu it is like a function call.
+
+    // 22.4.3 return() and throw()
+    // 22.4.4 return() terminates the generator
+    // - TODO: kill(coro), no throw (makes sense?)
+
+    @Test
+    fun x16_kill() {
+        val out = all("""
+            task genFunc1() {
+                defer {
+                    println(:exiting)
+                }
+                yield () ;; (A)
+            }
+            var genObj1 = coroutine(genFunc1)
+            resume genObj1()
+            kill genObj1()
+            println(:end)
+        """, true)
+        assert(out == ":exiting\n:end\n") { out }
+    }
+
+    @Test
+    fun x17_scope() {
+        val out = all("""
+            task genFunc1() {
+                defer {
+                    println(:exiting)
+                }
+                yield () ;; (A)
+            }
+            do {
+                var genObj1 = coroutine(genFunc1)
+                resume genObj1()
+            }
+            println(:end)
+        """, true)
+        assert(out == ":exiting\n:end\n") { out }
+    }
+
+    // 22.4.4.1 Preventing termination
+    // Ceu: not possible
+
+    @Test
+    fun x18_scope() {
+        val out = all("""
+
+        """, true)
+        assert(out == ":exiting\n:end\n") { out }
+    }
+
+    // 22.4.4.2 Returning from a newborn generator
+
+    @Test
+    fun todo_x19() {
+        val out = all("""
+            task genFunc() {}
+            var genObj = coroutine(genFunc)
+            kill genObj(:yes)
+            println(genObj.pub)
+        """, true)
+        assert(out == ":yes") { out }
+    }
+
+    // 22.4.5 throw() signals an error
+    // 22.4.5.1 Throwing from a newborn generator
+    // Ceu: not possible
+
+    // 22.4.6 Example: processing asynchronously pushed data
+    // Ceu uses a scope for the generator and uses a normal loop to feed data.
+
+    @Test
+    fun x20() {
+        val out = all("""
+            func readFile (fileName, target) {
+                ;; TODO: from fileName
+                resume target("ab\nc")
+                resume target("")
+                resume target("\ndefg\n")
+            }
+            
+            task splitLines (target) {
+                var cur = ""
+                while true {
+                    var tmp = yield()
+                    while in :vector, tmp, (_,c) {
+                        if c == '\n' {
+                            resume target(cur)
+                            set cur = ""
+                        } else {
+                            set cur[+] = c
+                        }
+                    }
+                }
+            }
+            
+            task printLines () {
+                while true {
+                    var line = yield()
+                    println(line)
+                }
+            }
+            
+            var co_print = spawn printLines()
+            var co_split = spawn splitLines(co_print)
+            readFile(nil, co_split) 
+        """, true)
+        assert(out == ":yes") { out }
+    }
+
+    @Test
+    fun x21() {
+        val out = all("""
+            task readFile (fileName) {
+                ;; TODO: from fileName
+                yield("ab\nc")
+                yield("")
+                yield("\ndefg\n")
+            }
+            
+            task splitLines () {
+                var cur = ""
+                while true {
+                    var tmp = yield()
+                    while in :vector, tmp, (_,c) {
+                        if c == '\n' {
+                            yield(cur)
+                            set cur = ""
+                        } else {
+                            set cur[+] = c
+                        }
+                    }
+                }
+            }
+            
+            task printLines () {
+                while true {
+                    var line = yield()
+                    println(line)
+                }
+            }
+            
+            var co_read  = coroutine(readFile)
+            var co_split = spawn splitLines()
+            var co_print = spawn printLines()
+            spawn {
+                while in :coro, co_read, chars {
+                    while (do {
+                        var line = if chars {
+                            resume co_split(chars)
+                        }
+                        if line {
+                            resume co_print(line)
+                        }
+                        (line /= nil)
+                    }) {}
+                }
+            }
+        """, true)
+        assert(out == "ab\nc\ndefg") { out }
+    }
+
+    @Test
+    fun x22() {
+        val out = all("""
+            readFile |> splitLines |> printLines
+        """, true)
+        assert(out == ":yes") { out }
+    }
+
+    // TODO
+    // usar operador de pipe
 }
