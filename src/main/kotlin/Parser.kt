@@ -259,14 +259,8 @@ class Parser (lexer_: Lexer)
             this.acceptFix("while") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (!this.acceptFix("in")) {
-                    val cnd_as_body = this.checkFix("{")
-                    val cnd = if (cnd_as_body) null else this.expr()
-                    val (C,b) = this.catch_block()
-                    if (cnd_as_body) {
-                        C(Expr.While(tk0, b, Expr.Block(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))))
-                    } else {
-                        C(Expr.While(tk0, cnd!!, b))
-                    }
+                    val cnd = this.expr()
+                    this.catch_block().let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
                 } else {
                     this.acceptEnu_err("Tag")
                     val tktag = this.tk0 as Tk.Tag
@@ -560,6 +554,21 @@ class Parser (lexer_: Lexer)
                 ifs += cnd.cond { "}" }
                 //println(ifs)
                 this.nest(ifs)
+            }
+            (XCEU && this.acceptFix("until")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val (C,cnd) = this.catch_block()
+                C(this.nest("""
+                    ${pre0}do {
+                        var ceu_$N
+                        ${pre0}while not (
+                            set ceu_$N = do ${cnd.tostr(true)}
+                        ) {
+                            ;; cnd is the body
+                        }
+                        ceu_$N
+                    }
+                """))
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()

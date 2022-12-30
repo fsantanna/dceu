@@ -1374,7 +1374,7 @@ class TXExec {
         assert(out == "0\n1\n2\n") { out }
     }
 
-    // WHILE / BREAK
+    // WHILE / BREAK / UNTIL
 
     @Test
     fun break1() {
@@ -1411,27 +1411,42 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun while4_cnd() {
+    fun until4() {
         val out = all("""
-            while {
-                false
-            }
-            println(:1)
+            println(until {
+                10
+            })
         """)
-        assert(out == ":1\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
-    fun while5_cnd() {
+    fun until5() {
         val out = all("""
             var x = 0
-            while {
+            until {
                 set x = x + 1
                 println(x)
-                x < 3
+                x == 3
             }
             println(99)
         """, true)
         assert(out == "1\n2\n3\n99\n") { out }
+    }
+    @Test
+    fun until6() {
+        val out = all("""
+            var x = 0
+            var v = until { {:break}
+                set x = x + 1
+                println(x)
+                if x == 3 {
+                    throw(:break)
+                }
+                false
+            }
+            println(v)
+        """, true)
+        assert(out == "1\n2\n3\n:break\n") { out }
     }
 
     // TASK ITERATOR
