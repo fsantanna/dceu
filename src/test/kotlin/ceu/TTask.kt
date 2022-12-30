@@ -1187,7 +1187,7 @@ class TTask {
                 nil
             }
         """)
-        assert(out == "anon : (lin 2, col 30) : while error : expected coroutines\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 29) : while error : expected coroutines\n:error\n") { out }
     }
     @Test
     fun pool9_term() {

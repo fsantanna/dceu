@@ -7,6 +7,5 @@ install:
 	ls -l /usr/local/bin/[Cc]e*
 	#freechains --version
 
-test:
-	echo "^\"../lib/prelude.ceu\" ; output Std ()" > /tmp/tst.ce
-	ceu /tmp/tst.ce
+one:
+	ceu $(SRC).ceu -cc "-g -lm"
