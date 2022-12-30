@@ -423,23 +423,18 @@ class Parser (lexer_: Lexer)
                 } else {
                     val coro = this.expr()
                     this.nest("""
-                        ;;;
                         do {
                             var ceu_coro_$N = ${coro.tostr(true)}
                             assert(type(ceu_coro_$N) == :coro)
                             while ceu_coro_$N.status < :terminated {
+                                var ceu_i_$N = yield()
                                 until {
-                                    var ceu_i_$N = resume ceu_coro_$N()
-                                    set ceu_i_$N = yield()
+                                    set ceu_i_$N = resume ceu_coro_$N(ceu_i_$N)
+                                    if ceu_i_$N /= nil {
+                                        set ceu_i_$N = yield(ceu_i_$N)
+                                    }
                                     (ceu_i_$N == nil)
                                 }
-                            }
-                        }
-                        ;;;
-                        do {
-                            var ceu_coro_$N = ${coro.tostr(true)}
-                            while in :coro ceu_coro_$N, ceu_i_$N {
-                                yield(ceu_i_$N)
                             }
                         }
                     """)

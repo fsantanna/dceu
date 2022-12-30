@@ -564,37 +564,26 @@ class TXJS {
     }
 
     // 22.4.7 yield*: the full story
+    // TODO: JS is inverted: callee has no while loop, caller has while loop
 
     @Test
     fun x22() {
         val out = all("""
             task callee () {
                 while true {
-        println(:a)
                     var x = yield()
                     println(:callee, x)
-        println(:b)
                 }
             }
             task caller () {
-        println(:1)
-                ;;yield :all spawn callee()
-                var co_callee = spawn callee()
-        println(:2)
-                while in :coro co_callee, i {
-                    println(:i, i)
-                    yield(i)
-                }
-        println(:3)
+                yield :all spawn callee()
             }
-        println(:x)
             var co_caller = spawn caller ()
-        println(:y)
             println(:resume, resume co_caller('a'))
-        println(:z)
             println(:resume, resume co_caller('b'))
         """, true)
-        assert(out == ":yes") { out }
+        assert(out == ":callee\ta\n:resume\tnil\n:callee\tb\n:resume\tnil\n") { out }
     }
 
+    // 22.5 Generators as coroutines (cooperative multitasking)
 }
