@@ -378,7 +378,7 @@ class TXJS {
     // - TODO: kill(coro), no throw (makes sense?)
 
     @Test
-    fun x16_kill() {
+    fun todo_x16_kill() {
         val out = all("""
             task genFunc1() {
                 defer {
@@ -415,18 +415,10 @@ class TXJS {
     // 22.4.4.1 Preventing termination
     // Ceu: not possible
 
-    @Test
-    fun x18_scope() {
-        val out = all("""
-
-        """, true)
-        assert(out == ":exiting\n:end\n") { out }
-    }
-
     // 22.4.4.2 Returning from a newborn generator
 
     @Test
-    fun todo_x19() {
+    fun todo_x18() {
         val out = all("""
             task genFunc() {}
             var genObj = coroutine(genFunc)
@@ -444,7 +436,7 @@ class TXJS {
     // Ceu uses a scope for the generator and uses a normal loop to feed data.
 
     @Test
-    fun x20() {
+    fun x19() {
         val out = all("""
             func readFile (fileName, target) {
                 ;; TODO: from fileName
@@ -479,11 +471,11 @@ class TXJS {
             var co_split = spawn splitLines(co_print)
             readFile(nil, co_split) 
         """, true)
-        assert(out == ":yes") { out }
+        assert(out == "ab\nc\ndefg\n") { out }
     }
 
     @Test
-    fun x21() {
+    fun x20() {
         val out = all("""
             task readFile (fileName) {
                 ;; TODO: from fileName
@@ -531,11 +523,11 @@ class TXJS {
                 }
             }
         """, true)
-        assert(out == "ab\nc\ndefg") { out }
+        assert(out == "ab\nc\ndefg\n") { out }
     }
 
     @Test
-    fun x22() {
+    fun x21() {
         val out = all("""
             readFile |> splitLines |> printLines
         """, true)
