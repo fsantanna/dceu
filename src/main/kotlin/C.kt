@@ -269,6 +269,27 @@ fun Coder.main (): String {
         const CEU_Value* ceu_evt = &CEU_EVT_NIL;    // also b/c of `evt` outside task
     """ +
     """ // IMPLS
+        void ceu_error_list_print (void) {
+            CEU_Error_List* cur = ceu_error_list;
+            while (cur != NULL) {
+                char* msg = (cur->msg[0] == '\0') ? cur->msg+1 : cur->msg;
+                if (cur->next!=NULL && cur->next->msg[0]=='\0') {
+                    fprintf(stderr, "%s", msg);
+                } else {
+                    fprintf(stderr, "%s\n", msg);
+                }
+                if (cur->shown) {
+                    fprintf(stderr, "-=- duplicate exception : stop now -=-\n");
+                    break;
+                }
+                cur->shown = 1;
+                cur = cur->next;
+            }
+            CEU_Value ceu_accx = ceu_acc;
+            ceu_print1(&ceu_accx);
+            puts("");
+        }
+        
         int ceu_as_bool (CEU_Value* v) {
             return !(v->type==CEU_VALUE_NIL || (v->type==CEU_VALUE_BOOL && !v->Bool));
         }
@@ -1351,26 +1372,6 @@ fun Coder.main (): String {
                 ${this.code}
                 return 0;
             } while (0);
-            {
-                CEU_Error_List* cur = ceu_error_list;
-                while (cur != NULL) {
-                    char* msg = (cur->msg[0] == '\0') ? cur->msg+1 : cur->msg;
-                    if (cur->next!=NULL && cur->next->msg[0]=='\0') {
-                        fprintf(stderr, "%s", msg);
-                    } else {
-                        fprintf(stderr, "%s\n", msg);
-                    }
-                    if (cur->shown) {
-                        fprintf(stderr, "-=- duplicate exception : stop now -=-\n");
-                        break;
-                    }
-                    cur->shown = 1;
-                    cur = cur->next;
-                }
-                CEU_Value ceu_accx = ceu_acc;
-                ceu_print1(&ceu_accx);
-                puts("");
-            }
             return 1;
         }
     """)

@@ -1400,7 +1400,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun todo_catch4_valgrind() {
+    fun catch4_valgrind() {
         val out = all("""
             catch err==:x {
                 throw([])

@@ -232,6 +232,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     do { // block
                         $es
                     } while (0); // block
+                    if (ceu_ret == CEU_RET_THROW) {
+                        // must be before frees
+                        ${(f_b == null).cond {"ceu_error_list_print();" }}
+                    }
                     { // ceu_ret/ceu_acc: save/restore
                         CEU_RET   ceu_ret_$n = ceu_ret;
                         CEU_Value ceu_acc_$n = ceu_acc;
