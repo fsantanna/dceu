@@ -784,7 +784,7 @@ class TXExec {
     fun dict10_iter() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
-            while in :dict, t, (k, v) {
+            while in :dict t, (k, v) {
                 println(k,v)
             }
         """, true)
@@ -794,7 +794,7 @@ class TXExec {
     fun dict10_iter_err() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
-            while in :dict, t, k, v {
+            while in :dict t, k, v {
                 println(k,v)
             }
         """, true)
@@ -804,7 +804,7 @@ class TXExec {
     fun vect11_iter_err() {
         val out = all("""
             var t = #[1, 2, 3]
-            while in :vector, t, i, v {
+            while in :vector t, i, v {
                 println(i, v)
             }
         """, true)
@@ -814,7 +814,7 @@ class TXExec {
     fun vect11_iter() {
         val out = all("""
             var t = #[1, 2, 3]
-            while in :vector, t, (i, v) {
+            while in :vector t, (i, v) {
                 println(i, v)
             }
         """, true)
@@ -824,7 +824,7 @@ class TXExec {
     fun vect12_iter_err() {
         val out = all("""
             var t = #[1, 2, 3]
-            while in :vector, t, (i {
+            while in :vector t, (i {
                 println(i, v)
             }
         """, true)
@@ -834,7 +834,7 @@ class TXExec {
     fun dict13_iter() {
         val out = all("""
             var t = @[x=1, y=2, z=3]
-            while in :dict, t, (k, v) {
+            while in :dict t, (k, v) {
                 println(k, v)
             }
         """, true)
@@ -843,7 +843,7 @@ class TXExec {
     @Test
     fun dict14_iter_err() {
         val out = all("""
-            while in :dict, t, (i {
+            while in :dict t, (i {
                 println(i, v)
             }
         """, true)
@@ -1315,7 +1315,7 @@ class TXExec {
             spawn in ts, T(v) where {
                 var v = 10
             }
-            while in :coros, ts, t {
+            while in :coros ts, t {
                 println(type(t))
             }
         """)
@@ -1460,7 +1460,7 @@ class TXExec {
                 yield(3)
                 ;;nil
             }
-            while in :coro, coroutine(T), i {
+            while in :coro coroutine(T), i {
                 println(i)
             }
         """, true)
@@ -1474,7 +1474,7 @@ class TXExec {
                 yield(2)
                 yield(3)
             }
-            while in :coro, coroutine(T), i { {:x}
+            while in :coro coroutine(T), i { {:x}
                 println(i)
                 throw(:x)
             }
@@ -1489,7 +1489,7 @@ class TXExec {
                 yield(2)
                 3
             }
-            while in :coro, coroutine(T), i {
+            while in :coro coroutine(T), i {
                 println(i)
             }
         """, true)
@@ -1503,7 +1503,7 @@ class TXExec {
                 yield(2)
                 nil
             }
-            while in :coro, coroutine(T), i {
+            while in :coro coroutine(T), i {
                 println(i)
             }
         """, true)

@@ -88,7 +88,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
             val pos = lex.toPos()
             val (n1,x1) = read2()
             when (x1) {
-                ' ', '\n' -> {}
+                ' ', '\t', '\n' -> {}
                 ';' -> {
                     val (n2,x2) = read2()
                     if (x2 == ';') {

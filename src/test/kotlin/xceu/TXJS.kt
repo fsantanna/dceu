@@ -99,7 +99,7 @@ class TXJS {
         val out = all("""
             task objectEntries (obj) {
                 yield()
-                while in :dict, obj, (k, v) {
+                while in :dict obj, (k, v) {
                     yield([k, v])
                 }
             }
@@ -109,7 +109,7 @@ class TXJS {
                 last  = "Doe",
             ]
             var co = spawn objectEntries(jane)
-            while in :coro, co, v {
+            while in :coro co, v {
                 println((tostring(v.0) ++ ": ") ++ v.1)
             }
         """, true)
@@ -224,7 +224,7 @@ class TXJS {
     fun x9() {
         val out = all("""
             task genFunc () {
-                while in :vector, #['a','b'], (i, v) {
+                while in :vector #['a','b'], (i, v) {
                     yield([i,v])
                 }
             }
@@ -245,7 +245,7 @@ class TXJS {
             }
             task bar () {
                 yield('x')
-                while in :coro, coroutine(foo), i {
+                while in :coro coroutine(foo), i {
                     yield(i)
                 }
                 yield('y')
@@ -449,7 +449,7 @@ class TXJS {
                 var cur = ""
                 while true {
                     var tmp = yield()
-                    while in :vector, tmp, (_,c) {
+                    while in :vector tmp, (_,c) {
                         if c == '\n' {
                             resume target(cur)
                             set cur = ""
@@ -498,7 +498,7 @@ class TXJS {
                 var cur = ""
                 while true {
                     var tmp = yield()
-                    while in :vector, tmp, (_,c) {
+                    while in :vector tmp, (_,c) {
                         if c == '\n' {
                             yield(cur)
                             set cur = ""
@@ -530,7 +530,7 @@ class TXJS {
             var co_nums  = spawn numberLines()
             var co_print = spawn printLines()
             spawn {
-                while in :coro, co_read, chars {
+                while in :coro co_read, chars {
                     while {
                         var line = if chars {
                             resume co_split(chars)

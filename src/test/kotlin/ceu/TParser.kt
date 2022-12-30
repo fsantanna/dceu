@@ -768,37 +768,37 @@ class TParser {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in :coros, ts, t {
+            while in :coros ts, t {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile in :coros, ts, t {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile in :coros ts, t {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun coros2_err() {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in :coros, ts, 1 {
+            while in :coros ts, 1 {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 34) : expected identifier : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 33) : expected identifier : have \"1\"")
     }
     @Test
     fun coros3_err() {
         val l = lexer("""
             var ts
             set ts = coroutines()
-            while in :coros, x {
+            while in :coros x {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 32) : expected \",\" : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 31) : expected \",\" : have \"{\"")
     }
     @Test
     fun coros4_err() {
@@ -853,7 +853,7 @@ class TParser {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 29) : expected \",\" : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 29) : expected expression : have \"{\"")
     }
 
     // TRACK

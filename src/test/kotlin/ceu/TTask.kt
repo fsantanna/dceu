@@ -1158,7 +1158,7 @@ class TTask {
                     println(v)
                 }
                 spawn in ts, T(1)
-                while in :coros, ts, t {
+                while in :coros ts, t {
                     throw(1)    ;; never reached
                 }
             }
@@ -1183,7 +1183,7 @@ class TTask {
     @Test
     fun pool8_err() {
         val out = all("""
-            while in :coros, nil, x {
+            while in :coros nil, x {
                 nil
             }
         """)
@@ -1199,7 +1199,7 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while in :coros, ts, xxx {
+            while in :coros ts, xxx {
                 println(1)
                  broadcast in :global, 1
             }
@@ -1217,10 +1217,10 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while in :coros, ts, xxx {
+            while in :coros ts, xxx {
                 println(1)
                  broadcast in :global, 1
-                while in :coros, ts, yyy {
+                while in :coros ts, yyy {
                     println(2)
                 }
             }
@@ -1237,7 +1237,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var yyy
-            while in :coros, ts, xxx {
+            while in :coros ts, xxx {
                 set yyy = xxx
             }
         """)
@@ -1253,9 +1253,9 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while in :coros, ts, xxx {
+            while in :coros ts, xxx {
                 var yyy
-                while in :coros, ts, zzz {
+                while in :coros ts, zzz {
                     set yyy = zzz
                 }
                 set yyy = xxx
@@ -1274,9 +1274,9 @@ class TTask {
             var ts
             set ts = coroutines()
             spawn in ts, T()
-            while in :coros, ts, xxx {
+            while in :coros ts, xxx {
                 var yyy
-                while in :coros, ts, zzz {
+                while in :coros ts, zzz {
                     nil
                 }
                 set yyy = xxx
@@ -1491,8 +1491,8 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             
-            while in :coros, ts, t1 {
-                while in :coros, ts, t2 {
+            while in :coros ts, t1 {
+                while in :coros ts, t2 {
                     println(t1.pub, t2.pub)
                 }
             }
@@ -1839,7 +1839,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var x
-            while in :coros, ts, t {
+            while in :coros ts, t {
                 println(t.pub[0]+t.pub[0])
             }
         """, true)
@@ -1857,7 +1857,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             var x
-            while in :coros, ts, t {
+            while in :coros ts, t {
                 set x = t.pub   ;; TODO: incompatible scope
             }
             println(999)
@@ -2544,7 +2544,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while in :coros, ts, t {
+            while in :coros ts, t {
                 set x = track(t)
             }
             println(x.pub[0])   ;; 2
@@ -2567,7 +2567,7 @@ class TTask {
             do {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
-                while in :coros, ts, t {
+                while in :coros ts, t {
                     set x = track(t)    ;; track(t) hold in
                 }
                 println(x.pub[0])   ;; 2
@@ -2591,7 +2591,7 @@ class TTask {
                 var ts
                 set ts = coroutines()
                 spawn in ts, T(1)
-                while in :coros, ts, t {
+                while in :coros ts, t {
                     set x = t       ;; err: escope 
                 }
             }
@@ -2611,7 +2611,7 @@ class TTask {
             spawn in ts, T(1)
             var x
             set x = catch true {
-                while in :coros, ts, t {
+                while in :coros ts, t {
                     throw(track(t))
                 }
             }
@@ -2634,7 +2634,7 @@ class TTask {
             spawn in ts, T(2)
             var x
             set x = catch true {
-                while in :coros, ts, t {
+                while in :coros ts, t {
                     throw(track(t))
                 }
             }

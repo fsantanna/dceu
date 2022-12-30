@@ -264,7 +264,6 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.acceptEnu_err("Tag")
                     val tktag = this.tk0 as Tk.Tag
-                    this.acceptFix_err(",")
                     if (tktag.str !in ITERS) {
                         err(tk0, "invalid iterator : unexpected \"${tktag.str}\"")
                     }
@@ -421,7 +420,7 @@ class Parser (lexer_: Lexer)
                     this.nest("""
                         do {
                             var ceu_coro_$N = ${coro.tostr(true)}
-                            while in :coro, ceu_coro_$N, ceu_i_$N {
+                            while in :coro ceu_coro_$N, ceu_i_$N {
                                 yield(ceu_i_$N)
                             }
                         }

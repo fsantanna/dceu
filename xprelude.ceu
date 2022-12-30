@@ -175,7 +175,7 @@ func tovector (v) {
     ifs v {
         is :coro -> {
             var ret = #[]
-            while in :coro, v, vv {
+            while in :coro v, vv {
                 set ret[+] = vv
             }
             move(ret)
