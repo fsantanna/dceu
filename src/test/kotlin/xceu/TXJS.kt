@@ -558,7 +558,8 @@ class TXJS {
     @Test
     fun todo_x21() {
         val out = all("""
-            ((readFile |> splitLines) |> numLines) |> printLines
+            ;; f >|>> co   co >>|>> co
+            ((readFile >|>> splitLines) >>|>> numLines) >>|>> printLines
         """, true)
         assert(out == ":yes") { out }
     }
@@ -586,8 +587,23 @@ class TXJS {
     }
 
     // 22.5 Generators as coroutines (cooperative multitasking)
-
     // 22.5.1 The full generator interface
-
     // 22.5.2 Cooperative multitasking
+
+    // 22.5.2.1 Simplifying asynchronous computations via generators
+    // TODO: The following task reads the texts of two files, parses the JSON inside them and logs the result.
+
+    // 22.5.3 The limitations of cooperative multitasking via generators
+    // 22.5.3.1 The benefits of the limitations of generators
+
+    // 22.6 Examples of generators
+    // 22.6.1 Implementing iterables via generators
+    // 22.6.1.1 The iterable combinator take()
+    // 22.6.1.2 Infinite iterables
+    // 22.6.1.3 Array-inspired iterable combinators: map, filter
+    // 22.6.1.3.1 A generalized map()
+    // 22.6.1.3.2 A generalized filter()
+    // TODO: need interfaces now
+
+    // 22.6.2 Generators for lazy evaluation
 }

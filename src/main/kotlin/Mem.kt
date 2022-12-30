@@ -74,7 +74,7 @@ fun Expr.mem (): String {
                 };
             };
         """
-        is Expr.Iter -> """
+        is Expr.CsIter -> """
             struct { // ITER
                 CEU_Value coros_$n;
                 CEU_Block* hold_$n;

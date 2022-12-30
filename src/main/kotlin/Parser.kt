@@ -285,7 +285,7 @@ class Parser (lexer_: Lexer)
                     this.catch_block().let { (C,b) ->
                         when {
                             tktag.str == ":coros" -> {
-                                C(Expr.Iter(tk0, i, col,
+                                C(Expr.CsIter(tk0, i, col,
                                     Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
                             }
                             tktag.str == ":coro" -> {

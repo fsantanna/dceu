@@ -393,7 +393,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             }
             is Expr.Spawn -> this.call.code(issrc, null)
-            is Expr.Iter -> {
+            is Expr.CsIter -> {
                 val loc = this.loc.str
                 """
                 { // ITER ${this.tk.dump()}
