@@ -123,7 +123,7 @@ class Ups (val outer: Expr.Block) {
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = first(this) { it is Expr.Block || it is Expr.Group }!!
+                val bup = first(this) { it is Expr.Block || (it is Expr.Group && it.isHide) }!!
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup.syms[id] = Dcl(id, this.tk_.upv, this)

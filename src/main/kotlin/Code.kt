@@ -829,25 +829,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Call -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val up = ups.ups[this]!!
-                //val resume = (if (up is Expr.Resume) up else null)
                 val resume = ups.all_until(up) { it is Expr.Resume }.let { es ->
                     when {
                         es.isEmpty() -> null
                         es.drop(1).all { it is Expr.Group } -> es.first() as Expr.Resume
                         else -> null
-                        //else -> es.first() as Expr.Resume
                     }
                 }
-                //println(resume?.tostr())
                 val spawn = ups.all_until(up) { it is Expr.Spawn }.let { es ->
                     when {
                         es.isEmpty() -> null
-                        //es.drop(1).all { it is Expr.Group } -> es.first() as Expr.Resume
-                        //else -> null
-                        else -> es.first() as Expr.Spawn
+                        es.drop(1).all { grp ->
+                            (grp is Expr.Group) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
+                        } -> es.first() as Expr.Spawn
+                        else -> null
                     }
                 }
-                    //{ grp -> grp !is Expr.Group || grp.es.last() !is Expr.Call || !ups.ups[grp].let { it is Expr.Spawn && it.call==grp } }
+
                 val iscall = (resume==null && spawn==null)
                 val iscoros = (spawn?.coros != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
