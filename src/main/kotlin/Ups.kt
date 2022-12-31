@@ -22,35 +22,38 @@ class Ups (val outer: Expr.Block) {
         this.outer.traverse()
     }
 
-    fun path_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
+    fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
         val up = ups[e]
         return when {
             cnd(e) -> listOf(e)
             (up == null) -> emptyList()
-            else -> this.path_until(up,cnd).let { if (it.isEmpty()) it else it+e }
+            else -> this.all_until(up,cnd).let { if (it.isEmpty()) it else it+e }
         }
     }
-    fun block (e: Expr): Expr.Block? {
-        return this.path_until(e) { it is Expr.Block }.firstOrNull() as Expr.Block?
+    fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
+        return this.all_until(e,cnd).firstOrNull()
     }
-    fun block_or_group (e: Expr): Expr? {
-        return this.path_until(e) {
+    fun first_block (e: Expr): Expr.Block? {
+        return this.first(e) { it is Expr.Block } as Expr.Block?
+    }
+    fun first_block_or_group (e: Expr): Expr? {
+        return this.first(e) {
             it is Expr.Block || (it is Expr.Group && it.isHide)
-        }.firstOrNull()
+        }
     }
-    fun func_or_task (e: Expr): Expr.Proto? {
-        return this.path_until(e) { it is Expr.Proto }.firstOrNull() as Expr.Proto?
+    fun first_proto (e: Expr): Expr.Proto? {
+        return this.first(e) { it is Expr.Proto } as Expr.Proto?
     }
-    fun task (e: Expr): Expr.Proto? {
-        return this.path_until(e) {
+    fun first_task (e: Expr): Expr.Proto? {
+        return this.first(e) {
             it is Expr.Proto && it.tk.str=="task"
-        }.firstOrNull() as Expr.Proto?
+        } as Expr.Proto?
     }
-    fun proto_or_block (e: Expr): Expr? {
-        return this.path_until(e) { it is Expr.Proto || it is Expr.Block }.firstOrNull()
+    fun first_proto_or_block (e: Expr): Expr? {
+        return this.first(e) { it is Expr.Proto || it is Expr.Block }
     }
     fun intask (e: Expr): Boolean {
-        return (this.func_or_task(e)?.tk?.str == "task")
+        return (this.first_proto(e)?.tk?.str == "task")
     }
 
     fun getDcl (e: Expr, id: String): Dcl? {
@@ -71,7 +74,7 @@ class Ups (val outer: Expr.Block) {
         val (id,upv) = v
         val dcl = this.getDcl(e,id)
         val nocross = dcl?.blk.let { blk ->
-            (blk == null) || this.path_until(e) { blk == e }.none { it is Expr.Proto }
+            (blk == null) || this.all_until(e) { blk == e }.none { it is Expr.Proto }
         }
         return when {
             (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
@@ -127,7 +130,7 @@ class Ups (val outer: Expr.Block) {
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = block_or_group(this)!!
+                val bup = first_block_or_group(this)!!
                 //println(listOf("DCL", id, bup.javaClass.name))
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
@@ -138,7 +141,7 @@ class Ups (val outer: Expr.Block) {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
                     }
-                    (this.tk_.upv==1 && block(bup)==null) -> {
+                    (this.tk_.upv==1 && first_block(bup)==null) -> {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }
@@ -166,13 +169,13 @@ class Ups (val outer: Expr.Block) {
             is Expr.Pub    -> {
                 if (this.coro == null) {
                     var ok = false
-                    var up = func_or_task(this)
+                    var up = first_proto(this)
                     while (up != null) {
                         if (up.tk.str=="task" && !up.task!!.first) {
                             ok = true
                             break
                         }
-                        up = func_or_task(up)
+                        up = first_proto(up)
                     }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
@@ -186,7 +189,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Acc    -> {
                 val dcl = getDcl(this, this.tk.str)
                 if (this.tk_.upv==0 && dcl?.upv==0) {           // access with no upval modifier && matching declaration
-                    path_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
+                    all_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
                     .drop(1)                     // skip myself
                     .filter { it is Expr.Proto }    // all crossing protos
                     .forEach { noclos.add(it) }     // mark them as noclos
