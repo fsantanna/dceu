@@ -13,7 +13,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.id2c (id: String): String {
         val dcl = ups.getDcl(this, id)!!
         val mem = if (dcl.upv == 0) "mem" else "upvs"
-        val fup = if (dcl.blk is Expr.Proto) this else ups.first_proto(dcl.blk)
+        val fup = ups.first(dcl.blk) { it is Expr.Proto }
         val N = ups.all_until(this) { it==dcl.blk }.count{ it is Expr.Proto } - 1
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$id)"
@@ -25,14 +25,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.fupc (tk: String?=null): String? {
-        var n = 0
-        var fup = ups.first_proto(this)
-        while (fup!=null && ((fup.task!=null && fup.task!!.first) || tk==null || fup.tk.str!=tk)) {
-            n++
-            fup = ups.first_proto(fup)
+    fun Expr.taskc (): String? {
+        val n = ups.all_until(this) { it==outer }.count {
+            it is Expr.Proto && it.task!=null && it.task.first
         }
-        return if (fup == null) null else "(ceu_frame${"->proto->up".repeat(n)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
     fun Expr.gcall (): Boolean {
@@ -446,7 +443,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${this.fupc("task").let {
+                            ${this.taskc().let {
                                 if (it == null) {
                                     "ceu_err_$n = 1;"
                                 } else {
@@ -513,7 +510,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // PUB
                     CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
-                        "ceu_dyn_$n = ${this.fupc("task")}->Task.coro;"
+                        "ceu_dyn_$n = ${this.taskc()}->Task.coro;"
                     } else { """
                         ${this.coro.code(true, null)}
                         ${(this.tk.str=="status").cond { """
