@@ -43,12 +43,12 @@ class Ups (val outer: Expr.Block) {
             else -> this.pred_stop_path(up, cnd, stp).let { if (it.isEmpty()) it else it+up }
         }
     }
-    fun path_until (e: Expr, unt: (Expr)->Boolean): List<Expr> {
+    fun path_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
         val up = ups[e]
         return when {
+            cnd(e) -> listOf(e)
             (up == null) -> emptyList()
-            unt(up) -> listOf(up)
-            else -> this.path_until(up,unt).let { if (it.isEmpty()) it else it+up }
+            else -> this.path_until(up,cnd).let { if (it.isEmpty()) it else it+e }
         }
     }
     fun block (e: Expr): Expr.Block? {
