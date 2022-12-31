@@ -116,6 +116,15 @@ class Ups (val outer: Expr.Block) {
                 assertIsNotDeclared(bup, id, this.tk)
                 xup.syms[id] = this.tk_.ups
                 xup.syms["_${id}_"] = null
+                //println(listOf(this.tk_.ups, block(bup)))
+                when {
+                    (this.tk_.ups == 2) -> {
+                        err(tk, "var error : cannot declare an upref")
+                    }
+                    (this.tk_.ups==1 && block(bup)==null) -> {
+                        err(tk, "var error : cannot declare a global upvar")
+                    }
+                }
             }
             is Expr.Set    -> { this.dst.check() ; this.src.check() }
             is Expr.If     -> { this.cnd.check() ; this.t.check() ; this.f.check() }

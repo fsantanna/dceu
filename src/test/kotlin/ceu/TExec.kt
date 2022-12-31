@@ -2053,6 +2053,117 @@ class TExec {
 
     @Test
     fun clo1_err() {
+        val out = all(
+            """
+            var ^^x     ;; can't declare upref
+        """
+        )
+        assert(out == "anon : (lin 2, col 17) : var error : cannot declare an upref") { out }
+    }
+    @Test
+    fun clo2_err() {
+        val out = all("""
+            var ^x     ;; upvar can't be global
+        """)
+        assert(out == "anon : (lin 2, col 17) : var error : cannot declare a global upvar") { out }
+    }
+    @Test
+    fun clo3_err() {
+        val out = all("""
+            ^x     ;; upvar can't be in global
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo4_err() {
+        val out = all("""
+            ^^x     ;; upref can't be in global
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo5_err() {
+        val out = all("""
+            var g = 10
+            var f
+            set f = func (x) {
+                set x = []  ;; err: cannot reassign
+                func () {
+                    ^x + g
+                }
+            }
+            println(f([]])())
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo6_err() {
+        val out = all("""
+            var g = 10
+            var f
+            set f = func (x) {
+                func () {
+                    set ^x = []  ;; err: cannot reassign
+                    ^x + g
+                }
+            }
+            println(f([]])())
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo7_err() {
+        val out = all("""
+            do {
+                var ^x     ;; err: no associated upref
+            }
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo8_err() {
+        val out = all("""
+            do {
+                ^^x     ;; err: no associated upvar
+            }
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo9_err() {
+        val out = all("""
+            do {
+                var x
+                ^^x     ;; err: no associated upvar
+            }
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo10_err() {
+        val out = all("""
+            do {
+                var ^x
+                ^^x     ;; err: no associated upvar
+            }
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo11_err() {
+        val out = all("""
+            do {
+                var x
+                func () {   ;; block_set(1)
+                    x       ;; because of x
+                }           ;; err: scope on return
+            }
+            println(f(10)())
+        """)
+        assert(out == "err\n") { out }
+    }
+    @Test
+    fun clo12_err() {
         val out = all("""
             var f
             set f = func (x) {
@@ -2065,13 +2176,13 @@ class TExec {
         assert(out == "err\n") { out }
     }
     @Test
-    fun clo2_err() {
+    fun clo13_err() {
         val out = all("""
             var g = 10
             var f
-            set f = func (x) {  ;; err: 20 isnot dyn
+            set f = func (^x) {  ;; err: 20 isnot dyn
                 func () {       ;; block_set(0)
-                    ^x + g      ;; all (non-global) upvals are marked
+                    ^^x + g      ;; all (non-global) upvals are marked
                 } ;; x must be dynamic, so that both up/dn point to the same value
             }
             println(f(20)())
@@ -2079,13 +2190,13 @@ class TExec {
         assert(out == "err\n") { out }
     }
     @Test
-    fun clo5() {
+    fun clo14() {
         val out = all("""
             var g = 10
             var f
-            set f = func (x) {
+            set f = func (^x) {
                 func () {
-                    ^x.0 + g
+                    ^^x.0 + g
                 }
             }
             println(f([20]])())
@@ -2093,12 +2204,12 @@ class TExec {
         assert(out == "30\n") { out }
     }
     @Test
-    fun clo6() {
+    fun clo15() {
         val out = all("""
             var f
-            set f = func (x) {
+            set f = func (^x) {
                 func (y) {
-                    [^x,y]
+                    [^^x,y]
                 }
             }
             println(f([10])(20))

@@ -93,9 +93,18 @@
 - ranges
     - [1..2]
     - [1..2]
+- traverse
+    call fat (x=10) {
+        if x == 1 {
+            1
+        } else {
+            fat(x-1)
+        }
+    }
 
 # IDEAS
 
+- uv-ceu
 - code NAV tree
 - lessmilk
 - 7 guis
