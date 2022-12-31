@@ -2163,7 +2163,8 @@ class TExec {
             }
             println(f(10))
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun clo12_err() {
@@ -2176,12 +2177,15 @@ class TExec {
             }
             println(f(10)())
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 8, col 21) : f(10)\n" +
+                "anon : (lin 3, col 30) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun clo13_err() {
         val out = all("""
-            var g = 10
+            var g
+            set g = 10
             var f
             set f = func (^x) {
                 func () {       ;; block_set(0)
@@ -2189,21 +2193,22 @@ class TExec {
                 }
             }
             println(f(20)())
-        """)
-        assert(out == "err\n") { out }
+        """, true)
+        assert(out == "30\n") { out }
     }
     @Test
     fun clo14() {
         val out = all("""
-            var g = 10
+            var g
+            set g = 10
             var f
             set f = func (^x) {
                 func () {
-                    ^^x.0 + g
+                    ^^x[0] + g
                 }
             }
-            println(f([20]])())
-        """)
+            println(f([20])())
+        """, true)
         assert(out == "30\n") { out }
     }
     @Test
