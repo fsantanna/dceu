@@ -22,18 +22,6 @@ class Ups (val outer: Expr.Block) {
         this.outer.traverse()
     }
 
-    fun pred (e: Expr, f: (Expr)->Boolean): Expr? {
-        return this.pred_stop(e, f) { false }
-    }
-    fun pred_stop (e: Expr, f: (Expr)->Boolean, g: (Expr)->Boolean): Expr? {
-        val x = ups[e]
-        return when {
-            (x == null) -> null
-            f(x) -> x
-            g(x) -> null
-            else -> this.pred(x, f)
-        }
-    }
     fun path_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
         val up = ups[e]
         return when {
@@ -43,22 +31,23 @@ class Ups (val outer: Expr.Block) {
         }
     }
     fun block (e: Expr): Expr.Block? {
-        return this.pred(e) { it is Expr.Block } as Expr.Block?
+        return this.path_until(e) { it is Expr.Block }.firstOrNull() as Expr.Block?
     }
     fun block_or_group (e: Expr): Expr? {
-        return this.pred(e) { it is Expr.Block || (it is Expr.Group && it.isHide) }
+        return this.path_until(e) {
+            it is Expr.Block || (it is Expr.Group && it.isHide)
+        }.firstOrNull()
     }
     fun func_or_task (e: Expr): Expr.Proto? {
-        return this.pred(e) { it is Expr.Proto } as Expr.Proto?
+        return this.path_until(e) { it is Expr.Proto }.firstOrNull() as Expr.Proto?
     }
     fun task (e: Expr): Expr.Proto? {
-        return this.pred(e) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto?
+        return this.path_until(e) {
+            it is Expr.Proto && it.tk.str=="task"
+        }.firstOrNull() as Expr.Proto?
     }
     fun proto_or_block (e: Expr): Expr? {
-        return this.pred(e) { it is Expr.Proto || it is Expr.Block }
-    }
-    fun proto_or_block_or_group (e: Expr): Expr? {
-        return this.pred(e) { it is Expr.Proto || it is Expr.Block || (it is Expr.Group && it.isHide) }
+        return this.path_until(e) { it is Expr.Proto || it is Expr.Block }.firstOrNull()
     }
     fun intask (e: Expr): Boolean {
         return (this.func_or_task(e)?.tk?.str == "task")
@@ -196,14 +185,11 @@ class Ups (val outer: Expr.Block) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val dcl = getDcl(this, this.tk.str)
-                if (this.tk_.upv==0 && dcl?.upv==0) { // access with no upval modifier && matching declaration
-                    path_until(this) {
-                        (it == dcl.blk)     // stop at enclosing declaration block
-                    }.filter {
-                        (it is Expr.Proto)  // all crossing protos
-                    }.forEach {
-                        noclos.add(it)      // mark them as noclos
-                    }
+                if (this.tk_.upv==0 && dcl?.upv==0) {           // access with no upval modifier && matching declaration
+                    path_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
+                    .drop(1)                     // skip myself
+                    .filter { it is Expr.Proto }    // all crossing protos
+                    .forEach { noclos.add(it) }     // mark them as noclos
                 }
             }
             is Expr.EvtErr -> {}
