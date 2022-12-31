@@ -126,8 +126,8 @@ class Ups (val outer: Expr.Block) {
                 val bup = first(this) { it is Expr.Block || (it is Expr.Group && it.isHide) }!!
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup.syms[id] = Dcl(id, this.tk_.upv, this)
-                xup.syms["_${id}_"] = Dcl("_${id}_", this.tk_.upv, this)
+                xup.syms[id] = Dcl(id, this.tk_.upv, bup)
+                xup.syms["_${id}_"] = Dcl("_${id}_", this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")

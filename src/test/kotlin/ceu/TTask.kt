@@ -1889,7 +1889,7 @@ class TTask {
                 }) ()
                 println(x)
             }) ()
-        """, true)
+        """)
         assert(out == "anon : (lin 2, col 20) : task () :awakes { set pub = [] var x spawn ta...)\n" +
                 "anon : (lin 5, col 24) : task () :fake :awakes { set x = pub }()\n" +
                 "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
