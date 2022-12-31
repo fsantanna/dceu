@@ -9,28 +9,20 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             if (isptr) "(&($it))" else it
         }
     }
+
     fun Expr.id2c (id: String): String {
-        fun Expr.aux (n: Int): String {
-            val xblock = ups.xblocks[this]!!
-            val bup = ups.proto_or_block_or_group(this)
-            val fup = if (this is Expr.Proto) this else ups.func_or_task(this)
-            val dcl = xblock.syms[id]
-            val ok = (dcl != null)
-            val mem = if (dcl == 0) "mem" else "upvs"
-            return when {
-                (ok && fup==null) -> "(ceu_${mem}_${outer.n}->$id)"
-                (ok && n==0) -> "(ceu_${mem}->$id)"
-                (ok && n!=0) -> {
-                    val blk = if (this is Expr.Proto) this.n else fup!!.n
-                    "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->${mem})->$id)"
-                }
-                (this is Expr.Block) -> bup!!.aux(n)
-                (this is Expr.Group) -> bup!!.aux(n)
-                (this is Expr.Proto) -> bup!!.aux(n+1)
-                else -> error("bug found")
+        val dcl = ups.getDcl(this, id)!!
+        val mem = if (dcl.upv == 0) "mem" else "upvs"
+        val fup = if (dcl.blk is Expr.Proto) this else ups.func_or_task(dcl.blk)
+        val N = ups.path_until(this) { it==dcl.blk }.count{ it is Expr.Proto } - 1
+        return when {
+            (fup == null) -> "(ceu_${mem}_${outer.n}->$id)"
+            (N <= 0) -> "(ceu_${mem}->$id)"
+            else -> {
+                val blk = if (this is Expr.Proto) this.n else fup.n
+                "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->$id)"
             }
         }
-        return this.aux(0)
     }
 
     fun Expr.fupc (tk: String?=null): String? {
@@ -588,7 +580,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
 
             is Expr.Nat -> {
-                val bup = ups.block_or_group(this)!!
                 val body = this.tk.str.let {
                     var ret = ""
                     var i = 0
@@ -622,8 +613,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            ups.assertIsDeclared(bup, Pair(id,0), this.tk)
-                            id = bup.id2c(id)
+                            ups.assertIsDeclared(this, Pair(id,0), this.tk)
+                            id = this.id2c(id)
                             "($id)$x"
                         }
                     }
@@ -650,24 +641,23 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 pos
             }
             is Expr.Acc -> {
-                val bup = ups.block_or_group(this)!!
                 val id = this.tk_.fromOp().noSpecial()
-                ups.assertIsDeclared(bup, Pair(id,this.tk_.upv), this.tk)
+                ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (asdst_src == null) {
-                    assrc(bup.id2c(id)) // ACC ${this.tk.dump()}
+                    assrc(this.id2c(id)) // ACC ${this.tk.dump()}
                 } else {
-                    val upv = ups.assertIsDeclared(bup, Pair("_${id}_",this.tk_.upv), this.tk)
-                    if (upv > 0) {
+                    val dcl = ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
+                    if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
                         if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${bup.id2c("_${id}_")}, $asdst_src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(${this.id2c("_${id}_")}, $asdst_src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ${bup.id2c(id)} = $asdst_src;
+                        ${this.id2c(id)} = $asdst_src;
                     }
                     """
                 }

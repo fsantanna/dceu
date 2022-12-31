@@ -1,11 +1,12 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String, Int>, val defers: MutableList<String>?)
+data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<String>?)
+data class Dcl (val id: String, val upv: Int, val blk: Expr)
 
 class Ups (val outer: Expr.Block) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,0) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map { Pair(it,Dcl(it,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
     val ups = outer.tree()
@@ -33,6 +34,23 @@ class Ups (val outer: Expr.Block) {
             else -> this.pred(x, f)
         }
     }
+    fun pred_stop_path (e: Expr, cnd: (Expr)->Boolean, stp: (Expr)->Boolean): List<Expr> {
+        val up = ups[e]
+        return when {
+            (up == null) -> emptyList()
+            cnd(up) -> listOf(up)
+            stp(up) -> emptyList()
+            else -> this.pred_stop_path(up, cnd, stp).let { if (it.isEmpty()) it else it+up }
+        }
+    }
+    fun path_until (e: Expr, unt: (Expr)->Boolean): List<Expr> {
+        val up = ups[e]
+        return when {
+            (up == null) -> emptyList()
+            unt(up) -> listOf(up)
+            else -> this.path_until(up,unt).let { if (it.isEmpty()) it else it+up }
+        }
+    }
     fun block (e: Expr): Expr.Block? {
         return this.pred(e) { it is Expr.Block } as Expr.Block?
     }
@@ -55,34 +73,31 @@ class Ups (val outer: Expr.Block) {
         return (this.func_or_task(e)?.tk?.str == "task")
     }
 
-    fun getDeclared (e: Expr, id: String): Pair<Expr,Int>? {
+    fun getDcl (e: Expr, id: String): Dcl? {
         val up = this.ups[e]
-        val dcl = this.xblocks[e].let { if (it == null) null else it.syms[id] }
+        val dcl = this.xblocks[e]?.syms?.get(id)
         return when {
-            (dcl != null) -> Pair(e,dcl)
+            (dcl != null) -> dcl
             (up == null) -> null
-            else -> this.getDeclared(up, id)
+            else -> this.getDcl(up, id)
         }
     }
-    fun isDeclared (e: Expr, id: String): Boolean {
-        return (this.getDeclared(e,id) != null)
-    }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.getDeclared(e,id) != null) {
+        if (this.getDcl(e,id) != null) {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
-    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Int {
+    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Dcl {
         val (id,upv) = v
-        val dcl = this.getDeclared(e,id)
-        val nocross = dcl?.first.let { blk ->
+        val dcl = this.getDcl(e,id)
+        val nocross = dcl?.blk.let { blk ->
             (blk == null) || (blk == e) || (this.pred(e) { up -> up==blk || up is Expr.Proto } == blk)
         }
         return when {
-            (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Int
-            (dcl.second==0 && upv>0 || dcl.second==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Int
-            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Int
-            else -> dcl.second
+            (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
+            (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Dcl
+            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Dcl
+            else -> dcl
         }
     }
 
@@ -108,7 +123,11 @@ class Ups (val outer: Expr.Block) {
             is Expr.Proto -> {
                 xblocks[this] = XBlock (
                     this.args.let {
-                        (it.map { Pair(it.str,it.upv) } + it.map { Pair("_${it.str}_",it.upv) })
+                        (it.map {
+                            Pair(it.str,Dcl(it.str,it.upv,this))
+                        } + it.map {
+                            Pair("_${it.str}_",Dcl("_${it.str}_",it.upv,this))
+                        })
                     }.toMap().toMutableMap(),
                     null
                 )
@@ -132,8 +151,8 @@ class Ups (val outer: Expr.Block) {
                 //println(listOf("DCL", id, bup.javaClass.name))
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
-                xup.syms[id] = this.tk_.upv
-                xup.syms["_${id}_"] = this.tk_.upv
+                xup.syms[id] = Dcl(id, this.tk_.upv, this)
+                xup.syms["_${id}_"] = Dcl("_${id}_", this.tk_.upv, this)
                 //println(listOf(this.tk_.ups, block(bup)))
                 when {
                     (this.tk_.upv == 2) -> {
@@ -185,13 +204,13 @@ class Ups (val outer: Expr.Block) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = getDeclared(this, this.tk.str)
-                if (this.tk_.upv==0 && dcl?.second==0) { // access with no upval modifier && matching declaration
+                val dcl = getDcl(this, this.tk.str)
+                if (this.tk_.upv==0 && dcl?.upv==0) { // access with no upval modifier && matching declaration
                     pred(this) {
                         if (it is Expr.Proto) {
                             noclos.add(it)          // mark all crossing protos as noclos
                         }
-                        (it == dcl.first)    // stop at enclosing declaration block
+                        (it == dcl.blk)    // stop at enclosing declaration block
                     }
                 }
             }
