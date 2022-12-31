@@ -29,12 +29,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.taskc (): String? {
+    fun Expr.taskc (): String {
         val n = ups.all_until(this) {
             it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
         }.filter {
             it is Expr.Proto    // but count all protos in between
-        }.count() - 1
+        }.drop(1)           // skip the "non-crossing one"
+        .count()
         return "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
@@ -449,12 +450,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${this.taskc().let {
-                                if (it == null) {
-                                    "ceu_err_$n = 1;"
-                                } else {
-                                    "ceu_ret = ceu_bcast_dyn($it->Task.coro, &ceu_mem->evt_$n);"
-                                }
+                            ${if (!intask) {
+                                "ceu_err_$n = 1;"
+                            } else {
+                                "ceu_ret = ceu_bcast_dyn(${this.taskc()}->Task.coro, &ceu_mem->evt_$n);"
                             }}
                         } else {
                             ceu_err_$n = 1;
