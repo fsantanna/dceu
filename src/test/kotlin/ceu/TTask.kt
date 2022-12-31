@@ -2101,7 +2101,7 @@ class TTask {
             var a
             set a = coroutine(t)
             resume a(1)
-        """, true)
+        """)
         assert(out == "1\n") { out }
     }
     @Test

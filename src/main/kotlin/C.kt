@@ -384,6 +384,7 @@ fun Coder.main (): String {
                         cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
                         if (ceu_bcasting == 0) {
                             free(cur->Bcast.Coro.frame->mem);
+                            free(cur->Bcast.Coro.frame->upvs);
                             free(cur->Bcast.Coro.frame);
                         }
                         break;
@@ -635,6 +636,7 @@ fun Coder.main (): String {
             if (ceu_bcasting == 0) {
                 // pending bcast inside coro, let it free later
                 free(coro->Bcast.Coro.frame->mem);
+                free(coro->Bcast.Coro.frame->upvs);
                 free(coro->Bcast.Coro.frame);
                 free(coro);
             } else {

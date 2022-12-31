@@ -30,9 +30,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     }
 
     fun Expr.taskc (): String? {
-        val n = ups.all_until(this) { it==outer }.count {
-            it is Expr.Proto && it.task!=null && it.task.first
-        }
+        val n = ups.all_until(this) {
+            it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
+        }.filter {
+            it is Expr.Proto    // but count all protos in between
+        }.count() - 1
         return "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
