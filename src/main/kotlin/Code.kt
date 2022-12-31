@@ -431,7 +431,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val intask = ups.intask(this)
+                val task = ups.first_proto(this)
+                val intask = (task?.tk?.str == "task")
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
@@ -450,10 +451,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${if (!intask) {
-                                "ceu_err_$n = 1;"
-                            } else {
+                            ${if (intask && !task!!.task!!.first) {
                                 "ceu_ret = ceu_bcast_dyn(${this.taskc()}->Task.coro, &ceu_mem->evt_$n);"
+                            } else {
+                                "ceu_err_$n = 1;"
                             }}
                         } else {
                             ceu_err_$n = 1;
