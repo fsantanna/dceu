@@ -215,7 +215,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 { // BLOCK ${this.tk.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,NULL} };
-                    ${ups.first_proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond {
+                    ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
                     ${(f_b is Expr.Block).cond {
@@ -269,7 +269,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ${(f_b is Expr.Block).cond{
                                     "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
                                 }}
-                                ${ups.first_proto_or_block(this).let { it!=null && it !is Expr.Block && it.tk.str=="task" }.cond{
+                                ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
                                     "ceu_coro->Bcast.Coro.block = NULL;"
                                 }}
                                 ceu_dyns_free(ceu_mem->block_$n.tofree);
