@@ -450,6 +450,10 @@ fun Coder.main (): String {
                         }
                     }
                     break;
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
+                case CEU_VALUE_CORO:
+                case CEU_VALUE_COROS:
                 case CEU_VALUE_TRACK:
                     break;
                 default:
