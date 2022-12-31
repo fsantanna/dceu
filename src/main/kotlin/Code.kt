@@ -14,7 +14,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             val xblock = ups.xblocks[this]!!
             val bup = ups.proto_or_block_or_group(this)
             val fup = if (this is Expr.Proto) this else ups.func_or_task(this)
-            val ok = xblock.syms.contains(id)
+            val dcl = xblock.syms[id]
+            val ok = (dcl != null)
+            assert(dcl==null || dcl==0) // upv proto ->upvs->id
             return when {
                 (ok && fup==null) -> "(ceu_mem_${outer.n}->$id)"
                 (ok && n==0) -> "(ceu_mem->$id)"
@@ -872,7 +874,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.type != CEU_VALUE_FUNC) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error : expected function");
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, NULL, {} };
                 """} +
 
                 spawn.cond{"""
