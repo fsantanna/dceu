@@ -194,12 +194,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
                     ${ups.block(this)!!.toc(true)},
+                    1,
                     CEU_VALUE_${this.tk.str.uppercase()},
                     ceu_frame,
                     (CEU_Proto) {
                         NULL,
                         ceu_proto_f_$n,
-                        1,
+                        0,
                         { .Task = {
                             ${if (istask && this.task!!.second) 1 else 0},
                             sizeof(CEU_Proto_Mem_$n)
