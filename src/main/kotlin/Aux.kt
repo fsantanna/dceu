@@ -2,6 +2,10 @@ fun Pos.isSameLine (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin)
 }
 
+fun Tk.dump (): String {
+    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
+}
+
 fun Tk.Id.fromOp (): String {
     val MAP = mapOf(
         Pair('+', "plus"),

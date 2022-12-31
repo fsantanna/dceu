@@ -43,11 +43,19 @@ class Ups (val outer: Expr.Block) {
         return (this.func_or_task(e)?.tk?.str == "task")
     }
 
-    fun isDeclared (e: Expr, id: String): Boolean {
+    fun getDeclared (e: Expr, id: String): Boolean? {
         val xblock = this.xblocks[e]!!
         val up = this.proto_or_block_or_group(e)
         //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
-        return (xblock.syms.contains(id) || (up!=null && this.isDeclared(up,id)))
+        val dcl = xblock.syms.contains(id)
+        return when {
+            dcl -> dcl
+            (up == null) -> null
+            else -> this.getDeclared(up, id)
+        }
+    }
+    fun isDeclared (e: Expr, id: String): Boolean {
+        return (this.getDeclared(e,id) != null)
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
         if (this.isDeclared(e,id)) {
@@ -57,6 +65,18 @@ class Ups (val outer: Expr.Block) {
     fun assertIsDeclared (e: Expr, id: String, tk: Tk) {
         if (!this.isDeclared(e,id)) {
             err(tk, "access error : variable \"$id\" is not declared")
+        }
+    }
+
+    fun isUp (e: Expr, id: String): Boolean {
+        val xblock = this.xblocks[e]!!
+        val up = this.proto_or_block_or_group(e)
+        //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
+        return (xblock.syms.contains(id) || (up!=null && this.isDeclared(up,id)))
+    }
+    fun assertIsNotUp (e: Expr, id: String, tk: Tk) {
+        if (this.isUp(e,id)) {
+            err(tk, "set error : cannot reassign an upvalue")
         }
     }
 

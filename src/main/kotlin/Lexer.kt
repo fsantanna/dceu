@@ -185,13 +185,13 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         val (_,x2) = read2()
                         if (x2 != '}') {
                             if (op.length == 1) {
-                                yield(Tk.Id("{$op}", pos, false))
+                                yield(Tk.Id("{$op}", pos, 0))
                                 unread2(1)
                             } else {
                                 err(pos, "operator error : expected \"}\"")
                             }
                         }
-                        yield(Tk.Id("{$op}", pos, false))
+                        yield(Tk.Id("{$op}", pos, 0))
                     }
                 }
                 (x == ':') -> {
@@ -207,7 +207,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {
-                        yield(Tk.Id(id, pos, false))
+                        yield(Tk.Id(id, pos, 0))
                     }
                 }
                 x.isDigit() -> {
@@ -271,17 +271,23 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == '^') -> {
                     val (n2,x2) = read2()
+                    val (x3,ups) = if (x2 == '^') {
+                        val (n3,x3) = read2()
+                        Pair(x3,2)
+                    } else {
+                        Pair(x2, 1)
+                    }
                     when {
-                        (x2.isLetter() || x2 == '_') -> {
-                            val id = x2 + read2While { (it.isLetterOrDigit() || it in listOf('_', '\'', '?', '!')) }
+                        (x3.isLetter() || x3 == '_') -> {
+                            val id = x3 + read2While { (it.isLetterOrDigit() || it in listOf('_', '\'', '?', '!')) }
                             if (KEYWORDS.contains(id)) {
                                 err(pos, "token ^ error : unexpected keyword")
                                 yield(Tk.Fix(id, pos))
                             } else {
-                                yield(Tk.Id(id, pos, true))
+                                yield(Tk.Id(id, pos, ups))
                             }
                         }
-                        (x2 != '[') -> {
+                        (x3 != '[') -> {
                             err(pos, "token ^ error : expected \"[\"")
                         }
                         else -> {

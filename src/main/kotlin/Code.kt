@@ -1,7 +1,3 @@
-fun Tk.dump (): String {
-    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
-}
-
 class Coder (val outer: Expr.Block, val ups: Ups) {
     val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())

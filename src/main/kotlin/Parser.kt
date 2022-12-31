@@ -749,7 +749,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Fix
                 e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,false)), listOf(e))
+                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e))
             }
         }
         return e
@@ -792,7 +792,7 @@ class Parser (lexer_: Lexer)
                             val idx = this.expr()
                             this.acceptFix_err("]")
                             Expr.Index(e.tk, e,
-                                Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,false)), listOf(idx))
+                                Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(idx))
                             ) //.let { println(it.tostr());it }
                         }
                     } else {
@@ -856,7 +856,7 @@ class Parser (lexer_: Lexer)
                 """)
                 "is"    -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "isnot" -> this.nest("isnot'(${e.tostr(true)}, ${e2.tostr(true)})")
-                else    -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,false)), listOf(e,e2))
+                else    -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
             }
             pre = this.tk0
         }

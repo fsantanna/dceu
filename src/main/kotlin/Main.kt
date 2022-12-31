@@ -50,7 +50,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Tag (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Op  (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
-    data class Id  (val str_: String, val pos_: Pos, val up: Boolean, val n_: Int=N++): Tk(str_, pos_)
+    data class Id  (val str_: String, val pos_: Pos, val ups: Int, val n_: Int=N++): Tk(str_, pos_)  // up: 0=var, 1=upvar, 2=upref
     data class Num (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
