@@ -13,14 +13,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         fun Expr.aux (n: Int): String {
             val xblock = ups.xblocks[this]!!
             val bup = ups.proto_or_block_or_group(this)
-            val fup = ups.func_or_task(this)
+            val fup = if (this is Expr.Proto) this else ups.func_or_task(this)
             val ok = xblock.syms.contains(id)
             return when {
-                (ok && this==outer) -> "(ceu_mem_${outer.n}->$id)"
+                (ok && fup==null) -> "(ceu_mem_${outer.n}->$id)"
                 (ok && n==0) -> "(ceu_mem->$id)"
                 (ok && n!=0) -> {
-                    //println(id)
-                    //println(this)
                     val blk = if (this is Expr.Proto) this.n else fup!!.n
                     "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->mem)->$id)"
                 }

@@ -2154,13 +2154,14 @@ class TExec {
     @Test
     fun clo11_err() {
         val out = all("""
-            do {
+            var f
+            set f = do {
                 var x
                 func () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
             }
-            println(f(10)())
+            println(f(10))
         """)
         assert(out == "err\n") { out }
     }
