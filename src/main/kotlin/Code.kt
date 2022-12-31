@@ -203,8 +203,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
             }
             is Expr.Block -> {
-                val bup = ups.first_block(this)
-                val f_b = ups.first_proto_or_block(this)
+                val up = ups.ups[this]
+                val bup = up?.let { ups.first_block(it) }
+                val f_b = up?.let { ups.first_proto_or_block(it) }
                 val depth = when {
                     (f_b == null) -> "(0 + 1)"
                     (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
@@ -535,13 +536,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_dyn_$n = ceu_acc.Dyn;
                     """ }}
                     ${if (asdst_src != null) {
-                            """ // PUB - SET
-                            if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
-                                ceu_ret = ceu_block_set(&ceu_mem->block_${ups.first_task(this)!!.body.n}, $asdst_src.Dyn, 1);
-                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            }
-                            ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
-                            """
+                        val task = (ups.first(this) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto).body.n 
+                        """ // PUB - SET
+                        if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $asdst_src.Dyn, 1);
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        }
+                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
+                        """
                     } else {
                         val inidx  = ups.all_until(this) { it is Expr.Index }.isNotEmpty()
                         val incall = (ups.ups[this] is Expr.Call)

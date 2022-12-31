@@ -30,24 +30,17 @@ class Ups (val outer: Expr.Block) {
             else -> this.all_until(up,cnd).let { if (it.isEmpty()) it else it+e }
         }
     }
+    fun hasfirst (e: Expr, cnd: (Expr)->Boolean): Boolean {
+        return this.first(e,cnd) != null
+    }
     fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
         return this.all_until(e,cnd).firstOrNull()
     }
     fun first_block (e: Expr): Expr.Block? {
         return this.first(e) { it is Expr.Block } as Expr.Block?
     }
-    fun first_block_or_group (e: Expr): Expr? {
-        return this.first(e) {
-            it is Expr.Block || (it is Expr.Group && it.isHide)
-        }
-    }
     fun first_proto (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto } as Expr.Proto?
-    }
-    fun first_task (e: Expr): Expr.Proto? {
-        return this.first(e) {
-            it is Expr.Proto && it.tk.str=="task"
-        } as Expr.Proto?
     }
     fun first_proto_or_block (e: Expr): Expr? {
         return this.first(e) { it is Expr.Proto || it is Expr.Block }
@@ -130,18 +123,16 @@ class Ups (val outer: Expr.Block) {
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = first_block_or_group(this)!!
-                //println(listOf("DCL", id, bup.javaClass.name))
+                val bup = first(this) { it is Expr.Block || it is Expr.Group }!!
                 val xup = xblocks[bup]!!
-                assertIsNotDeclared(bup, id, this.tk)
+                assertIsNotDeclared(this, id, this.tk)
                 xup.syms[id] = Dcl(id, this.tk_.upv, this)
                 xup.syms["_${id}_"] = Dcl("_${id}_", this.tk_.upv, this)
-                //println(listOf(this.tk_.ups, block(bup)))
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
                     }
-                    (this.tk_.upv==1 && first_block(bup)==null) -> {
+                    (this.tk_.upv==1 && !(hasfirst(ups[bup]!!){ it is Expr.Block })) -> {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }
