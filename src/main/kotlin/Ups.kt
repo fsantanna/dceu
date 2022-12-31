@@ -67,12 +67,14 @@ class Ups (val outer: Expr.Block) {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
-    fun assertIsDeclared (e: Expr, id: String, tk: Tk): Int {
+    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Int {
+        val (id,upv) = v
         val dcl = this.getDeclared(e,id)
-        if (dcl == null) {
-            err(tk, "access error : variable \"$id\" is not declared")
+        return when {
+            (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Int
+            (!(dcl==0 && upv==0 || dcl==1 && upv==2)) -> err(tk, "access error : incompatible upval modifier") as Int
+            else -> dcl
         }
-        return dcl!!
     }
 
     fun isUp (e: Expr, id: String): Boolean {

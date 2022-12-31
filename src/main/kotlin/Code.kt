@@ -616,7 +616,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            ups.assertIsDeclared(bup, id, this.tk)
+                            ups.assertIsDeclared(bup, Pair(id,0), this.tk)
                             id = bup.id2c(id)
                             "($id)$x"
                         }
@@ -646,11 +646,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Acc -> {
                 val bup = ups.block_or_group(this)!!
                 val id = this.tk_.fromOp().noSpecial()
-                ups.assertIsDeclared(bup, id, this.tk)
+                ups.assertIsDeclared(bup, Pair(id,this.tk_.upv), this.tk)
                 if (asdst_src == null) {
                     assrc(bup.id2c(id)) // ACC ${this.tk.dump()}
                 } else {
-                    val upv = ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                    val upv = ups.assertIsDeclared(bup, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }

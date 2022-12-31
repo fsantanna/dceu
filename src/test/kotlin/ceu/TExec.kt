@@ -2100,17 +2100,18 @@ class TExec {
     @Test
     fun clo6_err() {
         val out = all("""
-            var g = 10
+            var g
+            set g = 10
             var f
-            set f = func (x) {
+            set f = func (^x) {
                 func () {
-                    set ^x = []  ;; err: cannot reassign
-                    ^x + g
+                    set ^^x = []  ;; err: cannot reassign
+                    ^^x + g
                 }
             }
-            println(f([]])())
+            println(f([])())
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
     }
     @Test
     fun clo7_err() {
@@ -2138,7 +2139,7 @@ class TExec {
                 ^^x     ;; err: no associated upvar
             }
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 4, col 17) : access error : incompatible upval modifier") { out }
     }
     @Test
     fun clo10_err() {
@@ -2181,10 +2182,10 @@ class TExec {
         val out = all("""
             var g = 10
             var f
-            set f = func (^x) {  ;; err: 20 isnot dyn
+            set f = func (^x) {
                 func () {       ;; block_set(0)
-                    ^^x + g      ;; all (non-global) upvals are marked
-                } ;; x must be dynamic, so that both up/dn point to the same value
+                    ^^x + g     ;; all (non-global) upvals are marked
+                }
             }
             println(f(20)())
         """)
