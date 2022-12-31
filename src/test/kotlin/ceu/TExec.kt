@@ -2079,36 +2079,6 @@ class TExec {
         assert(out == "err\n") { out }
     }
     @Test
-    fun clo3_err() {
-        val out = all("""
-            var g = 10
-            var f
-            set f = func (x) {
-                set x = []  ;; err: cannot reassign
-                func () {
-                    ^x + g
-                }
-            }
-            println(f([]])())
-        """)
-        assert(out == "err\n") { out }
-    }
-    @Test
-    fun clo4_err() {
-        val out = all("""
-            var g = 10
-            var f
-            set f = func (x) {
-                func () {
-                    set ^x = []  ;; err: cannot reassign
-                    ^x + g
-                }
-            }
-            println(f([]])())
-        """)
-        assert(out == "err\n") { out }
-    }
-    @Test
     fun clo5() {
         val out = all("""
             var g = 10

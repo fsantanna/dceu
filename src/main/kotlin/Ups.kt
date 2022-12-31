@@ -1,8 +1,13 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableSet<String>, val defers: MutableList<String>?)
+data class XBlock (val syms: MutableMap<String, Int?>, val defers: MutableList<String>?)
 
 class Ups (val outer: Expr.Block) {
-    val xblocks = mutableMapOf<Expr,XBlock>(Pair(outer, XBlock(GLOBALS.toMutableSet(), mutableListOf())))
+    val xblocks = mutableMapOf<Expr,XBlock> (
+        Pair (
+            outer,
+            XBlock(GLOBALS.map { Pair(it,0) }.toMap().toMutableMap(), mutableListOf())
+        )
+    )
     val ups = outer.calc()
 
     init {
@@ -43,13 +48,13 @@ class Ups (val outer: Expr.Block) {
         return (this.func_or_task(e)?.tk?.str == "task")
     }
 
-    fun getDeclared (e: Expr, id: String): Boolean? {
+    fun getDeclared (e: Expr, id: String): Int? {
         val xblock = this.xblocks[e]!!
         val up = this.proto_or_block_or_group(e)
         //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
-        val dcl = xblock.syms.contains(id)
+        val dcl = xblock.syms[id]
         return when {
-            dcl -> dcl
+            (dcl != null) -> dcl
             (up == null) -> null
             else -> this.getDeclared(up, id)
         }
@@ -83,20 +88,23 @@ class Ups (val outer: Expr.Block) {
     fun Expr.check () {
         when (this) {
             is Expr.Proto   -> {
-                xblocks[this] = XBlock(this.args.let {
-                    it.map { it.str } + it.map { "_${it.str}_" }
-                }.toMutableSet(), null)
+                xblocks[this] = XBlock (
+                    this.args.let {
+                        (it.map { Pair(it.str,0) } + it.map { Pair("_${it.str}_",0) })
+                    }.toMap().toMutableMap(),
+                    null
+                )
                 this.body.check()
             }
             is Expr.Block -> {
                 if (this != outer) {
-                    xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
+                    xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
                 this.es.forEach { it.check() }
             }
             is Expr.Group -> {
                 if (this.isHide) {
-                    xblocks[this] = XBlock(mutableSetOf(), mutableListOf())
+                    xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
                 this.es.forEach { it.check() }
             }
@@ -106,8 +114,8 @@ class Ups (val outer: Expr.Block) {
                 //println(listOf("DCL", id, bup.javaClass.name))
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
-                xup.syms.add(id)
-                xup.syms.add("_${id}_")
+                xup.syms[id] = this.tk_.ups
+                xup.syms["_${id}_"] = null
             }
             is Expr.Set    -> { this.dst.check() ; this.src.check() }
             is Expr.If     -> { this.cnd.check() ; this.t.check() ; this.f.check() }
