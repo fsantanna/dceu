@@ -247,7 +247,7 @@ fun Coder.main (): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Frame* frame, struct CEU_Proto proto);        
+        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Proto proto);        
         struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
 
         static CEU_Tags_Names* CEU_TAGS = NULL;
@@ -836,7 +836,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Frame* frame, CEU_Proto proto) {
+        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Proto proto) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {

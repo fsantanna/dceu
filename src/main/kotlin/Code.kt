@@ -196,9 +196,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${ups.block(this)!!.toc(true)},
                     1,
                     CEU_VALUE_${this.tk.str.uppercase()},
-                    ceu_frame,
                     (CEU_Proto) {
-                        NULL,
+                        ceu_frame,
                         ceu_proto_f_$n,
                         0,
                         { .Task = {
