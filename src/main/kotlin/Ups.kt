@@ -132,7 +132,7 @@ class Ups (val outer: Expr.Block) {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
                     }
-                    (this.tk_.upv==1 && !(hasfirst(ups[bup]!!){ it is Expr.Block })) -> {
+                    (this.tk_.upv==1 && bup==outer) -> {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }
