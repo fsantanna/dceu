@@ -159,15 +159,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Toggle -> { this.coro.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
                 if (this.coro == null) {
-                    var ok = false
-                    var up = first_proto(this)
-                    while (up != null) {
-                        if (up.tk.str=="task" && !up.task!!.first) {
-                            ok = true
-                            break
-                        }
-                        up = first_proto(up)
-                    }
+                    val ok = hasfirst(this) { it is Expr.Proto && it.task!=null && !it.task.first }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }

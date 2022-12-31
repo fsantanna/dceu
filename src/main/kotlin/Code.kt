@@ -1,3 +1,5 @@
+import java.lang.Integer.max
+
 class Coder (val outer: Expr.Block, val ups: Ups) {
     val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
@@ -14,10 +16,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         val dcl = ups.getDcl(this, id)!!
         val mem = if (dcl.upv == 0) "mem" else "upvs"
         val fup = ups.first(dcl.blk) { it is Expr.Proto }
-        val N = ups.all_until(this) { it==dcl.blk }.count{ it is Expr.Proto } - 1
+        val N = max(0, ups.all_until(this) { it==dcl.blk }.count{ it is Expr.Proto }-1)
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$id)"
-            (N <= 0) -> "(ceu_${mem}->$id)"
+            (N == 0) -> "(ceu_${mem}->$id)"
             else -> {
                 val blk = if (this is Expr.Proto) this.n else fup.n
                 "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->$id)"
@@ -29,7 +31,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         val n = ups.all_until(this) { it==outer }.count {
             it is Expr.Proto && it.task!=null && it.task.first
         }
-        return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n)})"
+        return "(ceu_frame${"->proto->up".repeat(n)})"
     }
 
     fun Expr.gcall (): Boolean {
