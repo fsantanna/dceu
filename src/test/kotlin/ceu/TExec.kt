@@ -2149,7 +2149,7 @@ class TExec {
                 ^^x     ;; err: no associated upvar
             }
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 4, col 17) : access error : unnecessary upref modifier") { out }
     }
     @Test
     fun clo11_err() {

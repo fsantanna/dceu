@@ -48,13 +48,13 @@ class Ups (val outer: Expr.Block) {
         return (this.func_or_task(e)?.tk?.str == "task")
     }
 
-    fun getDeclared (e: Expr, id: String): Int? {
+    fun getDeclared (e: Expr, id: String): Pair<Expr,Int>? {
         val xblock = this.xblocks[e]!!
         val up = this.proto_or_block_or_group(e)
         //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
         val dcl = xblock.syms[id]
         return when {
-            (dcl != null) -> dcl
+            (dcl != null) -> Pair(e,dcl)
             (up == null) -> null
             else -> this.getDeclared(up, id)
         }
@@ -70,10 +70,14 @@ class Ups (val outer: Expr.Block) {
     fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Int {
         val (id,upv) = v
         val dcl = this.getDeclared(e,id)
+        val nocross = dcl?.first.let { blk ->
+            (blk == null) || (blk == e) || (this.pred(e) { up -> up==blk || up is Expr.Proto } == blk)
+        }
         return when {
             (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Int
-            (!(dcl==0 && upv==0 || dcl==1 && upv==2)) -> err(tk, "access error : incompatible upval modifier") as Int
-            else -> dcl
+            (dcl.second==0 && upv>0 || dcl.second==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Int
+            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Int
+            else -> dcl.second
         }
     }
 
