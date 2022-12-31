@@ -16,7 +16,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         val dcl = ups.getDcl(this, id)!!
         val mem = if (dcl.upv == 0) "mem" else "upvs"
         val fup = ups.first(dcl.blk) { it is Expr.Proto }
-        val N = max(0, ups.all_until(this) { it==dcl.blk }.count{ it is Expr.Proto }-1)
+        val N = ups.all_until(this) {it==dcl.blk }  // go up until find dcl blk
+                .drop(1)                            // ignore proto if it is the first
+                .count{ it is Expr.Proto }              // count protos in between acc-dcl
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$id)"
             (N == 0) -> "(ceu_${mem}->$id)"
