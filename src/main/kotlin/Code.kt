@@ -16,13 +16,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             val fup = if (this is Expr.Proto) this else ups.func_or_task(this)
             val dcl = xblock.syms[id]
             val ok = (dcl != null)
-            assert(dcl==null || dcl==0) // upv proto ->upvs->id
+            val mem = if (dcl == 0) "mem" else "upvs"
             return when {
-                (ok && fup==null) -> "(ceu_mem_${outer.n}->$id)"
-                (ok && n==0) -> "(ceu_mem->$id)"
+                (ok && fup==null) -> "(ceu_${mem}_${outer.n}->$id)"
+                (ok && n==0) -> "(ceu_${mem}->$id)"
                 (ok && n!=0) -> {
                     val blk = if (this is Expr.Proto) this.n else fup!!.n
-                    "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->mem)->$id)"
+                    "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(n)}->${mem})->$id)"
                 }
                 (this is Expr.Block) -> bup!!.aux(n)
                 (this is Expr.Group) -> bup!!.aux(n)
@@ -196,9 +196,15 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${ups.block(this)!!.toc(true)},
                     CEU_VALUE_${this.tk.str.uppercase()},
                     ceu_frame,
-                    ceu_proto_f_$n,
-                    ${if (istask && this.task!!.second) 1 else 0},
-                    sizeof(CEU_Proto_Mem_$n)
+                    (CEU_Proto) {
+                        NULL,
+                        ceu_proto_f_$n,
+                        1,
+                        { .Task = {
+                            ${if (istask && this.task!!.second) 1 else 0},
+                            sizeof(CEU_Proto_Mem_$n)
+                        } }
+                    }
                 );
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}

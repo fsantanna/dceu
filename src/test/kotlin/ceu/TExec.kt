@@ -2049,7 +2049,7 @@ class TExec {
         assert(out == "anon : (lin 4, col 21) : throw error : uncaught exception\nnil\n") { out }
     }
 
-    // CLOSURE / ESCAPE / FUNC
+    // CLOSURE / ESCAPE / FUNC / UPVALS
 
     @Test
     fun clo1_err() {
@@ -2118,6 +2118,7 @@ class TExec {
         val out = all("""
             do {
                 var ^x     ;; err: no associated upref
+                ^x
             }
         """)
         assert(out == "err\n") { out }
@@ -2223,6 +2224,33 @@ class TExec {
             println(f([10])(20))
         """)
         assert(out == "[[10],20]\n") { out }
+    }
+    @Test
+    fun clo16() {
+        val out = all("""
+            var f
+            set f = func () {
+                var ^x = 10     ;; TODO: needs initialization
+                func (y) {
+                    [^^x,y]
+                }
+            }
+            println(f()(20))
+        """)
+        assert(out == "[[10],20]\n") { out }
+    }
+    @Test
+    fun clo17() {
+        val out = all("""
+            var f
+            set f = func (^x) {
+                func () {
+                    ^^x
+                }
+            }
+            println(f(10)())
+        """, true)
+        assert(out == "10\n") { out }
     }
 
     // MISC

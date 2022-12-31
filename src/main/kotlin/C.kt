@@ -247,7 +247,7 @@ fun Coder.main (): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int type, struct CEU_Frame* frame, CEU_Proto_F f, int awakes, int n);        
+        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Frame* frame, struct CEU_Proto proto);        
         struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
 
         static CEU_Tags_Names* CEU_TAGS = NULL;
@@ -832,15 +832,13 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int type, CEU_Frame* frame, CEU_Proto_F f, int awakes, int n) {
+        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Frame* frame, CEU_Proto proto) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
-                type, NULL, NULL, NULL, 0, {
-                    .Proto = { frame, f, {.Task={awakes,n}} }
-                }
+                type, NULL, NULL, NULL, 0, {.Proto=proto}
             };
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, isperm));
             return ret;
         }
         
