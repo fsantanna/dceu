@@ -650,7 +650,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 if (asdst_src == null) {
                     assrc(bup.id2c(id)) // ACC ${this.tk.dump()}
                 } else {
-                    ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                    val upv = ups.assertIsDeclared(bup, "_${id}_", this.tk)
+                    if (upv > 0) {
+                        err(tk, "set error : cannot reassign an upval")
+                    }
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET

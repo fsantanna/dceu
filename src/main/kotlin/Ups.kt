@@ -1,5 +1,5 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String, Int?>, val defers: MutableList<String>?)
+data class XBlock (val syms: MutableMap<String, Int>, val defers: MutableList<String>?)
 
 class Ups (val outer: Expr.Block) {
     val xblocks = mutableMapOf<Expr,XBlock> (
@@ -62,19 +62,17 @@ class Ups (val outer: Expr.Block) {
     fun isDeclared (e: Expr, id: String): Boolean {
         return (this.getDeclared(e,id) != null)
     }
-    fun assertIsNotDeclared (e: Expr, id: String, tk: Tk): Int? {
-        val dcl = this.getDeclared(e,id)
-        if (dcl != null) {
+    fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
+        if (this.getDeclared(e,id) != null) {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
-        return dcl
     }
-    fun assertIsDeclared (e: Expr, id: String, tk: Tk): Int? {
+    fun assertIsDeclared (e: Expr, id: String, tk: Tk): Int {
         val dcl = this.getDeclared(e,id)
         if (dcl == null) {
             err(tk, "access error : variable \"$id\" is not declared")
         }
-        return dcl
+        return dcl!!
     }
 
     fun isUp (e: Expr, id: String): Boolean {
@@ -91,10 +89,10 @@ class Ups (val outer: Expr.Block) {
 
     fun Expr.check () {
         when (this) {
-            is Expr.Proto   -> {
+            is Expr.Proto -> {
                 xblocks[this] = XBlock (
                     this.args.let {
-                        (it.map { Pair(it.str,0) } + it.map { Pair("_${it.str}_",0) })
+                        (it.map { Pair(it.str,it.upv) } + it.map { Pair("_${it.str}_",it.upv) })
                     }.toMap().toMutableMap(),
                     null
                 )
@@ -119,7 +117,7 @@ class Ups (val outer: Expr.Block) {
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
                 xup.syms[id] = this.tk_.upv
-                xup.syms["_${id}_"] = null
+                xup.syms["_${id}_"] = this.tk_.upv
                 //println(listOf(this.tk_.ups, block(bup)))
                 when {
                     (this.tk_.upv == 2) -> {

@@ -2072,29 +2072,30 @@ class TExec {
         val out = all("""
             ^x     ;; upvar can't be in global
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared") { out }
     }
     @Test
     fun clo4_err() {
         val out = all("""
             ^^x     ;; upref can't be in global
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared") { out }
     }
     @Test
     fun clo5_err() {
         val out = all("""
-            var g = 10
+            var g
+            set g = 10
             var f
-            set f = func (x) {
-                set x = []  ;; err: cannot reassign
+            set f = func (^x) {
+                set ^x = []  ;; err: cannot reassign
                 func () {
-                    ^x + g
+                    ^^x == g
                 }
             }
-            println(f([]])())
+            println(f([])())
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
     }
     @Test
     fun clo6_err() {
@@ -2127,7 +2128,7 @@ class TExec {
                 ^^x     ;; err: no associated upvar
             }
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared") { out }
     }
     @Test
     fun clo9_err() {
