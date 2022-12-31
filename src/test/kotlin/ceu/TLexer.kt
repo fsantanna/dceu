@@ -375,14 +375,14 @@ class TLexer {
     fun up1() {
         val l = lexer("^id ^if")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.ups==1 && it.str=="id" && it.pos.lin==1 && it.pos.col==1 })
+        assert(tks.next().let { it is Tk.Id && it.upv==1 && it.str=="id" && it.pos.lin==1 && it.pos.col==1 })
         assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : unexpected keyword")
     }
     @Test
     fun up2() {
         val l = lexer("^^x ^^^z")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.ups==2 && it.str=="x" && it.pos.lin==1 && it.pos.col==1 })
+        assert(tks.next().let { it is Tk.Id && it.upv==2 && it.str=="x" && it.pos.lin==1 && it.pos.col==1 })
         assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : expected \"[\"")
     }
 

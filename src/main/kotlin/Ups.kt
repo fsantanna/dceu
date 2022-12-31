@@ -62,15 +62,19 @@ class Ups (val outer: Expr.Block) {
     fun isDeclared (e: Expr, id: String): Boolean {
         return (this.getDeclared(e,id) != null)
     }
-    fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.isDeclared(e,id)) {
+    fun assertIsNotDeclared (e: Expr, id: String, tk: Tk): Int? {
+        val dcl = this.getDeclared(e,id)
+        if (dcl != null) {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
+        return dcl
     }
-    fun assertIsDeclared (e: Expr, id: String, tk: Tk) {
-        if (!this.isDeclared(e,id)) {
+    fun assertIsDeclared (e: Expr, id: String, tk: Tk): Int? {
+        val dcl = this.getDeclared(e,id)
+        if (dcl == null) {
             err(tk, "access error : variable \"$id\" is not declared")
         }
+        return dcl
     }
 
     fun isUp (e: Expr, id: String): Boolean {
@@ -114,14 +118,14 @@ class Ups (val outer: Expr.Block) {
                 //println(listOf("DCL", id, bup.javaClass.name))
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(bup, id, this.tk)
-                xup.syms[id] = this.tk_.ups
+                xup.syms[id] = this.tk_.upv
                 xup.syms["_${id}_"] = null
                 //println(listOf(this.tk_.ups, block(bup)))
                 when {
-                    (this.tk_.ups == 2) -> {
+                    (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
                     }
-                    (this.tk_.ups==1 && block(bup)==null) -> {
+                    (this.tk_.upv==1 && block(bup)==null) -> {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }

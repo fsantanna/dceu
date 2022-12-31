@@ -271,7 +271,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == '^') -> {
                     val (n2,x2) = read2()
-                    val (x3,ups) = if (x2 == '^') {
+                    val (x3,upv) = if (x2 == '^') {
                         val (n3,x3) = read2()
                         Pair(x3,2)
                     } else {
@@ -284,7 +284,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                                 err(pos, "token ^ error : unexpected keyword")
                                 yield(Tk.Fix(id, pos))
                             } else {
-                                yield(Tk.Id(id, pos, ups))
+                                yield(Tk.Id(id, pos, upv))
                             }
                         }
                         (x3 != '[') -> {
