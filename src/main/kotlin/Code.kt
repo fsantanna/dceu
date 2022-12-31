@@ -543,7 +543,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst_src;
                             """
                     } else {
-                        val inidx  = (ups.pred(this) { it is Expr.Index } != null)
+                        val inidx  = ups.path_until(this) { it is Expr.Index }.isNotEmpty()
                         val incall = (ups.ups[this] is Expr.Call)
                         """
                         { // PUB - read
@@ -666,7 +666,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 when (this.tk.str) {
                     "err" -> assrc("ceu_err")
                     "evt" -> {
-                        val inidx = (ups.pred(this) { it is Expr.Index } != null)
+                        val inidx = ups.path_until(this) { it is Expr.Index }.isNotEmpty()
                         (!inidx && !this.gcall()).cond { """
                             if (ceu_evt->type > CEU_VALUE_DYNAMIC) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : invalid evt : cannot expose dynamic \"evt\"");
@@ -831,8 +831,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val bupc = ups.block(this)!!.toc(true)
                 //val up = ups.ups[this]
                 //val resume = (if (up is Expr.Resume) up else null)
-                val resume = ups.pred_stop(this, { it is Expr.Resume }, { it !is Expr.Group }).let {
-                    if (it == null) null else it as Expr.Resume
+                val resume = ups.path_until(this) { it is Expr.Resume }.let { es ->
+                    when {
+                        es.isEmpty() -> null
+                        //es.drop(1).all { it is Expr.Group } -> es.first() as Expr.Resume
+                        //else -> null
+                        else -> es.first() as Expr.Resume
+                    }
                 }
                 //println(resume?.tostr())
                 val spawn = ups.pred_stop(this,

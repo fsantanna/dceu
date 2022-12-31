@@ -34,15 +34,6 @@ class Ups (val outer: Expr.Block) {
             else -> this.pred(x, f)
         }
     }
-    fun pred_stop_path (e: Expr, cnd: (Expr)->Boolean, stp: (Expr)->Boolean): List<Expr> {
-        val up = ups[e]
-        return when {
-            (up == null) -> emptyList()
-            cnd(up) -> listOf(up)
-            stp(up) -> emptyList()
-            else -> this.pred_stop_path(up, cnd, stp).let { if (it.isEmpty()) it else it+up }
-        }
-    }
     fun path_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
         val up = ups[e]
         return when {
@@ -91,7 +82,7 @@ class Ups (val outer: Expr.Block) {
         val (id,upv) = v
         val dcl = this.getDcl(e,id)
         val nocross = dcl?.blk.let { blk ->
-            (blk == null) || (blk == e) || (this.pred(e) { up -> up==blk || up is Expr.Proto } == blk)
+            (blk == null) || this.path_until(e) { blk == e }.none { it is Expr.Proto }
         }
         return when {
             (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
@@ -206,11 +197,12 @@ class Ups (val outer: Expr.Block) {
             is Expr.Acc    -> {
                 val dcl = getDcl(this, this.tk.str)
                 if (this.tk_.upv==0 && dcl?.upv==0) { // access with no upval modifier && matching declaration
-                    pred(this) {
-                        if (it is Expr.Proto) {
-                            noclos.add(it)          // mark all crossing protos as noclos
-                        }
-                        (it == dcl.blk)    // stop at enclosing declaration block
+                    path_until(this) {
+                        (it == dcl.blk)     // stop at enclosing declaration block
+                    }.filter {
+                        (it is Expr.Proto)  // all crossing protos
+                    }.forEach {
+                        noclos.add(it)      // mark them as noclos
                     }
                 }
             }
