@@ -8,10 +8,17 @@ class Ups (val outer: Expr.Block) {
             XBlock(GLOBALS.map { Pair(it,0) }.toMap().toMutableMap(), mutableListOf())
         )
     )
-    val ups = outer.calc()
+    val ups = outer.tree()
+
+    // Protos that cannot be closures:
+    //  - they access at least 1 free var w/o upval modifiers
+    //  - for each var access ACC, we get its declaration DCL in block BLK
+    //      - if ACC/DCL have no upval modifiers
+    //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
+    val noclos = mutableSetOf<Expr>()
 
     init {
-        this.outer.check()
+        this.outer.traverse()
     }
 
     fun pred (e: Expr, f: (Expr)->Boolean): Expr? {
@@ -49,10 +56,8 @@ class Ups (val outer: Expr.Block) {
     }
 
     fun getDeclared (e: Expr, id: String): Pair<Expr,Int>? {
-        val xblock = this.xblocks[e]!!
-        val up = this.proto_or_block_or_group(e)
-        //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
-        val dcl = xblock.syms[id]
+        val up = this.ups[e]
+        val dcl = this.xblocks[e].let { if (it == null) null else it.syms[id] }
         return when {
             (dcl != null) -> Pair(e,dcl)
             (up == null) -> null
@@ -81,6 +86,7 @@ class Ups (val outer: Expr.Block) {
         }
     }
 
+    /*
     fun isUp (e: Expr, id: String): Boolean {
         val xblock = this.xblocks[e]!!
         val up = this.proto_or_block_or_group(e)
@@ -92,8 +98,12 @@ class Ups (val outer: Expr.Block) {
             err(tk, "set error : cannot reassign an upvalue")
         }
     }
+     */
 
-    fun Expr.check () {
+    // Traverse the tree structure from top down
+    // 1. assigns this.xblocks
+    // 2. assigns this.noclos
+    fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> {
                 xblocks[this] = XBlock (
@@ -102,19 +112,19 @@ class Ups (val outer: Expr.Block) {
                     }.toMap().toMutableMap(),
                     null
                 )
-                this.body.check()
+                this.body.traverse()
             }
             is Expr.Block -> {
                 if (this != outer) {
                     xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
-                this.es.forEach { it.check() }
+                this.es.forEach { it.traverse() }
             }
             is Expr.Group -> {
                 if (this.isHide) {
                     xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
-                this.es.forEach { it.check() }
+                this.es.forEach { it.traverse() }
             }
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
@@ -134,26 +144,26 @@ class Ups (val outer: Expr.Block) {
                     }
                 }
             }
-            is Expr.Set    -> { this.dst.check() ; this.src.check() }
-            is Expr.If     -> { this.cnd.check() ; this.t.check() ; this.f.check() }
-            is Expr.While  -> { this.cnd.check() ; this.body.check() }
-            is Expr.Catch  -> { this.cnd.check() ; this.body.check() }
-            is Expr.Throw  -> this.ex.check()
-            is Expr.Defer  -> this.body.check()
+            is Expr.Set    -> { this.dst.traverse() ; this.src.traverse() }
+            is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
+            is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Throw  -> this.ex.traverse()
+            is Expr.Defer  -> this.body.traverse()
 
-            is Expr.Coros  -> this.max?.check()
-            is Expr.Coro   -> this.task.check()
-            is Expr.Spawn  -> { this.call.check() ; this.coros?.check() }
-            is Expr.CsIter -> { this.coros.check() ; this.body.check() }
-            is Expr.Bcast  -> this.evt.check()
+            is Expr.Coros  -> this.max?.traverse()
+            is Expr.Coro   -> this.task.traverse()
+            is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
+            is Expr.CsIter -> { this.coros.traverse() ; this.body.traverse() }
+            is Expr.Bcast  -> this.evt.traverse()
             is Expr.Yield  -> {
                 if (!intask(this)) {
                     err(this.tk, "yield error : expected enclosing task")
                 }
-                this.arg.check()
+                this.arg.traverse()
             }
-            is Expr.Resume -> this.call.check()
-            is Expr.Toggle -> { this.coro.check() ; this.on.check() }
+            is Expr.Resume -> this.call.traverse()
+            is Expr.Toggle -> { this.coro.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
                 if (this.coro == null) {
                     var ok = false
@@ -169,28 +179,40 @@ class Ups (val outer: Expr.Block) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }
                 }
-                this.coro?.check()
+                this.coro?.traverse()
             }
-            is Expr.Track  -> this.coro.check()
+            is Expr.Track  -> this.coro.traverse()
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {}
+            is Expr.Acc    -> {
+                val dcl = getDeclared(this, this.tk.str)
+                if (this.tk_.upv==0 && dcl?.second==0) { // access with no upval modifier && matching declaration
+                    pred(this) {
+                        if (it is Expr.Proto) {
+                            noclos.add(it)          // mark all crossing protos as noclos
+                        }
+                        (it == dcl.first)    // stop at enclosing declaration block
+                    }
+                }
+            }
             is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach{ it.check() }
-            is Expr.Vector -> this.args.forEach{ it.check() }
-            is Expr.Dict   -> this.args.forEach { it.first.check() ; it.second.check() }
-            is Expr.Index  -> { this.col.check() ; this.idx.check() }
-            is Expr.Call   -> { this.proto.check() ; this.args.forEach { it.check() } }
+            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
+            is Expr.Vector -> this.args.forEach{ it.traverse() }
+            is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
+            is Expr.Index  -> { this.col.traverse() ; this.idx.traverse() }
+            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
-    fun Expr.calc (): Map<Expr,Expr> {
+
+    // builds the tree structure from bottom up
+    fun Expr.tree (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
-            return l.map { it.calc() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
+            return l.map { it.tree() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))

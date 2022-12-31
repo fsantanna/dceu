@@ -194,7 +194,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
                     ${ups.block(this)!!.toc(true)},
-                    1,
+                    ${if (ups.noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
