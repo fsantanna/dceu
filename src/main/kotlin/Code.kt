@@ -11,7 +11,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     }
 
     fun Expr.id2c (dcl: Dcl, upv: Int): String {
-        val (Mem,mem) = if (dcl.upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
+        val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
         val start = if (upv==2) this else dcl.blk
         val fup = ups.first(start) { it is Expr.Proto }
         val N = if (upv==2) 0 else {
@@ -23,7 +23,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
             (N == 0) -> "(ceu_${mem}->${dcl.id})"
             else -> {
-                val blk = if (this is Expr.Proto) this.n else fup.n
+                val blk = if (this is Expr.Proto) this.n else fup.n     // Proto=func args
                 "(((CEU_Proto_${Mem}_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
             }
         }
@@ -105,7 +105,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
                     ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
                         val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
-                        "ceu_upvs->${it} = ${this.id2c(dcl,1)};"
+                        "ceu_upvs->${it} = ${this.body.id2c(dcl,1)};"   // use this.body to not confuse with args
                     }.joinToString("")}
                     """ +
                     """ // WHILE
