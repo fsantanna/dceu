@@ -564,7 +564,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         ceu_dyn_$n = ceu_acc.Dyn;
                     """ }}
-                    ${if (this.isdst()) {
+                    ${if (!this.isdst()) {
                         val inidx  = ups.all_until(this) { it is Expr.Index }.isNotEmpty()
                         val incall = (ups.ups[this] is Expr.Call)
                         """
