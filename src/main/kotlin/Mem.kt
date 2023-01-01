@@ -26,9 +26,12 @@ fun Expr.mem (): String {
         is Expr.Dcl -> {
             val id = this.tk_.fromOp().noSpecial()
             """
-            struct { // DCL
-                CEU_Value $id;
-                CEU_Block* _${id}_; // can't be static b/c recursion
+            union { // DCL
+                ${this.src.cond { it.mem() } }
+                struct {
+                    CEU_Value $id;
+                    CEU_Block* _${id}_; // can't be static b/c recursion
+                };
             };
             """
         }

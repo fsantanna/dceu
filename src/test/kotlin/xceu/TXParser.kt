@@ -16,14 +16,16 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         //println(e)
-        assert(e is Expr.Group && e.es[1] is Expr.Set)
+        //assert(e is Expr.Group && e.es[1] is Expr.Set)
+        assert(e is Expr.Dcl && e.src is Expr.Num)
     }
     @Test
     fun dcl2() {
         val l = lexer("do { var x = 1 }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\ngroup {\nvar x\nset x = 1\n}\n}") { e.tostr() }
+        //assert(e.tostr() == "do {\ngroup {\nvar x\nset x = 1\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nvar x = 1\n}") { e.tostr() }
     }
 
     // EMPTY BLOCKS

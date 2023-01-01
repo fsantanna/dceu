@@ -74,6 +74,14 @@ class TExec {
         assert(out == "[10]") { out }
     }
     @Test
+    fun printv() {
+        val out = all("""
+            var v = 1
+            print(v)
+        """)
+        assert(out == "1") { out }
+    }
+    @Test
     fun print2() {
         val out = all("""
             print(10)

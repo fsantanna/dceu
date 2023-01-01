@@ -134,6 +134,7 @@ class Ups (val outer: Expr.Block) {
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl -> {
+                this.src?.traverse()
                 val id = this.tk_.fromOp().noSpecial()
                 val bup = first(this) { it is Expr.Block || (it is Expr.Group && it.isHide) }!!
                 val xup = xblocks[bup]!!
@@ -231,7 +232,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Proto  -> this.map(listOf(this.body))
             is Expr.Block  -> this.map(this.es)
             is Expr.Group  -> this.map(this.es)
-            is Expr.Dcl    -> emptyMap()
+            is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.While  -> this.map(listOf(this.cnd, this.body))

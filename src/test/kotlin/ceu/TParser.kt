@@ -352,6 +352,14 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 5) : expected identifier : have \"[\"")
     }
+    @Test
+    fun expr_dcl3() {
+        val l = lexer("var x = 1")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.Dcl && e.tk.str == "x" && e.src is Expr.Num)
+        assert(e.tostr() == "var x = 1")
+    }
 
     // EXPR.SET
 
