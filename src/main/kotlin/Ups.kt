@@ -16,7 +16,14 @@ class Ups (val outer: Expr.Block) {
     //  - for each var access ACC, we get its declaration DCL in block BLK
     //      - if ACC/DCL have no upval modifiers
     //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
-    val noclos = mutableSetOf<Expr>()
+    val upvs_noclos = mutableSetOf<Expr>()
+
+    // Upvars (var ^up) with refs (^^up):
+    //  - at least one refs access the var
+    //  - for each var access ACC, we get its declaration DCL and set here
+    //  - in another round (Code), we assert that the DCL appears here
+    //  - TODO: can also be used to warn for unused normal vars
+    val upvs_refs = mutableSetOf<Dcl>()
 
     init {
         this.outer.traverse()
@@ -171,11 +178,15 @@ class Ups (val outer: Expr.Block) {
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val dcl = getDcl(this, this.tk.str)
-                if (this.tk_.upv==0 && dcl?.upv==0) {           // access with no upval modifier && matching declaration
-                    all_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
-                    .drop(1)                     // skip myself
-                    .filter { it is Expr.Proto }    // all crossing protos
-                    .forEach { noclos.add(it) }     // mark them as noclos
+                when {
+                    (dcl == null) -> {}
+                    (dcl.upv==1 && this.tk_.upv==2) -> upvs_refs.add(dcl) // UPVS_REFS
+                    (this.tk_.upv==0 && dcl.upv==0) -> {           // UPVS_NOCLOS: access with no upval modifier && matching declaration
+                        all_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
+                            .drop(1)                            // skip myself
+                            .filter { it is Expr.Proto }            // all crossing protos
+                            .forEach { upvs_noclos.add(it) }        // mark them as noclos
+                    }
                 }
             }
             is Expr.EvtErr -> {}

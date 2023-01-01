@@ -2121,8 +2121,9 @@ class TExec {
                 var ^x     ;; err: no associated upref
                 ^x
             }
+            println(1)
         """)
-        assert(out == "err\n") { out }
+        assert(out == "anon : (lin 3, col 21) : var error : unreferenced upvar\n") { out }
     }
     @Test
     fun clo8_err() {

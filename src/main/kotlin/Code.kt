@@ -1,5 +1,3 @@
-import java.lang.Integer.max
-
 class Coder (val outer: Expr.Block, val ups: Ups) {
     val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
@@ -190,7 +188,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
                     ${ups.first_block(this)!!.toc(true)},
-                    ${if (ups.noclos.contains(this)) 1 else 0},     // noclo must be perm=1
+                    ${if (ups.upvs_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
@@ -294,6 +292,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }.joinToString("")
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
+                val dcl = ups.getDcl(this, this.tk.str)!!
+                if (dcl.upv==1 && !ups.upvs_refs.contains(dcl)) {
+                    err(this.tk, "var error : unreferenced upvar")
+                }
                 """
                 { // DCL ${this.tk.dump()}
                     ${this.init.cond{"ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };"}}
