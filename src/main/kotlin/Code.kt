@@ -10,19 +10,18 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.id2c (id: String): String {
-        val dcl = ups.getDcl(this, id)!!
+    fun Expr.id2c (dcl: Dcl): String {
         val mem = if (dcl.upv == 0) "mem" else "upvs"
         val fup = ups.first(dcl.blk) { it is Expr.Proto }
         val N = ups.all_until(this) {it==dcl.blk }  // go up until find dcl blk
                 .drop(1)                            // ignore proto if it is the first
                 .count{ it is Expr.Proto }              // count protos in between acc-dcl
         return when {
-            (fup == null) -> "(ceu_${mem}_${outer.n}->$id)"
-            (N == 0) -> "(ceu_${mem}->$id)"
+            (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
+            (N == 0) -> "(ceu_${mem}->${dcl.id})"
             else -> {
                 val blk = if (this is Expr.Proto) this.n else fup.n
-                "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->$id)"
+                "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
             }
         }
     }
@@ -620,8 +619,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            ups.assertIsDeclared(this, Pair(id,0), this.tk)
-                            id = this.id2c(id)
+                            val dcl = ups.assertIsDeclared(this, Pair(id,0), this.tk)
+                            id = this.id2c(dcl)
                             "($id)$x"
                         }
                     }
@@ -649,11 +648,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Acc -> {
                 val id = this.tk_.fromOp().noSpecial()
-                ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
+                val dcl = ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (asdst_src == null) {
                     assrc(this.id2c(id)) // ACC ${this.tk.dump()}
                 } else {
-                    val dcl = ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
+                    ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }
@@ -661,10 +660,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """
                     { // ACC - SET
                         if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c("_${id}_")}, $asdst_src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk))}, $asdst_src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ${this.id2c(id)} = $asdst_src;
+                        ${this.id2c(dcl)} = $asdst_src;
                     }
                     """
                 }
