@@ -2248,7 +2248,7 @@ class TExec {
             set f = func (^x) {
                 println(^x)
                 func () {
-                    println(^^x)
+                    ;;println(^^x)
                     ^^x
                 }
             }

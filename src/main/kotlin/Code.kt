@@ -90,7 +90,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         #ifdef XXX
                         printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_coro->Bcast.status, ceu_coro);
                         #endif
-                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->upvs;
+                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto.upvs;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
                         if (ceu_n == CEU_ARG_EVT) {
@@ -103,10 +103,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
-                    ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
-                        val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
-                        "ceu_upvs->${it} = ${this.body.id2c(dcl,1)};"   // use this.body to not confuse with args
-                    }.joinToString("")}
                     """ +
                     """ // WHILE
                     do { // func
@@ -208,13 +204,17 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (CEU_Proto) {
                         ceu_frame,
                         ceu_proto_f_$n,
-                        ${ups.upvs_protos_refs[this]?.size ?: 0},
+                        { .Upvs = { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
                         { .Task = {
                             ${if (istask && this.task!!.second) 1 else 0},
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     }
                 );
+                ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
+                    val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
+                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->upvs.buf)->${it} = ${this.body.id2c(dcl,1)};"   // use this.body to not confuse with args
+                }.joinToString("")}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
@@ -897,7 +897,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     if (ceu_proto_$n.type != CEU_VALUE_FUNC) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error : expected function");
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
                 """} +
 
                 spawn.cond{"""
