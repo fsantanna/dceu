@@ -16,14 +16,18 @@ class Ups (val outer: Expr.Block) {
     //  - for each var access ACC, we get its declaration DCL in block BLK
     //      - if ACC/DCL have no upval modifiers
     //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
-    val upvs_noclos = mutableSetOf<Expr>()
+    val upvs_protos_noclos = mutableSetOf<Expr>()
 
     // Upvars (var ^up) with refs (^^up):
     //  - at least one refs access the var
     //  - for each var access ACC, we get its declaration DCL and set here
     //  - in another round (Code), we assert that the DCL appears here
     //  - TODO: can also be used to warn for unused normal vars
-    val upvs_refs = mutableSetOf<Dcl>()
+    val upvs_vars_refs = mutableSetOf<Dcl>()
+
+    // Set of uprefs within protos:
+    //  - for each ^^ACC, we get the enclosing PROTO and add ACC.ID to it
+    val upvs_protos_refs = mutableMapOf<Expr.Proto,MutableSet<String>>()
 
     init {
         this.outer.traverse()
@@ -100,7 +104,8 @@ class Ups (val outer: Expr.Block) {
 
     // Traverse the tree structure from top down
     // 1. assigns this.xblocks
-    // 2. assigns this.noclos
+    // 2. assigns this.upvs_protos_noclos, upvs_vars_refs, upvs_protos_refs
+    // 3. compiles all proto uprefs
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> {
@@ -180,12 +185,22 @@ class Ups (val outer: Expr.Block) {
                 val dcl = getDcl(this, this.tk.str)
                 when {
                     (dcl == null) -> {}
-                    (dcl.upv==1 && this.tk_.upv==2) -> upvs_refs.add(dcl) // UPVS_REFS
+                    (dcl.upv==1 && this.tk_.upv==2) -> {
+                        upvs_vars_refs.add(dcl) // UPVS_VARS_REFS
+
+                        // UPVS_PROTOS_REFS
+                        val proto = first_proto(this)!!
+                        val set = upvs_protos_refs[proto] ?: mutableSetOf()
+                        set.add(this.tk.str)
+                        if (upvs_protos_refs[proto] == null) {
+                            upvs_protos_refs[proto] = set
+                        }
+                    }
                     (this.tk_.upv==0 && dcl.upv==0) -> {           // UPVS_NOCLOS: access with no upval modifier && matching declaration
                         all_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
                             .drop(1)                            // skip myself
                             .filter { it is Expr.Proto }            // all crossing protos
-                            .forEach { upvs_noclos.add(it) }        // mark them as noclos
+                            .forEach { upvs_protos_noclos.add(it) }        // mark them as noclos
                     }
                 }
             }

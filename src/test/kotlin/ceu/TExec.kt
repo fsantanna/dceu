@@ -2246,13 +2246,15 @@ class TExec {
         val out = all("""
             var f
             set f = func (^x) {
+                println(^x)
                 func () {
+                    println(^^x)
                     ^^x
                 }
             }
             println(f(10)())
-        """, true)
-        assert(out == "10\n") { out }
+        """)
+        assert(out == "10\n1n10\n") { out }
     }
 
     // MISC

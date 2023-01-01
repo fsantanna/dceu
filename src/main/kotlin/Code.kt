@@ -10,18 +10,21 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.id2c (dcl: Dcl): String {
-        val mem = if (dcl.upv == 0) "mem" else "upvs"
-        val fup = ups.first(dcl.blk) { it is Expr.Proto }
-        val N = ups.all_until(this) {it==dcl.blk }  // go up until find dcl blk
+    fun Expr.id2c (dcl: Dcl, upv: Int): String {
+        val (Mem,mem) = if (dcl.upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
+        val start = if (upv==2) this else dcl.blk
+        val fup = ups.first(start) { it is Expr.Proto }
+        val N = if (upv==2) 0 else {
+            ups.all_until(this) {it==dcl.blk }  // go up until find dcl blk
                 .drop(1)                            // ignore proto if it is the first
-                .count{ it is Expr.Proto }              // count protos in between acc-dcl
+                .count{ it is Expr.Proto }
+        }              // count protos in between acc-dcl
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
             (N == 0) -> "(ceu_${mem}->${dcl.id})"
             else -> {
                 val blk = if (this is Expr.Proto) this.n else fup.n
-                "(((CEU_Proto_Mem_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
+                "(((CEU_Proto_${Mem}_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
             }
         }
     }
@@ -54,8 +57,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val istask = (this.tk.str == "task")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
+                    ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
+                        "CEU_Value $it;"
+                    }.joinToString("")}
+                } CEU_Proto_Upvs_$n;
+                typedef struct {
                     ${this.args.map {
-                        """
+                    """
                         CEU_Value ${it.str};
                         CEU_Block* _${it.str}_;
                         """
@@ -70,6 +78,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args[]
                 ) {
                     ${isfunc.cond{"""
+                        CEU_Proto_Upvs_$n _ceu_upvs_;
+                        CEU_Proto_Upvs_$n* ceu_upvs = &_ceu_upvs_;
+                        ceu_frame->upvs = (CEU_Value*) ceu_upvs;
                         CEU_Proto_Mem_$n _ceu_mem_;
                         CEU_Proto_Mem_$n* ceu_mem = &_ceu_mem_;
                         ceu_frame->mem = (char*) ceu_mem;
@@ -79,6 +90,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         #ifdef XXX
                         printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_coro->Bcast.status, ceu_coro);
                         #endif
+                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->upvs;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
                         if (ceu_n == CEU_ARG_EVT) {
@@ -91,6 +103,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
+                    ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
+                        val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
+                        "ceu_upvs->${it} = ${this.id2c(dcl,1)};"
+                    }.joinToString("")}
                     """ +
                     """ // WHILE
                     do { // func
@@ -187,12 +203,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 """
                 CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
                     ${ups.first_block(this)!!.toc(true)},
-                    ${if (ups.upvs_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
+                    ${if (ups.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
                         ceu_proto_f_$n,
-                        0,
+                        ${ups.upvs_protos_refs[this]?.size ?: 0},
                         { .Task = {
                             ${if (istask && this.task!!.second) 1 else 0},
                             sizeof(CEU_Proto_Mem_$n)
@@ -292,7 +308,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
                 val dcl = ups.getDcl(this, this.tk.str)
-                if (dcl!=null && dcl.upv==1 && !ups.upvs_refs.contains(dcl)) {
+                if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 """
@@ -620,7 +636,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = ups.assertIsDeclared(this, Pair(id,0), this.tk)
-                            id = this.id2c(dcl)
+                            id = this.id2c(dcl,0)
                             "($id)$x"
                         }
                     }
@@ -650,7 +666,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val id = this.tk_.fromOp().noSpecial()
                 val dcl = ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (asdst_src == null) {
-                    assrc(this.id2c(id)) // ACC ${this.tk.dump()}
+                    assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
                     ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
@@ -660,10 +676,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """
                     { // ACC - SET
                         if ($asdst_src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk))}, $asdst_src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $asdst_src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ${this.id2c(dcl)} = $asdst_src;
+                        ${this.id2c(dcl,this.tk_.upv)} = $asdst_src;
                     }
                     """
                 }
