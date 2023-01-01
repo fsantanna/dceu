@@ -67,7 +67,7 @@ class Ups (val outer: Expr.Block) {
         val (id,upv) = v
         val dcl = this.getDcl(e,id)
         val nocross = dcl?.blk.let { blk ->
-            (blk == null) || this.all_until(e) { blk == e }.none { it is Expr.Proto }
+            (blk == null) || this.all_until(e) { it==blk }.drop(1).none { it is Expr.Proto }
         }
         return when {
             (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
