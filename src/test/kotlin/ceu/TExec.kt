@@ -2207,9 +2207,22 @@ class TExec {
         val out = all("""
             var f
             set f = func (^x) {
-                println(^x)
+                println(:1, ^x)
                 func () {
-                    ;;println(^^x)
+                    println(:2, ^^x)
+                    ^^x
+                }
+            }
+            println(:3, f(10)())
+        """)
+        assert(out == ":1\t10\n:2\t10\n:3\t10\n") { out }
+    }
+    @Test
+    fun clo18() {
+        val out = all("""
+            var f
+            set f = func (^x) {
+                func () {
                     ^^x
                 }
             }

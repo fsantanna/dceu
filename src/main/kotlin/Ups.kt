@@ -198,8 +198,10 @@ class Ups (val outer: Expr.Block) {
                             }
                         }
                     }
-                    (this.tk_.upv==0 && dcl.upv==0) -> {           // UPVS_NOCLOS: access with no upval modifier && matching declaration
-                        all_until(this) { (it == dcl.blk) }     // stop at enclosing declaration block
+                    // UPVS_PROTOS_NOCLOS
+                    (dcl.blk!=outer && dcl.upv==0 && this.tk_.upv==0) -> {
+                        // access to normal noglb w/o upval modifier
+                        all_until(this) { it == dcl.blk }       // stop at enclosing declaration block
                             .drop(1)                            // skip myself
                             .filter { it is Expr.Proto }            // all crossing protos
                             .forEach { upvs_protos_noclos.add(it) }        // mark them as noclos

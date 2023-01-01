@@ -99,6 +99,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
+                    CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->upvs.buf;
                     """ +
                     """ // WHILE
                     do { // func
@@ -209,7 +210,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 );
                 ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
                     val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
-                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->upvs.buf)->${it} = ${this.body.id2c(dcl,1)};"   // use this.body to not confuse with args
+                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,1)};"   // use this.body to not confuse with args
                 }.joinToString("")}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}

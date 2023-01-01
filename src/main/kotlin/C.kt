@@ -843,7 +843,7 @@ fun Coder.main (): String {
         CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Proto proto) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
-            proto.upvs.buf = malloc(proto.upvs.n);
+            proto.upvs.buf = malloc(proto.upvs.n * sizeof(CEU_Value));
             assert(proto.upvs.buf != NULL);
             *ret = (CEU_Dynamic) {
                 type, NULL, NULL, NULL, 0, {.Proto=proto}
