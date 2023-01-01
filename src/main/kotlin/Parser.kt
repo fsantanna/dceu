@@ -279,10 +279,7 @@ class Parser (lexer_: Lexer)
                         when {
                             tktag.str == ":coros" -> {
                                 C(Expr.CsIter(tk0, i, col,
-                                    Expr.Block(tk0, listOf(
-                                        Expr.Dcl(i,null),
-                                        b
-                                    ))))
+                                    Expr.Block(tk0, listOf(Expr.Dcl(i,null), b))))
                             }
                             tktag.str == ":coro" -> {
                                 C(this.nest("""

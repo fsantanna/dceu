@@ -1882,10 +1882,10 @@ class TTask {
             spawn in ts, T()
             var x
             while in :coros ts, t {
-                println(t.pub[0]+t.pub[0])
+                println(t.pub[0])
             }
-        """, true)
-        assert(out == "20\n") { out }
+        """)
+        assert(out == "10\n") { out }
     }
     @Test
     fun pub7_pool_err() {

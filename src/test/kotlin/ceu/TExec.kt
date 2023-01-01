@@ -74,14 +74,6 @@ class TExec {
         assert(out == "[10]") { out }
     }
     @Test
-    fun printv() {
-        val out = all("""
-            var v = 1
-            print(v)
-        """)
-        assert(out == "1") { out }
-    }
-    @Test
     fun print2() {
         val out = all("""
             print(10)
@@ -142,6 +134,25 @@ class TExec {
     fun print6() {
         val out = all("println(false)")
         assert(out == "false\n") { out }
+    }
+
+    // VAR
+
+    @Test
+    fun var1() {
+        val out = all("""
+            var v
+            print(v)
+        """)
+        assert(out == "nil") { out }
+    }
+    @Test
+    fun var2() {
+        val out = all("""
+            var vvv = 1
+            print(vvv)
+        """)
+        assert(out == "1") { out }
     }
 
     // INDEX / TUPLE
