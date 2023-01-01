@@ -79,9 +79,6 @@
         - ?
     - reject anything after throw (last stmt)
     - reject yield with no direct enclosing task
-- closures
-    - only accept dyns as upvalue
-    - has same scope as upval
 - 3 `add` 4  -->  add(3,4)
 - move as a primitive?
     - needs to move nested objs

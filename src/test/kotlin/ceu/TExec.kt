@@ -2262,20 +2262,17 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun todo_closure() {    // TODO: solution: pass tuple that is compared on return
+    fun clo1() {
         val out = all("""
-            var smallerc
-            set smallerc = func (x) {
+            var f
+            set f = func (^x) {
                 func (y) {  ;; TODO: cannot return func that uses x in this block
-                    if x { x } else { y }
+                    if ^^x { ^^x } else { y }
                 }
             }
-            println(smallerc(3)(1))
+            println(f(3)(1))
         """)
-        //assert(out == "3\n") { out }
-        //assert(out == "anon : (lin 4, col 17) : return error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 8, col 21) : smallerc(3)\n" +
-                "anon : (lin 3, col 37) : set error : incompatible scopes\n") { out }
+        assert(out == "3\n") { out }
     }
 
     // TEMPLATE

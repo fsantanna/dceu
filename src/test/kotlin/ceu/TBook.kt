@@ -78,30 +78,28 @@ class TBook {
     // CHAPTER 1.4: Functions
 
     @Test
-    @Ignore
-    fun todo_pg_11_currying() {
+    fun pg_11_currying() {
         val out = all(
             """
             var smallerc
-            set smallerc = func (x) {
+            set smallerc = func (^x) {
                 func (y) {
-                    if x < y { x } else { y }
+                    if ^^x < y { ^^x } else { y }
                 }
             }
             var plusc
-            set plusc = func (x) {
+            set plusc = func (^x) {
                 func (y) {
-                    x+y
+                    ^^x+y
                 }
             }
             println(smallerc(3)(5))
-            println(plus(3)(5))
-        """, true
-        )
+            println(plusc(3)(5))
+        """, true)
         assert(out == "3\n8\n") { out }
     }
     @Test
-    fun todo_pg_12_twice_quad() {
+    fun pg_12_twice_quad() {
         val out = all(
             """
             var square
@@ -122,8 +120,7 @@ class TBook {
         assert(out == "16\t16\n") { out }
     }
     @Test
-    @Ignore
-    fun todo_pg_12_twicec() {
+    fun pg_12_twicec() {
         val out = all(
             """
             var square
@@ -131,9 +128,9 @@ class TBook {
                 x**2
             }
             var twicec
-            set twicec = func (f) {
+            set twicec = func (^f) {
                 func (v) {
-                    f(f(v))
+                    ^^f(^^f(v))
                 }
             }
             var quad
@@ -141,43 +138,44 @@ class TBook {
             println(quad(2))
         """, true
         )
-        assert(out == "16\t16\n") { out }
+        assert(out == "16\n") { out }
     }
     @Test
-    @Ignore
     fun todo_pg_13_curry() {
-        val out = all(
-            """
+        val out = all("""
             var curry
-            set curry = func (f) {
-                func (x) {
+            set curry = func (^f) {
+                func (^x) {
                     func (y) {
-                        f(x,y)
+                        ^^f(^^x,y)
                     }
                 }
             }
             var plusc
             set plusc = curry({+})
-            println(plusc(1)(-4))
-        """, true
-        )
+            println(:a, plusc)
+            var b = plusc(1)
+            println(:b, b)
+            var c = b(2)
+            println(:c, c)
+            println((plusc(1))(-4))
+        """, true)
         assert(out == "-3\n") { out }
     }
     @Test
-    @Ignore
-    fun todo_pg_13_uncurry() {
+    fun pg_13_uncurry() {
         val out = all(
             """
             var plusc
-            set plusc = func (x) {
+            set plusc = func (^x) {
                 func (y) {
-                    x + y
+                    ^^x + y
                 }
             }
             var uncurry
-            set uncurry = func (f) {
+            set uncurry = func (^f) {
                 func (x,y) {
-                    f(x)(y)
+                    ^^f(x)(y)
                 }            
             }
             println(uncurry(plusc)(1,-4))
@@ -195,14 +193,13 @@ class TBook {
         assert(out == "16\n") { out }
     }
     @Test
-    @Ignore
     fun todo_pg_15_compose() {
         val out = all(
             """
             var compose
-            set compose = func (f,g) {
+            set compose = func (^f,^g) {
                 func (v) {
-                    f(g(v))
+                    ^^f(^^g(v))
                 }
             }
             var square
