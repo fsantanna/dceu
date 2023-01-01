@@ -206,16 +206,10 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptEnu_err("Id")
                 val id = this.tk0 as Tk.Id
-                if (XCEU && this.acceptFix("=")) {
-                    val eq = this.tk0 as Tk.Fix
-                    val e = this.expr()
-                    Expr.Group(tk0, false, listOf(
-                        Expr.Dcl(id, false),
-                        Expr.Set(eq, Expr.Acc(id), e)
-                    ))
-                } else {
-                    Expr.Dcl(this.tk0 as Tk.Id, true)
+                val src = if (!this.acceptFix("=")) null else {
+                    this.expr()
                 }
+                Expr.Dcl(id, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -286,7 +280,7 @@ class Parser (lexer_: Lexer)
                         when {
                             tktag.str == ":coros" -> {
                                 C(Expr.CsIter(tk0, i, col,
-                                    Expr.Block(tk0, listOf(Expr.Dcl(i,false), b))))
+                                    Expr.Block(tk0, listOf(Expr.Dcl(i,null), b))))
                             }
                             tktag.str == ":coro" -> {
                                 C(this.nest("""

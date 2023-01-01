@@ -2200,7 +2200,7 @@ class TExec {
             }
             println(f()(20))
         """)
-        assert(out == "[[10],20]\n") { out }
+        assert(out == "[10,20]\n") { out }
     }
     @Test
     fun clo17() {
@@ -2228,7 +2228,7 @@ class TExec {
             }
             println(f(10)())
         """)
-        assert(out == "10\n1n10\n") { out }
+        assert(out == "10\n") { out }
     }
 
     // MISC
