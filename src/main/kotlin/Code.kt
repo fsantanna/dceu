@@ -29,7 +29,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.taskc (): String {
+    fun Expr.non_fake_task_c (): String {
         val n = ups.all_until(this) {
             it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
         }.filter {
@@ -445,7 +445,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val task = ups.first_proto(this)
-                val intask = (task?.tk?.str == "task")
+                val intask = (ups.first_proto(this)?.tk?.str == "task")
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code(true, null)}
@@ -464,8 +464,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${if (intask && !task!!.task!!.first) {
-                                "ceu_ret = ceu_bcast_dyn(${this.taskc()}->Task.coro, &ceu_mem->evt_$n);"
+                            ${if (intask) {
+                                "ceu_ret = ceu_bcast_dyn(${this.non_fake_task_c()}->Task.coro, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}
@@ -529,7 +529,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 { // PUB
                     CEU_Dynamic* ceu_dyn_$n;
                     ${if (this.coro == null) {
-                        "ceu_dyn_$n = ${this.taskc()}->Task.coro;"
+                        "ceu_dyn_$n = ${this.non_fake_task_c()}->Task.coro;"
                     } else { """
                         ${this.coro.code(true, null)}
                         ${(this.tk.str=="status").cond { """

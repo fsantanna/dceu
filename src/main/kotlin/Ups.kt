@@ -189,11 +189,13 @@ class Ups (val outer: Expr.Block) {
                         upvs_vars_refs.add(dcl) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
-                        val proto = first_proto(this)!!
-                        val set = upvs_protos_refs[proto] ?: mutableSetOf()
-                        set.add(this.tk.str)
-                        if (upvs_protos_refs[proto] == null) {
-                            upvs_protos_refs[proto] = set
+                        val proto = first_proto(this)
+                        if (proto != null) {
+                            val set = upvs_protos_refs[proto] ?: mutableSetOf()
+                            set.add(this.tk.str)
+                            if (upvs_protos_refs[proto] == null) {
+                                upvs_protos_refs[proto] = set
+                            }
                         }
                     }
                     (this.tk_.upv==0 && dcl.upv==0) -> {           // UPVS_NOCLOS: access with no upval modifier && matching declaration
