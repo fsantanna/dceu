@@ -78,9 +78,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_Value* ceu_args[]
                 ) {
                     ${isfunc.cond{"""
-                        CEU_Proto_Upvs_$n _ceu_upvs_;
-                        CEU_Proto_Upvs_$n* ceu_upvs = &_ceu_upvs_;
-                        ceu_frame->upvs = (CEU_Value*) ceu_upvs;
                         CEU_Proto_Mem_$n _ceu_mem_;
                         CEU_Proto_Mem_$n* ceu_mem = &_ceu_mem_;
                         ceu_frame->mem = (char*) ceu_mem;
@@ -90,7 +87,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         #ifdef XXX
                         printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_coro->Bcast.status, ceu_coro);
                         #endif
-                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto.upvs;
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
                         if (ceu_n == CEU_ARG_EVT) {
@@ -204,7 +200,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     (CEU_Proto) {
                         ceu_frame,
                         ceu_proto_f_$n,
-                        { .Upvs = { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
+                        { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
                         { .Task = {
                             ${if (istask && this.task!!.second) 1 else 0},
                             sizeof(CEU_Proto_Mem_$n)

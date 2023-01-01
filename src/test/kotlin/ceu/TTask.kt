@@ -447,8 +447,11 @@ class TTask {
         """)
         assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
+
+    // SPAWN / GROUP
+
     @Test
-    fun spawn14() {
+    fun group1() {
         val out = all("""
             var T
             set T = task (v) {
@@ -462,6 +465,45 @@ class TTask {
             }
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun group2() {
+        val out = all("""
+            group {
+                var T
+                set T = task (v) {
+                    println(v)
+                }
+            }
+            group {
+                var t
+                set t = spawn group :hide {
+                    group {
+                        var v
+                        set v = 10
+                    }
+                    T(v)
+                }
+            }
+            println(type(t))
+        """)
+        assert(out == "10\n:coro\n") { out }
+    }
+    @Test
+    fun group3() {
+        val out = all("""
+            var f
+            set f = func () {
+                nil
+            }
+            spawn task () :fake {
+                group :hide {
+                    f()
+                }
+            }()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // THROW

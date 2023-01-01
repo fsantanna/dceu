@@ -893,45 +893,6 @@ class TExec {
         """)
         assert(out == "[]") { out }
     }
-    @Test
-    fun group4() {
-        val out = all("""
-            group {
-                var T
-                set T = task (v) {
-                    println(v)
-                }
-            }
-            group {
-                var t
-                set t = spawn group :hide {
-                    group {
-                        var v
-                        set v = 10
-                    }
-                    T(v)
-                }
-            }
-            println(type(t))
-        """)
-        assert(out == "10\n:coro\n") { out }
-    }
-    @Test
-    fun group5() {
-        val out = all("""
-            var f
-            set f = func () {
-                nil
-            }
-            spawn task () :fake {
-                group :hide {
-                    f()
-                }
-            }()
-            println(1)
-        """)
-        assert(out == "1\n") { out }
-    }
 
     // SCOPE
 
