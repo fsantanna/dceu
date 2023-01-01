@@ -45,7 +45,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         } }
     }
 
-    // assrc_dst: calling expr is a source and here's its destination
+    // issrc: calling expr is a source, just set ceu_acc accordingly
     // asdst_src: calling expr is a destination and here's its source
     fun Expr.code (issrc: Boolean, asdst_src: String?): String {
         fun assrc (v: String): String {

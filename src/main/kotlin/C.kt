@@ -421,6 +421,18 @@ fun Coder.main (): String {
 
         CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
             switch (src->type) {
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
+#if 1
+                    for (int i=0; i<src->Proto.upvs.n; i++) {
+                        if (src->Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, src->Proto.upvs.buf[i].Dyn, isperm)) {
+                                return CEU_RET_THROW;
+                            }
+                        }
+                    }
+#endif
+                    break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.n; i++) {
                         if (src->Tuple.mem[i].type > CEU_VALUE_DYNAMIC) {
@@ -454,8 +466,6 @@ fun Coder.main (): String {
                         }
                     }
                     break;
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
                 case CEU_VALUE_CORO:
                 case CEU_VALUE_COROS:
                 case CEU_VALUE_TRACK:
