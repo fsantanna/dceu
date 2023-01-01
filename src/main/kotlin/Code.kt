@@ -292,8 +292,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }.joinToString("")
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
-                val dcl = ups.getDcl(this, this.tk.str)!!
-                if (dcl.upv==1 && !ups.upvs_refs.contains(dcl)) {
+                val dcl = ups.getDcl(this, this.tk.str)
+                if (dcl!=null && dcl.upv==1 && !ups.upvs_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 """

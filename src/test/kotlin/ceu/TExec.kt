@@ -2123,7 +2123,7 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 3, col 21) : var error : unreferenced upvar\n") { out }
+        assert(out == "anon : (lin 3, col 21) : var error : unreferenced upvar") { out }
     }
     @Test
     fun clo8_err() {
