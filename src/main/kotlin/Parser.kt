@@ -208,7 +208,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, src)
+                Expr.Dcl(id, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -277,7 +277,7 @@ class Parser (lexer_: Lexer)
                         when {
                             tktag.str == ":coros" -> {
                                 C(Expr.CsIter(tk0, i, col,
-                                    Expr.Block(tk0, listOf(Expr.Dcl(i,null), b))))
+                                    Expr.Block(tk0, listOf(Expr.Dcl(i,false, null), b))))
                             }
                             tktag.str == ":coro" -> {
                                 C(this.nest("""
