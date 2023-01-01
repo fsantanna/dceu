@@ -221,15 +221,13 @@ class Parser (lexer_: Lexer)
                     }
                     Expr.Set(tk0, dst, src)
                 } else {
-                    val hack = dst.tostr(true).let {
-                        //println(it)
-                        val xx = it.substringBeforeLast("\n}")
-                        val x2 = it.substringAfterLast("\n}")
-                        val x0 = xx.substringBeforeLast("\n}\n")
-                        val x1 = xx.substringAfterLast("\n}\n")
-                        x0 + "\n}\n" + "set " + x1 + " = " + src.tostr(true) + "\n}\n"+ x2
+                    val hack = dst.tostr(false).let {
+                        val s3 = it.substringAfterLast("\n}")
+                        val aa = it.substringBeforeLast("\n}")
+                        val s2 = aa.substringAfterLast("\n")
+                        val s1 = aa.substringBeforeLast("\n")
+                        s1 + "\n" + "set " + s2 + " = " + src.tostr(false) + "\n}\n"+ s3
                     }
-                    //println(hack)
                     this.nest(hack)
                 }
             }

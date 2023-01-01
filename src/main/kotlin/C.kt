@@ -855,6 +855,9 @@ fun Coder.main (): String {
             assert(ret != NULL);
             proto.upvs.buf = malloc(proto.upvs.n * sizeof(CEU_Value));
             assert(proto.upvs.buf != NULL);
+            for (int i=0; i<proto.upvs.n; i++) {
+                proto.upvs.buf[i] = (CEU_Value) { CEU_VALUE_NIL };
+            }
             *ret = (CEU_Dynamic) {
                 type, NULL, NULL, NULL, 0, {.Proto=proto}
             };

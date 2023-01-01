@@ -1674,45 +1674,6 @@ class TXExec {
                 "anon : (lin 4, col 5) : throw error : uncaught exception\n:error\n") { out }
     }
 
-    // tonumber, tostring, tovector
-
-    @Test
-    fun tostring1() {
-        val out = all("""
-            var s = tostring(10)
-            println(type(s), s)
-        """, true)
-        assert(out == ":vector\t10\n") { out }
-    }
-    @Test
-    fun tonumber2() {
-        val out = all("""
-            var n = tonumber("10")
-            println(type(n), n)
-        """, true)
-        assert(out == ":number\t10\n") { out }
-    }
-    @Test
-    fun tonumber_tostring3() {
-        val out = all("""
-            var s = tostring(tonumber("10"))
-            println(type(s), s)
-        """, true)
-        assert(out == ":vector\t10\n") { out }
-    }
-    @Test
-    fun tovector4() {
-        val out = all("""
-            task T() {
-                yield([1])
-            }
-            var t = coroutine(T)
-            var v = tovector(t)
-            println(v)
-        """, true)
-        assert(out == "#[[1]]\n") { out }
-    }
-
     // PEEK, PUSH, POP
 
     @Test
@@ -1800,6 +1761,45 @@ class TXExec {
             println(v[-1+1])
         """, true)
         assert(out == "anon : (lin 4, col 24) : expected \"]\" : have \"1\"") { out }
+    }
+
+    // tonumber, tostring, tovector
+
+    @Test
+    fun tostring1() {
+        val out = all("""
+            var s = tostring(10)
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun tonumber2() {
+        val out = all("""
+            var n = tonumber("10")
+            println(type(n), n)
+        """, true)
+        assert(out == ":number\t10\n") { out }
+    }
+    @Test
+    fun tonumber_tostring3() {
+        val out = all("""
+            var s = tostring(tonumber("10"))
+            println(type(s), s)
+        """, true)
+        assert(out == ":vector\t10\n") { out }
+    }
+    @Test
+    fun tovector4() {
+        val out = all("""
+            task T() {
+                yield([1])
+            }
+            var t = coroutine(T)
+            var v = tovector(t)
+            println(v)
+        """, true)
+        assert(out == "#[[1]]\n") { out }
     }
 
     // ALL
