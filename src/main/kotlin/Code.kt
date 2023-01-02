@@ -129,7 +129,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                     """
                                     ${istask.cond { """
                                         if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                            ceu_mem->_${id}_ = ceu_coro->hold;
+                                            ceu_mem->_${id}_ = ceu_coro->hold.block;
                                         } else
                                     """}}
                                     { // else
@@ -175,12 +175,12 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
 
                             CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                             ceu_bcasting++;
-                            if (ceu_coro->hold->bcast.up != NULL) {
+                            if (ceu_coro->hold.block->bcast.up != NULL) {
                                 // enclosing coro of enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(ceu_coro->hold->bcast.up, &ceu_evt_$n));
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
                             } else {
                                 // enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(ceu_coro->hold, &ceu_evt_$n));
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(ceu_coro->hold.block, &ceu_evt_$n));
                             }
                             ceu_bcasting--;
                         
@@ -448,16 +448,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         if (ceu_mem->$loc.Dyn == NULL) {
                             continue; // escape enclosing block
                         }
-                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold;  
-                        ceu_mem->$loc.Dyn->hold = ${this.body.toc(true)}; // tmp coro.hold to nested block
+                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold.block;  
+                        ceu_mem->$loc.Dyn->hold.block = ${this.body.toc(true)}; // tmp coro.hold to nested block
                         ${this.body.code()}
-                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
+                        ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
                         goto CEU_ITER_$n;
                     } while (0); // iter
                     assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in iter");
                     if (ceu_mem->$loc.Dyn != NULL) { // repeat in case body error
-                        ceu_mem->$loc.Dyn->hold = ceu_mem->hold_$n;
+                        ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
@@ -855,7 +855,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         val asdst = this.asdst()
                         """
                         if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold, $asdst.Dyn, 0);
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold.block, $asdst.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         switch (ceu_acc.type) {
