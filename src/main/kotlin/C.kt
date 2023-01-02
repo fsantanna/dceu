@@ -557,25 +557,21 @@ fun Coder.main (): String {
                                 ceu_bcast_dequeue(&src->hold.block->bcast.dyn, src);
                             }
                             { // remove from free list
-                                CEU_Dynamic* prv = NULL;
-                                CEU_Dynamic* cur = src->hold.block->tofree;
-                                while (cur != NULL) {
-                                    if (cur == src) {
-                                        if (prv == NULL) {
-                                            src->hold.block->tofree = cur->hold.next;
-                                        } else {
-                                            prv->hold.next = cur->hold.next;
-                                        }
-                                        cur->hold.next = NULL;
-                                    }
-                                    prv = cur;
-                                    cur = cur->hold.next;
+                                *src->hold.prev = src->hold.next;
+                                if (src->hold.next != NULL) {
+                                    src->hold.next->hold.prev = src->hold.prev;
+                                    src->hold.next = NULL;
                                 }
+                                src->hold.prev = NULL;
                             }
                         }
                     }
                     { // add to new block
+                        src->hold.prev = &dst->tofree;
                         src->hold.next = dst->tofree;
+                        if (dst->tofree != NULL) {
+                            dst->tofree->hold.prev = &src;
+                        }
                         dst->tofree = src;
                         if (src->type > CEU_VALUE_BCAST) {
                             ceu_bcast_enqueue(&dst->bcast.dyn, src);
