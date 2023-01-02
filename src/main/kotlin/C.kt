@@ -187,7 +187,7 @@ fun Coder.main (): String {
             CEU_VALUE type;                 // required to switch over free/bcast
             struct {
                 struct CEU_Block*    block;     // holding block to compare on set/move
-                struct CEU_Dynamic** prev;      // for relink when refcount=0
+                struct CEU_Dynamic** prev;      // for relink on set/move/refcount=0
                 struct CEU_Dynamic*  next;      // next dyn to free (not used by coro in coros)
             } hold;
             struct CEU_Tags_List* tags;     // linked list of tags
@@ -211,6 +211,7 @@ fun Coder.main (): String {
                 } Dict;
                 struct {
                     enum CEU_CORO_STATUS status;
+                    struct CEU_Dynamic* prev;           // to relink on set/move/remove
                     struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
                     union {
                         struct {
@@ -557,7 +558,9 @@ fun Coder.main (): String {
                                 ceu_bcast_dequeue(&src->hold.block->bcast.dyn, src);
                             }
                             { // remove from free list
-                                *src->hold.prev = src->hold.next;
+                                if (src->hold.prev != NULL) {
+                                    *src->hold.prev = src->hold.next;
+                                }
                                 if (src->hold.next != NULL) {
                                     src->hold.next->hold.prev = src->hold.prev;
                                     src->hold.next = NULL;
@@ -593,30 +596,23 @@ fun Coder.main (): String {
         void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
             if (*outer == NULL) {
                 *outer = dyn;
+                dyn->Bcast.prev = dyn;
+                dyn->Bcast.next = dyn;
             } else {
-                CEU_Dynamic* cur = *outer;
-                while (cur->Bcast.next != NULL) {
-                    cur = cur->Bcast.next;
-                }
-                cur->Bcast.next = dyn;
+                CEU_Dynamic* last = (*outer)->Bcast.prev;
+                last->Bcast.next = dyn;
+                dyn->Bcast.prev = last;
             }
         }
         void ceu_bcast_dequeue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
-            if (*outer == dyn) {
-                dyn->Bcast.next = NULL;
-                *outer = dyn->Bcast.next;
+            if (dyn == dyn->Bcast.next) {
+                *outer = NULL;
             } else {
-                CEU_Dynamic* cur = *outer;
-                while (cur->Bcast.next != NULL) {
-                    if (cur->Bcast.next == dyn) {
-                        CEU_Dynamic* tmp = cur->Bcast.next->Bcast.next;
-                        cur->Bcast.next->Bcast.next = NULL;
-                        cur->Bcast.next = tmp;
-                        break;
-                    }
-                    cur = cur->Bcast.next;
-                }
+                dyn->Bcast.prev->Bcast.next = dyn->Bcast.next;
+                dyn->Bcast.next->Bcast.prev = dyn->Bcast.prev;
             }
+            dyn->Bcast.prev = NULL;
+            dyn->Bcast.next = NULL;
         }
     """ +
     """ // BCAST_BLOCKS
@@ -998,7 +994,7 @@ fun Coder.main (): String {
             assert(coros != NULL);
             *coros = (CEU_Dynamic) {
                 CEU_VALUE_COROS, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coros = { max, 0, 0, NULL}
                     } }
                 }
@@ -1029,7 +1025,7 @@ fun Coder.main (): String {
             
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { NULL, NULL, frame }
                     } }
                 }
@@ -1071,7 +1067,7 @@ fun Coder.main (): String {
         
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, {coros->hold.block,NULL,NULL}, NULL, 0, 1, { // no free
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { coros, NULL, frame }
                     } }
                 }
@@ -1091,7 +1087,7 @@ fun Coder.main (): String {
             assert(trk != NULL);
             *trk = (CEU_Dynamic) {
                 CEU_VALUE_TRACK, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Track = coro
                     } }
                 }
