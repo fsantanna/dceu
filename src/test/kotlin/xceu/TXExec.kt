@@ -1807,6 +1807,9 @@ class TXExec {
     @Test
     fun comp1() {
         val out = all("""
+            func square (x) {
+                x**2
+            }
             var quad = square <|< square
             println(quad(3))
         """, true)
