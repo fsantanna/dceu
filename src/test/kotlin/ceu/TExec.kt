@@ -2254,11 +2254,8 @@ class TExec {
         val out = all("""
             var curry
             set curry = func (^fff) {
-                println(:1, ^fff)
                 func (^xxx) {
-                    println(:2, ^fff)
                     func (yyy) {
-                        println(:3, ^fff)
                         ^^fff(^^xxx,yyy)
                     }
                 }
@@ -2267,15 +2264,10 @@ class TExec {
             var f = func (a,b) {
                 [a,b]
             }
-            println(f(1,2))
-
             var f' = curry(f)
-            var iii = f'(1)
-            println(iii)
-            println(iii(2))
             println(f'(1)(2))
         """)
-        assert(out == "-3\n") { out }
+        assert(out == "[1,2]\n") { out }
     }
     @Test
     fun clo20() {
