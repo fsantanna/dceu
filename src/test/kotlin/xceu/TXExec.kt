@@ -1802,6 +1802,17 @@ class TXExec {
         assert(out == "#[[1]]\n") { out }
     }
 
+    // COMPOSITION
+
+    @Test
+    fun comp1() {
+        val out = all("""
+            var quad = square <|< square
+            println(quad(3))
+        """, true)
+        assert(out == "81\n") { out }
+    }
+
     // ALL
 
     @Test

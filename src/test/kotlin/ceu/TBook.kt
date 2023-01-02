@@ -193,7 +193,7 @@ class TBook {
         assert(out == "16\n") { out }
     }
     @Test
-    fun todo_pg_15_compose() {
+    fun pg_15_compose() {
         val out = all(
             """
             var compose

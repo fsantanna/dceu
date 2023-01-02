@@ -3,11 +3,14 @@ fun Pos.pre (): String {
 }
 
 fun Expr.tostr (pre: Boolean = false): String {
+    fun Tk.Id.tostr (): String {
+        return "^".repeat(this.upv) + this.str
+    }
     return when (this) {
-        is Expr.Proto  -> this.tk.str + " (" + this.args.map { it.str }.joinToString(",") + ") " + this.task?.first.cond{":fake "} + this.task?.second.cond{":awakes "} + this.body.tostr(pre)
+        is Expr.Proto  -> this.tk.str + " (" + this.args.map { it.tostr() }.joinToString(",") + ") " + this.task?.first.cond{":fake "} + this.task?.second.cond{":awakes "} + this.body.tostr(pre)
         is Expr.Block  -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Group  -> "group" + this.isHide.cond{" :hide"} + " {\n" + this.es.tostr(pre) + "}"
-        is Expr.Dcl    -> "var " + this.tk.str + this.src.cond { " = ${it.tostr(pre)}" }
+        is Expr.Dcl    -> "var " + this.tk_.tostr() + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.While  -> "while " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
@@ -27,7 +30,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Track  -> "track(" + this.coro.tostr(pre) + ")"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
-        is Expr.Acc    -> this.tk.str
+        is Expr.Acc    -> this.tk_.tostr()
         is Expr.EvtErr -> this.tk.str
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str

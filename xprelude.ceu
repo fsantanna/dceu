@@ -183,3 +183,11 @@ func tovector (v) {
         else -> throw(:TODO)
     }
 }
+
+;; composition
+
+func {<|<} (^f,^g) {
+    func (v) {
+        ^^f(^^g(v))
+    }
+}
