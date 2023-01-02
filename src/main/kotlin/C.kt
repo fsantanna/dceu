@@ -423,7 +423,6 @@ fun Coder.main (): String {
             switch (src->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
-#if 1
                     for (int i=0; i<src->Proto.upvs.n; i++) {
                         if (src->Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, src->Proto.upvs.buf[i].Dyn, isperm)) {
@@ -431,7 +430,6 @@ fun Coder.main (): String {
                             }
                         }
                     }
-#endif
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.n; i++) {
@@ -1219,6 +1217,15 @@ fun Coder.main (): String {
             CEU_Value* src = args[0];
             CEU_Dynamic* dyn = src->Dyn;
             switch (src->type) {
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
+                    dyn->isperm = 0;
+                    for (int i=0; i<dyn->Proto.upvs.n; i++) {
+                        CEU_Value* args[1] = { &dyn->Proto.upvs.buf[i] };
+                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
+                    }
+                    ceu_acc = *src;
+                    break;
                 case CEU_VALUE_TUPLE: {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Tuple.n; i++) {
@@ -1256,11 +1263,15 @@ fun Coder.main (): String {
             }
             return CEU_RET_RETURN;
         }
+        
         CEU_RET ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dynamic* old = src->Dyn;
             switch (src->type) {
+                case CEU_VALUE_FUNC:
+                case CEU_VALUE_TASK:
+                    assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
                     CEU_Value args1[old->Tuple.n];
                     for (int i=0; i<old->Tuple.n; i++) {

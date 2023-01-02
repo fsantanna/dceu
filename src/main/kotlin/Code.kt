@@ -318,6 +318,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }.joinToString("")
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
+                val isperm = if (id[0] == '_') 0 else 1
                 val dcl = ups.getDcl(this, this.tk.str)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -330,6 +331,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         else -> this.src.code() + "ceu_mem->$id = ceu_acc;"
                     }}
                     ceu_mem->_${id}_ = ${ups.first_block(this)!!.toc(true)};   // can't be static b/c recursion
+                    if (ceu_mem->${id}.type > CEU_VALUE_DYNAMIC) {
+                        ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_mem->${id}.Dyn, $isperm);
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    }
                     ${assrc("ceu_mem->$id")}
                 }
                 """

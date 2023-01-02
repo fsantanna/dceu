@@ -2287,6 +2287,69 @@ class TExec {
         """)
         assert(out == "[1,2]\n") { out }
     }
+    @Test
+    fun clo21() {
+        val out = all("""
+            var f = func (^a) {
+                func () {
+                    ^^a
+                }
+            }
+            var g = do {
+                var t = [1]
+                f(t)
+            }
+            println(g())
+        """)
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun tup22() {
+        val out = all("""
+            var g = do {
+                var t = [1]
+                [t]
+            }
+            println(g)
+        """)
+        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun clo23() {
+        val out = all("""
+            var f = func (^a) {
+                func () {
+                    ^^a
+                }
+            }
+            var g = do {
+                var t = [1]
+                move(f(t))
+            }
+            println(g())
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun todo_clo24_copy() {
+        val out = all("""
+            var f = func (^a) {
+                func () {
+                    ^^a
+                }
+            }
+            var g = do {
+                var t = [1]
+                var i = copy(f(t))
+                set t[0] = 10
+                move(i)
+            }
+            println(g())
+        """)
+        assert(out == "[1]\n") { out }
+    }
 
     // MISC
 
