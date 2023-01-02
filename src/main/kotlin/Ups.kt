@@ -26,7 +26,7 @@ class Ups (val outer: Expr.Block) {
     val upvs_vars_refs = mutableSetOf<Dcl>()
 
     // Set of uprefs within protos:
-    //  - for each ^^ACC, we get the enclosing PROTO and add ACC.ID to it
+    //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
     val upvs_protos_refs = mutableMapOf<Expr.Proto,MutableSet<String>>()
 
     init {
@@ -190,14 +190,17 @@ class Ups (val outer: Expr.Block) {
                         upvs_vars_refs.add(dcl) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
-                        val proto = first_proto(this)
-                        if (proto != null) {
-                            val set = upvs_protos_refs[proto] ?: mutableSetOf()
-                            set.add(this.tk.str)
-                            if (upvs_protos_refs[proto] == null) {
-                                upvs_protos_refs[proto] = set
+                        val proto = all_until(this) { dcl.blk==it }
+                            .drop(1)
+                            .filter { it is Expr.Proto }
+                            .let { it as List<Expr.Proto> }
+                            .forEach { proto ->
+                                val set = upvs_protos_refs[proto] ?: mutableSetOf()
+                                set.add(this.tk.str)
+                                if (upvs_protos_refs[proto] == null) {
+                                    upvs_protos_refs[proto] = set
+                                }
                             }
-                        }
                     }
                     // UPVS_PROTOS_NOCLOS
                     (dcl.blk!=outer && dcl.upv==0 && this.tk_.upv==0) -> {
