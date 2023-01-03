@@ -31,14 +31,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.non_fake_task_c (): String {
+    fun Expr.non_fake_task_c (): String? {
         val n = ups.all_until(this) {
             it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
         }.filter {
             it is Expr.Proto    // but count all protos in between
-        }.drop(1)           // skip the "non-crossing one"
+        }//.drop(1)           // skip the "non-crossing one"
         .count()
-        return "(ceu_frame${"->proto->up".repeat(n)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n-1)})"
     }
 
     fun Expr.gcall (): Boolean {
@@ -468,8 +468,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val task = ups.first_proto(this)
                 val intask = (ups.first_proto(this)?.tk?.str == "task")
+                val oktask = this.non_fake_task_c()
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code()}
@@ -488,8 +488,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${if (intask) {
-                                "ceu_ret = ceu_bcast_dyn(${this.non_fake_task_c()}->Task.coro, &ceu_mem->evt_$n);"
+                            ${if (intask && oktask!=null) {
+                                "ceu_ret = ceu_bcast_dyn(${oktask}->Task.coro, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}

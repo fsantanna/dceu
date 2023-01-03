@@ -1322,11 +1322,30 @@ class TTask {
                     nil
                 }
                 set yyy = xxx
+                nil ;; otherwise scope err for yyy/xxx
             }
             println(1)
         """
         )
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun poolX_scope() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () { yield(nil) }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            while in :coros ts, xxx {
+                xxx
+            }
+            println(1)
+        """
+        )
+        assert(out == "anon : (lin 7, col 13) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun pool14_max_err() {
