@@ -212,6 +212,7 @@ fun Coder.main (): String {
                 } Dict;
                 struct {
                     enum CEU_CORO_STATUS status;
+                    struct CEU_Dynamic* prev;           // to relink on set/move/remove
                     struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
                     union {
                         struct {
@@ -1008,7 +1009,7 @@ fun Coder.main (): String {
             assert(coros != NULL);
             *coros = (CEU_Dynamic) {
                 CEU_VALUE_COROS, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coros = { max, 0, 0, NULL}
                     } }
                 }
@@ -1039,7 +1040,7 @@ fun Coder.main (): String {
             
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { NULL, NULL, frame }
                     } }
                 }
@@ -1081,7 +1082,7 @@ fun Coder.main (): String {
         
             *coro = (CEU_Dynamic) {
                 CEU_VALUE_CORO, {coros->hold.block,NULL,NULL}, NULL, 0, 1, { // no free
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { coros, NULL, frame }
                     } }
                 }
@@ -1101,7 +1102,7 @@ fun Coder.main (): String {
             assert(trk != NULL);
             *trk = (CEU_Dynamic) {
                 CEU_VALUE_TRACK, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Track = coro
                     } }
                 }
