@@ -453,6 +453,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${this.body.code()}
                         ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
+                        if (ceu_mem->$loc.Dyn == ceu_mem->coros_$n.Dyn->Bcast.Coros.first) {
+                            continue; // escape enclosing block
+                        }
                         goto CEU_ITER_$n;
                     } while (0); // iter
                     assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in iter");

@@ -676,13 +676,17 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyns (CEU_Dynamic* fst, CEU_Value* evt) {
+            CEU_Dynamic* cur = fst;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 if (ceu_bcast_dyn(cur,evt) == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
+                if (cur == fst) {
+                    break;
+                }
             }
             return CEU_RET_RETURN;
         }
@@ -692,22 +696,15 @@ fun Coder.main (): String {
             if (coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
                 return;
             }
-            CEU_Dynamic* cur = coros->Bcast.Coros.first;
-            if (cur == coro) {
-                coros->Bcast.Coros.first = coro->Bcast.next;
+            if (coro == coros->Bcast.Coros.first) {
+                coros->Bcast.Coros.first = NULL;
             } else {
-                CEU_Dynamic* prv = cur;
-                while (prv != NULL) {
-                    if (prv->Bcast.next == coro) {
-                        break;
-                    }
-                    prv = prv->Bcast.next;
-                }
-                cur = prv->Bcast.next;
-                prv->Bcast.next = coro->Bcast.next;
+                coro->Bcast.prev->Bcast.next = coro->Bcast.next;
+                coro->Bcast.next->Bcast.prev = coro->Bcast.prev;
             }
-            assert(cur == coro);
-            cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
+            coro->Bcast.prev = NULL;
+            coro->Bcast.next = NULL;
+            coro->Bcast.status = CEU_CORO_STATUS_DESTROYED;
             if (ceu_bcasting == 0) {
                 // pending bcast inside coro, let it free later
                 free(coro->Bcast.Coro.frame->mem);
@@ -721,7 +718,8 @@ fun Coder.main (): String {
         }
         
         void ceu_coros_cleanup (CEU_Dynamic* coros) {
-            CEU_Dynamic* cur = coros->Bcast.Coros.first;
+            CEU_Dynamic* fst = coros->Bcast.Coros.first;
+            CEU_Dynamic* cur = fst;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next;
                 if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
@@ -729,6 +727,9 @@ fun Coder.main (): String {
                     ceu_coros_destroy(coros, cur);
                 }
                 cur = nxt;
+                if (cur == fst) {
+                    break;
+                }
             }
         }
     """ +
