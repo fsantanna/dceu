@@ -249,7 +249,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,NULL} };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
                     ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
@@ -288,7 +288,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }
                             { // cleanup active nested spawns in this block
                                 ceu_bcasting++;
-                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
+                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
                                 ceu_bcasting--;
                                 ceu_bcast_free();
                             }
@@ -447,7 +447,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines");
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
-                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
+                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.list.first} };
                     ceu_ret = CEU_RET_RETURN;
                     do { // iter
                 CEU_ITER_$n:;
