@@ -449,8 +449,24 @@ class TXExec {
                 }
                 println(999)
             } ()
-             broadcast in :global, nil
-             broadcast in :global, 1
+            broadcast in :global, nil
+            broadcast in :global, 1
+        """, true)
+        assert(out == "1\n2\n999\n") { out }
+    }
+    @Test
+    fun watchingX() {
+        val out = all("""
+            spawn task () :awakes {
+                var xxx
+                var t = spawn task () {
+                    set xxx = defer { println(2) }
+                    println(:111, xxx)
+                    xxx
+                }()
+                await :check.now t.status>=:terminated
+                xxx
+            } ()
         """, true)
         assert(out == "1\n2\n999\n") { out }
     }

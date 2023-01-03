@@ -50,7 +50,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.isdst (): Boolean {
         return ups.ups[this].let { it is Expr.Set && it.dst==this }
     }
-    fun Expr.asdst (): String {
+    fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.ups[this] as Expr.Set).n})"
     }
     fun Expr.assrc (v: String): String {
@@ -593,14 +593,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """
                     } else {
-                        val asdst = this.asdst()
+                        val src = this.asdst_src()
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto).body.n 
                         """ // PUB - SET
-                        if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $asdst.Dyn, 1);
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $src.Dyn, 1);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst;
+                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $src;
                         """
                     }}
                     CEU_PUB_$n:;
@@ -689,7 +689,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
-                    val asdst = this.asdst()
+                    val src = this.asdst_src()
                     ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
@@ -697,11 +697,11 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
-                        if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $asdst.Dyn, $isperm);
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ${this.id2c(dcl,this.tk_.upv)} = $asdst;
+                        ${this.id2c(dcl,this.tk_.upv)} = $src;
                     }
                     """
                 }
@@ -847,22 +847,22 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """                        
                     } else {
-                        val asdst = this.asdst()
+                        val src = this.asdst_src()
                         """
-                        if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold, $asdst.Dyn, 0);
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold, $src.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst;
+                                ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $src;
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $asdst);
+                                ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_acc;
-                                assert(CEU_RET_RETURN == ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$asdst));
+                                assert(CEU_RET_RETURN == ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$src));
                                 break;
                             }
                             default:
