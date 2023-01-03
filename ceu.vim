@@ -13,7 +13,7 @@ set cpo&vim
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
 syn keyword Statement   nil set throw var native copy move template
-syn keyword Statement   break catch defer do else func group in if ifs is isnot
+syn keyword Statement   break catch defer do else func in if ifs is isnot
 syn keyword Statement   track task spawn resume yield toggle broadcast pub
 syn keyword Statement   coroutine coroutines while where
 syn keyword Statement   not and or

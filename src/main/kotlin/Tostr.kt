@@ -6,10 +6,17 @@ fun Expr.tostr (pre: Boolean = false): String {
     fun Tk.Id.tostr (): String {
         return "^".repeat(this.upv) + this.str
     }
+    fun Expr.Do.anns (): String {
+        return when {
+             this.isnest &&  this.ishide -> ""
+            !this.isnest && !this.ishide -> ":unnest "
+            !this.isnest &&  this.ishide -> ":unnest :hide "
+            else -> error("bug found")
+        }
+    }
     return when (this) {
         is Expr.Proto  -> this.tk.str + " (" + this.args.map { it.tostr() }.joinToString(",") + ") " + this.task?.first.cond{":fake "} + this.task?.second.cond{":awakes "} + this.body.tostr(pre)
-        is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
-        is Expr.Group  -> "group" + this.isHide.cond{" :hide"} + " {\n" + this.es.tostr(pre) + "}"
+        is Expr.Do     -> (this.tk.str=="do").cond{"do "} + this.anns() + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> "var " + this.tk_.tostr() + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)

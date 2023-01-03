@@ -1,6 +1,6 @@
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
-        val s = if (this[i].let { it is Expr.Do || (it is Expr.Group && it.isHide) }) "union" else "struct"
+        val s = if (this[i].let { it is Expr.Do && it.ishide }) "union" else "struct"
         """
             $s {
                 ${this[i].mem()}
@@ -15,11 +15,6 @@ fun Expr.mem (): String {
         is Expr.Do -> """
             struct { // BLOCK
                 CEU_Block block_$n;
-                ${es.seq(0)}
-            };
-        """
-        is Expr.Group -> """
-            struct { // GROUP
                 ${es.seq(0)}
             };
         """

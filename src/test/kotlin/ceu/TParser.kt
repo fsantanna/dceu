@@ -450,26 +450,26 @@ class TParser {
 
     @Test
     fun group1_err() {
-        val l = lexer("group :x {}")
+        val l = lexer("do :x {}")
         val parser = Parser(l)
         //assert(trap { parser.exprPrim() } == "anon : (lin 1, col 1) : invalid group : unexpected \":x\"")
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 7) : expected \"{\" : have \":x\"")
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 4) : expected \"{\" : have \":x\"")
     }
     @Test
     fun group2() {
-        val l = lexer("group :hide { 1 ; 2 }")
+        val l = lexer("do :unnest { 1 ; 2 }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Group && e.es.size==2)
-        assert(e.tostr() == "group :hide {\n1\n2\n}") { e.tostr() }
+        assert(e is Expr.Do && e.es.size==2)
+        assert(e.tostr() == "do :unnest {\n1\n2\n}") { e.tostr() }
     }
     @Test
     fun group3() {
-        val l = lexer("group { x; y; z; }")
+        val l = lexer("do :unnest :hide { x; y; z; }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Group && e.es.size==3)
-        assert(e.tostr() == "group {\nx\ny\nz\n}") { e.tostr() }
+        assert(e is Expr.Do && e.es.size==3)
+        assert(e.tostr() == "do :unnest :hide {\nx\ny\nz\n}") { e.tostr() }
     }
 
     // FUNC

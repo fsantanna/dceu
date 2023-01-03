@@ -122,13 +122,7 @@ class Ups (val outer: Expr.Do) {
                 this.body.traverse()
             }
             is Expr.Do -> {
-                if (this != outer) {
-                    xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
-                }
-                this.es.forEach { it.traverse() }
-            }
-            is Expr.Group -> {
-                if (this.isHide) {
+                if (this!=outer && this.ishide) {
                     xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
                 this.es.forEach { it.traverse() }
@@ -136,7 +130,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Dcl -> {
                 this.src?.traverse()
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = first(this) { it is Expr.Do || (it is Expr.Group && it.isHide) }!!
+                val bup = first(this) { it is Expr.Do && it.ishide }!!
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup.syms[id] = Dcl(id, this.tk_.upv, bup)
@@ -233,8 +227,7 @@ class Ups (val outer: Expr.Do) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
-            is Expr.Do  -> this.map(this.es)
-            is Expr.Group  -> this.map(this.es)
+            is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))

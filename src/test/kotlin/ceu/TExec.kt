@@ -661,7 +661,7 @@ class TExec {
             var v
             set v = #[1,2,3]
             var x
-            set x = group :hide {
+            set x = do :unnest :hide {
                 var i
                 set i = v[#v-1]
                 set v[#v-1] = nil
@@ -873,11 +873,11 @@ class TExec {
     @Test
     fun group1() {
         val out = all("""
-            group {
+            do :unnest {
                 var a
                 set a = 10
             }
-            group {
+            do :unnest {
                 var x
                 set x = a
             }
@@ -888,7 +888,7 @@ class TExec {
     @Test
     fun group2_err() {
         val out = all("""
-            group :hide {
+            do :unnest :hide {
                 var a       ;; invisible
                 set a = 10
             }
@@ -902,7 +902,7 @@ class TExec {
     fun group3() {
         val out = all("""
             var x
-            set x = group :hide {
+            set x = do :unnest :hide {
                 var a       ;; invisible
                 set a = []
                 a

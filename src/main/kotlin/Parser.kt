@@ -163,8 +163,7 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk0, true, true, es)
     }
 
-    fun catch_block (): Pair<(Expr)->Expr,Expr.Do> {
-        val tk0 = if (this.tk0.str=="do") this.tk0 else this.tk1
+    fun catch_block (tk0: Tk, isnest:Boolean=true, ishide:Boolean=true): Pair<(Expr)->Expr,Expr.Do> {
         this.acceptFix_err("{")
         val cnd = if (!XCEU || !this.acceptFix("{")) null else {
             val cnd = this.expr()
@@ -173,13 +172,13 @@ class Parser (lexer_: Lexer)
         }
         val es = this.exprs()
         this.acceptFix_err("}")
-        val blk = Expr.Do(tk0, true, true, es)
+        val blk = Expr.Do(tk0, isnest, ishide, es)
         if (cnd == null) {
             return Pair({it}, blk)
         } else {
             val catch: (Expr)->Expr = {
                 val xcnd = this.nest("(err == ${cnd.tostr(true)})")
-                Expr.Catch(tk0 as Tk.Fix, xcnd, if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it)))
+                Expr.Catch(tk0 as Tk.Fix, xcnd, if (it is Expr.Do) it else Expr.Do(tk0, isnest, ishide, listOf(it)))
             }
             return Pair(catch, blk)
         }
@@ -195,12 +194,19 @@ class Parser (lexer_: Lexer)
 
     fun exprPrim (): Expr {
         return when {
-            this.acceptFix("do") -> this.catch_block().let { (C,b)->C(b) }
-            this.acceptFix("group") -> {
-                val tk0  = this.tk0 as Tk.Fix
-                val isHide = this.acceptTag(":hide")
-                val blk = this.block()
-                Expr.Group(tk0, isHide, blk.es)
+            this.acceptFix("do") -> {
+                val tk0 = this.tk0
+                val unnest = this.acceptTag(":unnest")
+                val hide = this.acceptTag(":hide")
+                val (isnest,ishide) = when {
+                    (unnest && hide) -> Pair(false, true)
+                    unnest -> Pair(false, false)
+                    else -> {
+                        assert(!hide)
+                        Pair(true, true)
+                    }
+                }
+                this.catch_block(tk0,isnest,ishide).let { (C,b)->C(b) }
             }
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
@@ -215,7 +221,7 @@ class Parser (lexer_: Lexer)
                 val dst = this.expr()
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (!XCEU || dst !is Expr.Group) {
+                if (!XCEU || !(dst is Expr.Do && !dst.isnest)) {
                     if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                         err(tk0, "invalid set : invalid destination")
                     }
@@ -251,7 +257,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 if (!this.acceptFix("in")) {
                     val cnd = this.expr()
-                    this.catch_block().let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
+                    this.catch_block(this.tk1).let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
                 } else {
                     this.acceptEnu_err("Tag")
                     val tktag = this.tk0 as Tk.Tag
@@ -273,7 +279,7 @@ class Parser (lexer_: Lexer)
                         this.acceptEnu_err("Id")
                         Pair(this.tk0 as Tk.Id, null)
                     }
-                    this.catch_block().let { (C,b) ->
+                    this.catch_block(this.tk1).let { (C,b) ->
                         when {
                             tktag.str == ":coros" -> {
                                 C(Expr.CsIter(tk0, i, col,
@@ -289,7 +295,7 @@ class Parser (lexer_: Lexer)
                                             set ${i.str} = resume ceu_col_$N(${i.str})
                                             var ceu_stop_$N = (ceu_col_$N.status >= :terminated)
                                             if not ceu_stop_$N {
-                                                set ${i.str} = group {
+                                                set ${i.str} = do :unnest {
                                                     ${b.es.tostr(true)}
                                                 }
                                             }
@@ -347,7 +353,7 @@ class Parser (lexer_: Lexer)
                 val task = if (tk0.str == "func") null else {
                     Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
                 }
-                val body = this.catch_block().let { (C,b) -> C(b) }.let {
+                val body = this.catch_block(this.tk1).let { (C,b) -> C(b) }.let {
                     if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it))
                 }
                 val proto = Expr.Proto(tk0, task, args, body)
@@ -378,7 +384,7 @@ class Parser (lexer_: Lexer)
                         val coros = this.expr()
                         this.acceptFix_err(",")
                         val call = this.expr()
-                        if (call !is Expr.Call && !(call is Expr.Group && call.es.last() is Expr.Call)) {
+                        if (call !is Expr.Call && !((call is Expr.Do && !call.isnest) && call.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, coros, call)
@@ -392,7 +398,7 @@ class Parser (lexer_: Lexer)
                     }
                     else -> {
                         val call = this.expr()
-                        if (call !is Expr.Call && !(call is Expr.Group && call.es.last() is Expr.Call)) {
+                        if (call !is Expr.Call && !((call is Expr.Do && !call.isnest) && call.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, null, call)
@@ -552,7 +558,7 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("until")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val (C,cnd) = this.catch_block()
+                val (C,cnd) = this.catch_block(this.tk1)
                 C(this.nest("""
                     ${pre0}do {
                         var ceu_$N
@@ -600,7 +606,7 @@ class Parser (lexer_: Lexer)
                     }
                     (cnd != null) -> {  // await evt==x
                         this.nest("""
-                            ${pre0}group {
+                            ${pre0}do :unnest {
                                 ${pre0}${(!now).cond { "yield ()" }}
                                 until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
@@ -758,19 +764,19 @@ class Parser (lexer_: Lexer)
                         if (isclose) {
                             when (op.str) {
                                 "=" -> this.nest("""
-                                    group :hide { 
+                                    do :unnest :hide { 
                                         var _ceu_col_$N = ${e.tostr(true)}
                                         _ceu_col_$N[(#_ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
-                                    group :hide { 
+                                    do :unnest :hide { 
                                         var _ceu_col_$N = ${e.tostr(true)}
                                         _ceu_col_$N[#_ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
-                                    group :hide { 
+                                    do :unnest :hide { 
                                         var _ceu_col_$N = ${e.tostr(true)}
                                         var ceu_i_$N = _ceu_col_$N[(#_ceu_col_$N)-1]
                                         set _ceu_col_$N[(#_ceu_col_$N)-1] = nil
@@ -862,7 +868,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0
                 val body = this.block()
                 this.nest("""
-                    ${tk0.pos.pre()}group :hide {
+                    ${tk0.pos.pre()}do :unnest :hide {
                         ${body.es.tostr(true)}
                         ${e.tostr(true)}
                     }

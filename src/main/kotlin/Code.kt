@@ -235,91 +235,106 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Do -> {
-                val up = ups.ups[this]
-                val bup = up?.let { ups.first_block(it) }
-                val f_b = up?.let { ups.first_proto_or_block(it) }
-                val depth = when {
-                    (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
-                    else -> "(${bup!!.toc(false)}.depth + 1)"
-                }
-                val es = this.es.mapIndexed { i, it ->
-                    it.code()
-                }.joinToString("")
-                val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
-                """
-                { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
-                    ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
-                        " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
+                if (!this.isnest) {
+                    this.es.mapIndexed { i, it ->
+                        it.code()
+                    }.joinToString("")
+                } else {
+                    val up = ups.ups[this]
+                    val bup = up?.let { ups.first_block(it) }
+                    val f_b = up?.let { ups.first_proto_or_block(it) }
+                    val depth = when {
+                        (f_b == null) -> "(0 + 1)"
+                        (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
+                        else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
-                    ${(f_b is Expr.Do).cond {
-                        "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"}
-                    }
-                    do { // block
-                        $es
-                    } while (0); // block
-                    if (ceu_ret == CEU_RET_THROW) {
-                        // must be before frees
-                        ${(f_b == null).cond {"ceu_error_list_print();" }}
-                    }
-                    { // ceu_ret/ceu_acc: save/restore
-                        CEU_RET   ceu_ret_$n = ceu_ret;
-                        CEU_Value ceu_acc_$n = ceu_acc;
-                        {
-                            { // move up dynamic ceu_acc (return or error)
-                                ${(f_b != null).cond {
-                                    val up1 = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
-                                    """
-                                    ${(f_b!!.tk.str=="task").cond {
-                                        "ceu_mem->block_$n.ispub = 0;"
-                                    }}
-                                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_ret = ceu_block_set($up1, ceu_acc.Dyn, 0);
-                                        if (ceu_ret == CEU_RET_THROW) {
-                                            CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                            // prioritize scope error over whatever there is now
-                                            ceu_acc_$n = ceu_acc;
-                                        }
-                                        ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
-                                    }
-                                    """
-                                }}
-                            }
-                            { // cleanup active nested spawns in this block
-                                ceu_bcasting++;
-                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
-                                ceu_bcasting--;
-                                ceu_bcast_free();
-                            }
-                            { // DEFERS ${this.tk.dump()}
-                                ceu_ret = CEU_RET_RETURN;
-                                ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
-                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
-                                    ceu_acc_$n = ceu_acc;
-                                }
-                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
-                            }
-                            { // relink blocks
-                                ${(f_b is Expr.Do).cond{
-                                    "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
-                                }}
-                                ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
-                                    "ceu_coro->Bcast.Coro.block = NULL;"
-                                }}
-                                ceu_dyns_free(ceu_mem->block_$n.tofree);
+                    val es = this.es.mapIndexed { i, it ->
+                        it.code()
+                    }.joinToString("")
+                    val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
+                    """
+                    { // BLOCK ${this.tk.dump()}
+                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
+                        ${
+                            (f_b is Expr.Proto && f_b.tk.str == "task").cond {
+                                " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"
                             }
                         }
-                        ceu_acc = ceu_acc_$n;
-                        ceu_ret = ceu_ret_$n;
-                        CEU_CONTINUE_ON_CLEAR_THROW();
-                    } // ceu_ret/ceu_acc: save/restore
+                        ${
+                            (f_b is Expr.Do).cond {
+                                "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"
+                            }
+                        }
+                        do { // block
+                            $es
+                        } while (0); // block
+                        if (ceu_ret == CEU_RET_THROW) {
+                            // must be before frees
+                            ${(f_b == null).cond { "ceu_error_list_print();" }}
+                        }
+                        { // ceu_ret/ceu_acc: save/restore
+                            CEU_RET   ceu_ret_$n = ceu_ret;
+                            CEU_Value ceu_acc_$n = ceu_acc;
+                            {
+                                { // move up dynamic ceu_acc (return or error)
+                                    ${
+                                        (f_b != null).cond {
+                                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                            """
+                                            ${
+                                                (f_b!!.tk.str == "task").cond {
+                                                    "ceu_mem->block_$n.ispub = 0;"
+                                                }
+                                            }
+                                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                                ceu_ret = ceu_block_set($up1, ceu_acc.Dyn, 0);
+                                                if (ceu_ret == CEU_RET_THROW) {
+                                                    CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                                    // prioritize scope error over whatever there is now
+                                                    ceu_acc_$n = ceu_acc;
+                                                }
+                                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                                            }
+                                            """
+                                            }
+                                    }
+                                }
+                                { // cleanup active nested spawns in this block
+                                    ceu_bcasting++;
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
+                                    ceu_bcasting--;
+                                    ceu_bcast_free();
+                                }
+                                { // DEFERS ${this.tk.dump()}
+                                    ceu_ret = CEU_RET_RETURN;
+                                    ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                                    if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                        ceu_acc_$n = ceu_acc;
+                                    }
+                                    ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                                }
+                                { // relink blocks
+                                    ${
+                                        (f_b is Expr.Do).cond {
+                                            "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
+                                        }
+                                    }
+                                    ${
+                                        (f_b is Expr.Proto && f_b.tk.str == "task").cond {
+                                            "ceu_coro->Bcast.Coro.block = NULL;"
+                                        }
+                                    }
+                                    ceu_dyns_free(ceu_mem->block_$n.tofree);
+                                }
+                            }
+                            ceu_acc = ceu_acc_$n;
+                            ceu_ret = ceu_ret_$n;
+                            CEU_CONTINUE_ON_CLEAR_THROW();
+                        } // ceu_ret/ceu_acc: save/restore
+                    }
+                    """
                 }
-                """
             }
-            is Expr.Group -> this.es.mapIndexed { i,it ->
-                it.code()
-            }.joinToString("")
             is Expr.Dcl -> {
                 val id = this.tk_.fromOp().noSpecial()
                 val isperm = if (id[0] == '_') 0 else 1
@@ -891,7 +906,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val resume = ups.all_until(up) { it is Expr.Resume }.let { es ->
                     when {
                         es.isEmpty() -> null
-                        es.drop(1).all { it is Expr.Group } -> es.first() as Expr.Resume
+                        es.drop(1).all { it is Expr.Do && !it.isnest } -> es.first() as Expr.Resume
                         else -> null
                     }
                 }
@@ -899,7 +914,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     when {
                         es.isEmpty() -> null
                         es.drop(1).all { grp ->
-                            (grp is Expr.Group) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
+                            (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
                         } -> es.first() as Expr.Spawn
                         else -> null
                     }

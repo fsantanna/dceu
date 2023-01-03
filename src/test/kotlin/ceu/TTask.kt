@@ -458,7 +458,7 @@ class TTask {
                 println(v)
             }
             var t
-            set t = group :hide {
+            set t = do :unnest :hide {
                 var v
                 set v = 10
                 spawn T(v)  
@@ -469,16 +469,16 @@ class TTask {
     @Test
     fun group2() {
         val out = all("""
-            group {
+            do :unnest {
                 var T
                 set T = task (v) {
                     println(v)
                 }
             }
-            group {
+            do :unnest {
                 var t
-                set t = spawn group :hide {
-                    group {
+                set t = spawn do :unnest :hide {
+                    do :unnest {
                         var v
                         set v = 10
                     }
@@ -497,7 +497,7 @@ class TTask {
                 nil
             }
             spawn task () :fake {
-                group :hide {
+                do :unnest :hide {
                     f()
                 }
             }()

@@ -121,7 +121,7 @@ class TXJS {
     @Test
     fun x4() {
         val out = all("""
-            group { ;; mock functions
+            do :unnest { ;; mock functions
                 task fetch (url) {
                     if url == :error {
                         throw(:error)
