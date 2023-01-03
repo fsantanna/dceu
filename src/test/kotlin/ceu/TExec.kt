@@ -2417,7 +2417,17 @@ class TExec {
         """)
         assert(out == "3\n") { out }
     }
-
+    @Test
+    fun gc7() {
+        val out = all("""
+            var f = func (v) {
+                v
+            }
+            println(#(#[f([1])]))
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
 
     // MISC
 
