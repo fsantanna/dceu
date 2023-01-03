@@ -62,6 +62,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     }
 
     fun Expr.code(): String {
+        if (this.isdst()) {
+            assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
+        }
         return when (this) {
             is Expr.Proto -> {
                 val isfunc = (this.tk.str == "func")
@@ -265,13 +268,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         {
                             { // move up dynamic ceu_acc (return or error)
                                 ${(f_b != null).cond {
-                                    val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                    val up1 = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
                                     ${(f_b!!.tk.str=="task").cond {
                                         "ceu_mem->block_$n.ispub = 0;"
                                     }}
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                        ceu_ret = ceu_block_set($up1, ceu_acc.Dyn, 0);
                                         if (ceu_ret == CEU_RET_THROW) {
                                             CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                             // prioritize scope error over whatever there is now
@@ -398,7 +401,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_THROW_DO_MSG(ceu_acc, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception");
                 }
                 """
-            is Expr.Defer -> { ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code()); "" }
+            is Expr.Defer -> {
+                ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code())
+                assrc("((CEU_Value) { CEU_VALUE_NIL })")
+            }
 
             is Expr.Coros -> {
                 """

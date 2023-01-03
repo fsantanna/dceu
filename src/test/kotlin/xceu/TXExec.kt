@@ -457,18 +457,17 @@ class TXExec {
     @Test
     fun watchingX() {
         val out = all("""
-            spawn task () :awakes {
+            do {
                 var xxx
                 var t = spawn task () {
                     set xxx = defer { println(2) }
                     println(:111, xxx)
                     xxx
                 }()
-                await :check.now t.status>=:terminated
                 xxx
-            } ()
+            }
         """, true)
-        assert(out == "1\n2\n999\n") { out }
+        assert(out == ":111\tnil\n2\n") { out }
     }
     @Test
     fun watching6_clk() {
