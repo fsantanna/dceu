@@ -186,10 +186,10 @@ fun Coder.main (): String {
     """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
             CEU_VALUE type;                 // required to switch over free/bcast
-            struct {                            // NOT CYCLE
-                struct CEU_Block*    block;     // holding block to compare on set/move
-                struct CEU_Dynamic** prev;      // for relink when refcount=0
-                struct CEU_Dynamic*  next;      // next dyn to free (not used by coro in coros)
+            struct {                        // NOT CYCLE
+                struct CEU_Block*   block;      // holding block to compare on set/move
+                struct CEU_Dynamic* prev;       // for relink when refcount=0
+                struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
             } hold;
             struct CEU_Tags_List* tags;     // linked list of tags
             int refs;                       // number of refs to it (free when 0)
@@ -434,6 +434,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
+#if 0
         void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
             src->hold.prev = &dst->tofree;
             src->hold.next = dst->tofree;
@@ -453,7 +454,32 @@ fun Coder.main (): String {
             dyn->hold.prev  = NULL;
             dyn->hold.next  = NULL;
         }
-K
+#else
+        void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
+            src->hold.prev = NULL;
+            src->hold.next = dst->tofree;
+            if (dst->tofree != NULL) {
+                dst->tofree->hold.prev = src;
+            }
+            dst->tofree = src;
+            src->hold.block = dst;
+        }
+        void ceu_hold_rem (CEU_Dynamic* dyn) {
+            if (dyn->hold.prev != NULL) {
+                dyn->hold.prev->hold.next = dyn->hold.next;
+            }
+            if (dyn->hold.next != NULL) {
+                dyn->hold.next->hold.prev = dyn->hold.prev;
+            }
+            if (dyn->hold.block->tofree == dyn) {
+                dyn->hold.block->tofree = dyn->hold.next;
+            }
+            dyn->hold.block = NULL;
+            dyn->hold.prev  = NULL;
+            dyn->hold.next  = NULL;
+        }
+#endif
+
         void ceu_dyn_free (CEU_Dynamic* dyn) {
             switch (dyn->type) {
                 case CEU_VALUE_FUNC:
