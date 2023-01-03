@@ -2352,6 +2352,73 @@ class TExec {
         assert(out == "[1]\n") { out }
     }
 
+    //  MEM-GC-REF-COUNT
+
+    @Test
+    fun gc1() {
+        val out = all("""
+            var xxx = []
+            set xxx = []
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc2() {
+        val out = all("""
+            []
+            []
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun gc3_cycle() {
+        val out = all("""
+            var x = [nil]
+            var y = [x]
+            set x[0] = y
+            set x = nil
+            set y = nil
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "0\n") { out }
+    }
+    @Test
+    fun gc4() {
+        val out = all("""
+            var x = []
+            var y = [x]
+            set x = nil
+            println(`:number ceu_gc_count`)
+            set y = nil
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "0\n2\n") { out }
+    }
+    @Test
+    fun gc5() {
+        val out = all("""
+            var x = []
+            do {
+                var y = x
+            }
+            set x = nil
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc6() {
+        val out = all("""
+            var x = [[],[]]
+            set x = nil
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "3\n") { out }
+    }
+
+
     // MISC
 
     @Test

@@ -144,6 +144,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                             ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
+                                        ceu_gc_inc(ceu_args[ceu_i]);
                                         ceu_mem->$id = *ceu_args[ceu_i];
                                     } else {
                                         ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
@@ -338,6 +339,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_mem->${id}.Dyn, $isperm);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
+                    ceu_gc_inc(&ceu_mem->${id});
                     ${assrc("ceu_mem->$id")}
                 }
                 """
@@ -606,6 +608,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $src.Dyn, 1);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
+                        ceu_gc_inc(&$src);
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->Task.pub);
                         ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $src;
                         """
                     }}
@@ -707,6 +711,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
+                        ceu_gc_inc(&$src);
+                        ceu_gc_dec(&${this.id2c(dcl,this.tk_.upv)});
                         ${this.id2c(dcl,this.tk_.upv)} = $src;
                     }
                     """

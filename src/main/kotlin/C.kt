@@ -803,6 +803,8 @@ fun Coder.main (): String {
         void ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Vector.n-1);
+                assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
+                ceu_gc_dec(&ceu_acc);
                 vec->Vector.n--;
             } else {
                 if (i == 0) {
@@ -817,9 +819,13 @@ fun Coder.main (): String {
                         vec->Vector.mem = realloc(vec->Vector.mem, vec->Vector.max*sz + 1);
                         assert(vec->Vector.mem != NULL);
                     }
+                    ceu_gc_inc(&v);
                     vec->Vector.n++;
                     vec->Vector.mem[sz*vec->Vector.n] = '\0';
                 } else {                            // set
+                    assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
+                    ceu_gc_inc(&v);
+                    ceu_gc_dec(&ceu_acc);
                     assert(i < vec->Vector.n);
                 }
                 memcpy(vec->Vector.mem + i*sz, (char*)&v.Number, sz);
@@ -885,9 +891,18 @@ fun Coder.main (): String {
             }
             assert(old != -1);
             
+            CEU_Value vv = ceu_dict_get(col, key);
+            
             if (val->type == CEU_VALUE_NIL) {
+                ceu_gc_dec(&vv);
+                ceu_gc_dec(key);
                 (*col->Dict.mem)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
             } else {
+                ceu_gc_inc(val);
+                ceu_gc_dec(&vv);
+                if (vv.type == CEU_VALUE_NIL) {
+                    ceu_gc_inc(key);
+                }
                 (*col->Dict.mem)[old][0] = *key;
                 (*col->Dict.mem)[old][1] = *val;
             }
