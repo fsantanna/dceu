@@ -31,14 +31,14 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
         }
     }
 
-    fun Expr.non_fake_task_c (): String {
+    fun Expr.non_fake_task_c (): String? {
         val n = ups.all_until(this) {
             it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
         }.filter {
             it is Expr.Proto    // but count all protos in between
-        }.drop(1)           // skip the "non-crossing one"
+        }//.drop(1)           // skip the "non-crossing one"
         .count()
-        return "(ceu_frame${"->proto->up".repeat(n)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n-1)})"
     }
 
     fun Expr.gcall (): Boolean {
@@ -50,7 +50,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     fun Expr.isdst (): Boolean {
         return ups.ups[this].let { it is Expr.Set && it.dst==this }
     }
-    fun Expr.asdst (): String {
+    fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.ups[this] as Expr.Set).n})"
     }
     fun Expr.assrc (v: String): String {
@@ -62,6 +62,9 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
     }
 
     fun Expr.code(): String {
+        if (this.isdst()) {
+            assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
+        }
         return when (this) {
             is Expr.Proto -> {
                 val isfunc = (this.tk.str == "func")
@@ -246,7 +249,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,NULL} };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str=="task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
                     ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
@@ -266,13 +269,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         {
                             { // move up dynamic ceu_acc (return or error)
                                 ${(f_b != null).cond {
-                                    val up = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                    val up1 = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
                                     """
                                     ${(f_b!!.tk.str=="task").cond {
                                         "ceu_mem->block_$n.ispub = 0;"
                                     }}
                                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_ret = ceu_block_set($up, ceu_acc.Dyn, 0);
+                                        ceu_ret = ceu_block_set($up1, ceu_acc.Dyn, 0);
                                         if (ceu_ret == CEU_RET_THROW) {
                                             CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                             // prioritize scope error over whatever there is now
@@ -285,7 +288,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                             }
                             { // cleanup active nested spawns in this block
                                 ceu_bcasting++;
-                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.dyn, &CEU_EVT_CLEAR));
+                                assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
                                 ceu_bcasting--;
                                 ceu_bcast_free();
                             }
@@ -400,7 +403,10 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     CEU_THROW_DO_MSG(ceu_acc, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception");
                 }
                 """
-            is Expr.Defer -> { ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code()); "" }
+            is Expr.Defer -> {
+                ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code())
+                assrc("((CEU_Value) { CEU_VALUE_NIL })")
+            }
 
             is Expr.Coros -> {
                 """
@@ -441,7 +447,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines");
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
-                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.first} };
+                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.list.first} };
                     ceu_ret = CEU_RET_RETURN;
                     do { // iter
                 CEU_ITER_$n:;
@@ -453,9 +459,6 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         ${this.body.code()}
                         ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
                         ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
-                        if (ceu_mem->$loc.Dyn == ceu_mem->coros_$n.Dyn->Bcast.Coros.first) {
-                            continue; // escape enclosing block
-                        }
                         goto CEU_ITER_$n;
                     } while (0); // iter
                     assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in iter");
@@ -474,6 +477,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val intask = (ups.first_proto(this)?.tk?.str == "task")
+                val oktask = this.non_fake_task_c()
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code()}
@@ -492,8 +496,8 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
                             ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
-                            ${if (intask) {
-                                "ceu_ret = ceu_bcast_dyn(${this.non_fake_task_c()}->Task.coro, &ceu_mem->evt_$n);"
+                            ${if (intask && oktask!=null) {
+                                "ceu_ret = ceu_bcast_dyn(${oktask}->Task.coro, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}
@@ -597,16 +601,16 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """
                     } else {
-                        val asdst = this.asdst()
+                        val src = this.asdst_src()
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto).body.n 
                         """ // PUB - SET
-                        if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $asdst.Dyn, 1);
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $src.Dyn, 1);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ceu_gc_inc(&$asdst);
+                        ceu_gc_inc(&$src);
                         ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->Task.pub);
-                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $asdst;
+                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $src;
                         """
                     }}
                     CEU_PUB_$n:;
@@ -695,7 +699,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
-                    val asdst = this.asdst()
+                    val src = this.asdst_src()
                     ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
@@ -703,13 +707,13 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
-                        if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $asdst.Dyn, $isperm);
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
-                        ceu_gc_inc(&$asdst);
+                        ceu_gc_inc(&$src);
                         ceu_gc_dec(&${this.id2c(dcl,this.tk_.upv)});
-                        ${this.id2c(dcl,this.tk_.upv)} = $asdst;
+                        ${this.id2c(dcl,this.tk_.upv)} = $src;
                     }
                     """
                 }
@@ -855,22 +859,22 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                         }
                         """                        
                     } else {
-                        val asdst = this.asdst()
+                        val src = this.asdst_src()
                         """
                         if ($asdst.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold.block, $asdst.Dyn, 0);
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold, $asdst.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $asdst;
+                                ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $src;
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $asdst);
+                                ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_acc;
-                                assert(CEU_RET_RETURN == ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$asdst));
+                                assert(CEU_RET_RETURN == ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$src));
                                 break;
                             }
                             default:

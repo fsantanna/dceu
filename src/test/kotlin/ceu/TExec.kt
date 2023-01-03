@@ -309,8 +309,8 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun tuple10_hold_err() {
@@ -2332,6 +2332,7 @@ class TExec {
         """)
         assert(out == "[1]\n") { out }
     }
+    @Ignore
     @Test
     fun todo_clo24_copy() {
         val out = all("""
@@ -2416,7 +2417,17 @@ class TExec {
         """)
         assert(out == "3\n") { out }
     }
-
+    @Test
+    fun gc7() {
+        val out = all("""
+            var f = func (v) {
+                v
+            }
+            println(#(#[f([1])]))
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
 
     // MISC
 

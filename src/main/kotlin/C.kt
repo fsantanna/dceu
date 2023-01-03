@@ -22,6 +22,7 @@ fun Coder.main (): String {
         struct CEU_Tags_Names;
         struct CEU_Block;
         struct CEU_Error_List;
+        struct CEU_Bcast_List;
 
         typedef enum {
             CEU_RET_THROW = 0,
@@ -69,11 +70,6 @@ fun Coder.main (): String {
         CEU_RET ceu_tags_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
-        void ceu_dyn_free (struct CEU_Dynamic* dyn);
-        void ceu_dyns_free (struct CEU_Dynamic* cur);
-
-        void ceu_gc_inc (struct CEU_Value* new);
-        void ceu_gc_dec (struct CEU_Value* old);
         CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
         
         void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
@@ -82,8 +78,8 @@ fun Coder.main (): String {
         CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
         CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
-        void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
-        void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
+        void ceu_bcast_add (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
+        void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
         void ceu_bcast_free (void);
         
         CEU_RET ceu_bcast_dyns   (struct CEU_Dynamic* cur, struct CEU_Value* evt);
@@ -183,13 +179,15 @@ fun Coder.main (): String {
         } CEU_Frame;
     """ +
     """ // CEU_Dynamic
+        typedef struct CEU_Bcast_List {
+            struct CEU_Dynamic* first;      // first/last coro/coros in this block
+            struct CEU_Dynamic* last;       // to bcast/relink
+        } CEU_Bcast_List;
+
         typedef struct CEU_Dynamic {
             CEU_VALUE type;                 // required to switch over free/bcast
-            struct {
-                struct CEU_Block*    block;     // holding block to compare on set/move
-                struct CEU_Dynamic** prev;      // for relink on set/move/refcount=0
-                struct CEU_Dynamic*  next;      // next dyn to free (not used by coro in coros)
-            } hold;
+            struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
+            struct CEU_Block*   hold;       // holding block to compare on set/move
             struct CEU_Tags_List* tags;     // linked list of tags
             int refs;                       // number of refs to it (free when 0)
             int isperm;                     // if hold is permanent and may not be reset to outer block
@@ -223,7 +221,7 @@ fun Coder.main (): String {
                             int max;                // max number of instances
                             int cur;                // cur number of instances
                             int open;               // number of open iterators
-                            struct CEU_Dynamic* first;  // coro->Bcast.Coro, first coro to bcast/free
+                            CEU_Bcast_List list;    // bcast list
                         } Coros;
                         struct CEU_Dynamic* Track;   // starts as CORO and may fall to NIL
                     };
@@ -239,7 +237,7 @@ fun Coder.main (): String {
             struct {
                 struct CEU_Dynamic* up;         // enclosing active coro
                 struct CEU_Block* block;        // nested block active
-                struct CEU_Dynamic* dyn;        // first coro/coros in this block
+                CEU_Bcast_List list;            // bcast list
             } bcast;
         } CEU_Block;
     """ +
@@ -376,104 +374,7 @@ fun Coder.main (): String {
             return cur->name;
         }
     """ +
-    """ // GC
-        void ceu_gc_free (CEU_Dynamic* dyn) {
-            switch (dyn->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
-                    for (int i=0; i<dyn->Proto.upvs.n; i++) {
-                        ceu_gc_dec(&dyn->Proto.upvs.buf[i]);
-                    }
-                    break;
-                case CEU_VALUE_TUPLE:
-                    for (int i=0; i<dyn->Tuple.n; i++) {
-                        if (dyn->Tuple.mem[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec(&dyn->Tuple.mem[i]);
-                        }
-                    }
-                    break;
-                case CEU_VALUE_VECTOR:
-                    for (int i=0; i<dyn->Vector.n; i++) {
-                        assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
-                        ceu_gc_dec(&ceu_acc);
-                    }
-                    break;
-                case CEU_VALUE_DICT:
-                    for (int i=0; i<dyn->Dict.max; i++) {
-                        ceu_gc_dec(&(*dyn->Dict.mem)[i][0]);
-                        ceu_gc_dec(&(*dyn->Dict.mem)[i][1]);
-                    }
-                    break;
-                case CEU_VALUE_CORO:
-                case CEU_VALUE_COROS:
-                case CEU_VALUE_TRACK:
-                    break;
-                default:
-                    assert(0);
-                    break;
-            }
-            ceu_gc_count++;
-            ceu_dyn_free(dyn);
-        }
-        
-        void ceu_gc_inc (struct CEU_Value* new) {
-            if (new->type < CEU_VALUE_DYNAMIC) {
-                return;
-            }
-            new->Dyn->refs++;
-        }
-        
-        void ceu_gc_dec (struct CEU_Value* old) {
-            if (old->type < CEU_VALUE_DYNAMIC) {
-                return;
-            }
-            old->Dyn->refs--;
-            if (old->Dyn->refs == 0) {
-                ceu_gc_free(old->Dyn);
-            }
-        }
-    """ +
     """ // BLOCK
-        void ceu_dyn_free (CEU_Dynamic* dyn) {
-            switch (dyn->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
-                    free(dyn->Proto.upvs.buf);
-                    break;
-                case CEU_VALUE_TUPLE:
-                case CEU_VALUE_COROS:
-                case CEU_VALUE_TRACK:
-                    break;
-                case CEU_VALUE_VECTOR:
-                    free(dyn->Vector.mem);
-                    break;
-                case CEU_VALUE_DICT:
-                    free(dyn->Dict.mem);
-                    break;
-                case CEU_VALUE_CORO:
-                    dyn->Bcast.status = CEU_CORO_STATUS_DESTROYED;
-                    if (ceu_bcasting == 0) {
-                        free(dyn->Bcast.Coro.frame->mem);
-                        free(dyn->Bcast.Coro.frame);
-                    }
-                    break;
-                default:
-                    assert(0 && "bug found");
-            }
-            if (dyn->type<CEU_VALUE_BCAST || ceu_bcasting==0) {
-                while (dyn->tags != NULL) {
-                    CEU_Tags_List* x = dyn->tags;
-                    dyn->tags = x->next;
-                    free(x);
-                }
-                //printf(">>> %d\n", dyn->type);
-                free(dyn);
-            } else {
-                dyn->hold.next = ceu_bcast_tofree;
-                ceu_bcast_tofree = dyn;
-            }
-        }
-        
         void ceu_dyns_free (CEU_Dynamic* cur) {
             CEU_Dynamic* nxt = cur;
             while (nxt != NULL) {
@@ -555,26 +456,28 @@ fun Coder.main (): String {
                     { // remove from old block
                         if (src->hold.block != NULL) {
                             if (src->type > CEU_VALUE_BCAST) {
-                                ceu_bcast_dequeue(&src->hold.block->bcast.dyn, src);
+                                ceu_bcast_dequeue(&src->hold->bcast.dyn, src);
                             }
                             { // remove from free list
-                                if (src->hold.prev != NULL) {
-                                    *src->hold.prev = src->hold.next;
+                                CEU_Dynamic* prv = NULL;
+                                CEU_Dynamic* cur = src->hold->tofree;
+                                while (cur != NULL) {
+                                    if (cur == src) {
+                                        if (prv == NULL) {
+                                            src->hold->tofree = cur->next;
+                                        } else {
+                                            prv->next = cur->next;
+                                        }
+                                        cur->next = NULL;
+                                    }
+                                    prv = cur;
+                                    cur = cur->next;
                                 }
-                                if (src->hold.next != NULL) {
-                                    src->hold.next->hold.prev = src->hold.prev;
-                                    src->hold.next = NULL;
-                                }
-                                src->hold.prev = NULL;
                             }
                         }
                     }
                     { // add to new block
-                        src->hold.prev = &dst->tofree;
-                        src->hold.next = dst->tofree;
-                        if (dst->tofree != NULL) {
-                            dst->tofree->hold.prev = &src;
-                        }
+                        src->next = dst->tofree;
                         dst->tofree = src;
                         if (src->type > CEU_VALUE_BCAST) {
                             ceu_bcast_enqueue(&dst->bcast.dyn, src);
@@ -593,32 +496,41 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST - ENQUEUE - DEQUEUE - FREE
-        void ceu_bcast_enqueue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
-            if (*outer == NULL) {
-                *outer = dyn;
-                dyn->Bcast.prev = dyn;
-                dyn->Bcast.next = dyn;
+        void ceu_bcast_add (CEU_Bcast_List* list, CEU_Dynamic* dyn) {
+            if (list->first == NULL) {
+                list->first = dyn;
             } else {
-                CEU_Dynamic* last = (*outer)->Bcast.prev;
-                last->Bcast.next = dyn;
-                dyn->Bcast.prev = last;
+                CEU_Dynamic* cur = *outer;
+                while (cur->Bcast.next != NULL) {
+                    cur = cur->Bcast.next;
+                }
+                cur->Bcast.next = dyn;
             }
+            dyn->Bcast.prev = list->last;
+            list->last = dyn;
         }
         void ceu_bcast_dequeue (CEU_Dynamic** outer, CEU_Dynamic* dyn) {
-            if (dyn == dyn->Bcast.next) {
-                *outer = NULL;
+            if (*outer == dyn) {
+                dyn->Bcast.next = NULL;
+                *outer = dyn->Bcast.next;
             } else {
-                dyn->Bcast.prev->Bcast.next = dyn->Bcast.next;
-                dyn->Bcast.next->Bcast.prev = dyn->Bcast.prev;
+                CEU_Dynamic* cur = *outer;
+                while (cur->Bcast.next != NULL) {
+                    if (cur->Bcast.next == dyn) {
+                        CEU_Dynamic* tmp = cur->Bcast.next->Bcast.next;
+                        cur->Bcast.next->Bcast.next = NULL;
+                        cur->Bcast.next = tmp;
+                        break;
+                    }
+                    cur = cur->Bcast.next;
+                }
             }
-            dyn->Bcast.prev = NULL;
-            dyn->Bcast.next = NULL;
         }
     """ +
     """ // BCAST_BLOCKS
         CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
-                CEU_Dynamic* dyn = cur->bcast.dyn;
+                CEU_Dynamic* dyn = cur->bcast.list.first;
                 if (dyn != NULL) {
                     if (ceu_bcast_dyns(dyn,evt) == CEU_RET_THROW) {
                         return CEU_RET_THROW;
@@ -658,7 +570,7 @@ fun Coder.main (): String {
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;
-                    int ret = ceu_bcast_dyns(cur->Bcast.Coros.first, evt);
+                    int ret = ceu_bcast_dyns(cur->Bcast.Coros.list.first, evt);
                     cur->Bcast.Coros.open--;
                     if (cur->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(cur);
@@ -676,17 +588,13 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        CEU_RET ceu_bcast_dyns (CEU_Dynamic* fst, CEU_Value* evt) {
-            CEU_Dynamic* cur = fst;
+        CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 if (ceu_bcast_dyn(cur,evt) == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
-                if (cur == fst) {
-                    break;
-                }
             }
             return CEU_RET_RETURN;
         }
@@ -696,15 +604,22 @@ fun Coder.main (): String {
             if (coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
                 return;
             }
-            if (coro == coros->Bcast.Coros.first) {
-                coros->Bcast.Coros.first = NULL;
+            CEU_Dynamic* cur = coros->Bcast.Coros.first;
+            if (cur == coro) {
+                coros->Bcast.Coros.first = coro->Bcast.next;
             } else {
-                coro->Bcast.prev->Bcast.next = coro->Bcast.next;
-                coro->Bcast.next->Bcast.prev = coro->Bcast.prev;
+                CEU_Dynamic* prv = cur;
+                while (prv != NULL) {
+                    if (prv->Bcast.next == coro) {
+                        break;
+                    }
+                    prv = prv->Bcast.next;
+                }
+                cur = prv->Bcast.next;
+                prv->Bcast.next = coro->Bcast.next;
             }
-            coro->Bcast.prev = NULL;
-            coro->Bcast.next = NULL;
-            coro->Bcast.status = CEU_CORO_STATUS_DESTROYED;
+            assert(cur == coro);
+            cur->Bcast.status = CEU_CORO_STATUS_DESTROYED;
             if (ceu_bcasting == 0) {
                 // pending bcast inside coro, let it free later
                 free(coro->Bcast.Coro.frame->mem);
@@ -718,8 +633,7 @@ fun Coder.main (): String {
         }
         
         void ceu_coros_cleanup (CEU_Dynamic* coros) {
-            CEU_Dynamic* fst = coros->Bcast.Coros.first;
-            CEU_Dynamic* cur = fst;
+            CEU_Dynamic* cur = coros->Bcast.Coros.first;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next;
                 if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
@@ -727,9 +641,6 @@ fun Coder.main (): String {
                     ceu_coros_destroy(coros, cur);
                 }
                 cur = nxt;
-                if (cur == fst) {
-                    break;
-                }
             }
         }
     """ +
@@ -778,8 +689,8 @@ fun Coder.main (): String {
                 }
             }
             if (hld != NULL) {
-                dyn->hold.block = hld;
-                dyn->hold.next = hld->tofree;
+                dyn->hold = hld;
+                dyn->next = hld->tofree;
                 hld->tofree = dyn;
             }
         }
@@ -994,8 +905,8 @@ fun Coder.main (): String {
             CEU_Dynamic* coros = malloc(sizeof(CEU_Dynamic));
             assert(coros != NULL);
             *coros = (CEU_Dynamic) {
-                CEU_VALUE_COROS, {NULL,NULL,NULL}, NULL, 0, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
+                CEU_VALUE_COROS, NULL, NULL, NULL, 0, {
+                    .Bcast = { CEU_CORO_STATUS_YIELDED, NULL, {
                         .Coros = { max, 0, 0, NULL}
                     } }
                 }
@@ -1078,7 +989,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
-            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            ceu_bcast_add(&coros->Bcast.Coros.list, coro);
             coros->Bcast.Coros.cur++;
             return CEU_RET_RETURN;
         }
