@@ -434,27 +434,6 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
-#if 0
-        void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
-            src->hold.prev = &dst->tofree;
-            src->hold.next = dst->tofree;
-            if (dst->tofree != NULL) {
-                dst->tofree->hold.prev = &src->hold.next;
-            }
-            dst->tofree = src;
-            src->hold.block = dst;
-        }
-        void ceu_hold_rem (CEU_Dynamic* dyn) {
-            assert(dyn->hold.prev != NULL);
-            *dyn->hold.prev = dyn->hold.next;
-            if (dyn->hold.next != NULL) {
-                dyn->hold.next->hold.prev = dyn->hold.prev;
-            }
-            dyn->hold.block = NULL;
-            dyn->hold.prev  = NULL;
-            dyn->hold.next  = NULL;
-        }
-#else
         void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
             src->hold.prev = NULL;
             src->hold.next = dst->tofree;
@@ -478,7 +457,6 @@ fun Coder.main (): String {
             dyn->hold.prev  = NULL;
             dyn->hold.next  = NULL;
         }
-#endif
 
         void ceu_dyn_free (CEU_Dynamic* dyn) {
             switch (dyn->type) {
