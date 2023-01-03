@@ -83,8 +83,8 @@ fun Coder.main (): String {
         CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
         CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
-        void ceu_bcast_enqueue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
-        void ceu_bcast_dequeue (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
+        void ceu_bcast_add (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
+        void ceu_bcast_rem (struct CEU_Dynamic** outer, struct CEU_Dynamic* dyn);
         void ceu_bcast_free (void);
         
         CEU_RET ceu_bcast_dyns   (struct CEU_Dynamic* cur, struct CEU_Value* evt);
@@ -186,7 +186,7 @@ fun Coder.main (): String {
     """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
             CEU_VALUE type;                 // required to switch over free/bcast
-            struct {                        // NOT CYCLE
+            struct {
                 struct CEU_Block*   block;      // holding block to compare on set/move
                 struct CEU_Dynamic* prev;       // for relink when refcount=0
                 struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
@@ -580,7 +580,7 @@ fun Coder.main (): String {
                     { // remove from old block
                         if (src->hold.block != NULL) {
                             if (src->type > CEU_VALUE_BCAST) {
-                                ceu_bcast_dequeue(&src->hold.block->bcast.dyn, src);
+                                ceu_bcast_rem(&src->hold.block->bcast.dyn, src);
                             }
                             ceu_hold_rem(src);
                         }
@@ -588,7 +588,7 @@ fun Coder.main (): String {
                     // add to new block
                     ceu_hold_add(dst, src);
                     if (src->type > CEU_VALUE_BCAST) {
-                        ceu_bcast_enqueue(&dst->bcast.dyn, src);
+                        ceu_bcast_add(&dst->bcast.dyn, src);
                     }
                 }
                 src->hold.block = dst;
@@ -1092,7 +1092,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
-            ceu_bcast_enqueue(&coros->Bcast.Coros.first, coro);
+            ceu_bcast_add(&coros->Bcast.Coros.first, coro);
             coros->Bcast.Coros.cur++;
             return CEU_RET_RETURN;
         }
