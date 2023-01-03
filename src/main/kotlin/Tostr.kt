@@ -8,7 +8,7 @@ fun Expr.tostr (pre: Boolean = false): String {
     }
     return when (this) {
         is Expr.Proto  -> this.tk.str + " (" + this.args.map { it.tostr() }.joinToString(",") + ") " + this.task?.first.cond{":fake "} + this.task?.second.cond{":awakes "} + this.body.tostr(pre)
-        is Expr.Block  -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
+        is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Group  -> "group" + this.isHide.cond{" :hide"} + " {\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> "var " + this.tk_.tostr() + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)

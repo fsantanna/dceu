@@ -155,15 +155,15 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (): Expr.Block {
+    fun block (): Expr.Do {
         val tk0 = if (this.tk0.str=="do") this.tk0 else this.tk1
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Block(tk0, es)
+        return Expr.Do(tk0, es)
     }
 
-    fun catch_block (): Pair<(Expr)->Expr,Expr.Block> {
+    fun catch_block (): Pair<(Expr)->Expr,Expr.Do> {
         val tk0 = if (this.tk0.str=="do") this.tk0 else this.tk1
         this.acceptFix_err("{")
         val cnd = if (!XCEU || !this.acceptFix("{")) null else {
@@ -173,13 +173,13 @@ class Parser (lexer_: Lexer)
         }
         val es = this.exprs()
         this.acceptFix_err("}")
-        val blk = Expr.Block(tk0, es)
+        val blk = Expr.Do(tk0, es)
         if (cnd == null) {
             return Pair({it}, blk)
         } else {
             val catch: (Expr)->Expr = {
                 val xcnd = this.nest("(err == ${cnd.tostr(true)})")
-                Expr.Catch(tk0 as Tk.Fix, xcnd, if (it is Expr.Block) it else Expr.Block(tk0,listOf(it)))
+                Expr.Catch(tk0 as Tk.Fix, xcnd, if (it is Expr.Do) it else Expr.Do(tk0,listOf(it)))
             }
             return Pair(catch, blk)
         }
@@ -242,7 +242,7 @@ class Parser (lexer_: Lexer)
                     if (this.acceptFix("else")) {
                         this.block()
                     } else {
-                        Expr.Block(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -277,7 +277,7 @@ class Parser (lexer_: Lexer)
                         when {
                             tktag.str == ":coros" -> {
                                 C(Expr.CsIter(tk0, i, col,
-                                    Expr.Block(tk0, listOf(Expr.Dcl(i,false, null), b))))
+                                    Expr.Do(tk0, listOf(Expr.Dcl(i,false, null), b))))
                             }
                             tktag.str == ":coro" -> {
                                 C(this.nest("""
@@ -348,7 +348,7 @@ class Parser (lexer_: Lexer)
                     Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
                 }
                 val body = this.catch_block().let { (C,b) -> C(b) }.let {
-                    if (it is Expr.Block) it else Expr.Block(tk0,listOf(it))
+                    if (it is Expr.Do) it else Expr.Do(tk0,listOf(it))
                 }
                 val proto = Expr.Proto(tk0, task, args, body)
                 if (id == null) proto else {
@@ -520,7 +520,7 @@ class Parser (lexer_: Lexer)
                 val eq1_op = this.tk0.str
                 val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eq1_op ${it.tostr(true)})" }
                 this.acceptFix_err("->")
-                val b1 = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
+                val b1 = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, listOf(this.expr()))
                 ifs += """
                     ${pre0}if $e1 ${b1.tostr(true)} else {
                 """
@@ -528,7 +528,7 @@ class Parser (lexer_: Lexer)
                 while (!this.acceptFix("}")) {
                     if (this.acceptFix("else")) {
                         this.acceptFix_err("->")
-                        val be = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
+                        val be = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, listOf(this.expr()))
                         ifs += be.es.map { it.tostr(true)+"\n" }.joinToString("")
                         this.acceptFix("}")
                         break
@@ -538,7 +538,7 @@ class Parser (lexer_: Lexer)
                     val eqi_op = this.tk0.str
                     val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eqi_op ${it.tostr(true)})" }
                     this.acceptFix_err("->")
-                    val bi = if (this.checkFix("{")) this.block() else Expr.Block(this.tk0, listOf(this.expr()))
+                    val bi = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, listOf(this.expr()))
                     ifs += """
                         ${pre1}if $ei ${bi.tostr(true)}
                         else {

@@ -57,21 +57,21 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Block): Expr(N++, tk_)
-    data class Block  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
+    data class Do  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val isHide: Boolean, val es: List<Expr>): Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id,  val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
-    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Block, val f: Expr.Block): Expr(N++, tk_)
-    data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
+    data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
-    data class Defer  (val tk_: Tk.Fix, val body: Expr.Block): Expr(N++, tk_)
+    data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
     data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
-    data class CsIter (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Block): Expr(N++, tk_)
+    data class CsIter (val tk_: Tk.Fix, val loc: Tk.Id, val coros: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
@@ -124,7 +124,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
-        val outer = Expr.Block(Tk.Fix("", Pos("anon", 0, 0)), es)
+        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups = Ups(outer)
         val coder = Coder(outer, ups)
         coder.main()

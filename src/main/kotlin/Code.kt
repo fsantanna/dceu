@@ -1,12 +1,12 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Block, val ups: Ups) {
+class Coder (val outer: Expr.Do, val ups: Ups) {
     val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code()
 
-    fun Expr.Block.toc (isptr: Boolean): String {
+    fun Expr.Do.toc (isptr: Boolean): String {
         return "ceu_mem->block_${this.n}".let {
             if (isptr) "(&($it))" else it
         }
@@ -234,7 +234,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
             }
-            is Expr.Block -> {
+            is Expr.Do -> {
                 val up = ups.ups[this]
                 val bup = up?.let { ups.first_block(it) }
                 val f_b = up?.let { ups.first_proto_or_block(it) }
@@ -253,7 +253,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                     ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {
                         " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"}
                     }
-                    ${(f_b is Expr.Block).cond {
+                    ${(f_b is Expr.Do).cond {
                         "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"}
                     }
                     do { // block
@@ -301,7 +301,7 @@ class Coder (val outer: Expr.Block, val ups: Ups) {
                                 ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                             }
                             { // relink blocks
-                                ${(f_b is Expr.Block).cond{
+                                ${(f_b is Expr.Do).cond{
                                     "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
                                 }}
                                 ${(f_b is Expr.Proto && f_b.tk.str=="task").cond {

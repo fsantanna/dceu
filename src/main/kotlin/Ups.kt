@@ -2,7 +2,7 @@
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<String>?)
 data class Dcl (val id: String, val upv: Int, val blk: Expr)    // blk = [Block,Group,Proto]
 
-class Ups (val outer: Expr.Block) {
+class Ups (val outer: Expr.Do) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
@@ -47,14 +47,14 @@ class Ups (val outer: Expr.Block) {
     fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
         return this.all_until(e,cnd).firstOrNull()
     }
-    fun first_block (e: Expr): Expr.Block? {
-        return this.first(e) { it is Expr.Block } as Expr.Block?
+    fun first_block (e: Expr): Expr.Do? {
+        return this.first(e) { it is Expr.Do } as Expr.Do?
     }
     fun first_proto (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto } as Expr.Proto?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || it is Expr.Block }
+        return this.first(e) { it is Expr.Proto || it is Expr.Do }
     }
     fun intask (e: Expr): Boolean {
         return (this.first_proto(e)?.tk?.str == "task")
@@ -121,7 +121,7 @@ class Ups (val outer: Expr.Block) {
                 )
                 this.body.traverse()
             }
-            is Expr.Block -> {
+            is Expr.Do -> {
                 if (this != outer) {
                     xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
                 }
@@ -136,7 +136,7 @@ class Ups (val outer: Expr.Block) {
             is Expr.Dcl -> {
                 this.src?.traverse()
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = first(this) { it is Expr.Block || (it is Expr.Group && it.isHide) }!!
+                val bup = first(this) { it is Expr.Do || (it is Expr.Group && it.isHide) }!!
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup.syms[id] = Dcl(id, this.tk_.upv, bup)
@@ -233,7 +233,7 @@ class Ups (val outer: Expr.Block) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
-            is Expr.Block  -> this.map(this.es)
+            is Expr.Do  -> this.map(this.es)
             is Expr.Group  -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))

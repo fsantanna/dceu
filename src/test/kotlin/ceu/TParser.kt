@@ -442,7 +442,7 @@ class TParser {
         val l = lexer("do { var a; set a=1; print(a) }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Block && e.es.size==3)
+        assert(e is Expr.Do && e.es.size==3)
         assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}") { e.tostr() }
     }
 

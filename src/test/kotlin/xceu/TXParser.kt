@@ -43,7 +43,7 @@ class TXParser {
         val l = lexer("do{}")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Block && e.es.size==1)
+        assert(e is Expr.Do && e.es.size==1)
         assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
     }
     @Test
