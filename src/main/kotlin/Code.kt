@@ -243,7 +243,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val es = this.es.mapIndexed { i,it ->
+                val es = this.es.mapIndexed { i, it ->
                     it.code()
                 }.joinToString("")
                 val coro = if (ups.intask(this)) "ceu_coro" else "NULL"

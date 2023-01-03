@@ -58,7 +58,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
-    data class Do  (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Do     (val tk_: Tk, val isnest: Boolean, val ishide: Boolean, val es: List<Expr>) : Expr(N++, tk_)
     data class Group  (val tk_: Tk.Fix, val isHide: Boolean, val es: List<Expr>): Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id,  val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
@@ -124,7 +124,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
-        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
+        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
         val ups = Ups(outer)
         val coder = Coder(outer, ups)
         coder.main()
