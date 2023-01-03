@@ -48,13 +48,13 @@ class Ups (val outer: Expr.Do) {
         return this.all_until(e,cnd).firstOrNull()
     }
     fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do } as Expr.Do?
+        return this.first(e) { it is Expr.Do && it.isnest && it.ishide } as Expr.Do?
     }
     fun first_proto (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto } as Expr.Proto?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || it is Expr.Do }
+        return this.first(e) { it is Expr.Proto || (it is Expr.Do && it.isnest && it.ishide) }
     }
     fun intask (e: Expr): Boolean {
         return (this.first_proto(e)?.tk?.str == "task")
