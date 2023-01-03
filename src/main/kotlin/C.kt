@@ -186,7 +186,7 @@ fun Coder.main (): String {
     """ // CEU_Dynamic
         typedef struct CEU_Dynamic {
             CEU_VALUE type;                 // required to switch over free/bcast
-            struct {
+            struct {                            // NOT CYCLE
                 struct CEU_Block*    block;     // holding block to compare on set/move
                 struct CEU_Dynamic** prev;      // for relink when refcount=0
                 struct CEU_Dynamic*  next;      // next dyn to free (not used by coro in coros)
@@ -434,6 +434,50 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
+#if 1
+        void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
+            src->hold.prev = &dst->tofree;
+            src->hold.next = dst->tofree;
+            if (dst->tofree != NULL) {
+                dst->tofree->hold.prev = &src->hold.next;
+            }
+            dst->tofree = src;
+            src->hold.block = dst;
+        }
+        void ceu_hold_rem (CEU_Dynamic* dyn) {
+            assert(dyn->hold.prev != NULL);
+            *dyn->hold.prev = dyn->hold.next;
+            if (dyn->hold.next != NULL) {
+                dyn->hold.next->hold.prev = dyn->hold.prev;
+            }
+            dyn->hold.block = NULL;
+            dyn->hold.prev  = NULL;
+            dyn->hold.next  = NULL;
+        }
+#else
+        void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
+            src->hold.block = dst;
+            src->hold.next = dst->tofree;
+            dst->tofree = src;
+        }
+        void ceu_hold_rem (CEU_Dynamic* dyn) {
+            CEU_Dynamic* prv = NULL;
+            CEU_Dynamic* cur = dyn->hold.block->tofree;
+            while (cur != NULL) {
+                if (cur == dyn) {
+                    if (prv == NULL) {
+                        dyn->hold.block->tofree = cur->hold.next;
+                    } else {
+                        prv->hold.next = cur->hold.next;
+                    }
+                    cur->hold.next = NULL;
+                }
+                prv = cur;
+                cur = cur->hold.next;
+            }
+        }
+#endif
+
         void ceu_dyn_free (CEU_Dynamic* dyn) {
             switch (dyn->type) {
                 case CEU_VALUE_FUNC:
@@ -469,7 +513,7 @@ fun Coder.main (): String {
                 //printf(">>> %d\n", dyn->type);
                 free(dyn);
             } else {
-                dyn->hold.next = ceu_bcast_tofree;
+                dyn->hold.next = ceu_bcast_tofree;  // reuse next (no need to set block/prev)
                 ceu_bcast_tofree = dyn;
             }
         }
@@ -557,30 +601,13 @@ fun Coder.main (): String {
                             if (src->type > CEU_VALUE_BCAST) {
                                 ceu_bcast_dequeue(&src->hold.block->bcast.dyn, src);
                             }
-                            { // remove from free list
-                                CEU_Dynamic* prv = NULL;
-                                CEU_Dynamic* cur = src->hold.block->tofree;
-                                while (cur != NULL) {
-                                    if (cur == src) {
-                                        if (prv == NULL) {
-                                            src->hold.block->tofree = cur->hold.next;
-                                        } else {
-                                            prv->hold.next = cur->hold.next;
-                                        }
-                                        cur->hold.next = NULL;
-                                    }
-                                    prv = cur;
-                                    cur = cur->hold.next;
-                                }
-                            }
+                            ceu_hold_rem(src);
                         }
                     }
-                    { // add to new block
-                        src->hold.next = dst->tofree;
-                        dst->tofree = src;
-                        if (src->type > CEU_VALUE_BCAST) {
-                            ceu_bcast_enqueue(&dst->bcast.dyn, src);
-                        }
+                    // add to new block
+                    ceu_hold_add(dst, src);
+                    if (src->type > CEU_VALUE_BCAST) {
+                        ceu_bcast_enqueue(&dst->bcast.dyn, src);
                     }
                 }
                 src->hold.block = dst;
@@ -786,9 +813,7 @@ fun Coder.main (): String {
                 }
             }
             if (hld != NULL) {
-                dyn->hold.block = hld;
-                dyn->hold.next = hld->tofree;
-                hld->tofree = dyn;
+                ceu_hold_add(hld, dyn);
             }
         }
         
