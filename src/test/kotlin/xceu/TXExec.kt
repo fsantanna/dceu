@@ -1123,9 +1123,10 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake :awakes { group { var x set x =...)\n" +
-                "anon : (lin 3, col 38) : task () :fake :awakes { group { var y set y =...)\n" +
-                "anon : (lin 3, col 60) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task () :fake :awakes { var x = do { var ceu_...)\n" +
+                "anon : (lin 3, col 38) : task () :fake :awakes { var y = [] y }()\n" +
+                "anon : (lin 3, col 60) : set error : incompatible scopes\n" +
+                ":error\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
@@ -1736,10 +1737,10 @@ class TXExec {
         assert(out == "0\t1\n") { out }
     }
     @Test
-    fun ppp6_err() {
+    fun todo_ppp6_err() {
         val out = all("""
             var v = #[1]
-            set v[-] = 10
+            set v[-] = 10   ;; cannot set v[-]
             println(v)
         """, true)
         assert(out.contains("anon : (lin 6, col 41) : expected \"=\" : have")) { out }
