@@ -225,7 +225,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         .filter { it is Expr.Proto }
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
-                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // TODO: use this.body to not confuse with args
+                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // TODO: use this.body to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
@@ -851,11 +851,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
                                 ${(x!=null && !this.gcall()).cond { """
-                                    if (ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
+                                    if (ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$x\" field");
                                     }
                                 """ }}
-                                ${assrc("ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
+                                ${assrc("ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
                                 break;
                             case CEU_VALUE_VECTOR:
                                 ceu_ret = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
@@ -879,7 +879,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc.Dyn->Tuple.mem[(int) ceu_mem->idx_$n.Number] = $src;
+                                ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number] = $src;
                                 break;
                             case CEU_VALUE_VECTOR:
                                 ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
@@ -945,7 +945,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     if (ceu_proto_$n.type != CEU_VALUE_FUNC) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error : expected function");
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Proto, $bupc, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Ncast.Proto, $bupc, NULL, {} };
                 """} +
 
                 spawn.cond{"""
