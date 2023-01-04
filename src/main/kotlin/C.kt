@@ -398,9 +398,7 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Ncast.Tuple.n; i++) {
-                        if (dyn->Ncast.Tuple.mem[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec(&dyn->Ncast.Tuple.mem[i]);
-                        }
+                        ceu_gc_dec(&dyn->Ncast.Tuple.mem[i]);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
@@ -424,18 +422,18 @@ fun Coder.main (): String {
                     break;
             }
             ceu_gc_count++;
-            ceu_dyn_free(dyn);
+            //ceu_dyn_free(dyn);
         }
         
         void ceu_gc_inc (struct CEU_Value* new) {
-            if (new->type < CEU_VALUE_DYNAMIC) {
+            if (new->type<CEU_VALUE_DYNAMIC || new->type>CEU_VALUE_BCAST) {
                 return;
             }
             new->Dyn->Ncast.refs++;
         }
         
         void ceu_gc_dec (struct CEU_Value* old) {
-            if (old->type < CEU_VALUE_DYNAMIC) {
+            if (old->type < CEU_VALUE_DYNAMIC || old->type>CEU_VALUE_BCAST) {
                 return;
             }
             old->Dyn->Ncast.refs--;

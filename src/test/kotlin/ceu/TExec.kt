@@ -729,7 +729,7 @@ class TExec {
             set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
-            `puts(${D}v.Dyn->Vector.mem);`
+            `puts(${D}v.Dyn->Ncast.Vector.mem);`
             println(v)
         """)
         assert(out == "a\nabba\nabba\n") { out }

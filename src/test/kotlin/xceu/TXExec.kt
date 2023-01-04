@@ -740,7 +740,7 @@ class TXExec {
             set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
-            `puts(${D}v.Dyn->Vector.mem);`
+            `puts(${D}v.Dyn->Ncast.Vector.mem);`
         """)
         assert(out == "a\nabba\n") { out }
     }
