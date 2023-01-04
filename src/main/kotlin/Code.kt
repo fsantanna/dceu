@@ -225,7 +225,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         .filter { it is Expr.Proto }
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
-                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // use this.body to not confuse with args
+                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // TODO: use this.body to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
@@ -239,7 +239,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 } else {
                     val up = ups.ups[this]
                     val bup = up?.let { ups.first_block(it) }
-                    val f_b = up?.let { ups.first_proto_or_block(it) } // TODO
+                    val f_b = up?.let { ups.first_proto_or_block(it) }
                     val depth = when {
                         (f_b == null) -> "(0 + 1)"
                         (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
@@ -488,7 +488,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val intask = (ups.first_proto(this)?.tk?.str == "task")
+                val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str == "task")
                 val oktask = this.non_fake_task_c()
                 """
                 { // BCAST ${this.tk.dump()}
