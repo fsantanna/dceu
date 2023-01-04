@@ -2435,6 +2435,49 @@ class TExec {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun gc8() {
+        val out = all("""
+            do {
+                var out
+                set out = do {
+                    var ins = [1,2,3]
+                    move(ins)
+                }
+                println(`:number ceu_gc_count`)
+            }
+            println(`:number ceu_gc_count`)
+        """, true)
+        assert(out == "0\n1\n") { out }
+    }
+    @Test
+    fun gc9() {
+        val out = all("""
+            var out
+            set out = do {
+                var ins
+                set ins = [1,2,3]
+                ins
+            }
+            println(out)
+        """, true)
+        assert(out == "anon : (lin 3, col 23) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun gc10() {
+        val out = all("""
+            do {
+                do {
+                    var ins = [1,2,3]
+                    move(ins)
+                }
+                println(`:number ceu_gc_count`)
+            }
+            println(`:number ceu_gc_count`)
+        """, true)
+        assert(out == "1\n1\n") { out }
+    }
 
     // MISC
 

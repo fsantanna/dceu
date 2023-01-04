@@ -56,6 +56,15 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun Expr.gc_chk (): String {
+        return when (this) {
+            is Expr.Proto, is Expr.Tuple, is Expr.Vector, is Expr.Dict -> {
+                "ceu_gc_chk(ceu_acc.Dyn);\n"
+            }
+            else -> ""
+        }
+    }
+
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -232,11 +241,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Do -> {
-                if (!this.isnest) {
-                    this.es.mapIndexed { i, it ->
-                        it.code()
-                    }.joinToString("")
-                } else {
+                val ES = this.es.mapIndexed { i,e ->
+                    e.code() + (i<this.es.size-1).cond { e.gc_chk() }
+                }.joinToString("")
+
+                if (!this.isnest) ES else {
                     val up = ups.ups[this]
                     val bup = up?.let { ups.first_block(it) }
                     val f_b = up?.let { ups.first_proto_or_block(it) }
@@ -245,9 +254,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
-                    val es = this.es.mapIndexed { i, it ->
-                        it.code()
-                    }.joinToString("")
                     val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                     """
                     { // BLOCK ${this.tk.dump()}
@@ -263,7 +269,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             }
                         }
                         do { // block
-                            $es
+                            $ES
                         } while (0); // block
                         if (ceu_ret == CEU_RET_THROW) {
                             // must be before frees
@@ -309,6 +315,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         ceu_acc_$n = ceu_acc;
                                     }
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                                }
+                                { // decrement refs
+                                    ${ups.xblocks[this]!!.syms.keys
+                                        .filter { it.first()!='_' && it.last()!='_' }
+                                        .filter { this!=outer || it !in GLOBALS }
+                                        .map { """
+                                            ceu_gc_dec(&ceu_mem->$it);                    
+                                        """ }
+                                        .joinToString("")
+                                    }
                                 }
                                 { // relink blocks
                                     ${
