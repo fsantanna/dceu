@@ -786,14 +786,15 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // DICT ${this.tk.dump()}
                     ceu_mem->dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc(true)});
                     assert(ceu_mem->dict_$n != NULL);
-                    ${this.args.map {
-                        // allocate in the same scope of set (set.first) or use default block
-                        it.first.code() +
-                        "ceu_mem->key_$n = ceu_acc;\n" +
-                        it.second.code() +
-                        "CEU_Value ceu_val_$n = ceu_acc;\n" +
-                        "ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);\n"
-                    }.joinToString("")}
+                    ${this.args.map { """
+                        {
+                            ${it.first.code()}
+                            ceu_mem->key_$n = ceu_acc;
+                            ${it.second.code()}
+                            CEU_Value ceu_val_$n = ceu_acc;
+                            ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);
+                        }
+                    """ }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_mem->dict_$n} }")}
                 }
                 """

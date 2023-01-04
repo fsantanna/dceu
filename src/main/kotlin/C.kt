@@ -898,7 +898,7 @@ fun Coder.main (): String {
                 col->Ncast.Dict.max = new;
                 col->Ncast.Dict.mem = realloc(col->Ncast.Dict.mem, new*2*sizeof(CEU_Value));
                 assert(col->Ncast.Dict.mem != NULL);
-                memset(&(*col->Ncast.Dict.mem)[old], 0, old*2*sizeof(CEU_Value));  // x[i]=nil
+                memset(&(*col->Ncast.Dict.mem)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
             }
             assert(old != -1);
             
