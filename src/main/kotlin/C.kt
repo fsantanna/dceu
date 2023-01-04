@@ -428,6 +428,19 @@ fun Coder.main (): String {
             ceu_dyn_free(dyn);
         }
         
+        void ceu_gc_chk (CEU_Dynamic* dyn) {
+            if (dyn->Ncast.refs == 0) {
+                ceu_gc_free(dyn);
+            }
+        }
+
+        // var x = ?        // var source
+        // set x = ?        // set source
+        // set x[...] = ?   //      - index value
+        // set x[?] = ?     //      - index key
+        // set x.pub = ?    //      - pub
+        // [...?...]        // constructor argument     // TODO
+        // f(?)             // call argument
         void ceu_gc_inc (struct CEU_Value* new) {
             if (new->type<CEU_VALUE_DYNAMIC || new->type>CEU_VALUE_BCAST) {
                 return;
@@ -440,9 +453,7 @@ fun Coder.main (): String {
                 return;
             }
             old->Dyn->Ncast.refs--;
-            if (old->Dyn->Ncast.refs == 0) {
-                ceu_gc_free(old->Dyn);
-            }
+            ceu_gc_chk(old->Dyn);
         }
     """ +
     """ // BLOCK

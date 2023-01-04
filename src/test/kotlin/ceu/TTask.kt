@@ -1597,6 +1597,24 @@ class TTask {
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
                 "anon : (lin 5, col 17) : throw error : uncaught exception\nnil\n") { out }
     }
+    @Test
+    fun todo_pool25_valgrind() {
+        val out = ceu.all(
+            """
+            var ts
+            set ts = coroutines(1)
+            var T
+            set T = task () :awakes { yield(nil) }
+            var ok1
+            set ok1 = spawn in ts, T()
+            broadcast in :global, nil
+            var ok2
+            set ok2 = spawn in ts, T()
+            println(ok1, ok2)
+        """
+        )
+        assert(out == "true\tfalse\ttrue\tfalse\n") { out }
+    }
 
     // EVT
 
