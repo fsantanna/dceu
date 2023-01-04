@@ -17,27 +17,22 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         val start = if (upv==2) this else dcl.blk
         val fup = ups.first(start) { it is Expr.Proto }
         val N = if (upv==2) 0 else {
-            ups.all_until(this) {it==dcl.blk }  // go up until find dcl blk
-                .drop(1)                            // ignore proto if it is the first
-                .count{ it is Expr.Proto }
-        }              // count protos in between acc-dcl
+            ups
+                .all_until(this) { it==dcl.blk }  // go up until find dcl blk
+                .count { it is Expr.Proto }          // count protos in between acc-dcl
+        }
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
             (N == 0) -> "(ceu_${mem}->${dcl.id})"
-            else -> {
-                val blk = if (this is Expr.Proto) this.n else fup.n     // Proto=func args
-                "(((CEU_Proto_${Mem}_$blk*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
-            }
+            else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
         }
     }
 
     fun Expr.non_fake_task_c (): String? {
-        val n = ups.all_until(this) {
-            it is Expr.Proto && it.task!=null && !it.task.first  // find first non fake
-        }.filter {
-            it is Expr.Proto    // but count all protos in between
-        }//.drop(1)           // skip the "non-crossing one"
-        .count()
+        val n = ups     // find first non fake
+            .all_until(this) { it is Expr.Proto && it.task!=null && !it.task.first }
+            .filter { it is Expr.Proto } // but count all protos in between
+            .count()
         return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n-1)})"
     }
 
@@ -225,8 +220,10 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 );
                 ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
                     val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
-                    val btw = ups.all_until(this) { dcl.blk==it }.filter { it is Expr.Proto }.drop(1).count()
-                                // other protos in between myself and dcl, so it its an upref (upv=2)
+                    val btw = ups
+                        .all_until(this) { dcl.blk==it }
+                        .filter { it is Expr.Proto }
+                        .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
                     "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // use this.body to not confuse with args
                 }.joinToString("\n")}
@@ -242,7 +239,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 } else {
                     val up = ups.ups[this]
                     val bup = up?.let { ups.first_block(it) }
-                    val f_b = up?.let { ups.first_proto_or_block(it) }
+                    val f_b = up?.let { ups.first_proto_or_block(it) } // TODO
                     val depth = when {
                         (f_b == null) -> "(0 + 1)"
                         (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"

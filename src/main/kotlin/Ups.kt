@@ -1,6 +1,6 @@
 // func (args) or block (locals)
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<String>?)
-data class Dcl (val id: String, val upv: Int, val blk: Expr)    // blk = [Block,Group,Proto]
+data class Dcl (val id: String, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Ups (val outer: Expr.Do) {
     val xblocks = mutableMapOf<Expr,XBlock> (
@@ -78,7 +78,7 @@ class Ups (val outer: Expr.Do) {
         val (id,upv) = v
         val dcl = this.getDcl(e,id)
         val nocross = dcl?.blk.let { blk ->
-            (blk == null) || this.all_until(e) { it==blk }.drop(1).none { it is Expr.Proto }
+            (blk == null) || this.all_until(e) { it==blk }.none { it is Expr.Proto }
         }
         return when {
             (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
@@ -94,9 +94,7 @@ class Ups (val outer: Expr.Do) {
     // 3. compiles all proto uprefs
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto -> {
-                this.body.traverse()
-            }
+            is Expr.Proto -> this.body.traverse()
             is Expr.Do -> {
                 if (this!=outer && this.ishide) {
                     val proto = ups[this]
@@ -118,7 +116,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Dcl -> {
                 this.src?.traverse()
                 val id = this.tk_.fromOp().noSpecial()
-                val bup = first(this) { it is Expr.Do && it.ishide }!!
+                val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup.syms[id] = Dcl(id, this.tk_.upv, bup)
@@ -172,8 +170,7 @@ class Ups (val outer: Expr.Do) {
                         upvs_vars_refs.add(dcl) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
-                        val proto = all_until(this) { dcl.blk==it }
-                            .drop(1)
+                        all_until(this) { dcl.blk==it }
                             .filter { it is Expr.Proto }
                             .let { it as List<Expr.Proto> }
                             .forEach { proto ->
@@ -188,7 +185,6 @@ class Ups (val outer: Expr.Do) {
                     (dcl.blk!=outer && dcl.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
                         all_until(this) { it == dcl.blk }       // stop at enclosing declaration block
-                            .drop(1)                            // skip myself
                             .filter { it is Expr.Proto }            // all crossing protos
                             .forEach { upvs_protos_noclos.add(it) }        // mark them as noclos
                     }
