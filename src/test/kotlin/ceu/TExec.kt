@@ -626,11 +626,18 @@ class TExec {
         assert(out == "3\t#[1,2,3]\n5\t#[1,2,3,4,5]\n4\t#[1,2,3,4]\n") { out }
     }
     @Test
-    fun vector6_err() {
+    fun todo_vector6a_err() {
         val out = all("""
-            #[1,nil,3]
+            #[1,nil,3]  ;; v[2] = nil, but #v===1
         """)
-        assert(out == "anon : (lin 2, col 13) : vector error : non homogeneous arguments\n:error\n") { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->Ncast.Vector.n-1' failed.")) { out }
+    }
+    @Test
+    fun todo_vector6b_err() {
+        val out = all("""
+            #[1,'a',3]  ;; different type
+        """)
+        assert(out.contains("ceu_vector_set: Assertion `v.type == vec->Ncast.Vector.type' failed.")) { out }
     }
     @Test
     fun vector7_err() {

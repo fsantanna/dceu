@@ -771,27 +771,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             """
             is Expr.Vector -> """
                 { // VECTOR ${this.tk.dump()}
-                    $args
-                    CEU_Value ceu_args_$n[${this.args.size}] = {
-                        ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
-                    };
-                    int ceu_tag_$n = CEU_VALUE_NIL;
-                    { // check if vector is homogeneous
-                        for (int i=0; i<${this.args.size}; i++) {
-                            if (i == 0) {
-                                ceu_tag_$n = ceu_args_$n[i].type;
-                            } else if (ceu_tag_$n != ceu_args_$n[i].type) {
-                                CEU_THROW_DO_MSG(CEU_ERR_ERROR, break, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : non homogeneous arguments");
-                            }
-                        }
-                        CEU_CONTINUE_ON_THROW();
-                    }
-                    CEU_Dynamic* ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc(true)}, ceu_tag_$n, ${this.args.size}, ceu_args_$n);
-                    assert(ceu_vec_$n != NULL);
-                    ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=ceu_vec_$n} }")}
+                    ceu_mem->vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc(true)});
+                    assert(ceu_mem->vec_$n != NULL);
+                    ${this.args.mapIndexed { i, it ->
+                        it.code() + """
+                        ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc);
+                        """
+                    }.joinToString("")}
+                    ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=ceu_mem->vec_$n} }")}
                 }
-                """
-            }
+            """
             is Expr.Dict -> {
                 val args = this.args.mapIndexed { i, it ->
                     // allocate in the same scope of set (set.first) or use default block

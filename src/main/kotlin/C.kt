@@ -974,23 +974,14 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_vector_create (CEU_Block* hld, CEU_VALUE type, int n, CEU_Value* args) {
-            int sz = ceu_tag_to_size(type);
+        CEU_Dynamic* ceu_vector_create (CEU_Block* hld) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
-            char* mem = malloc(n*sz + 1);  // +1 '\0'
-            assert(mem != NULL);
             *ret = (CEU_Dynamic) {
                 CEU_VALUE_VECTOR, {NULL,NULL,NULL}, NULL, 0, {
-                    .Ncast = { 0, {.Vector={n,n,type,mem}} }
+                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,NULL}} }
                 }
             };
-            ceu_max_depth(ret, n, args);
-            for (int i=0; i<n; i++) {
-                assert(args[i].type == type);
-                memcpy(ret->Ncast.Vector.mem + i*sz, (char*)&args[i].Number, sz);
-            }
-            ret->Ncast.Vector.mem[n*sz] = '\0';
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -1391,10 +1382,8 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dynamic* new = ceu_vector_create(old->hold.block, old->Ncast.Vector.type, 0, NULL);
+                    CEU_Dynamic* new = ceu_vector_create(old->hold.block);
                     assert(new != NULL);
-                    CEU_Value ret = { CEU_VALUE_VECTOR, {.Dyn=new} };
-                    // TODO: memcpy if type!=DYN
                     for (int i=0; i<old->Ncast.Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(old, i));
                         CEU_Value ceu_accx = ceu_acc;
@@ -1402,7 +1391,7 @@ fun Coder.main (): String {
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
                         ceu_vector_set(new, i, ceu_acc);
                     }
-                    ceu_acc = ret;
+                    ceu_acc = (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=new} };
                     break;
                 }
                 case CEU_VALUE_DICT: {
