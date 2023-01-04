@@ -757,33 +757,19 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Char -> assrc("((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} })")
             is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
 
-            is Expr.Tuple -> {
-                val args = this.args.mapIndexed { i, it ->
-                    // allocate in the same scope of set (set.first) or use default block
-                    it.code() + """
-                    ceu_mem->arg_${i}_$n = ceu_acc;
-                    """
-                }.joinToString("")
-                """
+            is Expr.Tuple -> """
                 { // TUPLE ${this.tk.dump()}
-                    $args
-                    CEU_Value ceu_args_$n[${this.args.size}] = {
-                        ${this.args.mapIndexed { i, _ -> "ceu_mem->arg_${i}_$n" }.joinToString(",")}
-                    };
-                    CEU_Dynamic* ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc(true)}, ${this.args.size}, ceu_args_$n);
-                    assert(ceu_tup_$n != NULL);
-                    ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup_$n} }")}
+                    ceu_mem->tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc(true)}, ${this.args.size});
+                    assert(ceu_mem->tup_$n != NULL);
+                    ${this.args.mapIndexed { i, it ->
+                        it.code() + """
+                        ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc);
+                        """
+                    }.joinToString("")}
+                    ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_mem->tup_$n} }")}
                 }
-                """
-            }
-            is Expr.Vector -> {
-                val args = this.args.mapIndexed { i, it ->
-                    // allocate in the same scope of set (set.first) or use default block
-                    it.code() + """
-                    ceu_mem->arg_${i}_$n = ceu_acc;
-                    """
-                }.joinToString("")
-                """
+            """
+            is Expr.Vector -> """
                 { // VECTOR ${this.tk.dump()}
                     $args
                     CEU_Value ceu_args_$n[${this.args.size}] = {
@@ -879,7 +865,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number] = $src;
+                                ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
                                 break;
                             case CEU_VALUE_VECTOR:
                                 ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);

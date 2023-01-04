@@ -104,7 +104,7 @@ fun Expr.mem (): String {
 
         is Expr.Tuple -> """
             struct { // TUPLE
-                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                CEU_Dynamic* tup_$n;
                 union {
                     ${this.args.map { it.mem() }.joinToString("")}
                 };

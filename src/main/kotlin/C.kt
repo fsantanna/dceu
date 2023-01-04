@@ -102,7 +102,7 @@ fun Coder.main (): String {
         struct CEU_Value ceu_dict_get (struct CEU_Dynamic* col, struct CEU_Value* key);
         CEU_RET ceu_dict_set (struct CEU_Dynamic* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
-        struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n, struct CEU_Value* args);
+        struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n);
         
         struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
@@ -794,6 +794,12 @@ fun Coder.main (): String {
             }
         }
         
+        void ceu_tuple_set (CEU_Dynamic* tup, int i, CEU_Value v) {
+            ceu_gc_inc(&v);
+            ceu_gc_dec(&tup->Ncast.Tuple.mem[i]);
+            tup->Ncast.Tuple.mem[i] = v;
+        }
+        
         CEU_RET ceu_vector_get (CEU_Dynamic* vec, int i) {
             if (i<0 || i>=vec->Ncast.Vector.n) {
                 CEU_THROW_MSG("\0 : index error : out of bounds");
@@ -812,7 +818,7 @@ fun Coder.main (): String {
                 ceu_gc_dec(&ceu_acc);
                 vec->Ncast.Vector.n--;
             } else {
-                if (i == 0) {
+                if (vec->Ncast.Vector.n == 0) {
                     vec->Ncast.Vector.type = v.type;
                 } else {
                     assert(v.type == vec->Ncast.Vector.type);
@@ -955,7 +961,7 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n, CEU_Value* args) {
+        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Dynamic) {
@@ -963,10 +969,7 @@ fun Coder.main (): String {
                     .Ncast = { 0, {.Tuple={n,{}} } }
                 }
             };
-            if (args != NULL) {
-                memcpy(ret->Ncast.Tuple.mem, args, n*sizeof(CEU_Value));
-                ceu_max_depth(ret, n, args);
-            }
+            memset(ret->Ncast.Tuple.mem, 0, n*sizeof(CEU_Value));
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -1377,14 +1380,13 @@ fun Coder.main (): String {
                 case CEU_VALUE_TASK:
                     assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
-                    CEU_Value args1[old->Ncast.Tuple.n];
-                    for (int i=0; i<old->Ncast.Tuple.n; i++) {
-                        CEU_Value* args2[1] = { &old->Ncast.Tuple.mem[i] };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args2));
-                        args1[i] = ceu_acc;
-                    }
-                    CEU_Dynamic* new = ceu_tuple_create(old->hold.block, old->Ncast.Tuple.n, args1);
+                    CEU_Dynamic* new = ceu_tuple_create(old->hold.block, old->Ncast.Tuple.n);
                     assert(new != NULL);
+                    for (int i=0; i<old->Ncast.Tuple.n; i++) {
+                        CEU_Value* args[1] = { &old->Ncast.Tuple.mem[i] };
+                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                        ceu_tuple_set(new, i, ceu_acc);
+                    }
                     ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=new} };
                     break;
                 }
