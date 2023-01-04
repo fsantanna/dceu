@@ -2358,6 +2358,42 @@ class TExec {
         """)
         assert(out == "[1]\n") { out }
     }
+    @Test
+    fun clo25_compose() {
+        val out = all(
+            """
+            var comp = func (^f) {
+                func (v) {
+                    ^^f(v)
+                }
+            }
+            var f = func (x) {
+                x
+            }
+            var ff = comp(f)
+            println(ff(2))
+        """,
+        )
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun clo26_compose() {
+        val out = all(
+            """
+            var comp = func (^f,^g) {
+                func (v) {
+                    ^^f(^^g(v))
+                }
+            }
+            var f = func (x) {
+                x
+            }
+            var ff = comp(f,f)
+            println(ff(2))
+        """,
+        )
+        assert(out == "2\n") { out }
+    }
 
     //  MEM-GC-REF-COUNT
 

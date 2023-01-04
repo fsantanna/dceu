@@ -225,7 +225,10 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         .filter { it is Expr.Proto }
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
-                    "((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};"   // TODO: use this.body to not confuse with args
+                    """
+                    ceu_gc_inc(&${ups.ups[this]!!.id2c(dcl,upv)});
+                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};
+                    """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}

@@ -442,6 +442,8 @@ fun Coder.main (): String {
         // set x.pub = ?    //      - pub
         // [...?...]        // constructor argument     // TODO
         // f(?)             // call argument
+        // closure
+        
         void ceu_gc_inc (struct CEU_Value* new) {
             if (!CEU_TYPE_NCAST(new->type)) {
                 return;
