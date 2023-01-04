@@ -458,6 +458,15 @@ fun Coder.main (): String {
                 ceu_gc_chk(old->Dyn);
             }
         }
+/*
+        void ceu_gc_chk_args (int n, CEU_Value* args[]) {
+            for (int i=0; i<n; i++) {
+                if (CEU_TYPE_NCAST(args[i].type)) {
+                    ceu_gc_chk(args[i].Dyn);
+                }
+            }
+        }
+*/
     """ +
     """ // BLOCK
         void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {

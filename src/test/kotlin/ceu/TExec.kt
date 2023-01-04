@@ -2373,11 +2373,12 @@ class TExec {
     @Test
     fun gc2() {
         val out = all("""
-            []
-            []
+            []  ;; not checked
+            []  ;; not checked
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "2\n") { out }
+        //assert(out == "2\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun gc3_cycle() {
@@ -2430,10 +2431,10 @@ class TExec {
             var f = func (v) {
                 v
             }
-            println(#(#[f([1])]))
+            #( #[ f([1]) ] )
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "1\n2\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
     fun gc8() {
@@ -2493,6 +2494,14 @@ class TExec {
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
         //assert(out == "1\n") { out }
         assert(out == "0\n") { out }
+    }
+    @Test
+    fun gc12() {
+        val out = all("""
+            println([]) ;; println does not check
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "[]\n0\n") { out }
     }
 
     // MISC

@@ -241,10 +241,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Do -> {
-                val ES = this.es.mapIndexed { i,e ->
-                    e.code() + (i<this.es.size-1).cond { e.gc_chk() }
-                }.joinToString("")
-
+                val ES = this.es.map { it.code() }.joinToString("")
                 if (!this.isnest) ES else {
                     val up = ups.ups[this]
                     val bup = up?.let { ups.first_block(it) }
