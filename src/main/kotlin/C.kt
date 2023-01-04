@@ -275,7 +275,7 @@ fun Coder.main (): String {
     """ +
     """ // GLOBALS
         struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Proto proto);        
-        struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld, int n, struct CEU_Value (*args)[][2]);
+        struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld);
 
         int ceu_gc_count = 0;
         
@@ -894,7 +894,7 @@ fun Coder.main (): String {
             ceu_dict_key_to_index(col, key, &old);
             if (old == -1) {
                 old = col->Ncast.Dict.max;
-                int new = old * 2;
+                int new = MAX(5, old * 2);
                 col->Ncast.Dict.max = new;
                 col->Ncast.Dict.mem = realloc(col->Ncast.Dict.mem, new*2*sizeof(CEU_Value));
                 assert(col->Ncast.Dict.mem != NULL);
@@ -986,24 +986,14 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_dict_create (CEU_Block* hld, int n, CEU_Value (*args)[][2]) {
-            int min = (n < 4) ? 4 : n; 
+        CEU_Dynamic* ceu_dict_create (CEU_Block* hld) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
-            CEU_Value (*mem)[][2] = malloc(min*2*sizeof(CEU_Value));
-            assert(mem != NULL);
-            memset(mem, 0, min*2*sizeof(CEU_Value));  // x[i]=nil
             *ret = (CEU_Dynamic) {
                 CEU_VALUE_DICT, {NULL,NULL,NULL}, NULL, 0, {
-                    .Ncast = { 0, {.Dict={min,mem}} }
+                    .Ncast = { 0, {.Dict={0,NULL}} }
                 }
             };
-            if (args != NULL) {
-                for (int i=0; i<n; i++) {
-                    ceu_dict_set(ret, &(*args)[i][0], &(*args)[i][1]);
-                }
-                ceu_max_depth(ret, n*2, (CEU_Value*)args);
-            }
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -1395,18 +1385,25 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dynamic* new = ceu_dict_create(old->hold.block, old->Ncast.Dict.max, NULL);
+                    CEU_Dynamic* new = ceu_dict_create(old->hold.block);
                     assert(new != NULL);
-                    CEU_Value ret = { CEU_VALUE_DICT, {.Dyn=new} };
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
-                        CEU_Value* args0[1] = { &(*old->Ncast.Dict.mem)[i][0] };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args0));
-                        (*ret.Dyn->Ncast.Dict.mem)[i][0] = ceu_acc;
-                        CEU_Value* args1[1] = { &(*old->Ncast.Dict.mem)[i][1] };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args1));
-                        (*ret.Dyn->Ncast.Dict.mem)[i][1] = ceu_acc;
+                        {
+                            CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][0] };
+                            assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                        }
+                        CEU_Value key = ceu_acc;
+                        if (key.type == CEU_VALUE_NIL) {
+                            continue;
+                        }
+                        {
+                            CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][1] };
+                            assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                        }
+                        CEU_Value val = ceu_acc;
+                        ceu_dict_set(new, &key, &val);
                     }
-                    ceu_acc = ret;
+                    ceu_acc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=new} };
                     break;
                 }
                 default:

@@ -782,20 +782,19 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
             """
             is Expr.Dict -> {
-                val args = this.args.mapIndexed { i, it ->
-                    // allocate in the same scope of set (set.first) or use default block
-                    it.first.code() + "ceu_mem->arg_${i}_a_$n = ceu_acc;\n" +
-                    it.second.code() + "ceu_mem->arg_${i}_b_$n = ceu_acc;\n"
-                }.joinToString("")
                 """
                 { // DICT ${this.tk.dump()}
-                    $args
-                    CEU_Value ceu_args_$n[${this.args.size}][2] = {
-                        ${this.args.mapIndexed { i, _ -> "{ceu_mem->arg_${i}_a_$n,ceu_mem->arg_${i}_b_$n}" }.joinToString(",")}
-                    };
-                    CEU_Dynamic* ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc(true)}, ${this.args.size}, &ceu_args_$n);
-                    assert(ceu_dict_$n != NULL);
-                    ${assrc("(CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_$n} }")}
+                    ceu_mem->dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc(true)});
+                    assert(ceu_mem->dict_$n != NULL);
+                    ${this.args.map {
+                        // allocate in the same scope of set (set.first) or use default block
+                        it.first.code() +
+                        "ceu_mem->key_$n = ceu_acc;\n" +
+                        it.second.code() +
+                        "CEU_Value ceu_val_$n = ceu_acc;\n" +
+                        "ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);\n"
+                    }.joinToString("")}
+                    ${assrc("(CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_mem->dict_$n} }")}
                 }
                 """
             }

@@ -120,12 +120,8 @@ fun Expr.mem (): String {
             """
         is Expr.Dict -> """
             struct { // DICT
-                ${this.args.mapIndexed { i,_ ->
-                    """
-                    CEU_Value arg_${i}_a_$n;
-                    CEU_Value arg_${i}_b_$n;
-                    """
-                }.joinToString("")}
+                CEU_Dynamic* dict_$n;
+                CEU_Value key_$n;
                 union {
                     ${this.args.map {
                         listOf(it.first.mem(),it.second.mem())

@@ -16,7 +16,7 @@ import tostr
 import java.io.File
 
 // search in tests output for
-//  definitely|Invalid read|uninitialised|uninitialized
+//  definitely|Invalid read|Invalid write|uninitialised|uninitialized
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
