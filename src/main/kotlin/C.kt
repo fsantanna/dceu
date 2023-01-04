@@ -39,6 +39,7 @@ fun Coder.main (): String {
         CEU_RET ceu_type_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
         int ceu_as_bool (struct CEU_Value* v);
 
+        #define CEU_TYPE_NCAST(v) (v>CEU_VALUE_DYNAMIC && v<CEU_VALUE_BCAST)
         #define CEU_THROW_MSG(msg) {                       \
             static CEU_Error_List err = { msg, 0, NULL };  \
             err.shown = 0;                                 \
@@ -73,8 +74,8 @@ fun Coder.main (): String {
         void ceu_dyn_free (struct CEU_Dynamic* dyn);
         void ceu_dyns_free (struct CEU_Dynamic* cur);
 
-        void ceu_gc_inc (struct CEU_Value* new);
-        void ceu_gc_dec (struct CEU_Value* old);
+        void ceu_gc_inc (struct CEU_Value* v);
+        void ceu_gc_dec (struct CEU_Value* v, int chk);
 
         void ceu_hold_add (struct CEU_Block* dst, struct CEU_Dynamic* src);
         void ceu_hold_rem (struct CEU_Dynamic* dyn);
@@ -395,24 +396,24 @@ fun Coder.main (): String {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
                     for (int i=0; i<dyn->Ncast.Proto.upvs.n; i++) {
-                        ceu_gc_dec(&dyn->Ncast.Proto.upvs.buf[i]);
+                        ceu_gc_dec(&dyn->Ncast.Proto.upvs.buf[i], 1);
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Ncast.Tuple.n; i++) {
-                        ceu_gc_dec(&dyn->Ncast.Tuple.mem[i]);
+                        ceu_gc_dec(&dyn->Ncast.Tuple.mem[i], 1);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<dyn->Ncast.Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
-                        ceu_gc_dec(&ceu_acc);
+                        ceu_gc_dec(&ceu_acc, 1);
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
-                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][0]);
-                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][1]);
+                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][0], 1);
+                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][1], 1);
                     }
                     break;
                 case CEU_VALUE_CORO:
@@ -442,18 +443,20 @@ fun Coder.main (): String {
         // [...?...]        // constructor argument     // TODO
         // f(?)             // call argument
         void ceu_gc_inc (struct CEU_Value* new) {
-            if (new->type<CEU_VALUE_DYNAMIC || new->type>CEU_VALUE_BCAST) {
+            if (!CEU_TYPE_NCAST(new->type)) {
                 return;
             }
             new->Dyn->Ncast.refs++;
         }
         
-        void ceu_gc_dec (struct CEU_Value* old) {
-            if (old->type < CEU_VALUE_DYNAMIC || old->type>CEU_VALUE_BCAST) {
+        void ceu_gc_dec (struct CEU_Value* old, int chk) {
+            if (!CEU_TYPE_NCAST(old->type)) {
                 return;
             }
             old->Dyn->Ncast.refs--;
-            ceu_gc_chk(old->Dyn);
+            if (chk) {
+                ceu_gc_chk(old->Dyn);
+            }
         }
     """ +
     """ // BLOCK
@@ -807,7 +810,7 @@ fun Coder.main (): String {
         
         void ceu_tuple_set (CEU_Dynamic* tup, int i, CEU_Value v) {
             ceu_gc_inc(&v);
-            ceu_gc_dec(&tup->Ncast.Tuple.mem[i]);
+            ceu_gc_dec(&tup->Ncast.Tuple.mem[i], 1);
             tup->Ncast.Tuple.mem[i] = v;
         }
         
@@ -826,7 +829,7 @@ fun Coder.main (): String {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Ncast.Vector.n-1);
                 assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
-                ceu_gc_dec(&ceu_acc);
+                ceu_gc_dec(&ceu_acc, 1);
                 vec->Ncast.Vector.n--;
             } else {
                 if (vec->Ncast.Vector.n == 0) {
@@ -847,7 +850,7 @@ fun Coder.main (): String {
                 } else {                            // set
                     assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
                     ceu_gc_inc(&v);
-                    ceu_gc_dec(&ceu_acc);
+                    ceu_gc_dec(&ceu_acc, 1);
                     assert(i < vec->Ncast.Vector.n);
                 }
                 memcpy(vec->Ncast.Vector.mem + i*sz, (char*)&v.Number, sz);
@@ -916,12 +919,12 @@ fun Coder.main (): String {
             CEU_Value vv = ceu_dict_get(col, key);
             
             if (val->type == CEU_VALUE_NIL) {
-                ceu_gc_dec(&vv);
-                ceu_gc_dec(key);
+                ceu_gc_dec(&vv, 1);
+                ceu_gc_dec(key, 1);
                 (*col->Ncast.Dict.mem)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 ceu_gc_inc(val);
-                ceu_gc_dec(&vv);
+                ceu_gc_dec(&vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }

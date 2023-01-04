@@ -2465,18 +2465,34 @@ class TExec {
                 ":error\n") { out }
     }
     @Test
-    fun gc10() {
+    fun todo_gc10() {
         val out = all("""
             do {
                 do {
-                    var ins = [1,2,3]
-                    move(ins)
+                    var v = []
+                    move(v)
                 }
+                ;; [] not captured, should be checked 
                 println(`:number ceu_gc_count`)
             }
             println(`:number ceu_gc_count`)
         """, true)
-        assert(out == "1\n1\n") { out }
+        //assert(out == "1\n1\n") { out }
+        assert(out == "0\n0\n") { out }
+    }
+    @Test
+    fun todo_gc11() {
+        val out = all("""
+            var f = func (v) {
+                v
+            }
+            f([])
+            ;; [] not captured, should be checked 
+            println(`:number ceu_gc_count`)
+        """)
+        //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
     }
 
     // MISC

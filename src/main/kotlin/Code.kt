@@ -321,7 +321,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         .filter { it.first()!='_' && it.last()!='_' }
                                         .filter { this!=outer || it !in GLOBALS }
                                         .map { """
-                                            ceu_gc_dec(&ceu_mem->$it);                    
+                                            if (CEU_TYPE_NCAST(ceu_mem->$it.type)) {
+                                                ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->hold.block == &ceu_mem->block_$n));
+                                            }
                                         """ }
                                         .joinToString("")
                                     }
@@ -637,7 +639,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->Task.pub);
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->Task.pub, 1);
                         ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $src;
                         """
                     }}
@@ -740,7 +742,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&${this.id2c(dcl,this.tk_.upv)});
+                        ceu_gc_dec(&${this.id2c(dcl,this.tk_.upv)}, 1);
                         ${this.id2c(dcl,this.tk_.upv)} = $src;
                     }
                     """
