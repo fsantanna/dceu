@@ -76,6 +76,8 @@ fun Coder.main (): String {
         void ceu_gc_inc (struct CEU_Value* new);
         void ceu_gc_dec (struct CEU_Value* old);
 
+        void ceu_hold_add (struct CEU_Block* dst, struct CEU_Dynamic* src);
+        void ceu_hold_rem (struct CEU_Dynamic* dyn);
         CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
         
         void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
@@ -422,7 +424,8 @@ fun Coder.main (): String {
                     break;
             }
             ceu_gc_count++;
-            //ceu_dyn_free(dyn);
+            ceu_hold_rem(dyn);
+            ceu_dyn_free(dyn);
         }
         
         void ceu_gc_inc (struct CEU_Value* new) {
