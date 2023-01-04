@@ -56,15 +56,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun Expr.gc_chk (): String {
-        return when (this) {
-            is Expr.Proto, is Expr.Tuple, is Expr.Vector, is Expr.Dict -> {
-                "ceu_gc_chk(ceu_acc.Dyn);\n"
-            }
-            else -> ""
-        }
-    }
-
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -367,7 +358,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     ceu_gc_inc(&ceu_mem->${id});
-                    ${assrc("ceu_mem->$id")}
+                    #if 1
+                        ${assrc("ceu_mem->$id")}
+                    #else // b/c of ret scope
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    #endif
                 }
                 """
             }
@@ -376,7 +371,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ${this.src.code()}
                     ceu_mem->set_$n = ceu_acc;
                     ${this.dst.code()}
-                    ${assrc("ceu_mem->set_$n")}
+                    #if 1
+                        ${assrc("ceu_mem->set_$n")}
+                    #else // b/c of ret scope
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    #endif
                 }
                 """
             is Expr.If -> """

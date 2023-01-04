@@ -2434,7 +2434,8 @@ class TExec {
             #( #[ f([1]) ] )
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "2\n") { out }
+        //assert(out == "2\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun gc8() {
@@ -2466,7 +2467,7 @@ class TExec {
                 ":error\n") { out }
     }
     @Test
-    fun todo_gc10() {
+    fun gc10() {
         val out = all("""
             do {
                 do {
@@ -2482,7 +2483,7 @@ class TExec {
         assert(out == "0\n0\n") { out }
     }
     @Test
-    fun todo_gc11() {
+    fun gc11() {
         val out = all("""
             var f = func (v) {
                 v

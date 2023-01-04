@@ -1833,6 +1833,7 @@ class TTask {
                 var v2
                 set v2 = yield(nil)
                 set pub = pub + v2
+                pub
             }
             var a
             set a = coroutine(t)
@@ -2100,6 +2101,7 @@ class TTask {
                 var y
                 set y = yield(nil)
                 set pub = @[(:y,y)]
+                move(pub)
             }
             var a
             set a = coroutine(t)
@@ -2253,6 +2255,20 @@ class TTask {
         """)
         assert(out == "anon : (lin 11, col 28) : U()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun pub25() {
+        val out = all("""
+            var t = task (v) {
+                set pub = @[]
+                nil
+            }
+            var a
+            set a = coroutine(t)
+            resume a()
+            println(a.status)
+        """, true)
+        assert(out == ":terminated\n") { out }
     }
 
     // STATUS
