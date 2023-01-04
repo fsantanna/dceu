@@ -88,20 +88,6 @@ class Ups (val outer: Expr.Do) {
         }
     }
 
-    /*
-    fun isUp (e: Expr, id: String): Boolean {
-        val xblock = this.xblocks[e]!!
-        val up = this.proto_or_block_or_group(e)
-        //println(listOf("GET", id, e.javaClass.name, xblock.syms.contains(id)))
-        return (xblock.syms.contains(id) || (up!=null && this.isDeclared(up,id)))
-    }
-    fun assertIsNotUp (e: Expr, id: String, tk: Tk) {
-        if (this.isUp(e,id)) {
-            err(tk, "set error : cannot reassign an upvalue")
-        }
-    }
-     */
-
     // Traverse the tree structure from top down
     // 1. assigns this.xblocks
     // 2. assigns this.upvs_protos_noclos, upvs_vars_refs, upvs_protos_refs
@@ -109,21 +95,23 @@ class Ups (val outer: Expr.Do) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> {
-                xblocks[this] = XBlock (
-                    this.args.let {
-                        (it.map {
-                            Pair(it.str,Dcl(it.str,it.upv,this))
-                        } + it.map {
-                            Pair("_${it.str}_",Dcl("_${it.str}_",it.upv,this))
-                        })
-                    }.toMap().toMutableMap(),
-                    null
-                )
                 this.body.traverse()
             }
             is Expr.Do -> {
                 if (this!=outer && this.ishide) {
-                    xblocks[this] = XBlock(mutableMapOf(), mutableListOf())
+                    val proto = ups[this]
+                    val args = if (proto !is Expr.Proto) {
+                        mutableMapOf()
+                    } else {
+                        proto.args.let {
+                            (it.map {
+                                Pair(it.str, Dcl(it.str, it.upv, this))
+                            } + it.map {
+                                Pair("_${it.str}_", Dcl("_${it.str}_", it.upv, this))
+                            })
+                        }.toMap().toMutableMap()
+                    }
+                    xblocks[this] = XBlock(args, mutableListOf())
                 }
                 this.es.forEach { it.traverse() }
             }
