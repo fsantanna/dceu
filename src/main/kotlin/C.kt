@@ -993,9 +993,12 @@ fun Coder.main (): String {
         CEU_Dynamic* ceu_vector_create (CEU_Block* hld) {
             CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
             assert(ret != NULL);
+            char* mem = malloc(1);  // because of '\0' in empty strings
+            assert(mem != NULL);
+            mem[0] = '\0';
             *ret = (CEU_Dynamic) {
                 CEU_VALUE_VECTOR, {NULL,NULL,NULL}, NULL, 0, {
-                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,NULL}} }
+                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,mem}} }
                 }
             };
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));

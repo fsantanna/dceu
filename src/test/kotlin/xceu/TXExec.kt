@@ -900,6 +900,15 @@ class TXExec {
         """, true)
         assert(out == "#[1]\n") { out }
     }
+    @Test
+    fun string17() {
+        val out = all("""
+            var v = ""
+            println(v)
+            `printf(">%s<\n", ${D}v.Dyn->Ncast.Vector.mem);`
+        """)
+        assert(out == "#[]\n><\n") { out }
+    }
 
     // AWAIT / EVERY
 
