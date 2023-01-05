@@ -701,6 +701,25 @@ class TXExec {
         """, true)
         assert(out == "1\n2\n999\n") { out }
     }
+    @Test
+    fun paror19_valgrind() {
+        val out = all("""
+            spawn {
+                paror {
+                    while true { yield(nil) }
+                } with {
+                    paror {
+                        yield()
+                    } with {
+                        while true { yield(nil) }
+                    }
+                }
+            }
+            broadcast in :global, nil
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 
