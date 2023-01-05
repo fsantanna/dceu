@@ -702,7 +702,7 @@ class Parser (lexer_: Lexer)
                                 var _ceu_${i}_$n = do {
                                     ${body.es.tostr(true)}
                                 }
-                                ;;set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
+                                set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
                             }
                         """}.joinToString("")}
                         await :check.now (
