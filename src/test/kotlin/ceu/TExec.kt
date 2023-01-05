@@ -446,6 +446,54 @@ class TExec {
         """, true)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun tuple21_scope_copy() {
+        val out = all("""
+            var x = [1,2,3]
+            do {
+                var y = copy(x)
+                do {
+                    set x = y
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun tuple22_scope_copy() {
+        val out = all("""
+            var x = [1,2,3]
+            do {
+                var y = copy(x)
+                do {
+                    set x = copy(y)
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun tuple23_scope_copy() {
+        val out = all("""
+            var v
+            do {
+                var x = [1,2,3]
+                do {
+                    var y = copy(x)
+                    do {
+                        set x = copy(y)
+                        set v = x       ;; err
+                    }
+                }
+            }
+            println(v)
+        """, true)
+        assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
 
     // DICT
 

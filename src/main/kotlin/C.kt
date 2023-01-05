@@ -1380,8 +1380,9 @@ fun Coder.main (): String {
                 case CEU_VALUE_TASK:
                     assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
-                    CEU_Dynamic* new = ceu_tuple_create(old->hold.block, old->Ncast.Tuple.n);
+                    CEU_Dynamic* new = ceu_tuple_create(NULL, old->Ncast.Tuple.n);
                     assert(new != NULL);
+                    new->isperm = 0;
                     for (int i=0; i<old->Ncast.Tuple.n; i++) {
                         CEU_Value* args[1] = { &old->Ncast.Tuple.mem[i] };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
@@ -1391,8 +1392,9 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dynamic* new = ceu_vector_create(old->hold.block);
+                    CEU_Dynamic* new = ceu_vector_create(NULL);
                     assert(new != NULL);
+                    new->isperm = 0;
                     for (int i=0; i<old->Ncast.Vector.n; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(old, i));
                         CEU_Value ceu_accx = ceu_acc;
@@ -1404,8 +1406,9 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dynamic* new = ceu_dict_create(old->hold.block);
+                    CEU_Dynamic* new = ceu_dict_create(NULL);
                     assert(new != NULL);
+                    new->isperm = 0;
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
                         {
                             CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][0] };
