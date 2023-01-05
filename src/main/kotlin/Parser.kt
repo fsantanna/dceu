@@ -671,7 +671,9 @@ class Parser (lexer_: Lexer)
                         var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
                             var ceu_${i}_$n = spawn {
-                                set _ceu_$n = ${body.es.tostr(true)}
+                                set _ceu_$n = do {
+                                    ${body.es.tostr(true)}
+                                }
                             }
                         """}.joinToString("")}
                         await :check.now (
@@ -697,8 +699,10 @@ class Parser (lexer_: Lexer)
                         var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
                             var ceu_${i}_$n = spawn {
-                                var _ceu_${i}_$n = ${body.es.tostr(true)}
-                                set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
+                                var _ceu_${i}_$n = do {
+                                    ${body.es.tostr(true)}
+                                }
+                                ;;set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
                             }
                         """}.joinToString("")}
                         await :check.now (
