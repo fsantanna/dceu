@@ -246,6 +246,13 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
                     val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
+                    val vars = ups.xblocks[this]!!.syms.values.let { dcls ->
+                        val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.str }.toSet()
+                        dcls.filter { it.init }
+                            .map    { it.id }
+                            .filter { !GLOBALS.contains(it) }
+                            .filter { !(f_b is Expr.Proto && args.contains(it)) }
+                    }
                     """
                     { // BLOCK ${this.tk.dump()}
                         ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
@@ -257,6 +264,12 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ${
                             (f_b is Expr.Do).cond {
                                 "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"
+                            }
+                        }
+                        { // because of "decrement refs" below
+                            ${vars.map { """
+                                ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
+                            """ }.joinToString("")
                             }
                         }
                         do { // block
@@ -308,15 +321,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                                 { // decrement refs
-                                    ${ups.xblocks[this]!!.syms.keys
-                                        .filter { it.first()!='_' && it.last()!='_' }
-                                        .filter { this!=outer || it !in GLOBALS }
-                                        .map { """
-                                            if (CEU_TYPE_NCAST(ceu_mem->$it.type)) {
-                                                ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->hold.block == &ceu_mem->block_$n));
-                                            }
-                                        """ }
-                                        .joinToString("")
+                                    ${vars.map { """
+                                        if (CEU_TYPE_NCAST(ceu_mem->$it.type)) {
+                                            ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->hold.block == &ceu_mem->block_$n));
+                                        }
+                                    """ }.joinToString("")
                                     }
                                 }
                                 { // relink blocks
@@ -537,13 +546,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_err_$n = 1;
                     }
                     ceu_bcasting--;
-                    ${intask.cond {
-                        "//int ceu_term_$n = ceu_coro->Bcast.status>=CEU_CORO_STATUS_TERMINATED;"
-                    }}
                     ceu_bcast_free();
-                    ${intask.cond {
-                        "//if (ceu_term_$n) return CEU_RET_RETURN;"
-                    }}
                     if (ceu_err_$n) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target");
                     }
@@ -737,7 +740,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // ACC - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",false,dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);

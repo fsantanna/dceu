@@ -646,7 +646,7 @@ fun Coder.main (): String {
                 list->first = dyn->Bcast.next;
             }
             if (list->last == dyn) {
-                list->first = dyn->Bcast.prev;
+                list->last = dyn->Bcast.prev;
             }
             if (dyn->Bcast.prev != NULL) {
                 dyn->Bcast.prev->Bcast.next = dyn->Bcast.next;

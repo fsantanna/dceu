@@ -532,7 +532,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun wawaiting10_err() {
+    fun awaiting10_err() {
         val out = all("""
             task T () :awakes {
                 awaiting (throw(:error)) {

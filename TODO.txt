@@ -117,3 +117,5 @@
     - Toda memória é gerenciada dict array task
 - pico-sdl
     - image/font cache
+- rx-ceu
+    - Meier "dual" paper

@@ -1,12 +1,12 @@
 // func (args) or block (locals)
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<String>?)
-data class Dcl (val id: String, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
+data class Dcl (val id: String, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Ups (val outer: Expr.Do) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,Dcl(it,0,outer)) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map { Pair(it,Dcl(it,true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
     val ups = outer.tree()
@@ -100,9 +100,9 @@ class Ups (val outer: Expr.Do) {
                     } else {
                         proto.args.let {
                             (it.map {
-                                Pair(it.str, Dcl(it.str, it.upv, this))
+                                Pair(it.str, Dcl(it.str, true, it.upv, this))
                             } + it.map {
-                                Pair("_${it.str}_", Dcl("_${it.str}_", it.upv, this))
+                                Pair("_${it.str}_", Dcl("_${it.str}_", false, it.upv, this))
                             })
                         }.toMap().toMutableMap()
                     }
@@ -116,8 +116,8 @@ class Ups (val outer: Expr.Do) {
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup.syms[id] = Dcl(id, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Dcl("_${id}_", this.tk_.upv, bup)
+                xup.syms[id] = Dcl(id, this.init, this.tk_.upv, bup)
+                xup.syms["_${id}_"] = Dcl("_${id}_", false, this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
