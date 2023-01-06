@@ -691,7 +691,7 @@ fun Coder.main (): String {
                         return CEU_RET_RETURN;
                     } else {
                         // step (1)
-                        CEU_BStack xbstack = { ???, bstack };
+                        CEU_BStack xbstack = { cur->hold.block, bstack };
                         int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.block, evt);
                         if (xbstack.block == NULL) {
                             return ret;
@@ -728,9 +728,17 @@ fun Coder.main (): String {
         }
 
         CEU_RET ceu_bcast_dyns (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
+            CEU_BStack xbstack;
+            if (cur != NULL) {
+                xbstack = (CEU_BStack) { cur->hold.block, bstack };   // all dyns have the same enclosing block, which is checked after each bcast
+            }
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
-                if (ceu_bcast_dyn(bstack,cur,evt) == CEU_RET_THROW) {
+                int ret = ceu_bcast_dyn(&xbstack, cur, evt);
+                if (xbstack.block == NULL) { 
+                    return ret;
+                }
+                if (ret == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
