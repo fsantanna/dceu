@@ -26,8 +26,7 @@ fun Coder.main (): String {
         struct CEU_BStack;
 
         typedef enum {
-            CEU_RET_DEAD = 0,      // enclosing block is dead
-            CEU_RET_THROW,         // going up with throw
+            CEU_RET_THROW = 0,  // going up with throw
             CEU_RET_RETURN,
             CEU_RET_YIELD
         } CEU_RET;

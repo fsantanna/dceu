@@ -183,11 +183,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
                             }
                             ceu_bcasting--;
-                            // 1. should it be before or after throw check?
-                            //  - BEFORE: if it is dead, it wont catch
-                            // 2. should it return RET_DEAD?
                             if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
-                                return CEU_RET_DEAD;
+                                return ceu_ret;
                             }
                         
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
@@ -320,11 +317,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     ceu_bcasting++;
                                     assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
                                     ceu_bcasting--;
-                                    // 1. should it be before or after throw check?
-                                    //  - BEFORE: if it is dead, it wont catch
-                                    // 2. should it return RET_DEAD?
                                     if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
-                                        return CEU_RET_DEAD;
+                                        return CEU_RET_RETURN;
                                     }
                                     ceu_bcast_free();
                                 }
@@ -565,11 +559,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_bcasting--;
                     ceu_bcast_free();
                     
-                    // 1. should it be before or after throw check?
-                    //  - BEFORE: if it is dead, it wont catch
-                    // 2. should it return RET_DEAD?
                     if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
-                        return CEU_RET_DEAD;
+                        return ceu_ret;
                     }
                     
                     if (ceu_err_$n) {
