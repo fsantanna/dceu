@@ -2872,7 +2872,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun todo_xceu6() {
+    fun xceu6() {
         val out = all("""
             var T
             set T = task (pos) :awakes {
@@ -2891,5 +2891,22 @@ class TTask {
             broadcast in :global, nil
         """)
         assert(out == "[]\n") { out }
+    }
+    @Test
+    fun xceu7_valgrind() {
+        val out = all("""
+            spawn task () :awakes {
+                do {
+                    spawn task () :awakes {
+                        yield(nil)
+                    } ()
+                    yield(nil)
+                }
+                broadcast in :global, [[]]
+                ;;await true
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out == "1\n") { out }
     }
 }

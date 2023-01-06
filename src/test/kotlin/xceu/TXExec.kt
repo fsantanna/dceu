@@ -2011,4 +2011,23 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun all8_valgrind() {
+        val out = all("""
+            spawn {
+                while true {
+                    await evt==10
+                    broadcast in :global, tags([], :pause, true)
+                    awaiting evt==10 {
+                        await false
+                    }
+                    broadcast in :global, tags([], :resume, true)
+        ;;await true
+                }
+            }
+            broadcast in :global, 10
+            broadcast in :global, 10
+        """, true)
+        assert(out == "1\n") { out }
+    }
 }
