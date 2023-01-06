@@ -72,7 +72,7 @@ fun Coder.main (): String {
         char* ceu_tag_to_string (int tag);
         
         void ceu_dyn_free (struct CEU_Dynamic* dyn);
-        void ceu_dyns_free (struct CEU_Dynamic* cur);
+        void ceu_dyns_free (struct CEU_Dynamic** list);
 
         void ceu_gc_inc (struct CEU_Value* v);
         void ceu_gc_dec (struct CEU_Value* v, int chk);
@@ -120,8 +120,8 @@ fun Coder.main (): String {
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
             CEU_VALUE_DYNAMIC,  // all below are dynamic
-            CEU_VALUE_FUNC,     // func frame
-            CEU_VALUE_TASK,     // task frame
+            CEU_VALUE_FUNC,     // func closure
+            CEU_VALUE_TASK,     // task closure
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
             CEU_VALUE_DICT,
@@ -487,6 +487,11 @@ fun Coder.main (): String {
         }
 
         void ceu_dyn_free (CEU_Dynamic* dyn) {
+            while (dyn->tags != NULL) {
+                CEU_Tags_List* x = dyn->tags;
+                dyn->tags = x->next;
+                free(x);
+            }
             switch (dyn->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
@@ -512,35 +517,29 @@ fun Coder.main (): String {
                 default:
                     assert(0 && "bug found");
             }
-            if (dyn->type<CEU_VALUE_BCAST || ceu_bcasting==0) {
-                while (dyn->tags != NULL) {
-                    CEU_Tags_List* x = dyn->tags;
-                    dyn->tags = x->next;
-                    free(x);
-                }
-                //printf(">>> %d\n", dyn->type);
-                free(dyn);
-            } else {
-                dyn->hold.next = ceu_bcast_tofree;  // reuse next (no need to set block/prev)
-                ceu_bcast_tofree = dyn;
-            }
+            free(dyn);
         }
         
-        void ceu_dyns_free (CEU_Dynamic* cur) {
-            CEU_Dynamic* nxt = cur;
-            while (nxt != NULL) {
-                CEU_Dynamic* cur = nxt;
-                nxt = cur->hold.next;
-                ceu_dyn_free(cur);
+        void ceu_dyns_free (CEU_Dynamic** list) {
+            CEU_Dynamic* cur = *list;
+            while (cur != NULL) {
+                CEU_Dynamic* nxt = cur->hold.next;
+                if (ceu_bcasting > 0) {
+                    cur->hold.next = ceu_bcast_tofree;  // reuse next (no need to set block/prev)
+                    ceu_bcast_tofree = cur;
+                } else {
+                    ceu_dyn_free(cur);
+                }
+                cur = nxt;
             }
+            *list = NULL;
         }
 
         void ceu_bcast_free (void) {
             if (ceu_bcasting > 0) {
                 // do not free anything yet
             } else {
-                ceu_dyns_free(ceu_bcast_tofree);
-                ceu_bcast_tofree = NULL;
+                ceu_dyns_free(&ceu_bcast_tofree);
             }
         }
 

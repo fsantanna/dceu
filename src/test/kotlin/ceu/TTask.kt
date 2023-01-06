@@ -2893,7 +2893,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun xceu7_valgrind() {
+    fun xceu7() {
         val out = all("""
             spawn task () :awakes {
                 do {
@@ -2906,7 +2906,8 @@ class TTask {
                 ;;await true
             }()
             broadcast in :global, nil
+            println(:ok)
         """)
-        assert(out == "1\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }

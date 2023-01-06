@@ -339,7 +339,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                             "ceu_coro->Bcast.Coro.block = NULL;"
                                         }
                                     }
-                                    ceu_dyns_free(ceu_mem->block_$n.tofree);
+                                    ceu_dyns_free(&ceu_mem->block_$n.tofree);
                                 }
                             }
                             ceu_acc = ceu_acc_$n;
