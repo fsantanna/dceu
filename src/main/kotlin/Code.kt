@@ -154,48 +154,47 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ${istask.cond{"}\n}\n"}}
                     } while (0); // func
                     """ + istask.cond{ """  // TERMINATE
-                    if (ceu_coro->Bcast.status < CEU_CORO_STATUS_TERMINATED) {
-                        ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
-                        ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
-                        ceu_frame->Task.pc = -1;
+                    assert(ceu_coro->Bcast.status < CEU_CORO_STATUS_TERMINATED);
+                    ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
+                    ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
+                    ceu_frame->Task.pc = -1;
 
-                        if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
-                            // do not signal termination: clear comes from clearing enclosing block,
-                            // which also clears all possible interested awaits
-                        } else if (ceu_ret == CEU_RET_THROW) {
-                            // do not signal termination: throw clears enclosing block,
-                            // which also clears all possible interested awaits
+                    if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
+                        // do not signal termination: clear comes from clearing enclosing block,
+                        // which also clears all possible interested awaits
+                    } else if (ceu_ret == CEU_RET_THROW) {
+                        // do not signal termination: throw clears enclosing block,
+                        // which also clears all possible interested awaits
+                    } else {
+                        // only signal on normal termination
+
+                        // ceu_ret/ceu_acc: save/restore
+                        CEU_RET   ceu_ret_$n = ceu_ret;
+                        CEU_Value ceu_acc_$n = ceu_acc;
+
+                        CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                        CEU_BStack ceu_bstack_$n = { ceu_frame->up, ceu_bstack };
+                        if (ceu_coro->hold.block->bcast.up != NULL) {
+                            // enclosing coro of enclosing block
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
                         } else {
-                            // only signal on normal termination
+                            // enclosing block
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
+                        }
+                        if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                            return ceu_ret;
+                        }
+                    
+                        if (ceu_coro->Bcast.Coro.coros != NULL) {
+                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
+                                ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
+                            }
+                        }
 
-                            // ceu_ret/ceu_acc: save/restore
-                            CEU_RET   ceu_ret_$n = ceu_ret;
-                            CEU_Value ceu_acc_$n = ceu_acc;
-
-                            CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                            CEU_BStack ceu_bstack_$n = { ceu_frame->up, ceu_bstack };
-                            if (ceu_coro->hold.block->bcast.up != NULL) {
-                                // enclosing coro of enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
-                            } else {
-                                // enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
-                            }
-                            if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
-                                return ceu_ret;
-                            }
-                        
-                            if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                    ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
-                                }
-                            }
-
-                            if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
-                                ceu_acc = ceu_acc_$n;
-                            } else {
-                                // do not restore acc: we were ok, but now we did throw
-                            }
+                        if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
+                            ceu_acc = ceu_acc_$n;
+                        } else {
+                            // do not restore acc: we were ok, but now we did throw
                         }
                     }
                     """} + """
