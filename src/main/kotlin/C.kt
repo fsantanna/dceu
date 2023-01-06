@@ -92,7 +92,7 @@ fun Coder.main (): String {
         void ceu_bcast_add (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
         void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
         void ceu_bcast_free (void);
-        
+        void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_dyn    (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
@@ -667,6 +667,16 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST - TRAVERSE
+        void ceu_bstack_clear (CEU_BStack* bstack, CEU_Block* block) {
+            CEU_BStack* cur = bstack;
+            while (cur != NULL) {
+                if (cur->block == block) {
+                    cur->block = NULL;
+                }
+                cur = cur->prev;
+            }
+        }
+        
         CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.list.first;

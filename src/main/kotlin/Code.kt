@@ -291,6 +291,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_RET   ceu_ret_$n = ceu_ret;
                             CEU_Value ceu_acc_$n = ceu_acc;
                             {
+                                ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);
                                 { // move up dynamic ceu_acc (return or error)
                                     ${
                                         (f_b != null).cond {
@@ -322,7 +323,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     // 1. should it be before or after throw check?
                                     //  - BEFORE: if it is dead, it wont catch
                                     // 2. should it return RET_DEAD?
-                                if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                                    if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                                         return CEU_RET_DEAD;
                                     }
                                     ceu_bcast_free();
