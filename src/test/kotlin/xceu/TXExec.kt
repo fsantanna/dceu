@@ -4,6 +4,7 @@ import ceu.all
 import ceu.await
 import ceu.lexer
 import ceu.yield
+import org.junit.Ignore
 import org.junit.Test
 
 class TXExec {
@@ -2012,7 +2013,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun all8_valgrind() {
+    fun all8() {
         val out = all("""
             spawn {
                 while true {
@@ -2022,12 +2023,51 @@ class TXExec {
                         await false
                     }
                     broadcast in :global, tags([], :resume, true)
-        ;;await true
                 }
             }
             broadcast in :global, 10
             broadcast in :global, 10
+            println(:ok)
         """, true)
-        assert(out == "1\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun all9() {
+        val out = all("""
+            spawn {
+                while true {
+                    await evt==10
+                    broadcast in :global, tags([], :pause, true)
+                    awaiting evt==10 {
+                        await false
+                    }
+                    broadcast in :global, tags([], :resume, true)
+                    await true
+                }
+            }
+            broadcast in :global, 10
+            broadcast in :global, 10
+            broadcast in :global, 10
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun all10() {
+        val out = all("""
+            spawn {
+                while true {
+                    await evt==10
+                    println(:1)
+                    awaiting evt==10 {
+                        await false
+                    }
+                    println(:2)
+                }
+            }
+            broadcast in :global, 10    ;; :1
+            broadcast in :global, 10    ;; :2 (not :1 again)
+        """, true)
+        assert(out == ":1\n:2\n") { out }
     }
 }

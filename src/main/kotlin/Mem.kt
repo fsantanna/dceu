@@ -1,6 +1,8 @@
+val union = "struct"
+
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
-        val s = if (this[i].let { it is Expr.Do && it.ishide }) "union" else "struct"
+        val s = if (this[i].let { it is Expr.Do && it.ishide }) "$union" else "struct"
         """
             $s {
                 ${this[i].mem()}
@@ -33,27 +35,27 @@ fun Expr.mem (): String {
         is Expr.Set -> """
             struct { // SET
                 CEU_Value set_$n;
-                union {
+                $union {
                     ${this.dst.mem()}
                     ${this.src.mem()}
                 };
             };
             """
         is Expr.If -> """
-            union { // IF
+            $union { // IF
                 ${this.cnd.mem()}
                 ${this.t.mem()}
                 ${this.f.mem()}
             };
             """
         is Expr.While -> """
-            union { // WHILE
+            $union { // WHILE
                 ${this.cnd.mem()}
                 ${this.body.mem()}
             };
             """
         is Expr.Catch -> """
-            union { // CATCH
+            $union { // CATCH
                 ${this.cnd.mem()}
                 ${this.body.mem()}
             };
@@ -66,7 +68,7 @@ fun Expr.mem (): String {
         is Expr.Spawn -> """
             struct { // SPAWN
                 ${this.coros.cond{"CEU_Value coros_$n;"}}
-                union {
+                $union {
                     ${this.coros.cond { it.mem() }}
                     ${this.call.mem()}
                 };
@@ -82,7 +84,7 @@ fun Expr.mem (): String {
         is Expr.Bcast -> """
             struct { // BCAST
                 CEU_Value evt_$n;
-                union {
+                $union {
                     ${this.xin.mem()}
                     ${this.evt.mem()}
                 };
@@ -93,7 +95,7 @@ fun Expr.mem (): String {
         is Expr.Toggle -> """
             struct { // TOGGLE
                 CEU_Value on_$n;
-                union {
+                $union {
                     ${this.coro.mem()}
                     ${this.on.mem()}
                 };
@@ -105,7 +107,7 @@ fun Expr.mem (): String {
         is Expr.Tuple -> """
             struct { // TUPLE
                 CEU_Dynamic* tup_$n;
-                union {
+                $union {
                     ${this.args.map { it.mem() }.joinToString("")}
                 };
             };
@@ -113,7 +115,7 @@ fun Expr.mem (): String {
         is Expr.Vector -> """
             struct { // VECTOR
                 CEU_Dynamic* vec_$n;
-                union {
+                $union {
                     ${this.args.map { it.mem() }.joinToString("")}
                 };
             };
@@ -122,7 +124,7 @@ fun Expr.mem (): String {
             struct { // DICT
                 CEU_Dynamic* dict_$n;
                 CEU_Value key_$n;
-                union {
+                $union {
                     ${this.args.map {
                         listOf(it.first.mem(),it.second.mem())
                     }.flatten().joinToString("")}
@@ -132,7 +134,7 @@ fun Expr.mem (): String {
         is Expr.Index -> """
             struct { // INDEX
                 CEU_Value idx_$n;
-                union {
+                $union {
                     ${this.col.mem()}
                     ${this.idx.mem()}
                 };
@@ -141,7 +143,7 @@ fun Expr.mem (): String {
         is Expr.Call -> """
             struct { // CALL
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                union {
+                $union {
                     ${this.proto.mem()}
                     ${this.args.map { it.mem() }.joinToString("")}
                 };

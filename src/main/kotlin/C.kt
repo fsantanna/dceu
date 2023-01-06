@@ -488,9 +488,9 @@ fun Coder.main (): String {
 
         void ceu_dyn_free (CEU_Dynamic* dyn) {
             while (dyn->tags != NULL) {
-                CEU_Tags_List* x = dyn->tags;
-                dyn->tags = x->next;
-                free(x);
+                CEU_Tags_List* tag = dyn->tags;
+                dyn->tags = tag->next;
+                free(tag);
             }
             switch (dyn->type) {
                 case CEU_VALUE_FUNC:

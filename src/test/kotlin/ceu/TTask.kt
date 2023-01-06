@@ -2910,4 +2910,21 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun xceu8() {
+        val out = all("""
+            spawn task () :awakes {
+                do {
+                    spawn task () :awakes {
+                        yield(nil)
+                    } ()
+                    yield(nil)
+                }
+                broadcast in :global, tags([], :x, true)
+            }()
+            broadcast in :global, nil
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }
