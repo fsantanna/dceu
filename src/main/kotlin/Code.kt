@@ -154,7 +154,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ${istask.cond{"}\n}\n"}}
                     } while (0); // func
                     """ + istask.cond{ """  // TERMINATE
-                    assert(ceu_coro->Bcast.status < CEU_CORO_STATUS_TERMINATED);
+                    assert(ceu_coro->Bcast.status != CEU_CORO_STATUS_TERMINATED);
                     ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                     ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
                     ceu_frame->Task.pc = -1;

@@ -135,8 +135,7 @@ fun Coder.main (): String {
             CEU_CORO_STATUS_YIELDED = 1,
             CEU_CORO_STATUS_TOGGLED,
             CEU_CORO_STATUS_RESUMED,
-            CEU_CORO_STATUS_TERMINATED,
-            CEU_CORO_STATUS_DESTROYED
+            CEU_CORO_STATUS_TERMINATED
         } CEU_CORO_STATUS;        
 
         typedef struct CEU_Value {
@@ -514,7 +513,6 @@ fun Coder.main (): String {
                     free(dyn->Ncast.Dict.mem);
                     break;
                 case CEU_VALUE_CORO:
-                    dyn->Bcast.status = CEU_CORO_STATUS_DESTROYED;
                     free(dyn->Bcast.Coro.frame->mem);
                     free(dyn->Bcast.Coro.frame);
                     break;
@@ -678,7 +676,7 @@ fun Coder.main (): String {
         }
  
         CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
-            if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
+            if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
                 return CEU_RET_RETURN;
             }
             if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
@@ -748,11 +746,7 @@ fun Coder.main (): String {
     """ +
     """ // COROS
         void ceu_coros_destroy (CEU_Dynamic* coros, CEU_Dynamic* coro) {
-            if (coro->Bcast.status == CEU_CORO_STATUS_DESTROYED) {
-                return;
-            }
             ceu_bcast_rem(&coros->Bcast.Coros.list, coro);
-            coro->Bcast.status = CEU_CORO_STATUS_DESTROYED;
             free(coro->Bcast.Coro.frame->mem);
             free(coro->Bcast.Coro.frame);
             free(coro);
@@ -763,7 +757,7 @@ fun Coder.main (): String {
             CEU_Dynamic* cur = coros->Bcast.Coros.list.first;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next;
-                if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
+                if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
                     //assert(0 && "OK");
                     ceu_coros_destroy(coros, cur);
                 }
