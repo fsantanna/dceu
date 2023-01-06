@@ -90,7 +90,6 @@ fun Coder.main (): String {
         
         void ceu_bcast_add (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
         void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
-        void ceu_bcast_free (void);
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt);
@@ -664,7 +663,12 @@ fun Coder.main (): String {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.list.first;
                 if (dyn != NULL) {
-                    if (ceu_bcast_dyns(bstack,dyn,evt) == CEU_RET_THROW) {
+                    CEU_BStack xbstack = { cur, bstack };
+                    int ret = ceu_bcast_dyns(&xbstack, dyn, evt);
+                    if (xbstack.block == NULL) {
+                        return ret;
+                    }
+                    if (ret == CEU_RET_THROW) {
                         return CEU_RET_THROW;
                     }
                 }
@@ -687,8 +691,12 @@ fun Coder.main (): String {
                         return CEU_RET_RETURN;
                     } else {
                         // step (1)
-                        int ret = ceu_bcast_blocks(bstack, cur->Bcast.Coro.block, evt);
-                            // CEU_RET_THROW: step (5) may 'catch' 
+                        CEU_BStack xbstack = { ???, bstack };
+                        int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.block, evt);
+                        if (xbstack.block == NULL) {
+                            return ret;
+                        }
+                        // CEU_RET_THROW: step (5) may 'catch' 
                         
                         // step (5)
                         if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {

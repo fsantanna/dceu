@@ -181,7 +181,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 // enclosing block
                                 ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
                             }
-                            ceu_bcasting--;
                             if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                                 return ceu_ret;
                             }
@@ -312,7 +311,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 { // cleanup active nested spawns in this block
                                     CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
                                     assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
-                                    ceu_bcasting--;
                                     if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                                         return CEU_RET_RETURN;
                                     }
