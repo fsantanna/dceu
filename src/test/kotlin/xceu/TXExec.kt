@@ -720,6 +720,52 @@ class TXExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun await20_track() {
+        val out = all("""
+            task T () {
+                yield()
+            }
+            var t = spawn T()
+            var x = track(t)
+            spawn {
+                parand {
+                    println(:0)
+                    await x
+                    println(:2)
+                } with {
+                    println(:1)
+                    resume t()
+                }
+                println(:3)
+            }
+            println(:4)
+        """, true)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun await22_track() {
+        val out = all("""
+            task T () {
+                yield()
+            }
+            var t = spawn T()
+            var x = track(t)
+            spawn {
+                parand {
+                    println(:0)
+                    await t
+                    println(:2)
+                } with {
+                    println(:1)
+                    resume t()
+                }
+                println(:3)
+            }
+            println(:4)
+        """, true)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
 
     // TUPLE / VECTOR / DICT / STRING
 

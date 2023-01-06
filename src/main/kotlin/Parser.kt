@@ -611,7 +611,7 @@ class Parser (lexer_: Lexer)
                                 until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
                                     if type(ceu_cnd_$N) == :track {
-                                        set ceu_cnd_$N = (ceu_cnd_$N.status < :terminated)
+                                        set ceu_cnd_$N = (ceu_cnd_$N.status >= :terminated)
                                     }
                                     if not ceu_cnd_$N {
                                         yield ()
