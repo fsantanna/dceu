@@ -174,7 +174,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
                             CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
                             CEU_BStack ceu_bstack_$n = { ceu_frame->up, ceu_bstack };
-                            ceu_bcasting++;
                             if (ceu_coro->hold.block->bcast.up != NULL) {
                                 // enclosing coro of enclosing block
                                 ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
@@ -192,8 +191,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                                 }
                             }
-
-                            ceu_bcast_free();
 
                             if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
                                 ceu_acc = ceu_acc_$n;
@@ -314,13 +311,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 }
                                 { // cleanup active nested spawns in this block
                                     CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    ceu_bcasting++;
                                     assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
                                     ceu_bcasting--;
                                     if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                                         return CEU_RET_RETURN;
                                     }
-                                    ceu_bcast_free();
                                 }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
@@ -536,7 +531,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ${this.xin.code()}
                     int ceu_err_$n = 0;
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
-                    ceu_bcasting++;
                     if (ceu_acc.type == CEU_VALUE_CORO) {
                         ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.type == CEU_VALUE_TAG) {
@@ -556,8 +550,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         ceu_err_$n = 1;
                     }
-                    ceu_bcasting--;
-                    ceu_bcast_free();
                     
                     if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                         return ceu_ret;

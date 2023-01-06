@@ -301,7 +301,6 @@ fun Coder.main (): String {
         CEU_Value ceu_acc;
         
         CEU_BStack* ceu_bstack = NULL;
-        int ceu_bcasting = 0;
         CEU_Dynamic* ceu_bcast_tofree = NULL;
 
         // TODO: remove (only here b/c we do not test CEU_CONTINUE_ON_CLEAR at compile time)
@@ -517,10 +516,8 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_CORO:
                     dyn->Bcast.status = CEU_CORO_STATUS_DESTROYED;
-                    if (ceu_bcasting == 0) {
-                        free(dyn->Bcast.Coro.frame->mem);
-                        free(dyn->Bcast.Coro.frame);
-                    }
+                    free(dyn->Bcast.Coro.frame->mem);
+                    free(dyn->Bcast.Coro.frame);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -532,23 +529,10 @@ fun Coder.main (): String {
             CEU_Dynamic* cur = *list;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->hold.next;
-                if (ceu_bcasting > 0) {
-                    cur->hold.next = ceu_bcast_tofree;  // reuse next (no need to set block/prev)
-                    ceu_bcast_tofree = cur;
-                } else {
-                    ceu_dyn_free(cur);
-                }
+                ceu_dyn_free(cur);
                 cur = nxt;
             }
             *list = NULL;
-        }
-
-        void ceu_bcast_free (void) {
-            if (ceu_bcasting > 0) {
-                // do not free anything yet
-            } else {
-                ceu_dyns_free(&ceu_bcast_tofree);
-            }
         }
 
         CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
@@ -753,15 +737,9 @@ fun Coder.main (): String {
             }
             ceu_bcast_rem(&coros->Bcast.Coros.list, coro);
             coro->Bcast.status = CEU_CORO_STATUS_DESTROYED;
-            if (ceu_bcasting == 0) {
-                // pending bcast inside coro, let it free later
-                free(coro->Bcast.Coro.frame->mem);
-                free(coro->Bcast.Coro.frame);
-                free(coro);
-            } else {
-                coro->hold.next = ceu_bcast_tofree;
-                ceu_bcast_tofree = coro;
-            }
+            free(coro->Bcast.Coro.frame->mem);
+            free(coro->Bcast.Coro.frame);
+            free(coro);
             coros->Bcast.Coros.cur--;
         }
         
