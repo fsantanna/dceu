@@ -83,6 +83,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val func = """ // BODY ${this.tk.dump()}
                 CEU_RET ceu_proto_f_$n (
                     CEU_Frame* ceu_frame,
+                    CEU_BStack* ceu_bstack,
                     int ceu_n,
                     CEU_Value* ceu_args[]
                 ) {
@@ -172,15 +173,22 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_Value ceu_acc_$n = ceu_acc;
 
                             CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                            CEU_BStack ceu_bstack_$n = { ceu_frame->up, ceu_bstack };
                             ceu_bcasting++;
                             if (ceu_coro->hold.block->bcast.up != NULL) {
                                 // enclosing coro of enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
                             } else {
                                 // enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(ceu_coro->hold.block, &ceu_evt_$n));
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
                             }
                             ceu_bcasting--;
+                            // 1. should it be before or after throw check?
+                            //  - BEFORE: if it is dead, it wont catch
+                            // 2. should it return RET_DEAD?
+                            if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                                return CEU_RET_DEAD;
+                            }
                         
                             if (ceu_coro->Bcast.Coro.coros != NULL) {
                                 if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
@@ -307,9 +315,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     }
                                 }
                                 { // cleanup active nested spawns in this block
+                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
                                     ceu_bcasting++;
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
                                     ceu_bcasting--;
+                                    // 1. should it be before or after throw check?
+                                    //  - BEFORE: if it is dead, it wont catch
+                                    // 2. should it return RET_DEAD?
+                                if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                                        return CEU_RET_DEAD;
+                                    }
                                     ceu_bcast_free();
                                 }
                                 { // DEFERS ${this.tk.dump()}
@@ -525,17 +540,18 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     ${this.xin.code()}
                     int ceu_err_$n = 0;
+                    CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
                     ceu_bcasting++;
                     if (ceu_acc.type == CEU_VALUE_CORO) {
-                        ceu_ret = ceu_bcast_dyn(ceu_acc.Dyn, &ceu_mem->evt_$n);
+                        ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.type == CEU_VALUE_TAG) {
                         if (ceu_acc.Tag == CEU_TAG_global) {
-                            ceu_ret = ceu_bcast_blocks(&ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, &ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
-                            ceu_ret = ceu_bcast_blocks($bupc, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, $bupc, &ceu_mem->evt_$n);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${if (intask && oktask!=null) {
-                                "ceu_ret = ceu_bcast_dyn(${oktask}->Task.coro, &ceu_mem->evt_$n);"
+                                "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->Task.coro, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}
@@ -547,6 +563,14 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     ceu_bcasting--;
                     ceu_bcast_free();
+                    
+                    // 1. should it be before or after throw check?
+                    //  - BEFORE: if it is dead, it wont catch
+                    // 2. should it return RET_DEAD?
+                    if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                        return CEU_RET_DEAD;
+                    }
+                    
                     if (ceu_err_$n) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.xin.tk.pos.file} : (lin ${this.xin.tk.pos.lin}, col ${this.xin.tk.pos.col}) : broadcast error : invalid target");
                     }
@@ -989,6 +1013,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_Value* ceu_args_$n[] = { ${if (pass_evt) "ceu_evt" else args_vs} };
                     ceu_ret = $frame->proto->f (
                         $frame,
+                        ceu_bstack,
                         ${if (pass_evt) -1 else this.args.size},
                         ceu_args_$n
                     );

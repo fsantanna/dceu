@@ -23,9 +23,11 @@ fun Coder.main (): String {
         struct CEU_Block;
         struct CEU_Error_List;
         struct CEU_Bcast_List;
+        struct CEU_BStack;
 
         typedef enum {
-            CEU_RET_THROW = 0,
+            CEU_RET_DEAD = 0,      // enclosing block is dead
+            CEU_RET_THROW,         // going up with throw
             CEU_RET_RETURN,
             CEU_RET_YIELD
         } CEU_RET;
@@ -36,7 +38,7 @@ fun Coder.main (): String {
             CEU_ARG_ARGS = 0    // 0,1,...
         } CEU_ARG;
 
-        CEU_RET ceu_type_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
+        CEU_RET ceu_type_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         int ceu_as_bool (struct CEU_Value* v);
 
         #define CEU_TYPE_NCAST(v) (v>CEU_VALUE_DYNAMIC && v<CEU_VALUE_BCAST)
@@ -68,7 +70,7 @@ fun Coder.main (): String {
             ceu_tag_##id.next = CEU_TAGS;           \
             CEU_TAGS = &ceu_tag_##id;               \
             CEU_TAGS_MAX++;            
-        CEU_RET ceu_tags_f (struct CEU_Frame* _1, int n, struct CEU_Value* args[]);
+        CEU_RET ceu_tags_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
         void ceu_dyn_free (struct CEU_Dynamic* dyn);
@@ -91,9 +93,9 @@ fun Coder.main (): String {
         void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
         void ceu_bcast_free (void);
         
-        CEU_RET ceu_bcast_dyns   (struct CEU_Dynamic* cur, struct CEU_Value* evt);
-        CEU_RET ceu_bcast_blocks (struct CEU_Block* cur, struct CEU_Value* evt);
-        CEU_RET ceu_bcast_dyn    (struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_dyn    (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
         
         int ceu_tag_to_size (int type);
         void ceu_max_depth (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
@@ -109,7 +111,7 @@ fun Coder.main (): String {
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
         void ceu_print1 (struct CEU_Value* v);
-        CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* frame, int n, struct CEU_Value* args[]);
+        CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
     """ +
     """ // CEU_Value
         typedef enum CEU_VALUE {
@@ -155,6 +157,7 @@ fun Coder.main (): String {
     """ // CEU_Proto / CEU_Frame
         typedef CEU_RET (*CEU_Proto_F) (
             struct CEU_Frame* frame,
+            struct CEU_BStack* bstack,
             int n,
             struct CEU_Value* args[]
         );
@@ -176,7 +179,7 @@ fun Coder.main (): String {
         
         typedef struct CEU_Frame {    // call func / create task
             CEU_Proto* proto;
-            struct CEU_Block* up;
+            struct CEU_Block* up;               // block enclosing this call/coroutine
             char* mem;
             union {
                 struct {
@@ -192,6 +195,11 @@ fun Coder.main (): String {
             struct CEU_Dynamic* first;      // first/last coro/coros in this block
             struct CEU_Dynamic* last;       // to bcast/relink
         } CEU_Bcast_List;
+        
+        typedef struct CEU_BStack {
+            struct CEU_Block* block;        // block enclosing bcast, if null, block terminated, traversed the stack and reset it
+            struct CEU_BStack* prev;        // pending previous bcast
+        } CEU_BStack;
 
         typedef struct CEU_Dynamic {
             CEU_VALUE type;                 // required to switch over free/bcast
@@ -293,6 +301,7 @@ fun Coder.main (): String {
         CEU_RET ceu_ret = CEU_RET_RETURN;
         CEU_Value ceu_acc;
         
+        CEU_BStack* ceu_bstack = NULL;
         int ceu_bcasting = 0;
         CEU_Dynamic* ceu_bcast_tofree = NULL;
 
@@ -325,12 +334,12 @@ fun Coder.main (): String {
         int ceu_as_bool (CEU_Value* v) {
             return !(v->type==CEU_VALUE_NIL || (v->type==CEU_VALUE_BOOL && !v->Bool));
         }
-        CEU_RET ceu_type_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_RET ceu_type_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1 && "bug found");
             ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->type} };
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_tags_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_RET ceu_tags_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 2);
             CEU_Value* dyn = args[0];
             CEU_Value* tag = args[1];
@@ -354,7 +363,7 @@ fun Coder.main (): String {
                 CEU_Value* bool = args[2];
                 assert(bool->type == CEU_VALUE_BOOL);
                 if (bool->Bool) {   // add
-                    ceu_tags_f(frame, 2, args);
+                    ceu_tags_f(_1, _2, 2, args);
                     if (ceu_acc.Bool) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     } else {
@@ -628,7 +637,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
     """ +
-    """ // BCAST - ENQUEUE - DEQUEUE - FREE
+    """ // BCAST - ADD/REM
         void ceu_bcast_add (CEU_Bcast_List* list, CEU_Dynamic* dyn) {
             if (list->first == NULL) {
                 list->first = dyn;
@@ -657,12 +666,12 @@ fun Coder.main (): String {
             dyn->Bcast.prev = NULL;
         }
     """ +
-    """ // BCAST_BLOCKS
-        CEU_RET ceu_bcast_blocks (CEU_Block* cur, CEU_Value* evt) {
+    """ // BCAST - TRAVERSE
+        CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* dyn = cur->bcast.list.first;
                 if (dyn != NULL) {
-                    if (ceu_bcast_dyns(dyn,evt) == CEU_RET_THROW) {
+                    if (ceu_bcast_dyns(bstack,dyn,evt) == CEU_RET_THROW) {
                         return CEU_RET_THROW;
                     }
                 }
@@ -670,9 +679,8 @@ fun Coder.main (): String {
             }
             return CEU_RET_RETURN;
         }
-    """ +
-    """ // BCAST_DYN
-        CEU_RET ceu_bcast_dyn (CEU_Dynamic* cur, CEU_Value* evt) {
+ 
+        CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
             if (cur->Bcast.status >= CEU_CORO_STATUS_TERMINATED) {
                 return CEU_RET_RETURN;
             }
@@ -686,21 +694,21 @@ fun Coder.main (): String {
                         return CEU_RET_RETURN;
                     } else {
                         // step (1)
-                        int ret = ceu_bcast_blocks(cur->Bcast.Coro.block, evt);
+                        int ret = ceu_bcast_blocks(bstack, cur->Bcast.Coro.block, evt);
                             // CEU_RET_THROW: step (5) may 'catch' 
                         
                         // step (5)
                         if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
-                            ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, arg, args);
+                            ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, bstack, arg, args);
                         }
                         return MIN(ret, CEU_RET_RETURN);
                     }
                 }
                 case CEU_VALUE_COROS: {
                     cur->Bcast.Coros.open++;
-                    int ret = ceu_bcast_dyns(cur->Bcast.Coros.list.first, evt);
+                    int ret = ceu_bcast_dyns(bstack, cur->Bcast.Coros.list.first, evt);
                     cur->Bcast.Coros.open--;
                     if (cur->Bcast.Coros.open == 0) {
                         ceu_coros_cleanup(cur);
@@ -718,10 +726,10 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        CEU_RET ceu_bcast_dyns (CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyns (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
-                if (ceu_bcast_dyn(cur,evt) == CEU_RET_THROW) {
+                if (ceu_bcast_dyn(bstack,cur,evt) == CEU_RET_THROW) {
                     return CEU_RET_THROW;
                 }
                 cur = nxt;
@@ -858,7 +866,7 @@ fun Coder.main (): String {
             }
         }
         
-        CEU_RET ceu_next_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_RET ceu_next_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             CEU_Value NIL = (CEU_Value) { CEU_VALUE_NIL };
             assert(n==1 || n==2);
             CEU_Value* col = args[0];
@@ -866,7 +874,7 @@ fun Coder.main (): String {
             assert(col->type == CEU_VALUE_DICT);
             for (int i=0; i<col->Dyn->Ncast.Dict.max; i++) {
                 CEU_Value* args[] = { key, &(*col->Dyn->Ncast.Dict.mem)[i][0] };
-                assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, 2, args));
+                assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, NULL, 2, args));
                 if (ceu_acc.Bool) {
                     key = &NIL;
                 } else if (key->type == CEU_VALUE_NIL) {
@@ -882,7 +890,7 @@ fun Coder.main (): String {
             for (int i=0; i<col->Ncast.Dict.max; i++) {
                 CEU_Value* cur = &(*col->Ncast.Dict.mem)[i][0];
                 CEU_Value* args[] = { key, cur };
-                assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, 2, args));
+                assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, NULL, 2, args));
                 if (ceu_acc.Bool) {
                     *idx = i;
                     return 1;
@@ -1226,7 +1234,7 @@ fun Coder.main (): String {
                     assert(0 && "bug found");
             }
         }
-        CEU_RET ceu_print_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_RET ceu_print_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             for (int i=0; i<n; i++) {
                 if (i > 0) {
                     printf("\t");
@@ -1236,8 +1244,8 @@ fun Coder.main (): String {
             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_println_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
-            assert(CEU_RET_RETURN == ceu_print_f(frame, n, args));
+        CEU_RET ceu_println_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(CEU_RET_RETURN == ceu_print_f(_1, _2, n, args));
             printf("\n");
             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
             return CEU_RET_RETURN;
@@ -1245,7 +1253,7 @@ fun Coder.main (): String {
     """ +
     """
         // EQ-NEQ-LEN-COPY
-        CEU_RET ceu_op_equals_equals_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_RET ceu_op_equals_equals_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 2);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
@@ -1279,7 +1287,7 @@ fun Coder.main (): String {
                             if (v) {
                                 for (int i=0; i<e1->Dyn->Ncast.Tuple.n; i++) {
                                     CEU_Value* xs[] = { &e1->Dyn->Ncast.Tuple.mem[i], &e2->Dyn->Ncast.Tuple.mem[i] };
-                                    assert(CEU_RET_RETURN == ceu_op_equals_equals_f(frame, 2, xs));
+                                    assert(CEU_RET_RETURN == ceu_op_equals_equals_f(_1, _2, 2, xs));
                                     if (!ceu_acc.Bool) {
                                         break;
                                     }
@@ -1302,13 +1310,13 @@ fun Coder.main (): String {
             ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_op_slash_equals_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
-            assert(CEU_RET_RETURN == ceu_op_equals_equals_f(frame, n, args));
+        CEU_RET ceu_op_slash_equals_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(CEU_RET_RETURN == ceu_op_equals_equals_f(_1, _2, n, args));
             ceu_acc.Bool = !ceu_acc.Bool;
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value* args[]) {
+        CEU_RET ceu_op_hash_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             if (args[0]->type != CEU_VALUE_VECTOR) {
                 CEU_THROW_MSG("\0 : length error : not a vector");
@@ -1318,7 +1326,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_move_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_RET ceu_move_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dynamic* dyn = src->Dyn;
@@ -1328,7 +1336,7 @@ fun Coder.main (): String {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Proto.upvs.n; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
+                        assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
@@ -1336,7 +1344,7 @@ fun Coder.main (): String {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Tuple.n; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.mem[i] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
+                        assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
@@ -1347,7 +1355,7 @@ fun Coder.main (): String {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args));
+                        assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
@@ -1356,9 +1364,9 @@ fun Coder.main (): String {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.mem)[i][0] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args0));
+                        assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args0));
                         CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.mem)[i][1] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, 1, args1));
+                        assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args1));
                     }
                     ceu_acc = *src;
                     break;
@@ -1370,7 +1378,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_copy_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_RET ceu_copy_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dynamic* old = src->Dyn;
@@ -1384,7 +1392,7 @@ fun Coder.main (): String {
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Tuple.n; i++) {
                         CEU_Value* args[1] = { &old->Ncast.Tuple.mem[i] };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                        assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         ceu_tuple_set(new, i, ceu_acc);
                     }
                     ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=new} };
@@ -1398,7 +1406,7 @@ fun Coder.main (): String {
                         assert(CEU_RET_RETURN == ceu_vector_get(old, i));
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
-                        assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                        assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         ceu_vector_set(new, i, ceu_acc);
                     }
                     ceu_acc = (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=new} };
@@ -1411,7 +1419,7 @@ fun Coder.main (): String {
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
                         {
                             CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][0] };
-                            assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                            assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         }
                         CEU_Value key = ceu_acc;
                         if (key.type == CEU_VALUE_NIL) {
@@ -1419,7 +1427,7 @@ fun Coder.main (): String {
                         }
                         {
                             CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][1] };
-                            assert(CEU_RET_RETURN == ceu_copy_f(frame, 1, args));
+                            assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         }
                         CEU_Value val = ceu_acc;
                         ceu_dict_set(new, &key, &val);
