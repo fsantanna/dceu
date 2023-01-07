@@ -310,13 +310,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                             }
                                     }
                                 }
-                                { // cleanup active nested spawns in this block
-                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
-                                    if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
-                                        return CEU_RET_RETURN;
-                                    }
-                                }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
                                     ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
@@ -333,7 +326,14 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     """ }.joinToString("")
                                     }
                                 }
-                                { // relink blocks
+                                int dead; {
+                                    // cleanup active nested spawns in this block
+                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
+                                    dead = (ceu_bstack!=NULL && ceu_bstack->block==NULL);
+                                }
+                                if (!dead) {
+                                    // blocks: relink up, free down
                                     ${
                                         (f_b is Expr.Do).cond {
                                             "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
@@ -344,7 +344,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                             "ceu_coro->Bcast.Coro.block = NULL;"
                                         }
                                     }
-                                    ceu_dyns_free(&ceu_mem->block_$n.tofree);
+                                    ceu_block_free(&ceu_mem->block_$n);
                                 }
                             }
                             ceu_acc = ceu_acc_$n;

@@ -777,11 +777,11 @@ class TTask {
             set co1 = coroutine (task () :awakes {
                 var co2
                 set co2 = coroutine (task () :awakes {
-                    yield(nil)
+                    yield(nil)  ;; awakes from outer bcast
                     println(2)
                 })
                 resume co2 ()
-                yield(nil)
+                yield(nil)      ;; awakes from co2 termination
                 println(1)
             })
             resume co1 ()

@@ -73,8 +73,8 @@ fun Coder.main (): String {
         char* ceu_tag_to_string (int tag);
         
         void ceu_dyn_free (struct CEU_Dynamic* dyn);
-        void ceu_dyns_free (struct CEU_Dynamic** list);
-
+        void ceu_block_free (struct CEU_Block* block);
+        
         void ceu_gc_inc (struct CEU_Value* v);
         void ceu_gc_dec (struct CEU_Value* v, int chk);
 
@@ -524,14 +524,18 @@ fun Coder.main (): String {
             free(dyn);
         }
         
-        void ceu_dyns_free (CEU_Dynamic** list) {
-            CEU_Dynamic* cur = *list;
-            while (cur != NULL) {
-                CEU_Dynamic* nxt = cur->hold.next;
-                ceu_dyn_free(cur);
-                cur = nxt;
+        void ceu_block_free (CEU_Block* block) {
+            { // dyns_free
+                while (block->tofree != NULL) {
+                    CEU_Dynamic* nxt = block->tofree->hold.next;
+                    ceu_dyn_free(block->tofree);
+                    block->tofree = nxt;
+                }
             }
-            *list = NULL;
+            if (block->bcast.block != NULL) {
+                ceu_block_free(block->bcast.block);
+                block->bcast.block = NULL;
+            }
         }
 
         CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
