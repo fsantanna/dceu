@@ -10,8 +10,10 @@ import Ups
 import XCEU
 import exec
 import main
+import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.Test
+import org.junit.runners.MethodSorters
 import tostr
 import java.io.File
 
@@ -62,19 +64,20 @@ fun all (inp: String, pre: Boolean=false): String {
     return out3
 }
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TExec {
 
     // PRINT
 
     @Test
-    fun print1() {
+    fun aa_print1() {
         val out = all("""
             print([10])
         """)
         assert(out == "[10]") { out }
     }
     @Test
-    fun print2() {
+    fun aa_print2() {
         val out = all("""
             print(10)
             println(20)
@@ -82,7 +85,7 @@ class TExec {
         assert(out == "1020\n") { out }
     }
     @Test
-    fun print3() {
+    fun aa_print3() {
         val out = all("""
             println([[],[1,2,3]])
             println(func () { nil })
@@ -90,7 +93,7 @@ class TExec {
         assert(out.contains("[[],[1,2,3]]\nfunc: 0x")) { out }
     }
     @Test
-    fun print34() {
+    fun aa_print34() {
         val out = all("""
             var f
             set f = (func () { nil })
@@ -103,14 +106,14 @@ class TExec {
         assert(out.contains("func: 0x")) { out }
     }
     @Test
-    fun print_err1() {
+    fun aa_print_err1() {
         val out = all("""
             println(1)
         """)
         assert(out == "1\n") { out }
     }
     @Test
-    fun print_err2() {
+    fun aa_print_err2() {
         val out = all("""
             print(1)
             print()
@@ -121,17 +124,17 @@ class TExec {
         assert(out == "12\n3\n") { out }
     }
     @Test
-    fun print4() {
+    fun aa_print4() {
         val out = all("print(nil)")
         assert(out == "nil") { out }
     }
     @Test
-    fun print5() {
+    fun aa_print5() {
         val out = all("print(true)")
         assert(out == "true") { out }
     }
     @Test
-    fun print6() {
+    fun aa_print6() {
         val out = all("println(false)")
         assert(out == "false\n") { out }
     }
@@ -139,7 +142,7 @@ class TExec {
     // VAR
 
     @Test
-    fun var1() {
+    fun bb_var1() {
         val out = all("""
             var v
             print(v)
@@ -147,7 +150,7 @@ class TExec {
         assert(out == "nil") { out }
     }
     @Test
-    fun var2() {
+    fun bb_var2() {
         val out = all("""
             var vvv = 1
             print(vvv)
@@ -158,7 +161,7 @@ class TExec {
     // INDEX / TUPLE
 
     @Test
-    fun index01() {
+    fun cc_index01() {
         val out = all("""
             [1,2,3][1]
             println(1)
@@ -166,42 +169,42 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun index011() {
+    fun cc_index011() {
         val out = all("""
             println([1,2,3][1])
         """)
         assert(out == "2\n") { out }
     }
     @Test
-    fun index_err01() {
+    fun cc_index_err01() {
         val out = all("""
             println([1,[2],3][1])   ;; [2] is at block, not at call arg // index made it outside call
         """)
         assert(out == "[2]\n") { out }
     }
     @Test
-    fun index_err1() {
+    fun cc_index_err1() {
         val out = all("""
             println(1[1])
         """.trimIndent())
         assert(out == "anon : (lin 1, col 9) : index error : expected collection\n:error\n") { out }
     }
     @Test
-    fun index_err2() {
+    fun cc_index_err2() {
         val out = all("""
             println([1][[]])
         """.trimIndent())
         assert(out == "anon : (lin 1, col 9) : index error : expected number\n:error\n") { out }
     }
     @Test
-    fun index23() {
+    fun cc_index23() {
         val out = all("""
             println([[1]][[0][0]])
         """.trimIndent())
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun index_err3() {
+    fun cc_index_err3() {
         val out = all("""
             println([1][2])
         """.trimIndent())
@@ -209,7 +212,7 @@ class TExec {
         assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n:error\n") { out }
     }
     @Test
-    fun tuple4_free() {
+    fun cc_tuple4_free() {
         val out = all("""
             [1,2,3]
             println(1)
@@ -217,7 +220,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun tuple45_free() {
+    fun cc_tuple45_free() {
         val out = all("""
             [1,2,3][1]
             println(1)
@@ -225,7 +228,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun tuple5_free() {
+    fun cc_tuple5_free() {
         val out = all("""
             var f
             set f = func () { nil }
@@ -235,7 +238,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun tuple56_free() {
+    fun cc_tuple56_free() {
         val out = all("""
             var x
             set x = do {
@@ -246,7 +249,7 @@ class TExec {
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun tuple6_free() {
+    fun cc_tuple6_free() {
         val out = all("""
             var f
             set f = func (v) {
@@ -262,7 +265,7 @@ class TExec {
         assert(out == "[[[0]]]\n") { out }
     }
     @Test
-    fun tuple7_hold_err() {
+    fun cc_tuple7_hold_err() {
         val out = all("""
             var f
             set f = func (v) {
@@ -281,7 +284,7 @@ class TExec {
                 "anon : (lin 3, col 30) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun tuple8_hold_err() {
+    fun cc_tuple8_hold_err() {
         val out = all("""
             var f
             set f = func (v) {
@@ -300,7 +303,7 @@ class TExec {
                 "anon : (lin 4, col 26) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun tuple9_hold_err() {
+    fun cc_tuple9_hold_err() {
         val out = all("""
             do {
                 var x
@@ -313,7 +316,7 @@ class TExec {
         assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun tuple10_hold_err() {
+    fun cc_tuple10_hold_err() {
         val out = all("""
             println(do {
                 var xxx
@@ -327,7 +330,7 @@ class TExec {
         assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun tuple11_copy() {
+    fun cc_tuple11_copy() {
         val out = all("""
             var t1
             set t1 = [1,2,3]
@@ -344,7 +347,7 @@ class TExec {
         assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
     }
     @Test
-    fun tuple12_free_copy() {
+    fun cc_tuple12_free_copy() {
         val out = all("""
             var f
             set f = func (v) {
@@ -360,7 +363,7 @@ class TExec {
         assert(out == "[[[0]]]\n") { out }
     }
     @Test
-    fun tuple13_copy_out() {
+    fun cc_tuple13_copy_out() {
         val out = all("""
             var out
             set out = do {
@@ -373,7 +376,7 @@ class TExec {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun tuple14_move_out() {
+    fun cc_tuple14_move_out() {
         val out = all("""
             var out
             set out = do {
@@ -386,7 +389,7 @@ class TExec {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun tuple15_call_scope() {
+    fun cc_tuple15_call_scope() {
         val out = all("""
             var f
             set f = func (v) {
@@ -400,7 +403,7 @@ class TExec {
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun tuple16_move() {
+    fun cc_tuple16_move() {
         val out = all("""
             var v
             set v = do {
@@ -411,7 +414,7 @@ class TExec {
         assert(out == "[[1,2]]\n") { out }
     }
     @Test
-    fun vector17_move() {
+    fun cc_vector17_move() {
         val out = all("""
             var ttt
             set ttt = #[#[1,2]]
@@ -420,7 +423,7 @@ class TExec {
         assert(out == "#[#[1,2]]\n") { out }
     }
     @Test
-    fun dict18_move() {
+    fun cc_dict18_move() {
         val out = all("""
             var v
             set v = do {
@@ -431,14 +434,14 @@ class TExec {
         assert(out == "@[(:v,@[(:v,2)])]\n") { out }
     }
     @Test
-    fun vector19_print() {
+    fun cc_vector19_print() {
         val out = all("""
             println(#[#[1,2]])
         """)
         assert(out == "#[#[1,2]]\n") { out }
     }
     @Test
-    fun vector20() {
+    fun cc_vector20() {
         val out = all("""
             var v
             set v = #[10]
@@ -447,7 +450,7 @@ class TExec {
         assert(out == "10\n") { out }
     }
     @Test
-    fun tuple21_scope_copy() {
+    fun cc_tuple21_scope_copy() {
         val out = all("""
             var x = [1,2,3]
             do {
@@ -462,7 +465,7 @@ class TExec {
                 ":error\n") { out }
     }
     @Test
-    fun tuple22_scope_copy() {
+    fun cc_tuple22_scope_copy() {
         val out = all("""
             var x = [1,2,3]
             do {
@@ -476,7 +479,7 @@ class TExec {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun tuple23_scope_copy() {
+    fun cc_tuple23_scope_copy() {
         val out = all("""
             var v
             do {
@@ -498,7 +501,7 @@ class TExec {
     // DICT
 
     @Test
-    fun dict1() {
+    fun dd_dict1() {
         val out = all("""
             println(type(@[(1,2)]))
             println(@[(1,2)])
@@ -506,7 +509,7 @@ class TExec {
         assert(out == ":dict\n@[(1,2)]\n") { out }
     }
     @Test
-    fun dict2() {
+    fun dd_dict2() {
         val out = all("""
             var t
             set t = @[(:x,1)]
@@ -515,7 +518,7 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun dict3() {
+    fun dd_dict3() {
         val out = all("""
             var t
             set t = @[(:x,1)]
@@ -524,7 +527,7 @@ class TExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun dict4() {
+    fun dd_dict4() {
         val out = all("""
             var t
             set t = @[(:x,1)]
@@ -534,7 +537,7 @@ class TExec {
         assert(out == "2\n") { out }
     }
     @Test
-    fun dict5() {
+    fun dd_dict5() {
         val out = all("""
             var t
             set t = @[]
@@ -545,7 +548,7 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n") { out }
     }
     @Test
-    fun dict6_copy() {
+    fun dd_dict6_copy() {
         val out = all("""
             var t1
             set t1 = @[]
@@ -563,7 +566,7 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
     }
     @Test
-    fun todo_dict7_err() {
+    fun todo_dd_dict7_err() {
         val out = all("""
             var x
             set x = @[(nil,10)]
@@ -572,7 +575,7 @@ class TExec {
         assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
     }
     @Test
-    fun todo_dict8_err() {
+    fun todo_dd_dict8_err() {
         val out = all("""
             var x
             set x = @[]
@@ -582,7 +585,7 @@ class TExec {
         assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
     }
     @Test
-    fun dict9_next() {
+    fun dd_dict9_next() {
         val out = all("""
             var t
             set t = @[]
@@ -599,7 +602,7 @@ class TExec {
         assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
     }
     @Test
-    fun dict10_next() {
+    fun dd_dict10_next() {
         val out = all("""
             var t
             set t = @[]
@@ -624,7 +627,7 @@ class TExec {
     // VECTOR
 
     @Test
-    fun vector1() {
+    fun ee_vector1() {
         val out = all("""
             println(#[])
         """)
