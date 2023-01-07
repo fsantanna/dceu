@@ -186,9 +186,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }
                     
                         if (incoros) {
-                            if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
-                                ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
-                            }
+                            ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                         }
 
                         if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
@@ -480,43 +478,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Spawn -> this.call.code()
-            is Expr.CsIter -> {
-                val loc = this.loc.str
-                """
-                { // ITER ${this.tk.dump()}
-                    ${this.coros.code()}
-                    ceu_mem->coros_$n = ceu_acc;
-                    if (ceu_mem->coros_$n.type != CEU_VALUE_COROS) {                
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.coros.tk.pos.lin}, col ${this.coros.tk.pos.col}) : while error : expected coroutines");
-                    }
-                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open++;
-                    ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->coros_$n.Dyn->Bcast.Coros.list.first} };
-                    ceu_ret = CEU_RET_RETURN;
-                    do { // iter
-                CEU_ITER_$n:;
-                        if (ceu_mem->$loc.Dyn == NULL) {
-                            continue; // escape enclosing block
-                        }
-                        ceu_mem->hold_$n = ceu_mem->$loc.Dyn->hold.block;  
-                        ceu_mem->$loc.Dyn->hold.block = ${this.body.toc(true)}; // tmp coro.hold to nested block
-                        ${this.body.code()}
-                        ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
-                        ceu_mem->$loc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->$loc.Dyn->Bcast.next} };
-                        goto CEU_ITER_$n;
-                    } while (0); // iter
-                    assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in iter");
-                    if (ceu_mem->$loc.Dyn != NULL) { // repeat in case body error
-                        ceu_mem->$loc.Dyn->hold.block = ceu_mem->hold_$n;
-                    }
-                    ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
-                    if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
-                        ceu_coros_cleanup(ceu_mem->coros_$n.Dyn, 0);
-                    }
-                    CEU_CONTINUE_ON_THROW();
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                }
-                """
-            }
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str == "task")
@@ -610,7 +571,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 CEU_Value ceu_accx = ceu_acc;
                                 ceu_acc = ceu_track_to_coro(&ceu_accx);
                                 if (ceu_acc.type != CEU_VALUE_CORO) {
-                                    ${assrc("(CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_destroyed} }")}
+                                    ${assrc("(CEU_Value) { CEU_VALUE_NIL }")}
                                     goto CEU_PUB_$n;    // special case, skip everything else
                                 }
                             }

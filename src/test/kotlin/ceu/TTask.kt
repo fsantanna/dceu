@@ -1299,9 +1299,30 @@ class TTask {
             while in :coros ts, xxx {
                 set yyy = xxx
             }
+            println(yyy.status)
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun ff_pool11a_err_scope() {
+        val out = all("""
+            var T
+            set T = task () :awakes { yield(nil) }
+            var ts
+            set ts = coroutines()
+            spawn in ts, T()
+            var yyy
+            while in :coros ts, xxx {
+                set yyy = xxx
+            }
+            broadcast in :global, nil
+            println(yyy.status)
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun ff_pool12_err_scope() {
@@ -1361,8 +1382,8 @@ class TTask {
             println(1)
         """
         )
-        assert(out == "anon : (lin 7, col 13) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 7, col 13) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun ff_pool14_max_err() {
@@ -2644,20 +2665,34 @@ class TTask {
         assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun ll_track9() {
+    fun ll_track09_err() {
         val out = all("""
-            var T
-            set T = task (v) :awakes {
+            var T = task (v) :awakes {
+                yield(nil)
+            }
+            var x
+            var ts = coroutines()
+            spawn in ts, T(1)
+            while in :coros ts, t {
+                set x = track(t)
+            }
+        """)
+        assert(out == "anon : (lin 9, col 31) : track error : expected coroutine\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun ll_track09() {
+        val out = all("""
+            var T = task (v) :awakes {
                 set pub = [v]
                 yield(nil)
             }
             var x
-            var ts
-            set ts = coroutines()
+            var ts = coroutines()
             spawn in ts, T(1)
             spawn in ts, T(2)
             while in :coros ts, t {
-                set x = track(t)
+                set x = t
             }
             println(x.pub[0])   ;; 2
             broadcast in :global, nil
@@ -2787,6 +2822,24 @@ class TTask {
             println(:ok)
         """)
         assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+    }
+    @Test
+    fun ll_track15_simplify() {
+        val out = all("""
+            var T = task (v) :awakes {
+                yield(nil)
+            }
+            var ts = coroutines()
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            var x
+            while in :coros ts, t {
+                set x = track(t)
+            }
+            broadcast in :global, nil
+            println(x.status)   ;; nil
+        """)
+        assert(out == "2\n:destroyed\n") { out }
     }
 
     // XCEU

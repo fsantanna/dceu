@@ -137,7 +137,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Coros  -> this.max?.traverse()
             is Expr.Coro   -> this.task.traverse()
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
-            is Expr.CsIter -> { this.coros.traverse() ; this.body.traverse() }
             is Expr.Bcast  -> this.evt.traverse()
             is Expr.Yield  -> {
                 if (!intask(this)) {
@@ -220,7 +219,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Coros  -> this.map(listOfNotNull(this.max))
             is Expr.Coro   -> this.map(listOf(this.task))
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
-            is Expr.CsIter -> this.map(listOf(this.coros,this.body))
             is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
             is Expr.Yield  -> this.map(listOf(this.arg))
             is Expr.Resume -> this.map(listOf(this.call))

@@ -241,7 +241,6 @@ fun Coder.main (): String {
                         struct {
                             int max;                // max number of instances
                             int cur;                // cur number of instances
-                            int open;               // number of open iterators
                             CEU_Bcast_List list;    // bcast list
                         } Coros;
                         struct CEU_Dynamic* Track;   // starts as CORO and may fall to NIL
@@ -719,13 +718,7 @@ fun Coder.main (): String {
                     }
                 }
                 case CEU_VALUE_COROS: {
-                    cur->Bcast.Coros.open++;
-                    int ret = ceu_bcast_dyns(bstack, cur->Bcast.Coros.list.first, evt);
-                    cur->Bcast.Coros.open--;
-                    if (cur->Bcast.Coros.open == 0) {
-                        ceu_coros_cleanup(cur, 0);
-                    }
-                    return ret;
+                    return ceu_bcast_dyns(bstack, cur->Bcast.Coros.list.first, evt);
                 case CEU_VALUE_TRACK:
                     if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track==evt->Dyn) {
                         cur->Bcast.Track = NULL; // tracked coro is terminating
@@ -1040,7 +1033,7 @@ fun Coder.main (): String {
             *coros = (CEU_Dynamic) {
                 CEU_VALUE_COROS, {NULL,NULL,NULL}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
-                        .Coros = { max, 0, 0, {NULL,NULL} }
+                        .Coros = { max, 0, {NULL,NULL} }
                     } }
                 }
             };            

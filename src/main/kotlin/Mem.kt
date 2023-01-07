@@ -74,13 +74,6 @@ fun Expr.mem (): String {
                 };
             };
         """
-        is Expr.CsIter -> """
-            struct { // ITER
-                CEU_Value coros_$n;
-                CEU_Block* hold_$n;
-                ${this.body.mem()}
-            };
-            """
         is Expr.Bcast -> """
             struct { // BCAST
                 CEU_Value evt_$n;
