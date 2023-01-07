@@ -1,8 +1,10 @@
 package ceu
 
 import D
+import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.Test
+import org.junit.runners.MethodSorters
 
 fun yield (ok: String = "ok"): String {
     return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:coro { set $ok=false } else { nil } } }"
@@ -11,12 +13,13 @@ fun await (evt: String): String {
     return "do { var ok; set ok=true; yield(nil); while ok { if $evt { set ok=false } else { yield(nil) } } }"
 }
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TTask {
 
     // TASK / COROUTINE / RESUME / YIELD
 
     @Test
-    fun task1() {
+    fun aa_task1() {
         val out = all("""
             var t
             set t = task (v) {
@@ -40,14 +43,14 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
     @Test
-    fun task2_err() {
+    fun aa_task2_err() {
         val out = all("""
             coroutine(func () {nil})
         """.trimIndent())
         assert(out == "anon : (lin 1, col 11) : coroutine error : expected task\n:error\n") { out }
     }
     @Test
-    fun task3_err() {
+    fun aa_task3_err() {
         val out = all("""
             var f
             resume f()
@@ -55,7 +58,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 1) : resume error : expected yielded task\n:error\n") { out }
     }
     @Test
-    fun task4_err() {
+    fun aa_task4_err() {
         val out = all("""
             var co
             set co = coroutine(task () {nil})
@@ -65,7 +68,7 @@ class TTask {
         assert(out == "anon : (lin 4, col 1) : resume error : expected yielded task\n:error\n") { out }
     }
     @Test
-    fun task5_err() {
+    fun aa_task5_err() {
         val out = all("""
             var co
             set co = coroutine(task () { nil
@@ -76,7 +79,7 @@ class TTask {
         assert(out == "anon : (lin 6, col 13) : resume error : expected yielded task\n:error\n") { out }
     }
     @Test
-    fun task6() {
+    fun aa_task6() {
         val out = all("""
             var co
             set co = coroutine(task (v) {
@@ -89,7 +92,7 @@ class TTask {
         assert(out == "2\n") { out }
     }
     @Test
-    fun task7() {
+    fun aa_task7() {
         val out = all("""
             var co
             set co = coroutine(task (v) {
@@ -102,7 +105,7 @@ class TTask {
         assert(out == "1\n99\n2\n") { out }
     }
     @Test
-    fun tak8_err() {
+    fun aa_task8_err() {
         val out = all("""
             var xxx
             resume xxx() ;;(xxx(1))
@@ -110,7 +113,7 @@ class TTask {
         assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n:error\n") { out }
     }
     @Test
-    fun task9_mult() {
+    fun aa_task9_mult() {
         val out = all("""
             var co
             set co = coroutine(task (x,y) {
@@ -121,7 +124,7 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun task10_err() {
+    fun aa_task10_err() {
         val out = all("""
             var co
             set co = coroutine(task () {
@@ -133,7 +136,7 @@ class TTask {
         assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
     @Test
-    fun task11_class() {
+    fun aa_task11_class() {
         val out = all("""
             var T
             set T = task (x,y) {
@@ -144,7 +147,7 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun task12_tuple_leak() {
+    fun aa_task12_tuple_leak() {
         val out = all("""
             var T
             set T = task () {
@@ -157,7 +160,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun task13_defer() {
+    fun aa_task13_defer() {
         val out = all("""
             var T
             set T = task () {
@@ -175,14 +178,14 @@ class TTask {
         assert(out == "0\n1\n4\n3\n") { out }
     }
     @Test
-    fun yield14_err() {
+    fun aa_yield14_err() {
         val out = all("""
             yield(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
     }
     @Test
-    fun yield15_err() {
+    fun aa_yield15_err() {
         val out = all("""
             task () {
                 func () {
@@ -193,7 +196,7 @@ class TTask {
         assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
     }
     @Test
-    fun task16_nest() {
+    fun aa_task16_nest() {
         val out = all("""
             spawn (task (v1) {
                 println(v1)
@@ -202,7 +205,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun task17_nest_err() {
+    fun aa_task17_nest_err() {
         val out = all("""
             spawn task (v1) {
                 spawn task (v2) {
@@ -218,7 +221,7 @@ class TTask {
                 "anon : (lin 3, col 33) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun task18_defer() {
+    fun aa_task18_defer() {
         val out = all("""
             var T
             set T = task () {
@@ -241,7 +244,7 @@ class TTask {
     // SPAWN
 
     @Test
-    fun spawn1() {
+    fun bb_spawn1() {
         val out = all("""
             var t
             set t = task (v) {
@@ -264,7 +267,7 @@ class TTask {
         assert(out == "1\n:coro\n3\n4\n5\n6\n") { out }
     }
     @Test
-    fun spawn2() {
+    fun bb_spawn2() {
         val out = all("""
             var T
             set T = task (x,y) {
@@ -275,21 +278,21 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun spawn3_err() {
+    fun bb_spawn3_err() {
         val out = all("""
             spawn (func () {nil}) ()
         """)
         assert(out == "anon : (lin 2, col 20) : coroutine error : expected task\n:error\n") { out }
     }
     @Test
-    fun spawn4_err() {
+    fun bb_spawn4_err() {
         val out = all("""
             spawn (func () {nil})
         """)
         assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call") { out }
     }
     @Test
-    fun spawn5() {
+    fun bb_spawn5() {
         val out = all("""
             var t
             set t = task () {
@@ -309,7 +312,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun spawn6_err() {
+    fun bb_spawn6_err() {
         val out = all("""
             var x
             set x = do {
@@ -320,7 +323,7 @@ class TTask {
         assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun spawn67_err() {
+    fun bb_spawn67_err() {
         val out = all("""
             var t
             set t = task () {
@@ -332,7 +335,7 @@ class TTask {
         assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun spawn7_err() {
+    fun bb_spawn7_err() {
         val out = all("""
             var f
             set f = func () {
@@ -346,7 +349,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun spawn8_err() {
+    fun bb_spawn8_err() {
         val out = all("""
             var T
             set T = task () {
@@ -361,7 +364,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun spawn9() {
+    fun bb_spawn9() {
         val out = all("""
             var x
             set x = do {
@@ -373,7 +376,7 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun spawn10() {
+    fun bb_spawn10() {
         val out = all("""
             var t
             set t = task () {
@@ -393,7 +396,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun spawn11() {
+    fun bb_spawn11() {
         val out = all("""
             var f
             set f = func () {
@@ -417,7 +420,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun spawn12_err() {
+    fun bb_spawn12_err() {
         val out = all("""
             var T
             set T = task () {
@@ -433,7 +436,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun spawn13_err() {
+    fun bb_spawn13_err() {
         val out = all("""
             var T
             set T = task (v) {
@@ -452,7 +455,7 @@ class TTask {
     // SPAWN / GROUP
 
     @Test
-    fun group1() {
+    fun cc_group1() {
         val out = all("""
             var T
             set T = task (v) {
@@ -468,7 +471,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun group2() {
+    fun cc_group2() {
         val out = all("""
             do :unnest {
                 var T
@@ -491,7 +494,7 @@ class TTask {
         assert(out == "10\n:coro\n") { out }
     }
     @Test
-    fun group3() {
+    fun cc_group3() {
         val out = all("""
             var f
             set f = func () {
@@ -510,7 +513,7 @@ class TTask {
     // THROW
 
     @Test
-    fun throw1() {
+    fun dd_throw1() {
         val out = all("""
             var co
             set co = coroutine(task (x,y) {
@@ -525,7 +528,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun throw2() {
+    fun dd_throw2() {
         val out = all("""
             var co
             set co = coroutine(task (x,y) {
@@ -543,7 +546,7 @@ class TTask {
         assert(out == "1\n3\n") { out }
     }
     @Test
-    fun throw3_err() {
+    fun dd_throw3_err() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -560,14 +563,14 @@ class TTask {
                 "anon : (lin 6, col 21) : throw error : uncaught exception\n:error\n") { out }
     }
     @Test
-    fun throw4_err() {
+    fun dd_throw4_err() {
         val out = all("""
             broadcast in :task, nil
         """)
         assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
-    fun throw5_err() {
+    fun dd_throw5_err() {
         val out = all("""
             spawn (task () :fake :awakes {
                 broadcast in :task, nil
@@ -577,7 +580,7 @@ class TTask {
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
-    fun throw6() {
+    fun dd_throw6() {
         val out = all("""
             var co
             set co = coroutine (task () {
@@ -600,7 +603,7 @@ class TTask {
         assert(out == ":e1\n:e2\n") { out }
     }
     @Test
-    fun throw7() {
+    fun dd_throw7() {
         val out = all("""
             var co
             set co = coroutine (task () :awakes {
@@ -628,7 +631,7 @@ class TTask {
         assert(out == ":e1\n:e2\n") { out }
     }
     @Test
-    fun throw8() {
+    fun dd_throw8() {
         val out = ceu.all(
             """
             var T
@@ -664,7 +667,7 @@ class TTask {
         assert(out == ":ok1\n:ok2\n:ok3\n") { out }
     }
     @Test
-    fun throw9_fake() {
+    fun dd_throw9_fake() {
         val out = all("""
             catch err==:err {
                 spawn (task () :fake {
@@ -676,7 +679,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun throw10_fake() {
+    fun dd_throw10_fake() {
         val out = all("""
             catch err == :xxx {
                 spawn task () {
@@ -691,7 +694,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun throw11_fake() {
+    fun dd_throw11_fake() {
         val out = all("""
             spawn task () { 
                 catch {==}(err,:err) {
@@ -711,14 +714,14 @@ class TTask {
     // BCAST / BROADCAST
 
     @Test
-    fun bcast0() {
+    fun ee_bcast0() {
         val out = all("""
             println(broadcast in :global, 1)
         """)
         assert(out == "nil\n") { out }
     }
     @Test
-    fun bcast001() {
+    fun ee_bcast001() {
         val out = ceu.all(
             """
             spawn task () :awakes {
@@ -732,7 +735,7 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun bcast01() {
+    fun ee_bcast01() {
         val out = all("""
             var tk
             set tk = task (v) :awakes {
@@ -749,7 +752,7 @@ class TTask {
         assert(out == "nil\t1\nnil\t2\n") { out }
     }
     @Test
-    fun bcast1() {
+    fun ee_bcast1() {
         val out = all("""
             var tk
             set tk = task (v) :awakes {
@@ -771,7 +774,7 @@ class TTask {
         assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\ncoro: 0x")) { out }
     }
     @Test
-    fun bcast2() {
+    fun ee_bcast2() {
         val out = all("""
             var co1
             set co1 = coroutine (task () :awakes {
@@ -790,7 +793,7 @@ class TTask {
         assert(out == "2\n1\n") { out }
     }
     @Test
-    fun bcast3() {
+    fun ee_bcast3() {
         val out = all("""
             var co1
             set co1 = coroutine(task () :awakes {
@@ -810,7 +813,7 @@ class TTask {
                 "anon : (lin 7, col 21) : throw error : uncaught exception\n:error\n") { out }
     }
     @Test
-    fun bcast4() {
+    fun ee_bcast4() {
         val out = all("""
             var tk
             set tk = task () :awakes {
@@ -835,7 +838,7 @@ class TTask {
         assert(out == "1\n2\n2\n3\n") { out }
     }
     @Test
-    fun bcast5() {
+    fun ee_bcast5() {
         val out = all("""
             var tk
             set tk = task (v) :awakes {
@@ -851,7 +854,7 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun bcast6() {
+    fun ee_bcast6() {
         val out = all("""
             func () {
                  broadcast in :global, 1
@@ -861,7 +864,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bcast7() {
+    fun ee_bcast7() {
         val out = all("""
             var tk
             set tk = task () :awakes {
@@ -882,7 +885,7 @@ class TTask {
         assert(out.contains("2\ncoro: 0x")) { out }
     }
     @Test
-    fun bcast8() {
+    fun ee_bcast8() {
         val out = all("""
             var tk
             set tk = task (v) :awakes {
@@ -902,7 +905,7 @@ class TTask {
         assert(out == "2\n2\n") { out }
     }
     @Test
-    fun bcast9() {
+    fun ee_bcast9() {
         val out = ceu.all(
             """
             var tk
@@ -930,7 +933,7 @@ class TTask {
         assert(out == "1\n2\n99\n") { out }
     }
     @Test
-    fun bcast10() {
+    fun ee_bcast10() {
         val out = ceu.all(
             """
             var tk
@@ -963,7 +966,7 @@ class TTask {
         assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
     }
     @Test
-    fun bcast11_err() {
+    fun ee_bcast11_err() {
         val out = ceu.all(
             """
             var tk
@@ -984,7 +987,7 @@ class TTask {
     // BCAST / SCOPE
 
     @Test
-    fun bcast_in1() {
+    fun ee_bcast_in1() {
         val out = ceu.all(
             """
             var T
@@ -1003,17 +1006,17 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bcast_in2_err() {
+    fun ee_bcast_in2_err() {
         val out = ceu.all(" broadcast in nil, nil")
         assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
-    fun bcast_in3_err() {
+    fun ee_bcast_in3_err() {
         val out = ceu.all(" broadcast in :xxx, nil")
         assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
-    fun bcast_in4() {
+    fun ee_bcast_in4() {
         val out = ceu.all(
             """
             var T
@@ -1033,7 +1036,7 @@ class TTask {
         assert(out == "2\n") { out }
     }
     @Test
-    fun bcast_in5() {
+    fun ee_bcast_in5() {
         val out = ceu.all(
             """
             var T
@@ -1050,7 +1053,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun bcast_in6() {
+    fun ee_bcast_in6() {
         val out = ceu.all(
             """
             var T
@@ -1077,7 +1080,7 @@ class TTask {
         assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
     @Test
-    fun bcast_in7() {
+    fun ee_bcast_in7() {
         val out = all("""
             spawn (task () :awakes {
                 spawn (task () :awakes {
@@ -1096,7 +1099,7 @@ class TTask {
     // COROS ITERATOR
 
     @Test
-    fun pool0() {
+    fun ff_pool0() {
         val out = ceu.all(
             """
             var T
@@ -1109,7 +1112,7 @@ class TTask {
         assert(out == "0\n") { out }
     }
     @Test
-    fun pool0a() {
+    fun ff_pool0a() {
         val out = ceu.all(
             """
             var x
@@ -1120,7 +1123,7 @@ class TTask {
         assert(out == "0\n") { out }
     }
     @Test
-    fun pool0b() {
+    fun ff_pool0b() {
         val out = ceu.all(
             """
             var T
@@ -1133,7 +1136,7 @@ class TTask {
         assert(out == "0\n") { out }
     }
     @Test
-    fun pool1() {
+    fun ff_pool1() {
         val out = all("""
             var ts
             set ts = coroutines()
@@ -1152,7 +1155,7 @@ class TTask {
         assert(out == ":coros\n1\n2\n") { out }
     }
     @Test
-    fun pool2_leak() {
+    fun ff_pool2_leak() {
         val out = all("""
             var T
             set T = task () {
@@ -1168,7 +1171,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pool4_defer() {
+    fun ff_pool4_defer() {
         val out = all("""
             var T
             set T = task (v) {
@@ -1186,7 +1189,7 @@ class TTask {
         assert(out == "0\n1\n2\n") { out }
     }
     @Test
-    fun pool5_scope() {
+    fun ff_pool5_scope() {
         val out = all("""
             do {
                 var ts
@@ -1204,7 +1207,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pool6_terminate() {
+    fun ff_pool6_terminate() {
         val out = all("""
             do {
                 var ts
@@ -1223,7 +1226,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pool7_leak() {
+    fun ff_pool7_leak() {
         val out = all("""
             var T
             set T = task () {
@@ -1237,7 +1240,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pool8_err() {
+    fun ff_pool8_err() {
         val out = all("""
             while in :coros nil, x {
                 nil
@@ -1246,7 +1249,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 29) : while error : expected coroutines\n:error\n") { out }
     }
     @Test
-    fun pool9_term() {
+    fun ff_pool9_term() {
         val out = all("""
             var T
             set T = task () {
@@ -1264,7 +1267,7 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun pool10_term() {
+    fun ff_pool10_term() {
         val out = all("""
             var T
             set T = task () {
@@ -1285,7 +1288,7 @@ class TTask {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun pool11_err_scope() {
+    fun ff_pool11_err_scope() {
         val out = all("""
             var T
             set T = task () { yield(nil) }
@@ -1301,7 +1304,7 @@ class TTask {
         assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pool12_err_scope() {
+    fun ff_pool12_err_scope() {
         val out = ceu.all(
             """
             var T
@@ -1322,7 +1325,7 @@ class TTask {
         assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pool13_scope() {
+    fun ff_pool13_scope() {
         val out = ceu.all(
             """
             var T
@@ -1344,7 +1347,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun poolX_scope() {
+    fun ff_poolX_scope() {
         val out = ceu.all(
             """
             var T
@@ -1362,7 +1365,7 @@ class TTask {
                 ":error\n") { out }
     }
     @Test
-    fun pool14_max_err() {
+    fun ff_pool14_max_err() {
         val out = ceu.all(
             """
             coroutines(0)
@@ -1371,7 +1374,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n:error\n") { out }
     }
     @Test
-    fun pool15_max_err() {
+    fun ff_pool15_max_err() {
         val out = ceu.all(
             """
             coroutines(nil)
@@ -1380,7 +1383,7 @@ class TTask {
         assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n:error\n") { out }
     }
     @Test
-    fun pool16_max() {
+    fun ff_pool16_max() {
         val out = ceu.all(
             """
             var ts
@@ -1402,7 +1405,7 @@ class TTask {
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
     @Test
-    fun pool17_term() {
+    fun ff_pool17_term() {
         val out = ceu.all(
             """
             var ts
@@ -1436,7 +1439,7 @@ class TTask {
         assert(out == "0\n10\n10\n1\n20\n30\n2\n20\n30\n3\n") { out }
     }
     @Test
-    fun pool18_throw() {
+    fun ff_pool18_throw() {
         val out = ceu.all(
             """
             println(1)
@@ -1465,7 +1468,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n6\n7\n") { out }
     }
     @Test
-    fun pool19_throw() {
+    fun ff_pool19_throw() {
         val out = ceu.all(
             """
             var T
@@ -1485,7 +1488,7 @@ class TTask {
         assert(out == "1\n2\n1\n2\n") { out }
     }
     @Test
-    fun pool20_throw() {
+    fun ff_pool20_throw() {
         val out = ceu.all(
             """
             var ts
@@ -1519,7 +1522,7 @@ class TTask {
         assert(out == "1\n1\n999\n2\n") { out }
     }
     @Test
-    fun pool21_throw() {
+    fun ff_pool21_throw() {
         val out = ceu.all(
             """
             var ts
@@ -1553,7 +1556,7 @@ class TTask {
         assert(out == "2\n2\n999\n1\n") { out }
     }
     @Test
-    fun pool22() {
+    fun ff_pool22() {
         val out = all("""
             var ts
             set ts = coroutines()
@@ -1576,7 +1579,7 @@ class TTask {
         assert(out == ":coros\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
     @Test
-    fun pool23_throw() {
+    fun ff_pool23_throw() {
         val out = ceu.all(
             """
             spawn (task () {
@@ -1595,7 +1598,7 @@ class TTask {
         assert(out == "999\n") { out }
     }
     @Test
-    fun pool24_term() {
+    fun ff_pool24_term() {
         val out = ceu.all(
             """
             var T
@@ -1633,7 +1636,7 @@ class TTask {
     // EVT
 
     @Test
-    fun evt_hld1_err() {
+    fun gg_evt_hld1_err() {
         val out = ceu.all(
             """
             var tk
@@ -1649,7 +1652,7 @@ class TTask {
                 "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
     }
     @Test
-    fun evt_hld1_1_err() {
+    fun gg_evt_hld1_1_err() {
         val out = ceu.all(
             """
             var tk
@@ -1665,7 +1668,7 @@ class TTask {
                 "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
     }
     @Test
-    fun evt_hld2_err() {
+    fun gg_evt_hld2_err() {
         val out = ceu.all(
             """
             var tk
@@ -1683,7 +1686,7 @@ class TTask {
                 "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
     }
     @Test
-    fun evt_hld3() {
+    fun gg_evt_hld3() {
         val out = ceu.all(
         """
             var fff
@@ -1704,7 +1707,7 @@ class TTask {
         assert(out == "1\n2\n99\n3\n") { out }
     }
     @Test
-    fun evt_hld4() {
+    fun gg_evt_hld4() {
         val out = ceu.all(
             """
             var fff
@@ -1728,7 +1731,7 @@ class TTask {
         assert(out == "1\n2\n3\n4\n99\n") { out }
     }
     @Test
-    fun evt45() {
+    fun gg_evt45() {
         val out = ceu.all(
             """
             spawn task () :awakes {
@@ -1744,7 +1747,7 @@ class TTask {
         assert(out == "111\n1\n222\n2\n") { out }
     }
     @Test
-    fun evt5() {
+    fun gg_evt5() {
         val out = ceu.all(
             """
             spawn task () :awakes {
@@ -1759,7 +1762,7 @@ class TTask {
         assert(out == "nil\n@[]\n") { out }
     }
     @Test
-    fun evt6() {
+    fun gg_evt6() {
         val out = ceu.all(
             """
             spawn task () :awakes {
@@ -1776,7 +1779,7 @@ class TTask {
         assert(out == "@[]\n") { out }
     }
     @Test
-    fun evt7_err() {
+    fun gg_evt7_err() {
         val out = ceu.all(
             """
             var x
@@ -1789,7 +1792,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun todo_evt_hld8_err() {
+    fun todo_gg_evt_hld8_err() {
         val out = ceu.all(
             """
             var tk
@@ -1805,7 +1808,7 @@ class TTask {
                 "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
     }
     @Test
-    fun todo_evt_hld9_err() {
+    fun todo_gg_evt_hld9_err() {
         val out = ceu.all(
             """
             var tk
@@ -1824,7 +1827,7 @@ class TTask {
     // PUB
 
     @Test
-    fun pub1_err() {
+    fun hh_pub1_err() {
         val out = all("""
             var a
             a.pub
@@ -1832,14 +1835,14 @@ class TTask {
         assert(out == "anon : (lin 3, col 15) : pub error : expected coroutine\n:error\n") { out }
     }
     @Test
-    fun pub2_err() {
+    fun hh_pub2_err() {
         val out = all("""
             pub
         """, true)
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task") { out }
     }
     @Test
-    fun pub3() {
+    fun hh_pub3() {
         val out = all("""
             var t
             set t = task (v1) {
@@ -1860,7 +1863,7 @@ class TTask {
         assert(out == "nil\n1\n3\n") { out }
     }
     @Test
-    fun pub4_err() {
+    fun hh_pub4_err() {
         val out = all("""
             var t
             set t = task () {
@@ -1882,7 +1885,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub5() {
+    fun hh_pub5() {
         val out = all("""
             var t
             set t = task () {
@@ -1896,7 +1899,7 @@ class TTask {
         assert(out == "20\n") { out }
     }
     @Test
-    fun pub56_pool() {
+    fun hh_pub56_pool() {
         val out = all("""
             var T
             set T = task () {
@@ -1909,7 +1912,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub562_pool() {
+    fun hh_pub562_pool() {
         val out = all("""
             var T
             set T = task () {
@@ -1922,7 +1925,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pub6_pool() {
+    fun hh_pub6_pool() {
         val out = all("""
             var T
             set T = task () {
@@ -1940,7 +1943,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun pub7_pool_err() {
+    fun hh_pub7_pool_err() {
         val out = all("""
             var T
             set T = task () {
@@ -1960,7 +1963,7 @@ class TTask {
         assert(out == "anon : (lin 12, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub8_fake_task() {
+    fun hh_pub8_fake_task() {
         val out = all("""
             spawn (task () {
                 set pub = 1
@@ -1973,7 +1976,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pub9_fake_task_err() {
+    fun hh_pub9_fake_task_err() {
         val out = all("""
             spawn (task () :awakes {
                 set pub = []
@@ -1989,7 +1992,7 @@ class TTask {
                 "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub9_10_fake_task() {
+    fun hh_pub9_10_fake_task() {
         val out = all("""
             spawn (task () {
                 set pub = [10]
@@ -2003,7 +2006,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun pub10_fake_err() {
+    fun hh_pub10_fake_err() {
         val out = all("""
             spawn (task () :fake {
                 pub
@@ -2012,7 +2015,7 @@ class TTask {
         assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
     }
     @Test
-    fun pub11_err() {
+    fun hh_pub11_err() {
         val out = all("""
             var T
             set T = task () {
@@ -2034,7 +2037,7 @@ class TTask {
         assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub12_index_err() {
+    fun hh_pub12_index_err() {
         val out = all("""
             var T
             set T = task () {
@@ -2050,7 +2053,7 @@ class TTask {
         assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub13_index_err() {
+    fun hh_pub13_index_err() {
         val out = all("""
             var T
             set T = task () {
@@ -2081,7 +2084,7 @@ class TTask {
         assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub15_task_err() {
+    fun hh_pub15_task_err() {
         val out = all("""
         spawn task () :fake :awakes { 
             var y
@@ -2103,7 +2106,7 @@ class TTask {
                 "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub16() {
+    fun hh_pub16() {
         val out = all("""
             var t
             set t = task (v) {
@@ -2129,7 +2132,7 @@ class TTask {
         assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
     }
     @Test
-    fun pub17_err_expose() {
+    fun hh_pub17_err_expose() {
         val out = all("""
             var t
             set t = task () {
@@ -2147,7 +2150,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub18_err_expose() {
+    fun hh_pub18_err_expose() {
         val out = all("""
             var t
             set t = task () {
@@ -2165,7 +2168,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub19_err_expose() {
+    fun hh_pub19_err_expose() {
         val out = all("""
             var t
             set t = task () {
@@ -2182,7 +2185,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub20_func() {
+    fun hh_pub20_func() {
         val out = all("""
             var t
             set t = task (v) {
@@ -2200,7 +2203,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun pub21_func_expose() {
+    fun hh_pub21_func_expose() {
         val out = all("""
             var t
             set t = task (v) {
@@ -2220,7 +2223,7 @@ class TTask {
                 "anon : (lin 7, col 21) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun pub_22_nopub() {
+    fun hh_pub_22_nopub() {
         val out = all("""
             var U
             set U = task () {
@@ -2238,7 +2241,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub_23_nopub() {
+    fun hh_pub_23_nopub() {
         val out = all("""
             var U
             set U = task () {
@@ -2254,7 +2257,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub_24_nopub() {
+    fun hh_pub_24_nopub() {
         val out = all("""
             var U
             set U = task () {
@@ -2271,7 +2274,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun pub25() {
+    fun hh_pub25() {
         val out = all("""
             var t = task (v) {
                 set pub = @[]
@@ -2288,7 +2291,7 @@ class TTask {
     // STATUS
 
     @Test
-    fun status1_err() {
+    fun ii_status1_err() {
         val out = all("""
             var a
             a.status
@@ -2296,14 +2299,14 @@ class TTask {
         assert(out == "anon : (lin 3, col 15) : status error : expected coroutine\n:error\n") { out }
     }
     @Test
-    fun status2_err() {
+    fun ii_status2_err() {
         val out = all("""
             status
         """, true)
         assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
     }
     @Test
-    fun status3_err() {
+    fun ii_status3_err() {
         val out = all("""
             var t
             set t = task () {
@@ -2313,7 +2316,7 @@ class TTask {
         assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination") { out }
     }
     @Test
-    fun status4() {
+    fun ii_status4() {
         val out = all("""
             var t
             set t = task () {
@@ -2334,7 +2337,7 @@ class TTask {
         assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
     }
     @Test
-    fun todo_status5() {
+    fun todo_ii_status5() {
         val out = all("""
             var T
             set T = task (x) :awakes {
@@ -2369,7 +2372,7 @@ class TTask {
     // TOGGLE
 
     @Test
-    fun todo_toggle1() { // should be rt error
+    fun todo_jj_toggle1() { // should be rt error
         val out = all("""
             var T
             set T = task () {
@@ -2384,14 +2387,14 @@ class TTask {
         assert(out.contains("Assertion `ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR)' failed")) { out }
     }
     @Test
-    fun toggle2_err() {
+    fun jj_toggle2_err() {
         val out = all("""
             toggle 1 (true)
         """)
         assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled coroutine\n:error\n") { out }
     }
     @Test
-    fun toggle3_coro() {
+    fun jj_toggle3_coro() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -2410,7 +2413,7 @@ class TTask {
         assert(out == "1\n2\n10\n") { out }
     }
     @Test
-    fun toggle4_coros() {
+    fun jj_toggle4_coros() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -2430,7 +2433,7 @@ class TTask {
         assert(out == "1\n2\n10\n") { out }
     }
     @Test
-    fun toggle5_defer() {
+    fun jj_toggle5_defer() {
         val out = all("""
             var T
             set T = task () {
@@ -2450,7 +2453,7 @@ class TTask {
         assert(out == "1\n2\n10\n") { out }
     }
     @Test
-    fun toggle6_defer_coros() {
+    fun jj_toggle6_defer_coros() {
         val out = all("""
             var T
             set T = task () {
@@ -2474,7 +2477,7 @@ class TTask {
     // ESCAPE
 
     @Test
-    fun esc1_err() {
+    fun kk_esc1_err() {
         val out = all("""
             var f
             set f = func () {
@@ -2486,7 +2489,7 @@ class TTask {
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun esc2() {
+    fun kk_esc2() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -2503,14 +2506,14 @@ class TTask {
     // TRACK
 
     @Test
-    fun track1_err() {
+    fun ll_track1_err() {
         val out = all("""
             track(nil)
         """)
         assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n:error\n") { out }
     }
     @Test
-    fun track2() {
+    fun ll_track2() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -2523,7 +2526,7 @@ class TTask {
         assert(out.contains("track: 0x")) { out }
     }
     @Test
-    fun track3_err() {
+    fun ll_track3_err() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -2538,7 +2541,7 @@ class TTask {
         assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n:error\n") { out }
     }
     @Test
-    fun track4() {
+    fun ll_track4() {
         val out = all("""
             var T
             set T = task () {
@@ -2556,7 +2559,7 @@ class TTask {
         assert(out == "nil\n10\n") { out }
     }
     @Test
-    fun track5_err() {
+    fun ll_track5_err() {
         val out = all("""
             var x
             set x = nil
@@ -2565,7 +2568,7 @@ class TTask {
         assert(out == "anon : (lin 4, col 23) : pub error : expected coroutine\n:error\n") { out }
     }
     @Test
-    fun track5_err2() {
+    fun ll_track5_err2() {
         val out = all("""
             var T
             set T = task () {
@@ -2583,7 +2586,7 @@ class TTask {
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun track6_err() {
+    fun ll_track6_err() {
         val out = all("""
             var T
             set T = task () { nil }
@@ -2600,7 +2603,7 @@ class TTask {
         assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun track7() {
+    fun ll_track7() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -2619,7 +2622,7 @@ class TTask {
         assert(out == "10\n:destroyed\n") { out }
     }
     @Test
-    fun track8_err() {
+    fun ll_track8_err() {
         val out = all("""
             var T
             set T = task () {
@@ -2641,7 +2644,7 @@ class TTask {
         assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun track9() {
+    fun ll_track9() {
         val out = all("""
             var T
             set T = task (v) :awakes {
@@ -2663,7 +2666,7 @@ class TTask {
         assert(out == "2\n:destroyed\n") { out }
     }
     @Test
-    fun track10() {
+    fun ll_track10() {
         val out = all("""
             var T
             set T = task (v) :awakes {
@@ -2688,7 +2691,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun track11_err() {
+    fun ll_track11_err() {
         val out = all("""
             var T
             set T = task (v) {
@@ -2709,7 +2712,7 @@ class TTask {
         assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun track12_throw() {
+    fun ll_track12_throw() {
         val out = all("""
             var T
             set T = task (v) :awakes {
@@ -2730,7 +2733,7 @@ class TTask {
         assert(out == ":destroyed\n") { out }
     }
     @Test
-    fun track13_throw() {
+    fun ll_track13_throw() {
         val out = all("""
             var T
             set T = task (v) :awakes {
@@ -2755,7 +2758,7 @@ class TTask {
         assert(out == "1\n:yielded\n:destroyed\n") { out }
     }
     @Test
-    fun track14() {
+    fun ll_track14() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -2789,7 +2792,7 @@ class TTask {
     // XCEU
 
     @Test
-    fun xceu1() {
+    fun mm_xceu1() {
         val out = all("""
             spawn task () {
                 spawn (task () {
@@ -2804,7 +2807,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun xceu2() {
+    fun mm_xceu2() {
         val out = all("""
             spawn task () :awakes {
                 yield(nil)
@@ -2824,7 +2827,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun xceu3() {
+    fun mm_xceu3() {
         val out = all("""
             spawn task () :awakes {
                 yield(nil)
@@ -2844,7 +2847,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun xceu4() {
+    fun mm_xceu4() {
         val out = all("""
             catch true {
                 spawn task () :fake {
@@ -2857,7 +2860,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun xceu5() {
+    fun mm_xceu5() {
         val out = all("""
             spawn task () {
                 catch err==:or {
@@ -2885,7 +2888,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun xceu6() {
+    fun mm_xceu6() {
         val out = all("""
             var T
             set T = task (pos) :awakes {
@@ -2906,7 +2909,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun xceu7() {
+    fun mm_xceu7() {
         val out = all("""
             spawn task () :awakes {
                 do {
@@ -2924,7 +2927,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun xceu8() {
+    fun mm_xceu8() {
         val out = all("""
             spawn task () :awakes {
                 do {
