@@ -207,7 +207,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 tops.third.add(func)
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
-                    ${ups.first_block(this)!!.toc(true)},
+                    &${ups.first_block(this)!!.toc(true)}->dn_dyns,
                     ${if (ups.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_${this.tk.str.uppercase()},
                     (CEU_Proto) {
@@ -257,7 +257,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     """
                     { // BLOCK ${this.tk.dump()}
-                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,NULL}, NULL };
+                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                         ${
                             (f_b is Expr.Proto && f_b.tk.str == "task").cond {
                                 " ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
@@ -472,7 +472,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // CORO ${this.tk.dump()}
                     ${this.task.code()}
                     CEU_Value ceu_coro_$n;
-                    ceu_ret = ceu_coro_create(${ups.first_block(this)!!.toc(true)}, &ceu_acc, &ceu_coro_$n);
+                    ceu_ret = ceu_coro_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, &ceu_acc, &ceu_coro_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col})");
                     ${assrc("ceu_acc = ceu_coro_$n")}
                 }
@@ -749,7 +749,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
             is Expr.Tuple -> """
                 { // TUPLE ${this.tk.dump()}
-                    ceu_mem->tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc(true)}, ${this.args.size});
+                    ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, ${this.args.size});
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -761,7 +761,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             """
             is Expr.Vector -> """
                 { // VECTOR ${this.tk.dump()}
-                    ceu_mem->vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc(true)});
+                    ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -774,7 +774,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dict -> {
                 """
                 { // DICT ${this.tk.dump()}
-                    ceu_mem->dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc(true)});
+                    ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->dict_$n != NULL);
                     ${this.args.map { """
                         {
@@ -926,7 +926,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     ${if (!iscoros) {
                         """
-                        ceu_ret = ceu_coro_create($bupc, &ceu_task_$n, &ceu_coro_$n);
+                        ceu_ret = ceu_coro_create(&$bupc->dn_dyns, &ceu_task_$n, &ceu_coro_$n);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     } else {

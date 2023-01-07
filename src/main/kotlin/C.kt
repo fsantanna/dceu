@@ -83,9 +83,9 @@ fun Coder.main (): String {
         void ceu_hold_rem (struct CEU_Dyn* dyn);
         CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm);
         
-        CEU_RET ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
-        CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dyn* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        CEU_RET ceu_coros_create   (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
+        CEU_RET ceu_coro_create    (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        CEU_RET ceu_coro_create_in (struct CEU_Dyns* hld, struct CEU_Dyn* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -100,7 +100,7 @@ fun Coder.main (): String {
         struct CEU_Value ceu_dict_get (struct CEU_Dyn* col, struct CEU_Value* key);
         CEU_RET ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
-        struct CEU_Dyn* ceu_tuple_create (struct CEU_Block* hld, int n);
+        struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         
         struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
@@ -273,8 +273,8 @@ fun Coder.main (): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dyn* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Proto proto);        
-        struct CEU_Dyn* ceu_dict_create  (struct CEU_Block* hld);
+        struct CEU_Dyn* ceu_proto_create (struct CEU_Dyns* hld, int isperm, int type, struct CEU_Proto proto);        
+        struct CEU_Dyn* ceu_dict_create  (struct CEU_Dyns* hld);
 
         int ceu_gc_count = 0;
         
@@ -591,7 +591,7 @@ fun Coder.main (): String {
             }
             if (dyns == dyn->up_dyns.dyns) {
                 dyn->isperm = dyn->isperm || isperm;
-            } else if (dyn->up_dyns.dyns->up_block==NULL || (!dyn->isperm && dyns->up_block->depth < dyn->up_dyns.dyns->up_block->depth)) {
+            } else if (dyn->up_dyns.dyns==NULL || (!dyn->isperm && dyns->up_block->depth < dyn->up_dyns.dyns->up_block->depth)) {
                 if (dyn->type==CEU_VALUE_FUNC && dyn->Ncast.Proto.up_frame==NULL) {
                     // do not enqueue: global functions use up=NULL and are not malloc'ed
                 } else {
@@ -735,19 +735,19 @@ fun Coder.main (): String {
         
         void ceu_max_depth (CEU_Dyn* dyn, int n, CEU_Value* childs) {
             // new dyn should have at least the maximum depth among its children
-            CEU_Block* hld = NULL;
+            CEU_Dyns* hld = NULL;
             int max = -1;
             for (int i=0; i<n; i++) {
                 CEU_Value* cur = &childs[i];
                 if (cur->type>CEU_VALUE_DYNAMIC && cur->Dyn->up_dyns.dyns->up_block!=NULL) {
                     if (max < cur->Dyn->up_dyns.dyns->up_block->depth) {
                         max = cur->Dyn->up_dyns.dyns->up_block->depth;
-                        hld = cur->Dyn->up_dyns.dyns->up_block;
+                        hld = cur->Dyn->up_dyns.dyns;
                     }
                 }
             }
             if (hld != NULL) {
-                ceu_hold_add(&hld->dn_dyns, dyn);
+                ceu_hold_add(hld, dyn);
             }
         }
         
@@ -901,7 +901,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dyn* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Proto proto) {
+        CEU_Dyn* ceu_proto_create (CEU_Dyns* hld, int isperm, int type, CEU_Proto proto) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             proto.upvs.buf = malloc(proto.upvs.its * sizeof(CEU_Value));
@@ -914,11 +914,11 @@ fun Coder.main (): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, ret, isperm));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, isperm));
             return ret;
         }
         
-        CEU_Dyn* ceu_tuple_create (CEU_Block* hld, int n) {
+        CEU_Dyn* ceu_tuple_create (CEU_Dyns* hld, int n) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
@@ -927,11 +927,11 @@ fun Coder.main (): String {
                 }
             };
             memset(ret->Ncast.Tuple.mem, 0, n*sizeof(CEU_Value));
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
         
-        CEU_Dyn* ceu_vector_create (CEU_Block* hld) {
+        CEU_Dyn* ceu_vector_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* mem = malloc(1);  // because of '\0' in empty strings
@@ -942,11 +942,11 @@ fun Coder.main (): String {
                     .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,mem}} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
         
-        CEU_Dyn* ceu_dict_create (CEU_Block* hld) {
+        CEU_Dyn* ceu_dict_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
@@ -954,17 +954,18 @@ fun Coder.main (): String {
                     .Ncast = { 0, {.Dict={0,NULL}} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
         
-        CEU_RET ceu_coros_create (CEU_Block* hld, int max, CEU_Value* ret) {
+        CEU_RET ceu_coros_create (CEU_Dyns* hld, int max, CEU_Value* ret) {
             CEU_Dyn* coros = malloc(sizeof(CEU_Dyn));
             assert(coros != NULL);
+            CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *coros = (CEU_Dyn) {
                 CEU_VALUE_COROS, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
-                        .Coros = { max, {0,0,NULL,NULL} }
+                        .Coros = { max, {0,0,NULL,blk} }
                     } }
                 }
             };            
@@ -974,12 +975,12 @@ fun Coder.main (): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, coros, 1));  // 1=cannot escape this block b/c of tasks
+            assert(CEU_RET_RETURN == ceu_block_set(hld, coros, 1));  // 1=cannot escape this block b/c of tasks
 
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create (CEU_Block* hld, CEU_Value* task, CEU_Value* ret) {
+        CEU_RET ceu_coro_create (CEU_Dyns* hld, CEU_Value* task, CEU_Value* ret) {
             if (task->type != CEU_VALUE_TASK) {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1000,7 +1001,8 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, hld, mem, {
+            CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
+            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
@@ -1009,12 +1011,12 @@ fun Coder.main (): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
 
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create_in (CEU_Block* hld, CEU_Dyn* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
+        CEU_RET ceu_coro_create_in (CEU_Dyns* hld, CEU_Dyn* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (coros->type != CEU_VALUE_COROS) {
                 CEU_THROW_MSG("\0 : coroutine error : expected coroutines");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1043,7 +1045,8 @@ fun Coder.main (): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, hld, mem, {
+            CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
+            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
@@ -1063,8 +1066,8 @@ fun Coder.main (): String {
                 }
             };
             // at most coro->hld, same as pointer coro/coros, term bcast is limited to it
-            CEU_Block* hld = (coro->Bcast.Coro.up_coros == NULL) ? coro->up_dyns.dyns->up_block : coro->Bcast.Coro.up_coros->up_dyns.dyns->up_block;
-            assert(CEU_RET_RETURN == ceu_block_set(&hld->dn_dyns, trk, 1));
+            CEU_Dyns* hld = (coro->Bcast.Coro.up_coros == NULL) ? coro->up_dyns.dyns : coro->Bcast.Coro.up_coros->up_dyns.dyns;
+            assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 1));
             *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
             return NULL;
         }

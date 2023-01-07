@@ -332,12 +332,9 @@ class TExec {
     @Test
     fun cc_tuple11_copy() {
         val out = all("""
-            var t1
-            set t1 = [1,2,3]
-            var t2
-            set t2 = copy(t1)
-            var t3
-            set t3 = t1
+            var t1 = [1,2,3]
+            var t2 = copy(t1)
+            var t3 = t1
             set t1[2] = 999
             set t2[0] = 10
             println(t1)
