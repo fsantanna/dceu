@@ -573,7 +573,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } else { """
                         ${this.coro.code()}
                         ${(this.tk.str=="status").cond { """
-                            // track with destroyed coro: status -> :destroyed
+                            // track with destroyed coro: status -> nil
                             if (ceu_acc.type == CEU_VALUE_TRACK) {
                                 CEU_Value ceu_accx = ceu_acc;
                                 ceu_acc = ceu_track_to_coro(&ceu_accx);

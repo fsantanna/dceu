@@ -1337,13 +1337,16 @@ class TTask {
                 var yyy
                 while in :coros ts, zzz {
                     set yyy = zzz
+                    println(yyy.status)
                 }
+                println(yyy.status)
                 set yyy = xxx
             }
         """
         )
         //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 10, col 25) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n:yielded\n") { out }
     }
     @Test
     fun ff_pool13_scope() {
@@ -1407,19 +1410,13 @@ class TTask {
     fun ff_pool16_max() {
         val out = ceu.all(
             """
-            var ts
-            set ts = coroutines(1)
-            var T
-            set T = task () :awakes { yield(nil) }
-            var ok1
-            set ok1 = spawn in ts, T()
-            var ok2
-            set ok2 = spawn in ts, T()
+            var ts = coroutines(1)
+            var T = task () :awakes { yield(nil) }
+            var ok1 = spawn in ts, T()
+            var ok2 = spawn in ts, T()
             broadcast in :global, nil
-            var ok3
-            set ok3 = spawn in ts, T()
-            var ok4
-            set ok4 = spawn in ts, T()
+            var ok3 = spawn in ts, T()
+            var ok4 = spawn in ts, T()
             println(ok1, ok2, ok3, ok4)
         """
         )
@@ -2640,7 +2637,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)
         """)
-        assert(out == "10\n:destroyed\n") { out }
+        assert(out == "10\nnil\n") { out }
     }
     @Test
     fun ll_track8_err() {
@@ -2698,7 +2695,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\n:destroyed\n") { out }
+        assert(out == "2\nnil\n") { out }
     }
     @Test
     fun ll_track10() {
@@ -2722,7 +2719,7 @@ class TTask {
                 println(x.status)   ;; nil
             }
         """)
-        assert(out == "2\n:destroyed\n") { out }
+        assert(out == "2\nnil\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -2765,7 +2762,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == ":destroyed\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun ll_track13_throw() {
@@ -2790,7 +2787,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "1\n:yielded\n:destroyed\n") { out }
+        assert(out == "1\n:yielded\nnil\n") { out }
     }
     @Test
     fun ll_track14() {
@@ -2807,7 +2804,7 @@ class TTask {
             spawn task () :awakes {
                 catch :paror {
                     spawn task () :awakes {
-                        ${await("if x.status==:terminated { true } else { if x.status==:destroyed { true } else { false } }")}
+                        ${await("if x.status==:terminated { true } else { if x.status==nil { true } else { false } }")}
                         throw(:paror)
                     } ()
                     println(x.pub[0])
@@ -2821,7 +2818,7 @@ class TTask {
             }()
             println(:ok)
         """)
-        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+        assert(out == "10\n10\nnil\n:ok\n") { out }
     }
     @Test
     fun ll_track15_simplify() {
@@ -2839,7 +2836,7 @@ class TTask {
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\n:destroyed\n") { out }
+        assert(out == "2\nnil\n") { out }
     }
 
     // XCEU

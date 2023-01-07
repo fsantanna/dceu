@@ -462,20 +462,31 @@ fun Coder.main (): String {
     """ +
     """ // BLOCK
         void ceu_hold_add (CEU_Dyns* dyns, CEU_Dyn* dyn) {
-            if (dyns->max <= dyns->its) {
-                dyns->max = 1 + dyns->max*2;
-                dyns->buf = realloc(dyns->buf, dyns->max * sizeof(CEU_Dyns*));
-                assert(dyns->buf != NULL);
+            int I = -1;
+            if (dyns->max > dyns->its) {            // end of list
+                I = dyns->its++;
+            } else {
+                for (int i=0; i<dyns->max; i++) {   // hole in list
+                    if (dyns->buf[i] == NULL) {
+                        I = i;
+                        break;
+                    }
+                }
+                if (I == -1) {                      // grow list
+                    dyns->max = 1 + dyns->max*2;
+                    dyns->buf = realloc(dyns->buf, dyns->max * sizeof(CEU_Dyns*));
+                    assert(dyns->buf != NULL);
+                    I = dyns->its++;
+                }
             }
-            dyns->buf[dyns->its] = dyn;
-            dyn->up_dyns = (CEU_Dyns_I) { dyns, dyns->its };
-            dyns->its++;
+            assert(I >= 0);
+            dyns->buf[I] = dyn;
+            dyn->up_dyns = (CEU_Dyns_I) { dyns, I };
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
             CEU_Dyns_I* up = &dyn->up_dyns;
             assert(up->dyns->buf != NULL);
             up->dyns->buf[up->i] = NULL;
-            // TODO: shift left, shrink // add on holes
         }
 
         void ceu_dyn_free (CEU_Dyn* dyn) {
@@ -1021,9 +1032,20 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("\0 : coroutine error : expected coroutines");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            if (coros->Bcast.Coros.max!=0 && coros->Bcast.Coros.dyns.its==coros->Bcast.Coros.max) {
-                *ok = 0;
-                return CEU_RET_RETURN;
+            if (coros->Bcast.Coros.max != 0) {
+                *ok = (coros->Bcast.Coros.dyns.its < coros->Bcast.Coros.max);
+                if (!*ok) {
+                    // look for hole
+                    for (int i=0; i<coros->Bcast.Coros.dyns.max; i++) {
+                        if (coros->Bcast.Coros.dyns.buf[i] == NULL) {
+                            *ok = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!*ok) {
+                    return CEU_RET_RETURN;
+                }
             }
             if (task->type != CEU_VALUE_TASK) {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");

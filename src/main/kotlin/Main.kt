@@ -29,7 +29,7 @@ val TAGS = listOf (
     ":fake", ":hide", ":check.now", ":all", ":awakes",
     ":clear", ":error",           // bcast-clear
     ":global", ":local", //":task"   // bcast scope
-    ":yielded", ":toggled", ":resumed", ":terminated", ":destroyed"
+    ":yielded", ":toggled", ":resumed", ":terminated"
 )
 
 val GLOBALS = setOf (

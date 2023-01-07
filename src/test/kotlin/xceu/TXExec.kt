@@ -665,7 +665,7 @@ class TXExec {
             }
             println(:ok)
         """, true)
-        assert(out == "10\n10\n:destroyed\n:ok\n") { out }
+        assert(out == "10\n10\nnil\n:ok\n") { out }
     }
     @Test
     fun todo_awaiting17_track() {
@@ -686,7 +686,7 @@ class TXExec {
             }
             println(:ok)
         """, true)
-        assert(out == ":destroyed\n:ok\n") { out }
+        assert(out == "nil\n:ok\n") { out }
     }
     @Test
     fun parand18_immediate() {
