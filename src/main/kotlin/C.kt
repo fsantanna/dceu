@@ -424,6 +424,7 @@ fun Coder.main (): String {
                 case CEU_VALUE_CORO:
                 case CEU_VALUE_COROS:
                 case CEU_VALUE_TRACK:
+                    // TODO: currently not gc'ed
                     break;
                 default:
                     assert(0);
@@ -660,6 +661,9 @@ fun Coder.main (): String {
                     cur->block = NULL;
                 }
                 cur = cur->prev;
+            }
+            if (block->bcast.block != NULL) {
+                ceu_bstack_clear(bstack, block->bcast.block);
             }
         }
         
@@ -1053,6 +1057,7 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
+            ceu_gc_inc(task);
             
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
