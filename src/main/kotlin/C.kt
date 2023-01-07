@@ -513,6 +513,9 @@ fun Coder.main (): String {
                     free(dyn->Ncast.Dict.mem);
                     break;
                 case CEU_VALUE_CORO:
+                    if (dyn->Bcast.Coro.block != NULL) {
+                        ceu_block_free(dyn->Bcast.Coro.block);
+                    }
                     free(dyn->Bcast.Coro.frame->mem);
                     free(dyn->Bcast.Coro.frame);
                     break;
@@ -1100,6 +1103,7 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
+            ceu_gc_inc(task);
             
             CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
             assert(coro != NULL);
