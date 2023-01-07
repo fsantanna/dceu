@@ -1109,11 +1109,24 @@ class TTask {
         assert(out == "0\n") { out }
     }
     @Test
-    fun pool01() {
+    fun pool0a() {
         val out = ceu.all(
             """
             var x
             spawn in coroutines(), (task(){nil})(x)
+            println(0)
+        """
+        )
+        assert(out == "0\n") { out }
+    }
+    @Test
+    fun pool0b() {
+        val out = ceu.all(
+            """
+            var T
+            set T = task () { yield(nil) }
+            var x
+            spawn in coroutines(), T(x)
             println(0)
         """
         )

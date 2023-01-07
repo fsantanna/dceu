@@ -82,7 +82,7 @@ fun Coder.main (): String {
         void ceu_hold_rem (struct CEU_Dynamic* dyn);
         CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
         
-        void  ceu_coros_cleanup  (struct CEU_Dynamic* coros);
+        void  ceu_coros_cleanup  (struct CEU_Dynamic* coros, int force);
         void  ceu_coros_destroy  (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
         CEU_RET ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -503,7 +503,6 @@ fun Coder.main (): String {
                     free(dyn->Ncast.Proto.upvs.buf);
                     break;
                 case CEU_VALUE_TUPLE:
-                case CEU_VALUE_COROS:
                 case CEU_VALUE_TRACK:
                     break;
                 case CEU_VALUE_VECTOR:
@@ -515,6 +514,9 @@ fun Coder.main (): String {
                 case CEU_VALUE_CORO:
                     free(dyn->Bcast.Coro.frame->mem);
                     free(dyn->Bcast.Coro.frame);
+                    break;
+                case CEU_VALUE_COROS:
+                    ceu_coros_cleanup(dyn, 1);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -710,7 +712,7 @@ fun Coder.main (): String {
                     int ret = ceu_bcast_dyns(bstack, cur->Bcast.Coros.list.first, evt);
                     cur->Bcast.Coros.open--;
                     if (cur->Bcast.Coros.open == 0) {
-                        ceu_coros_cleanup(cur);
+                        ceu_coros_cleanup(cur, 0);
                     }
                     return ret;
                 case CEU_VALUE_TRACK:
@@ -753,11 +755,11 @@ fun Coder.main (): String {
             coros->Bcast.Coros.cur--;
         }
         
-        void ceu_coros_cleanup (CEU_Dynamic* coros) {
+        void ceu_coros_cleanup (CEU_Dynamic* coros, int force) {
             CEU_Dynamic* cur = coros->Bcast.Coros.list.first;
             while (cur != NULL) {
                 CEU_Dynamic* nxt = cur->Bcast.next;
-                if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+                if (force || cur->Bcast.status==CEU_CORO_STATUS_TERMINATED) {
                     //assert(0 && "OK");
                     ceu_coros_destroy(coros, cur);
                 }

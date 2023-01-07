@@ -155,9 +155,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } while (0); // func
                     """ + istask.cond{ """  // TERMINATE
                     assert(ceu_coro->Bcast.status != CEU_CORO_STATUS_TERMINATED);
-                    ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                     ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
                     ceu_frame->Task.pc = -1;
+                    int incoros = (ceu_coro->Bcast.Coro.coros != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not signal termination: clear comes from clearing enclosing block,
@@ -173,7 +173,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         CEU_Value ceu_acc_$n = ceu_acc;
 
                         CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                        CEU_BStack ceu_bstack_$n = { ceu_frame->up, ceu_bstack };
+                        CEU_BStack ceu_bstack_$n = { ceu_coro->hold.block, ceu_bstack };
                         if (ceu_coro->hold.block->bcast.up != NULL) {
                             // enclosing coro of enclosing block
                             ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
@@ -185,7 +185,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             return ceu_ret;
                         }
                     
-                        if (ceu_coro->Bcast.Coro.coros != NULL) {
+                        if (incoros) {
                             if (ceu_coro->Bcast.Coro.coros->Bcast.Coros.open == 0) {
                                 ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
                             }
@@ -196,6 +196,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         } else {
                             // do not restore acc: we were ok, but now we did throw
                         }
+                    }
+                    if (!incoros) {
+                        ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                     }
                     """} + """
                     return ceu_ret;
@@ -507,7 +510,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     ceu_mem->coros_$n.Dyn->Bcast.Coros.open--;
                     if (ceu_mem->coros_$n.Dyn->Bcast.Coros.open == 0) {
-                        ceu_coros_cleanup(ceu_mem->coros_$n.Dyn);
+                        ceu_coros_cleanup(ceu_mem->coros_$n.Dyn, 0);
                     }
                     CEU_CONTINUE_ON_THROW();
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
