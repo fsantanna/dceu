@@ -1421,7 +1421,7 @@ class TXExec {
                 println(type(t))
             }
         """)
-        assert(out == "10\n:coro\n") { out }
+        assert(out == "10\n:track\n") { out }
     }
 
     // TOGGLE

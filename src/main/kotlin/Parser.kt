@@ -321,7 +321,7 @@ class Parser (lexer_: Lexer)
                                     var ${i.str} = nil
                                     until {
                                         set ${i.str} = resume ceu_col_$N(${i.str})
-                                        var ceu_stop_$N = (ceu_col_$N.status >= :terminated)
+                                        var ceu_stop_$N = (ceu_col_$N.status == :terminated)
                                         if not ceu_stop_$N {
                                             set ${i.str} = do :unnest {
                                                 ${b.es.tostr(true)}
@@ -615,7 +615,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
-                                ${pre0}await :check.now (ceu_spw_$N.status >= :terminated)
+                                ${pre0}await :check.now (ceu_spw_$N.status == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
                             }
                         """) //.let { println(it.tostr());it }
@@ -638,7 +638,7 @@ class Parser (lexer_: Lexer)
                                 until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
                                     if type(ceu_cnd_$N) == :track {
-                                        set ceu_cnd_$N = (ceu_cnd_$N.status >= :terminated)
+                                        set ceu_cnd_$N = (ceu_cnd_$N.status == nil)
                                     }
                                     if not ceu_cnd_$N {
                                         yield ()
@@ -705,7 +705,7 @@ class Parser (lexer_: Lexer)
                         """}.joinToString("")}
                         await :check.now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status >= :terminated) and
+                                ((ceu_${i}_$n.status == :terminated) and
                             """}.joinToString("")} true ${")".repeat(pars.size)}
                         )
                         _ceu_$n
@@ -734,7 +734,7 @@ class Parser (lexer_: Lexer)
                         """}.joinToString("")}
                         await :check.now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status >= :terminated) or
+                                ((ceu_${i}_$n.status == :terminated) or
                             """}.joinToString("")} false ${")".repeat(pars.size)}
                         )
                         _ceu_$n
