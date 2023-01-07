@@ -291,16 +291,23 @@ class Parser (lexer_: Lexer)
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected coroutines");
                                     }
                                     ```
-                                    var ceu_dyn_$N = `:pointer ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.list.first`
-                                    while ceu_dyn_$N /= `:pointer NULL` {
-                                        var ceu_coro_$N
-                                        `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                        var ${i.str} = track(ceu_coro_$N)
-                                        ${blk.es.tostr(true)}
-                                        if ${i.str}.status {
-                                            set ceu_dyn_$N = `:pointer ((CEU_Dyn*)ceu_mem->ceu_dyn_$N.Pointer)->Bcast.next`
+                                    var ceu_n_$N = `:number ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.its`
+                                    var ceu_i_$N = 0
+                                    while ceu_i_$N /= ceu_n_$N {
+                                        var ceu_dyn_$N = `:pointer ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                        if ceu_dyn_$N == `:pointer NULL` {
+                                            ;; empty slot
+                                            set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         } else {
-                                            set ceu_dyn_$N = `:pointer NULL`
+                                            var ceu_coro_$N
+                                            `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                            var ${i.str} = track(ceu_coro_$N)
+                                            ${blk.es.tostr(true)}
+                                            if ${i.str}.status {
+                                                set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
+                                            } else {
+                                                set ceu_i_$N = ceu_n_$N
+                                            }
                                         }
                                     }
                                 }

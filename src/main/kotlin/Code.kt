@@ -466,7 +466,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }
                     """}}
                     assert(CEU_RET_RETURN == ceu_coros_create (
-                        ${ups.first_block(this)!!.toc(true)},
+                        &${ups.first_block(this)!!.toc(true)}->dn_dyns,
                         ${if (this.max==null) 0 else "ceu_acc.Number"},
                         &ceu_acc
                     ));
@@ -938,7 +938,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         """
                         ceu_ret = ceu_coro_create_in (
-                            $bupc,
+                            &$bupc->dn_dyns,
                             ceu_mem->coros_${spawn!!.n}.Dyn,
                             &ceu_task_$n,
                             &ceu_coro_$n,
