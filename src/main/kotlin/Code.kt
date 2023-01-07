@@ -324,7 +324,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 }
                                 { // decrement refs
                                     ${vars.map { """
-                                        if (CEU_TYPE_NCAST(ceu_mem->$it.type)) {
+                                        if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
+                                            // skip globals
                                             ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n));
                                         }
                                     """ }.joinToString("")
