@@ -121,34 +121,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             case 0: {
                                 CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
                         """}}
-                            { // initialize parameters
-                                int ceu_i = 0;
-                                ${this.args.map {
-                                    val id = it.str.noSpecial()
-                                    """
-                                    ${istask.cond { """
-                                        if (ceu_coro->Bcast.Coro.up_coros != NULL) {
-                                            ceu_mem->_${id}_ = ceu_coro->up_dyns.dyns->up_block;
-                                        } else
-                                    """}}
-                                    { // else
-                                        ceu_mem->_${id}_ = ${this.body.toc(true)};
-                                        ceu_mem->_${id}_->depth = ceu_frame->up_block->depth + 1;
-                                    }
-                                    if (ceu_i < ceu_n) {
-                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
-                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                        }
-                                        ceu_gc_inc(ceu_args[ceu_i]);
-                                        ceu_mem->$id = *ceu_args[ceu_i];
-                                    } else {
-                                        ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
-                                    }
-                                    ceu_i++;
-                                    """
-                                }.joinToString("")}
-                            }
                             // BODY
                             ${this.body.code()}
                         ${istask.cond{"}\n}\n"}}
@@ -258,6 +230,39 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // BLOCK ${this.tk.dump()}
                         ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                        ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
+                            f_b as Expr.Proto
+                            val istask = (f_b.tk.str == "task")
+                            """
+                            {
+                                int ceu_i = 0;
+                                ${f_b.args.map {
+                                    val id = it.str.noSpecial()
+                                    """
+                                    ${istask.cond { """
+                                        if (ceu_coro->Bcast.Coro.up_coros != NULL) {
+                                            ceu_mem->_${id}_ = ceu_coro->up_dyns.dyns->up_block;
+                                        } else
+                                    """}}
+                                    { // else
+                                        ceu_mem->_${id}_ = &ceu_mem->block_$n;
+                                    }
+                                    if (ceu_i < ceu_n) {
+                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                            ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
+                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        }
+                                        ceu_gc_inc(ceu_args[ceu_i]);
+                                        ceu_mem->$id = *ceu_args[ceu_i];
+                                    } else {
+                                        ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                                    }
+                                    ceu_i++;
+                                    """
+                                }.joinToString("")}
+                            }
+                            """ 
+                        }}
                         ${
                             (f_b is Expr.Proto && f_b.tk.str == "task").cond {
                                 " ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
