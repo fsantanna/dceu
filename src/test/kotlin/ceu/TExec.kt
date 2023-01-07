@@ -681,7 +681,7 @@ class TExec {
         val out = all("""
             #[1,nil,3]  ;; v[2] = nil, but #v===1
         """)
-        assert(out.contains("ceu_vector_set: Assertion `i == vec->Ncast.Vector.n-1' failed.")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->Ncast.Vector.its-1' failed.")) { out }
     }
     @Test
     fun todo_vector6b_err() {

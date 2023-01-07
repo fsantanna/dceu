@@ -2715,7 +2715,7 @@ class TTask {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
                 while in :coros ts, t {
-                    set x = track(t)    ;; track(t) hold in
+                    set x = track(t)    ;; track(t) up_hold in
                 }
                 println(x.pub[0])   ;; 2
                 broadcast in :global, nil

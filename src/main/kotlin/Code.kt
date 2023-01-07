@@ -24,7 +24,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
             (N == 0) -> "(ceu_${mem}->${dcl.id})"
-            else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up".repeat(N)}->${mem})->${dcl.id})"
+            else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->${dcl.id})"
         }
     }
 
@@ -33,7 +33,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             .all_until(this) { it is Expr.Proto && it.task!=null && !it.task.first }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
-        return if (n == 0) null else "(ceu_frame${"->proto->up".repeat(n-1)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
     }
 
     fun Expr.gcall (): Boolean {
@@ -127,17 +127,17 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     val id = it.str.noSpecial()
                                     """
                                     ${istask.cond { """
-                                        if (ceu_coro->Bcast.Coro.coros != NULL) {
-                                            ceu_mem->_${id}_ = ceu_coro->hold.block;
+                                        if (ceu_coro->Bcast.Coro.up_coros != NULL) {
+                                            ceu_mem->_${id}_ = ceu_coro->up_dyns.dyns->up_block;
                                         } else
                                     """}}
                                     { // else
                                         ceu_mem->_${id}_ = ${this.body.toc(true)};
-                                        ceu_mem->_${id}_->depth = ceu_frame->up->depth + 1;
+                                        ceu_mem->_${id}_->depth = ceu_frame->up_block->depth + 1;
                                     }
                                     if (ceu_i < ceu_n) {
                                         if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_args[ceu_i]->Dyn, 0);
+                                            ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
                                         ceu_gc_inc(ceu_args[ceu_i]);
@@ -157,7 +157,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     assert(ceu_coro->Bcast.status != CEU_CORO_STATUS_TERMINATED);
                     ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
                     ceu_frame->Task.pc = -1;
-                    int incoros = (ceu_coro->Bcast.Coro.coros != NULL);
+                    int incoros = (ceu_coro->Bcast.Coro.up_coros != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not signal termination: clear comes from clearing enclosing block,
@@ -173,20 +173,21 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         CEU_Value ceu_acc_$n = ceu_acc;
 
                         CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
-                        CEU_BStack ceu_bstack_$n = { ceu_coro->hold.block, ceu_bstack };
-                        if (ceu_coro->hold.block->bcast.up != NULL) {
+                        CEU_BStack ceu_bstack_$n = { ceu_coro->up_dyns.dyns->up_block, ceu_bstack };
+                        if (ceu_coro->up_dyns.dyns->up_block->up_coro != NULL) {
                             // enclosing coro of enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->hold.block->bcast.up, &ceu_evt_$n));
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block->up_coro, &ceu_evt_$n));
                         } else {
                             // enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->hold.block, &ceu_evt_$n));
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block, &ceu_evt_$n));
                         }
                         if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                             return ceu_ret;
                         }
                     
                         if (incoros) {
-                            ceu_coros_destroy(ceu_coro->Bcast.Coro.coros, ceu_coro);
+                            ceu_hold_rem(ceu_coro);
+                            ceu_dyn_free(ceu_coro);
                         }
 
                         if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
@@ -243,7 +244,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     val f_b = up?.let { ups.first_proto_or_block(it) }
                     val depth = when {
                         (f_b == null) -> "(0 + 1)"
-                        (f_b is Expr.Proto) -> "(ceu_frame->up->depth + 1)"
+                        (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
                     val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
@@ -256,15 +257,15 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     """
                     { // BLOCK ${this.tk.dump()}
-                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, NULL, {$coro,NULL,{NULL,NULL}} };
+                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,NULL}, NULL };
                         ${
                             (f_b is Expr.Proto && f_b.tk.str == "task").cond {
-                                " ceu_coro->Bcast.Coro.block = &ceu_mem->block_$n;"
+                                " ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
                             }
                         }
                         ${
                             (f_b is Expr.Do).cond {
-                                "ceu_mem->block_${bup!!.n}.bcast.block = &ceu_mem->block_$n;"
+                                "ceu_mem->block_${bup!!.n}.dn_block = &ceu_mem->block_$n;"
                             }
                         }
                         { // because of "decrement refs" below
@@ -288,7 +289,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 { // move up dynamic ceu_acc (return or error)
                                     ${
                                         (f_b != null).cond {
-                                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up" else bup!!.toc(true)
+                                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
                                             """
                                             ${
                                                 (f_b!!.tk.str == "task").cond {
@@ -296,7 +297,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                                 }
                                             }
                                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                                ceu_ret = ceu_block_set($up1, ceu_acc.Dyn, 0);
+                                                ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, 0);
                                                 if (ceu_ret == CEU_RET_THROW) {
                                                     CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                                     // prioritize scope error over whatever there is now
@@ -319,7 +320,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 { // decrement refs
                                     ${vars.map { """
                                         if (CEU_TYPE_NCAST(ceu_mem->$it.type)) {
-                                            ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->hold.block == &ceu_mem->block_$n));
+                                            ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n));
                                         }
                                     """ }.joinToString("")
                                     }
@@ -327,19 +328,19 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 int dead; {
                                     // cleanup active nested spawns in this block
                                     CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, ceu_mem->block_$n.bcast.list.first, &CEU_EVT_CLEAR));
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
                                     dead = (ceu_bstack!=NULL && ceu_bstack->block==NULL);
                                 }
                                 if (!dead) {
                                     // blocks: relink up, free down
                                     ${
                                         (f_b is Expr.Do).cond {
-                                            "ceu_mem->block_${bup!!.n}.bcast.block = NULL;"
+                                            "ceu_mem->block_${bup!!.n}.dn_block = NULL;"
                                         }
                                     }
                                     ${
                                         (f_b is Expr.Proto && f_b.tk.str == "task").cond {
-                                            "ceu_coro->Bcast.Coro.block = NULL;"
+                                            "ceu_coro->Bcast.Coro.dn_block = NULL;"
                                         }
                                     }
                                     ceu_block_free(&ceu_mem->block_$n);
@@ -369,7 +370,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }}
                     ceu_mem->_${id}_ = ${ups.first_block(this)!!.toc(true)};   // can't be static b/c recursion
                     if (ceu_mem->${id}.type > CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(ceu_mem->_${id}_, ceu_mem->${id}.Dyn, $isperm);
+                        ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_mem->${id}.Dyn, $isperm);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     ceu_gc_inc(&ceu_mem->${id});
@@ -487,7 +488,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ${this.evt.code()}
                     ceu_mem->evt_$n = ceu_acc;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        assert(CEU_RET_RETURN == ceu_block_set($bupc, ceu_mem->evt_$n.Dyn, 1));
+                        assert(CEU_RET_RETURN == ceu_block_set(&$bupc->dn_dyns, ceu_mem->evt_$n.Dyn, 1));
                     }
                     ${this.xin.code()}
                     int ceu_err_$n = 0;
@@ -530,7 +531,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_frame->Task.pc = $n;      // next resume
                     ceu_coro->Bcast.status = CEU_CORO_STATUS_YIELDED;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(ceu_frame->up, ceu_acc.Dyn, 0);
+                        ceu_ret = ceu_block_set(&ceu_frame->up_block->dn_dyns, ceu_acc.Dyn, 0);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     return CEU_RET_YIELD;
@@ -606,7 +607,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}, $src.Dyn, 1);
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, 1);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
@@ -709,7 +710,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // ACC - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(${this.id2c(Dcl("_${id}_",false,dcl.upv,dcl.blk),this.tk_.upv)}, $src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
@@ -838,7 +839,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         val src = this.asdst_src()
                         """
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(ceu_acc.Dyn->hold.block, $src.Dyn, 0);
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         switch (ceu_acc.type) {
