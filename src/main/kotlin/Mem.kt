@@ -99,7 +99,7 @@ fun Expr.mem (): String {
 
         is Expr.Tuple -> """
             struct { // TUPLE
-                CEU_Dynamic* tup_$n;
+                CEU_Dyn* tup_$n;
                 $union {
                     ${this.args.map { it.mem() }.joinToString("")}
                 };
@@ -107,7 +107,7 @@ fun Expr.mem (): String {
             """
         is Expr.Vector -> """
             struct { // VECTOR
-                CEU_Dynamic* vec_$n;
+                CEU_Dyn* vec_$n;
                 $union {
                     ${this.args.map { it.mem() }.joinToString("")}
                 };
@@ -115,7 +115,7 @@ fun Expr.mem (): String {
             """
         is Expr.Dict -> """
             struct { // DICT
-                CEU_Dynamic* dict_$n;
+                CEU_Dyn* dict_$n;
                 CEU_Value key_$n;
                 $union {
                     ${this.args.map {

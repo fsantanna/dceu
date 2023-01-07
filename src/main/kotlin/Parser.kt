@@ -298,7 +298,7 @@ class Parser (lexer_: Lexer)
                                         var ${i.str} = track(ceu_coro_$N)
                                         ${blk.es.tostr(true)}
                                         if ${i.str}.status {
-                                            set ceu_dyn_$N = `:pointer ((CEU_Dynamic*)ceu_mem->ceu_dyn_$N.Pointer)->Bcast.next`
+                                            set ceu_dyn_$N = `:pointer ((CEU_Dyn*)ceu_mem->ceu_dyn_$N.Pointer)->Bcast.next`
                                         } else {
                                             set ceu_dyn_$N = `:pointer NULL`
                                         }

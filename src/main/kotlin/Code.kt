@@ -93,7 +93,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_frame->mem = (char*) ceu_mem;
                     """}}
                     ${istask.cond{"""
-                        CEU_Dynamic* ceu_coro = ceu_frame->Task.coro;
+                        CEU_Dyn* ceu_coro = ceu_frame->Task.coro;
                         #ifdef XXX
                         printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_coro->Bcast.status, ceu_coro);
                         #endif
@@ -205,7 +205,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 tops.second.add(type)
                 tops.third.add(func)
                 """
-                CEU_Dynamic* ceu_proto_$n = ceu_proto_create (
+                CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     ${ups.first_block(this)!!.toc(true)},
                     ${if (ups.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_${this.tk.str.uppercase()},
@@ -560,7 +560,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             is Expr.Pub -> """
                 { // PUB
-                    CEU_Dynamic* ceu_dyn_$n;
+                    CEU_Dyn* ceu_dyn_$n;
                     ${if (this.coro == null) {
                         "ceu_dyn_$n = ${this.non_fake_task_c()}->Task.coro;"
                     } else { """

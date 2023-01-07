@@ -14,7 +14,7 @@ fun Coder.main (): String {
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
         struct CEU_Value;
-            struct CEU_Dynamic;
+            struct CEU_Dyn;
             struct CEU_Frame;        
             struct CEU_Block;
             struct CEU_Proto;
@@ -72,40 +72,40 @@ fun Coder.main (): String {
         CEU_RET ceu_tags_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
-        void ceu_dyn_free (struct CEU_Dynamic* dyn);
+        void ceu_dyn_free (struct CEU_Dyn* dyn);
         void ceu_block_free (struct CEU_Block* block);
         
         void ceu_gc_inc (struct CEU_Value* v);
         void ceu_gc_dec (struct CEU_Value* v, int chk);
 
-        void ceu_hold_add (struct CEU_Block* dst, struct CEU_Dynamic* src);
-        void ceu_hold_rem (struct CEU_Dynamic* dyn);
-        CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dynamic* src, int isperm);
+        void ceu_hold_add (struct CEU_Block* dst, struct CEU_Dyn* src);
+        void ceu_hold_rem (struct CEU_Dyn* dyn);
+        CEU_RET ceu_block_set (struct CEU_Block* dst, struct CEU_Dyn* src, int isperm);
         
-        void  ceu_coros_cleanup  (struct CEU_Dynamic* coros, int force);
-        void  ceu_coros_destroy  (struct CEU_Dynamic* coros, struct CEU_Dynamic* coro);
+        void  ceu_coros_cleanup  (struct CEU_Dyn* coros, int force);
+        void  ceu_coros_destroy  (struct CEU_Dyn* coros, struct CEU_Dyn* coro);
         CEU_RET ceu_coros_create   (struct CEU_Block* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_coro_create    (struct CEU_Block* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dynamic* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        CEU_RET ceu_coro_create_in (struct CEU_Block* hld, struct CEU_Dyn* coros, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
-        void ceu_bcast_add (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
-        void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dynamic* dyn);
+        void ceu_bcast_add (struct CEU_Bcast_List* list, struct CEU_Dyn* dyn);
+        void ceu_bcast_rem (struct CEU_Bcast_List* list, struct CEU_Dyn* dyn);
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
-        CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyn* cur, struct CEU_Value* evt);
         CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt);
-        CEU_RET ceu_bcast_dyn    (struct CEU_BStack* bstack, struct CEU_Dynamic* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_dyn    (struct CEU_BStack* bstack, struct CEU_Dyn* cur, struct CEU_Value* evt);
         
         int ceu_tag_to_size (int type);
-        void ceu_max_depth (struct CEU_Dynamic* dyn, int n, struct CEU_Value* childs);
-        CEU_RET ceu_vector_get (struct CEU_Dynamic* vec, int i);
-        void ceu_vector_set (struct CEU_Dynamic* vec, int i, struct CEU_Value v);
-        int ceu_dict_key_to_index (struct CEU_Dynamic* col, struct CEU_Value* key, int* idx);
-        struct CEU_Value ceu_dict_get (struct CEU_Dynamic* col, struct CEU_Value* key);
-        CEU_RET ceu_dict_set (struct CEU_Dynamic* col, struct CEU_Value* key, struct CEU_Value* val);
+        void ceu_max_depth (struct CEU_Dyn* dyn, int n, struct CEU_Value* childs);
+        CEU_RET ceu_vector_get (struct CEU_Dyn* vec, int i);
+        void ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
+        int ceu_dict_key_to_index (struct CEU_Dyn* col, struct CEU_Value* key, int* idx);
+        struct CEU_Value ceu_dict_get (struct CEU_Dyn* col, struct CEU_Value* key);
+        CEU_RET ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
-        struct CEU_Dynamic* ceu_tuple_create (struct CEU_Block* hld, int n);
+        struct CEU_Dyn* ceu_tuple_create (struct CEU_Block* hld, int n);
         
-        struct CEU_Dynamic* ceu_track_create (struct CEU_Dynamic* coro, struct CEU_Value* ret);
+        struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* coro, struct CEU_Value* ret);
         struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
         void ceu_print1 (struct CEU_Value* v);
@@ -147,7 +147,7 @@ fun Coder.main (): String {
                 char Char;
                 double Number;
                 void* Pointer;
-                struct CEU_Dynamic* Dyn;    // Func/Task/Tuple/Dict/Coro/Coros: allocates memory
+                struct CEU_Dyn* Dyn;    // Func/Task/Tuple/Dict/Coro/Coros: allocates memory
             };
         } CEU_Value;
     """ +
@@ -180,17 +180,17 @@ fun Coder.main (): String {
             char* mem;
             union {
                 struct {
-                    struct CEU_Dynamic* coro;   // coro/frame point to each other
+                    struct CEU_Dyn* coro;   // coro/frame point to each other
                     int pc;                     // next line to execute
                     CEU_Value pub;              // public value
                 } Task;
             };
         } CEU_Frame;
     """ +
-    """ // CEU_Dynamic
+    """ // CEU_Dyn
         typedef struct CEU_Bcast_List {
-            struct CEU_Dynamic* first;      // first/last coro/coros in this block
-            struct CEU_Dynamic* last;       // to bcast/relink
+            struct CEU_Dyn* first;      // first/last coro/coros in this block
+            struct CEU_Dyn* last;       // to bcast/relink
         } CEU_Bcast_List;
         
         typedef struct CEU_BStack {
@@ -198,12 +198,12 @@ fun Coder.main (): String {
             struct CEU_BStack* prev;        // pending previous bcast
         } CEU_BStack;
 
-        typedef struct CEU_Dynamic {
+        typedef struct CEU_Dyn {
             CEU_VALUE type;                 // required to switch over free/bcast
             struct {
                 struct CEU_Block*   block;      // holding block to compare on set/move
-                struct CEU_Dynamic* prev;       // for relink when refcount=0
-                struct CEU_Dynamic* next;       // next dyn to free (not used by coro in coros)
+                struct CEU_Dyn* prev;       // for relink when refcount=0
+                struct CEU_Dyn* next;       // next dyn to free (not used by coro in coros)
             } hold;
             struct CEU_Tags_List* tags;     // linked list of tags
             int isperm;                     // if hold is permanent and may not be reset to outer block
@@ -230,11 +230,11 @@ fun Coder.main (): String {
                 } Ncast;
                 struct {
                     enum CEU_CORO_STATUS status;
-                    struct CEU_Dynamic* prev;           // to relink on set/move/remove
-                    struct CEU_Dynamic* next;           // bcast->Bcast, next dyn to bcast
+                    struct CEU_Dyn* prev;           // to relink on set/move/remove
+                    struct CEU_Dyn* next;           // bcast->Bcast, next dyn to bcast
                     union {
                         struct {
-                            struct CEU_Dynamic* coros;  // auto terminate / remove from coros
+                            struct CEU_Dyn* coros;  // auto terminate / remove from coros
                             struct CEU_Block* block;    // first block to bcast
                             CEU_Frame* frame;
                         } Coro;
@@ -243,19 +243,19 @@ fun Coder.main (): String {
                             int cur;                // cur number of instances
                             CEU_Bcast_List list;    // bcast list
                         } Coros;
-                        struct CEU_Dynamic* Track;   // starts as CORO and may fall to NIL
+                        struct CEU_Dyn* Track;   // starts as CORO and may fall to NIL
                     };
                 } Bcast;
             };
-        } CEU_Dynamic;
+        } CEU_Dyn;
     """ +
     """ // CEU_Block
         typedef struct CEU_Block {
             int depth;                          // compare on set
             int ispub;                          // is top block inside task?
-            CEU_Dynamic* tofree;                // list of allocated data to free on exit
+            CEU_Dyn* tofree;                // list of allocated data to free on exit
             struct {
-                struct CEU_Dynamic* up;         // enclosing active coro
+                struct CEU_Dyn* up;         // enclosing active coro
                 struct CEU_Block* block;        // nested block active
                 CEU_Bcast_List list;            // bcast list
             } bcast;
@@ -279,8 +279,8 @@ fun Coder.main (): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dynamic* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Proto proto);        
-        struct CEU_Dynamic* ceu_dict_create  (struct CEU_Block* hld);
+        struct CEU_Dyn* ceu_proto_create (struct CEU_Block* hld, int isperm, int type, struct CEU_Proto proto);        
+        struct CEU_Dyn* ceu_dict_create  (struct CEU_Block* hld);
 
         int ceu_gc_count = 0;
         
@@ -298,7 +298,7 @@ fun Coder.main (): String {
         CEU_Value ceu_acc;
         
         CEU_BStack* ceu_bstack = NULL;
-        CEU_Dynamic* ceu_bcast_tofree = NULL;
+        CEU_Dyn* ceu_bcast_tofree = NULL;
 
         // TODO: remove (only here b/c we do not test CEU_CONTINUE_ON_CLEAR at compile time)
         const int ceu_n = 0;
@@ -395,7 +395,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // GC
-        void ceu_gc_free (CEU_Dynamic* dyn) {
+        void ceu_gc_free (CEU_Dyn* dyn) {
             switch (dyn->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
@@ -434,7 +434,7 @@ fun Coder.main (): String {
             ceu_dyn_free(dyn);
         }
         
-        void ceu_gc_chk (CEU_Dynamic* dyn) {
+        void ceu_gc_chk (CEU_Dyn* dyn) {
             if (dyn->Ncast.refs == 0) {
                 ceu_gc_free(dyn);
             }
@@ -467,7 +467,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
-        void ceu_hold_add (CEU_Block* dst, CEU_Dynamic* src) {
+        void ceu_hold_add (CEU_Block* dst, CEU_Dyn* src) {
             src->hold.prev = NULL;
             src->hold.next = dst->tofree;
             if (dst->tofree != NULL) {
@@ -476,7 +476,7 @@ fun Coder.main (): String {
             dst->tofree = src;
             src->hold.block = dst;
         }
-        void ceu_hold_rem (CEU_Dynamic* dyn) {
+        void ceu_hold_rem (CEU_Dyn* dyn) {
             if (dyn->hold.prev != NULL) {
                 dyn->hold.prev->hold.next = dyn->hold.next;
             }
@@ -491,7 +491,7 @@ fun Coder.main (): String {
             dyn->hold.next  = NULL;
         }
 
-        void ceu_dyn_free (CEU_Dynamic* dyn) {
+        void ceu_dyn_free (CEU_Dyn* dyn) {
             while (dyn->tags != NULL) {
                 CEU_Tags_List* tag = dyn->tags;
                 dyn->tags = tag->next;
@@ -530,7 +530,7 @@ fun Coder.main (): String {
         void ceu_block_free (CEU_Block* block) {
             { // dyns_free
                 while (block->tofree != NULL) {
-                    CEU_Dynamic* nxt = block->tofree->hold.next;
+                    CEU_Dyn* nxt = block->tofree->hold.next;
                     ceu_dyn_free(block->tofree);
                     block->tofree = nxt;
                 }
@@ -541,7 +541,7 @@ fun Coder.main (): String {
             }
         }
 
-        CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dynamic* src, int isperm) {
+        CEU_RET ceu_block_set (CEU_Block* dst, CEU_Dyn* src, int isperm) {
             switch (src->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
@@ -566,7 +566,7 @@ fun Coder.main (): String {
                     if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Ncast.Vector.type);
                         for (int i=0; i<src->Ncast.Vector.n; i++) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dynamic**)(src->Ncast.Vector.mem + i*sz), isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dyn**)(src->Ncast.Vector.mem + i*sz), isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -627,7 +627,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // BCAST - ADD/REM
-        void ceu_bcast_add (CEU_Bcast_List* list, CEU_Dynamic* dyn) {
+        void ceu_bcast_add (CEU_Bcast_List* list, CEU_Dyn* dyn) {
             if (list->first == NULL) {
                 list->first = dyn;
             } else {
@@ -638,7 +638,7 @@ fun Coder.main (): String {
             list->last = dyn;
         }
         
-        void ceu_bcast_rem (CEU_Bcast_List* list, CEU_Dynamic* dyn) {
+        void ceu_bcast_rem (CEU_Bcast_List* list, CEU_Dyn* dyn) {
             if (list->first == dyn) {
                 list->first = dyn->Bcast.next;
             }
@@ -671,7 +671,7 @@ fun Coder.main (): String {
         
         CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt) {
             while (cur != NULL) {
-                CEU_Dynamic* dyn = cur->bcast.list.first;
+                CEU_Dyn* dyn = cur->bcast.list.first;
                 if (dyn != NULL) {
                     CEU_BStack xbstack = { cur, bstack };
                     int ret = ceu_bcast_dyns(&xbstack, dyn, evt);
@@ -687,7 +687,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
  
-        CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dyn* cur, CEU_Value* evt) {
             if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
                 return CEU_RET_RETURN;
             }
@@ -731,13 +731,13 @@ fun Coder.main (): String {
             assert(0 && "bug found");
         }
 
-        CEU_RET ceu_bcast_dyns (CEU_BStack* bstack, CEU_Dynamic* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_dyns (CEU_BStack* bstack, CEU_Dyn* cur, CEU_Value* evt) {
             CEU_BStack xbstack;
             if (cur != NULL) {
                 xbstack = (CEU_BStack) { cur->hold.block, bstack };   // all dyns have the same enclosing block, which is checked after each bcast
             }
             while (cur != NULL) {
-                CEU_Dynamic* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
+                CEU_Dyn* nxt = cur->Bcast.next; // take nxt before cur is/may-be freed
                 int ret = ceu_bcast_dyn(&xbstack, cur, evt);
                 if (xbstack.block == NULL) { 
                     return ret;
@@ -751,7 +751,7 @@ fun Coder.main (): String {
         }
     """ +
     """ // COROS
-        void ceu_coros_destroy (CEU_Dynamic* coros, CEU_Dynamic* coro) {
+        void ceu_coros_destroy (CEU_Dyn* coros, CEU_Dyn* coro) {
             ceu_bcast_rem(&coros->Bcast.Coros.list, coro);
             free(coro->Bcast.Coro.frame->mem);
             free(coro->Bcast.Coro.frame);
@@ -759,10 +759,10 @@ fun Coder.main (): String {
             coros->Bcast.Coros.cur--;
         }
         
-        void ceu_coros_cleanup (CEU_Dynamic* coros, int force) {
-            CEU_Dynamic* cur = coros->Bcast.Coros.list.first;
+        void ceu_coros_cleanup (CEU_Dyn* coros, int force) {
+            CEU_Dyn* cur = coros->Bcast.Coros.list.first;
             while (cur != NULL) {
-                CEU_Dynamic* nxt = cur->Bcast.next;
+                CEU_Dyn* nxt = cur->Bcast.next;
                 if (force || cur->Bcast.status==CEU_CORO_STATUS_TERMINATED) {
                     //assert(0 && "OK");
                     ceu_coros_destroy(coros, cur);
@@ -802,7 +802,7 @@ fun Coder.main (): String {
             }
         }
         
-        void ceu_max_depth (CEU_Dynamic* dyn, int n, CEU_Value* childs) {
+        void ceu_max_depth (CEU_Dyn* dyn, int n, CEU_Value* childs) {
             // new dyn should have at least the maximum depth among its children
             CEU_Block* hld = NULL;
             int max = -1;
@@ -820,13 +820,13 @@ fun Coder.main (): String {
             }
         }
         
-        void ceu_tuple_set (CEU_Dynamic* tup, int i, CEU_Value v) {
+        void ceu_tuple_set (CEU_Dyn* tup, int i, CEU_Value v) {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.mem[i], 1);
             tup->Ncast.Tuple.mem[i] = v;
         }
         
-        CEU_RET ceu_vector_get (CEU_Dynamic* vec, int i) {
+        CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
             if (i<0 || i>=vec->Ncast.Vector.n) {
                 CEU_THROW_MSG("\0 : index error : out of bounds");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -837,7 +837,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        void ceu_vector_set (CEU_Dynamic* vec, int i, CEU_Value v) {
+        void ceu_vector_set (CEU_Dyn* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Ncast.Vector.n-1);
                 assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
@@ -888,7 +888,7 @@ fun Coder.main (): String {
             ceu_acc = NIL;
             return CEU_RET_RETURN;
         }        
-        int ceu_dict_key_to_index (CEU_Dynamic* col, CEU_Value* key, int* idx) {
+        int ceu_dict_key_to_index (CEU_Dyn* col, CEU_Value* key, int* idx) {
             *idx = -1;
             for (int i=0; i<col->Ncast.Dict.max; i++) {
                 CEU_Value* cur = &(*col->Ncast.Dict.mem)[i][0];
@@ -905,7 +905,7 @@ fun Coder.main (): String {
             }
             return 0;
         }        
-        CEU_Value ceu_dict_get (CEU_Dynamic* col, CEU_Value* key) {
+        CEU_Value ceu_dict_get (CEU_Dyn* col, CEU_Value* key) {
             int i;
             int ok = ceu_dict_key_to_index(col, key, &i);
             if (ok) {
@@ -914,7 +914,7 @@ fun Coder.main (): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
         }        
-        CEU_RET ceu_dict_set (CEU_Dynamic* col, CEU_Value* key, CEU_Value* val) {
+        CEU_RET ceu_dict_set (CEU_Dyn* col, CEU_Value* key, CEU_Value* val) {
             assert(key->type != CEU_VALUE_NIL);     // TODO
             int old;
             ceu_dict_key_to_index(col, key, &old);
@@ -970,15 +970,15 @@ fun Coder.main (): String {
         }
     """ +
     """ // CREATES
-        CEU_Dynamic* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Proto proto) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+        CEU_Dyn* ceu_proto_create (CEU_Block* hld, int isperm, int type, CEU_Proto proto) {
+            CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             proto.upvs.buf = malloc(proto.upvs.n * sizeof(CEU_Value));
             assert(proto.upvs.buf != NULL);
             for (int i=0; i<proto.upvs.n; i++) {
                 proto.upvs.buf[i] = (CEU_Value) { CEU_VALUE_NIL };
             }
-            *ret = (CEU_Dynamic) {
+            *ret = (CEU_Dyn) {
                 type, {NULL,NULL,NULL}, NULL, 0, {
                     .Ncast = { 0, {.Proto=proto} }
                 }
@@ -987,10 +987,10 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_tuple_create (CEU_Block* hld, int n) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic) + n*sizeof(CEU_Value));
+        CEU_Dyn* ceu_tuple_create (CEU_Block* hld, int n) {
+            CEU_Dyn* ret = malloc(sizeof(CEU_Dyn) + n*sizeof(CEU_Value));
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) {
+            *ret = (CEU_Dyn) {
                 CEU_VALUE_TUPLE, {NULL,NULL,NULL}, NULL, 0, {
                     .Ncast = { 0, {.Tuple={n,{}} } }
                 }
@@ -1000,13 +1000,13 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_vector_create (CEU_Block* hld) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+        CEU_Dyn* ceu_vector_create (CEU_Block* hld) {
+            CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* mem = malloc(1);  // because of '\0' in empty strings
             assert(mem != NULL);
             mem[0] = '\0';
-            *ret = (CEU_Dynamic) {
+            *ret = (CEU_Dyn) {
                 CEU_VALUE_VECTOR, {NULL,NULL,NULL}, NULL, 0, {
                     .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,mem}} }
                 }
@@ -1015,10 +1015,10 @@ fun Coder.main (): String {
             return ret;
         }
         
-        CEU_Dynamic* ceu_dict_create (CEU_Block* hld) {
-            CEU_Dynamic* ret = malloc(sizeof(CEU_Dynamic));
+        CEU_Dyn* ceu_dict_create (CEU_Block* hld) {
+            CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
-            *ret = (CEU_Dynamic) {
+            *ret = (CEU_Dyn) {
                 CEU_VALUE_DICT, {NULL,NULL,NULL}, NULL, 0, {
                     .Ncast = { 0, {.Dict={0,NULL}} }
                 }
@@ -1028,9 +1028,9 @@ fun Coder.main (): String {
         }
         
         CEU_RET ceu_coros_create (CEU_Block* hld, int max, CEU_Value* ret) {
-            CEU_Dynamic* coros = malloc(sizeof(CEU_Dynamic));
+            CEU_Dyn* coros = malloc(sizeof(CEU_Dyn));
             assert(coros != NULL);
-            *coros = (CEU_Dynamic) {
+            *coros = (CEU_Dyn) {
                 CEU_VALUE_COROS, {NULL,NULL,NULL}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coros = { max, 0, {NULL,NULL} }
@@ -1055,14 +1055,14 @@ fun Coder.main (): String {
             }
             ceu_gc_inc(task);
             
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
+            CEU_Dyn* coro = malloc(sizeof(CEU_Dyn));
             assert(coro != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
             char* mem = malloc(task->Dyn->Ncast.Proto.Task.n_mem);
             assert(mem != NULL);
             
-            *coro = (CEU_Dynamic) {
+            *coro = (CEU_Dyn) {
                 CEU_VALUE_CORO, {NULL,NULL,NULL}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { NULL, NULL, frame }
@@ -1083,7 +1083,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create_in (CEU_Block* hld, CEU_Dynamic* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
+        CEU_RET ceu_coro_create_in (CEU_Block* hld, CEU_Dyn* coros, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (coros->type != CEU_VALUE_COROS) {
                 CEU_THROW_MSG("\0 : coroutine error : expected coroutines");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1098,14 +1098,14 @@ fun Coder.main (): String {
             }
             ceu_gc_inc(task);
             
-            CEU_Dynamic* coro = malloc(sizeof(CEU_Dynamic));
+            CEU_Dyn* coro = malloc(sizeof(CEU_Dyn));
             assert(coro != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
             char* mem = malloc(task->Dyn->Ncast.Proto.Task.n_mem);
             assert(mem != NULL);
         
-            *coro = (CEU_Dynamic) {
+            *coro = (CEU_Dyn) {
                 CEU_VALUE_CORO, {coros->hold.block,NULL,NULL}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Coro = { coros, NULL, frame }
@@ -1122,10 +1122,10 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_Dynamic* ceu_track_create (CEU_Dynamic* coro, CEU_Value* ret) {
-            CEU_Dynamic* trk = malloc(sizeof(CEU_Dynamic));
+        CEU_Dyn* ceu_track_create (CEU_Dyn* coro, CEU_Value* ret) {
+            CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
-            *trk = (CEU_Dynamic) {
+            *trk = (CEU_Dyn) {
                 CEU_VALUE_TRACK, {NULL,NULL,NULL}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, NULL,NULL, {
                         .Track = coro
@@ -1334,7 +1334,7 @@ fun Coder.main (): String {
         CEU_RET ceu_move_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
-            CEU_Dynamic* dyn = src->Dyn;
+            CEU_Dyn* dyn = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
@@ -1386,13 +1386,13 @@ fun Coder.main (): String {
         CEU_RET ceu_copy_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
-            CEU_Dynamic* old = src->Dyn;
+            CEU_Dyn* old = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_FUNC:
                 case CEU_VALUE_TASK:
                     assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
-                    CEU_Dynamic* new = ceu_tuple_create(NULL, old->Ncast.Tuple.n);
+                    CEU_Dyn* new = ceu_tuple_create(NULL, old->Ncast.Tuple.n);
                     assert(new != NULL);
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Tuple.n; i++) {
@@ -1404,7 +1404,7 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dynamic* new = ceu_vector_create(NULL);
+                    CEU_Dyn* new = ceu_vector_create(NULL);
                     assert(new != NULL);
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Vector.n; i++) {
@@ -1418,7 +1418,7 @@ fun Coder.main (): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dynamic* new = ceu_dict_create(NULL);
+                    CEU_Dyn* new = ceu_dict_create(NULL);
                     assert(new != NULL);
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
@@ -1468,52 +1468,52 @@ fun Coder.main (): String {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {
-                    static CEU_Dynamic ceu_type = { 
+                    static CEU_Dyn ceu_type = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_tags = { 
+                    static CEU_Dyn ceu_tags = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_print = { 
+                    static CEU_Dyn ceu_print = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_println = { 
+                    static CEU_Dyn ceu_println = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_equals_equals = { 
+                    static CEU_Dyn ceu_op_equals_equals = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_slash_equals = { 
+                    static CEU_Dyn ceu_op_slash_equals = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_op_hash = { 
+                    static CEU_Dyn ceu_op_hash = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_move = { 
+                    static CEU_Dyn ceu_move = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_copy = { 
+                    static CEU_Dyn ceu_copy = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dynamic ceu_next = { 
+                    static CEU_Dyn ceu_next = { 
                         CEU_VALUE_FUNC, {NULL,NULL,NULL}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} }
                         }
