@@ -2712,7 +2712,7 @@ class TTask {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
                 while in :coros ts, t {
-                    set x = track(t)    ;; track(t) up_hold in
+                    set x = t    ;; track(t) up_hold in
                 }
                 println(x.pub[0])   ;; 2
                 broadcast in :global, nil
@@ -2756,7 +2756,7 @@ class TTask {
             var x
             set x = catch true {
                 while in :coros ts, t {
-                    throw(track(t))
+                    throw(t)
                 }
             }
             broadcast in :global, nil
@@ -2779,7 +2779,7 @@ class TTask {
             var x
             set x = catch true {
                 while in :coros ts, t {
-                    throw(track(t))
+                    throw(t)
                 }
             }
             println(x.pub[0])   ;; 1
@@ -2831,12 +2831,12 @@ class TTask {
             spawn in ts, T(2)
             var x
             while in :coros ts, t {
-                set x = track(t)
+                set x = (t)
             }
             broadcast in :global, nil
             println(x.status)   ;; nil
         """)
-        assert(out == "2\nnil\n") { out }
+        assert(out == "nil\n") { out }
     }
 
     // XCEU
