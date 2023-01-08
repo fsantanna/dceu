@@ -3009,7 +3009,8 @@ class TTask {
                 }
             } ()
             broadcast in :global, nil
+            println(:ok)
         """)
-        assert(out == "1\t[2]\t3\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }

@@ -755,7 +755,7 @@ class TXExec {
             spawn {
                 parand {
                     println(:0)
-                    await t
+                    await x
                     println(:2)
                 } with {
                     println(:1)

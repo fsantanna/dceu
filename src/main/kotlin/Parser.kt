@@ -631,14 +631,22 @@ class Parser (lexer_: Lexer)
                             }
                         """)//.let { println(it.tostr()); it }
                     }
-                    (cnd != null) -> {  // await evt==x
+                    (cnd != null) -> {  // await evt==x | await trk | await coro
                         this.nest("""
                             ${pre0}do :unnest {
                                 ${pre0}${(!now).cond { "yield ()" }}
                                 until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
-                                    if type(ceu_cnd_$N) == :track {
-                                        set ceu_cnd_$N = (ceu_cnd_$N.status == nil)
+                                    ifs {
+                                        type(ceu_cnd_$N) == :coro -> {
+                                            set ceu_cnd_$N = (ceu_cnd_$N.status == :terminated)
+                                        }
+                                        type(ceu_cnd_$N) == :track -> {
+                                            set ceu_cnd_$N = (ceu_cnd_$N.status == nil)
+                                        }
+                                        else -> {
+                                            ;;set ceu_cnd_$N = ceu_cnd_$N
+                                        }
                                     }
                                     if not ceu_cnd_$N {
                                         yield ()
