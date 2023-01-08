@@ -1206,7 +1206,7 @@ class TXExec {
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun await16_task_rets() {
+    fun await16_task_rets_valgrind () {
         val out = all("""
             spawn {
                 var x = await spawn {
@@ -2053,7 +2053,7 @@ class TXExec {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun all10() {
+    fun all10_valgrind () {
         val out = all("""
             spawn {
                 while true {

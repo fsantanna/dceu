@@ -263,7 +263,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }}
                         ${
                             (f_b is Expr.Proto && f_b.tk.str == "task").cond {
-                                " ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
+                                "ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
                             }
                         }
                         ${
@@ -333,7 +333,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     // cleanup active nested spawns in this block
                                     CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
                                     assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
-                                    dead = (ceu_bstack!=NULL && ceu_bstack->block==NULL);
+                                    dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
                                 }
                                 if (!dead) {
                                     // blocks: relink up, free down
