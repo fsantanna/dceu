@@ -1449,7 +1449,7 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("track error : expected unterminated coroutine");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            assert(NULL == ceu_track_create(ceu_acc.Dyn, &ceu_acc));
+            assert(NULL == ceu_track_create(coro->Dyn, &ceu_acc));
             return CEU_RET_RETURN;
         }
     """ +

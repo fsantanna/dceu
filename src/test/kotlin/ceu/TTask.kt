@@ -2528,7 +2528,9 @@ class TTask {
         val out = all("""
             track(nil)
         """)
-        assert(out == "anon : (lin 2, col 19) : track error : expected coroutine\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : track(nil)\n" +
+                "track error : expected coroutine\n" +
+                ":error\n") { out }
     }
     @Test
     fun ll_track2() {
@@ -2568,7 +2570,9 @@ class TTask {
             ;;println(t.status)
             println(x)
         """)
-        assert(out == "anon : (lin 8, col 27) : track error : expected unterminated coroutine\n:error\n") { out }
+        assert(out == "anon : (lin 8, col 21) : track(t)\n" +
+                "track error : expected unterminated coroutine\n" +
+                ":error\n") { out }
     }
     @Test
     fun ll_track4() {
@@ -2686,7 +2690,8 @@ class TTask {
                 set x = track(t)
             }
         """)
-        assert(out == "anon : (lin 9, col 31) : track error : expected coroutine\n" +
+        assert(out == "anon : (lin 9, col 25) : track(t)\n" +
+                "track error : expected coroutine\n" +
                 ":error\n") { out }
     }
     @Test
