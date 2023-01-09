@@ -1020,7 +1020,7 @@ fun Coder.main (): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, coros, 1));  // 1=cannot escape this block b/c of tasks
+            assert(CEU_RET_RETURN == ceu_block_set(hld, coros, 0));  // 1=cannot escape this block b/c of tasks
 
             return CEU_RET_RETURN;
         }
@@ -1056,7 +1056,7 @@ fun Coder.main (): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 0));  // 1=cannot escape this block b/c of upvalues
 
             return CEU_RET_RETURN;
         }
@@ -1109,7 +1109,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&coros->Bcast.Coros.dyns, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(&coros->Bcast.Coros.dyns, coro, 0));  // 1=cannot escape this block b/c of upvalues
             return CEU_RET_RETURN;
         }
         
@@ -1125,7 +1125,7 @@ fun Coder.main (): String {
             };
             // at most coro->hld, same as pointer coro/coros, term bcast is limited to it
             CEU_Dyns* hld = (coro->Bcast.Coro.up_coros == NULL) ? coro->up_dyns.dyns : coro->Bcast.Coro.up_coros->up_dyns.dyns;
-            assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 1));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0));
             *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
             return NULL;
         }
