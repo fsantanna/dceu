@@ -58,7 +58,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "coroutines" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "coroutines" })
         assert(tks.next().let { it is Tk.Fix && it.str == "evt" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
         assert(tks.next().let { it is Tk.Fix && it.str == "pub" })

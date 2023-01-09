@@ -9,7 +9,7 @@ var N = 1
 val D = "\$"
 
 val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
+    "broadcast", "catch", "coroutine", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
     "task", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
@@ -33,7 +33,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "move", "next", "print", "println", "tags", "throw", "track", "type",
+    "copy", "coroutines", "move", "next", "print", "println", "tags", "throw", "track", "type",
     "op_equals_equals", "op_hash", "op_slash_equals"
 )
 
@@ -66,7 +66,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
-    data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
     data class Coro   (val tk_: Tk.Fix, val task: Expr): Expr(N++, tk_)
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)

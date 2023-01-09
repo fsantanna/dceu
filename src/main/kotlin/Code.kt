@@ -450,23 +450,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 assrc("((CEU_Value) { CEU_VALUE_NIL })")
             }
 
-            is Expr.Coros -> {
-                """
-                { // COROS ${this.tk.dump()}
-                    ${this.max.cond { """
-                        ${it.code()}
-                        if (ceu_acc.type!=CEU_VALUE_NUMBER || ceu_acc.Number<=0) {                
-                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${it.tk.pos.file} : (lin ${it.tk.pos.lin}, col ${it.tk.pos.col}) : coroutines error : expected positive number");
-                        }
-                    """}}
-                    assert(CEU_RET_RETURN == ceu_coros_create (
-                        &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                        ${if (this.max==null) 0 else "ceu_acc.Number"},
-                        &ceu_acc
-                    ));
-                }
-                """
-            }
             is Expr.Coro -> {
                 """
                 { // CORO ${this.tk.dump()}
@@ -858,11 +841,13 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
                 val spawn = ups.all_until(up) { it is Expr.Spawn }.let { es ->
+                    val fst = es.firstOrNull() as Expr.Spawn?
                     when {
-                        es.isEmpty() -> null
+                        (fst == null) -> null
+                        (fst.coros == this) -> null
                         es.drop(1).all { grp ->
                             (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
-                        } -> es.first() as Expr.Spawn
+                        } -> fst
                         else -> null
                     }
                 }

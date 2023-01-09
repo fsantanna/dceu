@@ -1,5 +1,6 @@
 # BUGS
 
+- mudei coro,coros,track para isperm=0, preciso avaliar e testar
 - como vou fazer com os holes?
     - o certo seria
         - ao terminar o loop

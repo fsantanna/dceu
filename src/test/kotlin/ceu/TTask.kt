@@ -210,15 +210,16 @@ class TTask {
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
-                        nil ;;println(v1,v2,v3)
+                        println(v1,v2,v3)
+                        nil
                     }(3)
                 }(2)
             }(1)
         """)
-        //assert(out == "1\t2\t3\n") { out }
-        assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
-                "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
-                "anon : (lin 3, col 33) : set error : incompatible scopes\n:error\n") { out }
+        ////assert(out == "1\t2\t3\n") { out }
+        //assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
+        //        "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
+        //        "anon : (lin 3, col 33) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun aa_task18_defer() {
@@ -320,7 +321,8 @@ class TTask {
             }
             println(2)
         """)
-        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
     fun bb_spawn67_err() {
@@ -331,8 +333,10 @@ class TTask {
             }
             var co
             set co = if true { spawn t() } else { nil }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn7_err() {
@@ -344,9 +348,11 @@ class TTask {
             var t
             set t = task () { nil }
             f()
+            println(:ok)
         """)
-        assert(out == "anon : (lin 8, col 13) : f()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : f()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn8_err() {
@@ -354,14 +360,15 @@ class TTask {
             var T
             set T = task () {
                 spawn (task () :fake {
-                    nil ;;println(1)
+                    println(1)
+                    nil
                 }) ()
             }
             spawn T()
         """)
-        //assert(out == "1\n")
-        assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "1\n")
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun bb_spawn9() {
@@ -431,9 +438,9 @@ class TTask {
             spawn T()
             println(1)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun bb_spawn13_err() {
@@ -448,8 +455,10 @@ class TTask {
                 set v = 10
                 spawn T(v)  ;; ERR: coro in nested scope cannot escape
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
 
     // SPAWN / GROUP
@@ -1399,7 +1408,9 @@ class TTask {
             coroutines(0)
         """
         )
-        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : coroutines(0)\n" +
+                "coroutines error : expected positive number\n" +
+                ":error\n") { out }
     }
     @Test
     fun ff_pool15_max_err() {
@@ -1408,7 +1419,9 @@ class TTask {
             coroutines(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 24) : coroutines error : expected positive number\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : coroutines(nil)\n" +
+                "coroutines error : expected positive number\n" +
+                ":error\n") { out }
     }
     @Test
     fun ff_pool16_max() {
@@ -2509,8 +2522,9 @@ class TTask {
             }
             println(f())
         """, true)
-        assert(out == "anon : (lin 6, col 21) : f()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 6, col 21) : f()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out.contains("coro: 0x"))
     }
     @Test
     fun kk_esc2() {
@@ -2639,8 +2653,8 @@ class TTask {
             println(x.status)
             println(x)
         """)
-        //assert(out.contains("terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out.contains("terminated\ntrack: 0x")) { out }
+        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun ll_track7() {
@@ -2680,8 +2694,8 @@ class TTask {
             println(x.status)
             println(x)
         """)
-        //assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
-        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
+        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun ll_track09_err() {

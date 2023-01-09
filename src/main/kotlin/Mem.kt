@@ -62,7 +62,6 @@ fun Expr.mem (): String {
             """
         is Expr.Defer -> this.body.mem()
 
-        is Expr.Coros -> this.max.cond { it.mem() }
         is Expr.Coro -> this.task.mem()
         is Expr.Spawn -> """
             struct { // SPAWN
