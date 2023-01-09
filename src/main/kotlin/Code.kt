@@ -485,7 +485,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_err_$n = 1;
                     }
                     
-                    if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                    if (ceu_bstack_$n.block == NULL) {
                         return ceu_ret;
                     }
                     
