@@ -3013,4 +3013,31 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun mm_xceu10 () {
+        val out = all("""
+            ;;println(:blk0, `:pointer ceu_block`)
+            spawn task () :awakes {
+                ;;println(:cor1, `:pointer ceu_coro`)
+                ;;println(:blk11, `:pointer ceu_block`)
+                while true {
+                    ;;println(:blk12, `:pointer ceu_block`)
+                    yield(nil); while evt/=10 { yield(nil) }
+                    println(:1)
+                    var t = spawn task () :awakes {
+                        ;;println(:cor2, `:pointer ceu_coro`)
+                        ;;println(:blk2, `:pointer ceu_block`)
+                        yield(nil); while evt/=10 { yield(nil) }
+                    } ()
+                    while t.status/=:terminated { yield(nil) }
+                    println(:2)
+                }
+            } ()
+            ;;println(:xxxxxxxxxxxxxxxxxxxxxxx)
+            broadcast in :global, 10    ;; :1
+            ;;println(:xxxxxxxxxxxxxxxxxxxxxxx)
+            broadcast in :global, 10    ;; :2 (not :1 again)
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
 }

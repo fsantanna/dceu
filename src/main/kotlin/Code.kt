@@ -152,7 +152,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block->up_coro, &ceu_evt_$n));
                         } else {
                             // enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block, &ceu_evt_$n));
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
                         }
                         if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
                             return ceu_ret;
@@ -228,6 +228,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // BLOCK ${this.tk.dump()}
                         ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                        void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
                             val istask = (f_b.tk.str == "task")
@@ -501,9 +502,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.type == CEU_VALUE_TAG) {
                         if (ceu_acc.Tag == CEU_TAG_global) {
-                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, &ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, &ceu_mem_${outer.n}->block_${outer.n}, &ceu_mem->evt_$n, NULL);
                         } else if (ceu_acc.Tag == CEU_TAG_local) {
-                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, $bupc, &ceu_mem->evt_$n);
+                            ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, $bupc, &ceu_mem->evt_$n, NULL);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${if (intask && oktask!=null) {
                                 "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->Task.coro, &ceu_mem->evt_$n);"

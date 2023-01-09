@@ -1,5 +1,10 @@
 # BUGS
 
+- como vou fazer com os holes?
+    - o certo seria
+        - ao terminar o loop
+        - verificar que nao tem outra instancia na pilha
+        - fazer o shift left
 - checar todos os bcasts e testar se estou morto
     - todo_status5
 - preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt

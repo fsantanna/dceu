@@ -89,7 +89,7 @@ fun Coder.main (): String {
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
-        CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt);
+        CEU_RET ceu_bcast_blocks (struct CEU_BStack* bstack, struct CEU_Block* cur, struct CEU_Value* evt, int* killed);
         CEU_RET ceu_bcast_dyn    (struct CEU_BStack* bstack, struct CEU_Dyn* cur, struct CEU_Value* evt);
         
         int ceu_tag_to_size (int type);
@@ -466,12 +466,14 @@ fun Coder.main (): String {
             if (dyns->max > dyns->its) {            // end of list
                 I = dyns->its++;
             } else {
+                #if 0
                 for (int i=0; i<dyns->max; i++) {   // hole in list
                     if (dyns->buf[i] == NULL) {
                         I = i;
                         break;
                     }
                 }
+                #endif
                 if (I == -1) {                      // grow list
                     dyns->max = 1 + dyns->max*2;
                     dyns->buf = realloc(dyns->buf, dyns->max * sizeof(CEU_Dyns*));
@@ -634,39 +636,61 @@ fun Coder.main (): String {
                 ceu_bstack_clear(bstack, block->dn_block);
             }
         }
+
+        #define SPC_EQU(s) { for (int i=0; i<SPC; i++) putchar(' '); s; }
+        #define SPC_INC(s) { SPC+=4; for (int i=0; i<SPC; i++) putchar(' '); s; }
+        #define SPC_DEC(s) { for (int i=0; i<SPC; i++) putchar(' '); SPC-=4; s; }
+        static int SPC = 0;
         
-        CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt) {
+        CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt, int* killed) {
+//SPC_INC(printf(">>> ceu_bcast_blocks = %p\n", cur));
             while (cur != NULL) {
+//SPC_INC(printf(">>> ceu_bcast_block = %p\n", cur));
                 CEU_BStack xbstack = { cur, bstack };
                 int ret = ceu_bcast_dyns(&xbstack, &cur->dn_dyns, evt);
                 if (xbstack.block == NULL) {
+//SPC_DEC(printf("<<< ceu_bcast_block = %p\n", cur));
+//SPC_DEC(printf("<<< ceu_bcast_blocks = %p\n", cur));
+                    if (killed != NULL) {
+                        *killed = 1;
+                    }
                     return ret;
                 }
                 if (ret == CEU_RET_THROW) {
+//SPC_DEC(printf("<<< ceu_bcast_block = %p\n", cur));
+//SPC_DEC(printf("<<< ceu_bcast_blocks = %p\n", cur));
                     return CEU_RET_THROW;
                 }
+//SPC_DEC(printf("<<< ceu_bcast_block = %p\n", cur));
                 cur = cur->dn_block;
             }
+//SPC_DEC(printf("<<< ceu_bcast_blocks = %p\n", cur));
             return CEU_RET_RETURN;
         }
  
         CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dyn* cur, CEU_Value* evt) {
+//SPC_INC(printf(">>> ceu_bcast_dyn = %p\n", cur));
             if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
             }
             if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
                 // do not awake toggled coro, unless it is a CLEAR event
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
             }
             switch (cur->type) {
                 case CEU_VALUE_CORO: {
                     if (evt!=&CEU_EVT_CLEAR && !cur->Bcast.Coro.frame->proto->Task.awakes) {
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
                         return CEU_RET_RETURN;
                     } else {
                         // step (1)
                         CEU_BStack xbstack = { cur->up_dyns.dyns->up_block, bstack };
-                        int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.dn_block, evt);
-                        if (xbstack.block == NULL) {
+                        int killed = 0;
+                        int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.dn_block, evt, &killed);
+                        if (xbstack.block==NULL || killed) {
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p [XXX]\n", cur));
                             return ret;
                         }
                         // CEU_RET_THROW: step (5) may 'catch' 
@@ -675,17 +699,22 @@ fun Coder.main (): String {
                         if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
+//SPC_EQU(printf(">>> awake %p\n", cur));
                             ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, bstack, arg, args);
+//SPC_EQU(printf("<<< awake %p\n", cur));
                         }
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur);
                         return MIN(ret, CEU_RET_RETURN);
                     }
                 }
                 case CEU_VALUE_COROS: {
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
                     return ceu_bcast_dyns(bstack, &cur->Bcast.Coros.dyns, evt);
                 case CEU_VALUE_TRACK:
                     if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track==evt->Dyn) {
                         cur->Bcast.Track = NULL; // tracked coro is terminating
                     }
+//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
                     return CEU_RET_RETURN;
                 }
                 default:
@@ -695,21 +724,26 @@ fun Coder.main (): String {
         }
 
         CEU_RET ceu_bcast_dyns (CEU_BStack* bstack, CEU_Dyns* dyns, CEU_Value* evt) {
+//SPC_INC(printf(">>> ceu_bcast_dyns [blk=%p]\n", dyns->up_block));
             CEU_BStack xbstack = { dyns->up_block, bstack };   // all dyns have the same enclosing block, which is checked after each bcast
-            for (int i=0; i<dyns->its; i++) {
+            int N = dyns->its;  // move out of loop, do not traverse incoming dyns
+            for (int i=0; i<N; i++) {
                 CEU_Dyn* cur = dyns->buf[i];
                 if (cur==NULL || cur->type<CEU_VALUE_BCAST) {
                     // dead or not bcastable
                 } else {
                     int ret = ceu_bcast_dyn(&xbstack, cur, evt);
                     if (xbstack.block == NULL) { 
+//SPC_DEC(printf("<<< ceu_bcast_dyns [blk=%p]\n", dyns->up_block));
                         return ret;
                     }
                     if (ret == CEU_RET_THROW) {
+//SPC_DEC(printf("<<< ceu_bcast_dyns [blk=%p]\n", dyns->up_block));
                         return CEU_RET_THROW;
                     }
                 }
             }
+//SPC_DEC(printf("<<< ceu_bcast_dyns [blk=%p]\n", dyns->up_block));
             return CEU_RET_RETURN;
         }
     """ +
@@ -1036,12 +1070,14 @@ fun Coder.main (): String {
                 *ok = (coros->Bcast.Coros.dyns.its < coros->Bcast.Coros.max);
                 if (!*ok) {
                     // look for hole
+                    #if 0
                     for (int i=0; i<coros->Bcast.Coros.dyns.max; i++) {
                         if (coros->Bcast.Coros.dyns.buf[i] == NULL) {
                             *ok = 1;
                             break;
                         }
                     }
+                    #endif
                 }
                 if (!*ok) {
                     return CEU_RET_RETURN;
