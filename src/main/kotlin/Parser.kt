@@ -638,7 +638,7 @@ class Parser (lexer_: Lexer)
                                             set ceu_cnd_$N = (ceu_cnd_$N.status == :terminated)
                                         }
                                         type(ceu_cnd_$N) == :track -> {
-                                            set ceu_cnd_$N = (ceu_cnd_$N.status == nil)
+                                            set ceu_cnd_$N = (detrack(ceu_cnd_$N) == nil)
                                         }
                                         else -> {
                                             ;;set ceu_cnd_$N = ceu_cnd_$N
