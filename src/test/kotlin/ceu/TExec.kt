@@ -1411,7 +1411,9 @@ class TExec {
             }
             println(1)
         """.trimIndent())
-        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n:y\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw(:y)\n" +
+                "throw error : uncaught exception\n" +
+                ":y\n") { out }
     }
     @Test
     fun catch3() {
@@ -1445,7 +1447,9 @@ class TExec {
             println(1)
         """.trimIndent())
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n[]\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw([])\n" +
+                "throw error : uncaught exception\n" +
+                "[]\n") { out }
     }
     @Test
     fun catch5() {
@@ -1532,7 +1536,9 @@ class TExec {
         """
         )
         assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
-                "anon : (lin 8, col 21) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 8, col 21) : throw([:x])\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun catch9() {
@@ -1576,7 +1582,9 @@ class TExec {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (lin 2, col 5) : throw error : uncaught exception\n:xxx\n") { out }
+        assert(out == "anon : (lin 2, col 5) : throw(:xxx)\n" +
+                "throw error : uncaught exception\n" +
+                ":xxx\n") { out }
     }
     @Test
     fun catch12() {
@@ -1618,7 +1626,9 @@ class TExec {
             println(1)
         """, true)
         assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 5, col 17) : throw(xxx)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
 
     // NATIVE
@@ -2082,7 +2092,9 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 4, col 21) : throw error : uncaught exception\nnil\n") { out }
+        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
+                "throw error : uncaught exception\n" +
+                "nil\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS

@@ -131,7 +131,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Throw  -> this.ex.traverse()
             is Expr.Defer  -> this.body.traverse()
 
             is Expr.Coros  -> this.max?.traverse()
@@ -212,7 +211,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.While  -> this.map(listOf(this.cnd, this.body))
             is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
-            is Expr.Throw  -> this.map(listOf(this.ex))
             is Expr.Defer  -> this.map(listOf(this.body))
 
             is Expr.Coros  -> this.map(listOfNotNull(this.max))

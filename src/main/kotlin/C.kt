@@ -1439,6 +1439,13 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
 
+        CEU_RET ceu_throw_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_THROW_MSG("throw error : uncaught exception");
+            ceu_acc = *args[0];
+            return CEU_RET_THROW;
+        }
+
         CEU_RET ceu_track_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* coro = args[0];
@@ -1504,6 +1511,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_throw = { 
+                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} }
+                        }
+                    };
                     static CEU_Dyn ceu_track = { 
                         CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} }
@@ -1535,6 +1547,7 @@ fun Coder.main (): String {
                     ceu_mem->print   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}   };
                     ceu_mem->println = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println} };            
                     ceu_mem->tags    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}    };
+                    ceu_mem->throw   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_throw}   };
                     ceu_mem->track   = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_track}   };
                     ceu_mem->type    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_type}    };
                     ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_equals_equals} };

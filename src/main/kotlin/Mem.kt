@@ -60,7 +60,6 @@ fun Expr.mem (): String {
                 ${this.body.mem()}
             };
             """
-        is Expr.Throw -> this.ex.mem()
         is Expr.Defer -> this.body.mem()
 
         is Expr.Coros -> this.max.cond { it.mem() }

@@ -444,12 +444,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
                 """
-            is Expr.Throw -> """
-                { // THROW ${this.tk.dump()}
-                    ${this.ex.code()}
-                    CEU_THROW_DO_MSG(ceu_acc, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : throw error : uncaught exception");
-                }
-                """
+
             is Expr.Defer -> {
                 ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code())
                 assrc("((CEU_Value) { CEU_VALUE_NIL })")

@@ -399,7 +399,6 @@ class Parser (lexer_: Lexer)
                     Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
                 }
             }
-            this.acceptFix("throw") -> Expr.Throw(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU,XCEU)!!)
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             this.acceptFix("coroutines") -> Expr.Coros(this.tk0 as Tk.Fix, this.expr_in_parens(false,false))

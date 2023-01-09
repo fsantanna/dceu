@@ -560,7 +560,9 @@ class TTask {
             broadcast in :global, nil
         """)
         assert(out == "anon : (lin 11, col 13) : broadcast in :global, nil\n" +
-                "anon : (lin 6, col 21) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 6, col 21) : throw(:error)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun dd_throw4_err() {
@@ -810,7 +812,9 @@ class TTask {
              broadcast in :global, nil
         """)
         assert(out == "anon : (lin 14, col 14) : broadcast in :global, nil\n" +
-                "anon : (lin 7, col 21) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 7, col 21) : throw(:error)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun ee_bcast4() {
@@ -1630,7 +1634,9 @@ class TTask {
         """
         )
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, @[]\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\nnil\n") { out }
+                "anon : (lin 5, col 17) : throw(nil)\n" +
+                "throw error : uncaught exception\n" +
+                "nil\n") { out }
     }
     @Test
     fun todo_pool25_valgrind() {

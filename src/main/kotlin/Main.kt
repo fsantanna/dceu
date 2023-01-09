@@ -11,7 +11,7 @@ val D = "\$"
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
-    "task", "throw", "toggle", "true", "var", "yield", "while"
+    "task", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
     "parand", "paror", "until", "with", "where"
@@ -33,7 +33,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "move", "next", "print", "println", "tags", "track", "type",
+    "copy", "move", "next", "print", "println", "tags", "throw", "track", "type",
     "op_equals_equals", "op_hash", "op_slash_equals"
 )
 
@@ -64,7 +64,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
-    data class Throw  (val tk_: Tk.Fix, val ex: Expr): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
     data class Coros  (val tk_: Tk.Fix, val max: Expr?): Expr(N++, tk_)
