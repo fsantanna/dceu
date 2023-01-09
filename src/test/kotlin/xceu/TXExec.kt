@@ -1688,7 +1688,9 @@ class TXExec {
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 5, col 17) : throw(x)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun catch7() {

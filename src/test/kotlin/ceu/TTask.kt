@@ -1274,7 +1274,7 @@ class TTask {
             spawn in ts, T()
             while in :coros ts, xxx {
                 println(1)
-                 broadcast in :global, 1
+                broadcast in :global, 1
             }
             println(2)
         """)
@@ -1313,7 +1313,7 @@ class TTask {
             while in :coros ts, xxx {
                 set yyy = xxx
             }
-            println(yyy.status)
+            println(detrack(yyy).status)
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
@@ -1332,7 +1332,7 @@ class TTask {
                 set yyy = xxx
             }
             broadcast in :global, nil
-            println(yyy.status)
+            println(detrack(yyy))
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
@@ -1351,9 +1351,9 @@ class TTask {
                 var yyy
                 while in :coros ts, zzz {
                     set yyy = zzz
-                    println(yyy.status)
+                    println(detrack(yyy).status)
                 }
-                println(yyy.status)
+                println(detrack(yyy).status)
                 set yyy = xxx
             }
         """
@@ -1607,7 +1607,7 @@ class TTask {
             
             while in :coros ts, t1 {
                 while in :coros ts, t2 {
-                    println(t1.pub, t2.pub)
+                    println(detrack(t1).pub, detrack(t2).pub)
                 }
             }
              broadcast in :global, 2
@@ -1975,7 +1975,7 @@ class TTask {
             spawn in ts, T()
             var x
             while in :coros ts, t {
-                println(t.pub[0])
+                println(detrack(t).pub[0])
             }
         """)
         assert(out == "10\n") { out }
@@ -1993,12 +1993,12 @@ class TTask {
             spawn in ts, T()
             var x
             while in :coros ts, t {
-                set x = t.pub   ;; TODO: incompatible scope
+                set x = detrack(t).pub   ;; TODO: incompatible scope
             }
             println(999)
         """)
         //assert(out == "20\n") { out }
-        assert(out == "anon : (lin 12, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub8_fake_task() {
@@ -2607,9 +2607,9 @@ class TTask {
             set t = coroutine(T)
             var x
             set x = track(t)
-            println(x.pub) 
+            println(detrack(x).pub) 
             resume t()
-            println(x.pub) 
+            println(detrack(x).pub) 
         """)
         assert(out == "nil\n10\n") { out }
     }
@@ -2635,7 +2635,7 @@ class TTask {
             resume t()
             var x
             set x = track(t)
-            println(x.pub)      ;; expose (ok, global func)
+            println(detrack(x).pub)      ;; expose (ok, global func)
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         assert(out == "[10]\n") { out }
@@ -2651,7 +2651,7 @@ class TTask {
                 set t = coroutine(T)
                 set x = track(t)         ;; error scope
             }
-            println(x.status)
+            println(detrack(x).status)
             println(x)
         """)
         assert(out.contains("terminated\ntrack: 0x")) { out }
@@ -2670,9 +2670,9 @@ class TTask {
             resume t ()
             var x
             set x = track(t)
-            println(x.pub[0])
+            println(detrack(x).pub[0])
             broadcast in :global, nil
-            println(x.status)
+            println(detrack(x))
         """)
         assert(out == "10\nnil\n") { out }
     }
@@ -2690,9 +2690,9 @@ class TTask {
                 set t = coroutine(T)
                 resume t ()
                 set x = track(t)         ;; scope x < t
-                println(x.pub[0])
+                println(detrack(x).pub[0])
             }
-            println(x.status)
+            println(detrack(x).status)
             println(x)
         """)
         assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
@@ -2729,9 +2729,9 @@ class TTask {
             while in :coros ts, t {
                 set x = t
             }
-            println(x.pub[0])   ;; 2
+            println(detrack(x).pub[0])   ;; 2
             broadcast in :global, nil
-            println(x.status)   ;; nil
+            println(detrack(x))   ;; nil
         """)
         assert(out == "2\nnil\n") { out }
     }
@@ -2752,9 +2752,9 @@ class TTask {
                 while in :coros ts, t {
                     set x = t    ;; track(t) up_hold in
                 }
-                println(x.pub[0])   ;; 2
+                println(detrack(x).pub[0])   ;; 2
                 broadcast in :global, nil
-                println(x.status)   ;; nil
+                println(detrack(x))   ;; nil
             }
         """)
         assert(out == "2\nnil\n") { out }
@@ -2798,7 +2798,7 @@ class TTask {
                 }
             }
             broadcast in :global, nil
-            println(x.status)   ;; nil
+            println(detrack(x))   ;; nil
         """)
         assert(out == "nil\n") { out }
     }
@@ -2820,10 +2820,10 @@ class TTask {
                     throw(t)
                 }
             }
-            println(x.pub[0])   ;; 1
-            println(x.status)   ;; :yielded
+            println(detrack(x).pub[0])   ;; 1
+            println(detrack(x).status)   ;; :yielded
             broadcast in :global, nil
-            println(x.status)   ;; nil
+            println(detrack(x))   ;; nil
         """)
         assert(out == "1\n:yielded\nnil\n") { out }
     }
@@ -2842,17 +2842,17 @@ class TTask {
             spawn task () :awakes {
                 catch :paror {
                     spawn task () :awakes {
-                        ${await("if x.status==:terminated { true } else { if x.status==nil { true } else { false } }")}
+                        ${await("if detrack(x).status==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
                         throw(:paror)
                     } ()
-                    println(x.pub[0])
+                    println(detrack(x).pub[0])
                     broadcast in :global, nil
-                    println(x.pub[0])
+                    println(detrack(x).pub[0])
                     broadcast in :global, :evt
-                    println(x.pub[0]) ;; never printed
+                    println(detrack(x).pub[0]) ;; never printed
                     ${await("false")}
                 }
-                println(x.status)
+                println(detrack(x))
             }()
             println(:ok)
         """)
@@ -2872,7 +2872,7 @@ class TTask {
                 set x = (t)
             }
             broadcast in :global, nil
-            println(x.status)   ;; nil
+            println(detrack(x))   ;; nil
         """)
         assert(out == "nil\n") { out }
     }

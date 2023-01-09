@@ -103,7 +103,6 @@ fun Coder.main (): String {
         struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         
         struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* coro, struct CEU_Value* ret);
-        struct CEU_Value ceu_track_to_coro (struct CEU_Value* track);
         
         void ceu_print1 (struct CEU_Value* v);
         CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
@@ -1129,18 +1128,6 @@ fun Coder.main (): String {
             *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
             return NULL;
         }
-        
-        CEU_Value ceu_track_to_coro (CEU_Value* track) {
-            if (track->type == CEU_VALUE_TRACK) {
-                if (track->Dyn->Bcast.Track == NULL) {
-                    return (CEU_Value) { CEU_VALUE_NIL };
-                } else {
-                    return (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track} };
-                }
-            } else {
-                return *track;
-            }
-        }
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Value* v) {
@@ -1343,6 +1330,21 @@ fun Coder.main (): String {
             return ceu_coros_create(&frame->up_block->dn_dyns, max, &ceu_acc);
         }
         
+        CEU_RET ceu_detrack_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* track = args[0];
+            if (track->type != CEU_VALUE_TRACK) {                
+                CEU_THROW_MSG("detrack error : expected track value");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
+            if (track->Dyn->Bcast.Track == NULL) {
+                ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+            } else {
+                ceu_acc = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=track->Dyn->Bcast.Track} };
+            }
+            return CEU_RET_RETURN;
+        }
+        
         CEU_RET ceu_move_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
@@ -1516,6 +1518,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_detrack = { 
+                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} }
+                        }
+                    };
                     static CEU_Dyn ceu_move = { 
                         CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} }
@@ -1574,6 +1581,7 @@ fun Coder.main (): String {
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}         };
                     ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->coroutines = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_coroutines}   };
+                    ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_detrack}      };
                     ceu_mem->move       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}         };
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_next}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}        };

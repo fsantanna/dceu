@@ -538,20 +538,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         "ceu_dyn_$n = ${this.non_fake_task_c()}->Task.coro;"
                     } else { """
                         ${this.coro.code()}
-                        ${(this.tk.str=="status").cond { """
-                            // track with destroyed coro: status -> nil
-                            if (ceu_acc.type == CEU_VALUE_TRACK) {
-                                CEU_Value ceu_accx = ceu_acc;
-                                ceu_acc = ceu_track_to_coro(&ceu_accx);
-                                if (ceu_acc.type != CEU_VALUE_CORO) {
-                                    ${assrc("(CEU_Value) { CEU_VALUE_NIL }")}
-                                    goto CEU_PUB_$n;    // special case, skip everything else
-                                }
-                            }
-                            """
-                         }}
-                        CEU_Value ceu_accx = ceu_acc;
-                        ceu_acc = ceu_track_to_coro(&ceu_accx);
                         if (ceu_acc.type != CEU_VALUE_CORO) {                
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine");
                         }

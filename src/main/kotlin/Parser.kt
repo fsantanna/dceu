@@ -303,7 +303,7 @@ class Parser (lexer_: Lexer)
                                             `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
                                             var ${i.str} = track(ceu_coro_$N)
                                             ${blk.es.tostr(true)}
-                                            if ${i.str}.status {
+                                            if detrack(${i.str}) {
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
                                                 set ceu_i_$N = ceu_n_$N
