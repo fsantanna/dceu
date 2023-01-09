@@ -544,7 +544,9 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "anon : (lin 8, col 13) : broadcast in :global, nil\n" +
-                "anon : (lin 3, col 27) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 3, col 27) : throw(:error)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun paror11_ret() {
@@ -1717,7 +1719,9 @@ class TXExec {
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 9) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 5, col 9) : throw(tags([10],:y,true))\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
     @Test
     fun while1() {
@@ -1762,7 +1766,9 @@ class TXExec {
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 1, col 31) : set error : incompatible scopes\n" +
-                "anon : (lin 4, col 5) : throw error : uncaught exception\n:error\n") { out }
+                "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
     }
 
     // PEEK, PUSH, POP

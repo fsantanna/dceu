@@ -1323,6 +1323,12 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
+        CEU_RET ceu_coroutine_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* task = args[0];
+            return ceu_coro_create(&frame->up_block->dn_dyns, task, &ceu_acc);
+        }
+
         CEU_RET ceu_coroutines_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n <= 1);
             int max = 0;
@@ -1505,6 +1511,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_coroutines_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_coroutine = { 
+                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} }
+                        }
+                    };
                     static CEU_Dyn ceu_move = { 
                         CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} }
@@ -1561,6 +1572,7 @@ fun Coder.main (): String {
                         }
                     };
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}         };
+                    ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->coroutines = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_coroutines}   };
                     ceu_mem->move       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}         };
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_next}         };

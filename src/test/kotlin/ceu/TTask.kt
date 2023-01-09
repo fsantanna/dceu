@@ -47,7 +47,8 @@ class TTask {
         val out = all("""
             coroutine(func () {nil})
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 11) : coroutine error : expected task\n:error\n") { out }
+        assert(out == "anon : (lin 1, col 1) : coroutine(func () { nil }) : coroutine error : expected task\n" +
+                ":error\n") { out }
     }
     @Test
     fun aa_task3_err() {

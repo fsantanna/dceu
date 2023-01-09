@@ -401,7 +401,6 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
-            this.acceptFix("coroutine") -> Expr.Coro(this.tk0 as Tk.Fix, this.expr_in_parens(true,false)!!)
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 when {

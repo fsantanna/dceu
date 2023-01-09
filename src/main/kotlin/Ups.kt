@@ -133,7 +133,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
 
-            is Expr.Coro   -> this.task.traverse()
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
             is Expr.Bcast  -> this.evt.traverse()
             is Expr.Yield  -> {
@@ -212,7 +211,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
             is Expr.Defer  -> this.map(listOf(this.body))
 
-            is Expr.Coro   -> this.map(listOf(this.task))
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
             is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
             is Expr.Yield  -> this.map(listOf(this.arg))

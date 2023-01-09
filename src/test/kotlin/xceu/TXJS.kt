@@ -200,7 +200,8 @@ class TXJS {
                 ;; :problem
         """, true)
         assert(out == "anon : (lin 6, col 20) : genObj()\n" +
-                "anon : (lin 3, col 17) : throw error : uncaught exception\n" +
+                "anon : (lin 3, col 17) : throw(:problem)\n" +
+                "throw error : uncaught exception\n" +
                 ":problem\n") { out }
     }
 

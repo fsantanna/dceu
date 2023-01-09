@@ -24,7 +24,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)
 
-        is Expr.Coro   -> "coroutine(" + this.task.tostr(pre) + ")"
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"

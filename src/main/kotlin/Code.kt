@@ -450,17 +450,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 assrc("((CEU_Value) { CEU_VALUE_NIL })")
             }
 
-            is Expr.Coro -> {
-                """
-                { // CORO ${this.tk.dump()}
-                    ${this.task.code()}
-                    CEU_Value ceu_coro_$n;
-                    ceu_ret = ceu_coro_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, &ceu_acc, &ceu_coro_$n);
-                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col})");
-                    ${assrc("ceu_acc = ceu_coro_$n")}
-                }
-                """
-            }
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
