@@ -155,7 +155,6 @@ class Ups (val outer: Expr.Do) {
                 }
                 this.coro?.traverse()
             }
-            is Expr.Track  -> this.coro.traverse()
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
@@ -224,7 +223,6 @@ class Ups (val outer: Expr.Do) {
             is Expr.Resume -> this.map(listOf(this.call))
             is Expr.Toggle -> this.map(listOf(this.coro, this.on))
             is Expr.Pub    -> this.map(listOfNotNull(this.coro))
-            is Expr.Track  -> this.map(listOfNotNull(this.coro))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()

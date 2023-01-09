@@ -11,7 +11,7 @@ val D = "\$"
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coroutine", "coroutines", "defer", "do", "else", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
-    "task", "throw", "toggle", "track", "true", "var", "yield", "while"
+    "task", "throw", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
     "parand", "paror", "until", "with", "where"
@@ -33,8 +33,8 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "move", "next", "print", "println", "tags", "type",
-    "op_slash_equals", "op_equals_equals", "op_hash"
+    "copy", "move", "next", "print", "println", "tags", "track", "type",
+    "op_equals_equals", "op_hash", "op_slash_equals"
 )
 
 val EXPOSE = setOf (
@@ -75,7 +75,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val coro: Expr, val on: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val coro: Expr?): Expr(N++, tk_)
-    data class Track  (val tk_: Tk.Fix, val coro: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

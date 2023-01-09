@@ -623,21 +623,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.Track -> """
-                { // TRACK
-                    ${this.coro.code()}
-                    if (ceu_acc.type != CEU_VALUE_CORO) {                
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected coroutine");
-                    } else if (ceu_acc.Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : track error : expected unterminated coroutine");
-                    }
-                    {
-                        CEU_Value ceu_$n;
-                        assert(NULL == ceu_track_create(ceu_acc.Dyn, &ceu_$n));
-                        ${assrc("ceu_$n")}
-                    }
-                }
-                """
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {
