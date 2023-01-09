@@ -2544,6 +2544,18 @@ class TTask {
         assert(out.contains("track: 0x")) { out }
     }
     @Test
+    fun ll_track2a() {
+        val out = all("""
+            var T = task () { nil }
+            var t = coroutine(T)
+            var x = track(t)
+            var y = track(t)
+            var z = y
+            println(x==y, y==z)
+        """)
+        assert(out.contains("false\ttrue\n")) { out }
+    }
+    @Test
     fun ll_track3_err() {
         val out = all("""
             var T

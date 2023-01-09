@@ -1297,6 +1297,7 @@ fun Coder.main (): String {
                     case CEU_VALUE_TASK:
                     case CEU_VALUE_CORO:
                     case CEU_VALUE_COROS:
+                    case CEU_VALUE_TRACK:
                         v = (e1->Dyn == e2->Dyn);
                         break;
                     default:
