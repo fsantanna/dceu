@@ -102,7 +102,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         if (ceu_n == CEU_ARG_EVT) {
                             ceu_evt = ceu_args[0];
                         }
-                        assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || (ceu_coro->Bcast.status==CEU_CORO_STATUS_TOGGLED && ceu_evt==&CEU_EVT_CLEAR));
+                        assert(ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR);
                         //if (ceu_evt != &CEU_EVT_CLEAR) {
                             ceu_coro->Bcast.status = CEU_CORO_STATUS_RESUMED;
                         //}

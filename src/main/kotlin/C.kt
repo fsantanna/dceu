@@ -637,8 +637,8 @@ fun Coder.main (): String {
         }
 
         #define SPC_EQU(s) { for (int i=0; i<SPC; i++) putchar(' '); s; }
-        #define SPC_INC(s) { SPC+=4; for (int i=0; i<SPC; i++) putchar(' '); s; }
-        #define SPC_DEC(s) { for (int i=0; i<SPC; i++) putchar(' '); SPC-=4; s; }
+        #define SPC_INC(s) { SPC+=2; for (int i=0; i<SPC; i++) putchar(' '); s; }
+        #define SPC_DEC(s) { for (int i=0; i<SPC; i++) putchar(' '); SPC-=2; s; }
         static int SPC = 0;
         
         CEU_RET ceu_bcast_blocks (CEU_BStack* bstack, CEU_Block* cur, CEU_Value* evt, int* killed) {
@@ -670,18 +670,18 @@ fun Coder.main (): String {
         CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dyn* cur, CEU_Value* evt) {
 //SPC_INC(printf(">>> ceu_bcast_dyn = %p\n", cur));
             if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
+//SPC_DEC(printf("<a< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
             }
             if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
                 // do not awake toggled coro, unless it is a CLEAR event
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
+//SPC_DEC(printf("<b< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
             }
             switch (cur->type) {
                 case CEU_VALUE_CORO: {
                     if (evt!=&CEU_EVT_CLEAR && !cur->Bcast.Coro.frame->proto->Task.awakes) {
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
+//SPC_DEC(printf("<c< ceu_bcast_dyn = %p\n", cur));
                         return CEU_RET_RETURN;
                     } else {
                         // step (1)
@@ -689,31 +689,31 @@ fun Coder.main (): String {
                         int killed = 0;
                         int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.dn_block, evt, &killed);
                         if (xbstack.block==NULL || killed) {
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p [XXX]\n", cur));
+//SPC_DEC(printf("<d< ceu_bcast_dyn = %p [XXX] (killed=%d)\n", cur, killed));
                             return ret;
                         }
                         // CEU_RET_THROW: step (5) may 'catch' 
                         
                         // step (5)
-                        if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt==&CEU_EVT_CLEAR)) {
+                        if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || evt==&CEU_EVT_CLEAR) {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
 //SPC_EQU(printf(">>> awake %p\n", cur));
                             ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, bstack, arg, args);
 //SPC_EQU(printf("<<< awake %p\n", cur));
                         }
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur);
+//SPC_DEC(printf("<e< ceu_bcast_dyn = %p\n", cur));
                         return MIN(ret, CEU_RET_RETURN);
                     }
                 }
                 case CEU_VALUE_COROS: {
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
+//SPC_DEC(printf("<f< ceu_bcast_dyn = %p\n", cur));
                     return ceu_bcast_dyns(bstack, &cur->Bcast.Coros.dyns, evt);
                 case CEU_VALUE_TRACK:
                     if (evt->type==CEU_VALUE_CORO && cur->Bcast.Track==evt->Dyn) {
                         cur->Bcast.Track = NULL; // tracked coro is terminating
                     }
-//SPC_DEC(printf("<<< ceu_bcast_dyn = %p\n", cur));
+//SPC_DEC(printf("<g< ceu_bcast_dyn = %p\n", cur));
                     return CEU_RET_RETURN;
                 }
                 default:

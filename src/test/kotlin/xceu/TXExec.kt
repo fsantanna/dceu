@@ -2078,4 +2078,28 @@ class TXExec {
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
+    @Test
+    fun all11_term_coro () {
+        val out = all("""
+            task T () :awakes {
+                awaiting false {
+                    await true
+                }
+                println(:t)
+            }
+            spawn {
+                var ts = coroutines()
+                spawn in ts, T()
+                every :e {
+                    println(:while)
+                    while in :coros ts, t {
+                        println(t, detrack(t), detrack(t).status)
+                        assert(detrack(t).status /= :terminated)
+                    }
+                }
+            }
+            broadcast in :global, :e
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
 }
