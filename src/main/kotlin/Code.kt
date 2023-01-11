@@ -154,7 +154,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             // enclosing block
                             ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_coro->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
                         }
-                        if (ceu_bstack!=NULL && ceu_bstack->block==NULL) {
+                        if (ceu_bstack_$n.block == NULL) {
                             return ceu_ret;
                         }
                     

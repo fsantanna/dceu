@@ -499,7 +499,7 @@ class TXJS {
             task splitLines () {
                 var cur = ""
                 while true {
-                    var tmp = yield()
+                    var tmp = yield(nil)
                     while in :vector tmp, (_,c) {
                         if c == '\n' {
                             yield(cur)
@@ -514,7 +514,7 @@ class TXJS {
             task numberLines () {
                 var n = 0
                 while true {
-                    var line = yield()
+                    var line = yield(nil)
                     set n = n + 1
                     yield((tostring(n) ++ ": ") ++ line)
                 }

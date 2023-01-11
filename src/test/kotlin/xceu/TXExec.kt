@@ -2082,22 +2082,26 @@ class TXExec {
     fun all11_term_coro () {
         val out = all("""
             task T () :awakes {
+                println(:1)
                 awaiting false {
                     await true
                 }
-                println(:t)
+                println(:2)
+                ;;println(:t)
             }
             spawn {
                 var ts = coroutines()
                 spawn in ts, T()
+                ;;println(:every)
                 every :e {
-                    println(:while)
+                    ;;println(:while)
                     while in :coros ts, t {
-                        println(t, detrack(t), detrack(t).status)
+                        ;;println(t, detrack(t), detrack(t).status)
                         assert(detrack(t).status /= :terminated)
                     }
                 }
             }
+            ;;println(:bcast)
             broadcast in :global, :e
         """, true)
         assert(out == ":1\n:2\n") { out }
