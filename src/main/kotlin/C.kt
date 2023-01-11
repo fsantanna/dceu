@@ -460,21 +460,27 @@ fun Coder.main (): String {
         }
     """ +
     """ // BLOCK
+        int ceu_hold_hole (CEU_Dyns* dyns) {
+            // TODO: should check if dyns is currently being traversed,
+            //       in which case should return that there's no hole,
+            //       otherwise new dyn might be allocated and traversed
+            //       right away
+            for (int i=0; i<dyns->max; i++) {
+                if (dyns->buf[i] == NULL) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
         void ceu_hold_add (CEU_Dyns* dyns, CEU_Dyn* dyn) {
             int I = -1;
             if (dyns->max > dyns->its) {            // end of list
                 I = dyns->its++;
             } else {
-                #if 0
-                for (int i=0; i<dyns->max; i++) {   // hole in list
-                    if (dyns->buf[i] == NULL) {
-                        I = i;
-                        break;
-                    }
-                }
-                #endif
+                I = ceu_hold_hole(dyns);
                 if (I == -1) {                      // grow list
-                    dyns->max = 1 + dyns->max*2;
+                    dyns->max++; // = 1 + dyns->max*2;
                     dyns->buf = realloc(dyns->buf, dyns->max * sizeof(CEU_Dyns*));
                     assert(dyns->buf != NULL);
                     I = dyns->its++;
@@ -1065,22 +1071,13 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("\0 : coroutine error : expected coroutines");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            if (coros->Bcast.Coros.max != 0) {
-                *ok = (coros->Bcast.Coros.dyns.its < coros->Bcast.Coros.max);
-                if (!*ok) {
-                    // look for hole
-                    #if 0
-                    for (int i=0; i<coros->Bcast.Coros.dyns.max; i++) {
-                        if (coros->Bcast.Coros.dyns.buf[i] == NULL) {
-                            *ok = 1;
-                            break;
-                        }
-                    }
-                    #endif
-                }
-                if (!*ok) {
-                    return CEU_RET_RETURN;
-                }
+            *ok = !(
+                (coros->Bcast.Coros.max != 0) &&
+                (coros->Bcast.Coros.dyns.its >= coros->Bcast.Coros.max) &&
+                (ceu_hold_hole(&coros->Bcast.Coros.dyns) == -1)
+            );
+            if (!*ok) {
+                return CEU_RET_RETURN;
             }
             if (task->type != CEU_VALUE_TASK) {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");

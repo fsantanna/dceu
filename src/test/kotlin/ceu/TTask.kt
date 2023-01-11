@@ -1677,6 +1677,40 @@ class TTask {
         )
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
+    @Test
+    fun ff_pool25_reuse_awake() {
+        val out = ceu.all(
+            """
+            var T = task (n) :awakes {
+                set pub = n
+                yield(nil)
+                ;;println(:awake, evt, n)
+                while evt /= n {
+                    yield(nil)
+                }
+                ;;println(:term, n)
+            }
+            var ts = coroutines(2)
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            while in :coros ts, t {
+                println(:t, detrack(t).pub)
+                ;;println(:bcast1)
+                broadcast in :global, 2         ;; opens hole for 99 below
+                ;;println(:bcast2)
+                var ok = spawn in ts, T(99)     ;; must not fill hole b/c ts in the stack
+                println(ok)
+            }
+            ;;;
+            println("-=-=-=-")
+            while in :coros ts, x {
+                println(:t, detrack(x).pub)
+            }
+            ;;;
+        """
+        )
+        assert(out == "1\nfalse\n") { out }
+    }
 
     // EVT
 
