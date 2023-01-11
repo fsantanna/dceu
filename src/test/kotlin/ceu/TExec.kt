@@ -784,7 +784,7 @@ class TExec {
             set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
-            `puts(${D}v.Dyn->Ncast.Vector.mem);`
+            `puts(${D}v.Dyn->Ncast.Vector.buf);`
             println(v)
         """)
         assert(out == "a\nabba\nabba\n") { out }
@@ -1790,6 +1790,18 @@ class TExec {
             `putchar(${D}c.Char);`
         """)
         assert(out == "x") { out }
+    }
+    @Test
+    fun native15_func() {
+        val out = all("""
+            func f (v) {
+                println(v)
+                v
+            }
+            var f' = `:func ${D}f.Dyn`
+            println(f'(10))
+        """)
+        assert(out == "10\n10\n") { out }
     }
 
     // OPERATORS

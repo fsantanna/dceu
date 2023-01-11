@@ -759,11 +759,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
                                 ${(x!=null && !this.gcall()).cond { """
-                                    if (ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
+                                    if (ceu_acc.Dyn->Ncast.Tuple.buf[(int) ceu_mem->idx_$n.Number].type > CEU_VALUE_DYNAMIC) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.idx.tk.pos.file} : (lin ${this.idx.tk.pos.lin}, col ${this.idx.tk.pos.col}) : invalid index : cannot expose dynamic \"$x\" field");
                                     }
                                 """ }}
-                                ${assrc("ceu_acc.Dyn->Ncast.Tuple.mem[(int) ceu_mem->idx_$n.Number]")}
+                                ${assrc("ceu_acc.Dyn->Ncast.Tuple.buf[(int) ceu_mem->idx_$n.Number]")}
                                 break;
                             case CEU_VALUE_VECTOR:
                                 ceu_ret = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);

@@ -136,7 +136,7 @@ func tostring (v) {
 func tonumber (v) {
     ifs v {
         ((v is :vector) and (#v > 0)) and (v[0] is :char) -> {
-            `:number atoi($v.Dyn->Ncast.Vector.mem)`
+            `:number atoi($v.Dyn->Ncast.Vector.buf)`
         }
         else -> v   ;; TODO
     }

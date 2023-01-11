@@ -808,7 +808,7 @@ class TXExec {
             set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
-            `puts(${D}v.Dyn->Ncast.Vector.mem);`
+            `puts(${D}v.Dyn->Ncast.Vector.buf);`
         """)
         assert(out == "a\nabba\n") { out }
     }
@@ -973,7 +973,7 @@ class TXExec {
         val out = all("""
             var v = ""
             println(v)
-            `printf(">%s<\n", ${D}v.Dyn->Ncast.Vector.mem);`
+            `printf(">%s<\n", ${D}v.Dyn->Ncast.Vector.buf);`
         """)
         assert(out == "#[]\n><\n") { out }
     }

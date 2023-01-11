@@ -10,6 +10,8 @@ fun Coder.main (): String {
         #include <stdarg.h>
         #include <math.h>
 
+        #undef MAX
+        #undef MIN
         #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
@@ -212,18 +214,18 @@ fun Coder.main (): String {
                     union {
                         CEU_Proto Proto;            // func or task
                         struct {
-                            int its;                  // number of items
-                            CEU_Value mem[0];       // beginning of CEU_Value[n]
+                            int its;                // number of items
+                            CEU_Value buf[0];       // beginning of CEU_Value[n]
                         } Tuple;
                         struct {
-                            int max;                // size of mem
-                            int its;                  // number of items
+                            int max;                // size of buf
+                            int its;                // number of items
                             CEU_VALUE type;
-                            char* mem;              // resizable Unknown[n]
+                            char* buf;              // resizable Unknown[n]
                         } Vector;
                         struct {
-                            int max;                // size of mem
-                            CEU_Value (*mem)[0][2]; // resizable CEU_Value[n][2]
+                            int max;                // size of buf
+                            CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
                         } Dict;
                     };
                 } Ncast;
@@ -398,7 +400,7 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
-                        ceu_gc_dec(&dyn->Ncast.Tuple.mem[i], 1);
+                        ceu_gc_dec(&dyn->Ncast.Tuple.buf[i], 1);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
@@ -409,8 +411,8 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
-                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][0], 1);
-                        ceu_gc_dec(&(*dyn->Ncast.Dict.mem)[i][1], 1);
+                        ceu_gc_dec(&(*dyn->Ncast.Dict.buf)[i][0], 1);
+                        ceu_gc_dec(&(*dyn->Ncast.Dict.buf)[i][1], 1);
                     }
                     break;
                 case CEU_VALUE_CORO:
@@ -511,10 +513,10 @@ fun Coder.main (): String {
                 case CEU_VALUE_TRACK:
                     break;
                 case CEU_VALUE_VECTOR:
-                    free(dyn->Ncast.Vector.mem);
+                    free(dyn->Ncast.Vector.buf);
                     break;
                 case CEU_VALUE_DICT:
-                    free(dyn->Ncast.Dict.mem);
+                    free(dyn->Ncast.Dict.buf);
                     break;
                 case CEU_VALUE_CORO:
                     if (dyn->Bcast.Coro.dn_block != NULL) {
@@ -567,8 +569,8 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
-                        if (dyn->Ncast.Tuple.mem[i].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dyns, dyn->Ncast.Tuple.mem[i].Dyn, isperm)) {
+                        if (dyn->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
+                            if (CEU_RET_THROW == ceu_block_set(dyns, dyn->Ncast.Tuple.buf[i].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -578,7 +580,7 @@ fun Coder.main (): String {
                     if (dyn->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(dyn->Ncast.Vector.type);
                         for (int i=0; i<dyn->Ncast.Vector.its; i++) {
-                            if (CEU_RET_THROW == ceu_block_set(dyns, *(CEU_Dyn**)(dyn->Ncast.Vector.mem + i*sz), isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dyns, *(CEU_Dyn**)(dyn->Ncast.Vector.buf + i*sz), isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -586,13 +588,13 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
-                        if ((*dyn->Ncast.Dict.mem)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dyns, (*dyn->Ncast.Dict.mem)[i][0].Dyn, isperm)) {
+                        if ((*dyn->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
+                            if (CEU_RET_THROW == ceu_block_set(dyns, (*dyn->Ncast.Dict.buf)[i][0].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
-                        if ((*dyn->Ncast.Dict.mem)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dyns, (*dyn->Ncast.Dict.mem)[i][1].Dyn, isperm)) {
+                        if ((*dyn->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
+                            if (CEU_RET_THROW == ceu_block_set(dyns, (*dyn->Ncast.Dict.buf)[i][1].Dyn, isperm)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -803,8 +805,8 @@ fun Coder.main (): String {
         
         void ceu_tuple_set (CEU_Dyn* tup, int i, CEU_Value v) {
             ceu_gc_inc(&v);
-            ceu_gc_dec(&tup->Ncast.Tuple.mem[i], 1);
-            tup->Ncast.Tuple.mem[i] = v;
+            ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
+            tup->Ncast.Tuple.buf[i] = v;
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -814,7 +816,7 @@ fun Coder.main (): String {
             }
             int sz = ceu_tag_to_size(vec->Ncast.Vector.type);
             ceu_acc = (CEU_Value) { vec->Ncast.Vector.type };
-            memcpy(&ceu_acc.Number, vec->Ncast.Vector.mem+i*sz, sz);
+            memcpy(&ceu_acc.Number, vec->Ncast.Vector.buf+i*sz, sz);
             return CEU_RET_RETURN;
         }
         
@@ -834,19 +836,19 @@ fun Coder.main (): String {
                 if (i == vec->Ncast.Vector.its) {           // push
                     if (i == vec->Ncast.Vector.max) {
                         vec->Ncast.Vector.max = vec->Ncast.Vector.max*2 + 1;    // +1 if max=0
-                        vec->Ncast.Vector.mem = realloc(vec->Ncast.Vector.mem, vec->Ncast.Vector.max*sz + 1);
-                        assert(vec->Ncast.Vector.mem != NULL);
+                        vec->Ncast.Vector.buf = realloc(vec->Ncast.Vector.buf, vec->Ncast.Vector.max*sz + 1);
+                        assert(vec->Ncast.Vector.buf != NULL);
                     }
                     ceu_gc_inc(&v);
                     vec->Ncast.Vector.its++;
-                    vec->Ncast.Vector.mem[sz*vec->Ncast.Vector.its] = '\0';
+                    vec->Ncast.Vector.buf[sz*vec->Ncast.Vector.its] = '\0';
                 } else {                            // set
                     assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
                     ceu_gc_inc(&v);
                     ceu_gc_dec(&ceu_acc, 1);
                     assert(i < vec->Ncast.Vector.its);
                 }
-                memcpy(vec->Ncast.Vector.mem + i*sz, (char*)&v.Number, sz);
+                memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
             }
         }
         
@@ -857,12 +859,12 @@ fun Coder.main (): String {
             CEU_Value* key = (n == 1) ? &NIL : args[1];
             assert(col->type == CEU_VALUE_DICT);
             for (int i=0; i<col->Dyn->Ncast.Dict.max; i++) {
-                CEU_Value* args[] = { key, &(*col->Dyn->Ncast.Dict.mem)[i][0] };
+                CEU_Value* args[] = { key, &(*col->Dyn->Ncast.Dict.buf)[i][0] };
                 assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, NULL, 2, args));
                 if (ceu_acc.Bool) {
                     key = &NIL;
                 } else if (key->type == CEU_VALUE_NIL) {
-                    ceu_acc = (*col->Dyn->Ncast.Dict.mem)[i][0];
+                    ceu_acc = (*col->Dyn->Ncast.Dict.buf)[i][0];
                     return CEU_RET_RETURN;
                 }
             }
@@ -872,7 +874,7 @@ fun Coder.main (): String {
         int ceu_dict_key_to_index (CEU_Dyn* col, CEU_Value* key, int* idx) {
             *idx = -1;
             for (int i=0; i<col->Ncast.Dict.max; i++) {
-                CEU_Value* cur = &(*col->Ncast.Dict.mem)[i][0];
+                CEU_Value* cur = &(*col->Ncast.Dict.buf)[i][0];
                 CEU_Value* args[] = { key, cur };
                 assert(CEU_RET_RETURN == ceu_op_equals_equals_f(NULL, NULL, 2, args));
                 if (ceu_acc.Bool) {
@@ -890,7 +892,7 @@ fun Coder.main (): String {
             int i;
             int ok = ceu_dict_key_to_index(col, key, &i);
             if (ok) {
-                return (*col->Ncast.Dict.mem)[i][1];
+                return (*col->Ncast.Dict.buf)[i][1];
             } else {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
@@ -903,9 +905,9 @@ fun Coder.main (): String {
                 old = col->Ncast.Dict.max;
                 int new = MAX(5, old * 2);
                 col->Ncast.Dict.max = new;
-                col->Ncast.Dict.mem = realloc(col->Ncast.Dict.mem, new*2*sizeof(CEU_Value));
-                assert(col->Ncast.Dict.mem != NULL);
-                memset(&(*col->Ncast.Dict.mem)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
+                col->Ncast.Dict.buf = realloc(col->Ncast.Dict.buf, new*2*sizeof(CEU_Value));
+                assert(col->Ncast.Dict.buf != NULL);
+                memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
             }
             assert(old != -1);
             
@@ -914,15 +916,15 @@ fun Coder.main (): String {
             if (val->type == CEU_VALUE_NIL) {
                 ceu_gc_dec(&vv, 1);
                 ceu_gc_dec(key, 1);
-                (*col->Ncast.Dict.mem)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
+                (*col->Ncast.Dict.buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 ceu_gc_inc(val);
                 ceu_gc_dec(&vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }
-                (*col->Ncast.Dict.mem)[old][0] = *key;
-                (*col->Ncast.Dict.mem)[old][1] = *val;
+                (*col->Ncast.Dict.buf)[old][0] = *key;
+                (*col->Ncast.Dict.buf)[old][1] = *val;
             }
             
             return CEU_RET_RETURN;                  // TODO
@@ -976,7 +978,7 @@ fun Coder.main (): String {
                     .Ncast = { 0, {.Tuple={n,{}} } }
                 }
             };
-            memset(ret->Ncast.Tuple.mem, 0, n*sizeof(CEU_Value));
+            memset(ret->Ncast.Tuple.buf, 0, n*sizeof(CEU_Value));
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
             return ret;
         }
@@ -984,12 +986,12 @@ fun Coder.main (): String {
         CEU_Dyn* ceu_vector_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
-            char* mem = malloc(1);  // because of '\0' in empty strings
-            assert(mem != NULL);
-            mem[0] = '\0';
+            char* buf = malloc(1);  // because of '\0' in empty strings
+            assert(buf != NULL);
+            buf[0] = '\0';
             *ret = (CEU_Dyn) {
                 CEU_VALUE_VECTOR, {NULL,-1}, NULL, 0, {
-                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,mem}} }
+                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,buf}} }
                 }
             };
             assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
@@ -1157,13 +1159,13 @@ fun Coder.main (): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        ceu_print1(&v->Dyn->Ncast.Tuple.mem[i]);
+                        ceu_print1(&v->Dyn->Ncast.Tuple.buf[i]);
                     }                    
                     printf("]");
                     break;
                 case CEU_VALUE_VECTOR:
                     if (v->Dyn->Ncast.Vector.type == CEU_VALUE_CHAR) {
-                        printf("%s", v->Dyn->Ncast.Vector.mem);
+                        printf("%s", v->Dyn->Ncast.Vector.buf);
                     } else {
                         printf("#[");
                         for (int i=0; i<v->Dyn->Ncast.Vector.its; i++) {
@@ -1181,15 +1183,15 @@ fun Coder.main (): String {
                     printf("@[");
                     int comma = 0;
                     for (int i=0; i<v->Dyn->Ncast.Dict.max; i++) {
-                        if ((*v->Dyn->Ncast.Dict.mem)[i][0].type != CEU_VALUE_NIL) {
+                        if ((*v->Dyn->Ncast.Dict.buf)[i][0].type != CEU_VALUE_NIL) {
                             if (comma != 0) {
                                 printf(",");
                             }
                             comma = 1;
                             printf("(");
-                            ceu_print1(&(*v->Dyn->Ncast.Dict.mem)[i][0]);
+                            ceu_print1(&(*v->Dyn->Ncast.Dict.buf)[i][0]);
                             printf(",");
-                            ceu_print1(&(*v->Dyn->Ncast.Dict.mem)[i][1]);
+                            ceu_print1(&(*v->Dyn->Ncast.Dict.buf)[i][1]);
                             printf(")");
                         }
                     }                    
@@ -1266,7 +1268,7 @@ fun Coder.main (): String {
                             v = (e1->Dyn->Ncast.Tuple.its==e2->Dyn->Ncast.Tuple.its);
                             if (v) {
                                 for (int i=0; i<e1->Dyn->Ncast.Tuple.its; i++) {
-                                    CEU_Value* xs[] = { &e1->Dyn->Ncast.Tuple.mem[i], &e2->Dyn->Ncast.Tuple.mem[i] };
+                                    CEU_Value* xs[] = { &e1->Dyn->Ncast.Tuple.buf[i], &e2->Dyn->Ncast.Tuple.buf[i] };
                                     assert(CEU_RET_RETURN == ceu_op_equals_equals_f(_1, _2, 2, xs));
                                     if (!ceu_acc.Bool) {
                                         break;
@@ -1359,7 +1361,7 @@ fun Coder.main (): String {
                 case CEU_VALUE_TUPLE: {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
-                        CEU_Value* args[1] = { &dyn->Ncast.Tuple.mem[i] };
+                        CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
                     }
                     ceu_acc = *src;
@@ -1379,9 +1381,9 @@ fun Coder.main (): String {
                 case CEU_VALUE_DICT: {
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
-                        CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.mem)[i][0] };
+                        CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args0));
-                        CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.mem)[i][1] };
+                        CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.buf)[i][1] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args1));
                     }
                     ceu_acc = *src;
@@ -1407,7 +1409,7 @@ fun Coder.main (): String {
                     assert(new != NULL);
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Tuple.its; i++) {
-                        CEU_Value* args[1] = { &old->Ncast.Tuple.mem[i] };
+                        CEU_Value* args[1] = { &old->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         ceu_tuple_set(new, i, ceu_acc);
                     }
@@ -1434,7 +1436,7 @@ fun Coder.main (): String {
                     new->isperm = 0;
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
                         {
-                            CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][0] };
+                            CEU_Value* args[1] = { &(*old->Ncast.Dict.buf)[i][0] };
                             assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         }
                         CEU_Value key = ceu_acc;
@@ -1442,7 +1444,7 @@ fun Coder.main (): String {
                             continue;
                         }
                         {
-                            CEU_Value* args[1] = { &(*old->Ncast.Dict.mem)[i][1] };
+                            CEU_Value* args[1] = { &(*old->Ncast.Dict.buf)[i][1] };
                             assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
                         }
                         CEU_Value val = ceu_acc;
