@@ -624,13 +624,14 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
+                        }.let { (TAG,Tag) ->
+                            if (Tag=="Func" || Tag=="Task") {
+                                Pair(TAG, "Dyn")
+                            } else {
+                                Pair(TAG, Tag)
+                            }
                         }
-                        val v = assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
-                        Pair(null, """
-                        //{ // NATIVE ${this.tk.dump()} // (use comment b/c native may declare var to be used next)
-                            $v
-                        //}
-                        """)
+                        Pair(null, assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })"))
                     }
                 }
                 if (pre != null) {
