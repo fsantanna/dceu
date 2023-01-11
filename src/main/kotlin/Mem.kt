@@ -1,4 +1,4 @@
-val union = "struct"
+val union = "union"
 
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
