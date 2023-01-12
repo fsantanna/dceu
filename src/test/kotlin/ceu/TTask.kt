@@ -246,7 +246,7 @@ class TTask {
     fun todo_aa_task19_self() {
         val out = all("""
             var T1 = task (co) {
-                yield()
+                yield(nil)
             }
             var T2 = task () {
                 var t1 = spawn T1(task)
@@ -262,7 +262,7 @@ class TTask {
         val out = all("""
             var T1 = task (co) {
                 println(:3)
-                yield()
+                yield(nil)
                 println(:6)
                 resume co(:t1)  ;; will kill myself
                 println(:999)
@@ -289,7 +289,7 @@ class TTask {
             var t = []
             resume t()
         """)
-        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n") { out }
+        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\nerror\n") { out }
     }
 
     // SPAWN
@@ -2115,7 +2115,7 @@ class TTask {
                 println(x)
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spawn ta...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spa...)\n" +
                 "anon : (lin 5, col 24) : task () :fake :awakes { set x = task.pub }()\n" +
                 "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
