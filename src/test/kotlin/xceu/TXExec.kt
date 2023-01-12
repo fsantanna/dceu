@@ -1304,7 +1304,7 @@ class TXExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 5, col 33) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 5, col 38) : pub error : expected enclosing task") { out }
     }
     @Test
     fun task5_pub_fake() {
@@ -1959,7 +1959,7 @@ class TXExec {
             spawn T ()
         """, true)
         assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 5, col 25) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 5, col 30) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun all4() {
