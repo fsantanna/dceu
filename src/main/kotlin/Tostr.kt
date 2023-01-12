@@ -29,7 +29,8 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "resume " + this.call.tostr(pre)
         is Expr.Toggle -> "toggle " + this.coro.tostr(pre) + "(" + this.on.tostr() + ")"
-        is Expr.Pub    -> this.coro.cond { it.tostr(pre) + "." } + this.tk.str
+        is Expr.Pub    -> this.coro.tostr(pre) + "." + this.tk.str
+        is Expr.Task   -> "task"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()

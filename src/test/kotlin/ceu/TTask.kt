@@ -1606,7 +1606,7 @@ class TTask {
             println(type(ts))
             var T
             set T = task (v) {
-                set pub = v
+                set task.pub = v
                 set v = yield(nil)
             }
             spawn in ts, T(1)
@@ -1678,11 +1678,11 @@ class TTask {
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
     @Test
-    fun ff_pool25_reuse_awake() {
+    fun todo_ff_pool25_reuse_awake() {
         val out = ceu.all(
             """
             var T = task (n) :awakes {
-                set pub = n
+                set task.pub = n
                 yield(nil)
                 ;;println(:awake, evt, n)
                 while evt /= n {
@@ -1916,20 +1916,20 @@ class TTask {
     @Test
     fun hh_pub2_err() {
         val out = all("""
-            pub
+            task.pub
         """, true)
-        assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
     }
     @Test
     fun hh_pub3() {
         val out = all("""
             var t
             set t = task (v1) {
-                set pub = v1
+                set task.pub = v1
                 var v2
                 set v2 = yield(nil)
-                set pub = pub + v2
-                pub
+                set task.pub = task.pub + v2
+                task.pub
             }
             var a
             set a = coroutine(t)
@@ -1946,7 +1946,7 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                set pub = []
+                set task.pub = []
             }
             var x
             do {
@@ -1968,7 +1968,7 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                set pub = 10
+                set task.pub = 10
             }
             var a
             set a = coroutine(t)
@@ -1982,7 +1982,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]  ;; valgrind test
+                set task.pub = [10]  ;; valgrind test
             }
             spawn T()
             println(1)
@@ -1995,7 +1995,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                pub ;; useless test
+                task.pub ;; useless test
                 nil
             }
             spawn T()
@@ -2008,7 +2008,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var ts
@@ -2026,7 +2026,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var ts
@@ -2045,9 +2045,9 @@ class TTask {
     fun hh_pub8_fake_task() {
         val out = all("""
             spawn (task () {
-                set pub = 1
+                set task.pub = 1
                 spawn (task () :fake {
-                    println(pub)
+                    println(task.pub)
                 }) ()
                 nil
             }) ()
@@ -2058,26 +2058,26 @@ class TTask {
     fun hh_pub9_fake_task_err() {
         val out = all("""
             spawn (task () :awakes {
-                set pub = []
+                set task.pub = []
                 var x
                 spawn (task () :fake :awakes {
-                    set x = pub
+                    set x = task.pub
                 }) ()
                 println(x)
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :awakes { set pub = [] var x spawn ta...)\n" +
-                "anon : (lin 5, col 24) : task () :fake :awakes { set x = pub }()\n" +
-                "anon : (lin 6, col 29) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spawn ta...)\n" +
+                "anon : (lin 5, col 24) : task () :fake :awakes { set x = task.pub }()\n" +
+                "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub9_10_fake_task() {
         val out = all("""
             spawn (task () {
-                set pub = [10]
+                set task.pub = [10]
                 var x
                 spawn (task () :fake {
-                    set x = pub[0]
+                    set x = task.pub[0]
                 }) ()
                 println(x)
             }) ()
@@ -2088,17 +2088,17 @@ class TTask {
     fun hh_pub10_fake_err() {
         val out = all("""
             spawn (task () :fake {
-                pub
+                task.pub
             }) ()
         """, true)
-        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
     }
     @Test
     fun hh_pub11_err() {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var y
@@ -2120,7 +2120,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var t
@@ -2136,7 +2136,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var t
@@ -2152,7 +2152,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [[@[(:x,10)]]]
+                set task.pub = [[@[(:x,10)]]]
                 yield(nil)
             }
             var t
@@ -2189,15 +2189,15 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
-                set pub = v
+                set task.pub = v
                 yield(nil)
                 var x
                 set x = [2]
-                set pub = x
+                set task.pub = x
                 var y
                 set y = yield(nil)
-                set pub = @[(:y,y)]
-                move(pub)
+                set task.pub = @[(:y,y)]
+                move(task.pub)
             }
             var a
             set a = coroutine(t)
@@ -2215,7 +2215,7 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                set pub = []
+                set task.pub = []
             }
             var a
             set a = coroutine(t)
@@ -2233,7 +2233,7 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                set pub = @[]
+                set task.pub = @[]
             }
             var a
             set a = coroutine(t)
@@ -2251,7 +2251,7 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                set pub = #[]
+                set task.pub = #[]
             }
             var a
             set a = coroutine(t)
@@ -2268,10 +2268,10 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
-                set pub = v
+                set task.pub = v
                 var f
                 set f = func () {
-                    pub
+                    task.pub
                 }
                 println(f())
             }
@@ -2286,10 +2286,10 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
-                set pub = v
+                set task.pub = v
                 var f
                 set f = func () {
-                    pub
+                    task.pub
                 }
                 println(f())
             }
@@ -2299,14 +2299,14 @@ class TTask {
         """, true)
         assert(out == "anon : (lin 13, col 20) : a([1])\n" +
                 "anon : (lin 9, col 25) : f()\n" +
-                "anon : (lin 7, col 21) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+                "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub_22_nopub() {
         val out = all("""
             var U
             set U = task () {
-                set pub = func () {
+                set task.pub = func () {
                     10
                 }
             }
@@ -2324,7 +2324,7 @@ class TTask {
         val out = all("""
             var U
             set U = task () {
-                set pub = [10]
+                set task.pub = [10]
             }
             var T
             set T = task (u) {
@@ -2356,7 +2356,7 @@ class TTask {
     fun hh_pub25() {
         val out = all("""
             var t = task (v) {
-                set pub = @[]
+                set task.pub = @[]
                 nil
             }
             var a
@@ -2380,16 +2380,16 @@ class TTask {
     @Test
     fun ii_status2_err() {
         val out = all("""
-            status
+            task.status
         """, true)
-        assert(out == "anon : (lin 2, col 13) : status error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
     }
     @Test
     fun ii_status3_err() {
         val out = all("""
             var t
             set t = task () {
-                set status = nil     ;; error: cannot assign to status
+                set task.status = nil     ;; error: cannot assign to status
             }
         """, true)
         assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination") { out }
@@ -2399,9 +2399,9 @@ class TTask {
         val out = all("""
             var t
             set t = task () {
-                println(10, status)
+                println(10, task.status)
                 yield(nil)
-                println(20, status)
+                println(20, task.status)
             }
             var a
             set a = coroutine(t)
@@ -2641,7 +2641,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = 10
+                set task.pub = 10
                 yield(nil)
             }
             var t
@@ -2668,7 +2668,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var t
@@ -2703,7 +2703,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () :awakes {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var t
@@ -2722,7 +2722,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                set pub = [10]
+                set task.pub = [10]
                 yield(nil)
             }
             var x
@@ -2760,7 +2760,7 @@ class TTask {
     fun ll_track09() {
         val out = all("""
             var T = task (v) :awakes {
-                set pub = [v]
+                set task.pub = [v]
                 yield(nil)
             }
             var x
@@ -2781,7 +2781,7 @@ class TTask {
         val out = all("""
             var T
             set T = task (v) :awakes {
-                set pub = [v]
+                set task.pub = [v]
                 yield(nil)
             }
             var x
@@ -2806,7 +2806,7 @@ class TTask {
         val out = all("""
             var T
             set T = task (v) {
-                set pub = [v]
+                set task.pub = [v]
                 yield(nil)
             }
             var x
@@ -2848,7 +2848,7 @@ class TTask {
         val out = all("""
             var T
             set T = task (v) :awakes {
-                set pub = [v]
+                set task.pub = [v]
                 yield(nil)
             }
             var ts
@@ -2873,7 +2873,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () :awakes {
-                set pub = [10]
+                set task.pub = [10]
                 ${await("evt==:evt")}
             }
             var t

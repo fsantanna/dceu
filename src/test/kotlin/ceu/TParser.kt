@@ -285,11 +285,17 @@ class TParser {
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"2\"")
     }
     @Test
-    fun pub7() {
+    fun pub7_err() {
         val l = lexer("set pub = x.pub + pub")
         val parser = Parser(l)
+        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected expression : have \"pub\"")
+    }
+    @Test
+    fun pub8() {
+        val l = lexer("set task.pub = x.pub + task.pub")
+        val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "set pub = {+}(x.pub,pub)") { e.tostr() }
+        assert(e.tostr() == "set task.pub = {+}(x.pub,task.pub)") { e.tostr() }
     }
 
     // EXPRS

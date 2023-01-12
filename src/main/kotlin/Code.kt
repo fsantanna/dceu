@@ -534,15 +534,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pub -> """
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
-                    ${if (this.coro == null) {
-                        "ceu_dyn_$n = ${this.non_fake_task_c()}->Task.coro;"
-                    } else { """
-                        ${this.coro.code()}
-                        if (ceu_acc.type != CEU_VALUE_CORO) {                
-                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine");
-                        }
-                        ceu_dyn_$n = ceu_acc.Dyn;
-                    """ }}
+                    ${this.coro.code()}
+                    if (ceu_acc.type != CEU_VALUE_CORO) {                
+                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine");
+                    }
+                    ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
                         val inidx  = ups.all_until(this) { it is Expr.Index }.isNotEmpty()
                         val incall = (ups.ups[this] is Expr.Call)
@@ -576,6 +572,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
+            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_CORO, {.Dyn=${this.non_fake_task_c()}->Task.coro} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {

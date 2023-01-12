@@ -144,14 +144,15 @@ class Ups (val outer: Expr.Do) {
             is Expr.Resume -> this.call.traverse()
             is Expr.Toggle -> { this.coro.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
-                if (this.coro == null) {
+                if (this.coro is Expr.Task) {
                     val ok = hasfirst(this) { it is Expr.Proto && it.task!=null && !it.task.first }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }
                 }
-                this.coro?.traverse()
+                this.coro.traverse()
             }
+            is Expr.Task   -> {}
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
@@ -216,7 +217,8 @@ class Ups (val outer: Expr.Do) {
             is Expr.Yield  -> this.map(listOf(this.arg))
             is Expr.Resume -> this.map(listOf(this.call))
             is Expr.Toggle -> this.map(listOf(this.coro, this.on))
-            is Expr.Pub    -> this.map(listOfNotNull(this.coro))
+            is Expr.Pub    -> this.map(listOf(this.coro))
+            is Expr.Task   -> emptyMap()
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()

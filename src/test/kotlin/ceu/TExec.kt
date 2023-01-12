@@ -1794,7 +1794,7 @@ class TExec {
     @Test
     fun native15_func() {
         val out = all("""
-            func f (v) {
+            var f = func (v) {
                 println(v)
                 v
             }

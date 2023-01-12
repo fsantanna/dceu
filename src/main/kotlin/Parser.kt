@@ -374,20 +374,25 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
-                this.acceptFix_err("(")
-                val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
-                val task = if (tk0.str == "func") null else {
-                    Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
-                }
-                val body = this.catch_block(this.tk1).let { (C,b) -> C(b) }.let {
-                    if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it))
-                }
-                val proto = Expr.Proto(tk0, task, args, body)
-                if (id == null) proto else {
+                val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || this.checkFix("(") || (XCEU && this.checkEnu("Id")))
+                if (isnote) {
+                    val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
+                    this.acceptFix_err("(")
+                    val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
+                    val task = if (tk0.str == "func") null else {
+                        Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
+                    }
+                    val body = this.catch_block(this.tk1).let { (C,b) -> C(b) }.let {
+                        if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it))
+                    }
+                    val proto = Expr.Proto(tk0, task, args, body)
+                    if (id == null) proto else {
                     this.nest("""
                         ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 
                     """)
+                }
+                } else {
+                    Expr.Task(tk0)
                 }
             }
             this.acceptFix("catch") -> {
@@ -496,7 +501,6 @@ class Parser (lexer_: Lexer)
                     """)//.let { println(it.tostr()); it }
                 }
             }
-            this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, null)
 
             this.acceptFix("evt") || this.acceptFix("err") -> Expr.EvtErr(this.tk0 as Tk.Fix)
             this.acceptEnu("Nat")  -> {

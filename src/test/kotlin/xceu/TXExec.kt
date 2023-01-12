@@ -648,7 +648,7 @@ class TXExec {
     fun todo_awaiting16_track() {
         val out = all("""
             task T () :awakes {
-                set pub = [10]
+                set task.pub = [10]
                 await :evt
             }
             var t = coroutine(T)
@@ -673,7 +673,7 @@ class TXExec {
     fun todo_awaiting17_track() {
         val out = all("""
             task T () :awakes {
-                set pub = :pub
+                set task.pub = :pub
                 await evt==:evt
             }
             var t = spawn T()
@@ -1298,7 +1298,7 @@ class TXExec {
             spawn {
                 awaiting evt==:a {
                     every evt==:b {
-                        println(pub)    ;; no enclosing task
+                        println(task.pub)    ;; no enclosing task
                     }
                 }
             }
@@ -1310,10 +1310,10 @@ class TXExec {
     fun task5_pub_fake() {
         val out = all("""
             spawn (task () :awakes {
-                set pub = 1
+                set task.pub = 1
                 awaiting evt==:a {
                     every evt==:b {
-                        println(pub)
+                        println(task.pub)
                     }
                 }
             }) ()
@@ -1328,10 +1328,10 @@ class TXExec {
     fun task6_pub_fake() {
         val out = all("""
             task T () {
-                set pub = 10
-                println(pub)
+                set task.pub = 10
+                println(task.pub)
                 spawn {
-                    println(pub)
+                    println(task.pub)
                     await false
                 }
                 nil
@@ -1439,9 +1439,9 @@ class TXExec {
     fun toggle2() {
         val out = all("""
             task T (v) :awakes {
-                set pub = v
+                set task.pub = v
                 toggle evt==:hide -> evt==:show {
-                    println(pub)
+                    println(task.pub)
                     every (evt is :dict) and (evt.sub==:draw) {
                         println(evt.v)
                     }
@@ -1460,9 +1460,9 @@ class TXExec {
     fun toggle3() {
         val out = all("""
             task T (v) :awakes {
-                set pub = v
+                set task.pub = v
                 toggle :hide -> :show {
-                    println(pub)
+                    println(task.pub)
                     every :draw {
                         println(evt.0)
                     }
@@ -1939,7 +1939,7 @@ class TXExec {
     fun all2() {
         val out = all("""
             task T (pos) {
-                set pub = func () { pos }
+                set task.pub = func () { pos }
                 await false
             }
             var t = spawn T ([1,2])
@@ -1953,7 +1953,7 @@ class TXExec {
             task T () {
                 do {
                     var x = []
-                    set pub = func () { x }
+                    set task.pub = func () { x }
                 }
             }
             spawn T ()
@@ -1965,7 +1965,7 @@ class TXExec {
     fun all4() {
         val out = all("""
             task U () {
-                set pub = func () {
+                set task.pub = func () {
                     10
                 }
             }
@@ -1981,7 +1981,7 @@ class TXExec {
     fun all5() {
         val out = all("""
             task U () {
-                set pub = func () {
+                set task.pub = func () {
                     10
                 }
                 await false
@@ -1997,7 +1997,7 @@ class TXExec {
     fun all6() {
         val out = all("""
             task U () {
-                set pub = func () {
+                set task.pub = func () {
                     10
                 }
                 await false
