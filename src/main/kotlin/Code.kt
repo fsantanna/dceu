@@ -893,19 +893,23 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 // RESUME ${this.tk.dump()}
                     ${this.proto.code()}
                     CEU_Value ceu_coro_$n = ceu_acc;
-                    if (ceu_coro_$n.type<CEU_VALUE_BCAST || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                    if (ceu_coro_$n.type!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${resume!!.tk.pos.file} : (lin ${resume.tk.pos.lin}, col ${resume.tk.pos.col}) : resume error : expected yielded task");
                     }
                 """} +
 
                 """
                     CEU_Value* ceu_args_$n[] = { ${if (pass_evt) "ceu_evt" else args_vs} };
+                    CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
                     ceu_ret = $frame->proto->f (
                         $frame,
-                        ceu_bstack,
+                        &ceu_bstack_$n,
                         ${if (pass_evt) -1 else this.args.size},
                         ceu_args_$n
                     );
+                    if (ceu_bstack_$n.block == NULL) {
+                        return ceu_ret;
+                    }
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${iscoros.cond{"}"}}
                     ${spawn.cond{ assrc(if (iscoros) "ceu_ok_$n" else "ceu_coro_$n") }}

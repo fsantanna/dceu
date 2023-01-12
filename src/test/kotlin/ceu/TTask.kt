@@ -242,6 +242,55 @@ class TTask {
         """)
         assert(out == "0\n1\n4\n3\n") { out }
     }
+    @Test
+    fun todo_aa_task19_self() {
+        val out = all("""
+            var T1 = task (co) {
+                yield()
+            }
+            var T2 = task () {
+                var t1 = spawn T1(task)
+                yield(t1)          ;; t1 cannot escape
+            }
+            var t2 = coroutine(T2)
+            var t1 = resume t2()
+        """)
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun aa_task20_self() {
+        val out = all("""
+            var T1 = task (co) {
+                println(:3)
+                yield()
+                println(:6)
+                resume co(:t1)  ;; will kill myself
+                println(:999)
+            }
+            var T2 = task () {
+                println(:2)
+                var t1 = spawn T1(task)
+                println(:4)
+                yield(track(t1))
+                println(:7)
+            }
+            println(:1)
+            var t2 = coroutine(T2)
+            var t1 = resume t2()
+            println(:5)
+            resume detrack(t1)()
+            println(:8)
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n:5\n:6\n:7\n:8\n") { out }
+    }
+    @Test
+    fun aa_task21_self() {
+        val out = all("""
+            var t = []
+            resume t()
+        """)
+        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n") { out }
+    }
 
     // SPAWN
 
