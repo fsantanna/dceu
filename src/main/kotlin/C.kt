@@ -66,10 +66,10 @@ fun Coder.main (): String {
 
         #define CEU_TAG_DEFINE_N(id,str,n)          \
             const int CEU_TAG_##id = n;             \
-            CEU_Tags_Names ceu_tag_##id = { str, NULL };
+            CEU_Tags_Names ceu_tag_##id = { CEU_TAG_##id, str, NULL };
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
-            CEU_Tags_Names ceu_tag_##id = { str, NULL };
+            CEU_Tags_Names ceu_tag_##id = { CEU_TAG_##id, str, NULL };
         #define CEU_TAG_INIT(id,str)                \
             ceu_tag_##id.next = CEU_TAGS;           \
             CEU_TAGS = &ceu_tag_##id;               \
@@ -261,6 +261,7 @@ fun Coder.main (): String {
     """ +
     """ // CEU_Tags
         typedef struct CEU_Tags_Names {
+            int tag;
             char* name;
             struct CEU_Tags_Names* next;
         } CEU_Tags_Names;
@@ -392,10 +393,13 @@ fun Coder.main (): String {
         }
         char* ceu_tag_to_string (int tag) {
             CEU_Tags_Names* cur = CEU_TAGS;
-            for (int i=0; i<CEU_TAGS_MAX-tag-1; i++) {
+            for (int i=0; i<CEU_TAGS_MAX; i++) {
+                if (cur->tag == tag) {
+                    return cur->name;
+                }
                 cur = cur->next;
             }
-            return cur->name;
+            assert(0 && "bug found");
         }
     """ +
     """ // GC

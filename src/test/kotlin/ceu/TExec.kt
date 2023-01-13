@@ -2087,7 +2087,17 @@ class TExec {
         """, true)
         assert(out == "29\t1000\t1001\t1002\t10\t11\t12\t30\t100\t101\t31\n") { out }
     }
-
+    @Test
+    fun enum02() {
+        val out = all("""
+            enum {
+                :x = `1000`,
+                :y = `1000`,
+            }
+            println(:tag, :x, :1000, :y)
+        """)
+        assert(out == ":tag\t:y\t:1000\t:y\n") { out }
+    }
 
     // DEFER
 
