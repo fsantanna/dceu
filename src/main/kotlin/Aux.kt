@@ -35,6 +35,7 @@ fun <T> T?.cond (f: (v:T)->String): String {
 
 fun String.noSpecial (): String {
     val MAP = mapOf(
+        Pair('-', "_dash"),
         Pair('\'', "_plic"),
         Pair('?', "_question"),
         Pair('!', "_bang"),

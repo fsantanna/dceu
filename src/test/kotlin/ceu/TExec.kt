@@ -157,6 +157,14 @@ class TExec {
         """)
         assert(out == "1") { out }
     }
+    @Test
+    fun bb_var3() {
+        val out = all("""
+            var this-is-a-var = 1
+            print(this-is-a-var)
+        """)
+        assert(out == "1") { out }
+    }
 
     // INDEX / TUPLE
 
