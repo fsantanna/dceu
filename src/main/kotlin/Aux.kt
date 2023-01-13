@@ -33,7 +33,14 @@ fun <T> T?.cond (f: (v:T)->String): String {
     }
 }
 
-fun String.noSpecial (): String {
+fun String.tag2c (): String {
+    return this
+        .drop(1)
+        .replace('.','_')
+        .replace('-','_')
+}
+
+fun String.id2c (): String {
     val MAP = mapOf(
         Pair('-', "_dash"),
         Pair('\'', "_plic"),

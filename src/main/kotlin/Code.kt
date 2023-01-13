@@ -236,7 +236,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             {
                                 int ceu_i = 0;
                                 ${f_b.args.map {
-                                    val id = it.str.noSpecial()
+                                    val id = it.str.id2c()
                                     """
                                     ${istask.cond { """
                                         if (ceu_coro->Bcast.Coro.up_coros != NULL) {
@@ -360,7 +360,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Dcl -> {
-                val id = this.tk_.fromOp().noSpecial()
+                val id = this.tk_.fromOp().id2c()
                 val isperm = if (id[0] == '_') 0 else 1
                 val dcl = ups.getDcl(this, this.tk.str)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
@@ -637,7 +637,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 pos
             }
             is Expr.Acc -> {
-                val id = this.tk_.fromOp().noSpecial()
+                val id = this.tk_.fromOp().id2c()
                 val dcl = ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
@@ -678,7 +678,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Nil -> assrc("((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str
-                val ctag = tag.drop(1).replace('.','_').replace('-','_')
+                val ctag = tag.tag2c()
                 if (tags.none { it.first==tag }) {
                     tags.add(Pair(tag,ctag))
                 }

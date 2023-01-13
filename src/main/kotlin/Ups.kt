@@ -112,7 +112,7 @@ class Ups (val outer: Expr.Do) {
             }
             is Expr.Dcl -> {
                 this.src?.traverse()
-                val id = this.tk_.fromOp().noSpecial()
+                val id = this.tk_.fromOp().id2c()
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
