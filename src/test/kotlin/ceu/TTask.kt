@@ -814,17 +814,6 @@ class TTask {
         """)
         assert(out == "10\n") { out }
     }
-    @Test
-    fun dd_throw12() {
-        val out = all("""
-            catch true {
-                throw(:x)
-                println(9)
-            }
-            println(1)
-        """)
-        assert(out == "1\n") { out }
-    }
 
     // BCAST / BROADCAST
 

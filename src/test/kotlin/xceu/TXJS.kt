@@ -611,11 +611,94 @@ class TXJS {
     // 22.6.2 Generators for lazy evaluation
     // 22.6.2.1 Lazy pull (generators as iterators)
     //  - addNumbers(extractNumbers(tokenize(CHARS)))
+    // See also: https://github.com/fsantanna/uv-ceu/blob/master/ceu/05-fs-lines-pull.ceu
     // 22.6.2.1.1 Step 1 – tokenizing
     // 22.6.2.1.2 Step 2 – extracting numbers
     // 22.6.2.1.3 Step 3 – adding numbers
     // 22.6.2.1.4 Pulling the output
+
     // 22.6.2.2 Lazy push (generators as observables)
+    // See also: https://github.com/fsantanna/uv-ceu/blob/master/ceu/05-fs-lines-pull.ceu
+    @Test
+    fun x23() {
+        val out = all("""
+        task Split (chars) {
+            yield()
+            var line = ""
+            while in :coro chars, c {
+                if c == '\n' {
+                    yield(move(line))
+                    set line = ""
+                } else {
+                    set line[+] = c
+                }
+            }
+        }
+        task Number (lines) {
+            yield()
+            var i = 1
+            while in :coro lines, l {
+                yield(tostring(i) ++ (": " ++ l))
+                set i = i + 1
+            }
+        }
+        task Take (n, lines) {
+            yield()
+            var i = 0
+            while i < n {
+                yield(resume lines())
+                set i = i + 1
+            }
+        }
+        task FS-Read (filename) {
+            var f = `:pointer fopen(${D}filename.Dyn->Ncast.Vector.buf, "r")`
+            defer {
+                `fclose(${D}f.Pointer);`
+            }
+            yield()
+            until {
+                var c = `:char fgetc(${D}f.Pointer)`
+                yield(c)
+                c == `:char EOF`
+            }
+        }
+        do { ;; PULL
+            var read1   = spawn FS-Read("prelude.ceu")
+            var split1  = spawn Split(read1)
+            var number1 = spawn Number(split1)
+            var take1   = spawn Take(3, number1)
+            while in :coro take1, l {
+                println(l)
+            }
+        }
+        do { ;; PUSH
+            var read2   = spawn FS-Read("prelude.ceu")
+            var split2  = spawn Split(read2)
+            var number2 = spawn Number(split2)
+            var take2   = spawn Take(3, number2)
+            task Show () {
+                var line = yield()
+                while line {
+                    println(line)
+                    set line = yield()
+                }
+            }
+            task Send (iter, next) {
+                while in :coro iter, v {
+                    resume next(v)
+                }
+            }
+            spawn Send(take2, spawn Show())
+        }
+        """, true)
+        assert(out == "1: ;; is', isnot'\n" +
+                "2: \n" +
+                "3: func is' (v1,v2) {\n" +
+                "1: ;; is', isnot'\n" +
+                "2: \n" +
+                "3: func is' (v1,v2) {\n") { out }
+    }
+
     // 22.6.2.2.1 Step 1 – tokenize
     // 22.6.2.2.2 Step 2 – extract numbers
     // 22.6.2.2.3 Step 3 – add numbers
