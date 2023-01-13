@@ -436,6 +436,7 @@ class TXJS {
 
     // 22.4.6 Example: processing asynchronously pushed data
     // Ceu uses a scope for the generator and uses a normal loop to feed data.
+    // See also: https://github.com/fsantanna/uv-ceu/blob/master/ceu/04-fs-lines-push.ceu
 
     @Test
     fun x19() {

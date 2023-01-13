@@ -1,5 +1,5 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<String>?)
+data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
 data class Dcl (val id: String, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Ups (val outer: Expr.Do) {

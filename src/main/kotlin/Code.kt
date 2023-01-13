@@ -278,6 +278,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             """ }.joinToString("")
                             }
                         }
+                        { // reset defers
+                            ${ups.xblocks[this]!!.defers.map {
+                                "ceu_mem->defer_${it.first} = 0;\n"
+                            }.joinToString("")}
+                        }
                         do { // block
                             $ES
                         } while (0); // block
@@ -321,7 +326,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
-                                    ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
+                                    ${ups.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
                                     if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                         ceu_acc_$n = ceu_acc;
                                     }
@@ -445,8 +450,19 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
                 """
             is Expr.Defer -> {
-                ups.xblocks[ups.first_block(this)!!]!!.defers!!.add(this.body.code())
-                assrc("((CEU_Value) { CEU_VALUE_NIL })")
+                ups.xblocks[ups.first_block(this)!!]!!.defers.add(
+                    Pair(n,
+                        """
+                        if (ceu_mem->defer_$n) {
+                            ${this.body.code()}
+                        }
+                        """
+                    )
+                )
+                """
+                ceu_mem->defer_$n = 1;
+                ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
+                """
             }
             is Expr.Enum -> {
                 var E = ""

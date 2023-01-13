@@ -313,6 +313,27 @@ class TTask {
         """)
         assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n:error\n") { out }
     }
+    @Test
+    fun aa_task22_defer() {
+        val out = all("""
+            var T
+            set T = task () {
+                defer {
+                    println(3)
+                }
+                println(1)
+                yield(nil)   ;; never awakes
+                defer {
+                    println(999)
+                }
+                println(2)
+            }
+            println(0)
+            resume (coroutine(T)) ()
+            println(4)
+        """)
+        assert(out == "0\n1\n4\n3\n") { out }
+    }
 
     // SPAWN
 
@@ -792,6 +813,17 @@ class TTask {
             println(10)
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun dd_throw12() {
+        val out = all("""
+            catch true {
+                throw(:x)
+                println(9)
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // BCAST / BROADCAST

@@ -60,7 +60,12 @@ fun Expr.mem (): String {
                 ${this.body.mem()}
             };
             """
-        is Expr.Defer -> this.body.mem()
+        is Expr.Defer -> """
+            struct { // DEFER
+                int defer_$n;
+                ${this.body.mem()}
+            };
+        """
 
         is Expr.Spawn -> """
             struct { // SPAWN
