@@ -2,6 +2,7 @@ import java.io.File
 import java.io.PushbackReader
 import java.io.Reader
 import java.io.StringReader
+import java.lang.Integer.max
 
 data class Lex(var file: String, var lin: Int, var col: Int, val reader: PushbackReader)
 data class Pos (val file: String, val lin: Int, val col: Int)
@@ -43,7 +44,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
         when {
             iseof(n) -> {}
             (x == '\n') -> { pos.lin--; pos.col=0 }
-            else -> pos.col--
+            else -> pos.col = max(0,pos.col-1)    // TODO: should remeber col from previous line
         }
     }
     fun read2Until (f: (x: Char)->Boolean): String? {
@@ -215,14 +216,14 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && !y.isDigit()) }
+                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && y.isLetter()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && !y.isDigit()) }
+                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {

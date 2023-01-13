@@ -2152,4 +2152,14 @@ class TXExec {
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
+    @Test
+    fun all12_tk_pre () {
+        val out = all("""
+            ifs v {
+                is :pointer -> ctostring(v)
+                is :number -> 1
+            }
+        """)
+        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
+    }
 }
