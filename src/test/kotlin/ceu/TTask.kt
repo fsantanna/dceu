@@ -243,7 +243,7 @@ class TTask {
         assert(out == "0\n1\n4\n3\n") { out }
     }
     @Test
-    fun todo_aa_task19_self() {
+    fun aa_task19_self_escape_err() {
         val out = all("""
             var T1 = task (co) {
                 yield(nil)
@@ -255,7 +255,29 @@ class TTask {
             var t2 = coroutine(T2)
             var t1 = resume t2()
         """)
-        assert(out == "TODO\n") { out }
+        assert(out == "anon : (lin 10, col 29) : t2()\n" +
+                "anon : (lin 7, col 17) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun aa_task19a_self_escape() {
+        val out = all("""
+            var T1 = task (co) {
+                println(:3)
+                yield(nil)
+                println(:999)
+            }
+            var T2 = task () {
+                println(:2)
+                yield(spawn T1(task))
+                println(:999)
+            }
+            var t2 = coroutine(T2)
+            println(:1)
+            var t1 = resume t2()
+            println(:4)
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
     @Test
     fun aa_task20_self() {

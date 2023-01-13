@@ -502,7 +502,7 @@ class TXJS {
                     var tmp = yield(nil)
                     while in :vector tmp, (_,c) {
                         if c == '\n' {
-                            yield(cur)
+                            yield(move(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c

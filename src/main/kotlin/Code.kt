@@ -313,6 +313,12 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                             }
                                     }
                                 }
+                                int dead; {
+                                    // cleanup active nested spawns in this block
+                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
+                                    dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
+                                }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
                                     ${ups.xblocks[this]!!.defers!!.reversed().joinToString("")}
@@ -329,12 +335,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         }
                                     """ }.joinToString("")
                                     }
-                                }
-                                int dead; {
-                                    // cleanup active nested spawns in this block
-                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
-                                    dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
                                 }
                                 if (!dead) {
                                     // blocks: relink up, free down

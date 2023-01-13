@@ -630,7 +630,7 @@ fun Coder.main (): String {
                     ceu_hold_add(dyns, dyn);
                 }
                 dyn->isperm = dyn->isperm || isperm;
-            } else if (dyn->up_dyns.dyns->up_block->depth > dyns->up_block->depth && !(dyn->up_dyns.dyns->up_block->ispub && dyn->up_dyns.dyns->up_block->depth-1==dyns->up_block->depth)) {
+            } else if (dyn->up_dyns.dyns->up_block->depth > dyns->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {
