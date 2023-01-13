@@ -977,6 +977,24 @@ class TXExec {
         """)
         assert(out == "#[]\n><\n") { out }
     }
+    @Test
+    fun tuple18_size() {
+        val out = all("""
+            var t = [1, 2, 3]
+            println(#t)
+        """)
+        assert(out == "3\n") { out }
+    }
+    @Test
+    fun tuple19_iter() {
+        val out = all("""
+            var t = [1, 2, 3]
+            while in :tuple t, (i, v) {
+                println(i, v)
+            }
+        """, true)
+        assert(out == "0\t1\n1\t2\n2\t3\n") { out }
+    }
 
     // AWAIT / EVERY
 
@@ -1934,12 +1952,12 @@ class TXExec {
             }
             :depois
             var t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            while in :tuple, (i,v) {
+            while in :tuple t, (i,v) {
                 set t[i] = tonumber(v)
             }
             println(t)
         """, true)
-        assert(out == "[29,1000,1001,1002,10,11,12,30,100,101,31]\n") { out }
+        assert(out == "[31,1000,1001,1002,10,11,12,32,100,101,33]\n") { out }
     }
 
 

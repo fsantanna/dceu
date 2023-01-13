@@ -1310,11 +1310,15 @@ fun Coder.main (): String {
         
         CEU_RET ceu_op_hash_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
-            if (args[0]->type != CEU_VALUE_VECTOR) {
+            if (args[0]->type == CEU_VALUE_VECTOR) {
+                ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Vector.its} };
+            ${XCEU.cond { """ 
+                } else if (args[0]->type == CEU_VALUE_TUPLE) {
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Tuple.its} };            """ }}
+            } else {
                 CEU_THROW_MSG("\0 : length error : not a vector");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Vector.its} };
             return CEU_RET_RETURN;
         }
         

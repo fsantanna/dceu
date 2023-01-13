@@ -267,7 +267,7 @@ class Parser (lexer_: Lexer)
                     }
                     val col = this.expr()
                     this.acceptFix_err(",")
-                    val (i,v) = if (tktag.str in listOf(":vector",":dict")) {
+                    val (i,v) = if (tktag.str in listOf(":tuple",":vector",":dict")) {
                         this.acceptFix_err("(")
                         this.acceptEnu_err("Id")
                         val ii = this.tk0 as Tk.Id
@@ -330,6 +330,24 @@ class Parser (lexer_: Lexer)
                                         }
                                         ceu_stop_$N
                                     }
+                                }
+                                """) //.let { println(it.tostr());it })
+                            )
+                        }
+                        tktag.str == ":tuple" -> this.catch_block(this.tk1).let { (C,b) ->
+                            v!!
+                            C(this.nest("""
+                                do {
+                                    var ceu_tup_$N = ${col.tostr(true)}
+                                    assert(type(ceu_tup_$N) == :tuple)
+                                    var ${i.str} = 0
+                                    var ${v.str} = nil
+                                    while ${i.str} < #ceu_tup_$N {
+                                        set ${v.str} = ceu_tup_$N[${i.str}]
+                                        ${b.es.tostr(true)}
+                                        set ${i.str} = ${i.str} + 1
+                                    }
+                                    ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                 }
                                 """) //.let { println(it.tostr());it })
                             )
