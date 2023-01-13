@@ -1,7 +1,7 @@
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups) {
-    val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_')) }.toMutableList()
+    val tags = TAGS.map { Pair(it,it.drop(1).replace('.','_').replace('-','_')) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code()
@@ -678,7 +678,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Nil -> assrc("((CEU_Value) { CEU_VALUE_NIL })")
             is Expr.Tag -> {
                 val tag = this.tk.str
-                val ctag = tag.drop(1).replace('.','_')
+                val ctag = tag.drop(1).replace('.','_').replace('-','_')
                 if (tags.none { it.first==tag }) {
                     tags.add(Pair(tag,ctag))
                 }
