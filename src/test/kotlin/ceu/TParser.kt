@@ -883,4 +883,29 @@ class TParser {
         val e = parser.exprs()
         assert(e.tostr() == "track(x)\n") { e.tostr() }
     }
+
+    // ENUM
+
+    @Test
+    fun enum01() {
+        val l = lexer("""
+            enum {
+                :x = `1000`,
+                :y, :z,
+                :a = `10`,
+                :b, :c
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "enum {\n:x = 1000,\n:y,\n:z,\n:a = 10,\n:b,\n:c\n}\n") { e.tostr() }
+    }
+    @Test
+    fun enum02_err() {
+        val l = lexer("""
+            enum { :x=1 }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected native : have \"1\"")
+    }
 }

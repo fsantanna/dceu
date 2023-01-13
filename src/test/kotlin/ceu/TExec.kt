@@ -2053,6 +2053,42 @@ class TExec {
         assert(out == ":x-a-1\t:i.j.1\n") { out }
     }
 
+    // ENUM
+
+    @Test
+    fun enum01() {
+        val out = all("""
+            :antes
+            enum {
+                :x = `1000`,
+                :y, :z,
+                :a = `10`,
+                :b, :c
+            }
+            :meio
+            enum {
+                :i = `100`,
+                :j,
+            }
+            :depois
+            println (
+                tonumber(:antes),
+                tonumber(:x),
+                tonumber(:y),
+                tonumber(:z),
+                tonumber(:a),
+                tonumber(:b),
+                tonumber(:c),
+                tonumber(:meio),
+                tonumber(:i),
+                tonumber(:j),
+                tonumber(:depois)
+            )
+        """, true)
+        assert(out == "29\t1000\t1001\t1002\t10\t11\t12\t30\t100\t101\t31\n") { out }
+    }
+
+
     // DEFER
 
     @Test

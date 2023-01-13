@@ -1915,6 +1915,34 @@ class TXExec {
         assert(out == "81\n") { out }
     }
 
+    // ENUM
+
+    @Test
+    fun enum01() {
+        val out = all("""
+            :antes
+            enum {
+                :x = `1000`,
+                :y, :z,
+                :a = `10`,
+                :b, :c
+            }
+            :meio
+            enum {
+                :i = `100`,
+                :j,
+            }
+            :depois
+            var t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
+            while in :tuple, (i,v) {
+                set t[i] = tonumber(v)
+            }
+            println(t)
+        """, true)
+        assert(out == "[29,1000,1001,1002,10,11,12,30,100,101,31]\n") { out }
+    }
+
+
     // ALL
 
     @Test

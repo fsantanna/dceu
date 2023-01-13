@@ -64,6 +64,9 @@ fun Coder.main (): String {
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR_THROW() { CEU_CONTINUE_ON_CLEAR(); CEU_CONTINUE_ON_THROW(); }
 
+        #define CEU_TAG_DEFINE_N(id,str,n)          \
+            const int CEU_TAG_##id = n;             \
+            CEU_Tags_Names ceu_tag_##id = { str, NULL };
         #define CEU_TAG_DEFINE(id,str)              \
             const int CEU_TAG_##id = __COUNTER__;   \
             CEU_Tags_Names ceu_tag_##id = { str, NULL };
@@ -281,7 +284,13 @@ fun Coder.main (): String {
         
         static CEU_Tags_Names* CEU_TAGS = NULL;
         int CEU_TAGS_MAX = 0;
-        ${this.tags.map { "CEU_TAG_DEFINE(${it.second},\"${it.first}\")\n" }.joinToString("")}
+        ${this.tags.map { (str,c,n) ->
+            if (n == null) {
+                "CEU_TAG_DEFINE($c,\"${str}\")\n"
+            } else {
+                "CEU_TAG_DEFINE_N($c,\"${str}\",$n)\n"
+            }
+        }.joinToString("")}
 
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         CEU_Error_List* ceu_error_list = NULL;

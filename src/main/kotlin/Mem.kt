@@ -140,6 +140,6 @@ fun Expr.mem (): String {
             """
 
         is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
-        is Expr.Task, is Expr.Proto -> ""
+        is Expr.Task, is Expr.Proto, is Expr.Enum -> ""
     }
 }

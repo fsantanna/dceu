@@ -9,7 +9,7 @@ var N = 1
 val D = "\$"
 
 val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "defer", "do", "else", "err", "evt",
+    "broadcast", "catch", "defer", "do", "else", "enum", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
     "task", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
@@ -66,6 +66,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)

@@ -23,6 +23,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.While  -> "while " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
         is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)
+        is Expr.Enum   -> "enum {\n" + this.tags.map {
+            (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
+        }.joinToString(",\n") + "\n}"
 
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)

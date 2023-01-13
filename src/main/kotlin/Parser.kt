@@ -68,6 +68,7 @@ class Parser (lexer_: Lexer)
             "Id"  -> "identifier"
             "Tag" -> "tag"
             "Num" -> "number"
+            "Nat" -> "native"
             else   -> TODO(this.toString())
         }
 
@@ -405,6 +406,20 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
+            this.acceptFix("enum") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("{")
+                val tags = this.list0("}") {
+                    this.acceptEnu("Tag")
+                    val tag = this.tk0 as Tk.Tag
+                    val nat = if (!this.acceptFix("=")) null else {
+                        this.acceptEnu_err("Nat")
+                        this.tk0 as Tk.Nat
+                    }
+                    Pair(tag, nat)
+                }
+                Expr.Enum(tk0, tags)
+            }
 
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix

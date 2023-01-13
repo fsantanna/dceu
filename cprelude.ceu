@@ -168,17 +168,21 @@ set tostring = func (v) {
 
 var tonumber
 set tonumber = func (v) {
-    if type(v) == :vector {
-        if #v > 0 {
-            if type(v[0]) == :char {
-                `:number atoi($v.Dyn->Ncast.Vector.buf)`
+    if type(v) == :tag {
+        `:number $v.Tag`
+    } else {
+        if type(v) == :vector {
+            if #v > 0 {
+                if type(v[0]) == :char {
+                    `:number atoi($v.Dyn->Ncast.Vector.buf)`
+                } else {
+                    v   ;; TODO
+                }
             } else {
-                v   ;; TODO
+                v       ;; TODO
             }
         } else {
-            v       ;; TODO
+            v           ;; TODO
         }
-    } else {
-        v           ;; TODO
     }
 }
