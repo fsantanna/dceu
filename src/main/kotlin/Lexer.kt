@@ -81,6 +81,25 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
     fun read2While (x: Char): String {
         return read2While { it == x }
     }
+    fun read2While2 (f: (x: Char, y: Char)->Boolean): String {
+        var ret = ""
+        while (true) {
+            val (n1,x) = read2()
+            val (n2,y) = read2()
+            when {
+                f(x,y) -> {
+                    unread2(n2)
+                    ret += x
+                }
+                else -> {
+                    unread2(n2)
+                    unread2(n1)
+                    break
+                }
+            }
+        }
+        return ret
+    }
 
     fun next (): Pair<Char?, Pos> {
         while (true) {
@@ -196,14 +215,14 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While { it.isLetterOrDigit() || it in listOf('-','.') }
+                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && !y.isDigit()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While { (it.isLetterOrDigit() || it in listOf('-','_','\'','?','!')) }
+                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && !y.isDigit()) }
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {

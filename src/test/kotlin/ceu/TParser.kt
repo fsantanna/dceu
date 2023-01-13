@@ -898,7 +898,7 @@ class TParser {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "enum {\n:x = 1000,\n:y,\n:z,\n:a = 10,\n:b,\n:c\n}\n") { e.tostr() }
+        assert(e.tostr() == "enum {\n:x = `1000`,\n:y,\n:z,\n:a = `10`,\n:b,\n:c\n}\n") { e.tostr() }
     }
     @Test
     fun enum02_err() {

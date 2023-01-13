@@ -106,8 +106,10 @@ class TLexer {
     fun ids3() {
         val l = lexer("x-1 x-a")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.str == "x-1" })
-        assert(tks.next().let { it is Tk.Id && it.str == "x-a" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "-" })
+        assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x-a" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -426,9 +428,9 @@ class TLexer {
     }
     @Test
     fun tags6() {
-        val l = lexer(":X-y-1")
+        val l = lexer(":X-y-z")
         val tks = l.lex().iterator()
-        assert(tks.next().str == ":X-y-1")
+        assert(tks.next().str == ":X-y-z")
         assert(tks.next() is Tk.Eof)
     }
 }

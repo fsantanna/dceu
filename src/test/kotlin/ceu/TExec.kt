@@ -2048,9 +2048,9 @@ class TExec {
     @Test
     fun tags10() {
         val out = all("""
-            println(:x-a-1, :i.j.1)
+            println(:x-a-x, :i.j.1)
         """, true)
-        assert(out == ":x-a-1\t:i.j.1\n") { out }
+        assert(out == ":x-a-x\t:i.j.1\n") { out }
     }
 
     // ENUM

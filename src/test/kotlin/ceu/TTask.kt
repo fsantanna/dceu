@@ -289,7 +289,7 @@ class TTask {
             var t = []
             resume t()
         """)
-        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\nerror\n") { out }
+        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n:error\n") { out }
     }
 
     // SPAWN
