@@ -1,5 +1,6 @@
 # BUGS
 
+- block defer should be after block clean up
 - HOLES / UNION
 - mudei coro,coros,track para isperm=0, preciso avaliar e testar
 - como vou fazer com os holes?

@@ -196,14 +196,14 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While { it.isLetterOrDigit() || it=='.' }
+                    val tag = x + read2While { it.isLetterOrDigit() || it in listOf('-','.') }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While { (it.isLetterOrDigit() || it in listOf('_','\'','?','!')) }
+                    val id = x + read2While { (it.isLetterOrDigit() || it in listOf('-','_','\'','?','!')) }
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {
@@ -279,7 +279,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     when {
                         (x3.isLetter() || x3 == '_') -> {
-                            val id = x3 + read2While { (it.isLetterOrDigit() || it in listOf('_', '\'', '?', '!')) }
+                            val id = x3 + read2While { (it.isLetterOrDigit() || it=='_') }
                             if (KEYWORDS.contains(id)) {
                                 err(pos, "token ^ error : unexpected keyword")
                                 yield(Tk.Fix(id, pos))
