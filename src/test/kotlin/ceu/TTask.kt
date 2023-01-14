@@ -2973,10 +2973,10 @@ class TTask {
             var x
             set x = track(t)
             spawn task () :awakes {
-                catch :paror {
+                catch :par-or {
                     spawn task () :awakes {
                         ${await("if detrack(x).status==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
-                        throw(:paror)
+                        throw(:par-or)
                     } ()
                     println(detrack(x).pub[0])
                     broadcast in :global, nil

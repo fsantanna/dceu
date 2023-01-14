@@ -232,26 +232,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 x.isDigit() -> {
                     val num = x + read2While { it=='.' || it.isLetterOrDigit() }
-                    if (!XCEU) {
-                        yield(Tk.Num(num, pos))
-                    } else {
-                        val l = num.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex());
-                        if (l.size==1 || l[1] !in listOf("ms","s","min","h")) {
-                            yield(Tk.Num(num, pos))
-                        } else {
-                            val ms = l.chunked(2).map { (n,u) ->
-                                val v = n.toInt()
-                                when (u) {
-                                    "ms"  -> v
-                                    "s"   -> v * 1000
-                                    "min" -> v * 1000 * 60
-                                    "h"   -> v * 1000 * 60 * 60
-                                    else -> { err(pos, "invalid time constant"); 0 }
-                                }
-                            }.sum()
-                            yield(Tk.Clk(num, pos, ms))
-                        }
-                    }
+                    yield(Tk.Num(num, pos))
                 }
                 (x == '`') -> {
                     val open = x + read2While('`')

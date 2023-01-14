@@ -37,13 +37,18 @@ class TXLexer {
 
     @Test
     fun clk1() {
-        val l = lexer("1s 1 h 1h10min30s15ms 10ms")
+        val l = lexer("1:h x :min 30:s (1) :ms")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Clk && it.str == "1s" && it.ms==1000 })
         assert(tks.next().let { it is Tk.Num && it.str == "1" })
-        assert(tks.next().let { it is Tk.Id && it.str == "h" })
-        assert(tks.next().let { it is Tk.Clk && it.str=="1h10min30s15ms" && it.ms==4230015})
-        assert(tks.next().let { it is Tk.Clk && it.str == "10ms" && it.ms==10 })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":h" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":min" })
+        assert(tks.next().let { it is Tk.Num && it.str == "30" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":s" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":ms" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -51,7 +56,8 @@ class TXLexer {
     fun clk2() {
         val l = lexer("1s10k")
         val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Num && it.str == "1s10k" })
         //println(tks.next())
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid time constant")
+        //assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid time constant")
     }
 }

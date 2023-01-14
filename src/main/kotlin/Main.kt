@@ -14,7 +14,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "task", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
-    "parand", "paror", "until", "with", "where"
+    "par-and", "par-or", "until", "with", "where"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#')
@@ -26,11 +26,11 @@ val TAGS = listOf (
     ":tuple", ":vector", ":dict",
     ":bcast",
     ":coro", ":coros", ":track",
-    ":fake", ":hide", ":check.now", ":all", ":awakes",
+    ":fake", ":hide", ":check-now", ":all", ":awakes",
     ":clear", ":error",           // bcast-clear
     ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"
-)
+) + if (!XCEU) emptySet() else setOf(":h",":min",":s",":ms")
 
 val GLOBALS = setOf (
     "copy", "coroutine", "coroutines", "detrack", "move", "next", "print", "println",
@@ -55,7 +55,6 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Num (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
-    data class Clk (val str_: String, val pos_: Pos, val ms: Int, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)

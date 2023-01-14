@@ -322,7 +322,7 @@ class TXExec {
     fun paror1() {
         val out = all("""
             spawn task () {
-                paror {
+                par-or {
                     ${yield()}
                     println(1)
                 } with {
@@ -340,7 +340,7 @@ class TXExec {
     fun paror1a() {
         val out = all("""
             spawn task () :awakes {
-                paror {
+                par-or {
                     ${yield()}
                     println(1)
                 } with {
@@ -358,7 +358,7 @@ class TXExec {
     fun paror1b() {
         val out = all("""
             spawn task () {
-                paror {
+                par-or {
                     defer { println(3) }
                     ${yield()}
                     println(999)
@@ -375,7 +375,7 @@ class TXExec {
     fun paror2() {
         val out = all("""
             spawn task () :awakes {
-                paror {
+                par-or {
                     defer { println(1) }
                     ${yield("ok1")}
                     ${yield("ok2")}
@@ -399,7 +399,7 @@ class TXExec {
     fun parand3() {
         val out = all("""
             spawn task () :awakes {
-                parand {
+                par-and {
                     yield()
                     println(1)
                 } with {
@@ -418,7 +418,7 @@ class TXExec {
     fun parand4() {
         val out = all("""
             spawn task () :awakes {
-                parand {
+                par-and {
                     defer { println(1) }
                     ${yield("ok1")}
                     ${yield("ok2")}
@@ -474,7 +474,7 @@ class TXExec {
     fun watching6_clk() {
         val out = ceu.all("""
             spawn task () :awakes {
-                awaiting 10s {
+                awaiting 10:s {
                     defer { println(10) }
                     await false
                     println(1)
@@ -509,7 +509,7 @@ class TXExec {
         val out = all("""
             spawn {
                 par {
-                    every 500ms {
+                    every 500:ms {
                     }
                 } with {
                     every true { }
@@ -552,7 +552,7 @@ class TXExec {
     fun paror11_ret() {
         val out = all("""
             spawn {
-                var x = paror {
+                var x = par-or {
                     1
                 } with {
                     2
@@ -566,7 +566,7 @@ class TXExec {
     fun parand11_ret() {
         val out = all("""
             spawn {
-                var x = parand {
+                var x = par-and {
                     1
                 } with {
                     2
@@ -581,7 +581,7 @@ class TXExec {
         val out = all("""
             spawn {
                 task f () {
-                    paror {
+                    par-or {
                         1
                     } with {
                         999
@@ -600,7 +600,7 @@ class TXExec {
                 await evt==:x
             }
             spawn {
-                paror {
+                par-or {
                     await spawn T()
                 } with {
                     await spawn T()
@@ -615,7 +615,7 @@ class TXExec {
     fun paror14() {
         val out = all("""
             spawn {
-                paror {
+                par-or {
                     await true
                 } with {
                     await true
@@ -630,7 +630,7 @@ class TXExec {
     fun paror15() {
         val out = all("""
             spawn {
-                paror {
+                par-or {
                     await true
                 } with {
                     await true
@@ -655,7 +655,7 @@ class TXExec {
             resume t ()
             var x = track(t)
             spawn {
-                awaiting :check.now x {
+                awaiting :check-now x {
                     println(x.pub[0])
                     broadcast in :global, nil
                     println(x.pub[0])
@@ -694,7 +694,7 @@ class TXExec {
     fun parand18_immediate() {
         val out = all("""
             spawn task () {
-                parand {
+                par-and {
                     println(1)
                 } with {
                     println(2)
@@ -708,10 +708,10 @@ class TXExec {
     fun paror19_valgrind() {
         val out = all("""
             spawn {
-                paror {
+                par-or {
                     while true { yield(nil) }
                 } with {
-                    paror {
+                    par-or {
                         yield()
                     } with {
                         while true { yield(nil) }
@@ -732,7 +732,7 @@ class TXExec {
             var t = spawn T()
             var x = track(t)
             spawn {
-                parand {
+                par-and {
                     println(:0)
                     await x
                     println(:2)
@@ -755,7 +755,7 @@ class TXExec {
             var t = spawn T()
             var x = track(t)
             spawn {
-                parand {
+                par-and {
                     println(:0)
                     await x
                     println(:2)
@@ -1099,7 +1099,7 @@ class TXExec {
         val out = ceu.all("""
             spawn task () :awakes {
                 while (true) {
-                    await 10s                    
+                    await 10:s
                     println(999)
                 }
             }()
@@ -1115,7 +1115,7 @@ class TXExec {
     fun every8_clk() {
         val out = ceu.all("""
             spawn task () :awakes {
-                every 10s {
+                every 10:s {
                     println(10)
                 }
             }()
@@ -1133,7 +1133,7 @@ class TXExec {
     fun todo_every9_clk_multi() { // awake twice from single bcast
         val out = ceu.all("""
             spawn task () :awakes {
-                every 10s {
+                every 10:s {
                     println(10)
                 }
             }()
@@ -1265,7 +1265,7 @@ class TXExec {
         val out = all("""
             spawn {
                 println(1)
-                await :check.now true
+                await :check-now true
                 println(2)
             }
             println(3)
@@ -2000,7 +2000,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[31,1000,1001,1002,10,11,12,32,100,101,33]\n") { out }
+        assert(out == "[35,1000,1001,1002,10,11,12,36,100,101,37]\n") { out }
     }
 
 

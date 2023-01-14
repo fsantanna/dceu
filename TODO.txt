@@ -18,7 +18,6 @@
 
 # NEXT
 
-- parand/or as await task
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)
 - refer(track) -> coro

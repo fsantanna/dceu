@@ -200,3 +200,14 @@ func {<|<} (^f,^g) {
         ^^f(^^g(v))
     }
 }
+
+;; random-seed, random
+
+func random-seed (n) {
+    `srand($n.Number);`
+}
+
+func random-next () {
+    `:number rand()`
+}
+

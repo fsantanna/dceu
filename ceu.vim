@@ -18,7 +18,7 @@ syn keyword Statement   detrack track task spawn resume yield toggle broadcast p
 syn keyword Statement   coroutine coroutines enum while where until
 syn keyword Statement   not and or
 syn keyword Statement   err evt
-syn keyword Statement   await every par parand paror awaiting with
+syn keyword Statement   await every par par-and par-or awaiting with
 syn keyword Statement   print println
 
 syn keyword cTodo contained TODO FIXME XXX

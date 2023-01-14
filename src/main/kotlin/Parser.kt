@@ -56,7 +56,6 @@ class Parser (lexer_: Lexer)
             "Chr" -> this.tk1 is Tk.Chr
             "Num" -> this.tk1 is Tk.Num
             "Nat" -> this.tk1 is Tk.Nat
-            "Clk" -> this.tk1 is Tk.Clk
             else  -> error("bug found")
         }
     }
@@ -197,11 +196,27 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun clk_or_expr (): Pair<Tk.Clk?,Expr?> {
-        return if (this.acceptEnu("Clk")) {
-            Pair(this.tk0 as Tk.Clk, null)
+    fun clk_or_exp (): Pair<List<Pair<Expr,Tk.Tag>>?,Expr?> {
+        fun isclk (): Boolean {
+            return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
+        }
+        val e = this.expr()
+        if (!isclk()) {
+            return Pair(null, e)
         } else {
-            Pair(null, this.expr())
+            val es = mutableListOf(Pair(e, this.tk0 as Tk.Tag))
+            while (isclk()) {
+                es.add(Pair(this.expr(), this.tk0 as Tk.Tag))
+            }
+            return Pair(es, null)
+        }
+    }
+
+    fun clk_or_exp_tostr (clk_exp: Pair<List<Pair<Expr,Tk.Tag>>?,Expr?>): String {
+        return when {
+            (clk_exp.second != null) -> clk_exp.second!!.tostr(true)
+            (clk_exp.first  != null) -> clk_exp.first!!.map { (e,t) -> e.tostr(true)+t.str }.joinToString(" ")
+            else -> error("impossible case")
         }
     }
 
@@ -697,9 +712,9 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = this.acceptTag(":check.now")
+                val now = this.acceptTag(":check-now")
                 val spw = this.checkFix("spawn")
-                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_expr()
+                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_exp()
                 when {
                     (cnd is Expr.Tag) -> {   // await :key
                         this.nest("await evt is ${cnd.tk.str}")
@@ -712,7 +727,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
-                                ${pre0}await :check.now (ceu_spw_$N.status == :terminated)
+                                ${pre0}await :check-now (ceu_spw_$N.status == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
                             }
                         """) //.let { println(it.tostr());it }
@@ -720,7 +735,16 @@ class Parser (lexer_: Lexer)
                     (clk != null) -> { // await 5s
                         this.nest("""
                             ${pre0}do {
-                                var ceu_ms_$N = ${clk.ms}
+                                var ceu_ms_$N = ${clk.map { (e,tag) ->
+                                    val s = e.tostr(true)
+                                    "(" + when (tag.str) {
+                                        ":h"   -> "($s * ${1000*60*60})"
+                                        ":min" -> "($s * ${1000*60})"
+                                        ":s"   -> "($s * ${1000})"
+                                        ":ms"  -> "($s * ${1})"
+                                        else   -> error("impossible case")
+                                    }
+                                }.joinToString("+") + (")").repeat(clk.size)}
                                 while ceu_ms_$N > 0 {
                                     await (evt is :frame)
                                     set ceu_ms_$N = ceu_ms_$N - evt.0
@@ -758,11 +782,11 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val (clk,cnd) = this.clk_or_expr()
+                val clk_expr = this.clk_or_exp_tostr(this.clk_or_exp())
                 val body = this.block()
                 this.nest("""
                     ${pre0}while true {
-                        await ${if (clk!=null) clk.str else cnd!!.tostr(true) }
+                        await $clk_expr
                         ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
@@ -788,7 +812,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            (XCEU && this.acceptFix("parand")) -> {
+            (XCEU && this.acceptFix("par-and")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
                 val n = pars[0].n
@@ -808,7 +832,7 @@ class Parser (lexer_: Lexer)
                                 }
                             }
                         """}.joinToString("")}
-                        await :check.now (
+                        await :check-now (
                             ${pars.mapIndexed { i,_ -> """
                                 ((ceu_${i}_$n.status == :terminated) and
                             """}.joinToString("")} true ${")".repeat(pars.size)}
@@ -817,7 +841,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            (XCEU && this.acceptFix("paror")) -> {
+            (XCEU && this.acceptFix("par-or")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
                 val n = pars[0].n
@@ -837,7 +861,7 @@ class Parser (lexer_: Lexer)
                                 set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
                             }
                         """}.joinToString("")}
-                        await :check.now (
+                        await :check-now (
                             ${pars.mapIndexed { i,_ -> """
                                 ((ceu_${i}_$n.status == :terminated) or
                             """}.joinToString("")} false ${")".repeat(pars.size)}
@@ -848,12 +872,12 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = this.acceptTag(":check.now")
-                val (clk,cnd) = this.clk_or_expr()
+                val now = this.acceptTag(":check-now")
+                val clk_expr = this.clk_or_exp_tostr(this.clk_or_exp())
                 val body = this.block()
                 this.nest("""
-                    ${pre0}paror {
-                        await ${now.cond{":check.now"}} ${if (clk!=null) clk.str else cnd!!.tostr(true) }
+                    ${pre0}par-or {
+                        await $clk_expr
                     } with {
                         ${body.es.tostr(true)}
                     }
