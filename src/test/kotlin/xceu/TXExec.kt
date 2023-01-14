@@ -1571,7 +1571,50 @@ class TXExec {
         assert(out == "1\n2\n3\n:break\n") { out }
     }
 
-    // TASK ITERATOR
+    // WHILE / NUMERIC
+
+    @Test
+    fun while01_num() {
+        val out = all("""
+            while in [0 -> 1], i {
+                println(i)
+            }
+        """, true)
+        assert(out == "0\n1\n") { out }
+    }
+    @Test
+    fun while02_num() {
+        val out = all("""
+            println(:0)
+            while in (0 -> 1], a {
+                println(a)
+            }
+            println(:1)
+            while in (0 -> 3), b {
+                println(b)
+            }
+            println(:2)
+            while in [0 -> 4], :step +2, c {
+                println(c)
+            }
+            println(:3)
+            while in (2 -> 0], :step -1, d {
+                println(d)
+            }
+            println(:4)
+            while in [0 -> -2), :step -1 {
+                println(:x)
+            }
+            println(:5)
+            while in [1 -> 2] {
+                println(:y)
+            }
+            println(:6)
+        """, true)
+        assert(out == ":0\n1\n:1\n1\n2\n:2\n0\n2\n4\n:3\n1\n0\n:4\n:x\n:x\n:5\n:y\n:y\n:6\n") { out }
+    }
+
+    // WHILE / TASK ITERATOR
 
     @Test
     fun iter1() {

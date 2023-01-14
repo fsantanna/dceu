@@ -116,12 +116,24 @@ class Parser (lexer_: Lexer)
     fun checkOp (str: String): Boolean {
         return (this.tk1 is Tk.Op && this.tk1.str == str)
     }
+    fun checkOp_err (str: String): Boolean {
+        val ret = this.checkOp(str)
+        if (!ret) {
+            err_expected(this.tk1, '"'+str+'"')
+        }
+        return ret
+    }
     fun acceptOp (str: String): Boolean {
         val ret = this.checkOp(str)
         if (ret) {
             this.lex()
         }
         return ret
+    }
+    fun acceptOp_err (str: String): Boolean {
+        this.checkOp_err(str)
+        this.acceptOp(str)
+        return true
     }
 
     fun expr_in_parens (req: Boolean, nil: Boolean): Expr? {
@@ -256,138 +268,190 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("while") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                if (!this.acceptFix("in")) {
-                    val cnd = this.expr()
-                    this.catch_block(this.tk1).let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
-                } else {
-                    this.acceptEnu_err("Tag")
-                    val tktag = this.tk0 as Tk.Tag
-                    if (tktag.str !in ITERS) {
-                        err(tk0, "invalid iterator : unexpected \"${tktag.str}\"")
+                when {
+                    !this.acceptFix("in") -> {
+                        val cnd = this.expr()
+                        this.catch_block(this.tk1).let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
                     }
-                    val col = this.expr()
-                    this.acceptFix_err(",")
-                    val (i,v) = if (tktag.str in listOf(":tuple",":vector",":dict")) {
-                        this.acceptFix_err("(")
-                        this.acceptEnu_err("Id")
-                        val ii = this.tk0 as Tk.Id
+                    XCEU && (this.acceptFix("[") || this.acceptFix("(")) -> {
+                        val pre0 = tk0.pos.pre()
+
+                        // [x -> y]
+                        val tkA = this.tk0 as Tk.Fix
+                        val eA = this.expr()
+                        this.acceptFix_err("->")
+                        val eB = this.expr()
+                        (this.acceptFix("]") || this.acceptFix_err(")"))
+                        val tkB = this.tk0 as Tk.Fix
+
+                        // , :step +z
+                        var x = this.acceptFix(",")
+                        val (op,step) = if (x && this.acceptTag(":step")) {
+                            (this.acceptOp("-") || acceptOp_err("+"))
+                            Pair(this.tk0.str, this.expr())
+                        } else {
+                            Pair("+", null)
+                        }
+
+                        // , i
+                        x = (step==null && x) || this.acceptFix(",")
+                        val i = if (x && this.acceptEnu_err("Id")) this.tk0.str else "ceu_i_$N"
+
+                        // { ... }
+                        val blk = this.block()
+
+                        val cmp = when {
+                            (tkB.str=="]" && op=="+") -> "<="
+                            (tkB.str==")" && op=="+") -> "<"
+                            (tkB.str=="]" && op=="-") -> ">="
+                            (tkB.str==")" && op=="-") -> ">"
+                            else -> error("impossible case")
+                        }
+
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
+                                var $i = ${eA.tostr(true)} $op (
+                                    ${if (tkA.str=="[") 0 else "ceu_step_$N"}
+                                )
+                                var ceu_limit_$N = ${eB.tostr(true)}
+                                while $i $cmp ceu_limit_$N {
+                                    ${blk.es.tostr(true)}
+                                    set $i = $i $op ceu_step_$N
+                                }                                
+                            }
+                        """)
+                    }
+                    else -> {
+                        this.acceptEnu_err("Tag")
+                        val tktag = this.tk0 as Tk.Tag
+                        if (tktag.str !in ITERS) {
+                            err(tk0, "invalid iterator : unexpected \"${tktag.str}\"")
+                        }
+                        val col = this.expr()
                         this.acceptFix_err(",")
-                        this.acceptEnu_err("Id")
-                        val vv = this.tk0 as Tk.Id
-                        this.acceptFix_err(")")
-                        Pair(ii,vv)
-                    } else {
-                        this.acceptEnu_err("Id")
-                        Pair(this.tk0 as Tk.Id, null)
-                    }
-                    when {
-                        tktag.str == ":coros" -> {
-                            val pre0 = tk0.pos.pre()
-                            val blk = this.block()
-                            this.nest("""
-                                ${pre0}do {
-                                    var ceu_coros_$N = ${col.tostr(true)}
-                                    ```
-                                    if (ceu_mem->ceu_coros_$N.type != CEU_VALUE_COROS) {                
-                                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected coroutines");
-                                    }
-                                    ```
-                                    var ceu_n_$N = `:number ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.its`
-                                    var ceu_i_$N = 0
-                                    while ceu_i_$N /= ceu_n_$N {
-                                        var ceu_dyn_$N = `:pointer ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
-                                        if ceu_dyn_$N == `:pointer NULL` {
-                                            ;; empty slot
-                                            set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
-                                        } else {
-                                            var ceu_coro_$N
-                                            `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                            var ${i.str} = track(ceu_coro_$N)
-                                            ${blk.es.tostr(true)}
-                                            if detrack(${i.str}) {
+                        val (i,v) = if (tktag.str in listOf(":tuple",":vector",":dict")) {
+                            this.acceptFix_err("(")
+                            this.acceptEnu_err("Id")
+                            val ii = this.tk0 as Tk.Id
+                            this.acceptFix_err(",")
+                            this.acceptEnu_err("Id")
+                            val vv = this.tk0 as Tk.Id
+                            this.acceptFix_err(")")
+                            Pair(ii,vv)
+                        } else {
+                            this.acceptEnu_err("Id")
+                            Pair(this.tk0 as Tk.Id, null)
+                        }
+                        when {
+                            tktag.str == ":coros" -> {
+                                val pre0 = tk0.pos.pre()
+                                val blk = this.block()
+                                this.nest("""
+                                    ${pre0}do {
+                                        var ceu_coros_$N = ${col.tostr(true)}
+                                        ```
+                                        if (ceu_mem->ceu_coros_$N.type != CEU_VALUE_COROS) {                
+                                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected coroutines");
+                                        }
+                                        ```
+                                        var ceu_n_$N = `:number ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.its`
+                                        var ceu_i_$N = 0
+                                        while ceu_i_$N /= ceu_n_$N {
+                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                            if ceu_dyn_$N == `:pointer NULL` {
+                                                ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
-                                                set ceu_i_$N = ceu_n_$N
+                                                var ceu_coro_$N
+                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                                var ${i.str} = track(ceu_coro_$N)
+                                                ${blk.es.tostr(true)}
+                                                if detrack(${i.str}) {
+                                                    set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
+                                                } else {
+                                                    set ceu_i_$N = ceu_n_$N
+                                                }
                                             }
                                         }
                                     }
-                                }
-                            """) //.let { println(it.tostr()); it }
-                        }
-                        tktag.str == ":coro" -> this.catch_block(this.tk1).let { (C,b) ->
-                            C(this.nest("""
-                                do {
-                                    var ceu_col_$N = ${col.tostr(true)}
-                                    assert(type(ceu_col_$N) == :coro)
-                                    var ${i.str} = nil
-                                    until {
-                                        set ${i.str} = resume ceu_col_$N(${i.str})
-                                        var ceu_stop_$N = (ceu_col_$N.status == :terminated)
-                                        if not ceu_stop_$N {
-                                            set ${i.str} = do :unnest {
-                                                ${b.es.tostr(true)}
+                                """) //.let { println(it.tostr()); it }
+                            }
+                            tktag.str == ":coro" -> this.catch_block(this.tk1).let { (C,b) ->
+                                C(this.nest("""
+                                    do {
+                                        var ceu_col_$N = ${col.tostr(true)}
+                                        assert(type(ceu_col_$N) == :coro)
+                                        var ${i.str} = nil
+                                        until {
+                                            set ${i.str} = resume ceu_col_$N(${i.str})
+                                            var ceu_stop_$N = (ceu_col_$N.status == :terminated)
+                                            if not ceu_stop_$N {
+                                                set ${i.str} = do :unnest {
+                                                    ${b.es.tostr(true)}
+                                                }
                                             }
+                                            ceu_stop_$N
                                         }
-                                        ceu_stop_$N
                                     }
-                                }
-                                """) //.let { println(it.tostr());it })
-                            )
-                        }
-                        tktag.str == ":tuple" -> this.catch_block(this.tk1).let { (C,b) ->
-                            v!!
-                            C(this.nest("""
-                                do {
-                                    var ceu_tup_$N = ${col.tostr(true)}
-                                    assert(type(ceu_tup_$N) == :tuple)
-                                    var ${i.str} = 0
-                                    var ${v.str} = nil
-                                    while ${i.str} < #ceu_tup_$N {
-                                        set ${v.str} = ceu_tup_$N[${i.str}]
-                                        ${b.es.tostr(true)}
-                                        set ${i.str} = ${i.str} + 1
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            tktag.str == ":tuple" -> this.catch_block(this.tk1).let { (C,b) ->
+                                v!!
+                                C(this.nest("""
+                                    do {
+                                        var ceu_tup_$N = ${col.tostr(true)}
+                                        assert(type(ceu_tup_$N) == :tuple)
+                                        var ${i.str} = 0
+                                        var ${v.str} = nil
+                                        while ${i.str} < #ceu_tup_$N {
+                                            set ${v.str} = ceu_tup_$N[${i.str}]
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = ${i.str} + 1
+                                        }
+                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
-                                    ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
-                                }
-                                """) //.let { println(it.tostr());it })
-                            )
-                        }
-                        tktag.str == ":vector" -> this.catch_block(this.tk1).let { (C,b) ->
-                            v!!
-                            C(this.nest("""
-                                do {
-                                    var ceu_vec_$N = ${col.tostr(true)}
-                                    assert(type(ceu_vec_$N) == :vector)
-                                    var ${i.str} = 0
-                                    var ${v.str} = nil
-                                    while ${i.str} < #ceu_vec_$N {
-                                        set ${v.str} = ceu_vec_$N[${i.str}]
-                                        ${b.es.tostr(true)}
-                                        set ${i.str} = ${i.str} + 1
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            tktag.str == ":vector" -> this.catch_block(this.tk1).let { (C,b) ->
+                                v!!
+                                C(this.nest("""
+                                    do {
+                                        var ceu_vec_$N = ${col.tostr(true)}
+                                        assert(type(ceu_vec_$N) == :vector)
+                                        var ${i.str} = 0
+                                        var ${v.str} = nil
+                                        while ${i.str} < #ceu_vec_$N {
+                                            set ${v.str} = ceu_vec_$N[${i.str}]
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = ${i.str} + 1
+                                        }
+                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
-                                    ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
-                                }
-                                """) //.let { println(it.tostr());it })
-                            )
-                        }
-                        tktag.str == ":dict" -> this.catch_block(this.tk1).let { (C,b) ->
-                            v!!
-                            C(this.nest("""
-                                do {
-                                    var ceu_dict_$N = ${col.tostr(true)}
-                                    assert(type(ceu_dict_$N) == :dict)
-                                    var ${i.str} = next(ceu_dict_$N)
-                                    while ${i.str} /= nil {
-                                        var ${v.str} = ceu_dict_$N[${i.str}]
-                                        ${b.es.tostr(true)}
-                                        set ${i.str} = next(ceu_dict_$N, ${i.str})
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            tktag.str == ":dict" -> this.catch_block(this.tk1).let { (C,b) ->
+                                v!!
+                                C(this.nest("""
+                                    do {
+                                        var ceu_dict_$N = ${col.tostr(true)}
+                                        assert(type(ceu_dict_$N) == :dict)
+                                        var ${i.str} = next(ceu_dict_$N)
+                                        while ${i.str} /= nil {
+                                            var ${v.str} = ceu_dict_$N[${i.str}]
+                                            ${b.es.tostr(true)}
+                                            set ${i.str} = next(ceu_dict_$N, ${i.str})
+                                        }
+                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
                                     }
-                                    ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
-                                }
-                                """) //.let { println(it.tostr());it })
-                            )
+                                    """) //.let { println(it.tostr());it })
+                                )
+                            }
+                            else -> error("impossible case")
                         }
-                        else -> error("impossible case")
                     }
                 }
             }
