@@ -206,4 +206,27 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == "spawn task () :fake :awakes {\n1\n}()") { e.tostr() }
     }
+
+    // ITER
+
+    @Test
+    fun while01_n() {
+        val l = lexer("""
+            while in [0 -> n), :step +1, i {
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == """
+            do {
+            var ceu_step_25 = 1
+            var i = {+}(0,0)
+            var ceu_limit_25 = n
+            while {<}(i,ceu_limit_25) {
+            nil
+            set i = {+}(i,ceu_step_25)
+            }
+            }
+            """.trimIndent()) { e.tostr() }
+    }
 }
