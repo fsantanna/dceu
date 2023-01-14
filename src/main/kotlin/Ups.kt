@@ -78,7 +78,22 @@ class Ups (val outer: Expr.Do) {
             (blk == null) || this.all_until(e) { it==blk }.none { it is Expr.Proto }
         }
         return when {
-            (dcl == null) -> err(tk, "access error : variable \"${id}\" is not declared") as Dcl
+            (dcl == null) -> {
+                val l = id.split('-')
+                val x = l
+                    .mapIndexed { i,_ ->
+                        l.drop(i).scan(emptyList<String>()) { acc, s -> acc + s }
+                    }
+                    .flatten()
+                    .filter { it.size>0 && it.size<l.size }
+                    .map { it.joinToString("-") }
+                val amb = x.firstOrNull { this.getDcl(e,it) != null }
+                if (amb != null) {
+                    err(tk, "access error : \"${id}\" is ambiguous with \"${amb}\"") as Dcl
+                } else {
+                    err(tk, "access error : variable \"${id}\" is not declared") as Dcl
+                }
+            }
             (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Dcl
             (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Dcl
             else -> dcl
@@ -112,7 +127,7 @@ class Ups (val outer: Expr.Do) {
             }
             is Expr.Dcl -> {
                 this.src?.traverse()
-                val id = this.tk_.fromOp().id2c()
+                val id = this.tk.str
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)

@@ -35,7 +35,7 @@ val TAGS = listOf (
 val GLOBALS = setOf (
     "copy", "coroutine", "coroutines", "detrack", "move", "next", "print", "println",
     "tags", "throw", "track", "type",
-    "op_equals_equals", "op_hash", "op_slash_equals"
+    "{==}", "{#}", "{/=}"
 )
 
 val EXPOSE = setOf (

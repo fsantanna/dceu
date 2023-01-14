@@ -22,8 +22,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
         return when {
-            (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id})"
-            (N == 0) -> "(ceu_${mem}->${dcl.id})"
+            (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id.id2c()})"
+            (N == 0) -> "(ceu_${mem}->${dcl.id.id2c()})"
             else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->${dcl.id})"
         }
     }
@@ -224,6 +224,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             .map    { it.id }
                             .filter { !GLOBALS.contains(it) }
                             .filter { !(f_b is Expr.Proto && args.contains(it)) }
+                            .map    { it.id2c() }
                     }
                     """
                     { // BLOCK ${this.tk.dump()}
@@ -274,7 +275,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }
                         { // because of "decrement refs" below
                             ${vars.map { """
-                                ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
+                                ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")
                             }
                         }
@@ -365,8 +366,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Dcl -> {
-                val id = this.tk_.fromOp().id2c()
-                val isperm = if (id[0] == '_') 0 else 1
+                val idc = this.tk.str.id2c()
+                val isperm = if (idc[0] == '_') 0 else 1
                 val dcl = ups.getDcl(this, this.tk.str)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -375,17 +376,17 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // DCL ${this.tk.dump()}
                     ${when {
                         !this.init -> ""
-                        (this.src == null) -> "ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };"
-                        else -> this.src.code() + "ceu_mem->$id = ceu_acc;"
+                        (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
+                        else -> this.src.code() + "ceu_mem->$idc = ceu_acc;"
                     }}
-                    ceu_mem->_${id}_ = ${ups.first_block(this)!!.toc(true)};   // can't be static b/c recursion
-                    if (ceu_mem->${id}.type > CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_mem->${id}.Dyn, $isperm);
+                    ceu_mem->_${idc}_ = ${ups.first_block(this)!!.toc(true)};   // can't be static b/c recursion
+                    if (ceu_mem->${idc}.type > CEU_VALUE_DYNAMIC) {
+                        ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_mem->${idc}.Dyn, $isperm);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
-                    ceu_gc_inc(&ceu_mem->${id});
+                    ceu_gc_inc(&ceu_mem->${idc});
                     #if 1
-                        ${assrc("ceu_mem->$id")}
+                        ${assrc("ceu_mem->$idc")}
                     #else // b/c of ret scope
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     #endif
@@ -668,7 +669,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 pos
             }
             is Expr.Acc -> {
-                val id = this.tk_.fromOp().id2c()
+                val id = this.tk.str
                 val dcl = ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}

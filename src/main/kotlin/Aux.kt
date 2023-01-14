@@ -6,25 +6,6 @@ fun Tk.dump (): String {
     return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
 }
 
-fun Tk.Id.fromOp (): String {
-    val MAP = mapOf(
-        Pair('+', "plus"),
-        Pair('-', "minus"),
-        Pair('*', "asterisk"),
-        Pair('/', "slash"),
-        Pair('>', "greater"),
-        Pair('<', "less"),
-        Pair('=', "equals"),
-        Pair('!', "exclaim"),
-        Pair('|', "bar"),
-        Pair('&', "ampersand"),
-        Pair('#', "hash"),
-    )
-    return if (this.str[0] != '{') this.str else {
-        "op_" + this.str.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
-    }
-}
-
 fun <T> T?.cond (f: (v:T)->String): String {
     return when (this) {
         null  -> ""
@@ -41,13 +22,37 @@ fun String.tag2c (): String {
 }
 
 fun String.id2c (): String {
-    val MAP = mapOf(
-        Pair('-', "_dash"),
-        Pair('\'', "_plic"),
-        Pair('?', "_question"),
-        Pair('!', "_bang"),
-    )
-    return this.toList().map { MAP[it] ?: it }.joinToString("")
+    fun String.aux (): String {
+        return if (this[0] == '{') {
+            val MAP = mapOf(
+                Pair('+', "plus"),
+                Pair('-', "minus"),
+                Pair('*', "asterisk"),
+                Pair('/', "slash"),
+                Pair('>', "greater"),
+                Pair('<', "less"),
+                Pair('=', "equals"),
+                Pair('!', "exclaim"),
+                Pair('|', "bar"),
+                Pair('&', "ampersand"),
+                Pair('#', "hash"),
+            )
+            return "op_" + this.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
+        } else {
+            val MAP = mapOf(
+                Pair('-', "_dash_"),
+                Pair('\'', "_plic_"),
+                Pair('?', "_question_"),
+                Pair('!', "_bang_"),
+            )
+            this.toList().map { MAP[it] ?: it }.joinToString("")
+        }
+    }
+    return if (this.length>=3 && this.first()=='_' && this.last()=='_') {
+        '_' + this.drop(1).dropLast(1).aux() + '_'
+    } else {
+        this.aux()
+    }
 }
 
 fun err (pos: Pos, str: String) {

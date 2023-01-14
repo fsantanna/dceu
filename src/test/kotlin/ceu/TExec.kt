@@ -165,6 +165,24 @@ class TExec {
         """)
         assert(out == "1") { out }
     }
+    @Test
+    fun bb_var4_kebab_amb() {
+        val out = all("""
+            var x = 10
+            var y = 5
+            println(x-y)
+        """)
+        assert(out == "anon : (lin 4, col 21) : access error : \"x-y\" is ambiguous with \"x\"") { out }
+    }
+    @Test
+    fun bb_var5_kebab_amb() {
+        val out = all("""
+            var x = 10
+            var y-z = 5
+            println(h-y-z)
+        """)
+        assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
+    }
 
     // INDEX / TUPLE
 
