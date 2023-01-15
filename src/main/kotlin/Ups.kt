@@ -153,10 +153,19 @@ class Ups (val outer: Expr.Do) {
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> {}
             is Expr.Tplate -> {
+                val issub = this.tk.str.contains('.')
+                val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
+                if (issub && !tplates.containsKey(sup)) {
+                    err(this.tk, "template error : parent template $sup is not declared")
+                }
                 if (tplates.containsKey(this.tk.str)) {
                     err(this.tk, "template error : template ${this.tk.str} is already declared")
                 }
-                tplates[this.tk.str] = this.ids.map { it.str }
+                val ids = (tplates[sup] ?: emptyList()) + this.ids.map { it.str }
+                if (ids.size != ids.distinct().size) {
+                    err(this.tk, "template error : found duplicate ids")
+                }
+                tplates[this.tk.str] = ids
             }
 
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }

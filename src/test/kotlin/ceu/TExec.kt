@@ -2070,6 +2070,16 @@ class TExec {
         """, true)
         assert(out == ":x-a-x\t:i.j.1\n") { out }
     }
+    @Test
+    fun tags11() {
+        val out = all("""
+            var t = tags([], :T,   true)
+            var s = tags([], :T.S, true)
+            println(tags(t,:T), tags(t,:T.S))
+            println(tags(s,:T), tags(s,:T.S))
+        """, true)
+        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+    }
 
     // ENUM
 
@@ -2813,12 +2823,12 @@ class TExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_tplate05_xceu() {
+    fun tplate05() {
         val out = all("""
             template :T = [x,y]
-            var t :T = [x=1,y=2]
-            set t.x = 3
-            println(t)      ;; [x=3,y=2]
+            var t :T
+            set t = [1,2]
+            println(t.x, t.y)
         """, true)
         assert(out == "1\t2\n") { out }
     }
@@ -2826,15 +2836,14 @@ class TExec {
     fun tplate06() {
         val out = all("""
             template :T = [x,y]
-            template :S = [a:T,b:T]
-            var s :S
-            set s = [[1,2],[10,20]]
-            println(s.a, s.b.y)
+            template :T.S = [z]
+            var s :T.S = [1,2,3]
+            println(s.x,s.y,s.z)
         """, true)
-        assert(out == "[1,2]\t20\n") { out }
+        assert(out == "1\t2\t3\n") { out }
     }
     @Test
-    fun todo_tpl4() {
+    fun tplate07() {
         val out = all("""
             template :T = [x,y]
             template :T.S = [z]
@@ -2845,6 +2854,50 @@ class TExec {
             println(t)
             println(x)
         """, true)
-        assert(out == "[1,2,3]\n[1,2]\n[1,2,3]\n") { out }
+        assert(out == "[1,2,3]\n[1,2,3]\n[1,2,3]\n") { out }
+    }
+    @Test
+    fun tplate08() {
+        val out = all("""
+            template :T = [x,y]
+            template :T.S = [z]
+            var t = []
+            var s = []
+            println(tags(t,:T), tags(t,:T.S))
+            println(tags(s,:T), tags(s,:T.S))
+        """, true)
+        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+    }
+    @Test
+    fun tplate09_err() {
+        val out = all("""
+            template :T = [x,x]
+        """, true)
+        assert(out == "anon : (lin 2, col 22) : template error : found duplicate ids") { out }
+    }
+    @Test
+    fun tplate10_err() {
+        val out = all("""
+            template :T   = [x,y]
+            template :T.S = [x]
+        """, true)
+        assert(out == "anon : (lin 3, col 22) : template error : found duplicate ids") { out }
+    }
+    @Test
+    fun tplate11_err() {
+        val out = all("""
+            template :T.S = [x]
+        """, true)
+        assert(out == "anon : (lin 2, col 22) : template error : parent template :T is not declared") { out }
+    }
+    @Test
+    fun todo_tplatexx_xceu() {
+        val out = all("""
+            template :T = [x,y]
+            var t :T = [x=1,y=2]
+            set t.x = 3
+            println(t)      ;; [x=3,y=2]
+        """, true)
+        assert(out == "1\t2\n") { out }
     }
 }

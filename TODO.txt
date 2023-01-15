@@ -22,21 +22,16 @@
 - [x,y] = tup (destructor)
 - refer(track) -> coro
 - test throw/break across fake task
-- track may hold normal coro
-  - bcast to awake on termination
 - pub childs cannot be assigned
   - not even ahead b/c of coros which may kill pub
 - count memory
 - kill task
-- await task
-- local bcast
-- tags
-    - implement with vector or list?
-    - tag hier or tag of tag?
+- tags hier
+- tag of tag requires higher ID to avoid cycle
 - polymorphism
-    - poly var
-    - set f = func (a#x, b#y)
-    - set MAX#x = 10
+    - poly var f = func (a:X, b:Y)
+    - poly func f (a:X, b:Y)
+    - set MAX :T = 10
 - ~= (like)
     - 1 ~= "1"
     - #x ~= #x.y
@@ -50,9 +45,6 @@
 
 # BACK
 
-- copy x (deep copy)
-- y = do { move x }
-- same iface to all *create, no assert on malloc fail, all possible checks there
 - power assert
     group {
         var x = 10
@@ -61,25 +53,9 @@
         assert x > y, "error"   ;; custom message
     }
 - native
-    - `:pre`
     - `${complex-expr}` (nested parsing in w/ XCEU?)
-- emit local
-    - imply outer task?
-    - explicit #tag?
-    - bcast in :x, y
-- tuple is plain immutable value
-    - move on assign
-    - no scope error
-    - unless holds dyns
-- collections
-    - tup.a, .b, .x
-    - @dict, @[...]
-    - #vec,  #[...], homogeneous, string
-    - $size
-- char type
 - args keyword (or ...)
     - access to variable args from func args
-- tag of tag requires higher ID to avoid cycle
 - 1 >> f >> g -> g(f(1))
 - parser
     - reject no assign stmts
@@ -89,15 +65,11 @@
     - reject anything after throw (last stmt)
     - reject yield with no direct enclosing task
 - 3 `add` 4  -->  add(3,4)
-- move as a primitive?
-    - needs to move nested objs
-    - var x = [...] ; move x (up)
 - ceu2c
     - struct <- tuple
     - vec <- buf
 - call w/o blocks optimize
 - ranges
-    - [1..2]
     - [1..2]
 - traverse
     call fat (x=10) {
