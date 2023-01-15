@@ -1071,24 +1071,6 @@ class TTask {
         )
         assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
     }
-    @Test
-    fun ee_bcast11_err() {
-        val out = ceu.all(
-            """
-            var tk
-            set tk = task (v) :awakes {
-                do {
-                    set v = evt
-                }
-            }
-            var co
-            set co = coroutine(tk)
-            broadcast in :global, []
-        """
-        )
-        assert(out == "anon : (lin 10, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 29) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-    }
 
     // BCAST / SCOPE
 
@@ -1206,6 +1188,73 @@ class TTask {
             println(1)
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun ee_bcast08_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task () :awakes {
+                var v = evt
+                nil
+            }
+            var co
+            set co = coroutine(tk)
+            var f = func () {
+                var g = func () {
+                    broadcast in :global, []
+                }
+                g()
+            }
+            f()
+        """
+        )
+        assert(out == "anon : (lin 15, col 13) : f()\n" +
+                "anon : (lin 13, col 17) : g()\n" +
+                "anon : (lin 11, col 21) : broadcast in :global, []\n" +
+                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun todo_ee_bcast09_err() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task () :awakes {
+                var v = evt  ;; ERR: v is at same depth as f, but in a parallel scope
+                nil
+            }
+            var co
+            set co = coroutine(tk)
+            var f = func () {
+                broadcast in :global, []
+            }
+            f()
+        """
+        )
+        assert(out == "TODO\n") { out }
+    }
+    @Test
+    fun ee_bcast10_err() {
+        val out = ceu.all(
+            """
+            var T1 = task () :awakes {
+                spawn task () {
+                    var v = evt
+                    println(:1)
+                } ()
+            }
+            var t1 = coroutine(T1)
+            var T2 = task () :awakes {
+                var v = evt
+                println(:2)
+            }
+            var t2 = coroutine(T2)
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+            """
+        )
+        assert(out == ":1\n:2\n1\n") { out }
     }
 
     // POOL
@@ -1617,7 +1666,7 @@ class TTask {
             }
             spawn T(1)
             spawn T(2)
-             broadcast in :global, nil
+            broadcast in :global, nil
         """
         )
         assert(out == "1\n2\n1\n2\n") { out }
@@ -1813,14 +1862,17 @@ class TTask {
             var tk
             set tk = task (xxx) :awakes {
                 set xxx = evt
+                nil
             }
             var co
             set co = coroutine(tk)
             broadcast in :global, []
+            println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
     }
     @Test
     fun gg_evt_hld1_1_err() {
@@ -1833,10 +1885,12 @@ class TTask {
             var co
             set co = coroutine(tk)
             broadcast in :global, [[]]
+            println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun gg_evt_hld2_err() {
@@ -1846,15 +1900,39 @@ class TTask {
             set tk = task (xxx) :awakes {
                 yield(nil)
                 set xxx = evt
+                nil
             }
             var co
             set co = coroutine(tk)
-             broadcast in :global, 1
-             broadcast in :global, []
+            broadcast in :global, 1
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
+    }
+    @Test
+    fun gg_evt_hld2a() {
+        val out = ceu.all(
+            """
+            var tk
+            set tk = task (xxx) :awakes {
+                yield(nil)
+                set xxx = evt
+                yield(nil)
+            }
+            var co
+            set co = coroutine(tk)
+            broadcast in :global, 1
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "0\n") { out }
+        //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
     }
     @Test
     fun gg_evt_hld3() {
@@ -1870,9 +1948,9 @@ class TTask {
                 println(99)
             }()
             println(1)
-             broadcast in :global, @[(:type,:y)]
+            broadcast in :global, @[(:type,:y)]
             println(2)
-             broadcast in :global, @[(:type,:x)]
+            broadcast in :global, @[(:type,:x)]
             println(3)
         """)
         assert(out == "1\n2\n99\n3\n") { out }
@@ -1963,23 +2041,26 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun todo_gg_evt_hld8_err() {
+    fun gg_evt_hld8_err() {
         val out = ceu.all(
             """
             var tk
             set tk = task (xxx) :awakes {
                 set xxx = evt[0]
+                nil
             }
             var co
             set co = coroutine(tk)
             broadcast in :global, #[[]]
+            println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
     }
     @Test
-    fun todo_gg_evt_hld9_err() {
+    fun gg_evt_hld9_err() {
         val out = ceu.all(
             """
             var tk
@@ -1989,10 +2070,12 @@ class TTask {
             var co
             set co = coroutine(tk)
             broadcast in :global, @[(1,[])]
+            println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+        //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
     }
 
     // PUB
@@ -2131,7 +2214,8 @@ class TTask {
             println(999)
         """)
         //assert(out == "20\n") { out }
-        assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun hh_pub8_fake_task() {
@@ -2158,9 +2242,10 @@ class TTask {
                 println(x)
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spa...)\n" +
-                "anon : (lin 5, col 24) : task () :fake :awakes { set x = task.pub }()\n" +
-                "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spa...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake :awakes { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub9_10_fake_task() {
@@ -2204,8 +2289,8 @@ class TTask {
             }
             println(999)
         """)
-        //assert(out == "anon : (lin 14, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 13, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub12_index_err() {
@@ -2221,7 +2306,8 @@ class TTask {
             var x
             set x = t.pub   ;; no expose
         """)
-        assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 11, col 17) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub13_index_err() {
@@ -2240,7 +2326,7 @@ class TTask {
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun todo_pub14_index_err() {
+    fun pub14_index_err() {
         val out = all("""
             var T
             set T = task () {
@@ -2250,12 +2336,13 @@ class TTask {
             var t
             set t = coroutine(T)
             resume t()
-            println(t.pub[0][:x])   ;; no expose
+            println(t.pub[0][0][:x])   ;; no expose
         """)
-        assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 10, col 27) : invalid index : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun hh_pub15_task_err() {
+    fun hh_pub15_task() {
         val out = all("""
         spawn task () :fake :awakes { 
             var y
@@ -2273,8 +2360,34 @@ class TTask {
         }()
         broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
-                "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "[2]\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun hh_pub15a_task_err() {
+        val out = all("""
+        spawn task () :fake :awakes { 
+            var y
+            set y = do {     
+                var ceu_spw_54     
+                set ceu_spw_54 = spawn task () :awakes {         
+                    set task.pub = [2]             
+                    yield(nil)         
+                }()        
+                ;;yield(nil)     
+                ;;println(ceu_spw_54.pub)     
+                ceu_spw_54.pub        
+            }     
+            println(y) 
+        }()
+        broadcast in :global, nil
+        """)
+        assert(out == "anon : (lin 2, col 15) : task () :fake :awakes { var y set y = do { va...)\n" +
+                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+        //assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
+        //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub16() {
@@ -2389,9 +2502,10 @@ class TTask {
             set a = coroutine(t)
             resume a([1])
         """, true)
-        assert(out == "anon : (lin 13, col 20) : a([1])\n" +
-                "anon : (lin 9, col 25) : f()\n" +
-                "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
     fun hh_pub_22_nopub() {

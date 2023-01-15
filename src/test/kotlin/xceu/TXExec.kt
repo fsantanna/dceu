@@ -1722,6 +1722,38 @@ class TXExec {
     // THROW / CATCH
 
     @Test
+    fun catch1() {
+        val out = all("""
+            var x
+            set x = catch :x {
+                throw([])
+                println(9)
+            }.0
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 4, col 17) : throw([])\n" +
+                "throw error : uncaught exception\n" +
+                "[]\n") { out }
+    }
+    @Test
+    fun catch2() {
+        val out = all("""
+            func f (v) {
+                false
+            }
+            catch false {
+                catch f(err) {
+                    throw([])
+                }
+            }
+            println(`:number ceu_gc_count`)
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 7, col 21) : throw([])\n" +
+                "throw error : uncaught exception\n" +
+                "[]\n") { out }
+    }
+    @Test
     fun catch3() {
         val out = all("""
             var x
@@ -1732,9 +1764,10 @@ class TXExec {
                 }
                 println(9)
             }.0
-            println(x)
+            println(`:number ceu_gc_count`) ;; throw might be caught, so zero but no check
+            println(:x, x)
         """, true)
-        assert(out == "10\n") { out }
+        assert(out == "0\n:x\t10\n") { out }
     }
     @Test
     fun catch6_err() {
@@ -1768,11 +1801,23 @@ class TXExec {
     @Test
     fun catch8() {
         val out = all("""
+            catch false {
+                catch true {
+                    throw([10])
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun catch9() {
+        val out = all("""
             var x
             set x = catch :x {
                 var y
-                set y = catch :y {
-                    throw(tags([10],:y,true))
+                set y = catch true {
+                    throw([10])
                     println(9)
                 }
                 ;;println(1)
@@ -1782,7 +1827,7 @@ class TXExec {
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 9) : throw(tags([10],:y,true))\n" +
+                "anon : (lin 5, col 9) : throw([10])\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }

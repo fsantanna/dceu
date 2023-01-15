@@ -1481,6 +1481,7 @@ fun Coder.main (): String {
             assert(n == 1);
             CEU_THROW_MSG("throw error : uncaught exception");
             ceu_acc = *args[0];
+            ceu_gc_inc(&ceu_acc);
             return CEU_RET_THROW;
         }
 

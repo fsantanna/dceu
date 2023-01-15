@@ -38,10 +38,6 @@ val GLOBALS = setOf (
     "{==}", "{#}", "{/=}"
 )
 
-val EXPOSE = setOf (
-    "copy", "is'", "isnot'", "print", "println", "track", "type", "{==}", "{/=}"
-)
-
 val ITERS = setOf (
     ":coros"
 ) + if (!XCEU) emptySet() else setOf(":coro", ":tuple", ":vector", ":dict")

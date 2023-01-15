@@ -2673,9 +2673,9 @@ class TExec {
     fun gc11() {
         val out = all("""
             var f = func (v) {
-                v
+                v   ;; not captured, should be checked after call
             }
-            f([])
+            f([])   ;; v is not captured
             ;; [] not captured, should be checked 
             println(`:number ceu_gc_count`)
         """)
@@ -2690,6 +2690,64 @@ class TExec {
             println(`:number ceu_gc_count`)
         """)
         assert(out == "[]\n0\n") { out }
+    }
+    @Test
+    fun gc13_bcast() {
+        val out = all("""
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc14_bcast() {
+        val out = ceu.all(
+            """
+            var tk = task () :awakes {
+                do {
+                    var v = evt
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = coroutine(tk)
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc15_arg() {
+        val out = ceu.all(
+            """
+            var f = func (v) {
+                nil
+            }
+            f([])
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc16_arg_bcast() {
+        val out = ceu.all(
+            """
+            var tk = task (v) :awakes {
+                do {
+                    ;;println(evt)
+                    set v = evt
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = coroutine(tk)
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
     }
 
     // MISC
