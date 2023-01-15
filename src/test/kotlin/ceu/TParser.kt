@@ -270,7 +270,9 @@ class TParser {
     fun index4_err() {
         val l = lexer("x . a")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"a\"")
+        val e = parser.expr()
+        assert(e.tostr() == "x[:a]") { e.tostr() }
+        //assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"a\"")
     }
     @Test
     fun index5_err() {
@@ -918,7 +920,7 @@ class TParser {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "template :T = [x,y]") { e.tostr() }
+        assert(e.tostr() == "template :T = [x,y]\n") { e.tostr() }
     }
     @Test
     fun tplate01() {
@@ -927,7 +929,7 @@ class TParser {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var t :T = [1,2]") { e.tostr() }
+        assert(e.tostr() == "var t :T = [1,2]\n") { e.tostr() }
     }
     @Test
     fun tplate02_err() {
@@ -959,7 +961,6 @@ class TParser {
             template :X = [1,2]
         """)
         val parser = Parser(l)
-        val e = parser.exprs()
         assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected identifier : have \"1\"")
     }
 }

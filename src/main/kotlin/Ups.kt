@@ -1,14 +1,15 @@
 // func (args) or block (locals)
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
-data class Dcl (val id: String, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
+data class Dcl (val id: String, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Ups (val outer: Expr.Do) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,Dcl(it,true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map { Pair(it,Dcl(it,null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
+    val tplates = mutableMapOf<String,List<String>>()
     val ups = outer.tree()
 
     // Protos that cannot be closures:
@@ -115,9 +116,9 @@ class Ups (val outer: Expr.Do) {
                     } else {
                         proto.args.let {
                             (it.map {
-                                Pair(it.str, Dcl(it.str, true, it.upv, this))
+                                Pair(it.str, Dcl(it.str, null, true, it.upv, this))
                             } + it.map {
-                                Pair("_${it.str}_", Dcl("_${it.str}_", false, it.upv, this))
+                                Pair("_${it.str}_", Dcl("_${it.str}_", null, false, it.upv, this))
                             })
                         }.toMap().toMutableMap()
                     }
@@ -131,8 +132,11 @@ class Ups (val outer: Expr.Do) {
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup.syms[id] = Dcl(id, this.init, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Dcl("_${id}_", false, this.tk_.upv, bup)
+                if (this.tag!=null && !tplates.containsKey(this.tag.str)) {
+                    err(this.tag, "declaration error : template ${this.tag.str} is not declared")
+                }
+                xup.syms[id] = Dcl(id, this.tag?.str, this.init, this.tk_.upv, bup)
+                xup.syms["_${id}_"] = Dcl("_${id}_", null, false, this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
@@ -148,7 +152,12 @@ class Ups (val outer: Expr.Do) {
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> {}
-            is Expr.Tplate -> {}
+            is Expr.Tplate -> {
+                if (tplates.containsKey(this.tk.str)) {
+                    err(this.tk, "template error : template ${this.tk.str} is already declared")
+                }
+                tplates[this.tk.str] = this.ids.map { it.str }
+            }
 
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
             is Expr.Bcast  -> this.evt.traverse()
@@ -209,7 +218,19 @@ class Ups (val outer: Expr.Do) {
             is Expr.Tuple  -> this.args.forEach{ it.traverse() }
             is Expr.Vector -> this.args.forEach{ it.traverse() }
             is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
-            is Expr.Index  -> { this.col.traverse() ; this.idx.traverse() }
+            is Expr.Index  -> {
+                this.col.traverse() ; this.idx.traverse()
+                if (this.col is Expr.Acc && this.idx is Expr.Tag) {
+                    val dcl = getDcl(this, this.col.tk.str)!!
+                    if (dcl.tag != null) {
+                        val tpl = tplates[dcl.tag]!!
+                        val id = this.idx.tk.str.drop(1)
+                        if (tpl.indexOf(id) == -1) {
+                            err(this.idx.tk, "index error : undeclared field \"$id\" in ${dcl.tag}")
+                        }
+                    }
+                }
+            }
             is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
         }
     }

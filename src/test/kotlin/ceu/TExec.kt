@@ -2778,7 +2778,32 @@ class TExec {
     // TEMPLATE
 
     @Test
-    fun todo_tpl1() {
+    fun tplate01_err() {
+        val out = all("""
+            template :T = []
+            template :T = []
+        """, true)
+        assert(out == "anon : (lin 3, col 22) : template error : template :T is already declared") { out }
+    }
+    @Test
+    fun tplate02_err() {
+        val out = all("""
+            template :T = []
+            var t :T
+            println(t.x)
+        """, true)
+        assert(out == "anon : (lin 4, col 23) : index error : undeclared field \"x\" in :T") { out }
+    }
+    @Test
+    fun tplate03_err() {
+        val out = all("""
+            template :T = []
+            var v :U
+        """, true)
+        assert(out == "anon : (lin 3, col 19) : declaration error : template :U is not declared") { out }
+    }
+    @Test
+    fun tplate04() {
         val out = all("""
             template :T = [x,y]
             var t :T
@@ -2788,7 +2813,7 @@ class TExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_tpl2() {
+    fun todo_tplate05_xceu() {
         val out = all("""
             template :T = [x,y]
             var t :T = [x=1,y=2]
@@ -2798,7 +2823,7 @@ class TExec {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun todo_tpl3() {
+    fun tplate06() {
         val out = all("""
             template :T = [x,y]
             template :S = [a:T,b:T]
@@ -2812,11 +2837,14 @@ class TExec {
     fun todo_tpl4() {
         val out = all("""
             template :T = [x,y]
-            template :S = [a:T,b:T]
-            var s :S
-            set s = [[1,2],[10,20]]
-            println(s.a, s.b.y)
+            template :T.S = [z]
+            var s :T.S = [1,2,3]
+            var t :T = s
+            var x :T.S = t
+            println(s)
+            println(t)
+            println(x)
         """, true)
-        assert(out == "[1,2]\t20\n") { out }
+        assert(out == "[1,2,3]\n[1,2]\n[1,2,3]\n") { out }
     }
 }

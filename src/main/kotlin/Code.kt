@@ -494,7 +494,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
                 ""
             }
-            is Expr.Tplate -> TODO()
+            is Expr.Tplate -> ""
 
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {
@@ -690,7 +690,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // ACC - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, $isperm);
+                            ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
@@ -763,6 +763,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Index -> {
+                var idx = -1
+                if (this.col is Expr.Acc && this.idx is Expr.Tag) {
+                    val dcl = ups.getDcl(this, this.col.tk.str)!!
+                    if (dcl.tag != null) {
+                        val tpl = ups.tplates[dcl.tag]!!
+                        val id = this.idx.tk.str.drop(1)
+                        idx = tpl.indexOf(id)
+                        assert(idx >= 0)
+                    }
+                }
                 fun Expr.Index.has_pub_evt (): String? {
                     val up = ups.ups[this]
                     return when {
@@ -776,8 +786,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
                 { // INDEX  ${this.tk.dump()}
                     // IDX
-                    ${this.idx.code()}
-                    ceu_mem->idx_$n = ceu_acc;
+                    ${if (idx == -1) {
+                        """
+                        ${this.idx.code()}
+                        ceu_mem->idx_$n = ceu_acc;
+                        """
+                    } else {
+                        """
+                        ceu_mem->idx_$n = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} };
+                        """
+                    }}
                     // COL
                     ${this.col.code()}
                     CEU_Value ceu_accx = ceu_acc;
