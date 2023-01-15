@@ -494,6 +494,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
                 ""
             }
+            is Expr.Tplate -> TODO()
 
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {

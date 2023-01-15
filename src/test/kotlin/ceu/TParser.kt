@@ -908,4 +908,58 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected native : have \"1\"")
     }
+
+    // TEMPLATE
+
+    @Test
+    fun tplate00() {
+        val l = lexer("""
+            template :T = [x,y]
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "template :T = [x,y]") { e.tostr() }
+    }
+    @Test
+    fun tplate01() {
+        val l = lexer("""
+            var t :T = [1,2]
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "var t :T = [1,2]") { e.tostr() }
+    }
+    @Test
+    fun tplate02_err() {
+        val l = lexer("""
+            template X [x,y]
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 22) : expected tag : have \"X\"")
+    }
+    @Test
+    fun tplate03_err() {
+        val l = lexer("""
+            template :X [x,y]
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 25) : expected \"=\" : have \"[\"")
+    }
+    @Test
+    fun tplate04_err() {
+        val l = lexer("""
+            template :X = nil
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected \"[\" : have \"nil\"")
+    }
+    @Test
+    fun tplate05_err() {
+        val l = lexer("""
+            template :X = [1,2]
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected identifier : have \"1\"")
+    }
 }

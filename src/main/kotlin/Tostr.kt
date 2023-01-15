@@ -18,7 +18,7 @@ fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> this.tk.str + " (" + this.args.map { it.tostr() }.joinToString(",") + ") " + this.task?.first.cond{":fake "} + this.task?.second.cond{":awakes "} + this.body.tostr(pre)
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + this.anns() + "{\n" + this.es.tostr(pre) + "}"
-        is Expr.Dcl    -> "var " + this.tk_.tostr() + this.src.cond { " = ${it.tostr(pre)}" }
+        is Expr.Dcl    -> "var " + this.tk_.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
         is Expr.While  -> "while " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
@@ -27,6 +27,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
+        is Expr.Tplate -> "template " + this.tk.str + " = [" + this.ids.map { it.str }.joinToString(",") + "]"
 
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)

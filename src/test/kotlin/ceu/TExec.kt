@@ -2791,6 +2791,27 @@ class TExec {
     fun todo_tpl2() {
         val out = all("""
             template :T = [x,y]
+            var t :T = [x=1,y=2]
+            set t.x = 3
+            println(t)      ;; [x=3,y=2]
+        """, true)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun todo_tpl3() {
+        val out = all("""
+            template :T = [x,y]
+            template :S = [a:T,b:T]
+            var s :S
+            set s = [[1,2],[10,20]]
+            println(s.a, s.b.y)
+        """, true)
+        assert(out == "[1,2]\t20\n") { out }
+    }
+    @Test
+    fun todo_tpl4() {
+        val out = all("""
+            template :T = [x,y]
             template :S = [a:T,b:T]
             var s :S
             set s = [[1,2],[10,20]]

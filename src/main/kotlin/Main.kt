@@ -11,7 +11,7 @@ val D = "\$"
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "defer", "do", "else", "enum", "err", "evt",
     "false", "func", "if", "in", "nil", "pub", "resume", "set", "spawn", "status",
-    "task", "toggle", "true", "var", "yield", "while"
+    "task", "template", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
     "par-and", "par-or", "until", "with", "where"
@@ -55,13 +55,14 @@ sealed class Tk (val str: String, val pos: Pos) {
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val isnest: Boolean, val ishide: Boolean, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Id,  val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
+    data class Dcl    (val tk_: Tk.Id,  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
+    data class Tplate (val tk_: Tk.Tag, val ids: List<Tk.Id>): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)

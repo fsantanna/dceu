@@ -239,10 +239,13 @@ class Parser (lexer_: Lexer)
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
                 val id = this.tk0 as Tk.Id
+                val tag = if (!this.acceptEnu("Tag")) null else {
+                    this.tk0 as Tk.Tag
+                }
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, true, src)
+                Expr.Dcl(id, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -516,6 +519,17 @@ class Parser (lexer_: Lexer)
                     Pair(tag, nat)
                 }
                 Expr.Enum(tk0, tags)
+            }
+            this.acceptFix("template") -> {
+                this.acceptEnu_err("Tag")
+                val tk0 = this.tk0 as Tk.Tag
+                this.acceptFix_err("=")
+                this.acceptFix_err("[")
+                val ids = this.list0("]") {
+                    this.acceptEnu_err("Id")
+                    this.tk0 as Tk.Id
+                }
+                Expr.Tplate(tk0, ids)
             }
 
             this.acceptFix("spawn") -> {
