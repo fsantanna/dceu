@@ -2126,6 +2126,16 @@ class TExec {
         """)
         assert(out == ":tag\t:y\t:1000\t:y\n") { out }
     }
+    @Test
+    fun enum03() {
+        val out = all("""
+            enum {
+                :x.y
+            }
+            println(:tag, :x, :1000, :y)
+        """)
+        assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'") { out }
+    }
 
     // DEFER
 

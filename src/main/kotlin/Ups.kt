@@ -151,7 +151,11 @@ class Ups (val outer: Expr.Do) {
             is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
-            is Expr.Enum   -> {}
+            is Expr.Enum   -> this.tags.forEach {
+                if (it.first.str.contains('.')) {
+                    err(it.first, "enum error : enum tag cannot contain '.'")
+                }
+            }
             is Expr.Tplate -> {
                 val issub = this.tk.str.contains('.')
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
