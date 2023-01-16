@@ -2913,8 +2913,9 @@ class TExec {
         val out = all("""
             template :T = [x,y]
             template :T.S = [z]
-            var t = []
-            var s = []
+            var t :T = []
+            var s :T.S
+            set s = []
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
@@ -2988,6 +2989,20 @@ class TExec {
             println(u.X.v)
         """, true)
         assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a template") { out }
+    }
+    @Test
+    fun tplate16() {
+        val out = all("""
+            template :U = [a]
+            template :T = [x,y]
+            template :T.S = [z:U]
+            var s :T.S
+            set s = [1,2,[3]]
+            println(tags(s,:T), tags(s.z,:U))
+            set s.z = [10]
+            println(tags(s,:T), tags(s.z,:U))
+        """, true)
+        assert(out == "true\ttrue\ntrue\ttrue\n") { out }
     }
     @Test
     fun todo_tplatexx_xceu() {
