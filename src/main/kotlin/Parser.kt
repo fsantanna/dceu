@@ -279,7 +279,7 @@ class Parser (lexer_: Lexer)
                     if (this.acceptFix("else")) {
                         this.block()
                     } else {
-                        Expr.Do(tk0, true, true, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                        Expr.Do(tk0, true, true, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -1069,7 +1069,7 @@ class Parser (lexer_: Lexer)
         }
         if (ret.size == 0) {
             if (XCEU) {
-                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+                ret.add(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))))
             } else {
                 err_expected(this.tk1, "expression")
             }

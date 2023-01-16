@@ -12,7 +12,7 @@ class TXExec {
     // EMPTY IF
 
     @Test
-    fun if1() {
+    fun aa_if1() {
         val out = all("""
             var x
             set x = if (true) { 1 }
@@ -21,7 +21,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun if2() {
+    fun aa_if2() {
         val out = all("""
             var x
             set x = 10
@@ -31,7 +31,7 @@ class TXExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if3() {
+    fun aa_if3() {
         val out = all("""
             var x
             set x = 10
@@ -42,7 +42,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun if4_err() {
+    fun aa_if4_err() {
         val out = all("""
             println(if [] {})
         """.trimIndent())
@@ -50,7 +50,7 @@ class TXExec {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if5() {
+    fun aa_if5() {
         val out = all("""
             println(if false { true })
         """.trimIndent())
@@ -61,7 +61,7 @@ class TXExec {
     // IFS
 
     @Test
-    fun ifs1() {
+    fun bb_ifs1() {
         val out = all("""
             var x = ifs {
                 10 < 1 -> 99
@@ -73,7 +73,7 @@ class TXExec {
         assert(out == "10\n") { out }
     }
     @Test
-    fun ifs2() {
+    fun bb_ifs2() {
         val out = all("""
             var x = ifs { true -> `:number 1` }
             println(x)
@@ -81,7 +81,7 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun ifs3() {
+    fun bb_ifs3() {
         val out = all("""
             var x = ifs 20 {
                 == 10 -> false
@@ -93,7 +93,7 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun ifs4() {
+    fun bb_ifs4() {
         val out = all("""
             var x = ifs 20 {
                 == 10 -> false
@@ -106,7 +106,7 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun ifs5() {
+    fun bb_ifs5() {
         val out = all("""
             var x = ifs 20 {
                 == 10 -> false
@@ -117,7 +117,7 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun todo_ifs6_nocnd() {
+    fun todo_bb_ifs6_nocnd() {
         val out = all("""
             var x = ifs 20 {
                 true -> ifs {
@@ -129,7 +129,7 @@ class TXExec {
         assert(out == "ERROR\n") { out }
     }
     @Test
-    fun ifs7() {
+    fun bb_ifs7() {
         val out = all("""
             var x = ifs 20 {
                 is 10 -> false
@@ -2026,19 +2026,19 @@ class TXExec {
     @Test
     fun enum01() {
         val out = all("""
-            :antes
+            pass :antes
             enum {
                 :x = `1000`,
                 :y, :z,
                 :a = `10`,
                 :b, :c
             }
-            :meio
+            pass :meio
             enum {
                 :i = `100`,
                 :j,
             }
-            :depois
+            pass :depois
             var t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
             while in :tuple t, (i,v) {
                 set t[i] = tonumber(v)
