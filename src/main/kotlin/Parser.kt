@@ -527,19 +527,46 @@ class Parser (lexer_: Lexer)
                 Expr.Enum(tk0, tags)
             }
             this.acceptFix("template") -> {
-                this.acceptEnu_err("Tag")
-                val tk0 = this.tk0 as Tk.Tag
-                this.acceptFix_err("=")
-                this.acceptFix_err("[")
-                val ids = this.list0("]") {
-                    this.acceptEnu_err("Id")
-                    val id = this.tk0 as Tk.Id
-                    val tag = if (!this.acceptEnu("Tag")) null else {
-                        this.tk0 as Tk.Tag
+                val tpl = this.tk0 as Tk.Fix
+                this.checkEnu_err("Tag")
+                fun one (pre: Tk.Tag?): List<Expr.Tplate> {
+                    return if (!this.acceptEnu("Tag")) emptyList() else {
+                        val tag = (this.tk0 as Tk.Tag).let {
+                            if (pre == null) it else {
+                                Tk.Tag(pre.str+'.'+it.str.drop(1), it.pos)
+                            }
+                        }
+                        this.acceptFix_err("=")
+                        this.acceptFix_err("[")
+                        val ids = this.list0("]") {
+                            this.acceptEnu_err("Id")
+                            val id = this.tk0 as Tk.Id
+                            val tp = if (!this.acceptEnu("Tag")) null else {
+                                this.tk0 as Tk.Tag
+                            }
+                            Pair(id, tp)
+                        }
+                        listOf(Expr.Tplate(tag, ids)) + when {
+                            !XCEU -> emptyList()
+                            !this.acceptFix("{") -> emptyList()
+                            else -> {
+                                val ll = mutableListOf<Expr.Tplate>()
+                                while (true) {
+                                    val l = one(tag)
+                                    if (l.isEmpty()) {
+                                        break
+                                    }
+                                    ll.addAll(l)
+                                }
+                                this.acceptFix_err("}")
+                                ll
+                            }
+                        }
                     }
-                    Pair(id, tag)
                 }
-                Expr.Tplate(tk0, ids)
+                val l = one(null)
+                //l.forEach { println(it.tostr()) }
+                Expr.Do(tpl, false, false, l)
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
 

@@ -60,7 +60,7 @@ class TXParser {
         val l = lexer("while true { }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.While && e.body.es[0] is Expr.Nil)
+        assert(e is Expr.While && e.body.es[0] is Expr.Pass)
         assert(e.tostr() == "while true {\npass nil\n}") { e.tostr() }
     }
 

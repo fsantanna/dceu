@@ -2080,6 +2080,31 @@ class TXExec {
     }
 
     @Test
+    fun tplate03_nest() {
+        val out = all("""
+            template :T = [t] {
+                :A = [a] {
+                    :I = []
+                    :J = [j]
+                }
+                :B = []
+                :C = [] {
+                    :Q = [q] {
+                        :X = []
+                        :Y = []
+                    }
+                }
+            }
+            var a :T.A   = :T.A [10,20]
+            var b :T     = :T.B [30]
+            var c :T.C.Q = :T.C.Q.Y [40,50]
+            println(a.a, b.t, c.q)
+            println(a is :T, b is :T.C, c is :T.C.Q.Y)
+        """, true)
+        assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
+    }
+
+    @Test
     fun todo_tplateXX() {
         val out = all("""
             template :T = [x,y]
