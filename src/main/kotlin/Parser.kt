@@ -566,7 +566,9 @@ class Parser (lexer_: Lexer)
                 }
                 val l = one(null)
                 //l.forEach { println(it.tostr()) }
-                Expr.Do(tpl, false, false, l)
+                if (l.size == 1) l.first() else {
+                    Expr.Do(Tk.Fix("do",tpl.pos), false, false, l)
+                }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
 
