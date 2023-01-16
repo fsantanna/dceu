@@ -2913,9 +2913,9 @@ class TExec {
         val out = all("""
             template :T = [x,y]
             template :T.S = [z]
-            var t :T = []
+            var t :T = tags([], :T, true)
             var s :T.S
-            set s = []
+            set s = tags([], :T.S, true)
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
@@ -2997,21 +2997,11 @@ class TExec {
             template :T = [x,y]
             template :T.S = [z:U]
             var s :T.S
-            set s = [1,2,[3]]
+            set s = tags([1,2,tags([3],:U,true)], :T.S, true)
             println(tags(s,:T), tags(s.z,:U))
-            set s.z = [10]
+            set s.z = tags([10], :U, true)
             println(tags(s,:T), tags(s.z,:U))
         """, true)
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
-    }
-    @Test
-    fun todo_tplatexx_xceu() {
-        val out = all("""
-            template :T = [x,y]
-            var t :T = [x=1,y=2]
-            set t.x = 3
-            println(t)      ;; [x=3,y=2]
-        """, true)
-        assert(out == "1\t2\n") { out }
     }
 }

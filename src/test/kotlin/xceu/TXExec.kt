@@ -2048,6 +2048,47 @@ class TXExec {
         assert(out == "[35,1000,1001,1002,10,11,12,36,100,101,37]\n") { out }
     }
 
+    // TEMPLATE
+
+    @Test
+    fun tplate01() {
+        val out = all("""
+            template :T = [x,y]
+            template :T.S = [z]
+            var t :T = :T []
+            var s :T.S
+            set s = :T.S []
+            println(t is :T, t is :T.S)
+            println(s is :T, s is :T.S)
+        """, true)
+        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+    }
+
+    @Test
+    fun tplate02() {
+        val out = all("""
+            template :U = [a]
+            template :T = [x,y]
+            template :T.S = :T.S [z:U]
+            var s :T.S
+            set s = :T.S [1,2,:U[3]]
+            println(s is :T, s.z is :U)
+            set s.z = :U [10]
+            println(s is :T.S, s.z is :U)
+        """, true)
+        assert(out == "true\ttrue\ntrue\ttrue\n") { out }
+    }
+
+    @Test
+    fun todo_tplateXX() {
+        val out = all("""
+            template :T = [x,y]
+            var t :T = [x=1,y=2]
+            set t.x = 3
+            println(t)      ;; [x=3,y=2]
+        """, true)
+        assert(out == "1\t2\n") { out }
+    }
 
     // ALL
 

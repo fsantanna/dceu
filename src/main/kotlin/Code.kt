@@ -392,16 +392,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     ceu_gc_inc(&ceu_mem->${idc});
-                    ${(this.tag!=null && this.src is Expr.Tuple).cond {
-                        """
-                        {
-                            CEU_Value ceu_true_$n = { CEU_VALUE_BOOL, {.Bool=1} };
-                            CEU_Value ceu_tag_$n  = { CEU_VALUE_TAG,  {.Tag=CEU_TAG_${tag!!.str.tag2c()}} };
-                            CEU_Value* ceu_args_$n[] = { &ceu_mem->$idc, &ceu_tag_$n, &ceu_true_$n };
-                            assert(CEU_RET_RETURN == ceu_tags_f(NULL, NULL, 3, ceu_args_$n));
-                        }
-                        """
-                    }}
                     #if 1
                         ${assrc("ceu_mem->$idc")}
                     #else // b/c of ret scope
@@ -411,28 +401,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Set -> {
-                val tag = this.dst.let {
-                    when {
-                        (this.src !is Expr.Tuple) -> null
-                        (it !is Expr.Acc) -> null
-                        else -> ups.getDcl(this, it.tk.str)!!.tag
-                    }
-                }
                 """
                 { // SET ${this.tk.dump()}
                     ${this.src.code()}
                     ceu_mem->set_$n = ceu_acc;
                     ${this.dst.code()}
-                    ${tag.cond {
-                        """
-                        {
-                            CEU_Value ceu_true_$n = { CEU_VALUE_BOOL, {.Bool=1} };
-                            CEU_Value ceu_tag_$n  = { CEU_VALUE_TAG,  {.Tag=CEU_TAG_${tag!!.tag2c()}} };
-                            CEU_Value* ceu_args_$n[] = { &ceu_mem->set_$n, &ceu_tag_$n, &ceu_true_$n };
-                            assert(CEU_RET_RETURN == ceu_tags_f(NULL, NULL, 3, ceu_args_$n));
-                        }
-                        """
-                    }}
                     #if 1
                         ${assrc("ceu_mem->set_$n")}
                     #else // b/c of ret scope
