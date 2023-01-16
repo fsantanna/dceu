@@ -434,4 +434,10 @@ class TLexer {
         assert(tks.next().str == ":X-y-z")
         assert(tks.next() is Tk.Eof)
     }
+    @Test
+    fun tags7() {
+        val l = lexer(":1.2.3.4.5")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' (at most 3)")
+    }
 }

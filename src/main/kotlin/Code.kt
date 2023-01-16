@@ -1,7 +1,6 @@
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups) {
-    val tags: MutableList<Triple<String,String,String?>> = TAGS.map { Triple(it,it.tag2c(), null) }.toMutableList()
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code()
@@ -478,22 +477,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
                 """
             }
-            is Expr.Enum -> {
-                var E = ""
-                var I = 0
-                this.tags.forEachIndexed { i, (tag,nat) ->
-                    val n = if (nat == null) {
-                        I++
-                        "($E) + $I"
-                    } else {
-                        E = nat.str
-                        I = 0
-                        nat.str
-                    }
-                    this@Coder.tags.add(Triple(tag.str,tag.str.tag2c(),n))
-                }
-                ""
-            }
+            is Expr.Enum -> ""
             is Expr.Tplate -> ""
 
             is Expr.Spawn -> this.call.code()
@@ -708,14 +692,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Nil -> assrc("((CEU_Value) { CEU_VALUE_NIL })")
-            is Expr.Tag -> {
-                val tag = this.tk.str
-                val ctag = tag.tag2c()
-                if (tags.none { it.first==tag }) {
-                    tags.add(Triple(tag,ctag,null))
-                }
-                assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_$ctag} })")
-            }
+            is Expr.Tag -> assrc("((CEU_Value) { CEU_VALUE_TAG, {.Tag=CEU_TAG_${this.tk.str.tag2c()}} })")
             is Expr.Bool -> assrc("((CEU_Value) { CEU_VALUE_BOOL, {.Bool=${if (this.tk.str == "true") 1 else 0}} })")
             is Expr.Char -> assrc("((CEU_Value) { CEU_VALUE_CHAR, {.Char=${this.tk.str}} })")
             is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")

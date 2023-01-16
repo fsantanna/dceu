@@ -9,8 +9,22 @@ class Ups (val outer: Expr.Do) {
             XBlock(GLOBALS.map { Pair(it,Dcl(it,null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
+    val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
     val tplates = mutableMapOf<String,List<String>>()
     val ups = outer.tree()
+
+    fun add_tag (tk: Tk, id: String, c: String, enu: String?) {
+        if (tags.containsKey(id)) {
+            // already there
+        } else {
+            val issub = id.contains('.')
+            val sup = id.dropLastWhile { it != '.' }.dropLast(1)
+            if (issub && !tags.containsKey(sup)) {
+                err(tk, "tag error : parent tag $sup is not declared")
+            }
+            tags[id] = Triple(id, c, enu)
+        }
+    }
 
     // Protos that cannot be closures:
     //  - they access at least 1 free var w/o upval modifiers
@@ -155,13 +169,23 @@ class Ups (val outer: Expr.Do) {
                 if (it.first.str.contains('.')) {
                     err(it.first, "enum error : enum tag cannot contain '.'")
                 }
+                var E = ""
+                var I = 0
+                this.tags.forEachIndexed { i, (tag,nat) ->
+                    val n = if (nat == null) {
+                        I++
+                        "($E) + $I"
+                    } else {
+                        E = nat.str
+                        I = 0
+                        nat.str
+                    }
+                    add_tag(tag, tag.str, tag.str.tag2c(), n)
+                }
             }
             is Expr.Tplate -> {
-                val issub = this.tk.str.contains('.')
+                add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
-                if (issub && !tplates.containsKey(sup)) {
-                    err(this.tk, "template error : parent template $sup is not declared")
-                }
                 if (tplates.containsKey(this.tk.str)) {
                     err(this.tk, "template error : template ${this.tk.str} is already declared")
                 }
@@ -224,7 +248,7 @@ class Ups (val outer: Expr.Do) {
             }
             is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
-            is Expr.Tag    -> {}
+            is Expr.Tag    -> add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}

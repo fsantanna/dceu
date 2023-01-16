@@ -64,16 +64,6 @@ fun Coder.main (): String {
         #define CEU_CONTINUE_ON_CLEAR() { if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) { continue; } }
         #define CEU_CONTINUE_ON_CLEAR_THROW() { CEU_CONTINUE_ON_CLEAR(); CEU_CONTINUE_ON_THROW(); }
 
-        #define CEU_TAG_DEFINE_N(id,str,n)          \
-            const int CEU_TAG_##id = n;             \
-            CEU_Tags_Names ceu_tag_##id = { CEU_TAG_##id, str, NULL };
-        #define CEU_TAG_DEFINE(id,str)              \
-            const int CEU_TAG_##id = __COUNTER__;   \
-            CEU_Tags_Names ceu_tag_##id = { CEU_TAG_##id, str, NULL };
-        #define CEU_TAG_INIT(id,str)                \
-            ceu_tag_##id.next = CEU_TAGS;           \
-            CEU_TAGS = &ceu_tag_##id;               \
-            CEU_TAGS_MAX++;            
         CEU_RET ceu_tags_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
         
@@ -283,15 +273,81 @@ fun Coder.main (): String {
 
         int ceu_gc_count = 0;
         
-        static CEU_Tags_Names* CEU_TAGS = NULL;
-        int CEU_TAGS_MAX = 0;
-        ${this.tags.map { (str,c,n) ->
-            if (n == null) {
-                "CEU_TAG_DEFINE($c,\"${str}\")\n"
-            } else {
-                "CEU_TAG_DEFINE_N($c,\"${str}\",$n)\n"
+        ${ ups.tags.values.let {
+            fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
+                return l
+                    .groupBy { it.first() }
+                    .toList()
+                    .map {
+                        Pair(it.first, it.second.map { it.drop(1) }.filter{it.size>0})
+                    }
             }
-        }.joinToString("")}
+            /*
+            fun <T> f2 (l: List<Pair<String, List<List<String>>>>): List<Pair<String, T>> {
+                return l.map {
+                    val x = f1(it.second)
+                    Pair(it.first, f2(x))
+                }
+            }
+            */
+            val l1 = it.map { it.first }.map { it.drop(1).split('.') }
+            val l2 = f1(l1)
+            val l3 = l2.map {
+                val a = f1(it.second)
+                val b = a.map {
+                    val i = f1(it.second)
+                    val j = i.map {
+                        val x = f1(it.second)
+                        Pair(it.first, x)
+                    }
+                    Pair(it.first, j)
+                }
+                Pair(it.first, b)
+            }
+            //println(l3)
+
+            var last = "NULL"
+            var i1 = 0
+            l3.map {
+                val (s1,c1,e1) = ups.tags[':'+it.first]!!
+                val ie1 = e1 ?: i1++
+                val prev = last
+                last = "&ceu_tag_$c1"
+                """
+                #define CEU_TAG_$c1 $ie1
+                CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prev };
+                """
+            }
+            .joinToString("") + """
+                CEU_Tags_Names* CEU_TAGS = $last;
+            """
+        /*
+        TODO()
+
+        var last = "NULL"
+        it.groupBy { it.first.count{it=='.'} }
+        .toList()
+        .sortedBy { it.first }
+        .map { (dots, ts) -> ts
+            .partition { (_,_,enu) -> enu==null }
+            .toList()
+            .map {
+                it.mapIndexed { i, (str,c,enu) ->
+                    if (dots > 0) {
+                        assert(enu == null)
+                    }
+                    val I = enu ?: i
+                    val prev = last
+                    last = "&ceu_tag_$c"
+                    """
+                    #define CEU_TAG_$c $I
+                    CEU_Tags_Names ceu_tag_$c = { CEU_TAG_$c, "$str", $prev };
+                    """
+                }
+            }.flatten()
+        }
+        */
+        }}
 
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
         CEU_Error_List* ceu_error_list = NULL;
@@ -393,7 +449,7 @@ fun Coder.main (): String {
         }
         char* ceu_tag_to_string (int tag) {
             CEU_Tags_Names* cur = CEU_TAGS;
-            for (int i=0; i<CEU_TAGS_MAX; i++) {
+            while (cur != NULL) {
                 if (cur->tag == tag) {
                     return cur->name;
                 }
@@ -1516,7 +1572,6 @@ fun Coder.main (): String {
     """ +
     """ // MAIN
         int main (void) {
-            ${this.tags.map { "CEU_TAG_INIT(${it.second},\"${it.first}\")\n" }.joinToString("")}
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {

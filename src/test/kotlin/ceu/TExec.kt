@@ -2003,7 +2003,19 @@ class TExec {
                 println(:1.2.3)
             }()
         """)
-        assert(out == ":Xxx.Yyy\n:1.2.3\n") { out }
+        assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared") { out }
+    }
+    @Test
+    fun tags3a() {
+        val out = all("""
+            func () {
+                println(:Xxx)
+            }()
+            func () {
+                println(:1)
+            }()
+        """)
+        assert(out == ":Xxx\n:1\n") { out }
     }
     @Test
     fun todo_tags4_err() {
@@ -2068,15 +2080,39 @@ class TExec {
         val out = all("""
             println(:x-a-x, :i.j.1)
         """, true)
-        assert(out == ":x-a-x\t:i.j.1\n") { out }
+        assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared") { out }
+    }
+    @Test
+    fun tags10a() {
+        val out = all("""
+            println(:x-a-x, :i-j-1)
+        """, true)
+        assert(out == ":x-a-x\t:i-j-1\n") { out }
     }
     @Test
     fun tags11() {
         val out = all("""
             var t = tags([], :T,   true)
             var s = tags([], :T.S, true)
+            println(tonumber(:T), tonumber(:T.S))
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
+        """, true)
+        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+    }
+    @Test
+    fun tags12() {
+        val out = all("""
+            :A
+            :A.I
+            :A.I.X
+            :A.I.Y
+            :A.J
+            :A.J.X
+            :B
+            :B.I
+            :B.I.X
+            :B.I.X.1
         """, true)
         assert(out == "true\tfalse\ntrue\ttrue\n") { out }
     }
@@ -2898,7 +2934,7 @@ class TExec {
         val out = all("""
             template :T.S = [x]
         """, true)
-        assert(out == "anon : (lin 2, col 22) : template error : parent template :T is not declared") { out }
+        assert(out == "anon : (lin 2, col 22) : tag error : parent tag :T is not declared") { out }
     }
     @Test
     fun todo_tplatexx_xceu() {

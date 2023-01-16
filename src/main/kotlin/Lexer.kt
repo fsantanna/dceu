@@ -216,9 +216,12 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && y.isLetter()) }
+                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && y.isLetterOrDigit()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
+                    }
+                    if (tag.count { it=='.' } > 3) {
+                        err(pos, "tag error : excess of '.' : max hierarchy of 4")
                     }
                     yield(Tk.Tag(tag, pos))
                 }
