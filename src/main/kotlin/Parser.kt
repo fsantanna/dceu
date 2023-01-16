@@ -676,10 +676,10 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Tag")  -> {
                 val tag = this.tk0 as Tk.Tag
                 if (XCEU && this.checkFix("[")) {
-                    val tup = this.expr()
+                    val tup = this.exprPrim()
                     assert(tup is Expr.Tuple)
                     this.nest("""
-                        tags(${tup.tostr(true)}, ${tag.str}, true)
+                        ${tag.pos.pre()}tags(${tup.tostr(true)}, ${tag.str}, true)
                     """)
                 } else {
                     Expr.Tag(tag)

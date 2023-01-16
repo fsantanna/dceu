@@ -141,6 +141,18 @@ class TXExec {
         """, true)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun bb_ifs8() {
+        val out = all("""
+            data :T = []
+            var x = ifs 10 {
+                true -> :T []
+                is 0 -> nil
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 5, col 20) : access error : variable \"is'\" is not declared") { out }
+    }
 
     // OPS: not, and, or
 
