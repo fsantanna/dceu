@@ -11,7 +11,7 @@ val D = "\$"
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "defer", "do", "else", "enum", "err", "evt",
     "false", "func", "if", "in", "nil", "pass", "pub", "resume", "set", "spawn", "status",
-    "task", "template", "toggle", "true", "var", "yield", "while"
+    "task", "data", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
     "par-and", "par-or", "until", "with", "where"
@@ -62,7 +62,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
-    data class Tplate (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
+    data class Data (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)

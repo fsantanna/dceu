@@ -526,10 +526,10 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Enum(tk0, tags)
             }
-            this.acceptFix("template") -> {
+            this.acceptFix("data") -> {
                 val tpl = this.tk0 as Tk.Fix
                 this.checkEnu_err("Tag")
-                fun one (pre: Tk.Tag?): List<Expr.Tplate> {
+                fun one (pre: Tk.Tag?): List<Expr.Data> {
                     return if (!this.acceptEnu("Tag")) emptyList() else {
                         val tag = (this.tk0 as Tk.Tag).let {
                             if (pre == null) it else {
@@ -546,11 +546,11 @@ class Parser (lexer_: Lexer)
                             }
                             Pair(id, tp)
                         }
-                        listOf(Expr.Tplate(tag, ids)) + when {
+                        listOf(Expr.Data(tag, ids)) + when {
                             !XCEU -> emptyList()
                             !this.acceptFix("{") -> emptyList()
                             else -> {
-                                val ll = mutableListOf<Expr.Tplate>()
+                                val ll = mutableListOf<Expr.Data>()
                                 while (true) {
                                     val l = one(tag)
                                     if (l.isEmpty()) {

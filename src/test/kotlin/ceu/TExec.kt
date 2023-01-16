@@ -2850,15 +2850,15 @@ class TExec {
     @Test
     fun tplate01_err() {
         val out = all("""
-            template :T = []
-            template :T = []
+            data :T = []
+            data :T = []
         """, true)
-        assert(out == "anon : (lin 3, col 22) : template error : template :T is already declared") { out }
+        assert(out == "anon : (lin 3, col 18) : data error : data :T is already declared") { out }
     }
     @Test
     fun tplate02_err() {
         val out = all("""
-            template :T = []
+            data :T = []
             var t :T
             println(t.x)
         """, true)
@@ -2867,15 +2867,15 @@ class TExec {
     @Test
     fun tplate03_err() {
         val out = all("""
-            template :T = []
+            data :T = []
             var v :U
         """, true)
-        assert(out == "anon : (lin 3, col 19) : declaration error : template :U is not declared") { out }
+        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
     }
     @Test
     fun tplate04() {
         val out = all("""
-            template :T = [x,y]
+            data :T = [x,y]
             var t :T
             set t = [1,2]
             println(t.x, t.y)
@@ -2885,7 +2885,7 @@ class TExec {
     @Test
     fun tplate05() {
         val out = all("""
-            template :T = [x,y]
+            data :T = [x,y]
             var t :T
             set t = [1,2]
             println(t.x, t.y)
@@ -2895,8 +2895,8 @@ class TExec {
     @Test
     fun tplate06() {
         val out = all("""
-            template :T = [x,y]
-            template :T.S = [z]
+            data :T = [x,y]
+            data :T.S = [z]
             var s :T.S = [1,2,3]
             println(s.x,s.y,s.z)
         """, true)
@@ -2905,8 +2905,8 @@ class TExec {
     @Test
     fun tplate07() {
         val out = all("""
-            template :T = [x,y]
-            template :T.S = [z]
+            data :T = [x,y]
+            data :T.S = [z]
             var s :T.S = [1,2,3]
             var t :T = s
             var x :T.S = t
@@ -2919,8 +2919,8 @@ class TExec {
     @Test
     fun tplate08() {
         val out = all("""
-            template :T = [x,y]
-            template :T.S = [z]
+            data :T = [x,y]
+            data :T.S = [z]
             var t :T = tags([], :T, true)
             var s :T.S
             set s = tags([], :T.S, true)
@@ -2932,37 +2932,37 @@ class TExec {
     @Test
     fun tplate09_err() {
         val out = all("""
-            template :T = [x,x]
+            data :T = [x,x]
         """, true)
-        assert(out == "anon : (lin 2, col 22) : template error : found duplicate ids") { out }
+        assert(out == "anon : (lin 2, col 18) : data error : found duplicate ids") { out }
     }
     @Test
     fun tplate10_err() {
         val out = all("""
-            template :T   = [x,y]
-            template :T.S = [x]
+            data :T   = [x,y]
+            data :T.S = [x]
         """, true)
-        assert(out == "anon : (lin 3, col 22) : template error : found duplicate ids") { out }
+        assert(out == "anon : (lin 3, col 18) : data error : found duplicate ids") { out }
     }
     @Test
     fun tplate11_err() {
         val out = all("""
-            template :T.S = [x]
+            data :T.S = [x]
         """, true)
-        assert(out == "anon : (lin 2, col 22) : tag error : parent tag :T is not declared") { out }
+        assert(out == "anon : (lin 2, col 18) : tag error : parent tag :T is not declared") { out }
     }
     @Test
     fun tplate12_err() {
         val out = all("""
-            template :T = [x:U]
+            data :T = [x:U]
         """, true)
-        assert(out == "anon : (lin 2, col 29) : template error : template :U is not declared") { out }
+        assert(out == "anon : (lin 2, col 25) : data error : data :U is not declared") { out }
     }
     @Test
     fun tplate12() {
         val out = all("""
-            template :T = [v]
-            template :U = [t:T]
+            data :T = [v]
+            data :U = [t:T]
             var u :U = [[10]]
             println(u.t.v)
         """, true)
@@ -2971,8 +2971,8 @@ class TExec {
     @Test
     fun tplate13_err() {
         val out = all("""
-            template :T = [v]
-            template :U = [t:T]
+            data :T = [v]
+            data :U = [t:T]
             var u :U = [[10]]
             println(u.t.X)
         """, true)
@@ -2981,8 +2981,8 @@ class TExec {
     @Test
     fun tplate14_err() {
         val out = all("""
-            template :T = [v]
-            template :U = [t:T]
+            data :T = [v]
+            data :U = [t:T]
             var u :U = [[10]]
             println(u.X.v)
         """, true)
@@ -2991,19 +2991,19 @@ class TExec {
     @Test
     fun tplate15_err() {
         val out = all("""
-            template :T = [v]
-            template :U = [t:T,X]
+            data :T = [v]
+            data :U = [t:T,X]
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a template") { out }
+        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
     }
     @Test
     fun tplate16() {
         val out = all("""
-            template :U = [a]
-            template :T = [x,y]
-            template :T.S = [z:U]
+            data :U = [a]
+            data :T = [x,y]
+            data :T.S = [z:U]
             var s :T.S
             set s = tags([1,2,tags([3],:U,true)], :T.S, true)
             println(tags(s,:T), tags(s.z,:U))

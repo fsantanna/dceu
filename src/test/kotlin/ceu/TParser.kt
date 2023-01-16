@@ -923,11 +923,11 @@ class TParser {
     @Test
     fun tplate00() {
         val l = lexer("""
-            template :T = [x,y]
+            data :T = [x,y]
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "template :T = [x,y]\n") { e.tostr() }
+        assert(e.tostr() == "data :T = [x,y]\n") { e.tostr() }
     }
     @Test
     fun tplate01() {
@@ -941,42 +941,42 @@ class TParser {
     @Test
     fun tplate02_err() {
         val l = lexer("""
-            template X [x,y]
+            data X [x,y]
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 22) : expected tag : have \"X\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 18) : expected tag : have \"X\"")
     }
     @Test
     fun tplate03_err() {
         val l = lexer("""
-            template :X [x,y]
+            data :X [x,y]
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 25) : expected \"=\" : have \"[\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : expected \"=\" : have \"[\"")
     }
     @Test
     fun tplate04_err() {
         val l = lexer("""
-            template :X = nil
+            data :X = nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected \"[\" : have \"nil\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected \"[\" : have \"nil\"")
     }
     @Test
     fun tplate05_err() {
         val l = lexer("""
-            template :X = [1,2]
+            data :X = [1,2]
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected identifier : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 24) : expected identifier : have \"1\"")
     }
     @Test
     fun tplate06() {
         val l = lexer("""
-            template :U = [t:T]
+            data :U = [t:T]
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "template :U = [t:T]\n") { e.tostr() }
+        assert(e.tostr() == "data :U = [t:T]\n") { e.tostr() }
     }
 }

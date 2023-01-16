@@ -133,7 +133,7 @@ class Ups (val outer: Expr.Do) {
                 val lst = this.tpl_lst(e.col)
                 val id_tag = lst.firstOrNull { it.first.str==id }!!
                 if (id_tag.second == null) {
-                    err(e.idx.tk, "index error : field \"$id\" is not a template")
+                    err(e.idx.tk, "index error : field \"$id\" is not a data")
                 }
                 this.tplates[id_tag.second!!.str]!!
             }
@@ -173,7 +173,7 @@ class Ups (val outer: Expr.Do) {
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 if (this.tag!=null && !tplates.containsKey(this.tag.str)) {
-                    err(this.tag, "declaration error : template ${this.tag.str} is not declared")
+                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 xup.syms[id] = Dcl(id, this.tag?.str, this.init, this.tk_.upv, bup)
                 xup.syms["_${id}_"] = Dcl("_${id}_", null, false, this.tk_.upv, bup)
@@ -209,20 +209,20 @@ class Ups (val outer: Expr.Do) {
                     add_tag(tag, tag.str, tag.str.tag2c(), n)
                 }
             }
-            is Expr.Tplate -> {
+            is Expr.Data -> {
                 add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
                 if (tplates.containsKey(this.tk.str)) {
-                    err(this.tk, "template error : template ${this.tk.str} is already declared")
+                    err(this.tk, "data error : data ${this.tk.str} is already declared")
                 }
                 val ids = (tplates[sup] ?: emptyList()) + this.ids
                 val xids = ids.map { it.first.str }
                 if (xids.size != xids.distinct().size) {
-                    err(this.tk, "template error : found duplicate ids")
+                    err(this.tk, "data error : found duplicate ids")
                 }
                 ids.forEach { (_,tag) ->
                     if (tag!=null && !tplates.containsKey(tag.str)) {
-                        err(tag, "template error : template ${tag.str} is not declared")
+                        err(tag, "data error : data ${tag.str} is not declared")
                     }
                 }
                 tplates[this.tk.str] = ids
@@ -319,7 +319,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
             is Expr.Defer  -> this.map(listOf(this.body))
             is Expr.Enum   -> emptyMap()
-            is Expr.Tplate -> emptyMap()
+            is Expr.Data -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
 
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))

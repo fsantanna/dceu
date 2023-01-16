@@ -2053,8 +2053,8 @@ class TXExec {
     @Test
     fun tplate01() {
         val out = all("""
-            template :T = [x,y]
-            template :T.S = [z]
+            data :T = [x,y]
+            data :T.S = [z]
             var t :T = :T []
             var s :T.S
             set s = :T.S []
@@ -2067,9 +2067,9 @@ class TXExec {
     @Test
     fun tplate02() {
         val out = all("""
-            template :U = [a]
-            template :T = [x,y]
-            template :T.S = [z:U]
+            data :U = [a]
+            data :T = [x,y]
+            data :T.S = [z:U]
             var s :T.S
             set s = :T.S [1,2,:U[3]]
             println(s is :T, s.z is :U)
@@ -2082,7 +2082,7 @@ class TXExec {
     @Test
     fun tplate03_nest() {
         val out = all("""
-            template :T = [t] {
+            data :T = [t] {
                 :A = [a] {
                     :I = []
                     :J = [j]
@@ -2107,7 +2107,7 @@ class TXExec {
     @Test
     fun todo_tplateXX() {
         val out = all("""
-            template :T = [x,y]
+            data :T = [x,y]
             var t :T = [x=1,y=2]
             set t.x = 3
             println(t)      ;; [x=3,y=2]
