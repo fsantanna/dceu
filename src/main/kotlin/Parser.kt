@@ -289,7 +289,13 @@ class Parser (lexer_: Lexer)
                 when {
                     !this.acceptFix("in") -> {
                         val cnd = this.expr()
-                        this.catch_block(this.tk1).let { (C,b) -> C(Expr.While(tk0, cnd, b)) }
+                        this.catch_block(this.tk1).let { (C,b) ->
+                            val e = b.es.last()
+                            if (e.is_innocuous()) {
+                                err(e.tk, "invalid expression : innocuous expression")
+                            }
+                            C(Expr.While(tk0, cnd, b))
+                        }
                     }
                     XCEU && (this.acceptFix("[") || this.acceptFix("(")) -> {
                         val pre0 = tk0.pos.pre()
@@ -535,6 +541,7 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Tplate(tk0, ids)
             }
+            this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
 
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -1068,22 +1075,7 @@ class Parser (lexer_: Lexer)
             }
         }
         ret.forEachIndexed { i,e ->
-            val ok = when {
-                (i == ret.size-1) -> true
-                (e is Expr.Pub) -> false
-                (e is Expr.Tuple) -> false
-                (e is Expr.Vector) -> false
-                (e is Expr.Dict) -> false
-                (e is Expr.Index) -> false
-                (e is Expr.Acc) -> false
-                (e is Expr.EvtErr) -> false
-                (e is Expr.Nil) -> false
-                (e is Expr.Tag) -> false
-                (e is Expr.Bool) -> false
-                (e is Expr.Char) -> false
-                (e is Expr.Num) -> false
-                else -> true
-            }
+            val ok = (i == ret.size-1) || !e.is_innocuous()
             if (!ok) {
                 err(e.tk, "invalid expression : innocuous expression")
             }

@@ -152,7 +152,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                [1,2,3]
+                pass [1,2,3]
                 yield(nil)
             }
             resume (coroutine(T)) ()
@@ -1321,7 +1321,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                [1,2,3]
+                pass [1,2,3]
                 yield(nil)
             }
             var ts
@@ -1406,6 +1406,15 @@ class TTask {
         val out = all("""
             while in :coros nil, x {
                 nil
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : invalid expression : innocuous expression") { out }
+    }
+    @Test
+    fun ff_pool8a_err() {
+        val out = all("""
+            while in :coros nil, x {
+                pass nil
             }
         """)
         assert(out == "anon : (lin 2, col 29) : while error : expected coroutines\n:error\n") { out }
@@ -1522,10 +1531,10 @@ class TTask {
             while in :coros ts, xxx {
                 var yyy
                 while in :coros ts, zzz {
-                    nil
+                    pass nil
                 }
                 set yyy = xxx
-                nil ;; otherwise scope err for yyy/xxx
+                ;;pass nil ;; otherwise scope err for yyy/xxx
             }
             println(1)
         """
@@ -1542,7 +1551,7 @@ class TTask {
             set ts = coroutines()
             spawn in ts, T()
             while in :coros ts, xxx {
-                xxx
+                pass xxx
             }
             println(1)
         """
@@ -2170,7 +2179,7 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
-                task.pub ;; useless test
+                pass task.pub ;; useless test
                 nil
             }
             spawn T()

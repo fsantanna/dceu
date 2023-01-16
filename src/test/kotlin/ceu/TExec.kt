@@ -191,7 +191,7 @@ class TExec {
         val out = all("""
             [1,2,3][1]
         """)
-        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression") { out }
     }
     @Test
     fun cc_index01() {
@@ -1277,8 +1277,8 @@ class TExec {
     @Test
     fun func8() {
         val out = all("""
-            1
-            (1)
+            pass 1
+            pass (1)
         """)
         //assert(out == "anon : (lin 2, col 2) : call error : \"(\" in the next line") { out }
         assert(out == "") { out }
@@ -2110,16 +2110,16 @@ class TExec {
     @Test
     fun tags12() {
         val out = all("""
-            :A
-            :A.I
-            :A.I.X
-            :A.I.Y
-            :A.J
-            :A.J.X
-            :B
-            :B.I
-            :B.I.X
-            :B.I.X.1
+            pass :A
+            pass :A.I
+            pass :A.I.X
+            pass :A.I.Y
+            pass :A.J
+            pass :A.J.X
+            pass :B
+            pass :B.I
+            pass :B.I.X
+            pass :B.I.X.1
             println(supof(:A, :A.I))
             println(supof(:A, :A.I.X))
             println(supof(:A.I.X, :A.I.Y))
@@ -2135,19 +2135,19 @@ class TExec {
     @Test
     fun enum01() {
         val out = all("""
-            :antes
+            pass :antes
             enum {
                 :x = `1000`,
                 :y, :z,
                 :a = `10`,
                 :b, :c
             }
-            :meio
+            pass :meio
             enum {
                 :i = `100`,
                 :j,
             }
-            :depois
+            pass :depois
             println (
                 tonumber(:antes),
                 tonumber(:x),
@@ -2629,8 +2629,8 @@ class TExec {
     @Test
     fun gc2() {
         val out = all("""
-            []  ;; not checked
-            []  ;; not checked
+            pass []  ;; not checked
+            pass []  ;; not checked
             println(`:number ceu_gc_count`)
         """)
         //assert(out == "2\n") { out }

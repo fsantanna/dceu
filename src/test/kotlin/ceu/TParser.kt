@@ -331,6 +331,13 @@ class TParser {
     fun exprs_seq2() {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
+        //assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
+        assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : invalid expression : innocuous expression")
+    }
+    @Test
+    fun exprs_seq2a() {
+        val l = lexer("; f () \n pass (1) ; h()\ni() ;\n;")
+        val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
         assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
@@ -466,19 +473,19 @@ class TParser {
     }
     @Test
     fun group2() {
-        val l = lexer("do :unnest { 1 ; 2 }")
+        val l = lexer("do :unnest { pass 1 ; 2 }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Do && e.es.size==2)
-        assert(e.tostr() == "do :unnest {\n1\n2\n}") { e.tostr() }
+        assert(e.tostr() == "do :unnest {\npass 1\n2\n}") { e.tostr() }
     }
     @Test
     fun group3() {
-        val l = lexer("do :unnest :hide { x; y; z; }")
+        val l = lexer("do :unnest :hide { pass x; pass y; z; }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Do && e.es.size==3)
-        assert(e.tostr() == "do :unnest :hide {\nx\ny\nz\n}") { e.tostr() }
+        assert(e.tostr() == "do :unnest :hide {\npass x\npass y\nz\n}") { e.tostr() }
     }
 
     // FUNC

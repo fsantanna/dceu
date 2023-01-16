@@ -14,6 +14,14 @@ fun <T> T?.cond (f: (v:T)->String): String {
     }
 }
 
+fun Expr.is_innocuous (): Boolean {
+    return when (this) {
+        is Expr.Pub, is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
+        is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
+        else -> false
+    }
+}
+
 fun String.tag2c (): String {
     return this
         .drop(1)
