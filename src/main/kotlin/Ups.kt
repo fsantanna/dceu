@@ -197,7 +197,7 @@ class Ups (val outer: Expr.Do) {
             }
 
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
-            is Expr.Bcast  -> this.evt.traverse()
+            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
             is Expr.Yield  -> {
                 if (!intask(this)) {
                     err(this.tk, "yield error : expected enclosing task")
