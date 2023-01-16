@@ -114,6 +114,7 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     val es = try {
         parser.exprs()
     } catch (e: Throwable) {
+        //throw e;
         return e.message!! + "\n"
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))

@@ -516,7 +516,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("{")
                 val tags = this.list0("}") {
-                    this.acceptEnu("Tag")
+                    this.acceptEnu_err("Tag")
                     val tag = this.tk0 as Tk.Tag
                     val nat = if (!this.acceptFix("=")) null else {
                         this.acceptEnu_err("Nat")

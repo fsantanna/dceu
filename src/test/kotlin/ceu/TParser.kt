@@ -917,6 +917,14 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected native : have \"1\"")
     }
+    @Test
+    fun enum03_err() {
+        val l = lexer("""
+            enum { :x, 1 }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 24) : expected tag : have \"1\"")
+    }
 
     // TEMPLATE
 
