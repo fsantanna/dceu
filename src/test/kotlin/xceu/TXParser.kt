@@ -37,7 +37,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "if true {\n1\n} else {\npass nil\n}") { e.tostr() }
     }
     @Test
     fun empty2_do() {  // set whole tuple?
@@ -45,7 +45,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Do && e.es.size==1)
-        assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "do {\npass nil\n}") { e.tostr() }
     }
     @Test
     fun empty3_func() {
@@ -53,7 +53,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==0)
-        assert(e.tostr() == "func () {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "func () {\npass nil\n}") { e.tostr() }
     }
     @Test
     fun empty4_while() {
@@ -61,7 +61,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.While && e.body.es[0] is Expr.Nil)
-        assert(e.tostr() == "while true {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "while true {\npass nil\n}") { e.tostr() }
     }
 
     // IFS
@@ -96,7 +96,7 @@ class TXParser {
         val l = lexer("ifs { a -> {1} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n} else {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "if a {\n1\n} else {\npass nil\n}") { e.tostr() }
     }
     @Test
     fun ifs6() {
