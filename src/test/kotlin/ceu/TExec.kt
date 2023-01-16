@@ -190,6 +190,7 @@ class TExec {
     fun cc_index01_err() {
         val out = all("""
             [1,2,3][1]
+            nil
         """)
         assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression") { out }
     }

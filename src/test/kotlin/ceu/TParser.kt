@@ -340,7 +340,7 @@ class TParser {
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
+        assert(es.tostr() == "f()\npass 1\nh()\ni()\n") { es.tostr() }
         //assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
     }
     @Test
