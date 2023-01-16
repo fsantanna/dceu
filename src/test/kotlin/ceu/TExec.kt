@@ -2098,7 +2098,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "29\t285\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2113,8 +2113,14 @@ class TExec {
             :B.I
             :B.I.X
             :B.I.X.1
+            println(supof(:A, :A.I))
+            println(supof(:A, :A.I.X))
+            println(supof(:A.I.X, :A.I.Y))
+            println(supof(:A.J, :A.I.Y))
+            println(supof(:A.I.X, :A))
+            println(supof(:B, :B.I.X.1))
         """, true)
-        assert(out == "true\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
 
     // ENUM

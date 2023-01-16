@@ -438,6 +438,6 @@ class TLexer {
     fun tags7() {
         val l = lexer(":1.2.3.4.5")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' (at most 3)")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' : max hierarchy of 4")
     }
 }

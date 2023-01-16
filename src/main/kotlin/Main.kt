@@ -34,7 +34,7 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "copy", "coroutine", "coroutines", "detrack", "move", "next", "print", "println",
-    "tags", "throw", "track", "type",
+    "supof", "tags", "throw", "track", "type",
     "{==}", "{#}", "{/=}"
 )
 

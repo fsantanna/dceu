@@ -133,7 +133,7 @@ fun Coder.main (): String {
             CEU_VALUE type;
             union {
                 //void nil;
-                int Tag;
+                unsigned int Tag;
                 int Bool;
                 char Char;
                 double Number;
@@ -308,45 +308,55 @@ fun Coder.main (): String {
 
             var last = "NULL"
             var i1 = 0
-            l3.map {
-                val (s1,c1,e1) = ups.tags[':'+it.first]!!
+            l3.map { it1 ->
+                val (s1,c1,e1) = ups.tags[':'+it1.first]!!
                 val ie1 = e1 ?: i1++
-                val prev = last
+                val prv1 = last
                 last = "&ceu_tag_$c1"
+                var i2 = 0
                 """
                 #define CEU_TAG_$c1 $ie1
-                CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prev };
-                """
+                CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
+                """ + it1.second.map { it2 ->
+                    val (s2,c2,e2) = ups.tags[':'+it1.first+'.'+it2.first]!!
+                    assert(e2 == null)
+                    i2++
+                    val prv2 = last
+                    last = "&ceu_tag_$c2"
+                    var i3 = 0
+                    """
+                    #define CEU_TAG_$c2 (($i2 << 8) | $ie1)
+                    CEU_Tags_Names ceu_tag_$c2 = { CEU_TAG_$c2, "$s2", $prv2 };
+                    """ + it2.second.map { it3 ->
+                        val (s3,c3,e3) = ups.tags[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
+                        assert(e3 == null)
+                        i3++
+                        val prv3 = last
+                        last = "&ceu_tag_$c3"
+                        var i4 = 0
+                        """
+                        #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
+                        CEU_Tags_Names ceu_tag_$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
+                        """ + it3.second.map { it4 ->
+                            val (s4,c4,e4) = ups.tags[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
+                            assert(e4 == null)
+                            i4++
+                            val prv4 = last
+                            last = "&ceu_tag_$c4"
+                            """
+                            #define CEU_TAG_$c4 (($i4 << 24) | ($i3 << 16) | ($i2 << 8) | $ie1)
+                            CEU_Tags_Names ceu_tag_$c4 = { CEU_TAG_$c4, "$s4", $prv4 };
+                            """
+                        }
+                        .joinToString("")
+                    }
+                    .joinToString("")
+                 }
+                 .joinToString("")
             }
             .joinToString("") + """
                 CEU_Tags_Names* CEU_TAGS = $last;
             """
-        /*
-        TODO()
-
-        var last = "NULL"
-        it.groupBy { it.first.count{it=='.'} }
-        .toList()
-        .sortedBy { it.first }
-        .map { (dots, ts) -> ts
-            .partition { (_,_,enu) -> enu==null }
-            .toList()
-            .map {
-                it.mapIndexed { i, (str,c,enu) ->
-                    if (dots > 0) {
-                        assert(enu == null)
-                    }
-                    val I = enu ?: i
-                    val prev = last
-                    last = "&ceu_tag_$c"
-                    """
-                    #define CEU_TAG_$c $I
-                    CEU_Tags_Names ceu_tag_$c = { CEU_TAG_$c, "$str", $prev };
-                    """
-                }
-            }.flatten()
-        }
-        */
         }}
 
         const CEU_Value CEU_ERR_ERROR = { CEU_VALUE_TAG, {.Tag=CEU_TAG_error} };
@@ -395,6 +405,35 @@ fun Coder.main (): String {
             ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->type} };
             return CEU_RET_RETURN;
         }
+        CEU_RET ceu_supof_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n >= 2);
+            CEU_Value* sup = args[0];
+            CEU_Value* sub = args[1];
+            assert(sup->type == CEU_VALUE_TAG);
+            assert(sub->type == CEU_VALUE_TAG);
+            
+            //printf("sup=0x%08X vs sub=0x%08X\n", sup->Tag, sub->Tag);
+            int sup0 = sup->Tag & 0x000000FF;
+            int sup1 = sup->Tag & 0x0000FF00;
+            int sup2 = sup->Tag & 0x00FF0000;
+            int sup3 = sup->Tag & 0xFF000000;
+            int sub0 = sub->Tag & 0x000000FF;
+            int sub1 = sub->Tag & 0x0000FF00;
+            int sub2 = sub->Tag & 0x00FF0000;
+            int sub3 = sub->Tag & 0xFF000000;
+            
+            ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, { .Bool =
+                (sup0 == sub0) && ((sup1 == 0) || (
+                    (sup1 == sub1) && ((sup2 == 0) || (
+                        (sup2 == sub2) && ((sup3 == 0) || (
+                            (sup3 == sub3)
+                        ))
+                    ))
+                ))
+            } };
+
+            return CEU_RET_RETURN;
+        }
         CEU_RET ceu_tags_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 2);
             CEU_Value* dyn = args[0];
@@ -407,8 +446,10 @@ fun Coder.main (): String {
                 } else {
                     CEU_Tags_List* cur = dyn->Dyn->tags;
                     while (cur != NULL) {
-                        if (cur->tag == tag->Tag) {
-                            ceu_acc.Bool = 1;
+                        CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                        CEU_Value* args[] = { tag, &x };
+                        assert(CEU_RET_RETURN == ceu_supof_f(_1, _2, 2, args));
+                        if (ceu_acc.Bool) {
                             break;
                         }
                         cur = cur->next;
@@ -1615,6 +1656,11 @@ fun Coder.main (): String {
                             .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_supof = { 
+                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_supof_f, {0,NULL}, {{0}} }
+                        }
+                    };
                     static CEU_Dyn ceu_tags = { 
                         CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} }
@@ -1658,6 +1704,7 @@ fun Coder.main (): String {
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_next}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}      };            
+                    ceu_mem->supof      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_supof}        };
                     ceu_mem->tags       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}         };
                     ceu_mem->throw      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_throw}        };
                     ceu_mem->track      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_track}        };
