@@ -315,7 +315,7 @@ fun Coder.main (): String {
                 last = "&ceu_tag_$c1"
                 var i2 = 0
                 """
-                #define CEU_TAG_$c1 $ie1
+                #define CEU_TAG_$c1 ($ie1)
                 CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
                 """ + it1.second.map { it2 ->
                     val (s2,c2,e2) = ups.tags[':'+it1.first+'.'+it2.first]!!
