@@ -481,6 +481,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Enum -> ""
             is Expr.Tplate -> ""
+            is Expr.Pass -> this.e.code()
 
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {

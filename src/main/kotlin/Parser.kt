@@ -1067,6 +1067,27 @@ class Parser (lexer_: Lexer)
                 err_expected(this.tk1, "expression")
             }
         }
+        ret.forEachIndexed { i,e ->
+            val ok = when {
+                (i == ret.size-1) -> true
+                (e is Expr.Pub) -> false
+                (e is Expr.Tuple) -> false
+                (e is Expr.Vector) -> false
+                (e is Expr.Dict) -> false
+                (e is Expr.Index) -> false
+                (e is Expr.Acc) -> false
+                (e is Expr.EvtErr) -> false
+                (e is Expr.Nil) -> false
+                (e is Expr.Tag) -> false
+                (e is Expr.Bool) -> false
+                (e is Expr.Char) -> false
+                (e is Expr.Num) -> false
+                else -> true
+            }
+            if (!ok) {
+                err(e.tk, "invalid expression : innocuous expression")
+            }
+        }
         return ret
     }
 }

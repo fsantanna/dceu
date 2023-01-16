@@ -66,6 +66,7 @@ fun Expr.mem (): String {
                 ${this.body.mem()}
             };
         """
+        is Expr.Pass -> this.e.mem()
 
         is Expr.Spawn -> """
             struct { // SPAWN

@@ -187,9 +187,16 @@ class TExec {
     // INDEX / TUPLE
 
     @Test
-    fun cc_index01() {
+    fun cc_index01_err() {
         val out = all("""
             [1,2,3][1]
+        """)
+        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+    }
+    @Test
+    fun cc_index01() {
+        val out = all("""
+            pass [1,2,3][1]
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -240,7 +247,7 @@ class TExec {
     @Test
     fun cc_tuple4_free() {
         val out = all("""
-            [1,2,3]
+            pass [1,2,3]
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -248,7 +255,7 @@ class TExec {
     @Test
     fun cc_tuple45_free() {
         val out = all("""
-            [1,2,3][1]
+            pass [1,2,3][1]
             println(1)
         """)
         assert(out == "1\n") { out }

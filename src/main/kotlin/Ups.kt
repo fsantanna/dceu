@@ -227,6 +227,7 @@ class Ups (val outer: Expr.Do) {
                 }
                 tplates[this.tk.str] = ids
             }
+            is Expr.Pass   -> this.e.traverse()
 
             is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
@@ -319,6 +320,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Defer  -> this.map(listOf(this.body))
             is Expr.Enum   -> emptyMap()
             is Expr.Tplate -> emptyMap()
+            is Expr.Pass   -> this.map(listOf(this.e))
 
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
             is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
