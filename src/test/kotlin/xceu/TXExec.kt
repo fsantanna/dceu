@@ -2069,7 +2069,7 @@ class TXExec {
         val out = all("""
             template :U = [a]
             template :T = [x,y]
-            template :T.S = :T.S [z:U]
+            template :T.S = [z:U]
             var s :T.S
             set s = :T.S [1,2,:U[3]]
             println(s is :T, s.z is :U)

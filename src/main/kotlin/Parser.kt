@@ -644,7 +644,18 @@ class Parser (lexer_: Lexer)
                 Expr.Nat(this.tk0 as Tk.Nat)
             }
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
-            this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)
+            this.acceptEnu("Tag")  -> {
+                val tag = this.tk0 as Tk.Tag
+                if (XCEU && this.checkFix("[")) {
+                    val tup = this.expr()
+                    assert(tup is Expr.Tuple)
+                    this.nest("""
+                        tags(${tup.tostr(true)}, ${tag.str}, true)
+                    """)
+                } else {
+                    Expr.Tag(tag)
+                }
+            }
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
