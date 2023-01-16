@@ -740,12 +740,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
             }
             is Expr.Index -> {
-                fun Expr.Index.tpl_is (): Boolean {
-                    return (this.col is Expr.Acc && this.idx is Expr.Tag)
-                        || (this.col is Expr.Index && this.col.tpl_is())
-                }
                 var idx = -1
-                if (this.tpl_is()) {
+                if (ups.tpl_is(this)) {
                     val id = this.idx.tk.str.drop(1)
                     idx = ups.tpl_lst(this).indexOfFirst { it.first.str==id }
                     //assert(idx >= 0)

@@ -115,6 +115,12 @@ class Ups (val outer: Expr.Do) {
         }
     }
 
+    fun tpl_is (e: Expr.Index): Boolean {
+        val dcl = getDcl(e, e.col.tk.str)
+        return ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null))
+                || (e.col is Expr.Index && this.tpl_is(e.col))
+    }
+
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         return when {
             (e.col is Expr.Acc) -> {
@@ -285,13 +291,7 @@ class Ups (val outer: Expr.Do) {
                 this.col.traverse()
                 this.idx.traverse()
 
-                fun Expr.Index.tpl_is (): Boolean {
-                    val dcl = getDcl(this, this.col.tk.str)
-                    return ((this.col is Expr.Acc) && (this.idx is Expr.Tag) && (dcl!!.tag != null))
-                        || (this.col is Expr.Index && this.col.tpl_is())
-                }
-
-                if (this.tpl_is()) {
+                if (tpl_is(this)) {
                     val id = this.idx.tk.str.drop(1)
                     val idx = tpl_lst(this).indexOfFirst { it.first.str==id }
                     if (idx == -1) {
