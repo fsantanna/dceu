@@ -27,7 +27,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
-        is Expr.Tplate -> "template " + this.tk.str + " = [" + this.ids.map { it.str }.joinToString(",") + "]"
+        is Expr.Tplate -> "template " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "]"
 
         is Expr.Spawn  -> "spawn " + this.coros.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)

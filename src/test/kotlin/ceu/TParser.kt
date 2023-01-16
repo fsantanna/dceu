@@ -963,4 +963,13 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected identifier : have \"1\"")
     }
+    @Test
+    fun tplate06() {
+        val l = lexer("""
+            template :U = [t:T]
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "template :U = [t:T]\n") { e.tostr() }
+    }
 }

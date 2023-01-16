@@ -527,7 +527,11 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("[")
                 val ids = this.list0("]") {
                     this.acceptEnu_err("Id")
-                    this.tk0 as Tk.Id
+                    val id = this.tk0 as Tk.Id
+                    val tag = if (!this.acceptEnu("Tag")) null else {
+                        this.tk0 as Tk.Tag
+                    }
+                    Pair(id, tag)
                 }
                 Expr.Tplate(tk0, ids)
             }

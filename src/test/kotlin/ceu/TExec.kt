@@ -2854,7 +2854,7 @@ class TExec {
             var t :T
             println(t.x)
         """, true)
-        assert(out == "anon : (lin 4, col 23) : index error : undeclared field \"x\" in :T") { out }
+        assert(out == "anon : (lin 4, col 23) : index error : undeclared field \"x\"") { out }
     }
     @Test
     fun tplate03_err() {
@@ -2941,6 +2941,53 @@ class TExec {
             template :T.S = [x]
         """, true)
         assert(out == "anon : (lin 2, col 22) : tag error : parent tag :T is not declared") { out }
+    }
+    @Test
+    fun tplate12_err() {
+        val out = all("""
+            template :T = [x:U]
+        """, true)
+        assert(out == "anon : (lin 2, col 29) : template error : template :U is not declared") { out }
+    }
+    @Test
+    fun tplate12() {
+        val out = all("""
+            template :T = [v]
+            template :U = [t:T]
+            var u :U = [[10]]
+            println(u.t.v)
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun tplate13_err() {
+        val out = all("""
+            template :T = [v]
+            template :U = [t:T]
+            var u :U = [[10]]
+            println(u.t.X)
+        """, true)
+        assert(out == "anon : (lin 5, col 25) : index error : undeclared field \"X\"") { out }
+    }
+    @Test
+    fun tplate14_err() {
+        val out = all("""
+            template :T = [v]
+            template :U = [t:T]
+            var u :U = [[10]]
+            println(u.X.v)
+        """, true)
+        assert(out == "anon : (lin 5, col 23) : index error : undeclared field \"X\"") { out }
+    }
+    @Test
+    fun tplate15_err() {
+        val out = all("""
+            template :T = [v]
+            template :U = [t:T,X]
+            var u :U = [[10]]
+            println(u.X.v)
+        """, true)
+        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a template") { out }
     }
     @Test
     fun todo_tplatexx_xceu() {

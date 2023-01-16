@@ -10,7 +10,7 @@ class Ups (val outer: Expr.Do) {
         )
     )
     val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
-    val tplates = mutableMapOf<String,List<String>>()
+    val tplates = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
     val ups = outer.tree()
 
     fun add_tag (tk: Tk, id: String, c: String, enu: String?) {
@@ -115,6 +115,26 @@ class Ups (val outer: Expr.Do) {
         }
     }
 
+    fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
+        return when {
+            (e.col is Expr.Acc) -> {
+                val dcl = getDcl(e, e.col.tk.str)!!
+                this.tplates[dcl.tag]!!
+            }
+            (e.col is Expr.Index) -> {
+                e.col.idx as Expr.Tag
+                val id = e.col.idx.tk.str.drop(1)
+                val lst = this.tpl_lst(e.col)
+                val id_tag = lst.firstOrNull { it.first.str==id }!!
+                if (id_tag.second == null) {
+                    err(e.idx.tk, "index error : field \"$id\" is not a template")
+                }
+                this.tplates[id_tag.second!!.str]!!
+            }
+            else -> error("impossible case")
+        }
+    }
+
     // Traverse the tree structure from top down
     // 1. assigns this.xblocks
     // 2. assigns this.upvs_protos_noclos, upvs_vars_refs, upvs_protos_refs
@@ -189,9 +209,15 @@ class Ups (val outer: Expr.Do) {
                 if (tplates.containsKey(this.tk.str)) {
                     err(this.tk, "template error : template ${this.tk.str} is already declared")
                 }
-                val ids = (tplates[sup] ?: emptyList()) + this.ids.map { it.str }
-                if (ids.size != ids.distinct().size) {
+                val ids = (tplates[sup] ?: emptyList()) + this.ids
+                val xids = ids.map { it.first.str }
+                if (xids.size != xids.distinct().size) {
                     err(this.tk, "template error : found duplicate ids")
+                }
+                ids.forEach { (_,tag) ->
+                    if (tag!=null && !tplates.containsKey(tag.str)) {
+                        err(tag, "template error : template ${tag.str} is not declared")
+                    }
                 }
                 tplates[this.tk.str] = ids
             }
@@ -256,15 +282,20 @@ class Ups (val outer: Expr.Do) {
             is Expr.Vector -> this.args.forEach{ it.traverse() }
             is Expr.Dict   -> this.args.forEach { it.first.traverse() ; it.second.traverse() }
             is Expr.Index  -> {
-                this.col.traverse() ; this.idx.traverse()
-                if (this.col is Expr.Acc && this.idx is Expr.Tag) {
-                    val dcl = getDcl(this, this.col.tk.str)!!
-                    if (dcl.tag != null) {
-                        val tpl = tplates[dcl.tag]!!
-                        val id = this.idx.tk.str.drop(1)
-                        if (tpl.indexOf(id) == -1) {
-                            err(this.idx.tk, "index error : undeclared field \"$id\" in ${dcl.tag}")
-                        }
+                this.col.traverse()
+                this.idx.traverse()
+
+                fun Expr.Index.tpl_is (): Boolean {
+                    val dcl = getDcl(this, this.col.tk.str)
+                    return ((this.col is Expr.Acc) && (this.idx is Expr.Tag) && (dcl!!.tag != null))
+                        || (this.col is Expr.Index && this.col.tpl_is())
+                }
+
+                if (this.tpl_is()) {
+                    val id = this.idx.tk.str.drop(1)
+                    val idx = tpl_lst(this).indexOfFirst { it.first.str==id }
+                    if (idx == -1) {
+                        err(this.idx.tk, "index error : undeclared field \"$id\"")
                     }
                 }
             }
