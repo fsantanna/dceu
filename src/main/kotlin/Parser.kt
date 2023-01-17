@@ -1027,7 +1027,15 @@ class Parser (lexer_: Lexer)
                     e = when {
                         this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, e)
                         this.acceptEnu("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
-                        (XCEU && this.acceptEnu("Num")) -> Expr.Index(e.tk, e, Expr.Num(this.tk0 as Tk.Num))
+                        (XCEU && this.acceptEnu("Num")) -> {
+                            val num = this.tk0 as Tk.Num
+                            val l = num.str.split('.')
+                            var idx = Expr.Index(e.tk, e, Expr.Num(Tk.Num(l.first(), tk0.pos)))
+                            for (i in 1..l.size-1) {
+                                idx = Expr.Index(idx.tk, idx, Expr.Num(Tk.Num(l[i], tk0.pos)))
+                            }
+                            idx as Expr.Index
+                        }
                         XCEU -> {
                             err_expected(this.tk1, "field")
                             error("unreachable")

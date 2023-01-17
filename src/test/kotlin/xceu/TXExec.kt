@@ -1007,6 +1007,16 @@ class TXExec {
         """, true)
         assert(out == "0\t1\n1\t2\n2\t3\n") { out }
     }
+    @Test
+    fun tupl20_dots() {
+        val out = ceu.all(
+            """
+            var x = [[10]]
+            println(x, x.0, x.0.0)
+        """
+        )
+        assert(out == "[[10]]\t[10]\t10\n") { out }
+    }
 
     // AWAIT / EVERY
 
