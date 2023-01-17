@@ -494,9 +494,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_mem->evt_$n = ceu_acc;
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
+                    CEU_Block ceu_block_$n = (CEU_Block) { 999, 0, NULL, {0,0,NULL,&ceu_block_$n}, NULL };
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        assert(CEU_RET_RETURN == ceu_block_set(&$bupc->dn_dyns, ceu_mem->evt_$n.Dyn, 1));
+                        assert(CEU_RET_RETURN == ceu_block_set(&ceu_block_$n.dn_dyns, ceu_mem->evt_$n.Dyn, 1));
                     }
+                    
                     ${this.xin.code()}
                     int ceu_err_$n = 0;
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
