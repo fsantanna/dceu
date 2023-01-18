@@ -494,9 +494,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_mem->evt_$n = ceu_acc;
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
-                    CEU_Block ceu_block_$n = (CEU_Block) { 999, 0, NULL, {0,0,NULL,&ceu_block_$n}, NULL };
-                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        assert(CEU_RET_RETURN == ceu_block_set(&ceu_block_$n.dn_dyns, ceu_mem->evt_$n.Dyn, 1));
+                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 2);
                     }
                     
                     ${this.xin.code()}
@@ -522,6 +521,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_err_$n = 1;
                     }
                     
+                    // TODO: evt src may be freed? put up_block on stack and check here
+                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 1);
+                    }
+
                     if (ceu_bstack_$n.block == NULL) {
                         return ceu_ret;
                     }

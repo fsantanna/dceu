@@ -2785,7 +2785,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 10, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 4, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun gc15_arg() {
@@ -2817,7 +2820,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // MISC
