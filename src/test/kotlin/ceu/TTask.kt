@@ -206,6 +206,25 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
+    fun ee_task16a_nest_err() {
+        val out = ceu.all(
+            """
+            var T = task () {
+                spawn task () {
+                    yield(nil)
+                } ()
+            }
+            var t = coroutine(T)
+            resume t()
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == "anon : (lin 14, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
+                ":1\n" +
+                ":error\n") { out }
+    }
+    @Test
     fun aa_task17_nest_err() {
         val out = all("""
             spawn task (v1) {
@@ -1299,25 +1318,6 @@ class TTask {
     }
     @Test
     fun ee_bcast13_err() {
-        val out = ceu.all(
-            """
-            var T = task () {
-                spawn task () {
-                    yield(nil)
-                } ()
-            }
-            var t = coroutine(T)
-            resume t()
-            """
-        )
-        //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 14, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
-                ":1\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ee_bcast14_err() {
         val out = ceu.all(
             """
             var T1 = task () :awakes {

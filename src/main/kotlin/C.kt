@@ -515,8 +515,10 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<dyn->Ncast.Vector.its; i++) {
+                        CEU_Value xacc = ceu_acc;
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         ceu_gc_dec(&ceu_acc, 1);
+                        ceu_acc = xacc;
                     }
                     break;
                 case CEU_VALUE_DICT:
