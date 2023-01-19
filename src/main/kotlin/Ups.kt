@@ -44,6 +44,11 @@ class Ups (val outer: Expr.Do) {
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
     val upvs_protos_refs = mutableMapOf<Expr.Proto,MutableSet<String>>()
 
+    // funcs that set vars in enclosing tasks
+    //  - they are marked and cannot receive "evt"
+    //  - otherwise, we do not check with ceu_block_set
+    val funcs_vars_tasks = mutableSetOf<Expr.Proto>()
+
     init {
         this.outer.traverse()
     }
@@ -120,7 +125,6 @@ class Ups (val outer: Expr.Do) {
         return ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null))
                 || (e.col is Expr.Index && this.tpl_is(e.col))
     }
-
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         return when {
             (e.col is Expr.Acc) -> {
@@ -186,7 +190,25 @@ class Ups (val outer: Expr.Do) {
                     }
                 }
             }
-            is Expr.Set    -> { this.dst.traverse() ; this.src.traverse() }
+            is Expr.Set -> {
+                this.dst.traverse()
+                this.src.traverse()
+                val func = first(this) { it is Expr.Proto && it.tk.str=="func" }
+                if (func != null) {
+                    val acc = this.dst.base()
+                    val dcl = getDcl(this, acc.tk.str)!!
+                    val intask = first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }
+                    if (intask) {
+                        funcs_vars_tasks.add(func as Expr.Proto)
+                    }
+                }
+                when (this.dst) {
+                    is Expr.Acc   -> ""
+                    is Expr.Index -> ""
+                    is Expr.Pub   -> ""
+                    else -> error("impossible case")
+                }
+            }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }

@@ -49,6 +49,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun Expr.func_novars_task (): Boolean {
+        val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
+        return !(func==null || ups.funcs_vars_tasks.contains(func))
+    }
+
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -242,7 +247,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         ceu_mem->_${id}_ = &ceu_mem->block_$n;
                                     }
                                     if (ceu_i < ceu_n) {
-                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                        if (ceu_args[ceu_i]->type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& ceu_args[ceu_i]->Dyn->isperm<2" }}) {
                                             ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
@@ -378,13 +383,14 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val isperm = if (idc[0] == '_') 0 else 1
                 val dcl = ups.getDcl(this, this.tk.str)
+                val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 """
                 { // DCL ${this.tk.dump()}
                     ${(this.init && this.src!=null).cond { this.src!!.code() }}
-                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm<2" }}) {
                         ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, $isperm);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
@@ -687,7 +693,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     val isperm = if (id[0] == '_') 0 else 1
                     """
                     { // ACC - SET
-                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm<2" }}) {
                             ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, $isperm);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
@@ -811,7 +817,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         val src = this.asdst_src()
                         """
-                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm<2" }}) {
                             ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }

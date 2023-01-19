@@ -22,6 +22,14 @@ fun Expr.is_innocuous (): Boolean {
     }
 }
 
+fun Expr.base (): Expr.Acc {
+    return when (this) {
+        is Expr.Acc   -> this
+        is Expr.Index -> this.col.base()
+        else -> TODO()
+    }
+}
+
 fun String.tag2c (): String {
     return this
         .drop(1)

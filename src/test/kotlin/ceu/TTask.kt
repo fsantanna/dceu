@@ -1366,16 +1366,52 @@ class TTask {
     }
 
     @Test
-    fun ee_14_bcast_tuple_err() {
+    fun ee_14_bcast_tuple_func_ok() {
         val out = all("""
+            var fff = func (v) {
+                println(v)
+            }
             var T = task () :awakes {
                 yield(nil)
-                println(evt)
+                fff(evt)
             }
             spawn T()
             broadcast in :global, [1]
         """)
-        assert(out == "nil\t1\nnil\t2\n") { out }
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ee_15_bcast_tuple_func_ok() {
+        val out = all("""
+            var f = func (v) {
+                var x = v[0]
+                println(x)
+            }
+            var T = task () :awakes {
+                yield(nil)
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ee_16_bcast_tuple_func_ok() {
+        val out = all("""
+            var f = func (v) {
+                var x = [0]
+                set x[0] = v[0]
+                println(x[0])
+            }
+            var T = task () :awakes {
+                yield(nil)
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
     }
 
     // POOL
