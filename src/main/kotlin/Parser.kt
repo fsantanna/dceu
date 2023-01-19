@@ -786,8 +786,10 @@ class Parser (lexer_: Lexer)
                             this.expr().tostr(true)
                         }
                         this.nest("""
-                            var __evt ${cnd.tk.str}
-                            await (evt is ${cnd.tk.str}) && $xcnd
+                            ${pre0}do :unnest {
+                                var __evt ${cnd.tk.str}
+                                await (evt is ${cnd.tk.str}) and $xcnd
+                            }
                         """)
                     }
                     spw -> { // await spawn T()

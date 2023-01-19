@@ -179,7 +179,7 @@ class Ups (val outer: Expr.Do) {
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                if (this.tag!=null && !tplates.containsKey(this.tag.str)) {
+                if (id!="__evt" && this.tag!=null && !tplates.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 xup.syms[id] = Dcl(id, this.tag?.str, this.init, this.tk_.upv, bup)
