@@ -3305,10 +3305,26 @@ class TTask {
         assert(out == "nil\n") { out }
     }
 
+    // EVT / DATA
+
+    @Test
+    fun mm_01_await_data() {
+        val out = all("""
+            data :E = [x,y]
+            spawn task () :awakes {
+                var __evt :E
+                yield(nil)
+                println(evt.x)
+            } ()
+            broadcast in :global, tags([10,20], :E, true)
+        """, true)
+        assert(out == "10\n") { out }
+    }
+
     // XCEU
 
     @Test
-    fun mm_xceu1() {
+    fun zz_xceu1() {
         val out = all("""
             spawn task () {
                 spawn (task () {
@@ -3323,7 +3339,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_xceu2() {
+    fun zz_xceu2() {
         val out = all("""
             spawn task () :awakes {
                 yield(nil)
@@ -3343,7 +3359,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_xceu3() {
+    fun zz_xceu3() {
         val out = all("""
             spawn task () :awakes {
                 yield(nil)
@@ -3363,7 +3379,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_xceu4() {
+    fun zz_xceu4() {
         val out = all("""
             catch true {
                 spawn task () :fake {
@@ -3376,7 +3392,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_xceu5() {
+    fun zz_xceu5() {
         val out = all("""
             spawn task () {
                 catch err==:or {
@@ -3404,7 +3420,7 @@ class TTask {
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_xceu6() {
+    fun zz_xceu6() {
         val out = all("""
             var T
             set T = task (pos) :awakes {
@@ -3425,7 +3441,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun mm_xceu7() {
+    fun zz_xceu7() {
         val out = all("""
             spawn task () :awakes {
                 do {
@@ -3443,7 +3459,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun mm_xceu8() {
+    fun zz_xceu8() {
         val out = all("""
             spawn task () :awakes {
                 do {
@@ -3460,7 +3476,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun mm_xceu9 () {
+    fun zz_xceu9 () {
         val out = all("""
             spawn task () :awakes {
                 do {
@@ -3480,7 +3496,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun mm_xceu10 () {
+    fun zz_xceu10 () {
         val out = all("""
             ;;println(:blk0, `:pointer ceu_block`)
             spawn task () :awakes {

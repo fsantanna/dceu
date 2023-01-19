@@ -782,7 +782,13 @@ class Parser (lexer_: Lexer)
                 val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_exp()
                 when {
                     (cnd is Expr.Tag) -> {   // await :key
-                        this.nest("await evt is ${cnd.tk.str}")
+                        val xcnd = if (!this.acceptFix(",")) "true" else {
+                            this.expr().tostr(true)
+                        }
+                        this.nest("""
+                            var __evt ${cnd.tk.str}
+                            await (evt is ${cnd.tk.str}) && $xcnd
+                        """)
                     }
                     spw -> { // await spawn T()
                         val e = this.expr()

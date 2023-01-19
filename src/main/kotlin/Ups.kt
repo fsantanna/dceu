@@ -121,14 +121,17 @@ class Ups (val outer: Expr.Do) {
     }
 
     fun tpl_is (e: Expr.Index): Boolean {
-        val dcl = getDcl(e, e.col.tk.str)
-        return ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null))
+        val var_evt = e.col.tk.str.let { if (it=="evt") "__evt" else it }
+        val dcl = getDcl(e, var_evt)
+        return (((e.col is Expr.EvtErr) && (e.idx is Expr.Tag) && (dcl!=null && dcl.tag!=null))
+                || ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null)))
                 || (e.col is Expr.Index && this.tpl_is(e.col))
     }
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
+        val var_evt = e.col.tk.str.let { if (it=="evt") "__evt" else it }
         return when {
-            (e.col is Expr.Acc) -> {
-                val dcl = getDcl(e, e.col.tk.str)!!
+            (e.col is Expr.Acc) || (e.col is Expr.EvtErr) -> {
+                val dcl = getDcl(e, var_evt)!!
                 this.tplates[dcl.tag]!!
             }
             (e.col is Expr.Index) -> {
