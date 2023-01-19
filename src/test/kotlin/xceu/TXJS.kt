@@ -689,6 +689,7 @@ class TXJS {
                 }
             }
             spawn Send(take2, spawn Show())
+            nil
         }
         """, true)
         assert(out == "1: ;; is', isnot'\n" +

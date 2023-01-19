@@ -2085,7 +2085,6 @@ class TXExec {
         """, true)
         assert(out == "true\tfalse\ntrue\ttrue\n") { out }
     }
-
     @Test
     fun tplate02() {
         val out = all("""
@@ -2100,7 +2099,6 @@ class TXExec {
         """, true)
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
     }
-
     @Test
     fun tplate03_nest() {
         val out = all("""
@@ -2125,7 +2123,6 @@ class TXExec {
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }
-
     @Test
     fun todo_tplateXX() {
         val out = all("""
@@ -2135,6 +2132,35 @@ class TXExec {
             println(t)      ;; [x=3,y=2]
         """, true)
         assert(out == "1\t2\n") { out }
+    }
+
+    // AWAIT / EVT / TEMPLATE / DATA
+
+    @Test
+    fun xx_01_await_data() {
+        val out = all("""
+            data :E = [x,y]
+            spawn {
+                await :E
+                println(evt.x)
+            }
+            broadcast in :global, :E [10,20]
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun xx_02_await_data() {
+        val out = all("""
+            data :E = [x,y]
+            spawn {
+                await :E, evt.y==20
+                println(evt.x)
+            }
+            broadcast in :global, :E [10,10]
+            println(:mid)
+            broadcast in :global, :E [10,20]
+        """, true)
+        assert(out == ":mid\n10\n") { out }
     }
 
     // ALL
