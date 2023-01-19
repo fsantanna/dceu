@@ -1192,6 +1192,21 @@ class TTask {
     @Test
     fun ee_bcast_in7() {
         val out = all("""
+            spawn (task () :awakes {
+                spawn (task () :awakes {
+                    yield(nil)
+                    broadcast in :global, nil
+                }) ()
+                yield(nil)
+            }) ()
+            broadcast in :global, nil
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ee_bcast_in7a() {
+        val out = all("""
             ;;println(:BLOCK0, `:pointer ceu_block`)
             spawn (task () :awakes {
                 ;;println(:CORO1, `:pointer ceu_coro`)
@@ -1348,6 +1363,19 @@ class TTask {
                 "anon : (lin 14, col 21) : set error : incompatible scopes\n" +
                 ":2\n" +
                 ":error\n") { out }
+    }
+
+    @Test
+    fun ee_14_bcast_tuple_err() {
+        val out = all("""
+            var T = task () :awakes {
+                yield(nil)
+                println(evt)
+            }
+            spawn T()
+            broadcast in :global, [1]
+        """)
+        assert(out == "nil\t1\nnil\t2\n") { out }
     }
 
     // POOL

@@ -524,15 +524,17 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_err_$n = 1;
                     }
                     
-                    // TODO: evt src may be freed? put up_block on stack and check here
-                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 1);
-                    }
-
                     if (ceu_bstack_$n.block == NULL) {
                         return ceu_ret;
                     }
                     
+                    // it is safe to modify after check above:
+                    //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
+                    //  - if it was set to 1, we dont need to reset anyways
+                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 1);
+                    }
+
                     ceu_gc_dec(&ceu_mem->evt_$n, 1);
                     
                     if (ceu_err_$n) {
