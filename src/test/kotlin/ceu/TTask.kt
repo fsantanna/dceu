@@ -206,7 +206,7 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun ee_task16a_nest_err() {
+    fun aa_17_task_nest_err() {
         val out = ceu.all(
             """
             var T = task () {
@@ -215,13 +215,12 @@ class TTask {
                 } ()
             }
             var t = coroutine(T)
-            resume t()
+            println(resume t())
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 14, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
-                ":1\n" +
+        assert(out == "anon : (lin 8, col 28) : t()\n" +
+                "anon : (lin 2, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -279,7 +278,7 @@ class TTask {
                 ":error\n") { out }
     }
     @Test
-    fun aa_task19a_self_escape() {
+    fun todo_aa_task19a_self_escape() {
         val out = all("""
             var T1 = task (co) {
                 println(:3)
@@ -433,8 +432,8 @@ class TTask {
             }
             println(2)
         """)
-        //assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == "2\n") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "2\n") { out }
     }
     @Test
     fun bb_spawn67_err() {
@@ -447,8 +446,8 @@ class TTask {
             set co = if true { spawn t() } else { nil }
             println(:ok)
         """)
-        //assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 7, col 30) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn7_err() {
@@ -462,9 +461,9 @@ class TTask {
             f()
             println(:ok)
         """)
-        //assert(out == "anon : (lin 8, col 13) : f()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 8, col 13) : f()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn8_err() {
@@ -478,9 +477,13 @@ class TTask {
             }
             spawn T()
         """)
-        assert(out == "1\n")
+        //assert(out == "1\n")
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
         //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n" +
+                "1\n" +
+                ":error\n")
     }
     @Test
     fun bb_spawn9() {
@@ -550,9 +553,9 @@ class TTask {
             spawn T()
             println(1)
         """)
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 8, col 19) : T()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 8, col 19) : T()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun bb_spawn13_err() {
@@ -569,8 +572,8 @@ class TTask {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
 
     // SPAWN / GROUP
@@ -1273,7 +1276,7 @@ class TTask {
                 "anon : (lin 4, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun ee_bcast11_err() {
+    fun ee_11_bcast_err() {
         val out = ceu.all(
             """
             var T = task () :awakes {
@@ -1326,6 +1329,7 @@ class TTask {
                     println(:1)
                     var v = evt
                 } ()
+                nil
             }
             var t1 = coroutine(T1)
             var T2 = task () :awakes {
@@ -1340,8 +1344,8 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 17, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 13, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 18, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 14, col 21) : set error : incompatible scopes\n" +
                 ":2\n" +
                 ":error\n") { out }
     }
@@ -2883,9 +2887,9 @@ class TTask {
             }
             println(f())
         """, true)
-        //assert(out == "anon : (lin 6, col 21) : f()\n" +
-        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-        assert(out.contains("coro: 0x"))
+        assert(out == "anon : (lin 6, col 21) : f()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out.contains("coro: 0x"))
     }
     @Test
     fun kk_esc2() {

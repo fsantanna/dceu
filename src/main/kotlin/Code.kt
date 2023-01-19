@@ -112,6 +112,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 assert(0 && "bug found");
                                 break;
                             case 0: {
+                                //ceu_coro->isperm = 1;   // do not allow started coro to change scope
                                 CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
                         """}}
                             // BODY
@@ -374,6 +375,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Dcl -> {
                 val idc = this.tk.str.id2c()
+                val bupc = ups.first_block(this)!!.toc(true)
                 val isperm = if (idc[0] == '_') 0 else 1
                 val dcl = ups.getDcl(this, this.tk.str)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
@@ -381,16 +383,17 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
                 """
                 { // DCL ${this.tk.dump()}
+                    ${(this.init && this.src!=null).cond { this.src!!.code() }}
+                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                        ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, $isperm);
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    }
                     ${when {
                         !this.init -> ""
                         (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
-                        else -> this.src.code() + "ceu_mem->$idc = ceu_acc;"
+                        else -> "ceu_mem->$idc = ceu_acc;"
                     }}
-                    ceu_mem->_${idc}_ = ${ups.first_block(this)!!.toc(true)};   // can't be static b/c recursion
-                    if (ceu_mem->${idc}.type > CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_mem->${idc}.Dyn, $isperm);
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                    }
+                    ceu_mem->_${idc}_ = $bupc;   // can't be static b/c recursion
                     ceu_gc_inc(&ceu_mem->${idc});
                     #if 1
                         ${assrc("ceu_mem->$idc")}

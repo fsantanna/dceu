@@ -1228,7 +1228,7 @@ fun Coder.main (): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 0));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
 
             return CEU_RET_RETURN;
         }
@@ -1272,7 +1272,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=coro} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&coros->Bcast.Coros.dyns, coro, 0));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(&coros->Bcast.Coros.dyns, coro, 1));  // 1=cannot escape this block b/c of upvalues
             return CEU_RET_RETURN;
         }
         
