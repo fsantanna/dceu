@@ -18,6 +18,9 @@
 
 # NEXT
 
+- var evt :T
+- var :noperm _x
+
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)
 - refer(track) -> coro
