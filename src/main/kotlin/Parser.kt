@@ -486,7 +486,14 @@ class Parser (lexer_: Lexer)
                 if (isnote) {
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                     this.acceptFix_err("(")
-                    val args = this.list0(")") { this.acceptEnu("Id"); this.tk0 as Tk.Id }
+                    val args = this.list0(")") {
+                        this.acceptEnu("Id")
+                        val id = this.tk0 as Tk.Id
+                        val tag = if (!this.acceptEnu("Tag")) null else {
+                            this.tk0 as Tk.Tag
+                        }
+                        Pair(id, tag)
+                    }
                     val task = if (tk0.str == "func") null else {
                         Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
                     }

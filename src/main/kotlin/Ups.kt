@@ -170,10 +170,10 @@ class Ups (val outer: Expr.Do) {
                         mutableMapOf()
                     } else {
                         proto.args.let {
-                            (it.map {
-                                Pair(it.str, Dcl(it.str, false, null, true, it.upv, this))
-                            } + it.map {
-                                Pair("_${it.str}_", Dcl("_${it.str}_", false, null, false, it.upv, this))
+                            (it.map { (id,tag) ->
+                                Pair(id.str, Dcl(id.str, false, tag?.str, true, id.upv, this))
+                            } + it.map { (id,_) ->
+                                Pair("_${id.str}_", Dcl("_${id.str}_", false, null, false, id.upv, this))
                             })
                         }.toMap().toMutableMap()
                     }

@@ -69,10 +69,10 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
                 typedef struct {
-                    ${this.args.map {
+                    ${this.args.map { (id,_) ->
                     """
-                        CEU_Value ${it.str};
-                        CEU_Block* _${it.str}_;
+                        CEU_Value ${id.str};
+                        CEU_Block* _${id.str}_;
                         """
                 }.joinToString("")}
                     ${this.body.mem()}
@@ -218,7 +218,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     val coro = if (ups.intask(this)) "ceu_coro" else "NULL"
                     val vars = ups.xblocks[this]!!.syms.values.let { dcls ->
-                        val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.str }.toSet()
+                        val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.init }
                             .map    { it.id }
                             .filter { !GLOBALS.contains(it) }
@@ -236,7 +236,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             {
                                 int ceu_i = 0;
                                 ${f_b.args.map {
-                                    val id = it.str.id2c()
+                                    val id = it.first.str.id2c()
                                     """
                                     ${istask.cond { """
                                         if (ceu_coro->Bcast.Coro.up_coros != NULL) {
@@ -350,7 +350,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     }.joinToString("")}
                                     ${(f_b is Expr.Proto).cond {
                                         (f_b as Expr.Proto).args.map {
-                                            val id = it.str.id2c()
+                                            val id = it.first.str.id2c()
                                             "ceu_gc_dec(&ceu_mem->$id, 1);"
                                         }.joinToString("")
                                     }}

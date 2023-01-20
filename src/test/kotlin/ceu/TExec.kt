@@ -3018,4 +3018,15 @@ class TExec {
         """, true)
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
     }
+    @Test
+    fun tplate17_func() {
+        val out = all("""
+            data :T = [x,y]
+            var f = func (t:T) {
+                t.x
+            }
+            println(f([1,99]))
+        """, true)
+        assert(out == "1\n") { out }
+    }
 }
