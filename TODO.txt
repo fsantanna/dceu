@@ -18,6 +18,7 @@
 
 # NEXT
 
+- task -> coro + task
 - var evt :T
 - var :noperm _x
 

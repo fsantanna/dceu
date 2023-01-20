@@ -239,13 +239,14 @@ class Parser (lexer_: Lexer)
             this.acceptFix("var") -> {
                 this.acceptEnu_err("Id")
                 val id = this.tk0 as Tk.Id
+                val tmp = this.acceptTag(":tmp")
                 val tag = if (!this.acceptEnu("Tag")) null else {
                     this.tk0 as Tk.Tag
                 }
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, tag, true, src)
+                Expr.Dcl(id, tmp, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -998,21 +999,21 @@ class Parser (lexer_: Lexer)
                             when (op.str) {
                                 "=" -> this.nest("""
                                     do :unnest :hide { 
-                                        var _ceu_col_$N = ${e.tostr(true)}
-                                        _ceu_col_$N[(#_ceu_col_$N)-1]
+                                        var ceu_col_$N :tmp = ${e.tostr(true)}
+                                        ceu_col_$N[(#ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
                                     do :unnest :hide { 
-                                        var _ceu_col_$N = ${e.tostr(true)}
-                                        _ceu_col_$N[#_ceu_col_$N]
+                                        var ceu_col_$N :tmp = ${e.tostr(true)}
+                                        ceu_col_$N[#ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
                                     do :unnest :hide { 
-                                        var _ceu_col_$N = ${e.tostr(true)}
-                                        var ceu_i_$N = _ceu_col_$N[(#_ceu_col_$N)-1]
-                                        set _ceu_col_$N[(#_ceu_col_$N)-1] = nil
+                                        var ceu_col_$N :tmp = ${e.tostr(true)}
+                                        var ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
+                                        set ceu_col_$N[(#ceu_col_$N)-1] = nil
                                         ceu_i_$N
                                     }
                                 """)
@@ -1080,16 +1081,16 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or"    -> this.nest("""
                     ${op.pos.pre()}do {
-                        var _ceu_${e.n}
-                        set _ceu_${e.n} = ${e.tostr(true)} 
-                        if _ceu_${e.n} { _ceu_${e.n} } else { ${e2.tostr(true)} }
+                        var ceu_${e.n} :tmp
+                        set ceu_${e.n} = ${e.tostr(true)} 
+                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and"   -> this.nest("""
                     ${op.pos.pre()}do {
-                        var _ceu_${e.n}
-                        set _ceu_${e.n} = ${e.tostr(true)} 
-                        if _ceu_${e.n} { ${e2.tostr(true)} } else { _ceu_${e.n} }
+                        var ceu_${e.n} :tmp
+                        set ceu_${e.n} = ${e.tostr(true)} 
+                        if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
                 "is"    -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")

@@ -28,7 +28,7 @@ val TAGS = listOf (
     ":coro", ":coros", ":track",
     ":fake", ":hide", ":check-now", ":all", ":awakes",
     ":clear", ":error",           // bcast-clear
-    ":global", ":local", //":task"   // bcast scope
+    ":tmp", ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"
 ) + if (!XCEU) emptySet() else setOf(":h",":min",":s",":ms")
 
@@ -55,7 +55,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Tk.Id>, val body: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val isnest: Boolean, val ishide: Boolean, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Id,  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
+    data class Dcl    (val tk_: Tk.Id,  val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)

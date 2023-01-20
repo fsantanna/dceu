@@ -1092,9 +1092,9 @@ class TExec {
         val out = all("""
             var x
             do {
-                var _a
-                set _a = [1,2,3]
-                set x = _a
+                var a :tmp
+                set a = [1,2,3]
+                set x = a
             }
             println(x)
         """)
@@ -2106,7 +2106,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "29\t285\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "30\t286\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2163,7 +2163,7 @@ class TExec {
                 tonumber(:depois)
             )
         """, true)
-        assert(out == "29\t1000\t1001\t1002\t10\t11\t12\t30\t100\t101\t31\n") { out }
+        assert(out == "30\t1000\t1001\t1002\t10\t11\t12\t31\t100\t101\t32\n") { out }
     }
     @Test
     fun enum02() {

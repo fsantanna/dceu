@@ -1,12 +1,12 @@
 // func (args) or block (locals)
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
-data class Dcl (val id: String, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
+data class Dcl (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Ups (val outer: Expr.Do) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,Dcl(it,null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map { Pair(it,Dcl(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
     val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
@@ -163,9 +163,9 @@ class Ups (val outer: Expr.Do) {
                     } else {
                         proto.args.let {
                             (it.map {
-                                Pair(it.str, Dcl(it.str, null, true, it.upv, this))
+                                Pair(it.str, Dcl(it.str, false, null, true, it.upv, this))
                             } + it.map {
-                                Pair("_${it.str}_", Dcl("_${it.str}_", null, false, it.upv, this))
+                                Pair("_${it.str}_", Dcl("_${it.str}_", false, null, false, it.upv, this))
                             })
                         }.toMap().toMutableMap()
                     }
@@ -182,8 +182,8 @@ class Ups (val outer: Expr.Do) {
                 if (id!="__evt" && this.tag!=null && !tplates.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-                xup.syms[id] = Dcl(id, this.tag?.str, this.init, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Dcl("_${id}_", null, false, this.tk_.upv, bup)
+                xup.syms[id] = Dcl(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
+                xup.syms["_${id}_"] = Dcl("_${id}_", false,null, false, this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
