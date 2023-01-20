@@ -87,7 +87,7 @@ class Ups (val outer: Expr.Do) {
         }
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.getDcl(e,id) != null) {
+        if (this.getDcl(e,id)!=null && id!="__evt") {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }

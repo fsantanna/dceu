@@ -22,15 +22,17 @@ fun Expr.mem (): String {
         """
         is Expr.Dcl -> {
             val id = this.tk.str.id2c()
-            """
-            struct { // DCL
-                struct {
-                    CEU_Value $id;
-                    CEU_Block* _${id}_; // can't be static b/c recursion
-                    ${this.src.cond { it.mem() } }
+            if (id == "__evt") "" else {
+                """
+                struct { // DCL
+                    struct {
+                        CEU_Value $id;
+                        CEU_Block* _${id}_; // can't be static b/c recursion
+                        ${this.src.cond { it.mem() } }
+                    };
                 };
-            };
-            """
+                """
+            }
         }
         is Expr.Set -> """
             struct { // SET

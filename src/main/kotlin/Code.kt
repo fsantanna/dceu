@@ -273,7 +273,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             }
                         }
                         { // because of "decrement refs" below
-                            ${vars.map { """
+                            ${vars.map { if (it == "__evt") "" else """
                                 ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")
                             }
@@ -340,7 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                                 { // decrement refs
-                                    ${vars.map {
+                                    ${vars.map { if (it == "__evt") "" else
                                         """
                                         if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
                                             // skip globals
@@ -379,35 +379,38 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Dcl -> {
-                val idc = this.tk.str.id2c()
+                val id = this.tk.str
+                val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
                 val isperm = if (idc[0] == '_') 0 else 1
-                val dcl = ups.getDcl(this, this.tk.str)
+                val dcl = ups.getDcl(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
-                """
-                { // DCL ${this.tk.dump()}
-                    ${(this.init && this.src!=null).cond { this.src!!.code() }}
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm<2" }}) {
-                        ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, $isperm);
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                if (id == "__evt") "" else {
+                    """
+                    { // DCL ${this.tk.dump()}
+                        ${(this.init && this.src!=null).cond { this.src!!.code() }}
+                        if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm<2" }}) {
+                            ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, $isperm);
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        }
+                        ${when {
+                            !this.init -> ""
+                            (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
+                            else -> "ceu_mem->$idc = ceu_acc;"
+                        }}
+                        ceu_mem->_${idc}_ = $bupc;   // can't be static b/c recursion
+                        ceu_gc_inc(&ceu_mem->${idc});
+                        #if 1
+                            ${assrc("ceu_mem->$idc")}
+                        #else // b/c of ret scope
+                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        #endif
                     }
-                    ${when {
-                        !this.init -> ""
-                        (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
-                        else -> "ceu_mem->$idc = ceu_acc;"
-                    }}
-                    ceu_mem->_${idc}_ = $bupc;   // can't be static b/c recursion
-                    ceu_gc_inc(&ceu_mem->${idc});
-                    #if 1
-                        ${assrc("ceu_mem->$idc")}
-                    #else // b/c of ret scope
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    #endif
+                    """
                 }
-                """
             }
             is Expr.Set -> {
                 """

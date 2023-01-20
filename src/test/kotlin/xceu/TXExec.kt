@@ -2162,6 +2162,22 @@ class TXExec {
         """, true)
         assert(out == ":mid\n10\n") { out }
     }
+    @Test
+    fun xx_03_await_data() {
+        val out = all("""
+            data :E = [x,y]
+            data :F = [i,j]
+            spawn {
+                await :E, evt.y==20
+                println(evt.x)
+                await :F, evt.i==20
+                println(evt.j)
+            }
+            broadcast in :global, :E [10,20]
+            broadcast in :global, :E [10,20]
+        """, true)
+        assert(out == "10\n10\n") { out }
+    }
 
     // ALL
 
