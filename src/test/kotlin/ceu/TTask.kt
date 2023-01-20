@@ -3320,6 +3320,24 @@ class TTask {
         """, true)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun mm_02_await_data() {
+        val out = all("""
+            data :E = [x,y]
+            data :F = [i,j]
+            spawn task () :awakes {
+                var evt :E
+                yield(nil)
+                println(evt.x)
+                var evt :F
+                yield(nil)
+                println(evt.j)
+            } ()
+            broadcast in :global, tags([10,20], :E, true)
+            broadcast in :global, tags([10,20], :F, true)
+        """, true)
+        assert(out == "10\n20\n") { out }
+    }
 
     // XCEU
 

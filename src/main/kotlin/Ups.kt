@@ -9,6 +9,7 @@ class Ups (val outer: Expr.Do) {
             XBlock(GLOBALS.map { Pair(it,Dcl(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
+    val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
     val tplates = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
     val ups = outer.tree()
@@ -123,14 +124,21 @@ class Ups (val outer: Expr.Do) {
     fun tpl_is (e: Expr.Index): Boolean {
         val id = e.col.tk.str
         val dcl = getDcl(e, id)
-        return (((e.col is Expr.EvtErr) && (e.idx is Expr.Tag) && (dcl!=null && dcl.tag!=null))
-                || ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null)))
-                || (e.col is Expr.Index && this.tpl_is(e.col))
+        return when (e.col) {
+            is Expr.EvtErr -> (e.idx is Expr.Tag) && (dcl != null) && (evts[e.col] != null)
+            is Expr.Acc    -> (e.idx is Expr.Tag) && (dcl!!.tag != null)
+            is Expr.Index  -> this.tpl_is(e.col)
+            else           -> false
+        }
     }
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         val id = e.col.tk.str
         return when {
-            (e.col is Expr.Acc) || (e.col is Expr.EvtErr) -> {
+            (e.col is Expr.EvtErr) -> {
+                val tag = evts[e.col]!!
+                this.tplates[tag]!!
+            }
+            (e.col is Expr.Acc) -> {
                 val dcl = getDcl(e, id)!!
                 this.tplates[dcl.tag]!!
             }
@@ -304,7 +312,12 @@ class Ups (val outer: Expr.Do) {
                     }
                 }
             }
-            is Expr.EvtErr -> {}
+            is Expr.EvtErr -> {
+                val dcl = getDcl(this, "evt")
+                if (dcl?.tag != null) {
+                    evts[this] = dcl.tag
+                }
+            }
             is Expr.Nil    -> {}
             is Expr.Tag    -> add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Bool   -> {}
