@@ -22,7 +22,7 @@ fun Expr.mem (): String {
         """
         is Expr.Dcl -> {
             val id = this.tk.str.id2c()
-            if (id == "__evt") "" else {
+            if (id == "evt") "" else {
                 """
                 struct { // DCL
                     struct {

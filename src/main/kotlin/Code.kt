@@ -273,7 +273,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             }
                         }
                         { // because of "decrement refs" below
-                            ${vars.map { if (it == "__evt") "" else """
+                            ${vars.map { if (it == "evt") "" else """
                                 ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")
                             }
@@ -340,7 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                                 { // decrement refs
-                                    ${vars.map { if (it == "__evt") "" else
+                                    ${vars.map { if (it == "evt") "" else
                                         """
                                         if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
                                             // skip globals
@@ -387,7 +387,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
-                if (id == "__evt") "" else {
+                if (id == "evt") "" else {
                     """
                     { // DCL ${this.tk.dump()}
                         ${(this.init && this.src!=null).cond { this.src!!.code() }}

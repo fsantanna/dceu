@@ -237,8 +237,8 @@ class Parser (lexer_: Lexer)
                 this.catch_block(tk0,isnest,ishide).let { (C,b)->C(b) }
             }
             this.acceptFix("var") -> {
-                this.acceptEnu_err("Id")
-                val id = this.tk0 as Tk.Id
+                this.acceptFix("evt") || this.acceptEnu_err("Id")
+                val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
                 val tmp = this.acceptTag(":tmp")
                 val tag = if (!this.acceptEnu("Tag")) null else {
                     this.tk0 as Tk.Tag
@@ -788,7 +788,7 @@ class Parser (lexer_: Lexer)
                         }
                         this.nest("""
                             ${pre0}do :unnest {
-                                var __evt ${cnd.tk.str}
+                                var evt ${cnd.tk.str}
                                 await (evt is ${cnd.tk.str}) and $xcnd
                             }
                         """)

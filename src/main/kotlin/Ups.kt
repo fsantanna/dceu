@@ -87,7 +87,7 @@ class Ups (val outer: Expr.Do) {
         }
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.getDcl(e,id)!=null && id!="__evt") {
+        if (this.getDcl(e,id)!=null && id!="evt") {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
@@ -121,17 +121,17 @@ class Ups (val outer: Expr.Do) {
     }
 
     fun tpl_is (e: Expr.Index): Boolean {
-        val var_evt = e.col.tk.str.let { if (it=="evt") "__evt" else it }
-        val dcl = getDcl(e, var_evt)
+        val id = e.col.tk.str
+        val dcl = getDcl(e, id)
         return (((e.col is Expr.EvtErr) && (e.idx is Expr.Tag) && (dcl!=null && dcl.tag!=null))
                 || ((e.col is Expr.Acc) && (e.idx is Expr.Tag) && (dcl!!.tag != null)))
                 || (e.col is Expr.Index && this.tpl_is(e.col))
     }
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
-        val var_evt = e.col.tk.str.let { if (it=="evt") "__evt" else it }
+        val id = e.col.tk.str
         return when {
             (e.col is Expr.Acc) || (e.col is Expr.EvtErr) -> {
-                val dcl = getDcl(e, var_evt)!!
+                val dcl = getDcl(e, id)!!
                 this.tplates[dcl.tag]!!
             }
             (e.col is Expr.Index) -> {
@@ -179,7 +179,7 @@ class Ups (val outer: Expr.Do) {
                 val bup = first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                if (id!="__evt" && this.tag!=null && !tplates.containsKey(this.tag.str)) {
+                if (id!="evt" && this.tag!=null && !tplates.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 xup.syms[id] = Dcl(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)

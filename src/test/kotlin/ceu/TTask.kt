@@ -3312,7 +3312,7 @@ class TTask {
         val out = all("""
             data :E = [x,y]
             spawn task () :awakes {
-                var __evt :E
+                var evt :E
                 yield(nil)
                 println(evt.x)
             } ()
