@@ -863,11 +863,18 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val clk_expr = this.clk_or_exp_tostr(this.clk_or_exp())
+                val now = this.acceptTag(":check-now")
+                val (clk,cnd) = this.clk_or_exp()
+                val clk_expr = this.clk_or_exp_tostr(Pair(clk,cnd))
+                val xcnd = when {
+                    (cnd !is Expr.Tag) -> ""
+                    !this.acceptFix(",") -> ""
+                    else -> ", " + this.expr().tostr(true)
+                }
                 val body = this.block()
                 this.nest("""
                     ${pre0}while true {
-                        await $clk_expr
+                        await ${now.cond { ":check-now" }} $clk_expr $xcnd
                         ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
@@ -954,11 +961,17 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val now = this.acceptTag(":check-now")
-                val clk_expr = this.clk_or_exp_tostr(this.clk_or_exp())
+                val (clk,cnd) = this.clk_or_exp()
+                val clk_expr = this.clk_or_exp_tostr(Pair(clk,cnd))
+                val xcnd = when {
+                    (cnd !is Expr.Tag) -> ""
+                    !this.acceptFix(",") -> ""
+                    else -> ", " + this.expr().tostr(true)
+                }
                 val body = this.block()
                 this.nest("""
                     ${pre0}par-or {
-                        await $clk_expr
+                        await ${now.cond { ":check-now" }} $clk_expr $xcnd
                     } with {
                         ${body.es.tostr(true)}
                     }

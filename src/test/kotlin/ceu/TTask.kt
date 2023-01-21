@@ -3308,7 +3308,7 @@ class TTask {
     // EVT / DATA
 
     @Test
-    fun mm_01_await_data() {
+    fun mm_01_data_await() {
         val out = all("""
             data :E = [x,y]
             spawn task () :awakes {
@@ -3321,7 +3321,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun mm_02_await_data() {
+    fun mm_02_data_await() {
         val out = all("""
             data :E = [x,y]
             data :F = [i,j]
@@ -3335,6 +3335,18 @@ class TTask {
             } ()
             broadcast in :global, tags([10,20], :E, true)
             broadcast in :global, tags([10,20], :F, true)
+        """, true)
+        assert(out == "10\n20\n") { out }
+    }
+    @Test
+    fun mm_03_data_pub() {
+        val out = all("""
+            data :T = [x,y]
+            var t = spawn task () :T {
+                set pub = [10,20]
+                println(pub.x)
+            } ()
+            println(pub.y)
         """, true)
         assert(out == "10\n20\n") { out }
     }
