@@ -7,7 +7,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 fun yield (ok: String = "ok"): String {
-    return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:coro { set $ok=false } else { nil } } }"
+    return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:x-task { set $ok=false } else { nil } } }"
 }
 fun await (evt: String): String {
     return "do { var ok; set ok=true; yield(nil); while ok { if $evt { set ok=false } else { yield(nil) } } }"
@@ -691,7 +691,7 @@ class TTask {
     @Test
     fun dd_throw4_err() {
         val out = all("""
-            broadcast in :task, nil
+            broadcast in, nil
         """)
         assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
     }
@@ -699,10 +699,10 @@ class TTask {
     fun dd_throw5_err() {
         val out = all("""
             spawn (task () :fake {
-                broadcast in :task, nil
+                broadcast in, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in :task, nil }()\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in, nil }()\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
@@ -732,9 +732,9 @@ class TTask {
     fun dd_throw7() {
         val out = all("""
             var co
-            set co = coroutine (coro () :awakes {
+            set co = spawn (task () {
                 catch :e1 {
-                    coroutine (coro () :awakes {
+                    coroutine (coro () {
                         yield(nil)
                         throw(:e1)
                     })()
@@ -745,9 +745,8 @@ class TTask {
                 println(:e1)
                 yield(nil)
                 throw(:e2)
-            })
+            })()
             catch :e2 {
-                resume co()
                 broadcast in :global, nil
                 broadcast in :global, nil
                 println(99)
@@ -925,8 +924,8 @@ class TTask {
             })()
             broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 14, col 14) : broadcast in :global, nil\n" +
-                "anon : (lin 7, col 21) : throw(:error)\n" +
+        assert(out == "anon : (lin 10, col 13) : broadcast in :global, nil\n" +
+                "anon : (lin 5, col 21) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
@@ -1051,22 +1050,18 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
+                ;;do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
-                do { var ok2; set ok2=true; while ok2 { yield(nil;) if type(evt)/=:coro { set ok2=false } else { nil } } }
+                do { var ok2; set ok2=true; while ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
             }
-            var co1
-            set co1 = coroutine(tk)
-            var co2
-            set co2 = coroutine(tk)
+            var co1 = spawn (tk) ()
+            var co2 = spawn (tk) ()
             catch err==:1 {
                 func () {
                     println(1)
-                    resume co1(10)
-                    resume co2(10)
                     println(2)
                     broadcast in :global, [20]
                     println(3)
@@ -1158,7 +1153,7 @@ class TTask {
                 }) ()
                 spawn (task () :fake {
                     do {
-                        broadcast in :task, :ok
+                        broadcast in, :ok
                     }
                 }) ()
                 yield(nil)
@@ -1346,8 +1341,8 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 18, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 14, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 16, col 21) : set error : incompatible scopes\n" +
                 ":2\n" +
                 ":error\n") { out }
     }
@@ -1587,9 +1582,9 @@ class TTask {
             var T
             set T = task () {
                 yield(nil)
+                yield(nil)
             }
-            var ts
-            set ts = tasks()
+            var ts = tasks()
             spawn in ts, T()
             while in :tasks ts, xxx {
                 println(1)
@@ -1605,10 +1600,8 @@ class TTask {
     @Test
     fun ff_pool11_err_scope() {
         val out = all("""
-            var T
-            set T = task () { yield(nil) }
-            var ts
-            set ts = tasks()
+            var T = task () { yield(nil) }
+            var ts = tasks()
             spawn in ts, T()
             var yyy
             while in :tasks ts, xxx {
@@ -1754,10 +1747,10 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=true; while ok1 { yield(nil;) if type(evt)/=:coro { set ok1=false } else { nil } } }
+                do { var ok1; set ok1=true; while ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=false } else { nil } } }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
+                    do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -2014,12 +2007,12 @@ class TTask {
             """
             var tk
             set tk = task (xxx) {
+                yield(nil)
                 set xxx = evt
                 nil
             }
-            var co
-            set co = coroutine(tk)
-            broadcast in :global, []
+            var co = spawn(tk)([])
+            broadcast in :global, nil
             println(`:number ceu_gc_count`)
         """
         )
@@ -2038,9 +2031,7 @@ class TTask {
             set tk = task (xxx) {
                 set xxx = evt[0]
             }
-            var co
-            set co = coroutine(tk)
-            broadcast in :global, [[]]
+            spawn (tk) ([[]])
             println(`:number ceu_gc_count`)
         """
         )
@@ -2061,9 +2052,7 @@ class TTask {
                 set xxx = evt
                 nil
             }
-            var co
-            set co = coroutine(tk)
-            broadcast in :global, 1
+            var co = spawn (tk) (1)
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
@@ -2085,9 +2074,7 @@ class TTask {
                 set xxx = evt
                 yield(nil)
             }
-            var co
-            set co = coroutine(tk)
-            broadcast in :global, 1
+            var co = spawn (tk)(1)
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
@@ -2211,11 +2198,11 @@ class TTask {
             """
             var tk
             set tk = task (xxx) {
+                yield(nil)
                 set xxx = evt[0]
                 nil
             }
-            var co
-            set co = coroutine(tk)
+            var co = spawn (tk) ()
             broadcast in :global, #[[]]
             println(`:number ceu_gc_count`)
         """
@@ -2233,10 +2220,10 @@ class TTask {
             """
             var tk
             set tk = task (xxx) {
+                yield(nil)
                 set xxx = evt[0]
             }
-            var co
-            set co = coroutine(tk)
+            var co = spawn (tk) ()
             broadcast in :global, @[(1,[])]
             println(`:number ceu_gc_count`)
         """
@@ -2254,7 +2241,7 @@ class TTask {
             var a
             a.pub
         """, true)
-        assert(out == "anon : (lin 3, col 15) : pub error : expected coroutine\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 15) : pub error : expected task\n:error\n") { out }
     }
     @Test
     fun hh_pub2_err() {
@@ -2269,20 +2256,16 @@ class TTask {
             var t
             set t = task (v1) {
                 set task.pub = v1
-                var v2
-                set v2 = yield(nil)
-                set task.pub = task.pub + v2
+                yield(nil)
+                set task.pub = task.pub + evt
                 task.pub
             }
-            var a
-            set a = coroutine(t)
+            var a = spawn (t) (1)
             println(a.pub)
-            resume a(1)
-            println(a.pub)
-            resume a(2)
+            broadcast in a, 2
             println(a.pub)
         """, true)
-        assert(out == "nil\n1\n3\n") { out }
+        assert(out == "1\n3\n") { out }
     }
     @Test
     fun hh_pub4_err() {
@@ -2293,9 +2276,7 @@ class TTask {
             }
             var x
             do {
-                var a
-                set a = coroutine(t)
-                resume a()
+                var a = spawn (t) ()
                 set x = a.pub
             }
             println(x)
@@ -2303,7 +2284,7 @@ class TTask {
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 10, col 24) : a()\n" +
+        assert(out == "anon : (lin 8, col 32) : t()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -2313,9 +2294,7 @@ class TTask {
             set t = task () {
                 set task.pub = 10
             }
-            var a
-            set a = coroutine(t)
-            resume a()
+            var a = spawn t()
             println(a.pub + a.pub)
         """, true)
         assert(out == "20\n") { out }
@@ -2448,9 +2427,7 @@ class TTask {
             }
             var y
             do {
-                var t
-                set t = coroutine(T)
-                resume t ()
+                var t = spawn (T) ()
                 var x
                 set x = t.pub  ;; pub expose
                 set y = t.pub  ;; incompatible scopes
@@ -2468,9 +2445,7 @@ class TTask {
                 set task.pub = [10]
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            resume t()
+            var t = spawn(T)()
             var x
             set x = t.pub   ;; no expose
         """)
@@ -2485,9 +2460,7 @@ class TTask {
                 set task.pub = [10]
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            resume t()
+            var t = spawn(T)()
             println(t.pub)   ;; no expose
         """)
         //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
@@ -2501,9 +2474,7 @@ class TTask {
                 set task.pub = [[@[(:x,10)]]]
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            resume t()
+            var t = spawn T ()
             println(t.pub[0][0][:x])   ;; no expose
         """)
         assert(out == "10\n") { out }
@@ -2551,7 +2522,7 @@ class TTask {
         }()
         broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 2, col 15) : task () :fake { var y set y = do { va...)\n" +
+        assert(out == "anon : (lin 2, col 15) : task () :fake { var y set y = do { var ceu_sp...)\n" +
                 "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
         //assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
@@ -2562,6 +2533,7 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
+                yield(nil)
                 set task.pub = v
                 yield(nil)
                 var x
@@ -2572,13 +2544,11 @@ class TTask {
                 set task.pub = @[(:y,y)]
                 move(task.pub)
             }
-            var a
-            set a = coroutine(t)
-            resume a([1])
+            var a = spawn (t) ([1])
             println(a.pub)
-            resume a()
+            broadcast in a, nil
             println(a.pub)
-            resume a([3])
+            broadcast in a, [3]
             println(a.pub)
         """, true)
         assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
@@ -2590,15 +2560,13 @@ class TTask {
             set t = task () {
                 set task.pub = []
             }
-            var a
-            set a = coroutine(t)
-            resume a()
+            var a = spawn (t) ()
             var x
             set x = a.pub
             println(x)
         """)
         //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 8, col 20) : a()\n" +
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -2608,15 +2576,13 @@ class TTask {
             set t = task () {
                 set task.pub = @[]
             }
-            var a
-            set a = coroutine(t)
-            resume a()
+            var a = spawn (t) ()
             var x
             set x = a.pub
             println(x)
         """)
         //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 8, col 20) : a()\n" +
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -2626,14 +2592,12 @@ class TTask {
             set t = task () {
                 set task.pub = #[]
             }
-            var a
-            set a = coroutine(t)
-            resume a()
+            var a = spawn (t) ()
             var x
             set x = a.pub
             println(x)
         """)
-        assert(out == "anon : (lin 8, col 20) : a()\n" +
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -2648,9 +2612,7 @@ class TTask {
                 }
                 println(f())
             }
-            var a
-            set a = coroutine(t)
-            resume a(1)
+            var a = spawn (t)(1)
         """)
         assert(out == "1\n") { out }
     }
@@ -2667,8 +2629,7 @@ class TTask {
                 println(f())
             }
             var a
-            set a = coroutine(t)
-            resume a([1])
+            set a = spawn (t) ([1])
         """, true)
         assert(out == "[1]\n") { out }
         //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
@@ -2733,9 +2694,7 @@ class TTask {
                 set task.pub = @[]
                 nil
             }
-            var a
-            set a = coroutine(t)
-            resume a()
+            var a = spawn (t) ()
             println(a.status)
         """, true)
         assert(out == ":terminated\n") { out }
@@ -2749,7 +2708,7 @@ class TTask {
             var a
             a.status
         """, true)
-        assert(out == "anon : (lin 3, col 15) : status error : expected coroutine\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 15) : status error : expected task\n:error\n") { out }
     }
     @Test
     fun ii_status2_err() {
@@ -2772,7 +2731,7 @@ class TTask {
     fun ii_status4() {
         val out = all("""
             var t
-            set t = task () {
+            set t = coro () {
                 println(10, task.status)
                 yield(nil)
                 println(20, task.status)
@@ -2934,7 +2893,7 @@ class TTask {
         val out = all("""
             var f
             set f = func () {
-                coroutine(task() {nil})
+                coroutine(coro() {nil})
             }
             println(f())
         """, true)
@@ -2946,7 +2905,7 @@ class TTask {
     fun kk_esc2() {
         val out = all("""
             var T
-            set T = task () { nil }
+            set T = coro () { nil }
             var xxx
             do {
                 var t
@@ -2965,18 +2924,15 @@ class TTask {
             track(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : track(nil)\n" +
-                "track error : expected coroutine\n" +
+                "track error : expected task\n" +
                 ":error\n") { out }
     }
     @Test
     fun ll_track2() {
         val out = all("""
-            var T
-            set T = task () { nil }
-            var t
-            set t = coroutine(T)
-            var x
-            set x = track(t)
+            var T = task () { yield(nil) }
+            var t = spawn T()
+            var x = track(t)
             println(t, x)
         """)
         assert(out.contains("track: 0x")) { out }
@@ -2984,8 +2940,8 @@ class TTask {
     @Test
     fun ll_track2a() {
         val out = all("""
-            var T = task () { nil }
-            var t = coroutine(T)
+            var T = task () { yield(nil) }
+            var t = spawn T ()
             var x = track(t)
             var y = track(t)
             var z = y
@@ -2996,18 +2952,15 @@ class TTask {
     @Test
     fun ll_track3_err() {
         val out = all("""
-            var T
-            set T = task () { nil }
-            var t
-            set t = coroutine(T)
-            resume t()
+            var T = task () { nil }
+            var t = spawn T()
             var x
             set x = track(t) ;; error: dead coro
             ;;println(t.status)
             println(x)
         """)
-        assert(out == "anon : (lin 8, col 21) : track(t)\n" +
-                "track error : expected unterminated coroutine\n" +
+        assert(out == "anon : (lin 5, col 21) : track(t)\n" +
+                "track error : expected unterminated task\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3015,15 +2968,14 @@ class TTask {
         val out = all("""
             var T
             set T = task () {
+                yield(nil)
                 set task.pub = 10
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            var x
-            set x = track(t)
+            var t = spawn T()
+            var x = track(t)
             println(detrack(x).pub) 
-            resume t()
+            broadcast in :global, nil ;;resume t()
             println(detrack(x).pub) 
         """)
         assert(out == "nil\n10\n") { out }
@@ -3035,7 +2987,7 @@ class TTask {
             set x = nil
             println(x.pub)  ;; not coro/track()
         """)
-        assert(out == "anon : (lin 4, col 23) : pub error : expected coroutine\n:error\n") { out }
+        assert(out == "anon : (lin 4, col 23) : pub error : expected task\n:error\n") { out }
     }
     @Test
     fun ll_track5_err2() {
@@ -3045,11 +2997,8 @@ class TTask {
                 set task.pub = [10]
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            resume t()
-            var x
-            set x = track(t)
+            var t = spawn T()
+            var x = track(t)
             println(detrack(x).pub)      ;; expose (ok, global func)
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
@@ -3059,17 +3008,16 @@ class TTask {
     fun ll_track6_err() {
         val out = all("""
             var T
-            set T = task () { nil }
+            set T = task () { yield(nil) }
             var x
             do {
-                var t
-                set t = coroutine(T)
+                var t = spawn (T) ()
                 set x = track(t)         ;; error scope
             }
             println(detrack(x).status)
             println(x)
         """)
-        assert(out.contains("terminated\ntrack: 0x")) { out }
+        assert(out.contains("terminated\nx-track: 0x")) { out }
         //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -3080,11 +3028,8 @@ class TTask {
                 set task.pub = [10]
                 yield(nil)
             }
-            var t
-            set t = coroutine(T)
-            resume t ()
-            var x
-            set x = track(t)
+            var t = spawn T ()
+            var x = track(t)
             println(detrack(x).pub[0])
             broadcast in :global, nil
             println(detrack(x))
@@ -3101,16 +3046,14 @@ class TTask {
             }
             var x
             do {
-                var t
-                set t = coroutine(T)
-                resume t ()
+                var t = spawn (T) ()
                 set x = track(t)         ;; scope x < t
                 println(detrack(x).pub[0])
             }
             println(detrack(x).status)
             println(x)
         """)
-        assert(out.contains("10\n:terminated\ntrack: 0x")) { out }
+        assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
         //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -3127,7 +3070,7 @@ class TTask {
             }
         """)
         assert(out == "anon : (lin 9, col 25) : track(t)\n" +
-                "track error : expected coroutine\n" +
+                "track error : expected task\n" +
                 ":error\n") { out }
     }
     @Test

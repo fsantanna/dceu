@@ -591,16 +591,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
                     ${this.coro.code()}
-                    if (ceu_acc.type != CEU_VALUE_X_TASK) {                
+                    if (!(ceu_acc.type==CEU_VALUE_X_TASK ${(this.tk.str=="status").cond { "|| ceu_acc.type==CEU_VALUE_X_CORO" }})) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected task");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
-                        assrc(if (this.tk.str=="pub") {
-                                "ceu_dyn_$n->Bcast.Coro.frame->Task.pub"
-                            } else {
-                                "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_yielded - 1} }"
-                            })
+                        assrc(when (this.tk.str) {
+                            "pub" -> "ceu_dyn_$n->Bcast.Coro.frame->Task.pub"
+                            "status" -> "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_yielded - 1} }"
+                            else -> error("impossible case")
+                        })
                     } else {
                         val src = this.asdst_src()
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
