@@ -36,7 +36,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Resume -> "resume " + this.call.tostr(pre)
         is Expr.Toggle -> "toggle " + this.task.tostr(pre) + "(" + this.on.tostr() + ")"
         is Expr.Pub    -> this.x.tostr(pre) + "." + this.tk.str
-        is Expr.Task   -> "task"
+        is Expr.X   -> "task"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()

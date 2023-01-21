@@ -263,11 +263,11 @@ class TTask {
     @Test
     fun aa_task19_self_escape_err() {
         val out = all("""
-            var T1 = task (co) {
+            var T1 = coro (co) {
                 yield(nil)
             }
             var T2 = coro () {
-                var t1 = spawn T1(task)
+                var t1 = spawn T1(coro)
                 yield(t1)          ;; t1 cannot escape
             }
             var t2 = coroutine(T2)
@@ -351,6 +351,13 @@ class TTask {
             println(4)
         """)
         assert(out == "0\n1\n4\n3\n") { out }
+    }
+    @Test
+    fun aa_task23_notask() {
+        val out = all("""
+            task
+        """)
+        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task\n") { out }
     }
 
     // SPAWN
@@ -691,7 +698,7 @@ class TTask {
     @Test
     fun dd_throw4_err() {
         val out = all("""
-            broadcast in, nil
+            broadcast in :task, nil
         """)
         assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
     }
@@ -699,10 +706,10 @@ class TTask {
     fun dd_throw5_err() {
         val out = all("""
             spawn (task () :fake {
-                broadcast in, nil
+                broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in, nil }()\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in :task, nil }()\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
@@ -1050,18 +1057,19 @@ class TTask {
             var tk
             set tk = task (v) {
                 println(v)
-                ;;do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                ;;yield(nil)
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
                 do { var ok2; set ok2=true; while ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
             }
-            var co1 = spawn (tk) ()
-            var co2 = spawn (tk) ()
+            println(1)
+            var co1 = spawn (tk) (10)
+            var co2 = spawn (tk) (10)
             catch err==:1 {
                 func () {
-                    println(1)
                     println(2)
                     broadcast in :global, [20]
                     println(3)
@@ -1153,7 +1161,7 @@ class TTask {
                 }) ()
                 spawn (task () :fake {
                     do {
-                        broadcast in, :ok
+                        broadcast in :task, :ok
                     }
                 }) ()
                 yield(nil)
@@ -1906,7 +1914,7 @@ class TTask {
             }
              broadcast in :global, 2
         """)
-        assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+        assert(out == ":x-tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
     @Test
     fun ff_pool23_throw() {
@@ -2011,8 +2019,8 @@ class TTask {
                 set xxx = evt
                 nil
             }
-            var co = spawn(tk)([])
-            broadcast in :global, nil
+            var co = spawn(tk)()
+            broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
         )
@@ -2020,7 +2028,7 @@ class TTask {
         //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
         //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2029,9 +2037,11 @@ class TTask {
             """
             var tk
             set tk = task (xxx) {
+                yield(nil)
                 set xxx = evt[0]
             }
-            spawn (tk) ([[]])
+            spawn (tk) ()
+            broadcast in :global, [[]]
             println(`:number ceu_gc_count`)
         """
         )
@@ -2039,7 +2049,7 @@ class TTask {
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2060,7 +2070,7 @@ class TTask {
         //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
                 "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
@@ -2082,7 +2092,7 @@ class TTask {
         //assert(out == "0\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
                 "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
@@ -2211,7 +2221,7 @@ class TTask {
         //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, #[[]]\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2434,7 +2444,7 @@ class TTask {
             }
             println(999)
         """)
-        assert(out == "anon : (lin 13, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n:error\n") { out }
         //assert(out == "anon : (lin 13, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
@@ -2449,7 +2459,7 @@ class TTask {
             var x
             set x = t.pub   ;; no expose
         """)
-        assert(out == "anon : (lin 11, col 17) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 17) : set error : incompatible scopes\n:error\n") { out }
         //assert(out == "anon : (lin 11, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
@@ -2533,15 +2543,13 @@ class TTask {
         val out = all("""
             var t
             set t = task (v) {
-                yield(nil)
                 set task.pub = v
                 yield(nil)
                 var x
                 set x = [2]
                 set task.pub = x
-                var y
-                set y = yield(nil)
-                set task.pub = @[(:y,y)]
+                yield(nil)
+                set task.pub = @[(:y,copy(evt))]
                 move(task.pub)
             }
             var a = spawn (t) ([1])

@@ -27,14 +27,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun Expr.non_fake_task_c (): String? {
-        val n = ups     // find first non fake
-            .all_until(this) { it is Expr.Proto && !it.fake }
-            .filter { it is Expr.Proto } // but count all protos in between
-            .count()
-        return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
-    }
-
     fun Expr.isdst (): Boolean {
         return ups.ups[this].let { it is Expr.Set && it.dst==this }
     }
@@ -497,7 +489,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str != "func")
-                val oktask = this.non_fake_task_c()
+                val oktask = ups.non_fake_x_c(this)
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code()}
@@ -616,7 +608,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=${this.non_fake_task_c()}->X.x} }")
+            is Expr.X -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.non_fake_x_c(this)}->X.x} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {
@@ -667,7 +659,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }.let { (TAG,Tag) ->
                             if (Tag=="Func" || Tag=="Coro" || Tag=="Task") {
-                                Pair(TAG, "Dyn")
+                                Pair("P_"+TAG, "Dyn")
                             } else {
                                 Pair(TAG, Tag)
                             }

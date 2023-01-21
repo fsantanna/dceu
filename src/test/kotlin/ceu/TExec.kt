@@ -2773,21 +2773,22 @@ class TExec {
     fun gc14_bcast() {
         val out = ceu.all(
             """
-            var tk = coro () {
+            var tk = task () {
+                yield(nil)
                 do {
                     var v = evt
                 }
                 nil
                 ;;println(:out)
             }
-            var co = coroutine(tk)
+            var co = spawn tk ()
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 10, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 25) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2807,7 +2808,8 @@ class TExec {
     fun gc16_arg_bcast() {
         val out = ceu.all(
             """
-            var tk = coro (v) {
+            var tk = task (v) {
+                yield(nil)
                 do {
                     ;;println(evt)
                     set v = evt
@@ -2815,14 +2817,14 @@ class TExec {
                 nil
                 ;;println(:out)
             }
-            var co = coroutine(tk)
+            var co = spawn (tk) ()
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 

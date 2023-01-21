@@ -77,6 +77,13 @@ class Ups (val outer: Expr.Do) {
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
+    fun non_fake_x_c (e: Expr): String? {
+        val n = this     // find first non fake
+            .all_until(e) { it is Expr.Proto && it.tk.str==e.tk.str && !it.fake }
+            .filter { it is Expr.Proto } // but count all protos in between
+            .count()
+        return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
+    }
 
     fun getDcl (e: Expr, id: String): Dcl? {
         val up = this.ups[e]
@@ -273,7 +280,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Resume -> this.call.traverse()
             is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
-                if (this.x is Expr.Task) {
+                if (this.x is Expr.X) {
                     val ok = hasfirst(this) { it is Expr.Proto && !it.fake }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
@@ -281,7 +288,11 @@ class Ups (val outer: Expr.Do) {
                 }
                 this.x.traverse()
             }
-            is Expr.Task   -> {}
+            is Expr.X   -> {
+                if (non_fake_x_c(this) == null) {
+                    err(this.tk, "task error : missing enclosing task")
+                }
+            }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
@@ -366,7 +377,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Resume -> this.map(listOf(this.call))
             is Expr.Toggle -> this.map(listOf(this.task, this.on))
             is Expr.Pub    -> this.map(listOf(this.x))
-            is Expr.Task   -> emptyMap()
+            is Expr.X   -> emptyMap()
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
