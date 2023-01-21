@@ -273,7 +273,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
             is Expr.Yield  -> {
                 if (!intask(this)) {
-                    err(this.tk, "yield error : expected enclosing coro")
+                    err(this.tk, "yield error : expected enclosing coro or task")
                 }
                 this.arg.traverse()
             }

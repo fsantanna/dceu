@@ -215,11 +215,11 @@ class TXJS {
         val out = all("""
             coro genFunc () {
                 func () {
-                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing coro
+                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing coro or task
                 }()
             }
         """, true)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun x9() {

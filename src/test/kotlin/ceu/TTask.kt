@@ -183,7 +183,7 @@ class TTask {
         val out = all("""
             yield(nil)
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun aa_yield15_err() {
@@ -194,7 +194,7 @@ class TTask {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun aa_task16_nest() {

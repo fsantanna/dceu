@@ -236,13 +236,14 @@ class TXExec {
     fun bcast1() {
         val out = all("""
             var tk = task () {
+                yield()
                 println(evt)
-                do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :coro) { set ok=false } else { nil } } }
+                do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :x-task) { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
-            var co1 = coroutine(tk)
-            var co2 = coroutine(tk)
+            var co1 = spawn(tk)()
+            var co2 = spawn(tk)()
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3
@@ -277,13 +278,13 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    do { var ok1; set ok1=true; while ok1 { yield(nil); if type(evt)/=:coro { set ok1=false } else { nil } } }
+                    do { var ok1; set ok1=true; while ok1 { yield(nil); if type(evt)/=:x-task { set ok1=false } else { nil } } }
                     ;;yield()
-                    do { var ok2; set ok2=true; while ok2 { yield(nil); if type(evt)/=:coro { set ok2=false } else { nil } } }
+                    do { var ok2; set ok2=true; while ok2 { yield(nil); if type(evt)/=:x-task { set ok2=false } else { nil } } }
                     ;;yield()
                     println(1)
                 } with {
-                    do { var ok3; set ok3=true; while ok3 { yield(nil); if type(evt)/=:coro { set ok3=false } else { nil } } }
+                    do { var ok3; set ok3=true; while ok3 { yield(nil); if type(evt)/=:x-task { set ok3=false } else { nil } } }
                     ;;yield()
                     println(2)
                 } with {
@@ -738,7 +739,7 @@ class TXExec {
     @Test
     fun await20_track() {
         val out = all("""
-            coro T () {
+            task T () {
                 yield()
             }
             var t = spawn T()
@@ -750,7 +751,7 @@ class TXExec {
                     println(:2)
                 } with {
                     println(:1)
-                    resume t()
+                    broadcast in t, nil
                 }
                 println(:3)
             }
@@ -761,7 +762,7 @@ class TXExec {
     @Test
     fun await22_track() {
         val out = all("""
-            coro T () {
+            task T () {
                 yield()
             }
             var t = spawn T()
@@ -773,7 +774,7 @@ class TXExec {
                     println(:2)
                 } with {
                     println(:1)
-                    resume t()
+                    broadcast in t, nil
                 }
                 println(:3)
             }
@@ -1079,7 +1080,7 @@ class TXExec {
         val out = all("""
             await f()
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun await5() {
@@ -1240,9 +1241,9 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_7180...)\n" +
                 "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
-                "anon : (lin 3, col 60) : set error : incompatible scopes\n" +
+                "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
                 ":error\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
@@ -1445,13 +1446,13 @@ class TXExec {
             }
             println(type(t))
         """)
-        assert(out == "10\n:coro\n") { out }
+        assert(out == "10\n:x-coro\n") { out }
     }
     @Test
     fun where6() {
         val out = ceu.all(
             """
-            coro T (v) {
+            task T (v) {
                 println(v)
                 yield()
             }
@@ -1463,7 +1464,7 @@ class TXExec {
                 println(type(t))
             }
         """)
-        assert(out == "10\n:track\n") { out }
+        assert(out == "10\n:x-track\n") { out }
     }
 
     // TOGGLE
@@ -2067,7 +2068,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[36,1000,1001,1002,10,11,12,37,100,101,38]\n") { out }
+        assert(out == "[37,1000,1001,1002,10,11,12,38,100,101,39]\n") { out }
     }
 
     // TEMPLATE
@@ -2170,13 +2171,13 @@ class TXExec {
             spawn {
                 await :E, evt.y==20
                 println(evt.x)
-                await :F, evt.i==20
+                await :F, evt.i==10
                 println(evt.j)
             }
             broadcast in :global, :E [10,20]
-            broadcast in :global, :E [10,20]
+            broadcast in :global, :F [10,20]
         """, true)
-        assert(out == "10\n10\n") { out }
+        assert(out == "10\n20\n") { out }
     }
 
     // ALL
