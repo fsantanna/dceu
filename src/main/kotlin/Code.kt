@@ -127,9 +127,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """ + isx.cond{ """  // TERMINATE
                     assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
                     ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
-                    ceu_x->Bcast.Coro.frame->X.pub = ceu_acc;
+                    ceu_x->Bcast.X.frame->X.pub = ceu_acc;
                     ceu_frame->X.pc = -1;
-                    int intasks = (ceu_x->Bcast.Coro.up_tasks != NULL);
+                    int intasks = (ceu_x->Bcast.X.up_tasks != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not signal termination: clear comes from clearing enclosing block,
@@ -238,7 +238,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     val id = it.first.str.id2c()
                                     """
                                     ${istask.cond { """
-                                        if (ceu_x->Bcast.Coro.up_tasks != NULL) {
+                                        if (ceu_x->Bcast.X.up_tasks != NULL) {
                                             ceu_mem->_${id}_ = ceu_x->up_dyns.dyns->up_block;
                                         } else
                                     """}}
@@ -263,7 +263,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         }}
                         ${
                             (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                                "ceu_x->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
+                                "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
                             }
                         }
                         ${
@@ -363,7 +363,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     }
                                     ${
                                         (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                                            "ceu_x->Bcast.Coro.dn_block = NULL;"
+                                            "ceu_x->Bcast.X.dn_block = NULL;"
                                         }
                                     }
                                     ceu_block_free(&ceu_mem->block_$n);
@@ -596,7 +596,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
                         assrc(when (this.tk.str) {
-                            "pub" -> "ceu_dyn_$n->Bcast.Coro.frame->X.pub"
+                            "pub" -> "ceu_dyn_$n->Bcast.X.frame->X.pub"
                             "status" -> "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_yielded - 1} }"
                             else -> error("impossible case")
                         })
@@ -609,8 +609,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->X.pub, 1);
-                        ceu_dyn_$n->Bcast.Coro.frame->X.pub = $src;
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.X.frame->X.pub, 1);
+                        ceu_dyn_$n->Bcast.X.frame->X.pub = $src;
                         """
                     }}
                     CEU_PUB_$n:;
@@ -865,7 +865,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
                 val iscall = (resume==null && spawn==null)
                 val istasks = (spawn?.tasks != null)
-                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_x_$n.Dyn->Bcast.Coro.frame)"
+                val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_x_$n.Dyn->Bcast.X.frame)"
                 val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && this.proto.fake && (this.args.size == 0)
 
                 val (args_sets,args_vs) = this.args.mapIndexed { i,e ->

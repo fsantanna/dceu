@@ -380,10 +380,10 @@ class Parser (lexer_: Lexer)
                                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected tasks");
                                         }
                                         ```
-                                        var ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Coros.dyns.its`
+                                        var ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                         var ceu_i_$N = 0
                                         while ceu_i_$N /= ceu_n_$N {
-                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                             if ceu_dyn_$N == `:pointer NULL` {
                                                 ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -807,7 +807,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
                                 ${pre0}await :check-now (ceu_spw_$N.status == :terminated)
-                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->X.pub;`
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
                             }
                         """) //.let { println(it.tostr());it }
                     }

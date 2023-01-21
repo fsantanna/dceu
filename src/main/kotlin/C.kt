@@ -140,7 +140,7 @@ fun Coder.main (): String {
                 char Char;
                 double Number;
                 void* Pointer;
-                struct CEU_Dyn* Dyn;    // Func/Task/Tuple/Dict/Coro/Coros: allocates memory
+                struct CEU_Dyn* Dyn;    // Func/Task/Tuple/Dict/Coro/Tasks: allocates memory
             };
         } CEU_Value;
     """ +
@@ -230,11 +230,11 @@ fun Coder.main (): String {
                             struct CEU_Dyn* up_tasks;   // auto terminate / remove from tasks
                             struct CEU_Block* dn_block; // first block to bcast
                             CEU_Frame* frame;
-                        } Coro;
+                        } X;
                         struct {
                             int max;
                             CEU_Dyns dyns;
-                        } Coros;
+                        } Tasks;
                         struct CEU_Dyn* Track;  // starts as CORO and may fall to NIL
                     };
                 } Bcast;
@@ -635,14 +635,14 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_X_CORO:
                 case CEU_VALUE_X_TASK:
-                    if (dyn->Bcast.Coro.dn_block != NULL) {
-                        ceu_block_free(dyn->Bcast.Coro.dn_block);
+                    if (dyn->Bcast.X.dn_block != NULL) {
+                        ceu_block_free(dyn->Bcast.X.dn_block);
                     }
-                    free(dyn->Bcast.Coro.frame->mem);
-                    free(dyn->Bcast.Coro.frame);
+                    free(dyn->Bcast.X.frame->mem);
+                    free(dyn->Bcast.X.frame);
                     break;
                 case CEU_VALUE_X_TASKS:
-                    ceu_dyns_free(&dyn->Bcast.Coros.dyns);
+                    ceu_dyns_free(&dyn->Bcast.Tasks.dyns);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -869,7 +869,7 @@ fun Coder.main (): String {
                         // step (1)
                         CEU_BStack xbstack = { cur->up_dyns.dyns->up_block, bstack };
                         int killed = 0;
-                        int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.Coro.dn_block, evt, &killed);
+                        int ret = ceu_bcast_blocks(&xbstack, cur->Bcast.X.dn_block, evt, &killed);
                         if (xbstack.block==NULL || killed) {
 //SPC_DEC(printf("<d< ceu_bcast_dyn = %p [XXX] (killed=%d)\n", cur, killed));
                             return ret;
@@ -881,7 +881,7 @@ fun Coder.main (): String {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
 //SPC_EQU(printf(">>> awake %p\n", cur));
-                            ret = cur->Bcast.Coro.frame->proto->f(cur->Bcast.Coro.frame, bstack, arg, args);
+                            ret = cur->Bcast.X.frame->proto->f(cur->Bcast.X.frame, bstack, arg, args);
 //SPC_EQU(printf("<<< awake %p\n", cur));
                         }
 //SPC_DEC(printf("<e< ceu_bcast_dyn = %p\n", cur));
@@ -890,7 +890,7 @@ fun Coder.main (): String {
                 }
                 case CEU_VALUE_X_TASKS: {
 //SPC_DEC(printf("<f< ceu_bcast_dyn = %p\n", cur));
-                    return ceu_bcast_dyns(bstack, &cur->Bcast.Coros.dyns, evt);
+                    return ceu_bcast_dyns(bstack, &cur->Bcast.Tasks.dyns, evt);
                 case CEU_VALUE_X_TRACK:
                     if (evt->type==CEU_VALUE_X_TASK && cur->Bcast.Track==evt->Dyn) {
                         cur->Bcast.Track = NULL; // tracked coro is terminating
@@ -1193,7 +1193,7 @@ fun Coder.main (): String {
             *tasks = (CEU_Dyn) {
                 CEU_VALUE_X_TASKS, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
-                        .Coros = { max, {0,0,NULL,blk} }
+                        .Tasks = { max, {0,0,NULL,blk} }
                     } }
                 }
             };            
@@ -1228,7 +1228,7 @@ fun Coder.main (): String {
             *x = (CEU_Dyn) {
                 tag, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
-                        .Coro = { NULL, NULL, frame }
+                        .X = { NULL, NULL, frame }
                     } }
                 }
             };
@@ -1253,9 +1253,9 @@ fun Coder.main (): String {
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             *ok = !(
-                (tasks->Bcast.Coros.max != 0) &&
-                (tasks->Bcast.Coros.dyns.its >= tasks->Bcast.Coros.max) &&
-                (ceu_hold_hole(&tasks->Bcast.Coros.dyns) == -1)
+                (tasks->Bcast.Tasks.max != 0) &&
+                (tasks->Bcast.Tasks.dyns.its >= tasks->Bcast.Tasks.max) &&
+                (ceu_hold_hole(&tasks->Bcast.Tasks.dyns) == -1)
             );
             if (!*ok) {
                 return CEU_RET_RETURN;
@@ -1276,7 +1276,7 @@ fun Coder.main (): String {
             *x = (CEU_Dyn) {
                 CEU_VALUE_X_TASK, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
-                        .Coro = { tasks, NULL, frame }
+                        .X = { tasks, NULL, frame }
                     } }
                 }
             };
@@ -1286,7 +1286,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Coros.dyns, x, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 1));  // 1=cannot escape this block b/c of upvalues
             return CEU_RET_RETURN;
         }
         
@@ -1301,7 +1301,7 @@ fun Coder.main (): String {
                 }
             };
             // at most x->hld, same as pointer coro/tasks, term bcast is limited to it
-            CEU_Dyns* hld = (x->Bcast.Coro.up_tasks == NULL) ? x->up_dyns.dyns : x->Bcast.Coro.up_tasks->up_dyns.dyns;
+            CEU_Dyns* hld = (x->Bcast.X.up_tasks == NULL) ? x->up_dyns.dyns : x->Bcast.X.up_tasks->up_dyns.dyns;
             assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0));
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
             return NULL;
