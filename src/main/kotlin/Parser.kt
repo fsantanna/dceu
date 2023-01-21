@@ -369,21 +369,21 @@ class Parser (lexer_: Lexer)
                             Pair(this.tk0 as Tk.Id, null)
                         }
                         when {
-                            tktag.str == ":coros" -> {
+                            tktag.str == ":tasks" -> {
                                 val pre0 = tk0.pos.pre()
                                 val blk = this.block()
                                 this.nest("""
                                     ${pre0}do {
-                                        var ceu_coros_$N = ${col.tostr(true)}
+                                        var ceu_tasks_$N = ${col.tostr(true)}
                                         ```
-                                        if (ceu_mem->ceu_coros_$N.type != CEU_VALUE_COROS) {                
-                                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected coroutines");
+                                        if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_COROS) {                
+                                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected tasks");
                                         }
                                         ```
-                                        var ceu_n_$N = `:number ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.its`
+                                        var ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Coros.dyns.its`
                                         var ceu_i_$N = 0
                                         while ceu_i_$N /= ceu_n_$N {
-                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_coros_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Coros.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                             if ceu_dyn_$N == `:pointer NULL` {
                                                 ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -480,7 +480,7 @@ class Parser (lexer_: Lexer)
                     }
                 }
             }
-            this.acceptFix("func") || this.acceptFix("task") -> {
+            this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || this.checkFix("(") || (XCEU && this.checkEnu("Id")))
                 if (isnote) {
@@ -584,13 +584,13 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 when {
                     this.acceptFix("in") -> {
-                        val coros = this.expr()
+                        val tasks = this.expr()
                         this.acceptFix_err(",")
                         val call = this.expr()
                         if (call !is Expr.Call && !((call is Expr.Do && !call.isnest) && call.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
-                        Expr.Spawn(tk0, coros, call)
+                        Expr.Spawn(tk0, tasks, call)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
@@ -802,7 +802,7 @@ class Parser (lexer_: Lexer)
                     }
                     spw -> { // await spawn T()
                         val e = this.expr()
-                        if (!(e is Expr.Spawn && e.coros==null)) {
+                        if (!(e is Expr.Spawn && e.tasks==null)) {
                             err_expected(e.tk, "non-pool spawn")
                         }
                         this.nest("""

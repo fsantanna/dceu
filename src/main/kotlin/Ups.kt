@@ -75,7 +75,7 @@ class Ups (val outer: Expr.Do) {
         return this.first(e) { it is Expr.Proto || (it is Expr.Do && it.isnest && it.ishide) }
     }
     fun intask (e: Expr): Boolean {
-        return (this.first(e) { it is Expr.Proto }?.tk?.str == "task")
+        return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
 
     fun getDcl (e: Expr, id: String): Dcl? {
@@ -208,7 +208,7 @@ class Ups (val outer: Expr.Do) {
                 if (func != null) {
                     val acc = this.dst.base()
                     val dcl = getDcl(this, acc.tk.str)!!
-                    val intask = first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }
+                    val intask = first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
                     if (intask) {
                         funcs_vars_tasks.add(func as Expr.Proto)
                     }
@@ -262,7 +262,7 @@ class Ups (val outer: Expr.Do) {
             }
             is Expr.Pass   -> this.e.traverse()
 
-            is Expr.Spawn  -> { this.call.traverse() ; this.coros?.traverse() }
+            is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
             is Expr.Yield  -> {
                 if (!intask(this)) {
@@ -360,7 +360,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Data -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
 
-            is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.coros))
+            is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.tasks))
             is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
             is Expr.Yield  -> this.map(listOf(this.arg))
             is Expr.Resume -> this.map(listOf(this.call))

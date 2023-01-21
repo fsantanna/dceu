@@ -9,7 +9,7 @@ var N = 1
 val D = "\$"
 
 val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "defer", "do", "else", "enum", "err", "evt",
+    "broadcast", "catch", "coro", "defer", "do", "else", "enum", "err", "evt",
     "false", "func", "if", "in", "nil", "pass", "pub", "resume", "set", "spawn", "status",
     "task", "data", "toggle", "true", "var", "yield", "while"
 ) + if (!XCEU) setOf() else setOf (
@@ -25,7 +25,7 @@ val TAGS = listOf (
     ":func", ":task",
     ":tuple", ":vector", ":dict",
     ":bcast",
-    ":coro", ":coros", ":track",
+    ":coro", ":tasks", ":track",
     ":fake", ":hide", ":check-now", ":all", ":awakes",
     ":clear", ":error",           // bcast-clear
     ":tmp", ":global", ":local", //":task"   // bcast scope
@@ -33,13 +33,13 @@ val TAGS = listOf (
 ) + if (!XCEU) emptySet() else setOf(":h",":min",":s",":ms")
 
 val GLOBALS = setOf (
-    "copy", "coroutine", "coroutines", "detrack", "move", "next", "print", "println",
-    "supof", "tags", "throw", "track", "type",
+    "copy", "coroutine", "detrack", "move", "next", "print", "println",
+    "supof", "tags", "tasks", "throw", "track", "type",
     "{==}", "{#}", "{/=}"
 )
 
 val ITERS = setOf (
-    ":coros"
+    ":tasks"
 ) + if (!XCEU) emptySet() else setOf(":coro", ":tuple", ":vector", ":dict")
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -65,7 +65,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Data (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val coros: Expr?, val call: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)

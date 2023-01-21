@@ -512,17 +512,17 @@ class TParser {
     }
     @Test
     fun expr_task4_err() {
-        val l = lexer("task (a,b) :xxx { 10 }")
+        val l = lexer("coro (a,b) :xxx { 10 }")
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":xxx\"")
     }
     @Test
     fun expr_task5() {
-        val l = lexer("task (a,b) :awakes { 10 }")
+        val l = lexer("task (a,b) { 10 }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==2)
-        assert(e.tostr() == "task (a,b) :awakes {\n10\n}") { e.tostr() }
+        assert(e.tostr() == "task (a,b) {\n10\n}") { e.tostr() }
     }
 
     // WHILE
@@ -789,24 +789,24 @@ class TParser {
 
     @Ignore // now expands to complex C code
     @Test
-    fun coros1() {
+    fun tasks1() {
         val l = lexer("""
             var ts
-            set ts = coroutines()
-            while in :coros ts, t {
+            set ts = tasks()
+            while in :tasks ts, t {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var ts\nset ts = coroutines()\nwhile in :coros ts, t {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "var ts\nset ts = tasks()\nwhile in :tasks ts, t {\nnil\n}\n") { e.tostr() }
     }
     @Test
-    fun coros2_err() {
+    fun tasks2_err() {
         val l = lexer("""
             var ts
-            set ts = coroutines()
-            while in :coros ts, 1 {
+            set ts = tasks()
+            while in :tasks ts, 1 {
                 nil
             }
         """)
@@ -814,11 +814,11 @@ class TParser {
         assert(trap { parser.exprs() } == "anon : (lin 4, col 33) : expected identifier : have \"1\"")
     }
     @Test
-    fun coros3_err() {
+    fun tasks3_err() {
         val l = lexer("""
             var ts
-            set ts = coroutines()
-            while in :coros x {
+            set ts = tasks()
+            while in :tasks x {
                 nil
             }
         """)
@@ -826,7 +826,7 @@ class TParser {
         assert(trap { parser.exprs() } == "anon : (lin 4, col 31) : expected \",\" : have \"{\"")
     }
     @Test
-    fun coros4_err() {
+    fun tasks4_err() {
         val l = lexer("""
             spawn in nil, {}
         """)
@@ -834,7 +834,7 @@ class TParser {
         assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \"{\"")
     }
     @Test
-    fun coros5_err() {
+    fun tasks5_err() {
         val l = lexer("""
             spawn in ()
         """)
@@ -842,7 +842,7 @@ class TParser {
         assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected expression : have \")\"")
     }
     @Test
-    fun coros6_err() {
+    fun tasks6_err() {
         val l = lexer("""
             spawn in nil, f
         """)
@@ -850,7 +850,7 @@ class TParser {
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
     }
     @Test
-    fun coros7_err() {
+    fun tasks7_err() {
         val l = lexer("""
             spawn
         """)
@@ -873,7 +873,7 @@ class TParser {
     @Test
     fun iter2_err() {
         val l = lexer("""
-            while in :coros {
+            while in :tasks {
                 nil
             }
         """)

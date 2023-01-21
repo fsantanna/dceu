@@ -61,7 +61,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
         return when (this) {
             is Expr.Proto -> {
                 val isfunc = (this.tk.str == "func")
-                val istask = (this.tk.str == "task")
+                val istask = (this.tk.str != "func")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
@@ -129,7 +129,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ceu_coro->Bcast.status = CEU_CORO_STATUS_TERMINATED;
                     ceu_coro->Bcast.Coro.frame->Task.pub = ceu_acc;
                     ceu_frame->Task.pc = -1;
-                    int incoros = (ceu_coro->Bcast.Coro.up_coros != NULL);
+                    int intasks = (ceu_coro->Bcast.Coro.up_tasks != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not signal termination: clear comes from clearing enclosing block,
@@ -157,7 +157,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             return ceu_ret;
                         }
                     
-                        if (incoros) {
+                        if (intasks) {
                             ceu_hold_rem(ceu_coro);
                             ceu_dyn_free(ceu_coro);
                         }
@@ -227,11 +227,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     """
                     { // BLOCK ${this.tk.dump()}
-                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str == "task") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                         void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
-                            val istask = (f_b.tk.str == "task")
+                            val istask = (f_b.tk.str != "func")
                             """
                             {
                                 int ceu_i = 0;
@@ -239,7 +239,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                     val id = it.first.str.id2c()
                                     """
                                     ${istask.cond { """
-                                        if (ceu_coro->Bcast.Coro.up_coros != NULL) {
+                                        if (ceu_coro->Bcast.Coro.up_tasks != NULL) {
                                             ceu_mem->_${id}_ = ceu_coro->up_dyns.dyns->up_block;
                                         } else
                                     """}}
@@ -263,7 +263,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             """ 
                         }}
                         ${
-                            (f_b is Expr.Proto && f_b.tk.str == "task").cond {
+                            (f_b is Expr.Proto && f_b.tk.str != "func").cond {
                                 "ceu_coro->Bcast.Coro.dn_block = &ceu_mem->block_$n;"
                             }
                         }
@@ -308,7 +308,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                             val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
                                             """
                                             ${
-                                                (f_b!!.tk.str == "task").cond {
+                                                (f_b!!.tk.str != "func").cond {
                                                     "ceu_mem->block_$n.ispub = 0;"
                                                 }
                                             }
@@ -363,7 +363,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         }
                                     }
                                     ${
-                                        (f_b is Expr.Proto && f_b.tk.str == "task").cond {
+                                        (f_b is Expr.Proto && f_b.tk.str != "func").cond {
                                             "ceu_coro->Bcast.Coro.dn_block = NULL;"
                                         }
                                     }
@@ -497,7 +497,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str == "task")
+                val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str != "func")
                 val oktask = this.non_fake_task_c()
                 """
                 { // BCAST ${this.tk.dump()}
@@ -603,7 +603,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             })
                     } else {
                         val src = this.asdst_src()
-                        val task = (ups.first(this) { it is Expr.Proto && it.tk.str=="task" } as Expr.Proto).body.n 
+                        val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, 1);
@@ -856,7 +856,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     val fst = es.firstOrNull() as Expr.Spawn?
                     when {
                         (fst == null) -> null
-                        (fst.coros == this) -> null
+                        (fst.tasks == this) -> null
                         es.drop(1).all { grp ->
                             (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
                         } -> fst
@@ -865,7 +865,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
 
                 val iscall = (resume==null && spawn==null)
-                val iscoros = (spawn?.coros != null)
+                val istasks = (spawn?.tasks != null)
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_coro_$n.Dyn->Bcast.Coro.frame)"
                 val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && this.proto.task!!.first && (this.args.size == 0)
 
@@ -897,16 +897,16 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
                 spawn.cond{"""
                 // SPAWN/CORO ${this.tk.dump()}
-                    ${iscoros.cond {
-                        spawn!!.coros!!.code() + """
-                        ceu_mem->coros_${spawn!!.n} = ceu_acc;
+                    ${istasks.cond {
+                        spawn!!.tasks!!.code() + """
+                        ceu_mem->tasks_${spawn!!.n} = ceu_acc;
                         """
                     }}
                     ${this.proto.code()}
                     CEU_Value ceu_task_$n = ceu_acc;
                     CEU_Value ceu_coro_$n;
-                    ${iscoros.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
-                    ${if (!iscoros) {
+                    ${istasks.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
+                    ${if (!istasks) {
                         """
                         ceu_ret = ceu_coro_create(&$bupc->dn_dyns, &ceu_task_$n, &ceu_coro_$n);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
@@ -915,7 +915,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         """
                         ceu_ret = ceu_coro_create_in (
                             &$bupc->dn_dyns,
-                            ceu_mem->coros_${spawn!!.n}.Dyn,
+                            ceu_mem->tasks_${spawn!!.n}.Dyn,
                             &ceu_task_$n,
                             &ceu_coro_$n,
                             &ceu_ok_$n.Bool
@@ -950,8 +950,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         return ceu_ret;
                     }
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    ${iscoros.cond{"}"}}
-                    ${spawn.cond{ assrc(if (iscoros) "ceu_ok_$n" else "ceu_coro_$n") }}
+                    ${istasks.cond{"}"}}
+                    ${spawn.cond{ assrc(if (istasks) "ceu_ok_$n" else "ceu_coro_$n") }}
                 } // CALL (close)
                 """
             }

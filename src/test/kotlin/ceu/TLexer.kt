@@ -52,13 +52,13 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer("status if aaa throw coroutines evt nil pub task group track enum XXX defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
+        val l = lexer("status if aaa throw tasks evt nil pub task group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "coroutines" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Fix && it.str == "evt" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
         assert(tks.next().let { it is Tk.Fix && it.str == "pub" })
@@ -67,6 +67,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Id  && it.str == "track" })
         assert(tks.next().let { it is Tk.Fix && it.str == "enum" })
         assert(tks.next().let { it is Tk.Id  && it.str == "XXX" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "coro" })
         assert(tks.next().let { it is Tk.Fix && it.str == "defer" })
         assert(tks.next().let { it is Tk.Fix && it.str == "err" })
         assert(tks.next().let { it is Tk.Fix && it.str == "set" })

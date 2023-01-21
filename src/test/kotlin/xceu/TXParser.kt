@@ -205,7 +205,7 @@ class TXParser {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "spawn task () :fake :awakes {\n1\n}()") { e.tostr() }
+        assert(e.tostr() == "spawn task () :fake {\n1\n}()") { e.tostr() }
     }
 
     // ITER

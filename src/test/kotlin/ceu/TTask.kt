@@ -19,10 +19,10 @@ class TTask {
     // TASK / COROUTINE / RESUME / YIELD
 
     @Test
-    fun aa_task1() {
+    fun aa_coro1() {
         val out = all("""
             var t
-            set t = task (v) {
+            set t = coro (v) {
                 println(v)          ;; 1
                 set v = yield((v+1)) 
                 println(v)          ;; 3
@@ -43,47 +43,47 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
     @Test
-    fun aa_task2_err() {
+    fun aa_coro2_err() {
         val out = all("""
             coroutine(func () {nil})
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : coroutine(func () { nil }) : coroutine error : expected task\n" +
+        assert(out == "anon : (lin 1, col 1) : coroutine(func () { nil }) : coroutine error : expected coro\n" +
                 ":error\n") { out }
     }
     @Test
-    fun aa_task3_err() {
+    fun aa_coro3_err() {
         val out = all("""
             var f
             resume f()
         """.trimIndent())
-        assert(out == "anon : (lin 2, col 1) : resume error : expected yielded task\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 1) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
-    fun aa_task4_err() {
+    fun aa_coro4_err() {
         val out = all("""
             var co
-            set co = coroutine(task () {nil})
+            set co = coroutine(coro () {nil})
             resume co()
             resume co()
         """.trimIndent())
-        assert(out == "anon : (lin 4, col 1) : resume error : expected yielded task\n:error\n") { out }
+        assert(out == "anon : (lin 4, col 1) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
-    fun aa_task5_err() {
+    fun aa_coro5_err() {
         val out = all("""
             var co
-            set co = coroutine(task () { nil
+            set co = coroutine(coro () { nil
             })
             resume co()
             resume co(1,2)
         """)
-        assert(out == "anon : (lin 6, col 13) : resume error : expected yielded task\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 13) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
-    fun aa_task6() {
+    fun aa_coro6() {
         val out = all("""
             var co
-            set co = coroutine(task (v) {
+            set co = coroutine(coro (v) {
                 set v = yield(nil) 
                 println(v)
             })
@@ -93,10 +93,10 @@ class TTask {
         assert(out == "2\n") { out }
     }
     @Test
-    fun aa_task7() {
+    fun aa_coro7() {
         val out = all("""
             var co
-            set co = coroutine(task (v) {
+            set co = coroutine(coro (v) {
                 println(v)
             })
             println(1)
@@ -106,18 +106,18 @@ class TTask {
         assert(out == "1\n99\n2\n") { out }
     }
     @Test
-    fun aa_task8_err() {
+    fun aa_coro8_err() {
         val out = all("""
             var xxx
             resume xxx() ;;(xxx(1))
         """)
-        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
-    fun aa_task9_mult() {
+    fun aa_coro9_mult() {
         val out = all("""
             var co
-            set co = coroutine(task (x,y) {
+            set co = coroutine(coro (x,y) {
                 println(x,y)
             })
             resume co(1,2)
@@ -125,10 +125,10 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun aa_task10_err() {
+    fun aa_coro10_err() {
         val out = all("""
             var co
-            set co = coroutine(task () {
+            set co = coroutine(coro () {
                 yield(nil)
             })
             resume co()
@@ -137,10 +137,10 @@ class TTask {
         assert(out.contains("bug found : not implemented : multiple arguments to resume")) { out }
     }
     @Test
-    fun aa_task11_class() {
+    fun aa_coro11_class() {
         val out = all("""
             var T
-            set T = task (x,y) {
+            set T = coro (x,y) {
                 println(x,y)
             }
             resume (coroutine(T)) (1,2)
@@ -148,10 +148,10 @@ class TTask {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun aa_task12_tuple_leak() {
+    fun aa_coro12_tuple_leak() {
         val out = all("""
             var T
-            set T = task () {
+            set T = coro () {
                 pass [1,2,3]
                 yield(nil)
             }
@@ -161,10 +161,10 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun aa_task13_defer() {
+    fun aa_coro13_defer() {
         val out = all("""
             var T
-            set T = task () {
+            set T = coro () {
                 defer {
                     println(3)
                 }
@@ -183,18 +183,18 @@ class TTask {
         val out = all("""
             yield(nil)
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro") { out }
     }
     @Test
     fun aa_yield15_err() {
         val out = all("""
-            task () {
+            coro () {
                 func () {
                     yield(nil)
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
     }
     @Test
     fun aa_task16_nest() {
@@ -680,7 +680,7 @@ class TTask {
                 }()
                 yield(nil)
             }
-            spawn in coroutines(), T()
+            spawn in tasks(), T()
             broadcast in :global, nil
         """)
         assert(out == "anon : (lin 11, col 13) : broadcast in :global, nil\n" +
@@ -1424,7 +1424,7 @@ class TTask {
             var T
             set T = task () { nil }
             var x
-            spawn in coroutines(), T(x)
+            spawn in tasks(), T(x)
             println(0)
         """
         )
@@ -1435,7 +1435,7 @@ class TTask {
         val out = ceu.all(
             """
             var x
-            spawn in coroutines(), (task(){nil})(x)
+            spawn in tasks(), (task(){nil})(x)
             println(0)
         """
         )
@@ -1448,7 +1448,7 @@ class TTask {
             var T
             set T = task () { yield(nil) }
             var x
-            spawn in coroutines(), T(x)
+            spawn in tasks(), T(x)
             println(0)
         """
         )
@@ -1458,7 +1458,7 @@ class TTask {
     fun ff_pool1() {
         val out = all("""
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             println(type(ts))
             var T
             set T = task (v) :awakes {
@@ -1471,7 +1471,7 @@ class TTask {
             }
              broadcast in :global, 2
         """)
-        assert(out == ":coros\n1\n2\n") { out }
+        assert(out == ":tasks\n1\n2\n") { out }
     }
     @Test
     fun ff_pool2_leak() {
@@ -1482,7 +1482,7 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
             println(1)
@@ -1500,7 +1500,7 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
             println(0)
@@ -1512,7 +1512,7 @@ class TTask {
         val out = all("""
             do {
                 var ts
-                set ts = coroutines()
+                set ts = tasks()
                 var T
                 set T = task (v) {
                     println(v)
@@ -1530,13 +1530,13 @@ class TTask {
         val out = all("""
             do {
                 var ts
-                set ts = coroutines()
+                set ts = tasks()
                 var T
                 set T = task (v) {
                     println(v)
                 }
                 spawn in ts, T(1)
-                while in :coros ts, t {
+                while in :tasks ts, t {
                     throw(1)    ;; never reached
                 }
             }
@@ -1552,7 +1552,7 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             println(1)
         """)
@@ -1561,7 +1561,7 @@ class TTask {
     @Test
     fun ff_pool8_err() {
         val out = all("""
-            while in :coros nil, x {
+            while in :tasks nil, x {
                 nil
             }
         """)
@@ -1570,11 +1570,11 @@ class TTask {
     @Test
     fun ff_pool8a_err() {
         val out = all("""
-            while in :coros nil, x {
+            while in :tasks nil, x {
                 pass nil
             }
         """)
-        assert(out == "anon : (lin 2, col 29) : while error : expected coroutines\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 29) : while error : expected tasks\n:error\n") { out }
     }
     @Test
     fun ff_pool9_term() {
@@ -1584,9 +1584,9 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 println(1)
                 broadcast in :global, 1
             }
@@ -1602,12 +1602,12 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 println(1)
                  broadcast in :global, 1
-                while in :coros ts, yyy {
+                while in :tasks ts, yyy {
                     println(2)
                 }
             }
@@ -1621,10 +1621,10 @@ class TTask {
             var T
             set T = task () { yield(nil) }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             var yyy
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 set yyy = xxx
             }
             println(detrack(yyy).status)
@@ -1639,10 +1639,10 @@ class TTask {
             var T
             set T = task () :awakes { yield(nil) }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             var yyy
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 set yyy = xxx
             }
             broadcast in :global, nil
@@ -1659,11 +1659,11 @@ class TTask {
             var T
             set T = task () { yield(nil) }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 var yyy
-                while in :coros ts, zzz {
+                while in :tasks ts, zzz {
                     set yyy = zzz
                     println(detrack(yyy).status)
                 }
@@ -1683,11 +1683,11 @@ class TTask {
             var T
             set T = task () { yield(nil) }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 var yyy
-                while in :coros ts, zzz {
+                while in :tasks ts, zzz {
                     pass nil
                 }
                 set yyy = xxx
@@ -1705,9 +1705,9 @@ class TTask {
             var T
             set T = task () { yield(nil) }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
-            while in :coros ts, xxx {
+            while in :tasks ts, xxx {
                 pass xxx
             }
             println(1)
@@ -1720,29 +1720,29 @@ class TTask {
     fun ff_pool14_max_err() {
         val out = ceu.all(
             """
-            coroutines(0)
+            tasks(0)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : coroutines(0)\n" +
-                "coroutines error : expected positive number\n" +
+        assert(out == "anon : (lin 2, col 13) : tasks(0)\n" +
+                "tasks error : expected positive number\n" +
                 ":error\n") { out }
     }
     @Test
     fun ff_pool15_max_err() {
         val out = ceu.all(
             """
-            coroutines(nil)
+            tasks(nil)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : coroutines(nil)\n" +
-                "coroutines error : expected positive number\n" +
+        assert(out == "anon : (lin 2, col 13) : tasks(nil)\n" +
+                "tasks error : expected positive number\n" +
                 ":error\n") { out }
     }
     @Test
     fun ff_pool16_max() {
         val out = ceu.all(
             """
-            var ts = coroutines(1)
+            var ts = tasks(1)
             var T = task () :awakes { yield(nil) }
             var ok1 = spawn in ts, T()
             var ok2 = spawn in ts, T()
@@ -1759,7 +1759,7 @@ class TTask {
         val out = ceu.all(
             """
             var ts
-            set ts = coroutines(2)
+            set ts = tasks(2)
             var T
             set T = task (v) :awakes {
                 println(10)
@@ -1842,7 +1842,7 @@ class TTask {
         val out = ceu.all(
             """
             var ts
-            set ts = coroutines(2)
+            set ts = tasks(2)
             var T
             set T = task (v) :awakes {
                 defer {
@@ -1876,7 +1876,7 @@ class TTask {
         val out = ceu.all(
             """
             var ts
-            set ts = coroutines(2)
+            set ts = tasks(2)
             var T
             set T = task (v) :awakes {
                 defer {
@@ -1909,7 +1909,7 @@ class TTask {
     fun ff_pool22() {
         val out = all("""
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             println(type(ts))
             var T
             set T = task (v) {
@@ -1919,14 +1919,14 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             
-            while in :coros ts, t1 {
-                while in :coros ts, t2 {
+            while in :tasks ts, t1 {
+                while in :tasks ts, t2 {
                     println(detrack(t1).pub, detrack(t2).pub)
                 }
             }
              broadcast in :global, 2
         """)
-        assert(out == ":coros\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+        assert(out == ":tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
     @Test
     fun ff_pool23_throw() {
@@ -1971,7 +1971,7 @@ class TTask {
         val out = ceu.all(
             """
             var ts
-            set ts = coroutines(1)
+            set ts = tasks(1)
             var T
             set T = task () :awakes { yield(nil) }
             var ok1
@@ -1997,10 +1997,10 @@ class TTask {
                 }
                 ;;println(:term, n)
             }
-            var ts = coroutines(2)
+            var ts = tasks(2)
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 println(:t, detrack(t).pub)
                 ;;println(:bcast1)
                 broadcast in :global, 2         ;; opens hole for 99 below
@@ -2010,7 +2010,7 @@ class TTask {
             }
             ;;;
             println("-=-=-=-")
-            while in :coros ts, x {
+            while in :tasks ts, x {
                 println(:t, detrack(x).pub)
             }
             ;;;
@@ -2368,10 +2368,10 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             var x
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 println(detrack(t).pub[0])
             }
         """)
@@ -2386,10 +2386,10 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             var x
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 set x = detrack(t).pub   ;; TODO: incompatible scope
             }
             println(999)
@@ -2879,7 +2879,7 @@ class TTask {
         assert(out == "1\n2\n10\n") { out }
     }
     @Test
-    fun jj_toggle4_coros() {
+    fun jj_toggle4_tasks() {
         val out = all("""
             var T
             set T = task () :awakes {
@@ -2887,7 +2887,7 @@ class TTask {
                 println(10)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             toggle ts (false)
             println(1)
@@ -2919,7 +2919,7 @@ class TTask {
         assert(out == "1\n2\n10\n") { out }
     }
     @Test
-    fun jj_toggle6_defer_coros() {
+    fun jj_toggle6_defer_tasks() {
         val out = all("""
             var T
             set T = task () {
@@ -2930,7 +2930,7 @@ class TTask {
                 println(999)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T()
             toggle ts (false)
             println(1)
@@ -3133,9 +3133,9 @@ class TTask {
                 yield(nil)
             }
             var x
-            var ts = coroutines()
+            var ts = tasks()
             spawn in ts, T(1)
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 set x = track(t)
             }
         """)
@@ -3151,10 +3151,10 @@ class TTask {
                 yield(nil)
             }
             var x
-            var ts = coroutines()
+            var ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 set x = t
             }
             println(detrack(x).pub[0])   ;; 2
@@ -3173,11 +3173,11 @@ class TTask {
             }
             var x
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             do {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
-                while in :coros ts, t {
+                while in :tasks ts, t {
                     set x = t    ;; track(t) up_hold in
                 }
                 println(detrack(x).pub[0])   ;; 2
@@ -3199,9 +3199,9 @@ class TTask {
             var x
             do {
                 var ts
-                set ts = coroutines()
+                set ts = tasks()
                 spawn in ts, T(1)
-                while in :coros ts, t {
+                while in :tasks ts, t {
                     set x = t       ;; err: escope 
                 }
             }
@@ -3217,11 +3217,11 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T(1)
             var x
             set x = catch true {
-                while in :coros ts, t {
+                while in :tasks ts, t {
                     throw(t)
                 }
             }
@@ -3239,12 +3239,12 @@ class TTask {
                 yield(nil)
             }
             var ts
-            set ts = coroutines()
+            set ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
             var x
             set x = catch true {
-                while in :coros ts, t {
+                while in :tasks ts, t {
                     throw(t)
                 }
             }
@@ -3292,11 +3292,11 @@ class TTask {
             var T = task (v) :awakes {
                 yield(nil)
             }
-            var ts = coroutines()
+            var ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
             var x
-            while in :coros ts, t {
+            while in :tasks ts, t {
                 set x = (t)
             }
             broadcast in :global, nil
@@ -3459,7 +3459,7 @@ class TTask {
             }
             spawn (task () :awakes {
                 var ts
-                set ts = coroutines()
+                set ts = tasks()
                 do {
                     spawn in ts, T([])  ;; pass [] to ts
                 }

@@ -11,7 +11,7 @@ class TXJS {
     // Summary:
     //  - Declaring a generator prototype:
     //      - JS:  function* genFunc (...) { ... }
-    //      - Ceu: task genFunc (...) { ... }
+    //      - Ceu: coro genFunc (...) { ... }
     //  - Instantiating a generator:
     //      - JS:  gen = genFunc(...)
     //      - Ceu: gen = coroutine(genFunc)     ;; cannot pass argument (like Lua), if arg is required, init yield() required
@@ -56,7 +56,7 @@ class TXJS {
     @Test
     fun x1() {
         val out = all("""
-            task genFunc () {
+            coro genFunc () {
                 println("First")
                 yield()
                 println("Second")
@@ -73,16 +73,16 @@ class TXJS {
     @Test
     fun x2() {
         val out = all("""
-            task gen1 (v) { println(v) }
+            coro gen1 (v) { println(v) }
             var co1 = coroutine(gen1)
             resume co1(1)
 
-            var gen2 = task (v) { println(v) }
+            var gen2 = coro (v) { println(v) }
             var co2 = coroutine(gen1)
             resume co2(2)
             
             var obj3 = @[
-                gen = task (v) { println(v) }
+                gen = coro (v) { println(v) }
             ]
             var co3 = coroutine(obj3.gen)
             resume co3(3)
@@ -97,7 +97,7 @@ class TXJS {
     @Test
     fun x3() {
         val out = all("""
-            task objectEntries (obj) {
+            coro objectEntries (obj) {
                 yield()
                 while in :dict obj, (k, v) {
                     yield([k, v])
@@ -122,20 +122,20 @@ class TXJS {
     fun x4() {
         val out = all("""
             do :unnest { ;; mock functions
-                task fetch (url) {
+                coro fetch (url) {
                     if url == :error {
                         throw(:error)
                     }
                     url
                 }
-                task text (url) {
+                coro text (url) {
                     tostring(url)
                 }
-                task json (txt) {
+                coro json (txt) {
                     "json " ++ txt
                 }
             }
-            task fetchJson (url) {
+            coro fetchJson (url) {
                 var req = await spawn fetch(url)
                 var txt = await spawn text(req)
                 await spawn json(txt)
@@ -155,7 +155,7 @@ class TXJS {
     @Test
     fun x5() {
         val out = all("""
-            task genFunc() {
+            coro genFunc() {
                 yield('a')
                 yield('b')
             }
@@ -172,7 +172,7 @@ class TXJS {
     @Test
     fun x6() {
         val out = all("""
-            task genFunc() {
+            coro genFunc() {
                 yield('a')
                 yield('b')
             }
@@ -191,7 +191,7 @@ class TXJS {
     @Test
     fun x7() {
         val out = all("""
-            task genFunc() {
+            coro genFunc() {
                 throw(:problem)
             }
             var genObj = coroutine(genFunc)
@@ -213,18 +213,18 @@ class TXJS {
     @Test
     fun x8() {
         val out = all("""
-            task genFunc () {
+            coro genFunc () {
                 func () {
-                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing task
+                    yield() ;; anon : (lin 4, col 21) : yield error : expected enclosing coro
                 }()
             }
         """, true)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing task") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
     }
     @Test
     fun x9() {
         val out = all("""
-            task genFunc () {
+            coro genFunc () {
                 while in :vector #['a','b'], (i, v) {
                     yield([i,v])
                 }
@@ -240,11 +240,11 @@ class TXJS {
     @Test
     fun x10() {
         val out = all("""
-            task foo () {
+            coro foo () {
                 yield('a')
                 yield('b')
             }
-            task bar () {
+            coro bar () {
                 yield('x')
                 while in :coro coroutine(foo), i {
                     yield(i)
@@ -260,11 +260,11 @@ class TXJS {
     @Test
     fun x11() {
         val out = all("""
-            task foo () {
+            coro foo () {
                 yield('a')
                 yield('b')
             }
-            task bar () {
+            coro bar () {
                 yield('x')
                 yield :all coroutine(foo)
                 yield('y')
@@ -285,13 +285,13 @@ class TXJS {
     @Test
     fun x12() {
         val out = all("""
-            task genFuncWithReturn () {
+            coro genFuncWithReturn () {
                 yield('a')
                 yield('b')
                 yield('c')
                 nil
             }
-            task logReturned (genObj) {
+            coro logReturned (genObj) {
                 yield()
                 yield :all genObj
             }
@@ -314,7 +314,7 @@ class TXJS {
                 ],
                 r = @[v = 'e']
             ]
-            task T (tree) {
+            coro T (tree) {
                 yield()
                 yield(tree.v)
                 if tree.l {
@@ -336,7 +336,7 @@ class TXJS {
     @Test
     fun x14() {
         val out = all("""
-            task dataConsumer () {
+            coro dataConsumer () {
                 println(:started)
                 println(1, yield()) ;; (A)
                 println(2, yield())
@@ -357,7 +357,7 @@ class TXJS {
     @Test
     fun x15() {
         val out = all("""
-            task gen (input) {
+            coro gen (input) {
                 println(input)
                 while true {
                     set input = yield() ;; (B)
@@ -382,7 +382,7 @@ class TXJS {
     @Test
     fun todo_x16_kill() {
         val out = all("""
-            task genFunc1() {
+            coro genFunc1() {
                 defer {
                     println(:exiting)
                 }
@@ -399,7 +399,7 @@ class TXJS {
     @Test
     fun x17_scope() {
         val out = all("""
-            task genFunc1() {
+            coro genFunc1() {
                 defer {
                     println(:exiting)
                 }
@@ -422,7 +422,7 @@ class TXJS {
     @Test
     fun todo_x18() {
         val out = all("""
-            task genFunc() {}
+            coro genFunc() {}
             var genObj = coroutine(genFunc)
             kill genObj(:yes)
             println(genObj.pub)
@@ -448,7 +448,7 @@ class TXJS {
                 resume target("\ndefg\n")
             }
             
-            task splitLines (target) {
+            coro splitLines (target) {
                 var cur = ""
                 while true {
                     var tmp = yield()
@@ -463,7 +463,7 @@ class TXJS {
                 }
             }
             
-            task numberLines (target) {
+            coro numberLines (target) {
                 var n = 0
                 while true {
                     var line = yield()
@@ -472,7 +472,7 @@ class TXJS {
                 }
             }
             
-            task printLines () {
+            coro printLines () {
                 while true {
                     var line = yield()
                     println(line)
@@ -490,14 +490,14 @@ class TXJS {
     @Test
     fun x20() {
         val out = all("""
-            task readFile (fileName) {
+            coro readFile (fileName) {
                 ;; TODO: from fileName
                 yield("ab\nc")
                 yield("")
                 yield("\ndefg\n")
             }
             
-            task splitLines () {
+            coro splitLines () {
                 var cur = ""
                 while true {
                     var tmp = yield(nil)
@@ -512,7 +512,7 @@ class TXJS {
                 }
             }
             
-            task numberLines () {
+            coro numberLines () {
                 var n = 0
                 while true {
                     var line = yield(nil)
@@ -521,7 +521,7 @@ class TXJS {
                 }
             }
 
-            task printLines () {
+            coro printLines () {
                 while true {
                     var line = yield()
                     println(line)
@@ -572,13 +572,13 @@ class TXJS {
     @Test
     fun x22() {
         val out = all("""
-            task callee () {
+            coro callee () {
                 while true {
                     var x = yield()
                     println(:callee, x)
                 }
             }
-            task caller () {
+            coro caller () {
                 yield :all coroutine(callee)
             }
             var co_caller = spawn caller ()
@@ -588,7 +588,7 @@ class TXJS {
         assert(out == ":callee\ta\n:resume\tnil\n:callee\tb\n:resume\tnil\n") { out }
     }
 
-    // 22.5 Generators as coroutines (cooperative multitasking)
+    // 22.5 Generators as tasks (cooperative multitasking)
     // 22.5.1 The full generator interface
     // 22.5.2 Cooperative multitasking
 
@@ -622,7 +622,7 @@ class TXJS {
     @Test
     fun x23() {
         val out = all("""
-        task Split (chars) {
+        coro Split (chars) {
             yield()
             var line = ""
             while in :coro chars, c {
@@ -634,7 +634,7 @@ class TXJS {
                 }
             }
         }
-        task Number (lines) {
+        coro Number (lines) {
             yield()
             var i = 1
             while in :coro lines, l {
@@ -642,7 +642,7 @@ class TXJS {
                 set i = i + 1
             }
         }
-        task Take (n, lines) {
+        coro Take (n, lines) {
             yield()
             var i = 0
             while i < n {
@@ -650,7 +650,7 @@ class TXJS {
                 set i = i + 1
             }
         }
-        task FS-Read (filename) {
+        coro FS-Read (filename) {
             var f = `:pointer fopen(${D}filename.Dyn->Ncast.Vector.buf, "r")`
             defer {
                 `fclose(${D}f.Pointer);`
@@ -676,14 +676,14 @@ class TXJS {
             var split2  = spawn Split(read2)
             var number2 = spawn Number(split2)
             var take2   = spawn Take(3, number2)
-            task Show () {
+            coro Show () {
                 var line = yield()
                 while line {
                     println(line)
                     set line = yield()
                 }
             }
-            task Send (iter, next) {
+            coro Send (iter, next) {
                 while in :coro iter, v {
                     resume next(v)
                 }

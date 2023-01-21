@@ -72,9 +72,9 @@ fun Expr.mem (): String {
 
         is Expr.Spawn -> """
             struct { // SPAWN
-                ${this.coros.cond{"CEU_Value coros_$n;"}}
+                ${this.tasks.cond{"CEU_Value tasks_$n;"}}
                 $union {
-                    ${this.coros.cond { it.mem() }}
+                    ${this.tasks.cond { it.mem() }}
                     ${this.call.mem()}
                 };
             };
