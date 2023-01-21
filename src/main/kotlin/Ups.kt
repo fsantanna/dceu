@@ -77,9 +77,9 @@ class Ups (val outer: Expr.Do) {
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
-    fun non_fake_x_c (e: Expr): String? {
+    fun non_fake_x_c (e: Expr, str: String): String? {
         val n = this     // find first non fake
-            .all_until(e) { it is Expr.Proto && it.tk.str==e.tk.str && !it.fake }
+            .all_until(e) { it is Expr.Proto && it.tk.str==str && !it.fake }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
         return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
@@ -289,7 +289,7 @@ class Ups (val outer: Expr.Do) {
                 this.x.traverse()
             }
             is Expr.X   -> {
-                if (non_fake_x_c(this) == null) {
+                if (non_fake_x_c(this, this.tk.str) == null) {
                     err(this.tk, "task error : missing enclosing task")
                 }
             }

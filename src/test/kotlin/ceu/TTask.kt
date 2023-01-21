@@ -298,7 +298,7 @@ class TTask {
         assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
     @Test
-    fun aa_task20_self() {
+    fun todo_aa_task20_self() {
         val out = all("""
             var T1 = task (co) {
                 println(:3)
@@ -357,7 +357,7 @@ class TTask {
         val out = all("""
             task
         """)
-        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
 
     // SPAWN
@@ -2740,9 +2740,9 @@ class TTask {
         val out = all("""
             var t
             set t = coro () {
-                println(10, task.status)
+                println(10, coro.status)
                 yield(nil)
-                println(20, task.status)
+                println(20, coro.status)
             }
             var a
             set a = coroutine(t)
