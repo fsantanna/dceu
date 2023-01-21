@@ -235,7 +235,7 @@ class TXExec {
     @Test
     fun bcast1() {
         val out = all("""
-            var tk = coro () :awakes {
+            var tk = task () {
                 println(evt)
                 do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :coro) { set ok=false } else { nil } } }
                 ;;yield()
@@ -2345,7 +2345,7 @@ class TXExec {
     @Test
     fun all11_term_coro () {
         val out = all("""
-            task T () :awakes {
+            task T () {
                 println(:1)
                 awaiting false {
                     await true

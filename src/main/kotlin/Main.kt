@@ -22,11 +22,11 @@ val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%'
 val TAGS = listOf (
     ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
     ":dynamic",
-    ":func", ":task",
+    ":func", ":coro", ":task",
     ":tuple", ":vector", ":dict",
     ":bcast",
-    ":coro", ":tasks", ":track",
-    ":fake", ":hide", ":check-now", ":all", ":awakes",
+    ":x-coro", ":x-task", ":x-tasks", ":x-track",
+    ":fake", ":hide", ":check-now", ":all",
     ":clear", ":error",           // bcast-clear
     ":tmp", ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"
@@ -53,7 +53,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
 }
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val task: Pair<Boolean,Boolean>?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val fake: Boolean, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val isnest: Boolean, val ishide: Boolean, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Id,  val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, val src: Expr): Expr(N++, tk_)

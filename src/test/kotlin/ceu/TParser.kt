@@ -506,9 +506,9 @@ class TParser {
     }
     @Test
     fun expr_func3_err() {
-        val l = lexer("func (a,b) :awakes { 10 }")
+        val l = lexer("coro (a,b) :fake { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":awakes\"")
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":fake\"")
     }
     @Test
     fun expr_task4_err() {

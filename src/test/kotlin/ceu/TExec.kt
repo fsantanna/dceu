@@ -2106,7 +2106,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "30\t286\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "32\t288\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2163,7 +2163,7 @@ class TExec {
                 tonumber(:depois)
             )
         """, true)
-        assert(out == "30\t1000\t1001\t1002\t10\t11\t12\t31\t100\t101\t32\n") { out }
+        assert(out == "32\t1000\t1001\t1002\t10\t11\t12\t33\t100\t101\t34\n") { out }
     }
     @Test
     fun enum02() {
@@ -2773,7 +2773,7 @@ class TExec {
     fun gc14_bcast() {
         val out = ceu.all(
             """
-            var tk = task () :awakes {
+            var tk = task () {
                 do {
                     var v = evt
                 }
@@ -2807,7 +2807,7 @@ class TExec {
     fun gc16_arg_bcast() {
         val out = ceu.all(
             """
-            var tk = task (v) :awakes {
+            var tk = task (v) {
                 do {
                     ;;println(evt)
                     set v = evt

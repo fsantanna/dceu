@@ -266,7 +266,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
             is Expr.Yield  -> {
                 if (!intask(this)) {
-                    err(this.tk, "yield error : expected enclosing task")
+                    err(this.tk, "yield error : expected enclosing coro")
                 }
                 this.arg.traverse()
             }
@@ -274,7 +274,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Toggle -> { this.coro.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
                 if (this.coro is Expr.Task) {
-                    val ok = hasfirst(this) { it is Expr.Proto && it.task!=null && !it.task.first }
+                    val ok = hasfirst(this) { it is Expr.Proto && !it.fake }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }

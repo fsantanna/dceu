@@ -111,15 +111,17 @@ fun Coder.main (): String {
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
             CEU_VALUE_DYNAMIC,  // all below are dynamic
-            CEU_VALUE_FUNC,     // func closure
-            CEU_VALUE_TASK,     // task closure
+            CEU_VALUE_P_FUNC,     // prototypes func, coro, task
+            CEU_VALUE_P_CORO,
+            CEU_VALUE_P_TASK,
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
             CEU_VALUE_DICT,
             CEU_VALUE_BCAST,    // all below are bcast
-            CEU_VALUE_X_CORO,     // spawned task
-            CEU_VALUE_X_TASKS,    // pool of spawned tasks
-            CEU_VALUE_TRACK
+            CEU_VALUE_X_CORO,   // spawned coro, task, tasks
+            CEU_VALUE_X_TASK,
+            CEU_VALUE_X_TASKS,
+            CEU_VALUE_X_TRACK
         } CEU_VALUE;
         
         typedef enum CEU_CORO_STATUS {
@@ -502,8 +504,9 @@ fun Coder.main (): String {
     """ // GC
         void ceu_gc_free (CEU_Dyn* dyn) {
             switch (dyn->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         ceu_gc_dec(&dyn->Ncast.Proto.upvs.buf[i], 1);
                     }
@@ -529,7 +532,7 @@ fun Coder.main (): String {
                     break;
                 case CEU_VALUE_X_CORO:
                 case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_TRACK:
+                case CEU_VALUE_X_TRACK:
                     // TODO: currently not gc'ed
                     break;
                 default:
@@ -617,12 +620,13 @@ fun Coder.main (): String {
                 free(tag);
             }
             switch (dyn->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                     free(dyn->Ncast.Proto.upvs.buf);
                     break;
                 case CEU_VALUE_TUPLE:
-                case CEU_VALUE_TRACK:
+                case CEU_VALUE_X_TRACK:
                     break;
                 case CEU_VALUE_VECTOR:
                     free(dyn->Ncast.Vector.buf);
@@ -631,6 +635,7 @@ fun Coder.main (): String {
                     free(dyn->Ncast.Dict.buf);
                     break;
                 case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
                     if (dyn->Bcast.Coro.dn_block != NULL) {
                         ceu_block_free(dyn->Bcast.Coro.dn_block);
                     }
@@ -670,8 +675,9 @@ fun Coder.main (): String {
         CEU_RET ceu_evt_set (CEU_Dyn* src, int isperm) {
             src->isperm = isperm;
             switch (src->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
                             ceu_evt_set(src->Ncast.Proto.upvs.buf[i].Dyn, isperm);
@@ -704,8 +710,9 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
                 case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_TRACK:
+                case CEU_VALUE_X_TRACK:
                     break;
                 default:
                     // others never move
@@ -717,8 +724,9 @@ fun Coder.main (): String {
         
         CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int isperm) {
             switch (src->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
                             if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Proto.upvs.buf[i].Dyn, isperm)) {
@@ -761,8 +769,9 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
                 case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_TRACK:
+                case CEU_VALUE_X_TRACK:
                     break;
                 default:
                     // others never move
@@ -775,7 +784,7 @@ fun Coder.main (): String {
                 assert(isperm!=2 && src->isperm!=2);
                 src->isperm = src->isperm || isperm;
             } else if (src->up_dyns.dyns==NULL || (!src->isperm && dst->up_block->depth<src->up_dyns.dyns->up_block->depth)) {
-                if (src->type==CEU_VALUE_FUNC && src->Ncast.Proto.up_frame==NULL) {
+                if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                     // do not enqueue: global functions use up=NULL and are not malloc'ed
                 } else {
                     if (src->up_dyns.dyns != NULL) {
@@ -852,7 +861,8 @@ fun Coder.main (): String {
                 return CEU_RET_RETURN;
             }
             switch (cur->type) {
-                case CEU_VALUE_X_CORO: {
+                case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK: {
                     if (evt!=&CEU_EVT_CLEAR && !cur->Bcast.Coro.frame->proto->Task.awakes) {
 //SPC_DEC(printf("<c< ceu_bcast_dyn = %p\n", cur));
                         return CEU_RET_RETURN;
@@ -882,8 +892,8 @@ fun Coder.main (): String {
                 case CEU_VALUE_X_TASKS: {
 //SPC_DEC(printf("<f< ceu_bcast_dyn = %p\n", cur));
                     return ceu_bcast_dyns(bstack, &cur->Bcast.Coros.dyns, evt);
-                case CEU_VALUE_TRACK:
-                    if (evt->type==CEU_VALUE_X_CORO && cur->Bcast.Track==evt->Dyn) {
+                case CEU_VALUE_X_TRACK:
+                    if (evt->type==CEU_VALUE_X_TASK && cur->Bcast.Track==evt->Dyn) {
                         cur->Bcast.Track = NULL; // tracked coro is terminating
                     }
 //SPC_DEC(printf("<g< ceu_bcast_dyn = %p\n", cur));
@@ -935,15 +945,17 @@ fun Coder.main (): String {
                     return ceu_sizeof(CEU_Value, Number);
                 case CEU_VALUE_POINTER:
                     return ceu_sizeof(CEU_Value, Pointer);
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                 case CEU_VALUE_TUPLE:
                 case CEU_VALUE_VECTOR:
                 case CEU_VALUE_DICT:
                 case CEU_VALUE_BCAST:
                 case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
                 case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_TRACK:
+                case CEU_VALUE_X_TRACK:
                     return ceu_sizeof(CEU_Value, Dyn);
                 default:
                     assert(0 && "bug found");
@@ -1197,32 +1209,35 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create (CEU_Dyns* hld, CEU_Value* task, CEU_Value* ret) {
-            if (task->type != CEU_VALUE_TASK) {
-                CEU_THROW_MSG("\0 : coroutine error : expected task");
+        CEU_RET ceu_coro_create (CEU_Dyns* hld, CEU_Value* X, CEU_Value* ret) {
+            if (X->type==CEU_VALUE_P_CORO || X->type==CEU_VALUE_P_TASK) {
+                // ok
+            } else {
+                CEU_THROW_MSG("\0 : spawn error : expected coro or task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            ceu_gc_inc(task);
+            ceu_gc_inc(X);
             
             CEU_Dyn* coro = malloc(sizeof(CEU_Dyn));
             assert(coro != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
-            char* mem = malloc(task->Dyn->Ncast.Proto.Task.n_mem);
+            char* mem = malloc(X->Dyn->Ncast.Proto.Task.n_mem);
             assert(mem != NULL);
             
+            int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
             *coro = (CEU_Dyn) {
-                CEU_VALUE_X_CORO, {NULL,-1}, NULL, 0, {
+                tag, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Coro = { NULL, NULL, frame }
                     } }
                 }
             };
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
-            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
+            *frame = (CEU_Frame) { &X->Dyn->Ncast.Proto, blk, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = (CEU_Value) { CEU_VALUE_X_CORO, {.Dyn=coro} };
+            *ret = (CEU_Value) { tag, {.Dyn=coro} };
             
             // hld is the enclosing block of "coroutine T", not of T
             // T would be the outermost possible scope, but we use hld b/c
@@ -1246,7 +1261,7 @@ fun Coder.main (): String {
             if (!*ok) {
                 return CEU_RET_RETURN;
             }
-            if (task->type != CEU_VALUE_TASK) {
+            if (task->type != CEU_VALUE_P_TASK) {
                 CEU_THROW_MSG("\0 : coroutine error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1260,7 +1275,7 @@ fun Coder.main (): String {
             assert(mem != NULL);
         
             *coro = (CEU_Dyn) {
-                CEU_VALUE_X_CORO, {NULL,-1}, NULL, 0, {
+                CEU_VALUE_X_TASK, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Coro = { tasks, NULL, frame }
                     } }
@@ -1270,7 +1285,7 @@ fun Coder.main (): String {
             *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
                 .Task = { coro, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = (CEU_Value) { CEU_VALUE_X_CORO, {.Dyn=coro} };
+            *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=coro} };
             
             assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Coros.dyns, coro, 1));  // 1=cannot escape this block b/c of upvalues
             return CEU_RET_RETURN;
@@ -1280,7 +1295,7 @@ fun Coder.main (): String {
             CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
-                CEU_VALUE_TRACK, {NULL,-1}, NULL, 0, {
+                CEU_VALUE_X_TRACK, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Track = coro
                     } }
@@ -1289,7 +1304,7 @@ fun Coder.main (): String {
             // at most coro->hld, same as pointer coro/tasks, term bcast is limited to it
             CEU_Dyns* hld = (coro->Bcast.Coro.up_tasks == NULL) ? coro->up_dyns.dyns : coro->Bcast.Coro.up_tasks->up_dyns.dyns;
             assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0));
-            *ret = (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=trk} };
+            *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
             return NULL;
         }
     """ +
@@ -1362,20 +1377,26 @@ fun Coder.main (): String {
                     }                    
                     printf("]");
                     break;
-                case CEU_VALUE_FUNC:
+                case CEU_VALUE_P_FUNC:
                     printf("func: %p", v->Dyn);
                     break;
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_CORO:
+                    printf("coro: %p", v->Dyn);
+                    break;
+                case CEU_VALUE_P_TASK:
                     printf("task: %p", v->Dyn);
                     break;
                 case CEU_VALUE_X_CORO:
-                    printf("coro: %p", v->Dyn);
+                    printf("x-coro: %p", v->Dyn);
+                    break;
+                case CEU_VALUE_X_TASK:
+                    printf("x-task: %p", v->Dyn);
                     break;
                 case CEU_VALUE_X_TASKS:
-                    printf("tasks: %p", v->Dyn);
+                    printf("x-tasks: %p", v->Dyn);
                     break;
-                case CEU_VALUE_TRACK:
-                    printf("track: %p", v->Dyn);
+                case CEU_VALUE_X_TRACK:
+                    printf("x-track: %p", v->Dyn);
                     break;
                 default:
                     assert(0 && "bug found");
@@ -1444,11 +1465,13 @@ fun Coder.main (): String {
                         break;
                     case CEU_VALUE_VECTOR:
                     case CEU_VALUE_DICT:
-                    case CEU_VALUE_FUNC:
-                    case CEU_VALUE_TASK:
+                    case CEU_VALUE_P_FUNC:
+                    case CEU_VALUE_P_CORO:
+                    case CEU_VALUE_P_TASK:
                     case CEU_VALUE_X_CORO:
+                    case CEU_VALUE_X_TASK:
                     case CEU_VALUE_X_TASKS:
-                    case CEU_VALUE_TRACK:
+                    case CEU_VALUE_X_TRACK:
                         v = (e1->Dyn == e2->Dyn);
                         break;
                     default:
@@ -1480,8 +1503,12 @@ fun Coder.main (): String {
         
         CEU_RET ceu_coroutine_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
-            CEU_Value* task = args[0];
-            return ceu_coro_create(&frame->up_block->dn_dyns, task, &ceu_acc);
+            CEU_Value* coro = args[0];
+            if (coro->type != CEU_VALUE_P_CORO) {
+                CEU_THROW_MSG("\0 : coroutine error : expected coro");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
+            return ceu_coro_create(&frame->up_block->dn_dyns, coro, &ceu_acc);
         }
 
         CEU_RET ceu_tasks_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
@@ -1501,7 +1528,7 @@ fun Coder.main (): String {
         CEU_RET ceu_detrack_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* track = args[0];
-            if (track->type != CEU_VALUE_TRACK) {                
+            if (track->type != CEU_VALUE_X_TRACK) {                
                 CEU_THROW_MSG("detrack error : expected track value");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1518,8 +1545,9 @@ fun Coder.main (): String {
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             switch (src->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
                     dyn->isperm = 0;
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
@@ -1570,8 +1598,8 @@ fun Coder.main (): String {
             CEU_Value* src = args[0];
             CEU_Dyn* old = src->Dyn;
             switch (src->type) {
-                case CEU_VALUE_FUNC:
-                case CEU_VALUE_TASK:
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_TASK:
                     assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
                     CEU_Dyn* new = ceu_tuple_create(NULL, old->Ncast.Tuple.its);
@@ -1640,11 +1668,11 @@ fun Coder.main (): String {
         CEU_RET ceu_track_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* coro = args[0];
-            if (coro->type != CEU_VALUE_X_CORO) {                
-                CEU_THROW_MSG("track error : expected coroutine");
+            if (coro->type != CEU_VALUE_X_TASK) {                
+                CEU_THROW_MSG("track error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else if (coro->Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
-                CEU_THROW_MSG("track error : expected unterminated coroutine");
+                CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             assert(NULL == ceu_track_create(coro->Dyn, &ceu_acc));
@@ -1672,101 +1700,101 @@ fun Coder.main (): String {
             do {
                 {
                     static CEU_Dyn ceu_copy = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_tasks = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_tasks_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_coroutine = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_detrack = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_move = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_next = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_print = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_println = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_supof = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_supof_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_tags = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_throw = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_track = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_type = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_op_equals_equals = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_op_hash = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_op_slash_equals = { 
-                        CEU_VALUE_FUNC, {NULL,-1}, NULL, 1, 1, {
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} }
                         }
                     };
-                    ceu_mem->copy       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_copy}         };
-                    ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_coroutine}    };
-                    ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_detrack}      };
-                    ceu_mem->move       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_move}         };
-                    ceu_mem->next       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_next}         };
-                    ceu_mem->print      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_print}        };
-                    ceu_mem->println    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_println}      };            
-                    ceu_mem->supof      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_supof}        };
-                    ceu_mem->tags       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tags}         };
-                    ceu_mem->tasks      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_tasks}        };
-                    ceu_mem->throw      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_throw}        };
-                    ceu_mem->track      = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_track}        };
-                    ceu_mem->type       = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_type}         };
-                    ceu_mem->op_hash    = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_hash}      };
-                    ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_equals_equals} };
-                    ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_FUNC, {.Dyn=&ceu_op_slash_equals}  };
+                    ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
+                    ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
+                    ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
+                    ceu_mem->move       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_move}         };
+                    ceu_mem->next       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next}         };
+                    ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
+                    ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
+                    ceu_mem->supof      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_supof}        };
+                    ceu_mem->tags       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tags}         };
+                    ceu_mem->tasks      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tasks}        };
+                    ceu_mem->throw      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_throw}        };
+                    ceu_mem->track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
+                    ceu_mem->type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
+                    ceu_mem->op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
+                    ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
+                    ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
                 }
                 ${this.code}
                 return 0;

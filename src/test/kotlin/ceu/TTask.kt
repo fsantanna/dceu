@@ -206,11 +206,11 @@ class TTask {
         assert(out == "1\n") { out }
     }
     @Test
-    fun aa_17_task_nest_err() {
+    fun aa_17_coro_nest_err() {
         val out = ceu.all(
             """
-            var T = task () {
-                spawn task () {
+            var T = coro () {
+                spawn coro () {
                     yield(nil)
                 } ()
             }
@@ -241,10 +241,10 @@ class TTask {
         //        "anon : (lin 3, col 33) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
-    fun aa_task18_defer() {
+    fun aa_coro18_defer() {
         val out = all("""
             var T
-            set T = task () {
+            set T = coro () {
                 defer {
                     println(3)
                 }
@@ -266,7 +266,7 @@ class TTask {
             var T1 = task (co) {
                 yield(nil)
             }
-            var T2 = task () {
+            var T2 = coro () {
                 var t1 = spawn T1(task)
                 yield(t1)          ;; t1 cannot escape
             }
@@ -329,13 +329,13 @@ class TTask {
             var t = []
             resume t()
         """)
-        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded task\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
-    fun aa_task22_defer() {
+    fun aa_coro22_defer() {
         val out = all("""
             var T
-            set T = task () {
+            set T = coro () {
                 defer {
                     println(3)
                 }
@@ -359,7 +359,7 @@ class TTask {
     fun bb_spawn1() {
         val out = all("""
             var t
-            set t = task (v) {
+            set t = coro (v) {
                 println(v)          ;; 1
                 set v = yield((v+1)) 
                 println(v)          ;; 3
@@ -376,7 +376,7 @@ class TTask {
             set v = resume a(v+1)
             println(v)              ;; 6
         """, true)
-        assert(out == "1\n:coro\n3\n4\n5\n6\n") { out }
+        assert(out == "1\n:x-coro\n3\n4\n5\n6\n") { out }
     }
     @Test
     fun bb_spawn2() {
@@ -394,7 +394,7 @@ class TTask {
         val out = all("""
             spawn (func () {nil}) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : coroutine error : expected task\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 20) : spawn error : expected coro or task\n:error\n") { out }
     }
     @Test
     fun bb_spawn4_err() {
@@ -404,10 +404,10 @@ class TTask {
         assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call") { out }
     }
     @Test
-    fun bb_spawn5() {
+    fun bb_coro_spawn5() {
         val out = all("""
             var t
-            set t = task () {
+            set t = coro () {
                 println(1)
                 do {
                     println(2)
@@ -498,10 +498,10 @@ class TTask {
         assert(out == "1\n2\n") { out }
     }
     @Test
-    fun bb_spawn10() {
+    fun bb_coro_spawn10() {
         val out = all("""
             var t
-            set t = task () {
+            set t = coro () {
                 println(1)
                 do {
                     println(2)
@@ -518,14 +518,14 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun bb_spawn11() {
+    fun bb_coro_spawn11() {
         val out = all("""
             var f
             set f = func () {
                 t
             }
             var t
-            set t = task () {
+            set t = coro () {
                 println(1)
                 do {
                     println(2)
@@ -615,7 +615,7 @@ class TTask {
             }
             println(type(t))
         """)
-        assert(out == "10\n:coro\n") { out }
+        assert(out == "10\n:x-task\n") { out }
     }
     @Test
     fun cc_group3() {
@@ -640,7 +640,7 @@ class TTask {
     fun dd_throw1() {
         val out = all("""
             var co
-            set co = coroutine(task (x,y) {
+            set co = coroutine(coro (x,y) {
                 throw(:e2)
             })
             catch :e2 {
@@ -655,7 +655,7 @@ class TTask {
     fun dd_throw2() {
         val out = all("""
             var co
-            set co = coroutine(task (x,y) {
+            set co = coroutine(coro (x,y) {
                 yield(nil)
                 throw(:e2)
             })
@@ -673,8 +673,8 @@ class TTask {
     fun dd_throw3_err() {
         val out = all("""
             var T
-            set T = task () :awakes {
-                spawn task () :awakes {
+            set T = task () {
+                spawn task () {
                     yield(nil)
                     throw(:error )
                 }()
@@ -698,18 +698,18 @@ class TTask {
     @Test
     fun dd_throw5_err() {
         val out = all("""
-            spawn (task () :fake :awakes {
+            spawn (task () :fake {
                 broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :fake :awakes { broadcast in :task, n...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in :task, nil }()\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
     fun dd_throw6() {
         val out = all("""
             var co
-            set co = coroutine (task () {
+            set co = coroutine (coro () {
                 catch :e1 {
                     yield(nil)
                     throw(:e1)
@@ -732,9 +732,9 @@ class TTask {
     fun dd_throw7() {
         val out = all("""
             var co
-            set co = coroutine (task () :awakes {
+            set co = coroutine (coro () :awakes {
                 catch :e1 {
-                    coroutine (task () :awakes {
+                    coroutine (coro () :awakes {
                         yield(nil)
                         throw(:e1)
                     })()
@@ -761,9 +761,9 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task () :awakes {
+            set T = task () {
                 catch err==:e1 {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                         throw(:e1)
                         println(:no)
@@ -774,7 +774,7 @@ class TTask {
                 throw(:e2)
                 println(:no)
             }
-            spawn (task () :awakes {
+            spawn (task () {
                 catch :e2 {
                     spawn T()
                     while true { yield(nil) }
@@ -850,7 +850,7 @@ class TTask {
     fun ee_bcast001() {
         val out = ceu.all(
             """
-            spawn task () :awakes {
+            spawn task () {
                 println(1)
                 yield(nil)
                 println(2)
@@ -863,14 +863,13 @@ class TTask {
     @Test
     fun ee_bcast01() {
         val out = all("""
-            var tk
-            set tk = task (v) :awakes {
+            var tk = task (v) {
+                yield(nil)
                 println(v, evt)
                 set v = yield(nil)
                 println(v, evt)
             }
-            var co
-            set co = coroutine(tk)
+            spawn tk ()
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3
@@ -881,39 +880,34 @@ class TTask {
     fun ee_bcast1() {
         val out = all("""
             var tk
-            set tk = task (v) :awakes {
+            set tk = task (v) {
+                yield(nil)
                 println(v)
                 println(evt)
                 set v = yield(nil)
                 println(v)
                 println(evt)
             }
-            var co1
-            set co1 = coroutine(tk)
-            var co2
-            set co2 = coroutine(tk)
+            var co1 = spawn tk()
+            var co2 = spawn tk()
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\ncoro: 0x")) { out }
+        assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\nx-task: 0x")) { out }
     }
     @Test
     fun ee_bcast2() {
         val out = all("""
-            var co1
-            set co1 = coroutine (task () :awakes {
-                var co2
-                set co2 = coroutine (task () :awakes {
+            var co1 = spawn (task () {
+                var co2 = spawn (task () {
                     yield(nil)  ;; awakes from outer bcast
                     println(2)
-                })
-                resume co2 ()
+                }) ()
                 yield(nil)      ;; awakes from co2 termination
                 println(1)
-            })
-            resume co1 ()
+            }) ()
             broadcast in :global, nil
         """)
         assert(out == "2\n1\n") { out }
@@ -921,19 +915,15 @@ class TTask {
     @Test
     fun ee_bcast3() {
         val out = all("""
-            var co1
-            set co1 = coroutine(task () :awakes {
-                var co2
-                set co2 = coroutine(task () :awakes {
+            var co1 = spawn (task () {
+                var co2 = spawn (task () {
                     ${yield()}
                     throw(:error)
-                })
-                resume co2 ()
+                })()
                 ${yield()}
                 println(1)
-            })
-            resume co1 ()
-             broadcast in :global, nil
+            })()
+            broadcast in :global, nil
         """)
         assert(out == "anon : (lin 14, col 14) : broadcast in :global, nil\n" +
                 "anon : (lin 7, col 21) : throw(:error)\n" +
@@ -944,7 +934,8 @@ class TTask {
     fun ee_bcast4() {
         val out = all("""
             var tk
-            set tk = task () :awakes {
+            set tk = task () {
+                yield(nil)
                 do {
                     println(evt)
                     yield(nil)
@@ -956,12 +947,11 @@ class TTask {
                     println(evt)
                 }
             }
-            var co
-            set co = coroutine(tk)
-             broadcast in :global, 1
-             broadcast in :global, 2
-             broadcast in :global, 3
-             broadcast in :global, 4
+            spawn tk ()
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
+            broadcast in :global, 4
         """)
         assert(out == "1\n2\n2\n3\n") { out }
     }
@@ -969,15 +959,13 @@ class TTask {
     fun ee_bcast5() {
         val out = all("""
             var tk
-            set tk = task (v) :awakes {
+            set tk = task (v) {
                 println(v)
                 yield(nil)
                 println(evt)
             }
-            var co
-            set co = coroutine(tk)
-            resume co(1)
-             broadcast in :global, 2
+            var co = spawn(tk)(1)
+            broadcast in :global, 2
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -995,14 +983,13 @@ class TTask {
     fun ee_bcast7() {
         val out = all("""
             var tk
-            set tk = task () :awakes {
+            set tk = task () {
+                yield(nil)
                 yield(nil)
                 println(evt)                
             }
-            var co1
-            set co1 = coroutine(tk)
-            var co2
-            set co2 = coroutine(tk)
+            var co1 = spawn (tk) ()
+            var co2 = spawn tk ()
             do {
                  broadcast in :global, 1
                  broadcast in :global, 2
@@ -1010,20 +997,19 @@ class TTask {
             }
         """)
         //assert(out == "2\n2\n") { out }
-        assert(out.contains("2\ncoro: 0x")) { out }
+        assert(out.contains("2\nx-task: 0x")) { out }
     }
     @Test
     fun ee_bcast8() {
         val out = all("""
             var tk
-            set tk = task (v) :awakes {
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
+            set tk = task (v) {
+                yield(nil)
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 println(evt)                
             }
-            var co1
-            set co1 = coroutine(tk)
-            var co2
-            set co2 = coroutine(tk)
+            var co1 = spawn tk ()
+            var co2 = spawn tk ()
             func () {
                  broadcast in :global, 1
                  broadcast in :global, 2
@@ -1036,23 +1022,21 @@ class TTask {
     fun ee_bcast9() {
         val out = ceu.all(
             """
-            var tk
-            set tk = task (v) :awakes {
+            var tk = task (v) {
+                yield(nil)
                 set v = yield(nil)
-                throw(:1                )
+                throw(:1)
             }
-            var co1
-            set co1 = coroutine(tk)
-            var co2
-            set co2 = coroutine(tk)
+            var co1 = spawn tk ()
+            var co2 = spawn tk ()
             catch err==:1 {
                 func () {
                     println(1)
-                     broadcast in :global, 1
+                    broadcast in :global, 1
                     println(2)
-                     broadcast in :global, 2
+                    broadcast in :global, 2
                     println(3)
-                     broadcast in :global, 3
+                    broadcast in :global, 3
                 }()
             }
             println(99)
@@ -1065,7 +1049,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (v) :awakes {
+            set tk = task (v) {
                 println(v)
                 do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
                 ;;yield(nil)
@@ -1101,8 +1085,8 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task (v) :awakes {
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:coro { set ok=false } else { nil } } }
+            set T = task (v) {
+                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(v)
             }
@@ -1110,7 +1094,7 @@ class TTask {
             set t1 = spawn T (1)
             var t2
             set t2 = spawn T (2)
-             broadcast in t1, nil
+            broadcast in t1, nil
         """
         )
         assert(out == "1\n") { out }
@@ -1130,7 +1114,7 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 yield(nil)
                 println(v)
             }
@@ -1150,8 +1134,8 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task (v) :awakes {
-                spawn (task () :awakes {
+            set T = task (v) {
+                spawn (task () {
                     yield(nil)
                     println(:ok)
                 }) ()
@@ -1167,19 +1151,19 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task (v) :awakes {
-                spawn (task () :fake :awakes {
+            set T = task (v) {
+                spawn (task () :fake {
                     yield(nil)
                     println(v, evt)
                 }) ()
-                spawn (task () :fake :awakes {
+                spawn (task () :fake {
                     do {
                         broadcast in :task, :ok
                     }
                 }) ()
                 yield(nil)
             }
-            spawn (task () :awakes {
+            spawn (task () {
                 yield(nil)
                 println(999)
             }) ()
@@ -1192,8 +1176,8 @@ class TTask {
     @Test
     fun ee_bcast_in7() {
         val out = all("""
-            spawn (task () :awakes {
-                spawn (task () :awakes {
+            spawn (task () {
+                spawn (task () {
                     yield(nil)
                     broadcast in :global, nil
                 }) ()
@@ -1208,10 +1192,10 @@ class TTask {
     fun ee_bcast_in7a() {
         val out = all("""
             ;;println(:BLOCK0, `:pointer ceu_block`)
-            spawn (task () :awakes {
+            spawn (task () {
                 ;;println(:CORO1, `:pointer ceu_coro`)
                 ;;println(:BLOCK1, `:pointer ceu_block`)
-                spawn (task () :awakes {
+                spawn (task () {
                     ;;println(:CORO2, `:pointer ceu_coro`)
                     ;;println(:BLOCK2, `:pointer ceu_block`)
                     yield(nil)
@@ -1231,12 +1215,13 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task () :awakes {
+            set tk = task () {
+                yield(nil)
                 var v = evt
                 nil
             }
             var co
-            set co = coroutine(tk)
+            set co = spawn tk()
             var f = func () {
                 var g = func () {
                     broadcast in :global, []
@@ -1246,10 +1231,10 @@ class TTask {
             f()
         """
         )
-        assert(out == "anon : (lin 15, col 13) : f()\n" +
-                "anon : (lin 13, col 17) : g()\n" +
-                "anon : (lin 11, col 21) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 16, col 13) : f()\n" +
+                "anon : (lin 14, col 17) : g()\n" +
+                "anon : (lin 12, col 21) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -1257,7 +1242,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task () :awakes {
+            set tk = task () {
                 var v = evt  ;; ERR: v is at same depth as f, but in a parallel scope
                 nil
             }
@@ -1275,7 +1260,7 @@ class TTask {
     fun ee_bcast10_err() {
         val out = ceu.all(
             """
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 var v = evt
                 println(v)
@@ -1294,7 +1279,7 @@ class TTask {
     fun ee_11_bcast_err() {
         val out = ceu.all(
             """
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 var v = evt
                 println(v)
@@ -1315,7 +1300,7 @@ class TTask {
     fun ee_bcast12_err() {
         val out = ceu.all(
             """
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 var v = evt
                 println(v)
@@ -1338,7 +1323,8 @@ class TTask {
     fun ee_bcast13_err() {
         val out = ceu.all(
             """
-            var T1 = task () :awakes {
+            var T1 = task () {
+                yield(nil)
                 spawn task () {
                     yield(nil)
                     println(:1)
@@ -1346,14 +1332,15 @@ class TTask {
                 } ()
                 nil
             }
-            var t1 = coroutine(T1)
-            var T2 = task () :awakes {
+            var t1 = spawn T1()
+            var T2 = task () {
+                yield(nil)
                 yield(nil)
                 println(:2)
                 var v = evt
                 println(:evt, v, evt)
             }
-            var t2 = coroutine(T2)
+            var t2 = spawn T2()
             broadcast in :global, []
             println(`:number ceu_gc_count`)
             """
@@ -1371,7 +1358,7 @@ class TTask {
             var fff = func (v) {
                 println(v)
             }
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 fff(evt)
             }
@@ -1387,7 +1374,7 @@ class TTask {
                 var x = v[0]
                 println(x)
             }
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 f(evt)
             }
@@ -1404,7 +1391,7 @@ class TTask {
                 set x[0] = v[0]
                 println(x[0])
             }
-            var T = task () :awakes {
+            var T = task () {
                 yield(nil)
                 f(evt)
             }
@@ -1461,7 +1448,7 @@ class TTask {
             set ts = tasks()
             println(type(ts))
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 println(v)
                 yield(nil)
                 println(evt)
@@ -1471,7 +1458,7 @@ class TTask {
             }
              broadcast in :global, 2
         """)
-        assert(out == ":tasks\n1\n2\n") { out }
+        assert(out == ":x-tasks\n1\n2\n") { out }
     }
     @Test
     fun ff_pool2_leak() {
@@ -1606,7 +1593,7 @@ class TTask {
             spawn in ts, T()
             while in :tasks ts, xxx {
                 println(1)
-                 broadcast in :global, 1
+                broadcast in :global, 1
                 while in :tasks ts, yyy {
                     println(2)
                 }
@@ -1637,7 +1624,7 @@ class TTask {
     fun ff_pool11a_err_scope() {
         val out = all("""
             var T
-            set T = task () :awakes { yield(nil) }
+            set T = task () { yield(nil) }
             var ts
             set ts = tasks()
             spawn in ts, T()
@@ -1743,7 +1730,7 @@ class TTask {
         val out = ceu.all(
             """
             var ts = tasks(1)
-            var T = task () :awakes { yield(nil) }
+            var T = task () { yield(nil) }
             var ok1 = spawn in ts, T()
             var ok2 = spawn in ts, T()
             broadcast in :global, nil
@@ -1761,7 +1748,7 @@ class TTask {
             var ts
             set ts = tasks(2)
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 println(10)
                 defer {
                     println(20)
@@ -1795,13 +1782,13 @@ class TTask {
             println(1)
             catch err==:ok {
                 println(2)
-                spawn task () :awakes {
+                spawn task () {
                     println(3)
                     ${yield()}
                     println(6)
                     throw(:ok)
                 } ()
-                spawn task () :awakes {
+                spawn task () {
                     catch :ok {
                         println(4)
                         ${yield()}
@@ -1822,8 +1809,8 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task (v) :awakes {
-                spawn task () :awakes {
+            set T = task (v) {
+                spawn task () {
                     println(v)
                     yield(nil)
                     println(v)
@@ -1844,12 +1831,12 @@ class TTask {
             var ts
             set ts = tasks(2)
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 defer {
                     println(v)
                 }
                 catch err==:ok {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                         if v == 1 {
                             throw(:ok)
@@ -1878,12 +1865,12 @@ class TTask {
             var ts
             set ts = tasks(2)
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 defer {
                     println(v)
                 }
                 catch err==:ok {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                         if v == 2 {
                             throw(:ok)
@@ -1952,7 +1939,7 @@ class TTask {
         val out = ceu.all(
             """
             var T
-            set T = task () :awakes {
+            set T = task () {
                 yield(nil)
                 throw(nil)
             }
@@ -1973,7 +1960,7 @@ class TTask {
             var ts
             set ts = tasks(1)
             var T
-            set T = task () :awakes { yield(nil) }
+            set T = task () { yield(nil) }
             var ok1
             set ok1 = spawn in ts, T()
             broadcast in :global, nil
@@ -1988,7 +1975,7 @@ class TTask {
     fun todo_ff_pool25_reuse_awake() {
         val out = ceu.all(
             """
-            var T = task (n) :awakes {
+            var T = task (n) {
                 set task.pub = n
                 yield(nil)
                 ;;println(:awake, evt, n)
@@ -2026,7 +2013,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 set xxx = evt
                 nil
             }
@@ -2048,7 +2035,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 set xxx = evt[0]
             }
             var co
@@ -2069,7 +2056,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 yield(nil)
                 set xxx = evt
                 nil
@@ -2093,7 +2080,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 yield(nil)
                 set xxx = evt
                 yield(nil)
@@ -2118,7 +2105,7 @@ class TTask {
         """
             var fff
             set fff = func (x) { x }
-            spawn task () :awakes {
+            spawn task () {
                 yield(nil)
                 while evt[:type]/=:x {
                     yield(nil)
@@ -2139,7 +2126,7 @@ class TTask {
             """
             var fff
             set fff = func (x) { x }
-            spawn task () :awakes {
+            spawn task () {
                 println(1)
                 do {
                     println(2)
@@ -2161,7 +2148,7 @@ class TTask {
     fun gg_evt45() {
         val out = ceu.all(
             """
-            spawn task () :awakes {
+            spawn task () {
                 println(111)
                 yield(nil)
                 println(222)
@@ -2177,7 +2164,7 @@ class TTask {
     fun gg_evt5() {
         val out = ceu.all(
             """
-            spawn task () :awakes {
+            spawn task () {
                 while (true) {
                     println(evt)
                     yield(nil)
@@ -2192,7 +2179,7 @@ class TTask {
     fun gg_evt6() {
         val out = ceu.all(
             """
-            spawn task () :awakes {
+            spawn task () {
                 while (true) {
                     do {
                         yield(nil)
@@ -2223,7 +2210,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 set xxx = evt[0]
                 nil
             }
@@ -2245,7 +2232,7 @@ class TTask {
         val out = ceu.all(
             """
             var tk
-            set tk = task (xxx) :awakes {
+            set tk = task (xxx) {
                 set xxx = evt[0]
             }
             var co
@@ -2414,18 +2401,18 @@ class TTask {
     @Test
     fun hh_pub9_fake_task_err() {
         val out = all("""
-            spawn (task () :awakes {
+            spawn (task () {
                 set task.pub = []
                 var x
-                spawn (task () :fake :awakes {
+                spawn (task () :fake {
                     set x = task.pub
                 }) ()
                 println(x)
             }) ()
         """)
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 2, col 20) : task () :awakes { set task.pub = [] var x spa...)\n" +
-        //        "anon : (lin 5, col 24) : task () :fake :awakes { set x = task.pub }()\n" +
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
         //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
@@ -2525,11 +2512,11 @@ class TTask {
     @Test
     fun hh_pub15_task() {
         val out = all("""
-        spawn task () :fake :awakes { 
+        spawn task () :fake { 
             var y
             set y = do {     
                 var ceu_spw_54     
-                set ceu_spw_54 = spawn task () :fake :awakes {         
+                set ceu_spw_54 = spawn task () :fake {         
                     yield(nil)         
                     [2]             
                 }()        
@@ -2548,11 +2535,11 @@ class TTask {
     @Test
     fun hh_pub15a_task_err() {
         val out = all("""
-        spawn task () :fake :awakes { 
+        spawn task () :fake { 
             var y
             set y = do {     
                 var ceu_spw_54     
-                set ceu_spw_54 = spawn task () :awakes {         
+                set ceu_spw_54 = spawn task () {         
                     set task.pub = [2]             
                     yield(nil)         
                 }()        
@@ -2564,7 +2551,7 @@ class TTask {
         }()
         broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 2, col 15) : task () :fake :awakes { var y set y = do { va...)\n" +
+        assert(out == "anon : (lin 2, col 15) : task () :fake { var y set y = do { va...)\n" +
                 "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
         //assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
@@ -2806,7 +2793,7 @@ class TTask {
     fun todo_ii_status5() {
         val out = all("""
             var T
-            set T = task (x) :awakes {
+            set T = task (x) {
                 println(10, status)
                 yield(nil)
                 if x {
@@ -2816,7 +2803,7 @@ class TTask {
                 }
                 println(20, status)
             }
-            spawn task () :awakes {
+            spawn task () {
                 do {
                     var t1
                     set t1 = coroutine(T)
@@ -2863,7 +2850,7 @@ class TTask {
     fun jj_toggle3_coro() {
         val out = all("""
             var T
-            set T = task () :awakes {
+            set T = task () {
                 yield(nil)
                 println(10)
             }
@@ -2882,7 +2869,7 @@ class TTask {
     fun jj_toggle4_tasks() {
         val out = all("""
             var T
-            set T = task () :awakes {
+            set T = task () {
                 yield(nil)
                 println(10)
             }
@@ -3089,7 +3076,7 @@ class TTask {
     fun ll_track7() {
         val out = all("""
             var T
-            set T = task () :awakes {
+            set T = task () {
                 set task.pub = [10]
                 yield(nil)
             }
@@ -3129,7 +3116,7 @@ class TTask {
     @Test
     fun ll_track09_err() {
         val out = all("""
-            var T = task (v) :awakes {
+            var T = task (v) {
                 yield(nil)
             }
             var x
@@ -3146,7 +3133,7 @@ class TTask {
     @Test
     fun ll_track09() {
         val out = all("""
-            var T = task (v) :awakes {
+            var T = task (v) {
                 set task.pub = [v]
                 yield(nil)
             }
@@ -3167,7 +3154,7 @@ class TTask {
     fun ll_track10() {
         val out = all("""
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 set task.pub = [v]
                 yield(nil)
             }
@@ -3213,7 +3200,7 @@ class TTask {
     fun ll_track12_throw() {
         val out = all("""
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 yield(nil)
             }
             var ts
@@ -3234,7 +3221,7 @@ class TTask {
     fun ll_track13_throw() {
         val out = all("""
             var T
-            set T = task (v) :awakes {
+            set T = task (v) {
                 set task.pub = [v]
                 yield(nil)
             }
@@ -3259,7 +3246,7 @@ class TTask {
     fun ll_track14() {
         val out = all("""
             var T
-            set T = task () :awakes {
+            set T = task () {
                 set task.pub = [10]
                 ${await("evt==:evt")}
             }
@@ -3267,9 +3254,9 @@ class TTask {
             set t = spawn T()
             var x
             set x = track(t)
-            spawn task () :awakes {
+            spawn task () {
                 catch :par-or {
-                    spawn task () :awakes {
+                    spawn task () {
                         ${await("if detrack(x).status==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
                         throw(:par-or)
                     } ()
@@ -3289,7 +3276,7 @@ class TTask {
     @Test
     fun ll_track15_simplify() {
         val out = all("""
-            var T = task (v) :awakes {
+            var T = task (v) {
                 yield(nil)
             }
             var ts = tasks()
@@ -3311,7 +3298,7 @@ class TTask {
     fun mm_01_data_await() {
         val out = all("""
             data :E = [x,y]
-            spawn task () :awakes {
+            spawn task () {
                 var evt :E
                 yield(nil)
                 println(evt.x)
@@ -3325,7 +3312,7 @@ class TTask {
         val out = all("""
             data :E = [x,y]
             data :F = [i,j]
-            spawn task () :awakes {
+            spawn task () {
                 var evt :E
                 yield(nil)
                 println(evt.x)
@@ -3371,10 +3358,10 @@ class TTask {
     @Test
     fun zz_xceu2() {
         val out = all("""
-            spawn task () :awakes {
+            spawn task () {
                 yield(nil)
                 println(evt)
-                spawn (task () :awakes {
+                spawn (task () {
                     while (true) {
                         println(evt)    ;; lost reference
                         yield(nil)
@@ -3391,10 +3378,10 @@ class TTask {
     @Test
     fun zz_xceu3() {
         val out = all("""
-            spawn task () :awakes {
+            spawn task () {
                 yield(nil)
                 println(evt)
-                spawn (task () :fake :awakes {
+                spawn (task () :fake {
                     while (true) {
                         println(evt)    ;; kept reference
                         yield(nil)
@@ -3453,11 +3440,11 @@ class TTask {
     fun zz_xceu6() {
         val out = all("""
             var T
-            set T = task (pos) :awakes {
+            set T = task (pos) {
                 yield(nil)
                 println(pos)
             }
-            spawn (task () :awakes {
+            spawn (task () {
                 var ts
                 set ts = tasks()
                 do {
@@ -3473,9 +3460,9 @@ class TTask {
     @Test
     fun zz_xceu7() {
         val out = all("""
-            spawn task () :awakes {
+            spawn task () {
                 do {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                     } ()
                     yield(nil)
@@ -3491,9 +3478,9 @@ class TTask {
     @Test
     fun zz_xceu8() {
         val out = all("""
-            spawn task () :awakes {
+            spawn task () {
                 do {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                     } ()
                     yield(nil)
@@ -3508,9 +3495,9 @@ class TTask {
     @Test
     fun zz_xceu9 () {
         val out = all("""
-            spawn task () :awakes {
+            spawn task () {
                 do {
-                    spawn task () :awakes {
+                    spawn task () {
                         yield(nil)
                     }()
                     yield(nil)
@@ -3529,14 +3516,14 @@ class TTask {
     fun zz_xceu10 () {
         val out = all("""
             ;;println(:blk0, `:pointer ceu_block`)
-            spawn task () :awakes {
+            spawn task () {
                 ;;println(:cor1, `:pointer ceu_coro`)
                 ;;println(:blk11, `:pointer ceu_block`)
                 while true {
                     ;;println(:blk12, `:pointer ceu_block`)
                     yield(nil); while evt/=10 { yield(nil) }
                     println(:1)
-                    var t = spawn task () :awakes {
+                    var t = spawn task () {
                         ;;println(:cor2, `:pointer ceu_coro`)
                         ;;println(:blk2, `:pointer ceu_block`)
                         yield(nil); while evt/=10 { yield(nil) }

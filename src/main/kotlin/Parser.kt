@@ -389,7 +389,7 @@ class Parser (lexer_: Lexer)
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
                                                 var ceu_coro_$N
-                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_X_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
                                                 var ${i.str} = track(ceu_coro_$N)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
@@ -406,7 +406,7 @@ class Parser (lexer_: Lexer)
                                 C(this.nest("""
                                     do {
                                         var ceu_col_$N = ${col.tostr(true)}
-                                        assert(type(ceu_col_$N) == :coro)
+                                        assert(type(ceu_col_$N) == :x-coro)
                                         var ${i.str} = nil
                                         until {
                                             set ${i.str} = resume ceu_col_$N(${i.str})
@@ -494,13 +494,11 @@ class Parser (lexer_: Lexer)
                         }
                         Pair(id, tag)
                     }
-                    val task = if (tk0.str == "func") null else {
-                        Pair(this.acceptTag(":fake"), this.acceptTag(":awakes"))
-                    }
+                    val fake = (tk0.str == "task") && this.acceptTag(":fake")
                     val body = this.catch_block(this.tk1).let { (C,b) -> C(b) }.let {
                         if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it))
                     }
-                    val proto = Expr.Proto(tk0, task, args, body)
+                    val proto = Expr.Proto(tk0, fake, args, body)
                     if (id == null) proto else {
                     this.nest("""
                         ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 
@@ -594,7 +592,7 @@ class Parser (lexer_: Lexer)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task () :fake :awakes {
+                            ${tk0.pos.pre()}spawn (task () :fake {
                                 ${this.block().es.tostr(true)}
                             }) ()
                         """)
@@ -840,10 +838,10 @@ class Parser (lexer_: Lexer)
                                 until {
                                     var ceu_cnd_$N = ${cnd.tostr(true)}
                                     ifs {
-                                        type(ceu_cnd_$N) == :coro -> {
+                                        type(ceu_cnd_$N) == :x-task -> {
                                             set ceu_cnd_$N = (ceu_cnd_$N.status == :terminated)
                                         }
-                                        type(ceu_cnd_$N) == :track -> {
+                                        type(ceu_cnd_$N) == :x-track -> {
                                             set ceu_cnd_$N = (detrack(ceu_cnd_$N) == nil)
                                         }
                                         else -> {
