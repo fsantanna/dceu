@@ -388,9 +388,9 @@ class Parser (lexer_: Lexer)
                                                 ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
-                                                var ceu_coro_$N
-                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                                var ${i.str} = track(ceu_coro_$N)
+                                                var ceu_x_$N
+                                                `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                                var ${i.str} = track(ceu_x_$N)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
                                                     set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -622,8 +622,8 @@ class Parser (lexer_: Lexer)
                     val coro = this.expr()
                     this.nest("""
                         do {
-                            var ceu_coro_$N = ${coro.tostr(true)}
-                            while in :coro ceu_coro_$N, ceu_i_$N {
+                            var ceu_x_$N = ${coro.tostr(true)}
+                            while in :coro ceu_x_$N, ceu_i_$N {
                                 yield(ceu_i_$N)  ;; return of yield is used as arg to iter resume()
                             }
                         }

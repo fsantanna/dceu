@@ -1188,10 +1188,10 @@ class TTask {
         val out = all("""
             ;;println(:BLOCK0, `:pointer ceu_block`)
             spawn (task () {
-                ;;println(:CORO1, `:pointer ceu_coro`)
+                ;;println(:CORO1, `:pointer ceu_x`)
                 ;;println(:BLOCK1, `:pointer ceu_block`)
                 spawn (task () {
-                    ;;println(:CORO2, `:pointer ceu_coro`)
+                    ;;println(:CORO2, `:pointer ceu_x`)
                     ;;println(:BLOCK2, `:pointer ceu_block`)
                     yield(nil)
                     ;;println(:1)
@@ -2796,7 +2796,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_coro->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
+        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
     }
     @Test
     fun jj_toggle2_err() {
@@ -3460,14 +3460,14 @@ class TTask {
         val out = all("""
             ;;println(:blk0, `:pointer ceu_block`)
             spawn task () {
-                ;;println(:cor1, `:pointer ceu_coro`)
+                ;;println(:cor1, `:pointer ceu_x`)
                 ;;println(:blk11, `:pointer ceu_block`)
                 while true {
                     ;;println(:blk12, `:pointer ceu_block`)
                     yield(nil); while evt/=10 { yield(nil) }
                     println(:1)
                     var t = spawn task () {
-                        ;;println(:cor2, `:pointer ceu_coro`)
+                        ;;println(:cor2, `:pointer ceu_x`)
                         ;;println(:blk2, `:pointer ceu_block`)
                         yield(nil); while evt/=10 { yield(nil) }
                     } ()

@@ -79,8 +79,8 @@ fun Coder.main (): String {
         CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm);
         
         CEU_RET ceu_tasks_create   (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
-        CEU_RET ceu_coro_create    (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        CEU_RET ceu_coro_create_in (struct CEU_Dyns* hld, struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        CEU_RET ceu_x_create    (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        CEU_RET ceu_x_create_in (struct CEU_Dyns* hld, struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -1208,7 +1208,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create (CEU_Dyns* hld, CEU_Value* X, CEU_Value* ret) {
+        CEU_RET ceu_x_create (CEU_Dyns* hld, CEU_Value* X, CEU_Value* ret) {
             if (X->type==CEU_VALUE_P_CORO || X->type==CEU_VALUE_P_TASK) {
                 // ok
             } else {
@@ -1247,7 +1247,7 @@ fun Coder.main (): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_coro_create_in (CEU_Dyns* hld, CEU_Dyn* tasks, CEU_Value* task, CEU_Value* ret, int* ok) {
+        CEU_RET ceu_x_create_in (CEU_Dyns* hld, CEU_Dyn* tasks, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (tasks->type != CEU_VALUE_X_TASKS) {
                 CEU_THROW_MSG("\0 : coroutine error : expected tasks");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1507,7 +1507,7 @@ fun Coder.main (): String {
                 CEU_THROW_MSG("\0 : coroutine error : expected coro");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            return ceu_coro_create(&frame->up_block->dn_dyns, coro, &ceu_acc);
+            return ceu_x_create(&frame->up_block->dn_dyns, coro, &ceu_acc);
         }
 
         CEU_RET ceu_tasks_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
