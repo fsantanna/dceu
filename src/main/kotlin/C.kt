@@ -124,12 +124,12 @@ fun Coder.main (): String {
             CEU_VALUE_X_TRACK
         } CEU_VALUE;
         
-        typedef enum CEU_CORO_STATUS {
-            CEU_CORO_STATUS_YIELDED = 1,
-            CEU_CORO_STATUS_TOGGLED,
-            CEU_CORO_STATUS_RESUMED,
-            CEU_CORO_STATUS_TERMINATED
-        } CEU_CORO_STATUS;        
+        typedef enum CEU_X_STATUS {
+            CEU_X_STATUS_YIELDED = 1,
+            CEU_X_STATUS_TOGGLED,
+            CEU_X_STATUS_RESUMED,
+            CEU_X_STATUS_TERMINATED
+        } CEU_X_STATUS;        
 
         typedef struct CEU_Value {
             CEU_VALUE type;
@@ -224,7 +224,7 @@ fun Coder.main (): String {
                     };
                 } Ncast;
                 struct {
-                    enum CEU_CORO_STATUS status;
+                    enum CEU_X_STATUS status;
                     union {
                         struct {
                             struct CEU_Dyn* up_tasks;   // auto terminate / remove from tasks
@@ -245,7 +245,7 @@ fun Coder.main (): String {
         typedef struct CEU_Block {
             int depth;                  // compare on set
             int ispub;                  // is top block inside task?
-            struct CEU_Dyn* up_coro;    // enclosing active coro
+            struct CEU_Dyn* up_x;    // enclosing active coro
             struct CEU_Dyns dn_dyns;    // list of allocated data to bcast/free
             struct CEU_Block* dn_block; // nested block active
         } CEU_Block;
@@ -850,11 +850,11 @@ fun Coder.main (): String {
  
         CEU_RET ceu_bcast_dyn (CEU_BStack* bstack, CEU_Dyn* cur, CEU_Value* evt) {
 //SPC_INC(printf(">>> ceu_bcast_dyn = %p\n", cur));
-            if (cur->Bcast.status == CEU_CORO_STATUS_TERMINATED) {
+            if (cur->Bcast.status == CEU_X_STATUS_TERMINATED) {
 //SPC_DEC(printf("<a< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
             }
-            if (cur->Bcast.status==CEU_CORO_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
+            if (cur->Bcast.status==CEU_X_STATUS_TOGGLED && evt!=&CEU_EVT_CLEAR) {
                 // do not awake toggled coro, unless it is a CLEAR event
 //SPC_DEC(printf("<b< ceu_bcast_dyn = %p\n", cur));
                 return CEU_RET_RETURN;
@@ -877,7 +877,7 @@ fun Coder.main (): String {
                         // CEU_RET_THROW: step (5) may 'catch' 
                         
                         // step (5)
-                        if (cur->Bcast.status==CEU_CORO_STATUS_YIELDED || evt==&CEU_EVT_CLEAR) {
+                        if (cur->Bcast.status==CEU_X_STATUS_YIELDED || evt==&CEU_EVT_CLEAR) {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
 //SPC_EQU(printf(">>> awake %p\n", cur));
@@ -1192,7 +1192,7 @@ fun Coder.main (): String {
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *tasks = (CEU_Dyn) {
                 CEU_VALUE_X_TASKS, {NULL,-1}, NULL, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, {
+                    .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Coros = { max, {0,0,NULL,blk} }
                     } }
                 }
@@ -1227,7 +1227,7 @@ fun Coder.main (): String {
             int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
             *x = (CEU_Dyn) {
                 tag, {NULL,-1}, NULL, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, {
+                    .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Coro = { NULL, NULL, frame }
                     } }
                 }
@@ -1275,7 +1275,7 @@ fun Coder.main (): String {
         
             *x = (CEU_Dyn) {
                 CEU_VALUE_X_TASK, {NULL,-1}, NULL, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, {
+                    .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Coro = { tasks, NULL, frame }
                     } }
                 }
@@ -1295,7 +1295,7 @@ fun Coder.main (): String {
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
                 CEU_VALUE_X_TRACK, {NULL,-1}, NULL, 0, {
-                    .Bcast = { CEU_CORO_STATUS_YIELDED, {
+                    .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Track = x
                     } }
                 }
@@ -1670,7 +1670,7 @@ fun Coder.main (): String {
             if (task->type != CEU_VALUE_X_TASK) {                
                 CEU_THROW_MSG("track error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
-            } else if (task->Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
+            } else if (task->Dyn->Bcast.status == CEU_X_STATUS_TERMINATED) {                
                 CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }

@@ -2796,7 +2796,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
+        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_X_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
     }
     @Test
     fun jj_toggle2_err() {

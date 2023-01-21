@@ -100,9 +100,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         if (ceu_n == CEU_ARG_EVT) {
                             ceu_evt = ceu_args[0];
                         }
-                        assert(ceu_x->Bcast.status==CEU_CORO_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR);
+                        assert(ceu_x->Bcast.status==CEU_X_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR);
                         //if (ceu_evt != &CEU_EVT_CLEAR) {
-                            ceu_x->Bcast.status = CEU_CORO_STATUS_RESUMED;
+                            ceu_x->Bcast.status = CEU_X_STATUS_RESUMED;
                         //}
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
@@ -125,8 +125,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ${isx.cond{"}\n}\n"}}
                     } while (0); // func
                     """ + isx.cond{ """  // TERMINATE
-                    assert(ceu_x->Bcast.status != CEU_CORO_STATUS_TERMINATED);
-                    ceu_x->Bcast.status = CEU_CORO_STATUS_TERMINATED;
+                    assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
+                    ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
                     ceu_x->Bcast.Coro.frame->X.pub = ceu_acc;
                     ceu_frame->X.pc = -1;
                     int intasks = (ceu_x->Bcast.Coro.up_tasks != NULL);
@@ -146,9 +146,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
                         CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
                         CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
-                        if (ceu_x->up_dyns.dyns->up_block->up_coro != NULL) {
+                        if (ceu_x->up_dyns.dyns->up_block->up_x != NULL) {
                             // enclosing coro of enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block->up_coro, &ceu_evt_$n));
+                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block->up_x, &ceu_evt_$n));
                         } else {
                             // enclosing block
                             ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
@@ -556,7 +556,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // YIELD ${this.tk.dump()}
                     ${this.arg.code()}
                     ceu_frame->X.pc = $n;      // next resume
-                    ceu_x->Bcast.status = CEU_CORO_STATUS_YIELDED;
+                    ceu_x->Bcast.status = CEU_X_STATUS_YIELDED;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                         ceu_ret = ceu_block_set(&ceu_frame->up_block->dn_dyns, ceu_acc.Dyn, 0);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
@@ -581,10 +581,10 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 ${this.on.code()}
                 ceu_mem->on_$n = ceu_acc;
                 ${this.task.code()}
-                if (ceu_acc.type<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                if (ceu_acc.type<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_X_STATUS_YIELDED && ceu_acc.Dyn->Bcast.status!=CEU_X_STATUS_TOGGLED)) {                
                     CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.task.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : toggle error : expected yielded/toggled coroutine");
                 }
-                ceu_acc.Dyn->Bcast.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_CORO_STATUS_YIELDED : CEU_CORO_STATUS_TOGGLED);
+                ceu_acc.Dyn->Bcast.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_X_STATUS_YIELDED : CEU_X_STATUS_TOGGLED);
                 """
             is Expr.Pub -> """
                 { // PUB
@@ -931,7 +931,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 // RESUME ${this.tk.dump()}
                     ${this.proto.code()}
                     CEU_Value ceu_x_$n = ceu_acc;
-                    if (ceu_x_$n.type!=CEU_VALUE_X_CORO || (ceu_x_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_x_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                    if (ceu_x_$n.type!=CEU_VALUE_X_CORO || (ceu_x_$n.Dyn->Bcast.status!=CEU_X_STATUS_YIELDED && ceu_x_$n.Dyn->Bcast.status!=CEU_X_STATUS_TOGGLED)) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${resume!!.tk.pos.file} : (lin ${resume.tk.pos.lin}, col ${resume.tk.pos.col}) : resume error : expected yielded coro");
                     }
                 """} +
