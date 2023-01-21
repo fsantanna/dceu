@@ -34,8 +34,8 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "resume " + this.call.tostr(pre)
-        is Expr.Toggle -> "toggle " + this.coro.tostr(pre) + "(" + this.on.tostr() + ")"
-        is Expr.Pub    -> this.coro.tostr(pre) + "." + this.tk.str
+        is Expr.Toggle -> "toggle " + this.task.tostr(pre) + "(" + this.on.tostr() + ")"
+        is Expr.Pub    -> this.x.tostr(pre) + "." + this.tk.str
         is Expr.Task   -> "task"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"

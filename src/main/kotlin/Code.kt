@@ -91,9 +91,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_frame->mem = (char*) ceu_mem;
                     """}}
                     ${isx.cond{"""
-                        CEU_Dyn* ceu_x = ceu_frame->Task.coro;
+                        CEU_Dyn* ceu_x = ceu_frame->X.x;
                         #ifdef XXX
-                        printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->Task.pc, ceu_x->Bcast.status, ceu_x);
+                        printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->X.pc, ceu_x->Bcast.status, ceu_x);
                         #endif
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
@@ -112,7 +112,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """ // WHILE
                     do { // func
                         ${isx.cond{"""
-                        switch (ceu_frame->Task.pc) {
+                        switch (ceu_frame->X.pc) {
                             case -1:
                                 assert(0 && "bug found");
                                 break;
@@ -127,8 +127,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """ + isx.cond{ """  // TERMINATE
                     assert(ceu_x->Bcast.status != CEU_CORO_STATUS_TERMINATED);
                     ceu_x->Bcast.status = CEU_CORO_STATUS_TERMINATED;
-                    ceu_x->Bcast.Coro.frame->Task.pub = ceu_acc;
-                    ceu_frame->Task.pc = -1;
+                    ceu_x->Bcast.Coro.frame->X.pub = ceu_acc;
+                    ceu_frame->X.pc = -1;
                     int intasks = (ceu_x->Bcast.Coro.up_tasks != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
@@ -183,7 +183,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_frame,
                         ceu_proto_f_$n,
                         { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
-                        { .Task = {
+                        { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     }
@@ -215,7 +215,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
-                    val coro = if (ups.intask(this)) "ceu_x" else "NULL"
+                    val x = if (ups.intask(this)) "ceu_x" else "NULL"
                     val vars = ups.xblocks[this]!!.syms.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.init }
@@ -226,7 +226,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     """
                     { // BLOCK ${this.tk.dump()}
-                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $coro, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                         void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
@@ -520,7 +520,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, $bupc, &ceu_mem->evt_$n, NULL);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${if (intask && oktask!=null) {
-                                "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->Task.coro, &ceu_mem->evt_$n);"
+                                "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->X.x, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}
@@ -555,7 +555,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Yield -> """
                 { // YIELD ${this.tk.dump()}
                     ${this.arg.code()}
-                    ceu_frame->Task.pc = $n;      // next resume
+                    ceu_frame->X.pc = $n;      // next resume
                     ceu_x->Bcast.status = CEU_CORO_STATUS_YIELDED;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                         ceu_ret = ceu_block_set(&ceu_frame->up_block->dn_dyns, ceu_acc.Dyn, 0);
@@ -580,23 +580,23 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Toggle -> """
                 ${this.on.code()}
                 ceu_mem->on_$n = ceu_acc;
-                ${this.coro.code()}
+                ${this.task.code()}
                 if (ceu_acc.type<CEU_VALUE_BCAST || (ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_acc.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
-                    CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.coro.tk.pos.file} : (lin ${this.coro.tk.pos.lin}, col ${this.coro.tk.pos.col}) : toggle error : expected yielded/toggled coroutine");
+                    CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.task.tk.pos.file} : (lin ${this.task.tk.pos.lin}, col ${this.task.tk.pos.col}) : toggle error : expected yielded/toggled coroutine");
                 }
                 ceu_acc.Dyn->Bcast.status = (ceu_as_bool(&ceu_mem->on_$n) ? CEU_CORO_STATUS_YIELDED : CEU_CORO_STATUS_TOGGLED);
                 """
             is Expr.Pub -> """
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
-                    ${this.coro.code()}
+                    ${this.x.code()}
                     if (!(ceu_acc.type==CEU_VALUE_X_TASK ${(this.tk.str=="status").cond { "|| ceu_acc.type==CEU_VALUE_X_CORO" }})) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected task");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
                         assrc(when (this.tk.str) {
-                            "pub" -> "ceu_dyn_$n->Bcast.Coro.frame->Task.pub"
+                            "pub" -> "ceu_dyn_$n->Bcast.Coro.frame->X.pub"
                             "status" -> "(CEU_Value) { CEU_VALUE_TAG, {.Tag=ceu_dyn_$n->Bcast.status + CEU_TAG_yielded - 1} }"
                             else -> error("impossible case")
                         })
@@ -609,14 +609,14 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->Task.pub, 1);
-                        ceu_dyn_$n->Bcast.Coro.frame->Task.pub = $src;
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.Coro.frame->X.pub, 1);
+                        ceu_dyn_$n->Bcast.Coro.frame->X.pub = $src;
                         """
                     }}
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=${this.non_fake_task_c()}->Task.coro} }")
+            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=${this.non_fake_task_c()}->X.x} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {

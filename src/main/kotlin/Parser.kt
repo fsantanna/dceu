@@ -619,10 +619,10 @@ class Parser (lexer_: Lexer)
                 if (!all) {
                     Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU, XCEU)!!)
                 } else {
-                    val coro = this.expr()
+                    val x = this.expr()
                     this.nest("""
                         do {
-                            var ceu_x_$N = ${coro.tostr(true)}
+                            var ceu_x_$N = ${x.tostr(true)}
                             while in :coro ceu_x_$N, ceu_i_$N {
                                 yield(ceu_i_$N)  ;; return of yield is used as arg to iter resume()
                             }
@@ -641,19 +641,19 @@ class Parser (lexer_: Lexer)
             this.acceptFix("toggle") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
-                val coro = this.expr()
-                if (!XCEU || (coro is Expr.Call && !(XCEU && this.checkFix("->")))) {
-                    if (coro !is Expr.Call) {
-                        err(coro.tk, "invalid toggle : expected argument")
+                val task = this.expr()
+                if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
+                    if (task !is Expr.Call) {
+                        err(task.tk, "invalid toggle : expected argument")
                     }
-                    coro as Expr.Call
-                    if (coro.args.size != 1) {
-                        err(coro.tk, "invalid toggle : expected single argument")
+                    task as Expr.Call
+                    if (task.args.size != 1) {
+                        err(task.tk, "invalid toggle : expected single argument")
                     }
-                    Expr.Toggle(tk0, coro.proto, coro.args[0])
+                    Expr.Toggle(tk0, task.proto, task.args[0])
                 } else {
                     this.acceptFix_err("->")
-                    val (off,on) = Pair(coro, this.expr())
+                    val (off,on) = Pair(task, this.expr())
                     val blk = this.block()
                     this.nest("""
                         ${pre0}do {
@@ -807,7 +807,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 var ceu_spw_$N = ${e.tostr(true)}
                                 ${pre0}await :check-now (ceu_spw_$N.status == :terminated)
-                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->Task.pub;`
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.Coro.frame->X.pub;`
                             }
                         """) //.let { println(it.tostr());it }
                     }

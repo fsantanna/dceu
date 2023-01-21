@@ -94,12 +94,12 @@ fun Expr.mem (): String {
             struct { // TOGGLE
                 CEU_Value on_$n;
                 $union {
-                    ${this.coro.mem()}
+                    ${this.task.mem()}
                     ${this.on.mem()}
                 };
             };
             """
-        is Expr.Pub -> this.coro.mem()
+        is Expr.Pub -> this.x.mem()
 
         is Expr.Tuple -> """
             struct { // TUPLE

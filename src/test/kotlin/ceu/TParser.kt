@@ -263,7 +263,7 @@ class TParser {
         val l = lexer("x . pub")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Pub && e.coro is Expr.Acc)
+        assert(e is Expr.Pub && e.x is Expr.Acc)
         assert(e.tostr() == "x.pub") { e.tostr() }
     }
     @Test

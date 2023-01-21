@@ -97,7 +97,7 @@ fun Coder.main (): String {
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
         struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         
-        struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* coro, struct CEU_Value* ret);
+        struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
         
         void ceu_print1 (struct CEU_Value* v);
         CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
@@ -162,7 +162,7 @@ fun Coder.main (): String {
             union {
                 struct {
                     int n_mem;      // sizeof mem
-                } Task;
+                } X;
             };
         } CEU_Proto;
         
@@ -172,10 +172,10 @@ fun Coder.main (): String {
             char* mem;
             union {
                 struct {
-                    struct CEU_Dyn* coro;   // coro/frame point to each other
-                    int pc;                     // next line to execute
-                    CEU_Value pub;              // public value
-                } Task;
+                    struct CEU_Dyn* x;      // coro,task/frame point to each other
+                    int pc;                 // next line to execute
+                    CEU_Value pub;          // public value
+                } X;
             };
         } CEU_Frame;
     """ +
@@ -1217,15 +1217,15 @@ fun Coder.main (): String {
             }
             ceu_gc_inc(X);
             
-            CEU_Dyn* coro = malloc(sizeof(CEU_Dyn));
-            assert(coro != NULL);
+            CEU_Dyn* x = malloc(sizeof(CEU_Dyn));
+            assert(x != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
-            char* mem = malloc(X->Dyn->Ncast.Proto.Task.n_mem);
+            char* mem = malloc(X->Dyn->Ncast.Proto.X.n_mem);
             assert(mem != NULL);
             
             int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
-            *coro = (CEU_Dyn) {
+            *x = (CEU_Dyn) {
                 tag, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Coro = { NULL, NULL, frame }
@@ -1234,15 +1234,15 @@ fun Coder.main (): String {
             };
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *frame = (CEU_Frame) { &X->Dyn->Ncast.Proto, blk, mem, {
-                .Task = { coro, 0, { CEU_VALUE_NIL } }
+                .X = { x, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = (CEU_Value) { tag, {.Dyn=coro} };
+            *ret = (CEU_Value) { tag, {.Dyn=x} };
             
             // hld is the enclosing block of "coroutine T", not of T
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, x, 1));  // 1=cannot escape this block b/c of upvalues
 
             return CEU_RET_RETURN;
         }
@@ -1266,14 +1266,14 @@ fun Coder.main (): String {
             }
             ceu_gc_inc(task);
             
-            CEU_Dyn* coro = malloc(sizeof(CEU_Dyn));
-            assert(coro != NULL);
+            CEU_Dyn* x = malloc(sizeof(CEU_Dyn));
+            assert(x != NULL);
             CEU_Frame* frame = malloc(sizeof(CEU_Frame));
             assert(frame != NULL);
-            char* mem = malloc(task->Dyn->Ncast.Proto.Task.n_mem);
+            char* mem = malloc(task->Dyn->Ncast.Proto.X.n_mem);
             assert(mem != NULL);
         
-            *coro = (CEU_Dyn) {
+            *x = (CEU_Dyn) {
                 CEU_VALUE_X_TASK, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Coro = { tasks, NULL, frame }
@@ -1282,26 +1282,26 @@ fun Coder.main (): String {
             };
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
-                .Task = { coro, 0, { CEU_VALUE_NIL } }
+                .X = { x, 0, { CEU_VALUE_NIL } }
             } };
-            *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=coro} };
+            *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Coros.dyns, coro, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Coros.dyns, x, 1));  // 1=cannot escape this block b/c of upvalues
             return CEU_RET_RETURN;
         }
         
-        CEU_Dyn* ceu_track_create (CEU_Dyn* coro, CEU_Value* ret) {
+        CEU_Dyn* ceu_track_create (CEU_Dyn* x, CEU_Value* ret) {
             CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
                 CEU_VALUE_X_TRACK, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
-                        .Track = coro
+                        .Track = x
                     } }
                 }
             };
-            // at most coro->hld, same as pointer coro/tasks, term bcast is limited to it
-            CEU_Dyns* hld = (coro->Bcast.Coro.up_tasks == NULL) ? coro->up_dyns.dyns : coro->Bcast.Coro.up_tasks->up_dyns.dyns;
+            // at most x->hld, same as pointer coro/tasks, term bcast is limited to it
+            CEU_Dyns* hld = (x->Bcast.Coro.up_tasks == NULL) ? x->up_dyns.dyns : x->Bcast.Coro.up_tasks->up_dyns.dyns;
             assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0));
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
             return NULL;
@@ -1666,15 +1666,15 @@ fun Coder.main (): String {
 
         CEU_RET ceu_track_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
-            CEU_Value* coro = args[0];
-            if (coro->type != CEU_VALUE_X_TASK) {                
+            CEU_Value* task = args[0];
+            if (task->type != CEU_VALUE_X_TASK) {                
                 CEU_THROW_MSG("track error : expected task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
-            } else if (coro->Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
+            } else if (task->Dyn->Bcast.status == CEU_CORO_STATUS_TERMINATED) {                
                 CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            assert(NULL == ceu_track_create(coro->Dyn, &ceu_acc));
+            assert(NULL == ceu_track_create(task->Dyn, &ceu_acc));
             return CEU_RET_RETURN;
         }
     """ +
