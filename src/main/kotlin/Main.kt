@@ -27,7 +27,7 @@ val TAGS = listOf (
     ":bcast",
     ":x-coro", ":x-task", ":x-tasks", ":x-track",
     ":fake", ":hide", ":check-now", ":all",
-    ":clear", ":error",           // bcast-clear
+    ":ceu", ":clear", ":error",           // bcast-clear
     ":tmp", ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"
 ) + if (!XCEU) emptySet() else setOf(":h",":min",":s",":ms")

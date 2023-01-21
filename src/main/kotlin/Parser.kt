@@ -382,15 +382,22 @@ class Parser (lexer_: Lexer)
                                         ```
                                         var ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                         var ceu_i_$N = 0
-                                        while ceu_i_$N /= ceu_n_$N {
+                                        ${pre0}while ceu_i_$N /= ceu_n_$N {
                                             var ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                             if ceu_dyn_$N == `:pointer NULL` {
                                                 ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
+                                                ;;;
                                                 var ceu_x_$N
                                                 `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
                                                 var ${i.str} = track(ceu_x_$N)
+                                                ;;;
+
+                                                ```
+                                                    CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
+                                                ```
+                                                var ${i.str} = track(`:ceu ceu_x_$N`)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
                                                     set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude

@@ -632,21 +632,26 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
 
                     while (i < it.length) {
-                        ret += if (it[i] != '$') read() else {
-                            read()
+                        val x1 = read()
+                        ret += if (x1 != '$') x1 else {
                             val (l,c) = Pair(lin,col)
                             var id = ""
-                            var x = read()
-                            while (x.isLetterOrDigit() || x=='_') {
-                                id += x
-                                x = read()
+                            var no = ""
+                            while (i < it.length) {
+                                val x2 = read()
+                                if (x2.isLetterOrDigit() || x2=='_') {
+                                    id += x2
+                                } else {
+                                    no += x2
+                                    break
+                                }
                             }
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = ups.assertIsDeclared(this, Pair(id,0), this.tk)
                             id = this.id2c(dcl,0)
-                            "($id)$x"
+                            "($id)$no"
                         }
                     }
                     ret
@@ -654,15 +659,10 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val (pre,pos) = when (this.tk_.tag) {
                     null -> Pair(null, body)
                     ":pre" -> Pair(body, "")
+                    ":ceu" -> Pair(null, assrc(body))
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
-                        }.let { (TAG,Tag) ->
-                            if (Tag=="Func" || Tag=="Coro" || Tag=="Task") {
-                                Pair("P_"+TAG, "Dyn")
-                            } else {
-                                Pair(TAG, Tag)
-                            }
                         }
                         Pair(null, assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })"))
                     }

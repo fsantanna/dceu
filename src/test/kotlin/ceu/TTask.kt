@@ -1569,12 +1569,10 @@ class TTask {
     @Test
     fun ff_pool9_term() {
         val out = all("""
-            var T
-            set T = task () {
+            var T = task () {
                 yield(nil)
             }
-            var ts
-            set ts = tasks()
+            var ts = tasks()
             spawn in ts, T()
             while in :tasks ts, xxx {
                 println(1)
