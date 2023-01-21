@@ -144,7 +144,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         CEU_RET   ceu_ret_$n = ceu_ret;
                         CEU_Value ceu_acc_$n = ceu_acc;
 
-                        CEU_Value ceu_evt_$n = { CEU_VALUE_CORO, {.Dyn=ceu_coro} };
+                        CEU_Value ceu_evt_$n = { CEU_VALUE_X_CORO, {.Dyn=ceu_coro} };
                         CEU_BStack ceu_bstack_$n = { ceu_coro->up_dyns.dyns->up_block, ceu_bstack };
                         if (ceu_coro->up_dyns.dyns->up_block->up_coro != NULL) {
                             // enclosing coro of enclosing block
@@ -512,7 +512,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     ${this.xin.code()}
                     int ceu_err_$n = 0;
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
-                    if (ceu_acc.type == CEU_VALUE_CORO) {
+                    if (ceu_acc.type == CEU_VALUE_X_CORO) {
                         ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ceu_acc.Dyn, &ceu_mem->evt_$n);
                     } else if (ceu_acc.type == CEU_VALUE_TAG) {
                         if (ceu_acc.Tag == CEU_TAG_global) {
@@ -591,7 +591,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
                     ${this.coro.code()}
-                    if (ceu_acc.type != CEU_VALUE_CORO) {                
+                    if (ceu_acc.type != CEU_VALUE_X_CORO) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tk.str} error : expected coroutine");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
@@ -617,7 +617,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_CORO, {.Dyn=${this.non_fake_task_c()}->Task.coro} }")
+            is Expr.Task -> assrc("(CEU_Value) { CEU_VALUE_X_CORO, {.Dyn=${this.non_fake_task_c()}->Task.coro} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {
@@ -932,7 +932,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 // RESUME ${this.tk.dump()}
                     ${this.proto.code()}
                     CEU_Value ceu_coro_$n = ceu_acc;
-                    if (ceu_coro_$n.type!=CEU_VALUE_CORO || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
+                    if (ceu_coro_$n.type!=CEU_VALUE_X_CORO || (ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_YIELDED && ceu_coro_$n.Dyn->Bcast.status!=CEU_CORO_STATUS_TOGGLED)) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${resume!!.tk.pos.file} : (lin ${resume.tk.pos.lin}, col ${resume.tk.pos.col}) : resume error : expected yielded task");
                     }
                 """} +

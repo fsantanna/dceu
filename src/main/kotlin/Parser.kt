@@ -376,7 +376,7 @@ class Parser (lexer_: Lexer)
                                     ${pre0}do {
                                         var ceu_tasks_$N = ${col.tostr(true)}
                                         ```
-                                        if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_TASKS) {                
+                                        if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
                                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected tasks");
                                         }
                                         ```
@@ -389,7 +389,7 @@ class Parser (lexer_: Lexer)
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
                                                 var ceu_coro_$N
-                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                                `ceu_mem->ceu_coro_$N = (CEU_Value) { CEU_VALUE_X_CORO, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
                                                 var ${i.str} = track(ceu_coro_$N)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
