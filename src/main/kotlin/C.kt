@@ -161,7 +161,6 @@ fun Coder.main (): String {
             } upvs;
             union {
                 struct {
-                    int awakes;     // if it should awake even from non-clear bcasts
                     int n_mem;      // sizeof mem
                 } Task;
             };
@@ -863,7 +862,7 @@ fun Coder.main (): String {
             switch (cur->type) {
                 case CEU_VALUE_X_CORO:
                 case CEU_VALUE_X_TASK: {
-                    if (evt!=&CEU_EVT_CLEAR && !cur->Bcast.Coro.frame->proto->Task.awakes) {
+                    if (evt!=&CEU_EVT_CLEAR && cur->type!=CEU_VALUE_X_TASK) {
 //SPC_DEC(printf("<c< ceu_bcast_dyn = %p\n", cur));
                         return CEU_RET_RETURN;
                     } else {

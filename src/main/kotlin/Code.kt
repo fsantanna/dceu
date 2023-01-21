@@ -184,7 +184,6 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         ceu_proto_f_$n,
                         { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
                         { .Task = {
-                            ${if (this.tk.str == "task") 1 else 0},
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     }
