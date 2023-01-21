@@ -118,7 +118,7 @@ fun Coder.main (): String {
             CEU_VALUE_DICT,
             CEU_VALUE_BCAST,    // all below are bcast
             CEU_VALUE_CORO,     // spawned task
-            CEU_VALUE_COROS,    // pool of spawned tasks
+            CEU_VALUE_TASKS,    // pool of spawned tasks
             CEU_VALUE_TRACK
         } CEU_VALUE;
         
@@ -528,7 +528,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_CORO:
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                 case CEU_VALUE_TRACK:
                     // TODO: currently not gc'ed
                     break;
@@ -637,7 +637,7 @@ fun Coder.main (): String {
                     free(dyn->Bcast.Coro.frame->mem);
                     free(dyn->Bcast.Coro.frame);
                     break;
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                     ceu_dyns_free(&dyn->Bcast.Coros.dyns);
                     break;
                 default:
@@ -704,7 +704,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_CORO:
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                 case CEU_VALUE_TRACK:
                     break;
                 default:
@@ -761,7 +761,7 @@ fun Coder.main (): String {
                     }
                     break;
                 case CEU_VALUE_CORO:
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                 case CEU_VALUE_TRACK:
                     break;
                 default:
@@ -879,7 +879,7 @@ fun Coder.main (): String {
                         return MIN(ret, CEU_RET_RETURN);
                     }
                 }
-                case CEU_VALUE_COROS: {
+                case CEU_VALUE_TASKS: {
 //SPC_DEC(printf("<f< ceu_bcast_dyn = %p\n", cur));
                     return ceu_bcast_dyns(bstack, &cur->Bcast.Coros.dyns, evt);
                 case CEU_VALUE_TRACK:
@@ -942,7 +942,7 @@ fun Coder.main (): String {
                 case CEU_VALUE_DICT:
                 case CEU_VALUE_BCAST:
                 case CEU_VALUE_CORO:
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                 case CEU_VALUE_TRACK:
                     return ceu_sizeof(CEU_Value, Dyn);
                 default:
@@ -1180,13 +1180,13 @@ fun Coder.main (): String {
             assert(tasks != NULL);
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *tasks = (CEU_Dyn) {
-                CEU_VALUE_COROS, {NULL,-1}, NULL, 0, {
+                CEU_VALUE_TASKS, {NULL,-1}, NULL, 0, {
                     .Bcast = { CEU_CORO_STATUS_YIELDED, {
                         .Coros = { max, {0,0,NULL,blk} }
                     } }
                 }
             };            
-            *ret = (CEU_Value) { CEU_VALUE_COROS, {.Dyn=tasks} };
+            *ret = (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=tasks} };
             
             // hld is the enclosing block of "tasks()", not of T
             // T would be the outermost possible scope, but we use hld b/c
@@ -1234,7 +1234,7 @@ fun Coder.main (): String {
         }
         
         CEU_RET ceu_coro_create_in (CEU_Dyns* hld, CEU_Dyn* tasks, CEU_Value* task, CEU_Value* ret, int* ok) {
-            if (tasks->type != CEU_VALUE_COROS) {
+            if (tasks->type != CEU_VALUE_TASKS) {
                 CEU_THROW_MSG("\0 : coroutine error : expected tasks");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1371,7 +1371,7 @@ fun Coder.main (): String {
                 case CEU_VALUE_CORO:
                     printf("coro: %p", v->Dyn);
                     break;
-                case CEU_VALUE_COROS:
+                case CEU_VALUE_TASKS:
                     printf("tasks: %p", v->Dyn);
                     break;
                 case CEU_VALUE_TRACK:
@@ -1447,7 +1447,7 @@ fun Coder.main (): String {
                     case CEU_VALUE_FUNC:
                     case CEU_VALUE_TASK:
                     case CEU_VALUE_CORO:
-                    case CEU_VALUE_COROS:
+                    case CEU_VALUE_TASKS:
                     case CEU_VALUE_TRACK:
                         v = (e1->Dyn == e2->Dyn);
                         break;

@@ -376,7 +376,7 @@ class Parser (lexer_: Lexer)
                                     ${pre0}do {
                                         var ceu_tasks_$N = ${col.tostr(true)}
                                         ```
-                                        if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_COROS) {                
+                                        if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_TASKS) {                
                                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected tasks");
                                         }
                                         ```
