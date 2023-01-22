@@ -1,7 +1,8 @@
 # BUGS
 
+- detrack, scope 999
+    - ll_track16_hold_err
 - block defer should be after block clean up
-- HOLES / UNION
 - mudei coro,coros,track para isperm=0, preciso avaliar e testar
 - como vou fazer com os holes?
     - o certo seria
@@ -10,9 +11,6 @@
         - fazer o shift left
 - checar todos os bcasts e testar se estou morto
     - todo_status5
-- preciso voltar com ceu_block_evt pq alguem em paralelo com escopo mais aninhado poderia guardar evt
-    - ou nao permitir x=evt exatamente como x=v.pub
-- refcount: set rect = [orig.0, orig.1, orig.2, orig.3]
 - globals should be dyns like the others
     - currently they are not dealloc in block end
 

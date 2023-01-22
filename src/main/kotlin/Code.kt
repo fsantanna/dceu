@@ -238,7 +238,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                         ceu_mem->_${id}_ = &ceu_mem->block_$n;
                                     }
                                     if (ceu_i < ceu_n) {
-                                        if (ceu_args[ceu_i]->type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& ceu_args[ceu_i]->Dyn->isperm<2" }}) {
+                                        if (ceu_args[ceu_i]->type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& ceu_args[ceu_i]->Dyn->isperm!=CEU_PERM_ERR" }}) {
                                             ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
@@ -382,7 +382,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """
                     { // DCL ${this.tk.dump()}
                         ${(this.init && this.src!=null).cond { this.src!!.code() }}
-                        if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm<2" }}) {
+                        if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm!=CEU_PERM_ERR" }}) {
                             ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
@@ -685,7 +685,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     }
                     """
                     { // ACC - SET
-                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm<2" }}) {
+                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
                             ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",false,null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, ${if (dcl.tmp) 0 else 1});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
@@ -809,7 +809,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         val src = this.asdst_src()
                         """
-                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm<2" }}) {
+                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
                             ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }

@@ -2922,7 +2922,7 @@ class TTask {
         assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
     }
 
-    // TRACK
+    // TRACK / DETRACK
 
     @Test
     fun ll_track1_err() {
@@ -3237,6 +3237,21 @@ class TTask {
             }
             broadcast in :global, nil
             println(detrack(x))   ;; nil
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun ll_track16_hold_err() {
+        val out = all("""
+            var T = task (v) {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T(1)
+            while in :tasks ts, t {
+                var x = detrack(t)
+                println(x)
+            }
         """)
         assert(out == "nil\n") { out }
     }
