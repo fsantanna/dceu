@@ -858,7 +858,7 @@ class Parser (lexer_: Lexer)
                                     if not ceu_cnd_$N {
                                         yield ()
                                     }
-                                    (ceu_cnd_$N == true)
+                                    (not (not ceu_cnd_$N))
                                 }
                             }
                         """)//.let { println(it.tostr()); it }

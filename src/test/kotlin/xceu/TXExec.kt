@@ -1295,6 +1295,18 @@ class TXExec {
         """, true)
         assert(out == "1\n2\n3\n") { out }
     }
+    @Test
+    fun await19_notfalse() {
+        val out = all("""
+            spawn {
+                println(1)
+                await 10
+                println(2)
+            }
+            broadcast in :global, nil
+        """, true)
+        assert(out == "1\n2\n") { out }
+    }
 
     // FUNC / TASK
 
