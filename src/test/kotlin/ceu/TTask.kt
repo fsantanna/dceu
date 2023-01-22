@@ -3253,7 +3253,8 @@ class TTask {
                 println(x)
             }
         """)
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 8, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // EVT / DATA

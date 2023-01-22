@@ -1292,7 +1292,7 @@ fun Coder.main (): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 2));  // 2=cannot be reassigned
             return CEU_RET_RETURN;
         }
         
