@@ -53,7 +53,7 @@ fun String.id2c (): String {
                 Pair('&', "ampersand"),
                 Pair('#', "hash"),
             )
-            return "op_" + this.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
+            "op_" + this.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
         } else {
             val MAP = mapOf(
                 Pair('-', "_dash_"),

@@ -20,10 +20,11 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 .all_until(this) { it==dcl.blk }  // go up until find dcl blk
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
+        val idc = dcl.id.id2c()
         return when {
-            (fup == null) -> "(ceu_${mem}_${outer.n}->${dcl.id.id2c()})"
-            (N == 0) -> "(ceu_${mem}->${dcl.id.id2c()})"
-            else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->${dcl.id})"
+            (fup == null) -> "(ceu_${mem}_${outer.n}->$idc)"
+            (N == 0) -> "(ceu_${mem}->$idc)"
+            else -> "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->$idc)"
         }
     }
 
