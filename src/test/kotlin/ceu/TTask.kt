@@ -3563,4 +3563,17 @@ class TTask {
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
+    @Test
+    fun zz_xceu11 () {
+        val out = all("""
+            data :X = [x]
+            task () :X {
+                task () :fake {
+                    task.pub.x
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }

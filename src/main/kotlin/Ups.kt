@@ -77,6 +77,11 @@ class Ups (val outer: Expr.Do) {
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
+    fun first_true_task (e: Expr): Expr.Proto? {
+        return this.first(e) {
+            it is Expr.Proto && it.tk.str=="task" && !it.task!!.second
+        } as Expr.Proto?
+    }
     fun non_fake_x_c (e: Expr, str: String): String? {
         val n = this     // find first non fake
             .all_until(e) { it is Expr.Proto && it.tk.str==str && (it.task==null || !it.task.second) }
@@ -134,7 +139,7 @@ class Ups (val outer: Expr.Do) {
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
-                is Expr.Self -> (e.idx is Expr.Tag) && this.hasfirst(e) { (it is Expr.Proto) && (it.task != null) && (it.task.first != null) }
+                is Expr.Self -> (e.idx is Expr.Tag) && (this.first_true_task(e) != null)
                 // x.pub -> x:T
                 is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?
@@ -155,8 +160,7 @@ class Ups (val outer: Expr.Do) {
             (e.col is Expr.Pub) -> when (e.col.x) {
                 is Expr.Self -> {
                     // task.pub -> task (...) :T {...}
-                    val proto = this.first(e) { (it is Expr.Proto) && (it.task != null) } as Expr.Proto
-                    val tag = proto.task!!.first!!.str
+                    val tag = this.first_true_task(e)!!.task!!.first!!.str
                     this.tplates[tag]!!
                 }
                 is Expr.Acc -> {
@@ -318,7 +322,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Pub    -> {
                 this.x.traverse()
                 if (this.x is Expr.Self) {
-                    val ok = hasfirst(this) { it is Expr.Proto && (it.task==null || !it.task.second) }
+                    val ok = (first_true_task(this) != null)
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }
