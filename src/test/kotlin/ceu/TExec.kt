@@ -289,7 +289,7 @@ class TExec {
             set f = func (v) {
                 ;;println(v)
                 if v > 0 {
-                    [f(v-1)]
+                    [f(v - 1)]
                 } else {
                     0
                 }
@@ -305,7 +305,7 @@ class TExec {
             set f = func (v) {
                 var x
                 if v > 0 {
-                    set x = f(v-1)  ;; invalid set
+                    set x = f(v - 1)  ;; invalid set
                     [x]
                 } else {
                     0
@@ -324,7 +324,7 @@ class TExec {
             set f = func (v) {
                 if v > 0 {
                     var x
-                    set x = f(v-1)
+                    set x = f(v - 1)
                     [x] ;; invalid return
                 } else {
                     0
@@ -384,7 +384,7 @@ class TExec {
             set f = func (v) {
                 ;;println(v)
                 if v > 0 {
-                    copy([f(v-1)])
+                    copy([f(v - 1)])
                 } else {
                     0
                 }
@@ -476,7 +476,7 @@ class TExec {
         val out = all("""
             var v
             set v = #[10]
-            println(v[#v-1])
+            println(v[#v - 1])
         """, true)
         assert(out == "10\n") { out }
     }
@@ -701,7 +701,7 @@ class TExec {
             set v[#v] = 4
             set v[#v] = 5
             println(#v, v)
-            set v[#v-1] = nil
+            set v[#v - 1] = nil
             println(#v, v)
             ;;set #v = 2       ;; error
         """, true)
@@ -753,8 +753,8 @@ class TExec {
             var x
             set x = do :unnest :hide {
                 var i
-                set i = v[#v-1]
-                set v[#v-1] = nil
+                set i = v[#v - 1]
+                set v[#v - 1] = nil
                 i
             }
             println(x, #v)
@@ -806,6 +806,21 @@ class TExec {
             }
         """, true)
         assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun vector14_err() {
+        val out = all("""
+            set v[#v-1] = nil
+        """, true)
+        assert(out == "anon : (lin 2, col 20) : access error : variable \"v-1\" is not declared\n") { out }
+    }
+    @Test
+    fun vector15_err() {
+        val out = all("""
+            var v
+            v[#v-1]
+        """, true)
+        assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"\n") { out }
     }
 
     // STRINGS / CHAR

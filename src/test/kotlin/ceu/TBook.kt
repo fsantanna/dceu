@@ -246,7 +246,7 @@ class TBook {
                 if x == 0 {
                     1
                 } else {
-                    x * fact(x-1)
+                    x * fact(x - 1)
                 }
             }
             println(fact(5))
@@ -280,7 +280,7 @@ class TBook {
                 if x == 0 {
                     1
                 } else {
-                    x * fact(x-1)
+                    x * fact(x - 1)
                 }
             }
             println(fact(-1))

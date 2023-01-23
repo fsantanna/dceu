@@ -108,9 +108,10 @@ class TLexer {
     fun ids3() {
         val l = lexer("x-1 x-a")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
-        assert(tks.next().let { it is Tk.Op  && it.str == "-" })
-        assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x-1" })
+        //assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        //assert(tks.next().let { it is Tk.Op  && it.str == "-" })
+        //assert(tks.next().let { it is Tk.Num && it.str == "1" })
         assert(tks.next().let { it is Tk.Id  && it.str == "x-a" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())

@@ -1989,7 +1989,7 @@ class TXExec {
         val out = all("""
             var v
             set v = #[10]
-            println(v[#v-1])
+            println(v[#v - 1])
         """, true)
         assert(out == "10\n") { out }
     }

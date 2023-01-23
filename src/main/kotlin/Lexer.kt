@@ -226,7 +226,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
+                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetterOrDigit()) }
                     if (KEYWORDS.contains(id)) {
                          yield(Tk.Fix(id, pos))
                     } else {
