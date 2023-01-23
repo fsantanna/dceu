@@ -77,14 +77,15 @@ class Ups (val outer: Expr.Do) {
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
-    fun first_true_task (e: Expr): Expr.Proto? {
+    fun first_true_x (e: Expr, x: String): Expr.Proto? {
         return this.first(e) {
-            it is Expr.Proto && it.tk.str=="task" && !it.task!!.second
+            it is Expr.Proto && it.tk.str==x && (it.task==null || !it.task.second)
         } as Expr.Proto?
     }
-    fun non_fake_x_c (e: Expr, str: String): String? {
+    fun true_x_c (e: Expr, str: String): String? {
+        val x = this.first_true_x(e, str)
         val n = this     // find first non fake
-            .all_until(e) { it is Expr.Proto && it.tk.str==str && (it.task==null || !it.task.second) }
+            .all_until(e) { it == x }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
         return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
@@ -139,7 +140,7 @@ class Ups (val outer: Expr.Do) {
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
-                is Expr.Self -> (e.idx is Expr.Tag) && (this.first_true_task(e) != null)
+                is Expr.Self -> (e.idx is Expr.Tag) && (this.first_true_x(e,"task") != null)
                 // x.pub -> x:T
                 is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?
@@ -160,7 +161,7 @@ class Ups (val outer: Expr.Do) {
             (e.col is Expr.Pub) -> when (e.col.x) {
                 is Expr.Self -> {
                     // task.pub -> task (...) :T {...}
-                    val tag = this.first_true_task(e)!!.task!!.first!!.str
+                    val tag = this.first_true_x(e,"task")!!.task!!.first!!.str
                     this.tplates[tag]!!
                 }
                 is Expr.Acc -> {
@@ -322,14 +323,14 @@ class Ups (val outer: Expr.Do) {
             is Expr.Pub    -> {
                 this.x.traverse()
                 if (this.x is Expr.Self) {
-                    val ok = (first_true_task(this) != null)
+                    val ok = (first_true_x(this,this.x.tk.str) != null)
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }
                 }
             }
             is Expr.Self   -> {
-                if (non_fake_x_c(this, this.tk.str) == null) {
+                if (true_x_c(this, this.tk.str) == null) {
                     err(this.tk, "task error : missing enclosing task")
                 }
             }

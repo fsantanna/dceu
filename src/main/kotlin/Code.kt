@@ -490,7 +490,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             is Expr.Bcast -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str == "task")
-                val oktask = ups.non_fake_x_c(this, "task")
+                val oktask = ups.true_x_c(this, "task")
                 """
                 { // BCAST ${this.tk.dump()}
                     ${this.evt.code()}
@@ -609,7 +609,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.non_fake_x_c(this,this.tk.str)}->X.x} }")
+            is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->X.x} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {
