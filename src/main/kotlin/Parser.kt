@@ -517,7 +517,7 @@ class Parser (lexer_: Lexer)
                     """)
                 }
                 } else {
-                    Expr.X(tk0)
+                    Expr.Self(tk0)
                 }
             }
             this.acceptFix("catch") -> {

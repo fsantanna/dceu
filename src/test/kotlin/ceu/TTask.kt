@@ -3306,7 +3306,7 @@ class TTask {
                 println(task.pub.x)
             } ()
         """, true)
-        assert(out == "10\n20\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun mm_05_data_pub() {
@@ -3318,7 +3318,7 @@ class TTask {
             } ()
             println(t.pub.y)
         """, true)
-        assert(out == "10\n20\n") { out }
+        assert(out == "20\n") { out }
     }
     @Test
     fun mm_06_data_pool_pub() {

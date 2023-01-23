@@ -609,7 +609,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     CEU_PUB_$n:;
                 }
                 """
-            is Expr.X -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.non_fake_x_c(this,this.tk.str)}->X.x} }")
+            is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.non_fake_x_c(this,this.tk.str)}->X.x} }")
 
             is Expr.Nat -> {
                 val body = this.tk.str.let {
