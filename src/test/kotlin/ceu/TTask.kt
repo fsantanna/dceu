@@ -3291,23 +3291,41 @@ class TTask {
         assert(out == "10\n20\n") { out }
     }
     @Test
-    fun mm_03_data_pub() {
+    fun mm_03_data_pub_err() {
+        val out = all("""
+            task () :T { nil }
+        """, true)
+        assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared") { out }
+    }
+    @Test
+    fun mm_04_data_pub() {
         val out = all("""
             data :T = [x,y]
-            var t = spawn task () :T {
-                set pub = [10,20]
-                println(pub.x)
+            spawn task () :T {
+                set task.pub = [10,20]
+                println(task.pub.x)
+            } ()
+        """, true)
+        assert(out == "10\n20\n") { out }
+    }
+    @Test
+    fun mm_05_data_pub() {
+        val out = all("""
+            data :T = [x,y]
+            var t :T = spawn task () {
+                set task.pub = [10,20]
+                nil
             } ()
             println(t.pub.y)
         """, true)
         assert(out == "10\n20\n") { out }
     }
     @Test
-    fun mm_04_data_pool_pub() {
+    fun mm_06_data_pool_pub() {
         val out = all("""
             data :T = [x,y]
             var ts = tasks()
-            spawn in ts, task () :T {
+            spawn in ts, task () {
                 set pub = [10,20]
                 yield(nil)
             } ()

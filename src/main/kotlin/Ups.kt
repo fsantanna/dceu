@@ -132,6 +132,7 @@ class Ups (val outer: Expr.Do) {
         val id = e.col.tk.str
         val dcl = getDcl(e, id)
         return when (e.col) {
+            is Expr.Pub    -> (e.idx is Expr.Tag) && this.hasfirst(e) { (it is Expr.Proto) && (it.task != null) && (it.task.first != null) }
             is Expr.EvtErr -> (e.idx is Expr.Tag) && (dcl != null) && (evts[e.col] != null)
             is Expr.Acc    -> (e.idx is Expr.Tag) && (dcl!!.tag != null)
             is Expr.Index  -> this.tpl_is(e.col)
@@ -141,6 +142,11 @@ class Ups (val outer: Expr.Do) {
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         val id = e.col.tk.str
         return when {
+            (e.col is Expr.Pub) -> {
+                val proto = this.first(e) { (it is Expr.Proto) && (it.task != null) } as Expr.Proto
+                val tag = proto.task!!.first!!.str
+                this.tplates[tag]!!
+            }
             (e.col is Expr.EvtErr) -> {
                 val tag = evts[e.col]!!
                 this.tplates[tag]!!
@@ -169,7 +175,13 @@ class Ups (val outer: Expr.Do) {
     // 3. compiles all proto uprefs
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto -> this.body.traverse()
+            is Expr.Proto -> {
+                if (this.task!=null && this.task.first!=null && !tplates.containsKey(this.task.first!!.str)) {
+                    val tag = this.task.first!!
+                    err(tag, "declaration error : data ${tag.str} is not declared")
+                }
+                this.body.traverse()
+            }
             is Expr.Do -> {
                 if (this!=outer && this.ishide) {
                     val proto = ups[this]
