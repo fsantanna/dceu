@@ -132,7 +132,17 @@ class Ups (val outer: Expr.Do) {
         val id = e.col.tk.str
         val dcl = getDcl(e, id)
         return when (e.col) {
-            is Expr.Pub    -> (e.idx is Expr.Tag) && this.hasfirst(e) { (it is Expr.Proto) && (it.task != null) && (it.task.first != null) }
+            is Expr.Pub -> when (e.col.x) {
+                // task.pub -> task (...) :T {...}
+                is Expr.Self -> (e.idx is Expr.Tag) && this.hasfirst(e) { (it is Expr.Proto) && (it.task != null) && (it.task.first != null) }
+                // x.pub -> x:T
+                is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
+                // x.y.pub -> x.y?
+                is Expr.Index -> this.tpl_is(e.col.x)
+                // detrack(x).pub
+                is Expr.Call -> false   // TODO
+                else -> error("impossible case")
+            }
             is Expr.EvtErr -> (e.idx is Expr.Tag) && (dcl != null) && (evts[e.col] != null)
             is Expr.Acc    -> (e.idx is Expr.Tag) && (dcl!!.tag != null)
             is Expr.Index  -> this.tpl_is(e.col)
@@ -142,10 +152,24 @@ class Ups (val outer: Expr.Do) {
     fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         val id = e.col.tk.str
         return when {
-            (e.col is Expr.Pub) -> {
-                val proto = this.first(e) { (it is Expr.Proto) && (it.task != null) } as Expr.Proto
-                val tag = proto.task!!.first!!.str
-                this.tplates[tag]!!
+            (e.col is Expr.Pub) -> when (e.col.x) {
+                is Expr.Self -> {
+                    // task.pub -> task (...) :T {...}
+                    val proto = this.first(e) { (it is Expr.Proto) && (it.task != null) } as Expr.Proto
+                    val tag = proto.task!!.first!!.str
+                    this.tplates[tag]!!
+                }
+                is Expr.Acc -> {
+                    // x.pub -> x:T
+                    val tag = getDcl(e, e.col.x.tk.str)!!.tag!!
+                    this.tplates[tag]!!
+                }
+                is Expr.Index -> {
+                    // x.y.pub -> x.y?
+                    this.tpl_is(e.col.x)
+                    TODO()
+                }
+                else -> error("impossible case")
             }
             (e.col is Expr.EvtErr) -> {
                 val tag = evts[e.col]!!
@@ -157,11 +181,11 @@ class Ups (val outer: Expr.Do) {
             }
             (e.col is Expr.Index) -> {
                 e.col.idx as Expr.Tag
-                val id = e.col.idx.tk.str.drop(1)
+                val xid = e.col.idx.tk.str.drop(1)
                 val lst = this.tpl_lst(e.col)
-                val id_tag = lst.firstOrNull { it.first.str==id }!!
+                val id_tag = lst.firstOrNull { it.first.str==xid }!!
                 if (id_tag.second == null) {
-                    err(e.idx.tk, "index error : field \"$id\" is not a data")
+                    err(e.idx.tk, "index error : field \"$xid\" is not a data")
                 }
                 this.tplates[id_tag.second!!.str]!!
             }

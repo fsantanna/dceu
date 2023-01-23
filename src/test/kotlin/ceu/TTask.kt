@@ -2256,7 +2256,8 @@ class TTask {
         val out = all("""
             task.pub
         """, true)
-        assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
     @Test
     fun hh_pub3() {
@@ -2423,7 +2424,8 @@ class TTask {
                 task.pub
             }) ()
         """, true)
-        assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
     }
     @Test
     fun hh_pub11_err() {
@@ -2721,7 +2723,8 @@ class TTask {
         val out = all("""
             task.status
         """, true)
-        assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
+        //assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
+        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
     @Test
     fun ii_status3_err() {
@@ -3309,31 +3312,54 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun mm_05_data_pub() {
+    fun mm_05_data_pub_err() {
+        val out = all("""
+            var t = spawn task () { nil } ()
+            println(t.pub.y)
+        """, true)
+        assert(out == "anon : (lin 3, col 23) : index error : expected collection\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun mm_06_data_pub() {
         val out = all("""
             data :T = [x,y]
             var t :T = spawn task () {
                 set task.pub = [10,20]
-                nil
+                yield(nil)
             } ()
             println(t.pub.y)
         """, true)
         assert(out == "20\n") { out }
     }
     @Test
-    fun mm_06_data_pool_pub() {
+    fun todo_mm_07_data_pub() {
+        val out = all("""
+            data :T = [x,y]
+            var t :T = spawn task () {
+                set task.pub = [10,20]
+                nil
+            } ()
+            data :X = [a:T]
+            var x :X = [t]
+            println(x.a.pub.y)  // TODO: combine Pub/Index
+        """, true)
+        assert(out == "20\n") { out }
+    }
+    @Test
+    fun todo_mm_08_data_pool_pub() {
         val out = all("""
             data :T = [x,y]
             var ts = tasks()
             spawn in ts, task () {
-                set pub = [10,20]
+                set task.pub = [10,20]
                 yield(nil)
             } ()
-            while in ts, t:T {
-                println(detrack(t).pub.y)
+            while in :tasks ts, t:T {
+                println(detrack(t).pub.y)   // TODO: detrack needs to return to grammar
             }
         """, true)
-        assert(out == "10\n20\n") { out }
+        assert(out == "20\n") { out }
     }
 
     // XCEU

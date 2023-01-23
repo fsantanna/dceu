@@ -371,6 +371,7 @@ class Parser (lexer_: Lexer)
                         when {
                             tktag.str == ":tasks" -> {
                                 val pre0 = tk0.pos.pre()
+                                val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
                                 val blk = this.block()
                                 this.nest("""
                                     ${pre0}do {
@@ -397,7 +398,7 @@ class Parser (lexer_: Lexer)
                                                 ```
                                                     CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                                 ```
-                                                var ${i.str} = track(`:ceu ceu_x_$N`)
+                                                var ${i.str} ${tag.cond { tag!!.str }} = track(`:ceu ceu_x_$N`)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
                                                     set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
