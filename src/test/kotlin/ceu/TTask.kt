@@ -3298,7 +3298,22 @@ class TTask {
                 set pub = [10,20]
                 println(pub.x)
             } ()
-            println(pub.y)
+            println(t.pub.y)
+        """, true)
+        assert(out == "10\n20\n") { out }
+    }
+    @Test
+    fun mm_04_data_pool_pub() {
+        val out = all("""
+            data :T = [x,y]
+            var ts = tasks()
+            spawn in ts, task () :T {
+                set pub = [10,20]
+                yield(nil)
+            } ()
+            while in ts, t:T {
+                println(detrack(t).pub.y)
+            }
         """, true)
         assert(out == "10\n20\n") { out }
     }

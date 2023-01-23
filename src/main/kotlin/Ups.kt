@@ -79,7 +79,7 @@ class Ups (val outer: Expr.Do) {
     }
     fun non_fake_x_c (e: Expr, str: String): String? {
         val n = this     // find first non fake
-            .all_until(e) { it is Expr.Proto && it.tk.str==str && !it.fake }
+            .all_until(e) { it is Expr.Proto && it.tk.str==str && (it.task==null || !it.task.second) }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
         return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
@@ -281,7 +281,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {
                 if (this.x is Expr.X) {
-                    val ok = hasfirst(this) { it is Expr.Proto && !it.fake }
+                    val ok = hasfirst(this) { it is Expr.Proto && (it.task==null || !it.task.second) }
                     if (!ok) {
                         err(this.tk, "${this.tk.str} error : expected enclosing task")
                     }

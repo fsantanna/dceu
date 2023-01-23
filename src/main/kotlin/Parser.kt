@@ -495,17 +495,22 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("(")
                     val args = this.list0(")") {
                         this.acceptEnu("Id")
-                        val id = this.tk0 as Tk.Id
+                        val xid = this.tk0 as Tk.Id
                         val tag = if (!this.acceptEnu("Tag")) null else {
                             this.tk0 as Tk.Tag
                         }
-                        Pair(id, tag)
+                        Pair(xid, tag)
                     }
-                    val fake = (tk0.str == "task") && this.acceptTag(":fake")
+                    val task = when {
+                        (tk0.str != "task") -> null
+                        this.acceptTag(":fake") -> Pair(null, true)
+                        this.acceptEnu("Tag") -> Pair(this.tk0 as Tk.Tag, false)
+                        else -> Pair(null, false)
+                    }
                     val body = this.catch_block(this.tk1).let { (C,b) -> C(b) }.let {
                         if (it is Expr.Do) it else Expr.Do(tk0, true, true, listOf(it))
                     }
-                    val proto = Expr.Proto(tk0, fake, args, body)
+                    val proto = Expr.Proto(tk0, task, args, body)
                     if (id == null) proto else {
                     this.nest("""
                         ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 

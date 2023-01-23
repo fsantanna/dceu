@@ -16,7 +16,20 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
     }
     return when (this) {
-        is Expr.Proto  -> this.tk.str + " (" + this.args.map { (id,tag) -> id.tostr() + tag.cond {" ${tag!!.str}"} }.joinToString(",") + ") " + this.fake.cond{":fake "} + this.body.tostr(pre)
+        is Expr.Proto -> {
+            val args = this.args.map { (id,tag) ->
+                id.tostr() + tag.cond {" ${tag!!.str}"}
+            }.joinToString(",")
+            val task = this.task.let {
+                when {
+                    (it == null) -> ""
+                    (it.first != null) -> "${it.first!!.str} "
+                    it.second -> ":fake "
+                    else -> ""
+                }
+            }
+            this.tk.str + " (" + args + ") " + task + this.body.tostr(pre)
+        }
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + this.anns() + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> "var " + this.tk_.tostr() + this.tmp.cond { " :tmp" } + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
