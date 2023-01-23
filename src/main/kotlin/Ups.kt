@@ -140,7 +140,7 @@ class Ups (val outer: Expr.Do) {
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
-                is Expr.Self -> (e.idx is Expr.Tag) && (this.first_true_x(e,"task") != null)
+                is Expr.Self -> (e.idx is Expr.Tag) && (this.first_true_x(e,"task").let { it!=null && it.task!!.first!=null })
                 // x.pub -> x:T
                 is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?

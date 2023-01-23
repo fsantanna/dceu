@@ -3361,6 +3361,18 @@ class TTask {
         """, true)
         assert(out == "20\n") { out }
     }
+    @Test
+    fun mm_09_data_pool_pub() {
+        val out = all("""
+            spawn task () {
+                set task.pub.x = 10
+                nil
+            } ()
+        """)
+        assert(out == "anon : (lin 2, col 19) : task () { set task.pub[:x] = 10 nil }()\n" +
+                "anon : (lin 3, col 26) : index error : expected collection\n" +
+                ":error\n") { out }
+    }
 
     // XCEU
 
