@@ -1,6 +1,6 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val defers: MutableMap<Expr.Do, MutableList<Pair<Int,String>>> = mutableMapOf()
     val mem: String = outer.mem()
@@ -58,7 +58,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val isx = (this.tk.str != "func")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
-                    ${(sta.upvs_protos_refs[this] ?: emptySet()).map {
+                    ${(clos.protos_refs[this] ?: emptySet()).map {
                         "CEU_Value $it;"
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
@@ -171,18 +171,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                    ${if (sta.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
+                    ${if (clos.protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
                         ceu_proto_f_$n,
-                        { ${sta.upvs_protos_refs[this]?.size ?: 0}, NULL },
+                        { ${clos.protos_refs[this]?.size ?: 0}, NULL },
                         { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     }
                 );
-                ${(sta.upvs_protos_refs[this] ?: emptySet()).map {
+                ${(clos.protos_refs[this] ?: emptySet()).map {
                     val dcl = vars.assertIsDeclared(this, Pair(it,1), this.tk)
                     val btw = ups
                         .all_until(this) { dcl.blk==it }
@@ -384,7 +384,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val bupc = ups.first_block(this)!!.toc(true)
                 val dcl = vars.get(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
-                if (dcl!=null && dcl.upv==1 && !sta.upvs_vars_refs.contains(dcl)) {
+                if (dcl!=null && dcl.upv==1 && !clos.vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 if (id == "evt") "" else {

@@ -1,5 +1,6 @@
 package ceu
 
+import Clos
 import D
 import Lexer
 import Parser
@@ -49,8 +50,9 @@ fun all (inp: String, pre: Boolean=false): String {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
         val ups = Ups(outer)
         val vars = Vars(outer, ups)
+        val clos = Clos(outer, ups, vars)
         val sta = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, sta)
+        val coder = Coder(outer, ups, vars, clos, sta)
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {

@@ -16,24 +16,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
-    // Protos that cannot be closures:
-    //  - they access at least 1 free var w/o upval modifiers
-    //  - for each var access ACC, we get its declaration DCL in block BLK
-    //      - if ACC/DCL have no upval modifiers
-    //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
-    val upvs_protos_noclos = mutableSetOf<Expr>()
-
-    // Upvars (var ^up) with refs (^^up):
-    //  - at least one refs access the var
-    //  - for each var access ACC, we get its declaration DCL and set here
-    //  - in another round (Code), we assert that the DCL appears here
-    //  - TODO: can also be used to warn for unused normal vars
-    val upvs_vars_refs = mutableSetOf<Var>()
-
-    // Set of uprefs within protos:
-    //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
-    val upvs_protos_refs = mutableMapOf<Expr.Proto,MutableSet<String>>()
-
     // funcs that set vars in enclosing tasks
     //  - they are marked and cannot receive "evt"
     //  - otherwise, we do not check with ceu_block_set
@@ -120,9 +102,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.body.traverse()
             }
-            is Expr.Do -> {
-                this.es.forEach { it.traverse() }
-            }
+            is Expr.Do -> this.es.forEach { it.traverse() }
             is Expr.Dcl -> {
                 this.src?.traverse()
                 val id = this.tk.str
@@ -211,34 +191,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {
-                val dcl = vars.get(this, this.tk.str)
-                when {
-                    (dcl == null) -> {}
-                    (dcl.upv==1 && this.tk_.upv==2) -> {
-                        upvs_vars_refs.add(dcl) // UPVS_VARS_REFS
-
-                        // UPVS_PROTOS_REFS
-                        ups.all_until(this) { dcl.blk==it }
-                            .filter { it is Expr.Proto }
-                            .let { it as List<Expr.Proto> }
-                            .forEach { proto ->
-                                val set = upvs_protos_refs[proto] ?: mutableSetOf()
-                                set.add(this.tk.str)
-                                if (upvs_protos_refs[proto] == null) {
-                                    upvs_protos_refs[proto] = set
-                                }
-                            }
-                    }
-                    // UPVS_PROTOS_NOCLOS
-                    (dcl.blk!=outer && dcl.upv==0 && this.tk_.upv==0) -> {
-                        // access to normal noglb w/o upval modifier
-                        ups.all_until(this) { it == dcl.blk }       // stop at enclosing declaration block
-                            .filter { it is Expr.Proto }            // all crossing protos
-                            .forEach { upvs_protos_noclos.add(it) }        // mark them as noclos
-                    }
-                }
-            }
+            is Expr.Acc    -> {}
             is Expr.EvtErr -> {
                 val dcl = vars.get(this, "evt")
                 if (dcl?.tag != null) {
