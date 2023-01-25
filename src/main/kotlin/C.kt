@@ -281,7 +281,7 @@ fun Coder.main (): String {
 
         int ceu_gc_count = 0;
         
-        ${ ups.tags.values.let {
+        ${ sta.tags.values.let {
             fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
                 return l
                     .groupBy { it.first() }
@@ -317,7 +317,7 @@ fun Coder.main (): String {
             var last = "NULL"
             var i1 = 0
             l3.map { it1 ->
-                val (s1,c1,e1) = ups.tags[':'+it1.first]!!
+                val (s1,c1,e1) = sta.tags[':'+it1.first]!!
                 val ie1 = e1 ?: i1++
                 val prv1 = last
                 last = "&ceu_tag_$c1"
@@ -326,7 +326,7 @@ fun Coder.main (): String {
                 #define CEU_TAG_$c1 ($ie1)
                 CEU_Tags_Names ceu_tag_$c1 = { CEU_TAG_$c1, "$s1", $prv1 };
                 """ + it1.second.map { it2 ->
-                    val (s2,c2,e2) = ups.tags[':'+it1.first+'.'+it2.first]!!
+                    val (s2,c2,e2) = sta.tags[':'+it1.first+'.'+it2.first]!!
                     assert(e2 == null)
                     i2++
                     val prv2 = last
@@ -336,7 +336,7 @@ fun Coder.main (): String {
                     #define CEU_TAG_$c2 (($i2 << 8) | $ie1)
                     CEU_Tags_Names ceu_tag_$c2 = { CEU_TAG_$c2, "$s2", $prv2 };
                     """ + it2.second.map { it3 ->
-                        val (s3,c3,e3) = ups.tags[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
+                        val (s3,c3,e3) = sta.tags[':'+it1.first+'.'+it2.first+'.'+it3.first]!!
                         assert(e3 == null)
                         i3++
                         val prv3 = last
@@ -346,7 +346,7 @@ fun Coder.main (): String {
                         #define CEU_TAG_$c3 (($i3 << 16) | ($i2 << 8) | $ie1)
                         CEU_Tags_Names ceu_tag_$c3 = { CEU_TAG_$c3, "$s3", $prv3 };
                         """ + it3.second.map { it4 ->
-                            val (s4,c4,e4) = ups.tags[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
+                            val (s4,c4,e4) = sta.tags[':'+it1.first+'.'+it2.first+'.'+it3.first+'.'+it4.first]!!
                             assert(e4 == null)
                             i4++
                             val prv4 = last

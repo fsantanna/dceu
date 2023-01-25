@@ -1,6 +1,6 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups) {
+class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code()
@@ -44,7 +44,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
 
     fun Expr.func_novars_task (): Boolean {
         val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
-        return !(func==null || ups.funcs_vars_tasks.contains(func))
+        return !(func==null || sta.funcs_vars_tasks.contains(func))
     }
 
     fun Expr.code(): String {
@@ -57,7 +57,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val isx = (this.tk.str != "func")
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
-                    ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
+                    ${(sta.upvs_protos_refs[this] ?: emptySet()).map {
                         "CEU_Value $it;"
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
@@ -170,19 +170,19 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                    ${if (ups.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
+                    ${if (sta.upvs_protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
                         ceu_proto_f_$n,
-                        { ${ups.upvs_protos_refs[this]?.size ?: 0}, NULL },
+                        { ${sta.upvs_protos_refs[this]?.size ?: 0}, NULL },
                         { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     }
                 );
-                ${(ups.upvs_protos_refs[this] ?: emptySet()).map {
-                    val dcl = ups.assertIsDeclared(this, Pair(it,1), this.tk)
+                ${(sta.upvs_protos_refs[this] ?: emptySet()).map {
+                    val dcl = sta.assertIsDeclared(this, Pair(it,1), this.tk)
                     val btw = ups
                         .all_until(this) { dcl.blk==it }
                         .filter { it is Expr.Proto }
@@ -209,7 +209,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
                     val x = if (ups.intask(this)) "ceu_x" else "NULL"
-                    val vars = ups.xblocks[this]!!.syms.values.let { dcls ->
+                    val vars = sta.xblocks[this]!!.syms.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.init }
                             .map    { it.id }
@@ -274,7 +274,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             }
                         }
                         { // reset defers
-                            ${ups.xblocks[this]!!.defers.map {
+                            ${sta.xblocks[this]!!.defers.map {
                                 "ceu_mem->defer_${it.first} = 0;\n"
                             }.joinToString("")}
                         }
@@ -331,7 +331,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                                 }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
-                                    ${ups.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
+                                    ${sta.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
                                     if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                         ceu_acc_$n = ceu_acc;
                                     }
@@ -380,9 +380,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val id = this.tk.str
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
-                val dcl = ups.getDcl(this, id)
+                val dcl = sta.getDcl(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
-                if (dcl!=null && dcl.upv==1 && !ups.upvs_vars_refs.contains(dcl)) {
+                if (dcl!=null && dcl.upv==1 && !sta.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 if (id == "evt") "" else {
@@ -474,7 +474,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 }
                 """
             is Expr.Defer -> {
-                ups.xblocks[ups.first_block(this)!!]!!.defers.add(
+                sta.xblocks[ups.first_block(this)!!]!!.defers.add(
                     Pair(n,
                         """
                         if (ceu_mem->defer_$n) {
@@ -663,7 +663,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            val dcl = ups.assertIsDeclared(this, Pair(id,0), this.tk)
+                            val dcl = sta.assertIsDeclared(this, Pair(id,0), this.tk)
                             id = this.id2c(dcl,0)
                             "($id)$no"
                         }
@@ -688,12 +688,12 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Acc -> {
                 val id = this.tk.str
-                val dcl = ups.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
+                val dcl = sta.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
                     val src = this.asdst_src()
-                    ups.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
+                    sta.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }
@@ -767,9 +767,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Index -> {
                 var idx = -1
-                if (ups.tpl_is(this)) {
+                if (sta.tpl_is(this)) {
                     val id = this.idx.tk.str.drop(1)
-                    idx = ups.tpl_lst(this).indexOfFirst { it.first.str==id }
+                    idx = sta.tpl_lst(this).indexOfFirst { it.first.str==id }
                     //assert(idx >= 0)
                 }
                 fun Expr.Index.has_pub_evt (): String? {

@@ -2411,7 +2411,7 @@ class TXExec {
                     }
                     println(:20)
                     await evt==:E
-                    println(:40)
+                    println(:30)
                 }
             }
             println(:1)
@@ -2420,6 +2420,6 @@ class TXExec {
             broadcast in :global, :E
             println(:3)
         """)
-        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
+        assert(out == ":10\n:a\n:20\n:1\n:2\n:b\n:30\n:10\n:a\n:20\n:3\n") { out }
     }
 }

@@ -2021,7 +2021,7 @@ class TTask {
                     println(1)
                     broadcast in :global, 1
                 }
-            }
+            } ()
             println(2)
         """)
         assert(out == "1\n2\n") { out }

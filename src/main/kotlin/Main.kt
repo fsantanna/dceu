@@ -121,7 +121,8 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
         val ups = Ups(outer)
-        val coder = Coder(outer, ups)
+        val sta = Static(outer, ups)
+        val coder = Coder(outer, ups, sta)
         coder.main()
     } catch (e: Throwable) {
         //throw e;

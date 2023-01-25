@@ -204,7 +204,11 @@ func {<|<} (^f,^g) {
 ;; random-seed, random
 
 func random-seed (n) {
-    `srand($n.Number);`
+    if n {
+        `srand($n.Number);`
+    } else {
+        `srand(time());`
+    }
 }
 
 func random-next () {

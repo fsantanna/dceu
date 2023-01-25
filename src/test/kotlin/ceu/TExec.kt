@@ -6,6 +6,7 @@ import Parser
 import Expr
 import Coder
 import Pos
+import Static
 import Ups
 import XCEU
 import exec
@@ -22,9 +23,9 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
+val VALGRIND = ""
 val THROW = false
-val VALGRIND = "valgrind "
+//val VALGRIND = "valgrind "
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
@@ -46,7 +47,8 @@ fun all (inp: String, pre: Boolean=false): String {
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
         val ups = Ups(outer)
-        val coder = Coder(outer, ups)
+        val sta = Static(outer, ups)
+        val coder = Coder(outer, ups, sta)
         coder.main()
     } catch (e: Throwable) {
         if (THROW) {
@@ -812,7 +814,7 @@ class TExec {
         val out = all("""
             set v[#v-1] = nil
         """, true)
-        assert(out == "anon : (lin 2, col 20) : access error : variable \"v-1\" is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 20) : access error : variable \"v-1\" is not declared") { out }
     }
     @Test
     fun vector15_err() {
@@ -820,7 +822,7 @@ class TExec {
             var v
             v[#v-1]
         """, true)
-        assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"\n") { out }
+        assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
     }
 
     // STRINGS / CHAR
