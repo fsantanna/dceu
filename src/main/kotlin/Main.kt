@@ -120,12 +120,13 @@ fun all (name: String, reader: Reader, args: List<String>): String {
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
-        val ups = Ups(outer)
-        val tags = Tags(outer)
-        val vars = Vars(outer, ups)
-        val clos = Clos(outer, ups, vars)
-        val sta = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos, sta)
+        val ups   = Ups(outer)
+        val tags  = Tags(outer)
+        val vars  = Vars(outer, ups)
+        val datas = Datas(outer, ups, vars)
+        val clos  = Clos(outer, ups, vars)
+        val sta   = Static(outer, ups, vars)
+        val coder = Coder(outer, ups, vars, datas, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;

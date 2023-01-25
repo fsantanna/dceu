@@ -6,6 +6,7 @@ import Lexer
 import Parser
 import Expr
 import Coder
+import Datas
 import Pos
 import Static
 import Tags
@@ -52,9 +53,10 @@ fun all (inp: String, pre: Boolean=false): String {
         val ups = Ups(outer)
         val tags = Tags(outer)
         val vars = Vars(outer, ups)
+        val datas = Datas(outer, ups, vars)
         val clos = Clos(outer, ups, vars)
         val sta = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos, sta)
+        val coder = Coder(outer, ups, vars, datas, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
