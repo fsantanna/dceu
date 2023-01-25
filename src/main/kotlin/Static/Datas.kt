@@ -2,11 +2,6 @@ class Datas (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val datas = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
 
-    // funcs that set vars in enclosing tasks
-    //  - they are marked and cannot receive "evt"
-    //  - otherwise, we do not check with ceu_block_set
-    val funcs_vars_tasks = mutableSetOf<Expr.Proto>()
-
     init {
         outer.traverse()
     }
@@ -77,22 +72,22 @@ class Datas (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto -> {
+            is Expr.Proto  -> {
                 if (this.task!=null && this.task.first!=null && !datas.containsKey(this.task.first!!.str)) {
                     val tag = this.task.first!!
                     err(tag, "declaration error : data ${tag.str} is not declared")
                 }
                 this.body.traverse()
             }
-            is Expr.Do -> this.es.forEach { it.traverse() }
-            is Expr.Dcl -> {
+            is Expr.Do     -> this.es.forEach { it.traverse() }
+            is Expr.Dcl    -> {
                 this.src?.traverse()
                 val id = this.tk.str
                 if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
             }
-            is Expr.Set -> {
+            is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
             }
@@ -101,7 +96,7 @@ class Datas (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> {}
-            is Expr.Data -> {
+            is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
                 if (datas.containsKey(this.tk.str)) {
                     err(this.tk, "data error : data ${this.tk.str} is already declared")

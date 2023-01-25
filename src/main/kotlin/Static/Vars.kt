@@ -60,8 +60,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto -> this.body.traverse()
-            is Expr.Do -> {
+            is Expr.Proto  -> this.body.traverse()
+            is Expr.Do     -> {
                 if (this!=outer && this.ishide) {
                     val proto = ups.pub[this]
                     pub[this] = if (proto !is Expr.Proto) {
@@ -78,7 +78,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
                 this.es.forEach { it.traverse() }
             }
-            is Expr.Dcl -> {
+            is Expr.Dcl    -> {
                 this.src?.traverse()
                 val id = this.tk.str
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
@@ -95,7 +95,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
             }
-            is Expr.Set -> {
+            is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
             }

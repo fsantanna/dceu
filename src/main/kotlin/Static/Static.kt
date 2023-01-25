@@ -1,19 +1,19 @@
-class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
+class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // funcs that set vars in enclosing tasks
     //  - they are marked and cannot receive "evt"
     //  - otherwise, we do not check with ceu_block_set
     val funcs_vars_tasks = mutableSetOf<Expr.Proto>()
 
     init {
-        this.outer.traverse()
+        outer.traverse()
     }
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto -> this.body.traverse()
-            is Expr.Do -> this.es.forEach { it.traverse() }
-            is Expr.Dcl -> this.src?.traverse()
-            is Expr.Set -> {
+            is Expr.Proto  -> this.body.traverse()
+            is Expr.Do     -> this.es.forEach { it.traverse() }
+            is Expr.Dcl    -> this.src?.traverse()
+            is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
                 val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
