@@ -1,14 +1,13 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String,Var>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
 data class Var (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
-    val pub = mutableMapOf<Expr,XBlock> (
+    val pub = mutableMapOf<Expr,MutableMap<String,Var>> (
         Pair (
             outer,
-            XBlock(GLOBALS.map {
+            GLOBALS.map {
                 Pair(it,Var(it,false, null, true,0,outer))
-            }.toMap().toMutableMap(), mutableListOf())
+            }.toMap().toMutableMap()
         )
     )
 
@@ -18,7 +17,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun get (e: Expr, id: String): Var? {
         val up = ups.pub[e]
-        val dcl = this.pub[e]?.syms?.get(id)
+        val dcl = this.pub[e]?.get(id)
         return when {
             (dcl != null) -> dcl
             (up == null) -> null
@@ -69,7 +68,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Do -> {
                 if (this!=outer && this.ishide) {
                     val proto = ups.pub[this]
-                    val args = if (proto !is Expr.Proto) {
+                    pub[this] = if (proto !is Expr.Proto) {
                         mutableMapOf()
                     } else {
                         proto.args.let {
@@ -80,7 +79,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             })
                         }.toMap().toMutableMap()
                     }
-                    pub[this] = XBlock(args, mutableListOf())
                 }
                 this.es.forEach { it.traverse() }
             }
@@ -90,8 +88,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup.syms[id] = Var(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Var("_${id}_", false,null, false, this.tk_.upv, bup)
+                xup[id] = Var(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
+                xup["_${id}_"] = Var("_${id}_", false,null, false, this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
