@@ -1,20 +1,6 @@
 class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
-    val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
     val datas = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
-
-    fun add_tag (tk: Tk, id: String, c: String, enu: String?) {
-        if (tags.containsKey(id)) {
-            // already there
-        } else {
-            val issub = id.contains('.')
-            val sup = id.dropLastWhile { it != '.' }.dropLast(1)
-            if (issub && !tags.containsKey(sup)) {
-                err(tk, "tag error : parent tag $sup is not declared")
-            }
-            tags[id] = Triple(id, c, enu)
-        }
-    }
 
     // funcs that set vars in enclosing tasks
     //  - they are marked and cannot receive "evt"
@@ -89,10 +75,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
-    // Traverse the tree structure from top down
-    // 1. assigns this.xblocks
-    // 2. assigns this.upvs_protos_noclos, upvs_vars_refs, upvs_protos_refs
-    // 3. compiles all proto uprefs
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> {
@@ -127,26 +109,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
-            is Expr.Enum   -> this.tags.forEach {
-                if (it.first.str.contains('.')) {
-                    err(it.first, "enum error : enum tag cannot contain '.'")
-                }
-                var E = ""
-                var I = 0
-                this.tags.forEachIndexed { i, (tag,nat) ->
-                    val n = if (nat == null) {
-                        I++
-                        "($E) + $I"
-                    } else {
-                        E = nat.str
-                        I = 0
-                        nat.str
-                    }
-                    add_tag(tag, tag.str, tag.str.tag2c(), n)
-                }
-            }
+            is Expr.Enum   -> {}
             is Expr.Data -> {
-                add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
                 if (datas.containsKey(this.tk.str)) {
                     err(this.tk, "data error : data ${this.tk.str} is already declared")
@@ -199,7 +163,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.Nil    -> {}
-            is Expr.Tag    -> add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
+            is Expr.Tag    -> {}
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}

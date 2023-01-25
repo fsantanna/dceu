@@ -21,10 +21,6 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
         this.outer.traverse()
     }
 
-    // Traverse the tree structure from top down
-    // 1. assigns this.xblocks
-    // 2. assigns this.upvs_protos_noclos, upvs_vars_refs, upvs_protos_refs
-    // 3. compiles all proto uprefs
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> this.body.traverse()

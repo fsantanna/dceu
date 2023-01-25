@@ -8,6 +8,7 @@ import Expr
 import Coder
 import Pos
 import Static
+import Tags
 import Ups
 import Vars
 import XCEU
@@ -49,11 +50,12 @@ fun all (inp: String, pre: Boolean=false): String {
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
         val ups = Ups(outer)
+        val tags = Tags(outer)
         val vars = Vars(outer, ups)
         val clos = Clos(outer, ups, vars)
         val sta = Static(outer, ups, vars)
         val coder = Coder(outer, ups, vars, clos, sta)
-        coder.main()
+        coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
             throw e
