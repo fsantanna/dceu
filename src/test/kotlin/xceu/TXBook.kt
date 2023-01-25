@@ -174,12 +174,12 @@ class TXBook {
     // CHAPTER 1.5: Definitions
 
     @Test
-    fun pg_18_signum() {
+    fun todo_ifs_pg_18_signum() {
         val out = ceu.all("""
             func signum (x) {
-                ifs x {
-                    < 0  -> -1
-                    > 0  ->  1
+                ifs {
+                    x < 0  -> -1
+                    x > 0  ->  1
                     else -> 0
                 }
             }
@@ -216,19 +216,19 @@ class TXBook {
     // CHAPTER 2.1: Booleans
 
     @Test
-    fun pg_30_bool() {
+    fun todo_ifs_pg_30_bool() {
         val out = ceu.all("""
             func fact (x) {
-                ifs x {
-                    <  0 -> throw(:error)
-                    == 0 -> 1
+                ifs {
+                    x < 0  -> throw(:error)
+                    x == 0 -> 1
                     else -> x * fact(x - 1)
                 }
             }
             println(fact(-1))
         """, true)
-        assert(out == "anon : (lin 13, col 21) : fact({-}(1))\n" +
-                "anon : (lin 5, col 21) : throw(:error)\n" +
+        assert(out == "anon : (lin 9, col 21) : fact({-}(1))\n" +
+                "anon : (lin 4, col 31) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
