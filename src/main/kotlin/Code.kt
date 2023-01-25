@@ -1,6 +1,6 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val mem: String = outer.mem()
     val code: String = outer.code()
@@ -182,7 +182,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                     }
                 );
                 ${(sta.upvs_protos_refs[this] ?: emptySet()).map {
-                    val dcl = sta.assertIsDeclared(this, Pair(it,1), this.tk)
+                    val dcl = vars.assertIsDeclared(this, Pair(it,1), this.tk)
                     val btw = ups
                         .all_until(this) { dcl.blk==it }
                         .filter { it is Expr.Proto }
@@ -209,7 +209,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
                     val x = if (ups.intask(this)) "ceu_x" else "NULL"
-                    val vars = sta.xblocks[this]!!.syms.values.let { dcls ->
+                    val xvars = vars.xblocks[this]!!.syms.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.init }
                             .map    { it.id }
@@ -268,13 +268,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                             }
                         }
                         { // because of "decrement refs" below
-                            ${vars.map { if (it == "evt") "" else """
+                            ${xvars.map { if (it == "evt") "" else """
                                 ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")
                             }
                         }
                         { // reset defers
-                            ${sta.xblocks[this]!!.defers.map {
+                            ${vars.xblocks[this]!!.defers.map {
                                 "ceu_mem->defer_${it.first} = 0;\n"
                             }.joinToString("")}
                         }
@@ -331,14 +331,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                                 }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
-                                    ${sta.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
+                                    ${vars.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
                                     if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                         ceu_acc_$n = ceu_acc;
                                     }
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                                 { // decrement refs
-                                    ${vars.map { if (it == "evt") "" else
+                                    ${xvars.map { if (it == "evt") "" else
                                         """
                                         if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
                                             // skip globals
@@ -380,7 +380,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                 val id = this.tk.str
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
-                val dcl = sta.getDcl(this, id)
+                val dcl = vars.getDcl(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
                 if (dcl!=null && dcl.upv==1 && !sta.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -474,7 +474,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                 }
                 """
             is Expr.Defer -> {
-                sta.xblocks[ups.first_block(this)!!]!!.defers.add(
+                vars.xblocks[ups.first_block(this)!!]!!.defers.add(
                     Pair(n,
                         """
                         if (ceu_mem->defer_$n) {
@@ -663,7 +663,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                             if (id.length == 0) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
-                            val dcl = sta.assertIsDeclared(this, Pair(id,0), this.tk)
+                            val dcl = vars.assertIsDeclared(this, Pair(id,0), this.tk)
                             id = this.id2c(dcl,0)
                             "($id)$no"
                         }
@@ -688,12 +688,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
             }
             is Expr.Acc -> {
                 val id = this.tk.str
-                val dcl = sta.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
+                val dcl = vars.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
                     val src = this.asdst_src()
-                    sta.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
+                    vars.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }

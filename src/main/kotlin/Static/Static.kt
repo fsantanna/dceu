@@ -1,14 +1,4 @@
-// func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
-data class Dcl (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
-
-class Static (val outer: Expr.Do, val ups: Ups) {
-    val xblocks = mutableMapOf<Expr,XBlock> (
-        Pair (
-            outer,
-            XBlock(GLOBALS.map { Pair(it,Dcl(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
-        )
-    )
+class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
     val datas = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
@@ -53,58 +43,15 @@ class Static (val outer: Expr.Do, val ups: Ups) {
         this.outer.traverse()
     }
 
-    fun getDcl (e: Expr, id: String): Dcl? {
-        val up = ups.pub[e]
-        val dcl = this.xblocks[e]?.syms?.get(id)
-        return when {
-            (dcl != null) -> dcl
-            (up == null) -> null
-            else -> this.getDcl(up, id)
-        }
-    }
-    fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.getDcl(e,id)!=null && id!="evt") {
-            err(tk, "declaration error : variable \"$id\" is already declared")
-        }
-    }
-    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Dcl {
-        val (id,upv) = v
-        val dcl = this.getDcl(e,id)
-        val nocross = dcl?.blk.let { blk ->
-            (blk == null) || ups.all_until(e) { it==blk }.none { it is Expr.Proto }
-        }
-        return when {
-            (dcl == null) -> {
-                val l = id.split('-')
-                val x = l
-                    .mapIndexed { i,_ ->
-                        l.drop(i).scan(emptyList<String>()) { acc, s -> acc + s }
-                    }
-                    .flatten()
-                    .filter { it.size>0 && it.size<l.size }
-                    .map { it.joinToString("-") }
-                val amb = x.firstOrNull { this.getDcl(e,it) != null }
-                if (amb != null) {
-                    err(tk, "access error : \"${id}\" is ambiguous with \"${amb}\"") as Dcl
-                } else {
-                    err(tk, "access error : variable \"${id}\" is not declared") as Dcl
-                }
-            }
-            (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Dcl
-            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Dcl
-            else -> dcl
-        }
-    }
-
     fun data_is (e: Expr.Index): Boolean {
         val id = e.col.tk.str
-        val dcl = getDcl(e, id)
+        val dcl = vars.getDcl(e, id)
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
                 is Expr.Self -> (e.idx is Expr.Tag) && (ups.first_true_x(e,"task").let { it!=null && it.task!!.first!=null })
                 // x.pub -> x:T
-                is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
+                is Expr.Acc -> (e.idx is Expr.Tag) && (vars.getDcl(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?
                 is Expr.Index -> this.data_is(e.col.x)
                 // detrack(x).pub
@@ -128,7 +75,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 }
                 is Expr.Acc -> {
                     // x.pub -> x:T
-                    val tag = getDcl(e, e.col.x.tk.str)!!.tag!!
+                    val tag = vars.getDcl(e, e.col.x.tk.str)!!.tag!!
                     this.datas[tag]!!
                 }
                 is Expr.Index -> {
@@ -143,7 +90,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 this.datas[tag]!!
             }
             (e.col is Expr.Acc) -> {
-                val dcl = getDcl(e, id)!!
+                val dcl = vars.getDcl(e, id)!!
                 this.datas[dcl.tag]!!
             }
             (e.col is Expr.Index) -> {
@@ -174,41 +121,13 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 this.body.traverse()
             }
             is Expr.Do -> {
-                if (this!=outer && this.ishide) {
-                    val proto = ups.pub[this]
-                    val args = if (proto !is Expr.Proto) {
-                        mutableMapOf()
-                    } else {
-                        proto.args.let {
-                            (it.map { (id,tag) ->
-                                Pair(id.str, Dcl(id.str, false, tag?.str, true, id.upv, this))
-                            } + it.map { (id,_) ->
-                                Pair("_${id.str}_", Dcl("_${id.str}_", false, null, false, id.upv, this))
-                            })
-                        }.toMap().toMutableMap()
-                    }
-                    xblocks[this] = XBlock(args, mutableListOf())
-                }
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl -> {
                 this.src?.traverse()
                 val id = this.tk.str
-                val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
-                val xup = xblocks[bup]!!
-                assertIsNotDeclared(this, id, this.tk)
                 if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
-                }
-                xup.syms[id] = Dcl(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Dcl("_${id}_", false,null, false, this.tk_.upv, bup)
-                when {
-                    (this.tk_.upv == 2) -> {
-                        err(tk, "var error : cannot declare an upref")
-                    }
-                    (this.tk_.upv==1 && bup==outer) -> {
-                        err(tk, "var error : cannot declare a global upvar")
-                    }
                 }
             }
             is Expr.Set -> {
@@ -217,17 +136,11 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
                 if (func != null) {
                     val acc = this.dst.base()
-                    val dcl = getDcl(this, acc.tk.str)!!
+                    val dcl = vars.getDcl(this, acc.tk.str)!!
                     val intask = ups.first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
                     if (intask) {
                         funcs_vars_tasks.add(func as Expr.Proto)
                     }
-                }
-                when (this.dst) {
-                    is Expr.Acc   -> ""
-                    is Expr.Index -> ""
-                    is Expr.Pub   -> ""
-                    else -> error("impossible case")
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
@@ -299,7 +212,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = getDcl(this, this.tk.str)
+                val dcl = vars.getDcl(this, this.tk.str)
                 when {
                     (dcl == null) -> {}
                     (dcl.upv==1 && this.tk_.upv==2) -> {
@@ -327,7 +240,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.EvtErr -> {
-                val dcl = getDcl(this, "evt")
+                val dcl = vars.getDcl(this, "evt")
                 if (dcl?.tag != null) {
                     evts[this] = dcl.tag
                 }
@@ -353,48 +266,6 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
-        }
-    }
-
-    // builds the tree structure from bottom up
-    fun Expr.tree (): Map<Expr,Expr> {
-        fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
-            return l.map { it.tree() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
-        }
-        return when (this) {
-            is Expr.Proto  -> this.map(listOf(this.body))
-            is Expr.Do     -> this.map(this.es)
-            is Expr.Dcl    -> this.map(listOfNotNull(this.src))
-            is Expr.Set    -> this.map(listOf(this.dst, this.src))
-            is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
-            is Expr.While  -> this.map(listOf(this.cnd, this.body))
-            is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
-            is Expr.Defer  -> this.map(listOf(this.body))
-            is Expr.Enum   -> emptyMap()
-            is Expr.Data -> emptyMap()
-            is Expr.Pass   -> this.map(listOf(this.e))
-
-            is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.tasks))
-            is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
-            is Expr.Yield  -> this.map(listOf(this.arg))
-            is Expr.Resume -> this.map(listOf(this.call))
-            is Expr.Toggle -> this.map(listOf(this.task, this.on))
-            is Expr.Pub    -> this.map(listOf(this.x))
-            is Expr.Self   -> emptyMap()
-
-            is Expr.Nat    -> emptyMap()
-            is Expr.Acc    -> emptyMap()
-            is Expr.EvtErr -> emptyMap()
-            is Expr.Nil    -> emptyMap()
-            is Expr.Tag    -> emptyMap()
-            is Expr.Bool   -> emptyMap()
-            is Expr.Char   -> emptyMap()
-            is Expr.Num    -> emptyMap()
-            is Expr.Tuple  -> this.map(this.args)
-            is Expr.Vector -> this.map(this.args)
-            is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
-            is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.proto)) + this.map(this.args)
         }
     }
 }
