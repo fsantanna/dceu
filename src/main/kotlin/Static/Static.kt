@@ -44,15 +44,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Resume -> this.call.traverse()
             is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> {
-                this.x.traverse()
-                if (this.x is Expr.Self) {
-                    val ok = (ups.first_true_x(this,this.x.tk.str) != null)
-                    if (!ok) {
-                        err(this.tk, "${this.tk.str} error : expected enclosing task")
-                    }
-                }
-            }
+            is Expr.Pub    -> this.x.traverse()
             is Expr.Self   -> {
                 if (ups.true_x_c(this, this.tk.str) == null) {
                     err(this.tk, "task error : missing enclosing task")

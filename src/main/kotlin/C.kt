@@ -9,6 +9,7 @@ fun Coder.main (tags: Tags): String {
         #include <string.h>
         #include <assert.h>
         #include <stdarg.h>
+        #include <time.h>
         #include <math.h>
 
         #undef MAX

@@ -323,10 +323,11 @@ class TXExec {
     @Test
     fun spawn4() {
         val out = all("""
+            var ts
             (spawn in ts, T()) where {
             }
         """)
-        assert(out == "anon : (lin 2, col 23) : access error : variable \"ts\" is not declared") { out }
+        assert(out == "anon : (lin 3, col 23) : access error : variable \"ts\" is not declared") { out }
     }
 
     // PARAND / PAROR / WATCHING
@@ -1078,9 +1079,10 @@ class TXExec {
     @Test
     fun await4_err() {
         val out = all("""
+            var f
             await f()
         """)
-        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task") { out }
+        assert(out == "anon : (lin 2, col 19) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun await5() {
@@ -1241,7 +1243,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_7271...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_7294...)\n" +
                 "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
                 ":error\n") { out }
@@ -1357,7 +1359,7 @@ class TXExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 5, col 38) : pub error : expected enclosing task") { out }
+        assert(out == "anon : (lin 5, col 33) : task error : expected enclosing task") { out }
     }
     @Test
     fun task5_pub_fake() {

@@ -79,7 +79,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl    -> {
-                this.src?.traverse()
                 val id = this.tk.str
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = pub[bup]!!
@@ -94,6 +93,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }
+                this.src?.traverse()
             }
             is Expr.Set    -> {
                 this.dst.traverse()
