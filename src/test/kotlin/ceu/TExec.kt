@@ -814,9 +814,10 @@ class TExec {
     @Test
     fun vector14_err() {
         val out = all("""
+            ;;var v
             set v[#v-1] = nil
         """, true)
-        assert(out == "anon : (lin 2, col 20) : access error : variable \"v-1\" is not declared") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"v\" is not declared") { out }
     }
     @Test
     fun vector15_err() {
@@ -2334,7 +2335,7 @@ class TExec {
             set f = func (^x) {
                 func () {
                     set ^^x = []  ;; err: cannot reassign
-                    ^^x + g
+                    ;;^^x + g
                 }
             }
             println(f([])())

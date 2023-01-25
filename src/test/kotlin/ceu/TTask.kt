@@ -459,17 +459,17 @@ class TTask {
     @Test
     fun bb_spawn7_err() {
         val out = all("""
+            var t
+            set t = task () { nil }
             var f
             set f = func () {
                 spawn t()
             }
-            var t
-            set t = task () { nil }
             f()
             println(:ok)
         """)
         assert(out == "anon : (lin 8, col 13) : f()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 5, col 29) : set error : incompatible scopes\n:error\n") { out }
         //assert(out == ":ok\n") { out }
     }
     @Test
@@ -527,11 +527,11 @@ class TTask {
     @Test
     fun bb_coro_spawn11() {
         val out = all("""
+            var t
             var f
             set f = func () {
                 t
             }
-            var t
             set t = coro () {
                 println(1)
                 do {
@@ -581,6 +581,16 @@ class TTask {
         """)
         //assert(out == ":ok\n") { out }
         assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun bb_14_err() {
+        val out = all("""
+            var f = func () {
+                t
+            }
+            var t
+        """)
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared") { out }
     }
 
     // SPAWN / GROUP
