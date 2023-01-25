@@ -1,10 +1,9 @@
-package ceu
-import all
+package xceu
 
 import org.junit.Ignore
 import org.junit.Test
 
-class TBook {
+class TXBook {
 
     // CHAPTER 1: Fundamental concepts
 
@@ -12,60 +11,47 @@ class TBook {
 
     @Test
     fun pg_2_square() {
-        val out = all(
-            """
-            var square
-            set square = func (x) {
+        val out = ceu.all("""
+            var square = func (x) {
                 x * x
             }
             println(square(5))
-        """, true
-        )
+        """, true)
         assert(out == "25\n") { out }
     }
     @Test
     fun pg_2_smaller() {
-        val out = all(
-            """
-            var smaller
-            set smaller = func (x,y) {
+        val out = ceu.all("""
+            var smaller = func (x,y) {
                 if x < y { x } else { y }
             }
             println(smaller(1,2))
             println(smaller(1,1))
             println(smaller(2,1))
-        """, true
-        )
+        """, true)
         assert(out == "1\n1\n1\n") { out }
     }
     @Test
     fun pg_3_square_smaller() {
-        val out = all(
-            """
-            var square
-            set square = func (x) {
+        val out = ceu.all("""
+            func square (x) {
                 x * x
             }
-            var smaller
-            set smaller = func (x,y) {
-                if x < y { x } else { y }
+            func smaller (x,y) {
+                ((x < y) and x) or y
             }
             println(square(smaller(3,5)))
-        """, true
-        )
+        """, true)
         assert(out == "9\n") { out }
     }
     @Test
     fun pg_3_delta() {
-        val out = all(
-            """
-            var delta
-            set delta = func (a,b,c) {
+        val out = ceu.all("""
+            func delta (a,b,c) {
                 ((b**2) - (4*(a*c))) // 2
             }
             println(delta(4.2,7,2.3))
-        """, true
-        )
+        """, true)
         assert(out == "3.2187\n") { out }
     }
 
@@ -79,16 +65,13 @@ class TBook {
 
     @Test
     fun pg_11_currying() {
-        val out = all(
-            """
-            var smallerc
-            set smallerc = func (^x) {
+        val out = ceu.all("""
+            func smallerc (^x) {
                 func (y) {
                     if ^^x < y { ^^x } else { y }
                 }
             }
-            var plusc
-            set plusc = func (^x) {
+            func plusc (^x) {
                 func (y) {
                     ^^x+y
                 }
@@ -100,117 +83,91 @@ class TBook {
     }
     @Test
     fun pg_12_twice_quad() {
-        val out = all(
-            """
-            var square
-            set square = func (x) {
+        val out = ceu.all("""
+            func square (x) {
                 x**2
             }
-            var twice
-            set twice = func (f,x) {
+            func twice (f,x) {
                 f(f(x))
             }
-            var quad
-            set quad = func (x) {
+            func quad (x) {
                 twice(square,x)
             }
             println(twice(square, 2), quad(2))
-        """, true
-        )
+        """, true)
         assert(out == "16\t16\n") { out }
     }
     @Test
     fun pg_12_twicec() {
-        val out = all(
-            """
-            var square
-            set square = func (x) {
+        val out = ceu.all("""
+            func square (x) {
                 x**2
             }
-            var twicec
-            set twicec = func (^f) {
+            func twicec (^f) {
                 func (v) {
                     ^^f(^^f(v))
                 }
             }
-            var quad
-            set quad = twicec(square)
-            println(quad(2))
-        """, true
+            var quad = twicec(square)
+            println(quad(2))""", true
         )
         assert(out == "16\n") { out }
     }
     @Test
-    fun todo_pg_13_curry() {
-        val out = all("""
-            var curry
-            set curry = func (^f) {
+    fun pg_13_curry() {
+        val out = ceu.all("""
+            func curry (^f) {
                 func (^x) {
                     func (y) {
                         ^^f(^^x,y)
                     }
                 }
             }
-            var plusc
-            set plusc = curry({+})
-            println(:a, plusc)
+            var plusc = curry({+})
             var b = plusc(1)
-            println(:b, b)
             var c = b(2)
-            println(:c, c)
             println((plusc(1))(-4))
         """, true)
         assert(out == "-3\n") { out }
     }
     @Test
     fun pg_13_uncurry() {
-        val out = all(
-            """
-            var plusc
-            set plusc = func (^x) {
+        val out = ceu.all("""
+            func plusc (^x) {
                 func (y) {
                     ^^x + y
                 }
             }
-            var uncurry
-            set uncurry = func (^f) {
+            func uncurry (^f) {
                 func (x,y) {
                     ^^f(x)(y)
                 }            
             }
             println(uncurry(plusc)(1,-4))
-        """, true
-        )
+        """, true)
         assert(out == "-3\n") { out }
     }
     @Test
     fun pg_13_ops() {
-        val out = all(
-            """
+        val out = ceu.all("""
             println({*}(1 + 3, 4))
-        """, true
-        )
+        """, true)
         assert(out == "16\n") { out }
     }
     @Test
     fun pg_15_compose() {
-        val out = all(
-            """
-            var compose
-            set compose = func (^f,^g) {
+        val out = ceu.all("""
+            func compose (^f,^g) {
                 func (v) {
                     ^^f(^^g(v))
                 }
             }
-            var square
-            set square = func (x) {
+            func square (x) {
                 x**2
             }
-            var quad
-            set quad = compose(square,square)
+            var quad = compose(square,square)
             println(quad(2))
-        """, true
-        )
+        """, true)
         assert(out == "16\n") { out }
     }
 
@@ -218,31 +175,22 @@ class TBook {
 
     @Test
     fun pg_18_signum() {
-        val out = all(
-            """
-            var signum
-            set signum = func (x) {
-                if x < 0 {
-                    -1
-                } else {
-                    if x > 0 {
-                        1
-                    } else {
-                        0
-                    }
+        val out = ceu.all("""
+            func signum (x) {
+                ifs x {
+                    < 0  -> -1
+                    > 0  ->  1
+                    else -> 0
                 }
             }
             println(signum(10), signum(-9), signum(0))
-        """, true
-        )
+        """, true)
         assert(out == "1\t-1\t0\n") { out }
     }
     @Test
     fun pg_19_fact() {
-        val out = all(
-            """
-            var fact
-            set fact = func (x) {
+        val out = ceu.all("""
+            func fact (x) {
                 if x == 0 {
                     1
                 } else {
@@ -250,8 +198,7 @@ class TBook {
                 }
             }
             println(fact(5))
-        """, true
-        )
+        """, true)
         assert(out == "120\n") { out }
     }
 
@@ -270,35 +217,27 @@ class TBook {
 
     @Test
     fun pg_30_bool() {
-        val out = all(
-            """
-            var fact
-            set fact = func (x) {
-                if x < 0 {
-                    throw(:error)
-                } else {nil}
-                if x == 0 {
-                    1
-                } else {
-                    x * fact(x - 1)
+        val out = ceu.all("""
+            func fact (x) {
+                ifs x {
+                    <  0 -> throw(:error)
+                    == 0 -> 1
+                    else -> x * fact(x - 1)
                 }
             }
             println(fact(-1))
-        """, true
-        )
+        """, true)
         assert(out == "anon : (lin 13, col 21) : fact({-}(1))\n" +
                 "anon : (lin 5, col 21) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
     @Test
-    fun todo_pg_31_short() {    // TODO: user and/or
-        val out = all(
-            """
-            println(if false { throw(:error) } else { true })
-            println(if true { true } else { throw(:error) })
-        """, true
-        )
+    fun pg_31_short() {
+        val out = ceu.all("""
+            println((false and throw(:error)) or true)
+            println(true or throw(:error))
+        """, true)
         assert(out == "true\ntrue\n") { out }
     }
     @Test
@@ -311,58 +250,46 @@ class TBook {
     }
     @Test
     fun pg_33_leap1() {
-        val out = all(
-            """
-            var leapyear?
-            set leapyear? = func (y) {
-                if ((y % 100) == 0) {
-                    ((y % 400) == 0)
+        val out = ceu.all("""
+            func leapyear? (y) {
+                if (y % 100) == 0 {
+                    (y % 400) == 0
                 } else {
-                    ((y % 4) == 0)
+                    (y % 4) == 0
                 }
             }
             println(leapyear?(1980))
             println(leapyear?(1979))
-        """, true
-        )
+        """, true)
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun todo_pg_33_leap2() {    // TODO: and or
-        val out = all(
-            """
-            var leapyear?
-            set leapyear? = func (y) {
-                ((y % 100) == 0) && ((y % 400) == 0) || ((y % 4) == 0)
+    fun pg_33_leap2() {
+        val out = ceu.all("""
+            func leapyear? (y) {
+                ((y % 100) == 0) and ((y % 400) == 0) or ((y % 4) == 0)
             }
             println(leapyear?(1980))
             println(leapyear?(1979))
-        """, true
-        )
+        """, true)
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun todo_pg_34_tri() { // :Triangle.Equilateral
-        val out = all(
-        """
-             :Equ   
-             :Iso   
-             :Sca   
-             :Err
-             var analyse
-             set analyse = func (x,y,z) {
-                if (x+y) <= z {
-                    :Err
-                } else {
-                    if x == z {
-                        :Equ
-                    } else {
-                        if (x == y) || (y == z) {
-                            :Iso
-                        } else {
-                            :Sca
-                        }
-                    }
+    fun pg_34_tri() { // :Triangle.Equilateral
+        val out = ceu.all("""
+            data :Tri = [] {
+                :Equ = []
+                :Iso = []
+                :Sca = []
+                :Err = []
+            }
+            func analyse (x,y,z) {
+                ifs {
+                    (x+y) <= z -> :Tri.Err
+                    x == z     -> :Tri.Equ
+                    x == y     -> :Tri.Iso
+                    y == z     -> :Tri.Iso
+                    else       -> :Tri.Sca
                 }
              }
             println(analyse(10,20,30))
@@ -370,11 +297,10 @@ class TBook {
             println(analyse(10,20,20))
             println(analyse(10,10,10))
         """, true)
-        assert(out == ":Err\n:Sca\n:Iso\n:Equ\n") { out }
+        assert(out == ":Tri.Err\n:Tri.Sca\n:Tri.Iso\n:Tri.Equ\n") { out }
     }
 
     // CHAPTER 2.2: Characters
     // TODO
-
 
 }
