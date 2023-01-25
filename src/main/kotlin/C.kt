@@ -1,6 +1,7 @@
 fun Coder.main (): String {
     return ("" +
     """ // INCLUDES / PROTOS
+        //#define CEU_DEBUG
         #include <stdio.h>
         #include <stdlib.h>
         #include <stddef.h>

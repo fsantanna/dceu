@@ -85,8 +85,8 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     """}}
                     ${isx.cond{"""
                         CEU_Dyn* ceu_x = ceu_frame->X.x;
-                        #ifdef XXX
-                        printf("pc=%2d, status=%d, coro=%p\n", ceu_frame->X.pc, ceu_x->Bcast.status, ceu_x);
+                        #ifdef CEU_DEBUG
+                        printf("pc=%2d, status=%d, coro=%p, evt=%d\n", ceu_frame->X.pc, ceu_x->Bcast.status, ceu_x, ceu_n==CEU_ARG_EVT && ceu_args[0]==&CEU_EVT_CLEAR);
                         #endif
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
@@ -221,6 +221,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     { // BLOCK ${this.tk.dump()}
                         ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                         void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
+                        #ifdef CEU_DEBUG
+                        printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
+                        #endif
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
                             val istask = (f_b.tk.str != "func")
@@ -278,6 +281,9 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                         do { // block
                             $ES
                         } while (0); // block
+                        #ifdef CEU_DEBUG
+                        printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, $x);
+                        #endif
                         if (ceu_ret == CEU_RET_THROW) {
                             // must be before frees
                             ${(f_b == null).cond { "ceu_error_list_print();" }}
@@ -493,11 +499,18 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                 val oktask = ups.true_x_c(this, "task")
                 """
                 { // BCAST ${this.tk.dump()}
+                    ${intask.cond {"""
+                    ceu_frame->X.pc = $n;   // because of clear
+                case $n:
+                    CEU_CONTINUE_ON_CLEAR_THROW();
+                    """}}
+
                     ${this.evt.code()}
                     ceu_mem->evt_$n = ceu_acc;
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
-                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
+                    int ceu_evt_2 = (ceu_mem->evt_$n.type>=CEU_VALUE_TUPLE && ceu_mem->evt_$n.type<=CEU_VALUE_DICT);
+                    if (ceu_evt_2) {
                         ceu_evt_set(ceu_mem->evt_$n.Dyn, 2);
                     }
                     
@@ -531,7 +544,7 @@ class Coder (val outer: Expr.Do, val ups: Ups) {
                     // it is safe to modify after check above:
                     //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
                     //  - if it was set to 1, we dont need to reset anyways
-                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
+                    if (ceu_evt_2) {
                         ceu_evt_set(ceu_mem->evt_$n.Dyn, 1);
                     }
 

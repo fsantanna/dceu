@@ -2393,4 +2393,33 @@ class TXExec {
         """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
     }
+    @Test
+    fun all13_self_kill () {
+        val out = all("""
+            spawn {
+                while true {
+                    println(:10)
+                    spawn {
+                        println(:a)
+                        await evt==:E
+                        do {
+                            println(:b)
+                            broadcast in :global, :E
+                            println(:c)
+                        }
+                        println(:d)
+                    }
+                    println(:20)
+                    await evt==:E
+                    println(:40)
+                }
+            }
+            println(:1)
+            broadcast in :global, nil
+            println(:2)
+            broadcast in :global, :E
+            println(:3)
+        """)
+        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
+    }
 }

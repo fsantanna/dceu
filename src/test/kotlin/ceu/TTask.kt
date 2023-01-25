@@ -1971,7 +1971,7 @@ class TTask {
         assert(out == "true\tfalse\ttrue\tfalse\n") { out }
     }
     @Test
-    fun todo_ff_pool25_reuse_awake() {
+    fun todo_ff_pool26_reuse_awake() {
         val out = ceu.all(
             """
             var T = task (n) {
@@ -2003,6 +2003,28 @@ class TTask {
         """
         )
         assert(out == "1\nfalse\n") { out }
+    }
+    @Test
+    fun ff_pool27_term() {
+        val out = all("""
+            var T = task () {
+                spawn task () {
+                    yield(nil)
+                }()
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            spawn in ts, T()
+            spawn task () {
+                while in :tasks ts, xxx {
+                    println(1)
+                    broadcast in :global, 1
+                }
+            }
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
     }
 
     // EVT
