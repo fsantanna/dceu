@@ -323,7 +323,7 @@ class TXExec {
     @Test
     fun spawn4() {
         val out = all("""
-            var ts
+            task T () {}
             (spawn in ts, T()) where {
             }
         """)
@@ -1082,7 +1082,7 @@ class TXExec {
             var f
             await f()
         """)
-        assert(out == "anon : (lin 2, col 19) : yield error : expected enclosing coro or task") { out }
+        assert(out == "anon : (lin 3, col 13) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun await5() {

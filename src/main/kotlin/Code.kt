@@ -1,6 +1,6 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val datas: Datas, val clos: Clos, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val defers: MutableMap<Expr.Do, MutableList<Pair<Int,String>>> = mutableMapOf()
     val mem: String = outer.mem()
@@ -768,9 +768,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val datas: Datas,
             }
             is Expr.Index -> {
                 var idx = -1
-                if (datas.xis(this)) {
+                if (vars.data_is(this)) {
                     val id = this.idx.tk.str.drop(1)
-                    idx = datas.lst(this).indexOfFirst { it.first.str==id }
+                    idx = vars.data_lst(this).indexOfFirst { it.first.str==id }
                     //assert(idx >= 0)
                 }
                 fun Expr.Index.has_pub_evt (): String? {
