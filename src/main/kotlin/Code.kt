@@ -29,10 +29,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
     }
 
     fun Expr.isdst (): Boolean {
-        return ups.ups[this].let { it is Expr.Set && it.dst==this }
+        return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
     fun Expr.asdst_src (): String {
-        return "(ceu_mem->set_${(ups.ups[this] as Expr.Set).n})"
+        return "(ceu_mem->set_${(ups.pub[this] as Expr.Set).n})"
     }
     fun Expr.assrc (v: String): String {
         return if (this.isdst()) {
@@ -189,8 +189,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
                     """
-                    ceu_gc_inc(&${ups.ups[this]!!.id2c(dcl,upv)});
-                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.ups[this]!!.id2c(dcl,upv)};
+                    ceu_gc_inc(&${ups.pub[this]!!.id2c(dcl,upv)});
+                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.pub[this]!!.id2c(dcl,upv)};
                     """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
@@ -200,7 +200,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
             is Expr.Do -> {
                 val ES = this.es.map { it.code() }.joinToString("")
                 if (!this.isnest) ES else {
-                    val up = ups.ups[this]
+                    val up = ups.pub[this]
                     val bup = up?.let { ups.first_block(it) }
                     val f_b = up?.let { ups.first_proto_or_block(it) }
                     val depth = when {
@@ -773,7 +773,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                     //assert(idx >= 0)
                 }
                 fun Expr.Index.has_pub_evt (): String? {
-                    val up = ups.ups[this]
+                    val up = ups.pub[this]
                     return when {
                         (this.col is Expr.Pub) -> "pub"
                         (this.col is Expr.EvtErr && this.col.tk.str=="evt") -> "evt"
@@ -849,7 +849,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
             }
             is Expr.Call -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val up = ups.ups[this]!!
+                val up = ups.pub[this]!!
                 val resume = ups.all_until(up) { it is Expr.Resume }.let { es ->
                     when {
                         es.isEmpty() -> null
@@ -863,7 +863,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
                         (fst == null) -> null
                         (fst.tasks == this) -> null
                         es.drop(1).all { grp ->
-                            (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.ups[grp].let { it is Expr.Spawn && it.call==grp }
+                            (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.pub[grp].let { it is Expr.Spawn && it.call==grp }
                         } -> fst
                         else -> null
                     }

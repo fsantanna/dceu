@@ -1,8 +1,8 @@
-class Ups (val outer: Expr.Do) {
-    val ups = outer.tree()
+class Ups (outer: Expr.Do) {
+    val pub = outer.traverse()
 
     fun all_until (e: Expr, cnd: (Expr)->Boolean): List<Expr> {
-        val up = ups[e]
+        val up = pub[e]
         return when {
             cnd(e) -> listOf(e)
             (up == null) -> emptyList()
@@ -35,9 +35,9 @@ class Ups (val outer: Expr.Do) {
         return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
     }
 
-    fun Expr.tree (): Map<Expr,Expr> {
+    fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
-            return l.map { it.tree() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
+            return l.map { it.traverse() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
@@ -49,7 +49,7 @@ class Ups (val outer: Expr.Do) {
             is Expr.Catch  -> this.map(listOf(this.cnd, this.body))
             is Expr.Defer  -> this.map(listOf(this.body))
             is Expr.Enum   -> emptyMap()
-            is Expr.Data -> emptyMap()
+            is Expr.Data   -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
 
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.tasks))

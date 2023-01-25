@@ -2,8 +2,7 @@
 data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
 data class Dcl (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
-class Static (val outer: Expr.Do, ups: Ups) {
-    val ups = ups
+class Static (val outer: Expr.Do, val ups: Ups) {
     val xblocks = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
@@ -55,7 +54,7 @@ class Static (val outer: Expr.Do, ups: Ups) {
     }
 
     fun getDcl (e: Expr, id: String): Dcl? {
-        val up = ups.ups[e]
+        val up = ups.pub[e]
         val dcl = this.xblocks[e]?.syms?.get(id)
         return when {
             (dcl != null) -> dcl
@@ -176,7 +175,7 @@ class Static (val outer: Expr.Do, ups: Ups) {
             }
             is Expr.Do -> {
                 if (this!=outer && this.ishide) {
-                    val proto = ups.ups[this]
+                    val proto = ups.pub[this]
                     val args = if (proto !is Expr.Proto) {
                         mutableMapOf()
                     } else {
