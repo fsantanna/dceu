@@ -28,7 +28,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - for each var access ACC, we get its declaration DCL and set here
     //  - in another round (Code), we assert that the DCL appears here
     //  - TODO: can also be used to warn for unused normal vars
-    val upvs_vars_refs = mutableSetOf<Dcl>()
+    val upvs_vars_refs = mutableSetOf<Var>()
 
     // Set of uprefs within protos:
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
@@ -45,13 +45,13 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     fun data_is (e: Expr.Index): Boolean {
         val id = e.col.tk.str
-        val dcl = vars.getDcl(e, id)
+        val dcl = vars.get(e, id)
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
                 is Expr.Self -> (e.idx is Expr.Tag) && (ups.first_true_x(e,"task").let { it!=null && it.task!!.first!=null })
                 // x.pub -> x:T
-                is Expr.Acc -> (e.idx is Expr.Tag) && (vars.getDcl(e, e.col.x.tk.str)!!.tag != null)
+                is Expr.Acc -> (e.idx is Expr.Tag) && (vars.get(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?
                 is Expr.Index -> this.data_is(e.col.x)
                 // detrack(x).pub
@@ -75,7 +75,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 is Expr.Acc -> {
                     // x.pub -> x:T
-                    val tag = vars.getDcl(e, e.col.x.tk.str)!!.tag!!
+                    val tag = vars.get(e, e.col.x.tk.str)!!.tag!!
                     this.datas[tag]!!
                 }
                 is Expr.Index -> {
@@ -90,7 +90,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.datas[tag]!!
             }
             (e.col is Expr.Acc) -> {
-                val dcl = vars.getDcl(e, id)!!
+                val dcl = vars.get(e, id)!!
                 this.datas[dcl.tag]!!
             }
             (e.col is Expr.Index) -> {
@@ -136,7 +136,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
                 if (func != null) {
                     val acc = this.dst.base()
-                    val dcl = vars.getDcl(this, acc.tk.str)!!
+                    val dcl = vars.get(this, acc.tk.str)!!
                     val intask = ups.first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
                     if (intask) {
                         funcs_vars_tasks.add(func as Expr.Proto)
@@ -212,7 +212,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = vars.getDcl(this, this.tk.str)
+                val dcl = vars.get(this, this.tk.str)
                 when {
                     (dcl == null) -> {}
                     (dcl.upv==1 && this.tk_.upv==2) -> {
@@ -240,7 +240,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.EvtErr -> {
-                val dcl = vars.getDcl(this, "evt")
+                val dcl = vars.get(this, "evt")
                 if (dcl?.tag != null) {
                     evts[this] = dcl.tag
                 }

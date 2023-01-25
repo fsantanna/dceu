@@ -1,12 +1,12 @@
 // func (args) or block (locals)
-data class XBlock (val syms: MutableMap<String,Dcl>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
-data class Dcl (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
+data class XBlock (val syms: MutableMap<String,Var>, val defers: MutableList<Pair<Int,String>>)    // Triple<n,code>
+data class Var (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
-    val xblocks = mutableMapOf<Expr,XBlock> (
+    val pub = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,Dcl(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map { Pair(it,Var(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
         )
     )
 
@@ -14,23 +14,23 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         this.outer.traverse()
     }
 
-    fun getDcl (e: Expr, id: String): Dcl? {
+    fun get (e: Expr, id: String): Var? {
         val up = ups.pub[e]
-        val dcl = this.xblocks[e]?.syms?.get(id)
+        val dcl = this.pub[e]?.syms?.get(id)
         return when {
             (dcl != null) -> dcl
             (up == null) -> null
-            else -> this.getDcl(up, id)
+            else -> this.get(up, id)
         }
     }
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.getDcl(e,id)!=null && id!="evt") {
+        if (this.get(e,id)!=null && id!="evt") {
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
-    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Dcl {
+    fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Var {
         val (id,upv) = v
-        val dcl = this.getDcl(e,id)
+        val dcl = this.get(e,id)
         val nocross = dcl?.blk.let { blk ->
             (blk == null) || ups.all_until(e) { it==blk }.none { it is Expr.Proto }
         }
@@ -44,15 +44,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     .flatten()
                     .filter { it.size>0 && it.size<l.size }
                     .map { it.joinToString("-") }
-                val amb = x.firstOrNull { this.getDcl(e,it) != null }
+                val amb = x.firstOrNull { this.get(e,it) != null }
                 if (amb != null) {
-                    err(tk, "access error : \"${id}\" is ambiguous with \"${amb}\"") as Dcl
+                    err(tk, "access error : \"${id}\" is ambiguous with \"${amb}\"") as Var
                 } else {
-                    err(tk, "access error : variable \"${id}\" is not declared") as Dcl
+                    err(tk, "access error : variable \"${id}\" is not declared") as Var
                 }
             }
-            (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Dcl
-            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Dcl
+            (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Var
+            (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Var
             else -> dcl
         }
     }
@@ -72,13 +72,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         proto.args.let {
                             (it.map { (id,tag) ->
-                                Pair(id.str, Dcl(id.str, false, tag?.str, true, id.upv, this))
+                                Pair(id.str, Var(id.str, false, tag?.str, true, id.upv, this))
                             } + it.map { (id,_) ->
-                                Pair("_${id.str}_", Dcl("_${id.str}_", false, null, false, id.upv, this))
+                                Pair("_${id.str}_", Var("_${id.str}_", false, null, false, id.upv, this))
                             })
                         }.toMap().toMutableMap()
                     }
-                    xblocks[this] = XBlock(args, mutableListOf())
+                    pub[this] = XBlock(args, mutableListOf())
                 }
                 this.es.forEach { it.traverse() }
             }
@@ -86,10 +86,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src?.traverse()
                 val id = this.tk.str
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
-                val xup = xblocks[bup]!!
+                val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup.syms[id] = Dcl(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
-                xup.syms["_${id}_"] = Dcl("_${id}_", false,null, false, this.tk_.upv, bup)
+                xup.syms[id] = Var(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
+                xup.syms["_${id}_"] = Var("_${id}_", false,null, false, this.tk_.upv, bup)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")

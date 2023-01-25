@@ -11,16 +11,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
         }
     }
 
-    fun Expr.id2c (dcl: Dcl, upv: Int): String {
+    fun Expr.id2c (`var`: Var, upv: Int): String {
         val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
-        val start = if (upv==2) this else dcl.blk
+        val start = if (upv==2) this else `var`.blk
         val fup = ups.first(start) { it is Expr.Proto }
         val N = if (upv==2) 0 else {
             ups
-                .all_until(this) { it==dcl.blk }  // go up until find dcl blk
+                .all_until(this) { it==`var`.blk }  // go up until find dcl blk
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
-        val idc = dcl.id.id2c()
+        val idc = `var`.id.id2c()
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$idc)"
             (N == 0) -> "(ceu_${mem}->$idc)"
@@ -209,7 +209,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                         else -> "(${bup!!.toc(false)}.depth + 1)"
                     }
                     val x = if (ups.intask(this)) "ceu_x" else "NULL"
-                    val xvars = vars.xblocks[this]!!.syms.values.let { dcls ->
+                    val xvars = vars.pub[this]!!.syms.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.init }
                             .map    { it.id }
@@ -274,7 +274,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                             }
                         }
                         { // reset defers
-                            ${vars.xblocks[this]!!.defers.map {
+                            ${vars.pub[this]!!.defers.map {
                                 "ceu_mem->defer_${it.first} = 0;\n"
                             }.joinToString("")}
                         }
@@ -331,7 +331,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                                 }
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
-                                    ${vars.xblocks[this]!!.defers.map{it.second}.reversed().joinToString("")}
+                                    ${vars.pub[this]!!.defers.map{it.second}.reversed().joinToString("")}
                                     if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                         ceu_acc_$n = ceu_acc;
                                     }
@@ -380,7 +380,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 val id = this.tk.str
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
-                val dcl = vars.getDcl(this, id)
+                val dcl = vars.get(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
                 if (dcl!=null && dcl.upv==1 && !sta.upvs_vars_refs.contains(dcl)) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -474,7 +474,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                 }
                 """
             is Expr.Defer -> {
-                vars.xblocks[ups.first_block(this)!!]!!.defers.add(
+                vars.pub[ups.first_block(this)!!]!!.defers.add(
                     Pair(n,
                         """
                         if (ceu_mem->defer_$n) {
@@ -700,7 +700,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
                     """
                     { // ACC - SET
                         if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                            ceu_ret = ceu_block_set(&${this.id2c(Dcl("_${id}_",false,null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, ${if (dcl.tmp) 0 else 1});
+                            ceu_ret = ceu_block_set(&${this.id2c(Var("_${id}_",false,null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, ${if (dcl.tmp) 0 else 1});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
