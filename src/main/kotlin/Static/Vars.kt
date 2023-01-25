@@ -6,7 +6,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     val pub = mutableMapOf<Expr,XBlock> (
         Pair (
             outer,
-            XBlock(GLOBALS.map { Pair(it,Var(it,false, null, true,0,outer)) }.toMap().toMutableMap(), mutableListOf())
+            XBlock(GLOBALS.map {
+                Pair(it,Var(it,false, null, true,0,outer))
+            }.toMap().toMutableMap(), mutableListOf())
         )
     )
 
@@ -120,7 +122,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Self   -> {}
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {}
+            is Expr.Acc    -> {
+                val id = this.tk.str
+                assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
+                if (GLOBALS.contains(id)) {
+                    // TODO: create _id_ for globals
+                } else {
+                    assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
+                }
+            }
             is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}

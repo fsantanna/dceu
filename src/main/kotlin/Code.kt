@@ -688,12 +688,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val sta: Static) 
             }
             is Expr.Acc -> {
                 val id = this.tk.str
-                val dcl = vars.assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
+                val dcl = vars.get(this, id)!!
                 if (!this.isdst()) {
                     assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
                     val src = this.asdst_src()
-                    vars.assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
                     if (dcl.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }
