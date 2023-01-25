@@ -767,9 +767,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val sta: Static) {
             }
             is Expr.Index -> {
                 var idx = -1
-                if (sta.tpl_is(this)) {
+                if (sta.data_is(this)) {
                     val id = this.idx.tk.str.drop(1)
-                    idx = sta.tpl_lst(this).indexOfFirst { it.first.str==id }
+                    idx = sta.data_lst(this).indexOfFirst { it.first.str==id }
                     //assert(idx >= 0)
                 }
                 fun Expr.Index.has_pub_evt (): String? {

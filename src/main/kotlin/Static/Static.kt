@@ -11,7 +11,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
     )
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val tags: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
-    val tplates = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
+    val datas = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
 
     fun add_tag (tk: Tk, id: String, c: String, enu: String?) {
         if (tags.containsKey(id)) {
@@ -96,7 +96,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
-    fun tpl_is (e: Expr.Index): Boolean {
+    fun data_is (e: Expr.Index): Boolean {
         val id = e.col.tk.str
         val dcl = getDcl(e, id)
         return when (e.col) {
@@ -106,55 +106,55 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 // x.pub -> x:T
                 is Expr.Acc -> (e.idx is Expr.Tag) && (getDcl(e, e.col.x.tk.str)!!.tag != null)
                 // x.y.pub -> x.y?
-                is Expr.Index -> this.tpl_is(e.col.x)
+                is Expr.Index -> this.data_is(e.col.x)
                 // detrack(x).pub
                 is Expr.Call -> false   // TODO
                 else -> error("impossible case")
             }
             is Expr.EvtErr -> (e.idx is Expr.Tag) && (dcl != null) && (evts[e.col] != null)
             is Expr.Acc    -> (e.idx is Expr.Tag) && (dcl!!.tag != null)
-            is Expr.Index  -> this.tpl_is(e.col)
+            is Expr.Index  -> this.data_is(e.col)
             else           -> false
         }
     }
-    fun tpl_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
+    fun data_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
         val id = e.col.tk.str
         return when {
             (e.col is Expr.Pub) -> when (e.col.x) {
                 is Expr.Self -> {
                     // task.pub -> task (...) :T {...}
                     val tag = ups.first_true_x(e,"task")!!.task!!.first!!.str
-                    this.tplates[tag]!!
+                    this.datas[tag]!!
                 }
                 is Expr.Acc -> {
                     // x.pub -> x:T
                     val tag = getDcl(e, e.col.x.tk.str)!!.tag!!
-                    this.tplates[tag]!!
+                    this.datas[tag]!!
                 }
                 is Expr.Index -> {
                     // x.y.pub -> x.y?
-                    this.tpl_is(e.col.x)
+                    this.data_is(e.col.x)
                     TODO()
                 }
                 else -> error("impossible case")
             }
             (e.col is Expr.EvtErr) -> {
                 val tag = evts[e.col]!!
-                this.tplates[tag]!!
+                this.datas[tag]!!
             }
             (e.col is Expr.Acc) -> {
                 val dcl = getDcl(e, id)!!
-                this.tplates[dcl.tag]!!
+                this.datas[dcl.tag]!!
             }
             (e.col is Expr.Index) -> {
                 e.col.idx as Expr.Tag
                 val xid = e.col.idx.tk.str.drop(1)
-                val lst = this.tpl_lst(e.col)
+                val lst = this.data_lst(e.col)
                 val id_tag = lst.firstOrNull { it.first.str==xid }!!
                 if (id_tag.second == null) {
                     err(e.idx.tk, "index error : field \"$xid\" is not a data")
                 }
-                this.tplates[id_tag.second!!.str]!!
+                this.datas[id_tag.second!!.str]!!
             }
             else -> error("impossible case")
         }
@@ -167,7 +167,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> {
-                if (this.task!=null && this.task.first!=null && !tplates.containsKey(this.task.first!!.str)) {
+                if (this.task!=null && this.task.first!=null && !datas.containsKey(this.task.first!!.str)) {
                     val tag = this.task.first!!
                     err(tag, "declaration error : data ${tag.str} is not declared")
                 }
@@ -197,7 +197,7 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = xblocks[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                if (id!="evt" && this.tag!=null && !tplates.containsKey(this.tag.str)) {
+                if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 xup.syms[id] = Dcl(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
@@ -255,20 +255,20 @@ class Static (val outer: Expr.Do, val ups: Ups) {
             is Expr.Data -> {
                 add_tag(this.tk, this.tk.str, this.tk.str.tag2c(), null)
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
-                if (tplates.containsKey(this.tk.str)) {
+                if (datas.containsKey(this.tk.str)) {
                     err(this.tk, "data error : data ${this.tk.str} is already declared")
                 }
-                val ids = (tplates[sup] ?: emptyList()) + this.ids
+                val ids = (datas[sup] ?: emptyList()) + this.ids
                 val xids = ids.map { it.first.str }
                 if (xids.size != xids.distinct().size) {
                     err(this.tk, "data error : found duplicate ids")
                 }
                 ids.forEach { (_,tag) ->
-                    if (tag!=null && !tplates.containsKey(tag.str)) {
+                    if (tag!=null && !datas.containsKey(tag.str)) {
                         err(tag, "data error : data ${tag.str} is not declared")
                     }
                 }
-                tplates[this.tk.str] = ids
+                datas[this.tk.str] = ids
             }
             is Expr.Pass   -> this.e.traverse()
 
@@ -344,9 +344,9 @@ class Static (val outer: Expr.Do, val ups: Ups) {
                 this.col.traverse()
                 this.idx.traverse()
 
-                if (tpl_is(this)) {
+                if (data_is(this)) {
                     val id = this.idx.tk.str.drop(1)
-                    val idx = tpl_lst(this).indexOfFirst { it.first.str==id }
+                    val idx = data_lst(this).indexOfFirst { it.first.str==id }
                     if (idx == -1) {
                         err(this.idx.tk, "index error : undeclared field \"$id\"")
                     }
