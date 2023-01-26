@@ -9,7 +9,7 @@ val D = "\$"
 class TXLexer {
     @Test
     fun ids2() {
-        val l = lexer("and or where not with ifs every break await par")
+        val l = lexer("and or where not with ifs every poly break await par")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "and" })
         assert(tks.next().let { it is Tk.Fix && it.str == "or" })
@@ -18,6 +18,7 @@ class TXLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "with" })
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "every" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "poly" })
         assert(tks.next().let { it is Tk.Id  && it.str == "break" })
         assert(tks.next().let { it is Tk.Fix && it.str == "await" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par" })

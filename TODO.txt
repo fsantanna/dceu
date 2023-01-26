@@ -16,19 +16,15 @@
 
 # NEXT
 
-- task -> coro + task
-- var evt :T
-- var :noperm _x
-
+- ifs
+    - 3 {add} 4  -->  add(3,4)
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)
-- refer(track) -> coro
 - test throw/break across fake task
 - pub childs cannot be assigned
   - not even ahead b/c of coros which may kill pub
 - count memory
 - kill task
-- tags hier
 - tag of tag requires higher ID to avoid cycle
 - polymorphism
     - poly var f = func (a:X, b:Y)
@@ -66,7 +62,6 @@
         - ?
     - reject anything after throw (last stmt)
     - reject yield with no direct enclosing task
-- 3 `add` 4  -->  add(3,4)
 - ceu2c
     - struct <- tuple
     - vec <- buf

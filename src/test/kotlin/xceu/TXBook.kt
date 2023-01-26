@@ -206,7 +206,26 @@ class TXBook {
 
     @Test // 1.6.2: Type classes
     @Ignore
-    fun todo_poly() {}
+    fun todo_poly_mult() {
+        val out = ceu.all("""
+            poly var mult
+            println(10 {mult} 20)
+            println([1,2] {mult} 2)
+            println(2 {mult} [1,2])
+            func fact (x) {
+                ifs {
+                    x < 0  -> throw(:error)
+                    x == 0 -> 1
+                    else -> x * fact(x - 1)
+                }
+            }
+            println(fact(-1))
+        """, true)
+        assert(out == "anon : (lin 9, col 21) : fact({-}(1))\n" +
+                "anon : (lin 4, col 31) : throw(:error)\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
+    }
 
     // CHAPTER 1.7: Specifications
     // ok

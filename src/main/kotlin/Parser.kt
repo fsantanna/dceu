@@ -731,6 +731,38 @@ class Parser (lexer_: Lexer)
             })
             this.checkFix("(") -> this.expr_in_parens(true,false)!!
 
+            (XCEU && this.acceptFix("poly")) -> {
+                val pre0 = this.tk0.pos.pre()
+                when {
+                    this.acceptFix("var") -> {
+                        this.acceptEnu_err("Id")
+                        this.nest("""
+                            ${pre0}var ${this.tk0.str} = @[]
+                        """)
+                    }
+                    this.acceptFix("set") -> {
+                        val dst = this.expr()
+                        this.acceptFix_err("=")
+                        val src = this.expr()
+                        if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
+                            err(tk0, "invalid set : invalid destination")
+                        }
+                        this.nest("""
+                            ${pre0}set ${src.tostr(true)} = ${dst.tostr(true)}
+                        """)
+                    }
+                    this.acceptFix("func") -> {
+                        this.acceptEnu_err("Id")
+                        this.nest("""
+                            TODO
+                        """)
+                    }
+                    else -> {
+                        err(this.tk0, "poly error : expected var or set")
+                        error("unreachable")
+                    }
+                }
+            }
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
 
