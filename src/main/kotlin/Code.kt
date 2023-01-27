@@ -397,6 +397,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         ${when {
                             !this.init -> ""
+                            this.poly -> """
+                                ceu_mem->$idc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&$bupc->dn_dyns)} };
+                            """
                             (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
                             else -> "ceu_mem->$idc = ceu_acc;"
                         }}

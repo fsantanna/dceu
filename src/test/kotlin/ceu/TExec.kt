@@ -2162,7 +2162,7 @@ class TExec {
             tags(t, :Y, true)
             tags(t, :Z, true)
             ;;println(tags(t))
-            func f (ts) {
+            var f = func (ts) {
                 println(ts)
             }
             f(tags(t))

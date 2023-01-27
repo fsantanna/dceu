@@ -246,7 +246,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, tmp, tag, true, src)
+                Expr.Dcl(id, tmp, false, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -731,25 +731,33 @@ class Parser (lexer_: Lexer)
             })
             this.checkFix("(") -> this.expr_in_parens(true,false)!!
 
-            (XCEU && this.acceptFix("poly")) -> {
+            this.acceptFix("poly") -> {
                 val pre0 = this.tk0.pos.pre()
                 when {
                     this.acceptFix("var") -> {
                         this.acceptEnu_err("Id")
-                        this.nest("""
-                            ${pre0}var ${this.tk0.str} = @[]
-                        """)
+                        Expr.Dcl(this.tk0 as Tk.Id, true, false, null, true, null)
                     }
                     this.acceptFix("set") -> {
                         val dst = this.expr()
+                        val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
                         this.acceptFix_err("=")
+                        if (tag == null) {
+                            this.checkFix_err("func")
+                        }
                         val src = this.expr()
                         if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                             err(tk0, "invalid set : invalid destination")
                         }
-                        this.nest("""
-                            ${pre0}set ${src.tostr(true)} = ${dst.tostr(true)}
-                        """)
+                        when {
+                            (tag != null) -> this.nest("""
+                                ${pre0}set ${dst.tostr(true)}[${tag.str}] = ${src.tostr(true)}
+                            """)
+                            (src is Expr.Proto) -> this.nest("""
+                                TODO
+                            """)
+                            else -> error("impossible case")
+                        }
                     }
                     this.acceptFix("func") -> {
                         this.acceptEnu_err("Id")

@@ -2152,7 +2152,19 @@ class TXExec {
     // POLY
 
     @Test
-    fun vv_01_poly_ret() {
+    fun vv_01_poly_ret_type() {
+        val out = all("""
+            poly var min
+            poly set min :number = 1
+            poly set min :char   = 'a'
+            var n :number = min
+            var c :char   = min
+            println(n, c)
+        """)
+        assert(out == "1\t'a'\n") { out }
+    }
+    @Test
+    fun vv_02_poly_ret_tag() {
         val out = all("""
             poly var min
             poly set min :Nat  = 1
@@ -2160,7 +2172,7 @@ class TXExec {
             var n :Nat  = min
             var c :Char = min
             println(n, c)
-        """, true)
+        """)
         assert(out == "[1,'a']\n") { out }
     }
     @Test
