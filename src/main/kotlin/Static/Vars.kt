@@ -1,12 +1,18 @@
 // func (args) or block (locals)
-data class Var (val id: String, val tmp: Boolean, val tag: String?, val init: Boolean, val upv: Int, val blk: Expr.Do)    // blk = [Block,Group,Proto]
+data class Var (val blk: Expr.Do, val dcl: Expr.Dcl)    // blk = [Block,Group,Proto]
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val pub = mutableMapOf<Expr,MutableMap<String,Var>> (
         Pair (
             outer,
             GLOBALS.map {
-                Pair(it,Var(it,false, null, true,0,outer))
+                Pair (
+                    it,
+                    Var (
+                        outer,
+                        Expr.Dcl(Tk.Id(it,outer.tk.pos,0),false,false,null,true,null)
+                    )
+                )
             }.toMap().toMutableMap()
         )
     )
@@ -20,21 +26,21 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun data_is (e: Expr.Index): Boolean {
         val id = e.col.tk.str
-        val dcl = get(e, id)
+        val xvar = get(e, id)
         return when (e.col) {
             is Expr.Pub -> when (e.col.x) {
                 // task.pub -> task (...) :T {...}
                 is Expr.Self -> (e.idx is Expr.Tag) && (ups.first_true_x(e,"task").let { it!=null && it.task!!.first!=null })
                 // x.pub -> x:T
-                is Expr.Acc -> (e.idx is Expr.Tag) && (get(e, e.col.x.tk.str)!!.tag != null)
+                is Expr.Acc -> (e.idx is Expr.Tag) && (get(e, e.col.x.tk.str)!!.dcl.tag != null)
                 // x.y.pub -> x.y?
                 is Expr.Index -> this.data_is(e.col.x)
                 // detrack(x).pub
                 is Expr.Call -> false   // TODO
                 else -> error("impossible case")
             }
-            is Expr.EvtErr -> (e.idx is Expr.Tag) && (dcl != null) && (evts[e.col] != null)
-            is Expr.Acc    -> (e.idx is Expr.Tag) && (dcl!!.tag != null)
+            is Expr.EvtErr -> (e.idx is Expr.Tag) && (xvar != null) && (evts[e.col] != null)
+            is Expr.Acc    -> (e.idx is Expr.Tag) && (xvar!!.dcl.tag != null)
             is Expr.Index  -> this.data_is(e.col)
             else           -> false
         }
@@ -50,7 +56,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
                 is Expr.Acc -> {
                     // x.pub -> x:T
-                    val tag = get(e, e.col.x.tk.str)!!.tag!!
+                    val tag = get(e, e.col.x.tk.str)!!.dcl.tag!!.str
                     this.datas[tag]!!
                 }
                 is Expr.Index -> {
@@ -65,8 +71,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.datas[tag]!!
             }
             (e.col is Expr.Acc) -> {
-                val dcl = get(e, id)!!
-                this.datas[dcl.tag]!!
+                val xvar = get(e, id)!!
+                this.datas[xvar.dcl.tag!!.str]!!
             }
             (e.col is Expr.Index) -> {
                 e.col.idx as Expr.Tag
@@ -98,12 +104,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
     fun assertIsDeclared (e: Expr, v: Pair<String,Int>, tk: Tk): Var {
         val (id,upv) = v
-        val dcl = this.get(e,id)
-        val nocross = dcl?.blk.let { blk ->
+        val xvar = this.get(e,id)
+        val nocross = xvar?.blk.let { blk ->
             (blk == null) || ups.all_until(e) { it==blk }.none { it is Expr.Proto }
         }
         return when {
-            (dcl == null) -> {
+            (xvar == null) -> {
                 val l = id.split('-')
                 val x = l
                     .mapIndexed { i,_ ->
@@ -119,9 +125,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     err(tk, "access error : variable \"${id}\" is not declared") as Var
                 }
             }
-            (dcl.upv==0 && upv>0 || dcl.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Var
+            (xvar.dcl.tk_.upv==0 && upv>0 || xvar.dcl.tk_.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Var
             (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Var
-            else -> dcl
+            else -> xvar
         }
     }
 
@@ -142,9 +148,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         proto.args.let {
                             (it.map { (id,tag) ->
-                                Pair(id.str, Var(id.str, false, tag?.str, true, id.upv, this))
+                                val dcl = Expr.Dcl(id, false, false, tag, true, null)
+                                Pair(id.str, Var(this, dcl))
                             } + it.map { (id,_) ->
-                                Pair("_${id.str}_", Var("_${id.str}_", false, null, false, id.upv, this))
+                                val dcl = Expr.Dcl(Tk.Id("_${id.str}_",id.pos,id.upv), false, false, null, false, null)
+                                Pair("_${id.str}_", Var(this, dcl))
                             })
                         }.toMap().toMutableMap()
                     }
@@ -156,8 +164,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
-                xup[id] = Var(id, this.tmp, this.tag?.str, this.init, this.tk_.upv, bup)
-                xup["_${id}_"] = Var("_${id}_", false,null, false, this.tk_.upv, bup)
+                xup[id] = Var(bup, this)
+                val dcl = Expr.Dcl(Tk.Id("_${id}_",this.tk.pos,this.tk_.upv), false, false, null, false, null)
+                xup["_${id}_"] = Var(bup, dcl)
                 when {
                     (this.tk_.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
@@ -168,7 +177,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
 
                 if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
-                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                    //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
 
                 this.src?.traverse()
@@ -220,9 +229,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.EvtErr -> {
-                val dcl = get(this, "evt")
-                if (dcl?.tag != null) {
-                    evts[this] = dcl.tag
+                val xvar = get(this, "evt")
+                if (xvar != null) {
+                    evts[this] = xvar.dcl.tag!!.str
                 }
             }
             is Expr.Nil    -> {}

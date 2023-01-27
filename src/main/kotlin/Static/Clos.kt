@@ -48,13 +48,13 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val dcl = vars.get(this, this.tk.str)!!
+                val xvar = vars.get(this, this.tk.str)!!
                 when {
-                    (dcl.upv==1 && this.tk_.upv==2) -> {
-                        vars_refs.add(dcl) // UPVS_VARS_REFS
+                    (xvar.dcl.tk_.upv==1 && this.tk_.upv==2) -> {
+                        vars_refs.add(xvar) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
-                        ups.all_until(this) { dcl.blk==it }
+                        ups.all_until(this) { xvar.blk ==it }
                             .filter { it is Expr.Proto }
                             .let { it as List<Expr.Proto> }
                             .forEach { proto ->
@@ -66,9 +66,9 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             }
                     }
                     // UPVS_PROTOS_NOCLOS
-                    (dcl.blk!=outer && dcl.upv==0 && this.tk_.upv==0) -> {
+                    (xvar.blk !=outer && xvar.dcl.tk_.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
-                        ups.all_until(this) { it == dcl.blk }       // stop at enclosing declaration block
+                        ups.all_until(this) { it == xvar.blk }       // stop at enclosing declaration block
                             .filter { it is Expr.Proto }            // all crossing protos
                             .forEach { protos_noclos.add(it) }        // mark them as noclos
                     }

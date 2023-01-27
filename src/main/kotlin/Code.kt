@@ -12,16 +12,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         }
     }
 
-    fun Expr.id2c (`var`: Var, upv: Int): String {
+    fun Expr.id2c (xvar: Var, upv: Int): String {
         val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
-        val start = if (upv==2) this else `var`.blk
+        val start = if (upv==2) this else xvar.blk
         val fup = ups.first(start) { it is Expr.Proto }
         val N = if (upv==2) 0 else {
             ups
-                .all_until(this) { it==`var`.blk }  // go up until find dcl blk
+                .all_until(this) { it==xvar.blk }  // go up until find dcl blk
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
-        val idc = `var`.id.id2c()
+        val idc = xvar.dcl.tk.str.id2c()
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$idc)"
             (N == 0) -> "(ceu_${mem}->$idc)"
@@ -213,8 +213,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val x = if (ups.intask(this)) "ceu_x" else "NULL"
                     val xvars = vars.pub[this]!!.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                        dcls.filter { it.init }
-                            .map    { it.id }
+                        dcls.filter { it.dcl.init }
+                            .map    { it.dcl.tk.str }
                             .filter { !GLOBALS.contains(it) }
                             .filter { !(f_b is Expr.Proto && args.contains(it)) }
                             .map    { it.id2c() }
@@ -382,9 +382,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val id = this.tk.str
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
-                val dcl = vars.get(this, id)
+                val xvar = vars.get(this, id)
                 val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
-                if (dcl!=null && dcl.upv==1 && !clos.vars_refs.contains(dcl)) {
+                if (xvar!=null && xvar.dcl.tk_.upv==1 && !clos.vars_refs.contains(xvar)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 if (id == "evt") "" else {
@@ -693,23 +693,34 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Acc -> {
                 val id = this.tk.str
-                val dcl = vars.get(this, id)!!
+                val xvar = vars.get(this, id)!!
                 if (!this.isdst()) {
-                    assrc(this.id2c(dcl,this.tk_.upv)) // ACC ${this.tk.dump()}
+                    assrc(this.id2c(xvar,this.tk_.upv)) // ACC ${this.tk.dump()}
                 } else {
                     val src = this.asdst_src()
-                    if (dcl.upv > 0) {
+                    if (xvar.dcl.tk_.upv > 0) {
                         err(tk, "set error : cannot reassign an upval")
                     }
                     """
                     { // ACC - SET
                         if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                            ceu_ret = ceu_block_set(&${this.id2c(Var("_${id}_",false,null,false,dcl.upv,dcl.blk),this.tk_.upv)}->dn_dyns, $src.Dyn, ${if (dcl.tmp) 0 else 1});
+                            ceu_ret = ceu_block_set(&${
+                                this.id2c (
+                                    Var (
+                                        xvar.blk,
+                                        Expr.Dcl (
+                                            Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
+                                            false,false,null,false,null
+                                        )
+                                    ),
+                                    this.tk_.upv
+                                )
+                            }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&${this.id2c(dcl,this.tk_.upv)}, 1);
-                        ${this.id2c(dcl,this.tk_.upv)} = $src;
+                        ceu_gc_dec(&${this.id2c(xvar,this.tk_.upv)}, 1);
+                        ${this.id2c(xvar,this.tk_.upv)} = $src;
                     }
                     """
                 }

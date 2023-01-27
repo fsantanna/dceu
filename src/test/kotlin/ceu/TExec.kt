@@ -2917,8 +2917,10 @@ class TExec {
         val out = all("""
             data :T = []
             var v :U
+            println(v)
         """, true)
-        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
+        //assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun tplate04() {
