@@ -758,7 +758,7 @@ class Parser (lexer_: Lexer)
                         """)
                     }
                     else -> {
-                        err(this.tk0, "poly error : expected var or set")
+                        err(this.tk1, "poly error : expected var or set")
                         error("unreachable")
                     }
                 }

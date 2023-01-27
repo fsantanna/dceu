@@ -238,25 +238,27 @@ class TXParser {
     fun gg_01_poly_err() {
         val l = lexer("poly x")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected declaration")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected var or set")
     }
     @Test
     fun gg_02_poly_err() {
         val l = lexer("poly var x = 1")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected declaration")
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 12) : expected expression : have \"=\"")
     }
     @Test
     fun gg_03_poly() {
         val l = lexer("poly var x")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected declaration")
+        val e = parser.expr()
+        assert(e.tostr(false) == "var x = @[]") { e.tostr() }
     }
     @Test
     fun gg_04_poly() {
         val l = lexer("poly set x = 1")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected declaration")
+        val e = parser.expr()
+        assert(e.tostr(false) == "var x = @[]") { e.tostr() }
     }
     @Test
     fun gg_05_poly() {

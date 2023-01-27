@@ -2154,6 +2154,22 @@ class TExec {
         """, true)
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
+    @Test
+    fun tags13() {
+        val out = all("""
+            var t = []
+            tags(t, :X, true)
+            tags(t, :Y, true)
+            tags(t, :Z, true)
+            ;;println(tags(t))
+            func f (ts) {
+                println(ts)
+            }
+            f(tags(t))
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "[:Z,:Y,:X]\n1\n") { out }
+    }
 
     // ENUM
 

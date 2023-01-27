@@ -99,12 +99,15 @@ fun Coder.main (tags: Tags): String {
         void ceu_max_depth (struct CEU_Dyn* dyn, int n, struct CEU_Value* childs);
         CEU_RET ceu_vector_get (struct CEU_Dyn* vec, int i);
         void ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
+        
         int ceu_dict_key_to_index (struct CEU_Dyn* col, struct CEU_Value* key, int* idx);
         struct CEU_Value ceu_dict_get (struct CEU_Dyn* col, struct CEU_Value* key);
         CEU_RET ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
-        struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         
+        struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
+        void ceu_tuple_set (struct CEU_Dyn* tup, int i, struct CEU_Value v);
+
         struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
         
         void ceu_print1 (struct CEU_Value* v);
@@ -443,56 +446,81 @@ fun Coder.main (tags: Tags): String {
 
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_tags_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
-            assert(n >= 2);
+        CEU_RET ceu_tags_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n >= 1);
             CEU_Value* dyn = args[0];
             CEU_Value* tag = args[1];
             assert(tag->type == CEU_VALUE_TAG);
-            if (n == 2) {   // check
-                ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
-                if (dyn->type < CEU_VALUE_DYNAMIC) {
-                    // no tags
-                } else {
-                    CEU_Tags_List* cur = dyn->Dyn->tags;
-                    while (cur != NULL) {
-                        CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
-                        CEU_Value* args[] = { tag, &x };
-                        assert(CEU_RET_RETURN == ceu_supof_f(_1, _2, 2, args));
-                        if (ceu_acc.Bool) {
-                            break;
+            switch (n) {
+                case 1: {
+                    int len = 0; {
+                        CEU_Tags_List* cur = dyn->Dyn->tags;
+                        while (cur != NULL) {
+                            len++;
+                            cur = cur->next;
                         }
-                        cur = cur->next;
                     }
+                    CEU_Dyn* tup = ceu_tuple_create(&frame->up_block->dn_dyns, len);
+                    {
+                        CEU_Tags_List* cur = dyn->Dyn->tags;
+                        int i = 0;
+                        while (cur != NULL) {
+                            ceu_tuple_set(tup, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} });
+                            cur = cur->next;
+                        }
+                    }                    
+                    ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+                    break;
                 }
-            } else if (n == 3) {    // add/rem
-                assert(dyn->type > CEU_VALUE_DYNAMIC);
-                CEU_Value* bool = args[2];
-                assert(bool->type == CEU_VALUE_BOOL);
-                if (bool->Bool) {   // add
-                    ceu_tags_f(_1, _2, 2, args);
-                    if (ceu_acc.Bool) {
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                case 2: {   // check
+                    ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+                    if (dyn->type < CEU_VALUE_DYNAMIC) {
+                        // no tags
                     } else {
-                        CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
-                        assert(v != NULL);
-                        v->tag = tag->Tag;
-                        v->next = dyn->Dyn->tags;
-                        dyn->Dyn->tags = v;
-                        ceu_acc = *dyn;
-                    }
-                } else {            // rem
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    CEU_Tags_List** cur = &dyn->Dyn->tags;
-                    while (*cur != NULL) {
-                        if ((*cur)->tag == tag->Tag) {
-                            CEU_Tags_List* v = *cur;
-                            *cur = v->next;
-                            free(v);
-                            ceu_acc = *dyn;
-                            break;
+                        CEU_Tags_List* cur = dyn->Dyn->tags;
+                        while (cur != NULL) {
+                            CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                            CEU_Value* args[] = { tag, &x };
+                            assert(CEU_RET_RETURN == ceu_supof_f(frame, _2, 2, args));
+                            if (ceu_acc.Bool) {
+                                break;
+                            }
+                            cur = cur->next;
                         }
-                        cur = &(*cur)->next;
                     }
+                    break;
+                }
+                case 3: {   // add/rem
+                    assert(dyn->type > CEU_VALUE_DYNAMIC);
+                    CEU_Value* bool = args[2];
+                    assert(bool->type == CEU_VALUE_BOOL);
+                    if (bool->Bool) {   // add
+                        ceu_tags_f(frame, _2, 2, args);
+                        if (ceu_acc.Bool) {
+                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        } else {
+                            CEU_Tags_List* v = malloc(sizeof(CEU_Tags_List));
+                            assert(v != NULL);
+                            v->tag = tag->Tag;
+                            v->next = dyn->Dyn->tags;
+                            dyn->Dyn->tags = v;
+                            ceu_acc = *dyn;
+                        }
+                    } else {            // rem
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                        CEU_Tags_List** cur = &dyn->Dyn->tags;
+                        while (*cur != NULL) {
+                            if ((*cur)->tag == tag->Tag) {
+                                CEU_Tags_List* v = *cur;
+                                *cur = v->next;
+                                free(v);
+                                ceu_acc = *dyn;
+                                break;
+                            }
+                            cur = &(*cur)->next;
+                        }
+                    }
+                    break;
                 }
             }
             return CEU_RET_RETURN;
