@@ -59,14 +59,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     ${(clos.protos_refs[this] ?: emptySet()).map {
-                        "CEU_Value $it;"
+                        "CEU_Value ${it.id2c()};"
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
                 typedef struct {
                     ${this.args.map { (id,_) ->
-                    """
-                        CEU_Value ${id.str};
-                        CEU_Block* _${id.str}_;
+                        val idc = id.str.id2c()
+                        """
+                        CEU_Value $idc;
+                        CEU_Block* _${idc}_;
                         """
                 }.joinToString("")}
                     ${this.body.mem()}

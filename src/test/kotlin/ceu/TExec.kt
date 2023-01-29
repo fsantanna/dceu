@@ -1432,6 +1432,50 @@ class TExec {
         assert(out == "10\n") { out }
     }
 
+    // FUNC / ARGS / DOTS / ...
+
+    @Test
+    fun nn_01_dots_err() {
+        val out = all("""
+            var f = func () {
+                println(...)
+            }
+            f(1,2,3)
+        """)
+        assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
+    }
+    @Test
+    fun nn_02_dots() {
+        val out = all("""
+            var f = func (...) {
+                println(...)
+            }
+            f(1,2,3)
+        """)
+        assert(out == "1\t2\t3\n") { out }
+    }
+    @Test
+    fun nn_03_dots_gc() {
+        val out = all("""
+            var f = func (...) {
+                println(...)
+            }
+            f(1,2,3)
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\t2\t3\n1\n") { out }
+    }
+    @Test
+    fun nn_04_dots_gc() {
+        val out = all("""
+            var f = func (...) {
+                println(...)
+            }
+            f([1,2,3])
+        """)
+        assert(out == "[1\t2\t3]\n2\n") { out }
+    }
+
     // WHILE
 
     @Test

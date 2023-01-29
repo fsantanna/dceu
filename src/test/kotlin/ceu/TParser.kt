@@ -524,6 +524,38 @@ class TParser {
         assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "task (a,b) {\n10\n}") { e.tostr() }
     }
+    @Test
+    fun pp_06_func_dots() {
+        val l = lexer("func (...) { println(...) }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e is Expr.Proto && e.args.size==1)
+        assert(e.tostr() == "func (...) {\nprintln(...)\n}") { e.tostr() }
+    }
+    @Test
+    fun pp_07_func_args_err() {
+        val l = lexer("func (1) { nil }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected identifier : have \"1\"")
+    }
+    @Test
+    fun pp_08_func_args_err() {
+        val l = lexer("func (..., a) { nil }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : expected \")\" : have \",\"")
+    }
+    @Test
+    fun pp_09_func_args_err() {
+        val l = lexer("println(...,a)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \")\" : have \",\"")
+    }
+    @Test
+    fun pp_10_func_args_err() {
+        val l = lexer("var ...")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
+    }
 
     // WHILE
 

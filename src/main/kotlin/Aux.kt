@@ -56,6 +56,7 @@ fun String.id2c (): String {
             "op_" + this.drop(1).dropLast(1).toList().map { MAP[it] }.joinToString("_")
         } else {
             val MAP = mapOf(
+                Pair('.', "_dot_"),
                 Pair('-', "_dash_"),
                 Pair('\'', "_plic_"),
                 Pair('?', "_question_"),
