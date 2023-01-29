@@ -1243,7 +1243,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_9055...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_8919...)\n" +
                 "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
                 ":error\n") { out }

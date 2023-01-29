@@ -30,7 +30,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     }
 
     fun Expr.isdst (): Boolean {
-        return ups.pub[this].let { it is Expr.Set && it.dst ==this }
+        return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
     fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.pub[this] as Expr.Set).n})"
@@ -396,9 +396,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ${when {
+                            /*
                             this.poly -> """
                                 ceu_mem->$idc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&$bupc->dn_dyns)} };
                             """
+                            */
                             !this.init -> ""
                             (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
                             else -> "ceu_mem->$idc = ceu_acc;"
@@ -697,13 +699,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = this.id2c(xvar,this.tk_.upv)
                 when {
                     !this.isdst() -> when {
-                        !xvar.dcl.poly -> assrc(idc) // ACC ${this.tk.dump()}
-                         xvar.dcl.poly -> """
+                        //!xvar.dcl.poly ->
+                        true -> assrc(idc) // ACC ${this.tk.dump()}
+                        /*xvar.dcl.poly -> """
                             assert($idc.type==CEU_VALUE_DICT && "TODO");
                             CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
                             CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
                             ${assrc("ceu_fld")}
-                        """
+                        """*/
                         else -> error("impossible case")
                     }
                     this.isdst() -> {
@@ -711,14 +714,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (xvar.dcl.tk_.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
-                        val poly = (ups.pub[this] as Expr.Set).poly
+                        //val poly = (ups.pub[this] as Expr.Set).poly
                         when {
-                            (poly != null) -> """
+                            /*(poly != null) -> """
                                 assert($idc.type==CEU_VALUE_DICT && "bug found");
                                 CEU_Value ceu_tag_$n = { CEU_VALUE_TAG, {.Tag=CEU_TAG_${poly.str.tag2c()}} };
                                 ceu_dict_set($idc.Dyn, &ceu_tag_$n, &$src);
-                            """
-                            (poly == null) -> """
+                            """*/
+                            //(poly == null) -> """
+                            true -> """
                                 { // ACC - SET
                                     if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
                                         ceu_ret = ceu_block_set(&${
@@ -727,7 +731,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                     xvar.blk,
                                                     Expr.Dcl (
                                                         Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
-                                                        false,false,null,false,null
+                                                        false,/*false,*/null,false, null
                                                     )
                                                 ),
                                                 this.tk_.upv

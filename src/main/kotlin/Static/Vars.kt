@@ -10,7 +10,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     it,
                     Var (
                         outer,
-                        Expr.Dcl(Tk.Id(it,outer.tk.pos,0),false,false,null,true,null)
+                        Expr.Dcl(Tk.Id(it,outer.tk.pos,0),/*false,*/ false, null,true,null)
                     )
                 )
             }.toMap().toMutableMap()
@@ -148,10 +148,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         proto.args.let {
                             (it.map { (id,tag) ->
-                                val dcl = Expr.Dcl(id, false, false, tag, true, null)
+                                val dcl = Expr.Dcl(id, /*false,*/ false, tag, true, null)
                                 Pair(id.str, Var(this, dcl))
                             } + it.map { (id,_) ->
-                                val dcl = Expr.Dcl(Tk.Id("_${id.str}_",id.pos,id.upv), false, false, null, false, null)
+                                val dcl = Expr.Dcl(Tk.Id("_${id.str}_",id.pos,id.upv), /*false,*/ false, null, false, null)
                                 Pair("_${id.str}_", Var(this, dcl))
                             })
                         }.toMap().toMutableMap()
@@ -165,7 +165,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)
-                val dcl = Expr.Dcl(Tk.Id("_${id}_",this.tk.pos,this.tk_.upv), false, false, null, false, null)
+                val dcl = Expr.Dcl(Tk.Id("_${id}_",this.tk.pos,this.tk_.upv), /*false,*/ false, null, false, null)
                 xup["_${id}_"] = Var(bup, dcl)
                 when {
                     (this.tk_.upv == 2) -> {

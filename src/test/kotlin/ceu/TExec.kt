@@ -3075,7 +3075,7 @@ class TExec {
     }
 
     // POLY
-
+    /*
     @Test
     fun vv_01_poly_ret_type() {
         val out = all("""
@@ -3170,4 +3170,5 @@ class TExec {
         """)
         assert(out == "1\t'a'\n") { out }
     }
+    */
 }

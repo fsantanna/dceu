@@ -989,7 +989,7 @@ class TParser {
     }
 
     // POLY
-
+    /*
     @Test
     fun gg_01_poly_err() {
         val l = lexer("poly x")
@@ -1036,4 +1036,5 @@ class TParser {
         val e = parser.expr()
         assert(e.tostr(false) == "poly var x") { e.tostr() }
     }
+    */
 }

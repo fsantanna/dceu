@@ -233,11 +233,12 @@ class TXParser {
     }
 
     // POLY
-
+    /*
     @Test
     fun gg_05_poly() {
         val l = lexer("poly func f () {}")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected declaration")
     }
+    */
 }

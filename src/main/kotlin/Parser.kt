@@ -246,7 +246,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, false, tmp, tag, true, src)
+                Expr.Dcl(id, /*false,*/ tmp, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -257,7 +257,7 @@ class Parser (lexer_: Lexer)
                     if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                         err(tk0, "invalid set : invalid destination")
                     }
-                    Expr.Set(tk0, dst, null, src)
+                    Expr.Set(tk0, dst, /*null,*/ src)
                 } else {
                     val hack = dst.tostr(false).let {
                         val s3 = it.substringAfterLast("\n}")
@@ -731,6 +731,7 @@ class Parser (lexer_: Lexer)
             })
             this.checkFix("(") -> this.expr_in_parens(true,false)!!
 
+            /*
             this.acceptFix("poly") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 //val pre0 = this.tk0.pos.pre()
@@ -768,6 +769,8 @@ class Parser (lexer_: Lexer)
                     }
                 }
             }
+            */
+
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
 
