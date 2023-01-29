@@ -239,6 +239,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("var") -> {
                 this.acceptFix("evt") || this.acceptEnu_err("Id")
                 val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
+                if (id.str == "...") {
+                    err(this.tk0, "invalid declaration : unexpected ...")
+                }
                 val tmp = this.acceptTag(":tmp")
                 val tag = if (!this.acceptEnu("Tag")) null else {
                     this.tk0 as Tk.Tag

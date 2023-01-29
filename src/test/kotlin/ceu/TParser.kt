@@ -554,7 +554,7 @@ class TParser {
     fun pp_10_func_args_err() {
         val l = lexer("var ...")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : expected identifier : have \"...\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid declaration : unexpected ...")
     }
 
     // WHILE
