@@ -1475,6 +1475,28 @@ class TExec {
         """)
         assert(out == "[1\t2\t3]\n2\n") { out }
     }
+    @Test
+    fun nn_05_dots_tup() {
+        val out = all("""
+            var f = func (...) {
+                println(#..., ...[1])
+            }
+            f(1,2,3)
+        """)
+        assert(out == "3\t2\n") { out }
+    }
+    @Test
+    fun nn_06_dots_tup() {
+        val out = all("""
+            var f = func (...) {
+                set ... = 10
+                println(...)
+                println(`:number ceu_gc_count`)
+            }
+            f(1,2,3)
+        """)
+        assert(out == "10\n1\n") { out }
+    }
 
     // WHILE
 

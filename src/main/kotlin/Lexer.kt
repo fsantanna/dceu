@@ -167,7 +167,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     if (x1 == '.') {
                         val (n2, x2) = read2()
                         if (x2 == '.') {
-                            yield(Tk.Fix("...", pos))
+                            yield(Tk.Id("...", pos, 0))
                         } else {
                             yield(Tk.Fix(".", pos))
                             yield(Tk.Fix(".", pos))

@@ -134,7 +134,7 @@ class TLexer {
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
-        assert(tks.next().let { it is Tk.Fix && it.str == "..." })
+        assert(tks.next().let { it is Tk.Id  && it.str == "..." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
         assert(tks.next().let { it is Tk.Fix && it.str == "." })

@@ -495,11 +495,11 @@ class Parser (lexer_: Lexer)
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                     this.acceptFix_err("(")
                     val args = this.list0(")") {
-                        this.acceptFix("...") || this.acceptEnu_err("Id")
+                        this.acceptEnu_err("Id")
+                        val xid = this.tk0 as Tk.Id
                         if (this.tk0.str == "...") {
                             this.checkFix_err(")")
                         }
-                        val xid = if (this.tk0.str=="...") Tk.Id("...",this.tk0.pos,0) else this.tk0 as Tk.Id
                         val tag = if (!this.acceptEnu("Tag")) null else {
                             this.tk0 as Tk.Tag
                         }
@@ -1132,12 +1132,11 @@ class Parser (lexer_: Lexer)
                 // ECALL
                 this.acceptFix("(") -> {
                     e = Expr.Call(e.tk, e, list0(")") {
-                        if (this.acceptFix("...")) {
+                        val x = this.expr()
+                        if (x is Expr.Acc && x.tk.str=="...") {
                             this.checkFix_err(")")
-                            Expr.Acc(Tk.Id("...",this.tk0.pos,0))
-                        } else {
-                            this.expr()
                         }
+                        x
                     })
                 }
                 else -> break
