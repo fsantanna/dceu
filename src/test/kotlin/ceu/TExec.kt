@@ -3073,4 +3073,93 @@ class TExec {
         """, true)
         assert(out == "1\n") { out }
     }
+
+    // POLY
+
+    @Test
+    fun vv_01_poly_ret_type() {
+        val out = all("""
+            poly var min
+            poly set min :number = 1
+            poly set min :char   = 'a'
+            var n :number = min
+            var c :char   = min
+            println(n, c)
+        """)
+        assert(out == "1\t'a'\n") { out }
+    }
+    @Test
+    fun vv_02_poly_ret_tag() {
+        val out = all("""
+            poly var min
+            poly set min :Nat  = 1
+            poly set min :Char = 'a'
+            var n :Nat  = min
+            var c :Char = min
+            println(n, c)
+        """)
+        assert(out == "[1,'a']\n") { out }
+    }
+    @Test
+    fun vv_02_poly_func_ret() {
+        val out = all("""
+            poly var read
+            poly set read = func () -> :Nat {
+                return 1
+            }
+            poly func read () -> :Char {
+                return 'a'
+            }
+            var n :Nat  = read()
+            var c :Char = read()
+            println(n, c)
+        """, true)
+        assert(out == "[1,'a']\n") { out }
+    }
+    @Test
+    fun vv_03_poly_func_args_one() {
+        val out = all("""
+            poly var f
+            poly set f = func (v:Nat) {
+                println(:Nat, v)
+            }
+            poly func f (v:Char) {
+                println(:Char, v)
+            }
+            f(:Nat  [1])
+            f(:Char ['a'])
+        """, true)
+        assert(out == ":Nat\t[1]\n:Char\t['a']\n") { out }
+    }
+    @Test
+    fun vv_04_poly_func_args_one() {
+        val out = all("""
+            poly var f
+            poly func f (v:number) {
+                println(:number, v)
+            }
+            poly set f = func (v:char) {
+                println(:char, v)
+            }
+            f(1)
+            f('a')
+        """, true)
+        assert(out == ":number\t1\n:char\t'a'\n") { out }
+    }
+    @Test
+    fun vv_04_poly_func_args_multi() {
+        val out = all("""
+            poly var f
+            poly func f (x:number, y:number) {
+                println(:number, x, :number, y)
+            }
+            poly set f = func (x:number, y:char) {
+                println(:number, x, :char, y)
+            }
+            f(1, 'a')
+            f(1, 2)
+        """, true)
+        assert(out == ":number\t1\t:char\t'a'\n:number\t1\t:number\t1\n") { out }
+    }
+
 }

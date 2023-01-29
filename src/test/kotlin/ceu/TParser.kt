@@ -987,4 +987,46 @@ class TParser {
         val e = parser.exprs()
         assert(e.tostr() == "data :U = [t:T]\n") { e.tostr() }
     }
+
+    // POLY
+
+    @Test
+    fun gg_01_poly_err() {
+        val l = lexer("poly x")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected var or set")
+    }
+    @Test
+    fun gg_02_poly_err() {
+        val l = lexer("poly var x = 1")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 12) : expected expression : have \"=\"")
+    }
+    @Test
+    fun gg_03_poly() {
+        val l = lexer("poly var x")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr(false) == "poly var x") { e.tostr() }
+    }
+    @Test
+    fun gg_04_poly_err() {
+        val l = lexer("poly set x = 1")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 14) : expected \"func\" : have \"1\"")
+    }
+    @Test
+    fun gg_05_poly_set_tag() {
+        val l = lexer("poly set min :number = 1")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr(false) == "set min[:number] = 1") { e.tostr() }
+    }
+    @Test
+    fun gg_06_poly_set_func() {
+        val l = lexer("poly set f = func () { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr(false) == "poly var x") { e.tostr() }
+    }
 }

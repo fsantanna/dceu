@@ -396,10 +396,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ${when {
-                            !this.init -> ""
                             this.poly -> """
                                 ceu_mem->$idc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_dict_create(&$bupc->dn_dyns)} };
                             """
+                            !this.init -> ""
                             (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
                             else -> "ceu_mem->$idc = ceu_acc;"
                         }}
@@ -695,7 +695,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val id = this.tk.str
                 val xvar = vars.get(this, id)!!
                 if (!this.isdst()) {
-                    assrc(this.id2c(xvar,this.tk_.upv)) // ACC ${this.tk.dump()}
+                    val idc = this.id2c(xvar,this.tk_.upv)
+                    if (!xvar.dcl.poly) {
+                        assrc(idc) // ACC ${this.tk.dump()}
+                    } else {
+                        """
+                        assert($idc.type==CEU_VALUE_DICT && "TODO");
+                        CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
+                        CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
+                        ${assrc("ceu_fld")}
+                        """
+                    }
                 } else {
                     val src = this.asdst_src()
                     if (xvar.dcl.tk_.upv > 0) {
