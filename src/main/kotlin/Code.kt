@@ -30,7 +30,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     }
 
     fun Expr.isdst (): Boolean {
-        return ups.pub[this].let { it is Expr.Set && it.dst==this }
+        return ups.pub[this].let { it is Expr.Set && it.dst ==this }
     }
     fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.pub[this] as Expr.Set).n})"
@@ -694,45 +694,56 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Acc -> {
                 val id = this.tk.str
                 val xvar = vars.get(this, id)!!
-                if (!this.isdst()) {
-                    val idc = this.id2c(xvar,this.tk_.upv)
-                    if (!xvar.dcl.poly) {
-                        assrc(idc) // ACC ${this.tk.dump()}
-                    } else {
+                val idc = this.id2c(xvar,this.tk_.upv)
+                when {
+                    !this.isdst() -> when {
+                        !xvar.dcl.poly -> assrc(idc) // ACC ${this.tk.dump()}
+                         xvar.dcl.poly -> """
+                            assert($idc.type==CEU_VALUE_DICT && "TODO");
+                            CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
+                            CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
+                            ${assrc("ceu_fld")}
                         """
-                        assert($idc.type==CEU_VALUE_DICT && "TODO");
-                        CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
-                        CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
-                        ${assrc("ceu_fld")}
-                        """
+                        else -> error("impossible case")
                     }
-                } else {
-                    val src = this.asdst_src()
-                    if (xvar.dcl.tk_.upv > 0) {
-                        err(tk, "set error : cannot reassign an upval")
-                    }
-                    """
-                    { // ACC - SET
-                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                            ceu_ret = ceu_block_set(&${
-                                this.id2c (
-                                    Var (
-                                        xvar.blk,
-                                        Expr.Dcl (
-                                            Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
-                                            false,false,null,false,null
-                                        )
-                                    ),
-                                    this.tk_.upv
-                                )
-                            }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    this.isdst() -> {
+                        val src = this.asdst_src()
+                        if (xvar.dcl.tk_.upv > 0) {
+                            err(tk, "set error : cannot reassign an upval")
                         }
-                        ceu_gc_inc(&$src);
-                        ceu_gc_dec(&${this.id2c(xvar,this.tk_.upv)}, 1);
-                        ${this.id2c(xvar,this.tk_.upv)} = $src;
+                        val poly = (ups.pub[this] as Expr.Set).poly
+                        when {
+                            (poly != null) -> """
+                                assert($idc.type==CEU_VALUE_DICT && "bug found");
+                                CEU_Value ceu_tag_$n = { CEU_VALUE_TAG, {.Tag=CEU_TAG_${poly.str.tag2c()}} };
+                                ceu_dict_set($idc.Dyn, &ceu_tag_$n, &$src);
+                            """
+                            (poly == null) -> """
+                                { // ACC - SET
+                                    if ($src.type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
+                                        ceu_ret = ceu_block_set(&${
+                                            this.id2c (
+                                                Var (
+                                                    xvar.blk,
+                                                    Expr.Dcl (
+                                                        Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
+                                                        false,false,null,false,null
+                                                    )
+                                                ),
+                                                this.tk_.upv
+                                            )
+                                        }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
+                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                    }
+                                    ceu_gc_inc(&$src);
+                                    ceu_gc_dec(&${this.id2c(xvar,this.tk_.upv)}, 1);
+                                    $idc = $src;
+                                }
+                            """
+                            else -> error("impossible case")
+                        }
                     }
-                    """
+                    else -> error("impossible case")
                 }
             }
             is Expr.EvtErr -> {

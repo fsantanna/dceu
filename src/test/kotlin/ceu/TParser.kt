@@ -1029,4 +1029,11 @@ class TParser {
         val e = parser.expr()
         assert(e.tostr(false) == "poly var x") { e.tostr() }
     }
+    @Test
+    fun gg_07_poly_set_err() {
+        val l = lexer("poly set f.x :number = 10")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr(false) == "poly var x") { e.tostr() }
+    }
 }

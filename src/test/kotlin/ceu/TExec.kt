@@ -3084,6 +3084,7 @@ class TExec {
             poly set min :char   = 'a'
             var n :number = min
             var c :char   = min
+            println(min)
             println(n, c)
         """)
         assert(out == "1\t'a'\n") { out }
@@ -3161,5 +3162,12 @@ class TExec {
         """, true)
         assert(out == ":number\t1\t:char\t'a'\n:number\t1\t:number\t1\n") { out }
     }
-
+    @Test
+    fun vv_05_poly_set_nopoly_err() {
+        val out = all("""
+            var min
+            poly set min :number = 1
+        """)
+        assert(out == "1\t'a'\n") { out }
+    }
 }

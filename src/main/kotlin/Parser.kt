@@ -257,7 +257,7 @@ class Parser (lexer_: Lexer)
                     if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                         err(tk0, "invalid set : invalid destination")
                     }
-                    Expr.Set(tk0, false, dst, src)
+                    Expr.Set(tk0, dst, null, src)
                 } else {
                     val hack = dst.tostr(false).let {
                         val s3 = it.substringAfterLast("\n}")
@@ -740,18 +740,16 @@ class Parser (lexer_: Lexer)
                         Expr.Dcl(this.tk0 as Tk.Id, true, false, null, true, null)
                     }
                     this.acceptFix("set") -> {
-                        val dst = this.expr()
+                        this.acceptEnu_err("Id")
+                        val dst = Expr.Acc(this.tk0 as Tk.Id)
                         val tag = if (!this.acceptEnu("Tag")) null else this.tk0 as Tk.Tag
                         this.acceptFix_err("=")
                         if (tag == null) {
                             this.checkFix_err("func")
                         }
                         val src = this.expr()
-                        if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
-                            err(tk0, "invalid set : invalid destination")
-                        }
                         when {
-                            (tag != null) -> Expr.Set(tk0, true, dst, src)
+                            (tag != null) -> Expr.Set(tk0, dst, tag, src)
                             (src is Expr.Proto) -> this.nest("""
                                 TODO
                             """)
