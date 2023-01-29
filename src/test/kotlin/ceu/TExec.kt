@@ -2050,11 +2050,18 @@ class TExec {
         assert(out == ":Xxx\n:1\n") { out }
     }
     @Test
-    fun todo_tags4_err() {
+    fun tags4_err() {
         val out = all("""
-            tags([])
+            println(tags())
         """)
-        assert(out.contains("ceu_tags_f: Assertion `n >= 2' failed")) { out }
+        assert(out.contains("ceu_tags_f: Assertion `n >= 1' failed")) { out }
+    }
+    @Test
+    fun tags4() {
+        val out = all("""
+            println(tags([]))
+        """)
+        assert(out.contains("[]\n")) { out }
     }
     @Test
     fun tags5() {

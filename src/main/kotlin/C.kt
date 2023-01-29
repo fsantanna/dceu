@@ -449,8 +449,11 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_tags_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 1);
             CEU_Value* dyn = args[0];
-            CEU_Value* tag = args[1];
-            assert(tag->type == CEU_VALUE_TAG);
+            CEU_Value* tag = NULL;
+            if (n >= 2) {
+                tag = args[1];
+                assert(tag->type == CEU_VALUE_TAG);
+            }
             switch (n) {
                 case 1: {
                     int len = 0; {
