@@ -928,13 +928,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_x_$n.Dyn->Bcast.X.frame)"
                 val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && (this.proto.task.let { it!=null && it.second } && (this.args.size == 0))
 
-                val (args_sets,args_vs) = this.args.mapIndexed { i,e ->
+                val has_dots = (this.args.lastOrNull().let { it!=null && it is Expr.Acc && it.tk.str == "..." } && !this.proto.let { it is Expr.Acc && it.tk.str=="{#}" })
+                val (args_sets,args_vs) = this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e ->
                     Pair (
                         e.code() + "ceu_mem->arg_${i}_$n = ceu_acc;\n",
-                        "&ceu_mem->arg_${i}_$n"
+                        "ceu_args_$n[$i] = &ceu_mem->arg_${i}_$n;\n"
                     )
                 }.unzip().let {
-                    Pair(it.first.joinToString(""), it.second.joinToString(", "))
+                    Pair(it.first.joinToString(""), it.second.joinToString(""))
                 }
 
                 """
@@ -997,12 +998,34 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """} +
 
                 """
-                    CEU_Value* ceu_args_$n[] = { ${if (pass_evt) "ceu_evt" else args_vs} };
+                    ${has_dots.cond { """
+                        int ceu_dots_$n = ceu_mem->${"...".id2c()}.Dyn->Ncast.Tuple.its;
+                    """ }}
+                    CEU_Value* ceu_args_$n[${when {
+                        pass_evt  -> "1"
+                        !has_dots -> this.args.size
+                        else      -> "ceu_dots_$n + " + (this.args.size-1)
+                    }}];
+                    ${when {
+                        pass_evt  -> "ceu_args_$n[0] = ceu_evt;"
+                        !has_dots -> args_vs
+                        else      -> """
+                            $args_vs
+                            for (int ceu_i_$n=0; ceu_i_$n<ceu_dots_$n; ceu_i_$n++) {
+                                ceu_args_$n[${this.args.size-1} + ceu_i_$n] = &ceu_mem->${"...".id2c()}.Dyn->Ncast.Tuple.buf[ceu_i_$n];
+                            }
+                        """
+                    }}
+
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
                     ceu_ret = $frame->proto->f (
                         $frame,
                         &ceu_bstack_$n,
-                        ${if (pass_evt) -1 else this.args.size},
+                        ${if (pass_evt) -1 else this.args.let {
+                            if (!has_dots) it.size.toString() else {
+                                "(" + (it.size-1) + " + ceu_dots_$n)"
+                            }
+                        }},
                         ceu_args_$n
                     );
                     if (ceu_bstack_$n.block == NULL) {
