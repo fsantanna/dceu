@@ -1,8 +1,11 @@
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
-    // funcs that set vars in enclosing tasks
+    // Dangerous function:
+    //  - set vars in enclosing tasks
+    //  - broadcast events
+    // They cannot receive "evt" or "pub"
     //  - they are marked and cannot receive "evt"
     //  - otherwise, we do not check with ceu_block_set
-    val funcs_vars_tasks = mutableSetOf<Expr.Proto>()
+    val funcs_unsafe = mutableSetOf<Expr.Proto>()
 
     init {
         outer.traverse()
@@ -22,7 +25,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     val dcl = vars.get(this, acc.tk.str)!!
                     val intask = ups.first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
                     if (intask) {
-                        funcs_vars_tasks.add(func as Expr.Proto)
+                        funcs_unsafe.add(func as Expr.Proto)
                     }
                 }
             }
@@ -35,7 +38,14 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Pass   -> this.e.traverse()
 
             is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
+            is Expr.Bcast  -> {
+                this.xin.traverse()
+                this.evt.traverse()
+                val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
+                if (func != null) {
+                    funcs_unsafe.add(func as Expr.Proto)
+                }
+            }
             is Expr.Yield  -> {
                 if (!ups.intask(this)) {
                     err(this.tk, "yield error : expected enclosing coro or task")

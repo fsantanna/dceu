@@ -2786,6 +2786,31 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun hh_pub30_pool_err() {
+        val out = all("""
+            var T = task () {
+                set task.pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            while in :tasks ts, t {
+                var f = func (tt) {
+                    var x = detrack(tt).pub
+                    broadcast in detrack(tt), nil
+                    println(x)
+                }
+                f(t)
+            }
+            println(999)
+        """)
+        //assert(out == "20\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 14, col 17) : f(t)\n" +
+                "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
 
     // STATUS
 
