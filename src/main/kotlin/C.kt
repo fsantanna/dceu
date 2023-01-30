@@ -832,7 +832,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 //assert(isperm!=2 && src->isperm!=2);
                 src->isperm = MAX(src->isperm, isperm);
-            } else if (src->isperm==CEU_PERM_ERR || src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
+            } else if ((isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) || src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {

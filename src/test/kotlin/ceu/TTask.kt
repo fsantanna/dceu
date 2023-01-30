@@ -2659,17 +2659,14 @@ class TTask {
     @Test
     fun hh_pub21_func_expose() {
         val out = all("""
-            var t
-            set t = task (v) {
+            var t = task (v) {
                 set task.pub = v
-                var f
-                set f = func () {
+                var f = func () {
                     task.pub
                 }
                 println(f())
             }
-            var a
-            set a = spawn (t) ([1])
+            var a = spawn (t) ([1])
         """, true)
         assert(out == "[1]\n") { out }
         //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
@@ -2738,6 +2735,56 @@ class TTask {
             println(a.status)
         """, true)
         assert(out == ":terminated\n") { out }
+    }
+    @Test
+    fun hh_pub26_pool_err() {
+        val out = all("""
+            var T = task () {
+                set task.pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            while in :tasks ts, t {
+                var x = detrack(t).pub
+                broadcast in detrack(t), nil
+                println(x)
+            }
+            println(999)
+        """)
+        //assert(out == "20\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 25) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun hh_pub27_func_expose() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = v
+                var f = func (p) {
+                    p
+                }
+                println(f(task.pub))
+            }
+            var a = spawn (t) ([1])
+        """, true)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun hh_pub28_func_tst() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = v
+                var xxx
+                nil
+            }
+            var a = spawn (t) ([])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // STATUS
@@ -3229,15 +3276,12 @@ class TTask {
     @Test
     fun ll_track14() {
         val out = all("""
-            var T
-            set T = task () {
+            var T = task () {
                 set task.pub = [10]
                 ${await("evt==:evt")}
             }
-            var t
-            set t = spawn T()
-            var x
-            set x = track(t)
+            var t = spawn T()
+            var x = track(t)
             spawn task () {
                 catch :par-or {
                     spawn task () {

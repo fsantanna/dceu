@@ -405,11 +405,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 if (id == "evt") "" else {
                     """
                     { // DCL ${this.tk.dump()}
-                        ${(this.init && this.src!=null).cond { this.src!!.code() }}
-                        if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                            ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                        }
+                        ${(this.init && this.src!=null).cond {
+                            this.src!!.code() + """
+                            if (ceu_acc.type>CEU_VALUE_DYNAMIC ${infunc.cond { "&& ceu_acc.Dyn->isperm!=CEU_PERM_ERR" }}) {
+                                ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
+                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            }
+                            """
+                        }}
                         ${when {
                             /*
                             this.poly -> """
@@ -633,7 +636,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, 1);
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, CEU_PERM_ERR);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
