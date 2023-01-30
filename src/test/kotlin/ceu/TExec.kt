@@ -1435,7 +1435,17 @@ class TExec {
     // FUNC / ARGS / DOTS / ...
 
     @Test
-    fun nn_01_dots_err() {
+    fun nn_01_dots_tup() {
+        val out = all("""
+            var f = func (...) {
+                println(#..., ...[1])
+            }
+            f(1,2,3)
+        """)
+        assert(out == "3\t2\n") { out }
+    }
+    @Test
+    fun nn_02_dots_err() {
         val out = all("""
             var f = func () {
                 println(...)
@@ -1445,7 +1455,7 @@ class TExec {
         assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
     }
     @Test
-    fun nn_02_dots() {
+    fun nn_03_dots() {
         val out = all("""
             var f = func (...) {
                 println(...)
@@ -1455,7 +1465,7 @@ class TExec {
         assert(out == "1\t2\t3\n") { out }
     }
     @Test
-    fun nn_03_dots_gc() {
+    fun nn_04_dots_gc() {
         val out = all("""
             var f = func (...) {
                 println(...)
@@ -1466,7 +1476,7 @@ class TExec {
         assert(out == "1\t2\t3\n1\n") { out }
     }
     @Test
-    fun nn_04_dots_gc() {
+    fun nn_05_dots_gc() {
         val out = all("""
             var f = func (...) {
                 println(...)
@@ -1474,16 +1484,6 @@ class TExec {
             f([1,2,3])
         """)
         assert(out == "[1\t2\t3]\n2\n") { out }
-    }
-    @Test
-    fun nn_05_dots_tup() {
-        val out = all("""
-            var f = func (...) {
-                println(#..., ...[1])
-            }
-            f(1,2,3)
-        """)
-        assert(out == "3\t2\n") { out }
     }
     @Test
     fun nn_06_dots_tup() {
@@ -1496,6 +1496,17 @@ class TExec {
             f(1,2,3)
         """)
         assert(out == "10\n1\n") { out }
+    }
+    @Test
+    fun nn_07_dots_tup() {
+        val out = all("""
+            var f = func (x, ...) {
+                var x = ...
+                println(#..., x, ...)  ;; empty ... is not put into args
+            }
+            f(1)
+        """)
+        assert(out == "0\t[]\n") { out }
     }
 
     // WHILE

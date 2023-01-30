@@ -230,33 +230,46 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
                             val istask = (f_b.tk.str != "func")
+                            val dots = (f_b.args.lastOrNull()?.first?.str == "...")
+                            val args_n = f_b.args.size - 1
                             """
                             {
                                 int ceu_i = 0;
-                                ${f_b.args.map {
-                                    val id = it.first.str.id2c()
+                                ${f_b.args.filter { it.first.str!="..." }.map {
+                                    val id = it.first.str
+                                    val idc = id.id2c()
                                     """
                                     ${istask.cond { """
                                         if (ceu_x->Bcast.X.up_tasks != NULL) {
-                                            ceu_mem->_${id}_ = ceu_x->up_dyns.dyns->up_block;
+                                            ceu_mem->_${idc}_ = ceu_x->up_dyns.dyns->up_block;
                                         } else
                                     """}}
                                     { // else
-                                        ceu_mem->_${id}_ = &ceu_mem->block_$n;
+                                        ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                     }
                                     if (ceu_i < ceu_n) {
                                         if (ceu_args[ceu_i]->type>CEU_VALUE_DYNAMIC ${this.func_novars_task().cond { "&& ceu_args[ceu_i]->Dyn->isperm!=CEU_PERM_ERR" }}) {
-                                            ceu_ret = ceu_block_set(&ceu_mem->_${id}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
+                                            ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
                                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                         }
-                                        ceu_mem->$id = *ceu_args[ceu_i];
-                                        ceu_gc_inc(&ceu_mem->$id);
+                                        ceu_mem->$idc = *ceu_args[ceu_i];
+                                        ceu_gc_inc(&ceu_mem->$idc);
                                     } else {
-                                        ceu_mem->$id = (CEU_Value) { CEU_VALUE_NIL };
+                                        ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };
                                     }
                                     ceu_i++;
                                     """
                                 }.joinToString("")}
+                                ${dots.cond {
+                                    val idc = f_b.args.last()!!.first.str.id2c()
+                                    """
+                                    int ceu_tup_n = MAX(0,ceu_n-$args_n);
+                                    CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
+                                    for (int i=0; i<ceu_tup_n; i++) {
+                                        ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]);
+                                    }
+                                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
+                                """ }}
                             }
                             """ 
                         }}

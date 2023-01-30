@@ -1529,9 +1529,8 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             if (args[0]->type == CEU_VALUE_VECTOR) {
                 ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Vector.its} };
-            ${XCEU.cond { """ 
-                } else if (args[0]->type == CEU_VALUE_TUPLE) {
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Tuple.its} };            """ }}
+            } else if (args[0]->type == CEU_VALUE_TUPLE) {
+                ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Tuple.its} };
             } else {
                 CEU_THROW_MSG("\0 : length error : not a vector");
                 CEU_THROW_RET(CEU_ERR_ERROR);
