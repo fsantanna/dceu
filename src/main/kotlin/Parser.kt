@@ -254,6 +254,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
+                if (dst is Expr.Acc && dst.tk.str == "...") {
+                    err(this.tk0, "invalid set : unexpected ...")
+                }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (!XCEU || !(dst is Expr.Do && !dst.isnest)) {

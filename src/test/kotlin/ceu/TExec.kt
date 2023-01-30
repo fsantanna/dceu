@@ -1476,33 +1476,21 @@ class TExec {
         assert(out == "1\t2\t3\n1\n") { out }
     }
     @Test
-    fun nn_05_dots_gc() {
+    fun nn_05_dots() {
         val out = all("""
             var f = func (...) {
                 println(...)
             }
             f([1,2,3])
         """)
-        assert(out == "[1\t2\t3]\n2\n") { out }
+        assert(out == "[1,2,3]\n") { out }
     }
     @Test
     fun nn_06_dots_tup() {
         val out = all("""
-            var f = func (...) {
-                set ... = 10
-                println(...)
-                println(`:number ceu_gc_count`)
-            }
-            f(1,2,3)
-        """)
-        assert(out == "10\n1\n") { out }
-    }
-    @Test
-    fun nn_07_dots_tup() {
-        val out = all("""
             var f = func (x, ...) {
-                var x = ...
-                println(#..., x, ...)  ;; empty ... is not put into args
+                var y = ...
+                println(#..., y, ...)  ;; empty ... is not put into args
             }
             f(1)
         """)

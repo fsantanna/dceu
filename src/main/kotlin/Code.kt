@@ -269,6 +269,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]);
                                     }
                                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
+                                    ceu_gc_inc(&ceu_mem->$idc);
                                 """ }}
                             }
                             """ 

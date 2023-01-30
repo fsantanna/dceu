@@ -556,6 +556,12 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid declaration : unexpected ...")
     }
+    @Test
+    fun pp_11_func_args_err() {
+        val l = lexer("set ... = 10")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid set : unexpected ...")
+    }
 
     // WHILE
 
