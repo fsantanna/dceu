@@ -43,9 +43,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         }
     }
 
-    fun Expr.func_safe (): Boolean {
+    fun Expr.func_unsafe (): Boolean {
         val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
-        return (func!=null && !sta.funcs_unsafe.contains(func))
+        return (func==null || sta.funcs_unsafe.contains(func))
     }
 
     fun Expr.code(): String {
@@ -248,10 +248,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                     }
                                     if (ceu_i < ceu_n) {
-                                        if (ceu_args[ceu_i]->type>CEU_VALUE_DYNAMIC ${this.func_safe().cond { "&& ceu_args[ceu_i]->Dyn->isperm!=CEU_PERM_ERR" }}) {
-                                            ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
-                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                        }
+                                        ${this.func_unsafe().cond { """
+                                            if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                                ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
+                                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                            }
+                                        """ }}
                                         ceu_mem->$idc = *ceu_args[ceu_i];
                                         ceu_gc_inc(&ceu_mem->$idc);
                                     } else {
@@ -406,12 +408,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """
                     { // DCL ${this.tk.dump()}
                         ${(this.init && this.src!=null).cond {
-                            this.src!!.code() + """
-                            if (ceu_acc.type>CEU_VALUE_DYNAMIC ${this.func_safe().cond { "&& ceu_acc.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                                ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
-                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            }
-                            """
+                            this.src!!.code() + this.func_unsafe().cond { """
+                                if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                    ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
+                                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                }
+                            """ }
                         }}
                         ${when {
                             /*
@@ -742,8 +744,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //(poly == null) -> """
                             true -> """
                                 { // ACC - SET
-                                    if ($src.type>CEU_VALUE_DYNAMIC ${this.func_safe().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                                        ceu_ret = ceu_block_set(&${
+                                    ${this.func_unsafe().cond { """
+                                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                                            ceu_ret = ceu_block_set(&${
                                             this.id2c (
                                                 Var (
                                                     xvar.blk,
@@ -754,9 +757,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 ),
                                                 this.tk_.upv
                                             )
-                                        }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
-                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                    }
+                                            }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
+                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        }
+                                    """ }}
                                     ceu_gc_inc(&$src);
                                     ceu_gc_dec(&${this.id2c(xvar,this.tk_.upv)}, 1);
                                     $idc = $src;
@@ -881,10 +885,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } else {
                         val src = this.asdst_src()
                         """
-                        if ($src.type>CEU_VALUE_DYNAMIC ${this.func_safe().cond { "&& $src.Dyn->isperm!=CEU_PERM_ERR" }}) {
-                            ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                        }
+                        ${this.func_unsafe().cond { """
+                            if ($src.type > CEU_VALUE_DYNAMIC) {
+                                ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
+                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            }
+                        """ }}
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
                                 ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);

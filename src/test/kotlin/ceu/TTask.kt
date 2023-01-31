@@ -2811,6 +2811,24 @@ class TTask {
                 "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun hh_pub31_func_expose() {
+        val out = all("""
+            var f = func (t) {
+                t.pub
+            }
+            var T = task () {
+                set task.pub = []
+                yield(nil)
+            }
+            var t = spawn (T) ()
+            println(f(t))
+        """, true)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
 
     // STATUS
 
