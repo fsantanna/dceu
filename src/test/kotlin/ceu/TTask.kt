@@ -2594,240 +2594,17 @@ class TTask {
         assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
     }
     @Test
-    fun hh_pub17_err_expose() {
+    fun hh_17_pub_out() {
         val out = all("""
-            var t
-            set t = task () {
+            var t = task () {
                 set task.pub = []
-            }
-            var a = spawn (t) ()
-            var x
-            set x = a.pub
-            println(x)
-        """)
-        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 6, col 28) : t()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub18_err_expose() {
-        val out = all("""
-            var t
-            set t = task () {
-                set task.pub = @[]
-            }
-            var a = spawn (t) ()
-            var x
-            set x = a.pub
-            println(x)
-        """)
-        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 6, col 28) : t()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub19_err_expose() {
-        val out = all("""
-            var t
-            set t = task () {
-                set task.pub = #[]
-            }
-            var a = spawn (t) ()
-            var x
-            set x = a.pub
-            println(x)
-        """)
-        assert(out == "anon : (lin 6, col 28) : t()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub20_func() {
-        val out = all("""
-            var t
-            set t = task (v) {
-                set task.pub = v
-                var f
-                set f = func () {
-                    task.pub
-                }
-                println(f())
-            }
-            var a = spawn (t)(1)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun hh_pub21_func_expose() {
-        val out = all("""
-            var t = task (v) {
-                set task.pub = v
-                var f = func () {
-                    task.pub
-                }
-                println(f())
-            }
-            var a = spawn (t) ([1])
-        """, true)
-        assert(out == "[1]\n") { out }
-        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
-        //        "anon : (lin 9, col 25) : f()\n" +
-        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub_22_nopub() {
-        val out = all("""
-            var U
-            set U = task () {
-                set task.pub = func () {
-                    10
-                }
-            }
-            var T
-            set T = task (u) {
-                println(u.pub())
-            }
-            spawn T (spawn U())
-        """)
-        assert(out == "anon : (lin 12, col 28) : U()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub_23_nopub() {
-        val out = all("""
-            var U
-            set U = task () {
-                set task.pub = [10]
-            }
-            var T
-            set T = task (u) {
-                nil ;;println(u.pub.0)
-            }
-            spawn T (spawn U())
-        """)
-        assert(out == "anon : (lin 10, col 28) : U()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub_24_nopub() {
-        val out = all("""
-            var U
-            set U = task () {
-                var x
-                set x = [10]
-            }
-            var T
-            set T = task (u) {
-                nil ;;println(u.pub.0)
-            }
-            spawn T (spawn U())
-        """)
-        assert(out == "anon : (lin 11, col 28) : U()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub25() {
-        val out = all("""
-            var t = task (v) {
-                set task.pub = @[]
+                yield(nil)
                 nil
             }
             var a = spawn (t) ()
-            println(a.status)
-        """, true)
-        assert(out == ":terminated\n") { out }
-    }
-    @Test
-    fun hh_pub26_pool_err() {
-        val out = all("""
-            var T = task () {
-                set task.pub = [10]
-                yield(nil)
-            }
-            var ts = tasks()
-            spawn in ts, T()
-            while in :tasks ts, t {
-                var x = detrack(t).pub
-                broadcast in detrack(t), nil
-                println(x)
-            }
-            println(999)
-        """)
-        //assert(out == "20\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 25) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub27_func_expose() {
-        val out = all("""
-            var t = task (v) {
-                set task.pub = v
-                var f = func (p) {
-                    p
-                }
-                println(f(task.pub))
-            }
-            var a = spawn (t) ([1])
-        """, true)
-        assert(out == "[1]\n") { out }
-        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
-        //        "anon : (lin 9, col 25) : f()\n" +
-        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-    }
-    @Test
-    fun hh_pub28_func_tst() {
-        val out = all("""
-            var t = task (v) {
-                set task.pub = v
-                var xxx
-                nil
-            }
-            var a = spawn (t) ([])
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun hh_pub30_pool_err() {
-        val out = all("""
-            var T = task () {
-                set task.pub = [10]
-                yield(nil)
-            }
-            var ts = tasks()
-            spawn in ts, T()
-            while in :tasks ts, t {
-                var f = func (tt) {
-                    var x = detrack(tt).pub
-                    broadcast in detrack(tt), nil
-                    println(x)
-                }
-                f(t)
-            }
-            println(999)
-        """)
-        //assert(out == "20\n") { out }
-        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        assert(out == "anon : (lin 14, col 17) : f(t)\n" +
-                "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun hh_pub31_func_expose() {
-        val out = all("""
-            var f = func (t) {
-                t.pub
-            }
-            var T = task () {
-                set task.pub = []
-                yield(nil)
-            }
-            var t = spawn (T) ()
-            println(f(t))
+            a.pub
         """)
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
-        //        "anon : (lin 9, col 25) : f()\n" +
-        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
 
     // STATUS
@@ -3491,6 +3268,320 @@ class TTask {
         assert(out == "anon : (lin 2, col 19) : task () { set task.pub[:x] = 10 nil }()\n" +
                 "anon : (lin 3, col 26) : index error : expected collection\n" +
                 ":error\n") { out }
+    }
+
+    // EXPOSE
+
+    @Test
+    fun nn_01_expose_err() {
+        val out = all("""
+            var t = task () {
+                set task.pub = []
+                yield(nil)
+                nil
+            }
+            var a = spawn (t) ()
+            var x = a.pub
+            println(x)
+        """)
+        assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun nn_02_expose() {
+        val out = all("""
+            var f = func (t) {
+                var p = t.pub   ;; ok
+                set p = t.pub   ;; ok
+                set p = p       ;; ok
+                println(p)      ;; ok
+                p               ;; ok
+            }
+            var t = task () {
+                set task.pub = []
+                yield(nil)
+                nil
+            }
+            var a = spawn (t) ()
+            f(a)
+            nil
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun nn_03_expose_err() {
+        val out = all("""
+            var f = func (t) {
+                var p = t.pub   ;; ok
+                p               ;; ok
+            }
+            var t = task () {
+                set task.pub = []
+                yield(nil)
+                nil
+            }
+            var a = spawn (t) ()
+            var x = f(a)        ;; no
+            println(x)
+        """)
+        assert(out == "anon : (lin 12, col 17) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun nn_04_expose_err() {
+        val out = all("""
+            var p
+            var f = func (t) {
+                set p = t.pub   ;; no
+            }
+            var t = task () {
+                set task.pub = []
+                yield(nil)
+                nil
+            }
+            var a = spawn (t) ()
+            f(a)
+            nil
+        """)
+        assert(out == "anon : (lin 12, col 17) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+
+    @Test
+    fun nn_pub17_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set task.pub = []
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub18_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set task.pub = @[]
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        //assert(out == "anon : (lin 10, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub19_err_expose() {
+        val out = all("""
+            var t
+            set t = task () {
+                set task.pub = #[]
+            }
+            var a = spawn (t) ()
+            var x
+            set x = a.pub
+            println(x)
+        """)
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub20_func() {
+        val out = all("""
+            var t
+            set t = task (v) {
+                set task.pub = v
+                var f
+                set f = func () {
+                    task.pub
+                }
+                println(f())
+            }
+            var a = spawn (t)(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun nn_pub21_func_expose() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = v
+                var f = func () {
+                    task.pub
+                }
+                println(f())
+            }
+            var a = spawn (t) ([1])
+        """, true)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub_22_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                set task.pub = func () {
+                    10
+                }
+            }
+            var T
+            set T = task (u) {
+                println(u.pub())
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 12, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub_23_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                set task.pub = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 10, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub_24_nopub() {
+        val out = all("""
+            var U
+            set U = task () {
+                var x
+                set x = [10]
+            }
+            var T
+            set T = task (u) {
+                nil ;;println(u.pub.0)
+            }
+            spawn T (spawn U())
+        """)
+        assert(out == "anon : (lin 11, col 28) : U()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub25() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = @[]
+                nil
+            }
+            var a = spawn (t) ()
+            println(a.status)
+        """, true)
+        assert(out == ":terminated\n") { out }
+    }
+    @Test
+    fun nn_pub26_pool_err() {
+        val out = all("""
+            var T = task () {
+                set task.pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            while in :tasks ts, t {
+                var x = detrack(t).pub
+                broadcast in detrack(t), nil
+                println(x)
+            }
+            println(999)
+        """)
+        //assert(out == "20\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 25) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub27_func_expose() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = v
+                var f = func (p) {
+                    p
+                }
+                println(f(task.pub))
+            }
+            var a = spawn (t) ([1])
+        """, true)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun nn_pub28_func_tst() {
+        val out = all("""
+            var t = task (v) {
+                set task.pub = v
+                var xxx
+                nil
+            }
+            var a = spawn (t) ([])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun nn_pub30_pool_err() {
+        val out = all("""
+            var T = task () {
+                set task.pub = [10]
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            while in :tasks ts, t {
+                var f = func (tt) {
+                    var x = detrack(tt).pub
+                    broadcast in detrack(tt), nil
+                    println(x)
+                }
+                f(t)
+            }
+            println(999)
+        """)
+        //assert(out == "20\n") { out }
+        //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 14, col 17) : f(t)\n" +
+                "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun nn_pub31_func_expose() {
+        val out = all("""
+            var f = func (t) {
+                t.pub
+            }
+            var T = task () {
+                set task.pub = []
+                yield(nil)
+            }
+            var t = spawn (T) ()
+            println(f(t))
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
 
     // XCEU

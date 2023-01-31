@@ -11,6 +11,8 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
         outer.traverse()
     }
 
+    // spawn, call unsafe, bcast, yield, resume, toggle,
+
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> this.body.traverse()
@@ -24,9 +26,9 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     val acc = this.dst.base()
                     val dcl = vars.get(this, acc.tk.str)!!
                     val intask = ups.first(dcl.blk) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
-                    if (intask) {
+                    //if (intask) {
                         funcs_unsafe.add(func as Expr.Proto)
-                    }
+                    //}
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
