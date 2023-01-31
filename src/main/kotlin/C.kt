@@ -84,7 +84,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn);
         void ceu_hold_rem (struct CEU_Dyn* dyn);
-        CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm);
+        CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm, int issafe);
         
         CEU_RET ceu_tasks_create   (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create    (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -760,14 +760,14 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int isperm) {
+        CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int isperm, int issafe) {
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Proto.upvs.buf[i].Dyn, isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Proto.upvs.buf[i].Dyn, isperm, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -776,7 +776,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Ncast.Tuple.its; i++) {
                         if (src->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Tuple.buf[i].Dyn, isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Tuple.buf[i].Dyn, isperm, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -786,7 +786,7 @@ fun Coder.main (tags: Tags): String {
                     if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Ncast.Vector.type);
                         for (int i=0; i<src->Ncast.Vector.its; i++) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), isperm, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -795,12 +795,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Ncast.Dict.max; i++) {
                         if ((*src->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, isperm, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
                         if ((*src->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, isperm)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, isperm, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -819,8 +819,7 @@ fun Coder.main (tags: Tags): String {
             }
             int no = src->up_dyns.dyns==NULL;
             if (dst == src->up_dyns.dyns) {
-                //assert(isperm!=2 && src->isperm!=2);
-                src->isperm = MAX(src->isperm, isperm);
+                // ok
             } else if (src->up_dyns.dyns==NULL || (src->isperm==CEU_PERM_TMP && dst->up_block->depth<src->up_dyns.dyns->up_block->depth)) {
                 if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                     // do not enqueue: global functions use up=NULL and are not malloc'ed
@@ -830,15 +829,19 @@ fun Coder.main (tags: Tags): String {
                     }
                     ceu_hold_add(dst, src);
                 }
-                //assert(isperm!=2 && src->isperm!=2);
-                src->isperm = MAX(src->isperm, isperm);
-            } else if ((isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) || src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
+            } else if (src->isperm==CEU_PERM_ERR && issafe) {
+                // ok
+            } else if (isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) {
+                CEU_THROW_MSG("\0 : set error : incompatible scopes");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            } else if (src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else {
-                //assert(isperm!=2 && src->isperm!=2);
-                src->isperm = MAX(src->isperm, isperm);
+                // ok
             }
+            //assert(isperm!=2 && src->isperm!=2);
+            src->isperm = MAX(src->isperm, isperm);
             return CEU_RET_RETURN;
         }
     """ +
@@ -1181,7 +1184,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, isperm));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, isperm, 0));
             return ret;
         }
         
@@ -1194,7 +1197,7 @@ fun Coder.main (tags: Tags): String {
                 }
             };
             memset(ret->Ncast.Tuple.buf, 0, n*sizeof(CEU_Value));
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0, 0));
             return ret;
         }
         
@@ -1209,7 +1212,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,buf}} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0, 0));
             return ret;
         }
         
@@ -1221,7 +1224,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Dict={0,NULL}} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, 0, 0));
             return ret;
         }
         
@@ -1242,7 +1245,7 @@ fun Coder.main (tags: Tags): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, tasks, 0));  // 1=cannot escape this block b/c of tasks
+            assert(CEU_RET_RETURN == ceu_block_set(hld, tasks, 0, 0));  // 1=cannot escape this block b/c of tasks
 
             return CEU_RET_RETURN;
         }
@@ -1281,7 +1284,7 @@ fun Coder.main (tags: Tags): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             
-            assert(CEU_RET_RETURN == ceu_block_set(hld, x, 1));  // 1=cannot escape this block b/c of upvalues
+            assert(CEU_RET_RETURN == ceu_block_set(hld, x, 1, 0));  // 1=cannot escape this block b/c of upvalues
 
             return CEU_RET_RETURN;
         }
@@ -1325,7 +1328,7 @@ fun Coder.main (tags: Tags): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 2));  // 2=cannot be reassigned
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 2, 0));  // 2=cannot be reassigned
             return CEU_RET_RETURN;
         }
         
@@ -1341,7 +1344,7 @@ fun Coder.main (tags: Tags): String {
             };
             // at most x->hld, same as pointer coro/tasks, term bcast is limited to it
             CEU_Dyns* hld = (x->Bcast.X.up_tasks == NULL) ? x->up_dyns.dyns : x->Bcast.X.up_tasks->up_dyns.dyns;
-            assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, trk, 0, 0));
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
             return NULL;
         }

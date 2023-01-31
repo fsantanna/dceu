@@ -2823,8 +2823,8 @@ class TTask {
             }
             var t = spawn (T) ()
             println(f(t))
-        """, true)
-        assert(out == "[1]\n") { out }
+        """)
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
         //        "anon : (lin 9, col 25) : f()\n" +
         //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }

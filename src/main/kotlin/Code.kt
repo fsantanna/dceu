@@ -43,9 +43,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         }
     }
 
-    fun Expr.func_unsafe (): Boolean {
+    fun Expr.func_issafe (): Int {
         val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
-        return (func==null || sta.funcs_unsafe.contains(func))
+        return if (func==null || sta.funcs_unsafe.contains(func)) 0 else 1
     }
 
     fun Expr.code(): String {
@@ -248,12 +248,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                     }
                                     if (ceu_i < ceu_n) {
-                                        ${this.func_unsafe().cond { """
-                                            if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
-                                                ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0);
-                                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                            }
-                                        """ }}
+                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                            ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0, ${this.func_issafe()});
+                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        }
                                         ceu_mem->$idc = *ceu_args[ceu_i];
                                         ceu_gc_inc(&ceu_mem->$idc);
                                     } else {
@@ -330,7 +328,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                                 }
                                             }
                                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                                ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, 0);
+                                                ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, 0, ${this.func_issafe()});
                                                 if (ceu_ret == CEU_RET_THROW) {
                                                     CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                                     // prioritize scope error over whatever there is now
@@ -400,7 +398,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
                 val xvar = vars.get(this, id)
-                val infunc = (ups.first(this) { it is Expr.Proto && it.tk.str=="func" } != null)
                 if (xvar!=null && xvar.dcl.tk_.upv==1 && !clos.vars_refs.contains(xvar)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
@@ -408,12 +405,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """
                     { // DCL ${this.tk.dump()}
                         ${(this.init && this.src!=null).cond {
-                            this.src!!.code() + this.func_unsafe().cond { """
+                            this.src!!.code() + """
                                 if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                    ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1});
+                                    ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1}, ${this.func_issafe()});
                                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                 }
-                            """ }
+                            """
                         }}
                         ${when {
                             /*
@@ -538,7 +535,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                     int ceu_evt_2 = (ceu_mem->evt_$n.type>=CEU_VALUE_TUPLE && ceu_mem->evt_$n.type<=CEU_VALUE_DICT);
                     if (ceu_evt_2) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 2);
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_ERR);
                     }
                     
                     ${this.xin.code()}
@@ -572,7 +569,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
                     //  - if it was set to 1, we dont need to reset anyways
                     if (ceu_evt_2) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, 1);
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_FIX);
                     }
 
                     ceu_gc_dec(&ceu_mem->evt_$n, 1);
@@ -591,7 +588,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_frame->X.pc = $n;      // next resume
                     ceu_x->Bcast.status = CEU_X_STATUS_YIELDED;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(&ceu_frame->up_block->dn_dyns, ceu_acc.Dyn, 0);
+                        ceu_ret = ceu_block_set(&ceu_frame->up_block->dn_dyns, ceu_acc.Dyn, 0, 0);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     return CEU_RET_YIELD;
@@ -638,7 +635,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, CEU_PERM_ERR);
+                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, CEU_PERM_ERR, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
@@ -744,23 +741,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             //(poly == null) -> """
                             true -> """
                                 { // ACC - SET
-                                    ${this.func_unsafe().cond { """
-                                        if ($src.type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(&${
-                                            this.id2c (
-                                                Var (
-                                                    xvar.blk,
-                                                    Expr.Dcl (
-                                                        Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
-                                                        false,/*false,*/null,false, null
-                                                    )
-                                                ),
-                                                this.tk_.upv
-                                            )
-                                            }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1});
-                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                        }
-                                    """ }}
+                                    if ($src.type > CEU_VALUE_DYNAMIC) {
+                                        ceu_ret = ceu_block_set(&${
+                                        this.id2c (
+                                            Var (
+                                                xvar.blk,
+                                                Expr.Dcl (
+                                                    Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
+                                                    false,/*false,*/null,false, null
+                                                )
+                                            ),
+                                            this.tk_.upv
+                                        )
+                                        }->dn_dyns, $src.Dyn, ${if (xvar.dcl.tmp) 0 else 1}, ${this.func_issafe()});
+                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                    }
                                     ceu_gc_inc(&$src);
                                     ceu_gc_dec(&${this.id2c(xvar,this.tk_.upv)}, 1);
                                     $idc = $src;
@@ -885,12 +880,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } else {
                         val src = this.asdst_src()
                         """
-                        ${this.func_unsafe().cond { """
-                            if ($src.type > CEU_VALUE_DYNAMIC) {
-                                ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0);
-                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            }
-                        """ }}
+                        if ($src.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0, ${this.func_issafe()});
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
                                 ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
