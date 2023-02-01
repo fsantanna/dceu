@@ -23,17 +23,16 @@ class TTask {
         val out = all("""
             var t
             set t = coro (v) {
-                println(v)          ;; 1
-                set v = yield((v+1)) 
-                println(v)          ;; 3
-                set v = yield(v+1) 
-                println(v)          ;; 5
-                v+1
+                var v' = v
+                println(v')          ;; 1
+                set v' = yield((v'+1)) 
+                println(v')          ;; 3
+                set v' = yield(v'+1) 
+                println(v')          ;; 5
+                v'+1
             }
-            var a
-            set a = coroutine(t)
-            var v
-            set v = resume a(1)
+            val a = coroutine(t)
+            var v = resume a(1)
             println(v)              ;; 2
             set v = resume a(v+1)
             println(v)              ;; 4
@@ -71,21 +70,20 @@ class TTask {
     @Test
     fun aa_coro5_err() {
         val out = all("""
-            var co
-            set co = coroutine(coro () { nil
+            val co = coroutine(coro () { nil
             })
             resume co()
             resume co(1,2)
         """)
-        assert(out == "anon : (lin 6, col 13) : resume error : expected yielded coro\n:error\n") { out }
+        assert(out == "anon : (lin 5, col 13) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
     fun aa_coro6() {
         val out = all("""
             var co
             set co = coroutine(coro (v) {
-                set v = yield(nil) 
-                println(v)
+                val v' = yield(nil) 
+                println(v')
             })
             resume co(1)
             resume co(2)
@@ -150,8 +148,7 @@ class TTask {
     @Test
     fun aa_coro12_tuple_leak() {
         val out = all("""
-            var T
-            set T = coro () {
+            val T = coro () {
                 pass [1,2,3]
                 yield(nil)
             }
@@ -252,8 +249,7 @@ class TTask {
                 yield(nil)   ;; never awakes
                 println(2)
             }
-            var t
-            set t = coroutine(T)
+            val t = coroutine(T)
             println(0)
             resume t ()
             println(4)
@@ -280,7 +276,7 @@ class TTask {
     @Test
     fun todo_aa_task19a_self_escape() {
         val out = all("""
-            var T1 = task (co) {
+            val T1 = task (co) {
                 println(:3)
                 yield(nil)
                 println(:999)
@@ -367,15 +363,15 @@ class TTask {
         val out = all("""
             var t
             set t = coro (v) {
-                println(v)          ;; 1
-                set v = yield((v+1)) 
-                println(v)          ;; 3
-                set v = yield(v+1) 
-                println(v)          ;; 5
-                v+1
+                var v' = v
+                println(v')          ;; 1
+                set v' = yield((v'+1)) 
+                println(v')          ;; 3
+                set v' = yield(v'+1) 
+                println(v')          ;; 5
+                v'+1
             }
-            var a
-            set a = spawn t(1)
+            val a = spawn t(1)
             println(type(a))
             var v
             set v = resume a(3)
@@ -882,8 +878,8 @@ class TTask {
             var tk = task (v) {
                 yield(nil)
                 println(v, evt)
-                set v = yield(nil)
-                println(v, evt)
+                val v' = yield(nil)
+                println(v', evt)
             }
             spawn tk ()
             broadcast in :global, 1
@@ -900,8 +896,8 @@ class TTask {
                 yield(nil)
                 println(v)
                 println(evt)
-                set v = yield(nil)
-                println(v)
+                var v' = yield(nil)
+                println(v')
                 println(evt)
             }
             var co1 = spawn tk()
@@ -1040,7 +1036,7 @@ class TTask {
             """
             var tk = task (v) {
                 yield(nil)
-                set v = yield(nil)
+                val v' = yield(nil)
                 throw(:1)
             }
             var co1 = spawn tk ()
@@ -1516,8 +1512,8 @@ class TTask {
                 var T
                 set T = task (v) {
                     println(v)
-                    set v = yield(nil)
-                    println(v)
+                    val v' = yield(nil)
+                    println(v')
                 }
                 spawn in ts, T(1)
             }
@@ -1910,7 +1906,7 @@ class TTask {
             var T
             set T = task (v) {
                 set task.pub = v
-                set v = yield(nil)
+                val v' = yield(nil)
             }
             spawn in ts, T(1)
             spawn in ts, T(2)
@@ -2046,7 +2042,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt
+                val xxx' = evt
                 nil
             }
             var co = spawn(tk)()
@@ -2058,7 +2054,7 @@ class TTask {
         //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
         //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2068,7 +2064,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt[0]
+                val xxx' = evt[0]
             }
             spawn (tk) ()
             broadcast in :global, [[]]
@@ -2079,7 +2075,7 @@ class TTask {
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2089,7 +2085,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt
+                val xxx' = evt
                 nil
             }
             var co = spawn (tk) (1)
@@ -2101,7 +2097,7 @@ class TTask {
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2111,7 +2107,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt
+                val xxx' = evt
                 yield(nil)
             }
             var co = spawn (tk)(1)
@@ -2123,7 +2119,7 @@ class TTask {
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2239,7 +2235,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt[0]
+                val xxx' = evt[0]
                 nil
             }
             var co = spawn (tk) ()
@@ -2251,7 +2247,7 @@ class TTask {
         //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, #[[]]\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2261,7 +2257,7 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                set xxx = evt[0]
+                val xxx' = evt[0]
             }
             var co = spawn (tk) ()
             broadcast in :global, @[(1,[])]

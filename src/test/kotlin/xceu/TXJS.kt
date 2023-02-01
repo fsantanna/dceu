@@ -61,7 +61,7 @@ class TXJS {
                 yield()
                 println("Second")
             }
-            var genObj = coroutine(genFunc)
+            val genObj = coroutine(genFunc)
             resume genObj()     ;; First
             resume genObj()     ;; Second
         """)
@@ -74,17 +74,17 @@ class TXJS {
     fun x2() {
         val out = all("""
             coro gen1 (v) { println(v) }
-            var co1 = coroutine(gen1)
+            val co1 = coroutine(gen1)
             resume co1(1)
 
-            var gen2 = coro (v) { println(v) }
-            var co2 = coroutine(gen1)
+            val gen2 = coro (v) { println(v) }
+            val co2 = coroutine(gen1)
             resume co2(2)
             
-            var obj3 = @[
+            val obj3 = @[
                 gen = coro (v) { println(v) }
             ]
-            var co3 = coroutine(obj3.gen)
+            val co3 = coroutine(obj3.gen)
             resume co3(3)
             
             ;; no co4
@@ -104,11 +104,11 @@ class TXJS {
                 }
             }
             
-            var jane = @[
+            val jane = @[
                 first = "Jane",
                 last  = "Doe",
             ]
-            var co = spawn objectEntries(jane)
+            val co = spawn objectEntries(jane)
             while in :coro co, v {
                 println((tostring(v.0) ++ ": ") ++ v.1)
             }
@@ -136,14 +136,14 @@ class TXJS {
                 }
             }
             coro fetchJson (url) {
-                var req = await spawn fetch(url)
-                var txt = await spawn text(req)
+                val req = await spawn fetch(url)
+                val txt = await spawn text(req)
                 await spawn json(txt)
             }
             spawn {
-                var obj1 = await spawn fetchJson(:good)
+                val obj1 = await spawn fetchJson(:good)
                 println(obj1)   ;; json :good
-                var obj2 = await spawn fetchJson(:error)
+                val obj2 = await spawn fetchJson(:error)
                 println(obj2)   ;; never printed
             }
         """, true)
@@ -159,7 +159,7 @@ class TXJS {
                 yield('a')
                 yield('b')
             }
-            var genObj = coroutine(genFunc)
+            val genObj = coroutine(genFunc)
             println(resume genObj())
             println(resume genObj())
             println(resume genObj())
@@ -176,10 +176,10 @@ class TXJS {
                 yield('a')
                 yield('b')
             }
-            var arr = tovector(coroutine(genFunc))
+            val arr = tovector(coroutine(genFunc))
             println(arr)
             
-            ;; var [x,y] = ...  ;; TODO: destructor
+            ;; val [x,y] = ...  ;; TODO: destructor
         """, true)
         assert(out == "ab\n") { out }
     }
@@ -194,7 +194,7 @@ class TXJS {
             coro genFunc() {
                 throw(:problem)
             }
-            var genObj = coroutine(genFunc)
+            val genObj = coroutine(genFunc)
             resume genObj()
                 ;; anon : (lin 3, col 17) : throw error : uncaught exception
                 ;; :problem
@@ -229,7 +229,7 @@ class TXJS {
                     yield([i,v])
                 }
             }
-            var arr = tovector(coroutine(genFunc))
+            val arr = tovector(coroutine(genFunc))
             println(arr)
         """, true)
         assert(out == "#[[0,a],[1,b]]\n") { out }
@@ -251,7 +251,7 @@ class TXJS {
                 }
                 yield('y')
             }
-            var arr = tovector(coroutine(bar))
+            val arr = tovector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -269,7 +269,7 @@ class TXJS {
                 yield :all coroutine(foo)
                 yield('y')
             }
-            var arr = tovector(coroutine(bar))
+            val arr = tovector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -305,7 +305,7 @@ class TXJS {
     @Test
     fun x13() {
         val out = all("""
-            var tree = @[
+            val tree = @[
                 v = 'a',
                 l = @[
                     v = 'b',
@@ -343,7 +343,7 @@ class TXJS {
                 :result
             }
             
-            var genObj = coroutine(dataConsumer)
+            val genObj = coroutine(dataConsumer)
             println(resume genObj())
             println(resume genObj('a'))
             println(resume genObj('b'))
@@ -360,11 +360,11 @@ class TXJS {
             coro gen (input) {
                 println(input)
                 while true {
-                    set input = yield() ;; (B)
-                    println(input)
+                    val input' = yield() ;; (B)
+                    println(input')
                 }
             }
-            var obj = coroutine(gen);
+            val obj = coroutine(gen);
             resume obj('a');
             resume obj('b');
         """, true)
@@ -388,7 +388,7 @@ class TXJS {
                 }
                 yield () ;; (A)
             }
-            var genObj1 = coroutine(genFunc1)
+            val genObj1 = coroutine(genFunc1)
             resume genObj1()
             kill genObj1()
             println(:end)
@@ -406,7 +406,7 @@ class TXJS {
                 yield () ;; (A)
             }
             do {
-                var genObj1 = coroutine(genFunc1)
+                val genObj1 = coroutine(genFunc1)
                 resume genObj1()
             }
             println(:end)
@@ -423,7 +423,7 @@ class TXJS {
     fun todo_x18() {
         val out = all("""
             coro genFunc() {}
-            var genObj = coroutine(genFunc)
+            val genObj = coroutine(genFunc)
             kill genObj(:yes)
             println(genObj.pub)
         """, true)
@@ -451,7 +451,7 @@ class TXJS {
             coro splitLines (target) {
                 var cur = ""
                 while true {
-                    var tmp = yield()
+                    val tmp = yield()
                     while in :vector tmp, (_,c) {
                         if c == '\n' {
                             resume target(cur)
@@ -466,7 +466,7 @@ class TXJS {
             coro numberLines (target) {
                 var n = 0
                 while true {
-                    var line = yield()
+                    val line = yield()
                     set n = n + 1
                     resume target((tostring(n) ++ ": ") ++ line)
                 }
@@ -474,14 +474,14 @@ class TXJS {
             
             coro printLines () {
                 while true {
-                    var line = yield()
+                    val line = yield()
                     println(line)
                 }
             }
             
-            var co_print = spawn printLines()
-            var co_nums  = spawn numberLines(co_print)
-            var co_split = spawn splitLines(co_nums)
+            val co_print = spawn printLines()
+            val co_nums  = spawn numberLines(co_print)
+            val co_split = spawn splitLines(co_nums)
             readFile(nil, co_split) 
         """, true)
         assert(out == "1: ab\n2: c\n3: defg\n") { out }
@@ -500,7 +500,7 @@ class TXJS {
             coro splitLines () {
                 var cur = ""
                 while true {
-                    var tmp = yield(nil)
+                    val tmp = yield(nil)
                     while in :vector tmp, (_,c) {
                         if c == '\n' {
                             yield(move(cur))
@@ -515,7 +515,7 @@ class TXJS {
             coro numberLines () {
                 var n = 0
                 while true {
-                    var line = yield(nil)
+                    val line = yield(nil)
                     set n = n + 1
                     yield((tostring(n) ++ ": ") ++ line)
                 }
@@ -523,24 +523,24 @@ class TXJS {
 
             coro printLines () {
                 while true {
-                    var line = yield()
+                    val line = yield()
                     println(line)
                 }
             }
             
-            var co_read  = coroutine(readFile)
-            var co_split = spawn splitLines()
-            var co_nums  = spawn numberLines()
-            var co_print = spawn printLines()
+            val co_read  = coroutine(readFile)
+            val co_split = spawn splitLines()
+            val co_nums  = spawn numberLines()
+            val co_print = spawn printLines()
             spawn {
                 while in :coro co_read, chars {
                     until {
-                        var line = if chars {
+                        val line = if chars {
                             resume co_split(chars)
                         }
                         if line {
                             until {
-                                var nums = if line {
+                                val nums = if line {
                                     resume co_nums(line)
                                 }
                                 if nums {
@@ -574,14 +574,14 @@ class TXJS {
         val out = all("""
             coro callee () {
                 while true {
-                    var x = yield()
+                    val x = yield()
                     println(:callee, x)
                 }
             }
             coro caller () {
                 yield :all coroutine(callee)
             }
-            var co_caller = spawn caller ()
+            val co_caller = spawn caller ()
             println(:resume, resume co_caller('a'))
             println(:resume, resume co_caller('b'))
         """, true)
@@ -651,31 +651,31 @@ class TXJS {
             }
         }
         coro FS-Read (filename) {
-            var f = `:pointer fopen(${D}filename.Dyn->Ncast.Vector.buf, "r")`
+            val f = `:pointer fopen(${D}filename.Dyn->Ncast.Vector.buf, "r")`
             defer {
                 `fclose(${D}f.Pointer);`
             }
             yield()
             until {
-                var c = `:char fgetc(${D}f.Pointer)`
+                val c = `:char fgetc(${D}f.Pointer)`
                 yield(c)
                 c == `:char EOF`
             }
         }
         do { ;; PULL
-            var read1   = spawn FS-Read("prelude.ceu")
-            var split1  = spawn Split(read1)
-            var number1 = spawn Number(split1)
-            var take1   = spawn Take(3, number1)
+            val read1   = spawn FS-Read("prelude.ceu")
+            val split1  = spawn Split(read1)
+            val number1 = spawn Number(split1)
+            val take1   = spawn Take(3, number1)
             while in :coro take1, l {
                 println(l)
             }
         }
         do { ;; PUSH
-            var read2   = spawn FS-Read("prelude.ceu")
-            var split2  = spawn Split(read2)
-            var number2 = spawn Number(split2)
-            var take2   = spawn Take(3, number2)
+            val read2   = spawn FS-Read("prelude.ceu")
+            val split2  = spawn Split(read2)
+            val number2 = spawn Number(split2)
+            val take2   = spawn Take(3, number2)
             coro Show () {
                 var line = yield()
                 while line {

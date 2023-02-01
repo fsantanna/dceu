@@ -14,8 +14,7 @@ class TXExec {
     @Test
     fun aa_if1() {
         val out = all("""
-            var x
-            set x = if (true) { 1 }
+            val x = if (true) { 1 }
             println(x)
         """)
         assert(out == "1\n") { out }
@@ -63,7 +62,7 @@ class TXExec {
     @Test
     fun bb_ifs1() {
         val out = all("""
-            var x = ifs {
+            val x = ifs {
                 10 < 1 -> 99
                 (5+5)==0 -> { 99 }
                 else -> 10
@@ -75,7 +74,7 @@ class TXExec {
     @Test
     fun bb_ifs2() {
         val out = all("""
-            var x = ifs { true -> `:number 1` }
+            val x = ifs { true -> `:number 1` }
             println(x)
         """)
         assert(out == "1\n") { out }
@@ -83,7 +82,7 @@ class TXExec {
     @Test
     fun bb_ifs3() {
         val out = all("""
-            var x = ifs 20 {
+            val x = ifs 20 {
                 == 10 -> false
                 == 20 -> true
                 else  -> false
@@ -108,7 +107,7 @@ class TXExec {
     @Test
     fun bb_ifs5() {
         val out = all("""
-            var x = ifs 20 {
+            val x = ifs 20 {
                 == 10 -> false
                 else -> true
             }
@@ -119,7 +118,7 @@ class TXExec {
     @Test
     fun todo_bb_ifs6_nocnd() {
         val out = all("""
-            var x = ifs 20 {
+            val x = ifs 20 {
                 true -> ifs {
                     == 20 -> true   ;; err: no ifs expr
                 }
@@ -145,7 +144,7 @@ class TXExec {
     fun bb_ifs8() {
         val out = all("""
             data :T = []
-            var x = ifs 10 {
+            val x = ifs 10 {
                 true -> :T []
                 is 0 -> nil
             }
@@ -204,8 +203,7 @@ class TXExec {
     @Test
     fun is2() {
         val out = all("""
-            var t
-            set t = []
+            val t = []
             tags(t,:x,true)
             println(t is :x)
             tags(t,:y,true)
@@ -235,15 +233,15 @@ class TXExec {
     @Test
     fun bcast1() {
         val out = all("""
-            var tk = task () {
+            val tk = task () {
                 yield()
                 println(evt)
                 do { var ok; set ok=true; while ok { yield(nil); if (evt isnot :x-task) { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
-            var co1 = spawn(tk)()
-            var co2 = spawn(tk)()
+            val co1 = spawn(tk)()
+            val co2 = spawn(tk)()
             broadcast in :global, 1
             broadcast in :global, 2
             broadcast in :global, 3
@@ -474,7 +472,7 @@ class TXExec {
         val out = all("""
             do {
                 var xxx
-                var t = spawn coro () {
+                val t = spawn coro () {
                     set xxx = defer { println(2) }
                     println(:111, xxx)
                     xxx
@@ -566,7 +564,7 @@ class TXExec {
     fun paror11_ret() {
         val out = all("""
             spawn {
-                var x = par-or {
+                val x = par-or {
                     1
                 } with {
                     2
@@ -580,7 +578,7 @@ class TXExec {
     fun parand11_ret() {
         val out = all("""
             spawn {
-                var x = par-and {
+                val x = par-and {
                     1
                 } with {
                     2
@@ -601,7 +599,7 @@ class TXExec {
                         999
                     }
                 }
-                var x = await spawn f()
+                val x = await spawn f()
                 println(x)
             }
         """, true)
@@ -665,9 +663,9 @@ class TXExec {
                 set task.pub = [10]
                 await :evt
             }
-            var t = coroutine(T)
+            val t = coroutine(T)
             resume t ()
-            var x = track(t)
+            val x = track(t)
             spawn {
                 awaiting :check-now x {
                     println(x.pub[0])
@@ -690,8 +688,8 @@ class TXExec {
                 set task.pub = :pub
                 await evt==:evt
             }
-            var t = spawn T()
-            var x = track(t)
+            val t = spawn T()
+            val x = track(t)
             spawn {
                 awaiting x {
                     broadcast in :global, :evt
@@ -743,8 +741,8 @@ class TXExec {
             task T () {
                 yield()
             }
-            var t = spawn T()
-            var x = track(t)
+            val t = spawn T()
+            val x = track(t)
             spawn {
                 par-and {
                     println(:0)
@@ -766,8 +764,8 @@ class TXExec {
             task T () {
                 yield()
             }
-            var t = spawn T()
-            var x = track(t)
+            val t = spawn T()
+            val x = track(t)
             spawn {
                 par-and {
                     println(:0)
@@ -789,7 +787,7 @@ class TXExec {
     @Test
     fun todo_index1_tuple() {
         val out = all("""
-            var t = [1,2,3]
+            val t = [1,2,3]
             println(t.a, t.c)
         """)
         assert(out == "1\t3\n") { out }
@@ -797,7 +795,7 @@ class TXExec {
     @Test
     fun index2_dict() {
         val out = all("""
-            var t = @[ (:x,1), (:y,2) ]
+            val t = @[ (:x,1), (:y,2) ]
             println(t.x, t.y)
         """)
         assert(out == "1\t2\n") { out }
@@ -805,12 +803,12 @@ class TXExec {
     @Test
     fun vector3_size() {
         val out = all("""
-            var v = #[]
+            val v = #[]
             println(#v, v)
             set v[+] = 1
             set v[+] = 2
             println(#v, v)
-            var top = v[-]
+            val top = v[-]
             println(#v, v, v[=], top)
         """, true)
         assert(out == "0\t#[]\n2\t#[1,2]\n1\t#[1]\t1\t2\n") { out }
@@ -880,7 +878,7 @@ class TXExec {
     @Test
     fun dict10_iter() {
         val out = all("""
-            var t = @[x=1, y=2, z=3]
+            val t = @[x=1, y=2, z=3]
             while in :dict t, (k, v) {
                 println(k,v)
             }
@@ -890,7 +888,7 @@ class TXExec {
     @Test
     fun dict10a_iter() {
         val out = all("""
-            var t = @[]
+            val t = @[]
             while in :dict t, (k, v) {
                 println(k,v)
             }
@@ -901,7 +899,7 @@ class TXExec {
     @Test
     fun dict10_iter_err() {
         val out = all("""
-            var t = @[x=1, y=2, z=3]
+            val t = @[x=1, y=2, z=3]
             while in :dict t, k, v {
                 println(k,v)
             }
@@ -911,7 +909,7 @@ class TXExec {
     @Test
     fun vect11_iter_err() {
         val out = all("""
-            var t = #[1, 2, 3]
+            val t = #[1, 2, 3]
             while in :vector t, i, v {
                 println(i, v)
             }
@@ -921,7 +919,7 @@ class TXExec {
     @Test
     fun vect11_iter() {
         val out = all("""
-            var t = #[1, 2, 3]
+            val t = #[1, 2, 3]
             while in :vector t, (i, v) {
                 println(i, v)
             }
@@ -931,7 +929,7 @@ class TXExec {
     @Test
     fun vect12_iter_err() {
         val out = all("""
-            var t = #[1, 2, 3]
+            val t = #[1, 2, 3]
             while in :vector t, (i {
                 println(i, v)
             }
@@ -941,7 +939,7 @@ class TXExec {
     @Test
     fun dict13_iter() {
         val out = all("""
-            var t = @[x=1, y=2, z=3]
+            val t = @[x=1, y=2, z=3]
             while in :dict t, (k, v) {
                 println(k, v)
             }
@@ -960,7 +958,7 @@ class TXExec {
     @Test
     fun string_concat15() {
         val out = all("""
-            var s = #[]
+            val s = #[]
             s <++ #['1']
             s <++ #['2']
             s <++ #['3']
@@ -985,7 +983,7 @@ class TXExec {
     @Test
     fun string17() {
         val out = all("""
-            var v = ""
+            val v = ""
             println(v)
             `printf(">%s<\n", ${D}v.Dyn->Ncast.Vector.buf);`
         """)
@@ -994,7 +992,7 @@ class TXExec {
     @Test
     fun tuple18_size() {
         val out = all("""
-            var t = [1, 2, 3]
+            val t = [1, 2, 3]
             println(#t)
         """)
         assert(out == "3\n") { out }
@@ -1002,7 +1000,7 @@ class TXExec {
     @Test
     fun tuple19_iter() {
         val out = all("""
-            var t = [1, 2, 3]
+            val t = [1, 2, 3]
             while in :tuple t, (i, v) {
                 println(i, v)
             }
@@ -1013,7 +1011,7 @@ class TXExec {
     fun tupl20_dots() {
         val out = ceu.all(
             """
-            var x = [[10]]
+            val x = [[10]]
             println(x, x.0, x.0.0)
         """
         )
@@ -1079,7 +1077,7 @@ class TXExec {
     @Test
     fun await4_err() {
         val out = all("""
-            var f
+            val f
             await f()
         """)
         assert(out == "anon : (lin 3, col 13) : yield error : expected enclosing coro or task") { out }
@@ -1243,7 +1241,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_8919...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_9104...)\n" +
                 "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
                 ":error\n") { out }
@@ -1404,10 +1402,10 @@ class TXExec {
         val out = ceu.all(
             """
             println(x) where {
-                var x = 1
+                val x = 1
             }
-            var z = y + 10 where {
-                var y = 20
+            val z = y + 10 where {
+                val y = 20
             }
             println(z)
         """,true)
@@ -1420,7 +1418,7 @@ class TXExec {
             task T (v) {
                 println(v)
             }
-            var t = (spawn T(v)) where { var v = 10 }
+            val t = (spawn T(v)) where { val v = 10 }
         """)
         assert(out == "10\n") { out }
         //assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
@@ -1432,7 +1430,7 @@ class TXExec {
             coro T (v) {
                 println(v)
             }
-            (var t = spawn T(v)) where { var v = 10 }
+            (val t = spawn T(v)) where { val v = 10 }
             println(t)
         """)
         assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared") { out }
@@ -1444,7 +1442,7 @@ class TXExec {
             coro T (v) {
                 println(v)
             }
-            (var t = spawn T(v)) where { var v = 10 }
+            (val t = spawn T(v)) where { val v = 10 }
         """)
         assert(out == "10\n") { out }
     }
@@ -1455,8 +1453,8 @@ class TXExec {
             coro T (v) {
                 println(v)
             }
-            var t = spawn T(v) where {
-                var v = 10
+            val t = spawn T(v) where {
+                val v = 10
             }
             println(type(t))
         """)
@@ -1470,9 +1468,9 @@ class TXExec {
                 println(v)
                 yield()
             }
-            var ts = tasks()
+            val ts = tasks()
             spawn in ts, T(v) where {
-                var v = 10
+                val v = 10
             }
             while in :tasks ts, t {
                 println(type(t))
@@ -1595,7 +1593,7 @@ class TXExec {
     fun until6() {
         val out = all("""
             var x = 0
-            var v = until { {:break}
+            val v = until { {:break}
                 set x = x + 1
                 println(x)
                 if x == 3 {
@@ -1747,7 +1745,7 @@ class TXExec {
                 yield(2)
                 3
             }
-            var co = coroutine(T)
+            val co = coroutine(T)
             println(resume co())
             println(resume co())
             println(resume co())
@@ -1921,7 +1919,7 @@ class TXExec {
     @Test
     fun ppp1() {
         val out = all("""
-            var v = #[1]
+            val v = #[1]
             set v[=] = 10
             println(v)
         """, true)
@@ -1930,7 +1928,7 @@ class TXExec {
     @Test
     fun ppp2() {
         val out = all("""
-            var v = #[10]
+            val v = #[10]
             println(v[=])
         """, true)
         assert(out == "10\n") { out }
@@ -1938,7 +1936,7 @@ class TXExec {
     @Test
     fun ppp3() {
         val out = all("""
-            var v = #[]
+            val v = #[]
             set v[+] = 1
             println(v)
         """)
@@ -1947,7 +1945,7 @@ class TXExec {
     @Test
     fun ppp4_err() {
         val out = all("""
-            var v = #[]
+            val v = #[]
             v[+]
         """, true)
         assert(out == "anon : (lin 4, col 41) : index error : out of bounds\n" +
@@ -1965,7 +1963,7 @@ class TXExec {
     @Test
     fun todo_ppp6_err() {
         val out = all("""
-            var v = #[1]
+            val v = #[1]
             set v[-] = 10   ;; cannot set v[-]
             println(v)
         """, true)
@@ -1981,7 +1979,7 @@ class TXExec {
             set v[=] = 20
             set v[+] = 3
             println(#v, v[=])
-            var x = v[-]
+            val x = v[-]
             println(#v, v[=], x)
         """, true)
         assert(out == "3\t3\n2\t20\t3\n") { out }
@@ -2010,7 +2008,7 @@ class TXExec {
     @Test
     fun tostring1() {
         val out = all("""
-            var s = tostring(10)
+            val s = tostring(10)
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -2018,7 +2016,7 @@ class TXExec {
     @Test
     fun tonumber2() {
         val out = all("""
-            var n = tonumber("10")
+            val n = tonumber("10")
             println(type(n), n)
         """, true)
         assert(out == ":number\t10\n") { out }
@@ -2026,7 +2024,7 @@ class TXExec {
     @Test
     fun tonumber_tostring3() {
         val out = all("""
-            var s = tostring(tonumber("10"))
+            val s = tostring(tonumber("10"))
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -2037,8 +2035,8 @@ class TXExec {
             coro T() {
                 yield([1])
             }
-            var t = coroutine(T)
-            var v = tovector(t)
+            val t = coroutine(T)
+            val v = tovector(t)
             println(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
@@ -2052,7 +2050,7 @@ class TXExec {
             func square (x) {
                 x**2
             }
-            var quad = square <|< square
+            val quad = square <|< square
             println(quad(3))
         """, true)
         assert(out == "81\n") { out }
@@ -2076,7 +2074,7 @@ class TXExec {
                 :j,
             }
             pass :depois
-            var t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
+            val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
             while in :tuple t, (i,v) {
                 set t[i] = tonumber(v)
             }
@@ -2092,7 +2090,7 @@ class TXExec {
         val out = all("""
             data :T = [x,y]
             data :T.S = [z]
-            var t :T = :T []
+            val t :T = :T []
             var s :T.S
             set s = :T.S []
             println(t is :T, t is :T.S)
@@ -2130,9 +2128,9 @@ class TXExec {
                     }
                 }
             }
-            var a :T.A   = :T.A [10,20]
-            var b :T     = :T.B [30]
-            var c :T.C.Q = :T.C.Q.Y [40,50]
+            val a :T.A   = :T.A [10,20]
+            val b :T     = :T.B [30]
+            val c :T.C.Q = :T.C.Q.Y [40,50]
             println(a.a, b.t, c.q)
             println(a is :T, b is :T.C, c is :T.C.Q.Y)
         """, true)
@@ -2142,7 +2140,7 @@ class TXExec {
     fun todo_tplateXX() {
         val out = all("""
             data :T = [x,y]
-            var t :T = [x=1,y=2]
+            val t :T = [x=1,y=2]
             set t.x = 3
             println(t)      ;; [x=3,y=2]
         """, true)
@@ -2204,7 +2202,7 @@ class TXExec {
                 println(pos)
             }
             spawn {
-                var ts = tasks()
+                val ts = tasks()
                 do {
                     spawn in ts, T([])
                 }
@@ -2221,7 +2219,7 @@ class TXExec {
                 set task.pub = func () { pos }
                 await false
             }
-            var t = spawn T ([1,2])
+            val t = spawn T ([1,2])
             println(t.pub())
         """, true)
         assert(out == "[1,2]\n") { out }
@@ -2231,7 +2229,7 @@ class TXExec {
         val out = all("""
             task T () {
                 do {
-                    var x = []
+                    val x = []
                     set task.pub = func () { x }
                 }
             }
@@ -2369,7 +2367,7 @@ class TXExec {
                 ;;println(:t)
             }
             spawn {
-                var ts = tasks()
+                val ts = tasks()
                 spawn in ts, T()
                 ;;println(:every)
                 every :e {

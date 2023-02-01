@@ -12,7 +12,7 @@ class TXBook {
     @Test
     fun pg_2_square() {
         val out = ceu.all("""
-            var square = func (x) {
+            val square = func (x) {
                 x * x
             }
             println(square(5))
@@ -22,7 +22,7 @@ class TXBook {
     @Test
     fun pg_2_smaller() {
         val out = ceu.all("""
-            var smaller = func (x,y) {
+            val smaller = func (x,y) {
                 if x < y { x } else { y }
             }
             println(smaller(1,2))
@@ -108,7 +108,7 @@ class TXBook {
                     ^^f(^^f(v))
                 }
             }
-            var quad = twicec(square)
+            val quad = twicec(square)
             println(quad(2))""", true
         )
         assert(out == "16\n") { out }
@@ -123,9 +123,9 @@ class TXBook {
                     }
                 }
             }
-            var plusc = curry({+})
-            var b = plusc(1)
-            var c = b(2)
+            val plusc = curry({+})
+            val b = plusc(1)
+            val c = b(2)
             println((plusc(1))(-4))
         """, true)
         assert(out == "-3\n") { out }
@@ -165,7 +165,7 @@ class TXBook {
             func square (x) {
                 x**2
             }
-            var quad = compose(square,square)
+            val quad = compose(square,square)
             println(quad(2))
         """, true)
         assert(out == "16\n") { out }
@@ -208,7 +208,7 @@ class TXBook {
     @Ignore
     fun todo_poly_mult() {
         val out = ceu.all("""
-            poly var mult
+            poly val mult
             println(10 {mult} 20)
             println([1,2] {mult} 2)
             println(2 {mult} [1,2])

@@ -21,6 +21,12 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
+                if (this.dst is Expr.Acc) {
+                    val dcl = vars.get(this, this.dst.tk_.str)!!
+                    if (dcl.dcl.tk.str == "val") {
+                        err(this.tk, "invalid set : destination is immutable")
+                    }
+                }
                 val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
                 if (func != null) {
                     val acc = this.dst.base()

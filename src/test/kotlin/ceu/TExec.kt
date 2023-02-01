@@ -186,7 +186,7 @@ class TExec {
     fun bb_var5_kebab_amb() {
         val out = all("""
             var x = 10
-            var y-z = 5
+            val y-z = 5
             println(h-y-z)
         """)
         assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
@@ -197,7 +197,7 @@ class TExec {
             val v
             set v = 10
         """)
-        assert(out == "nil") { out }
+        assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable") { out }
     }
 
     // INDEX / TUPLE
@@ -280,8 +280,7 @@ class TExec {
     @Test
     fun cc_tuple5_free() {
         val out = all("""
-            var f
-            set f = func () { nil }
+            val f = func () { nil }
             f([1,2,3])
             println(1)
         """)
@@ -290,8 +289,7 @@ class TExec {
     @Test
     fun cc_tuple56_free() {
         val out = all("""
-            var x
-            set x = do {
+            val x = do {
                 [1]
             }
             println(x)
@@ -301,8 +299,7 @@ class TExec {
     @Test
     fun cc_tuple6_free() {
         val out = all("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 ;;println(v)
                 if v > 0 {
                     [f(v - 1)]
@@ -336,11 +333,9 @@ class TExec {
     @Test
     fun cc_tuple8_hold_err() {
         val out = all("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 if v > 0 {
-                    var x
-                    set x = f(v - 1)
+                    val x = f(v - 1)
                     [x] ;; invalid return
                 } else {
                     0
@@ -348,9 +343,9 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 12, col 21) : f(3)\n" +
-                "anon : (lin 6, col 29) : f({-}(v,1))\n" +
-                "anon : (lin 4, col 26) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 10, col 21) : f(3)\n" +
+                "anon : (lin 4, col 29) : f({-}(v,1))\n" +
+                "anon : (lin 3, col 26) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -382,9 +377,9 @@ class TExec {
     @Test
     fun cc_tuple11_copy() {
         val out = all("""
-            var t1 = [1,2,3]
-            var t2 = copy(t1)
-            var t3 = t1
+            val t1 = [1,2,3]
+            val t2 = copy(t1)
+            val t3 = t1
             set t1[2] = 999
             set t2[0] = 10
             println(t1)
@@ -396,8 +391,7 @@ class TExec {
     @Test
     fun cc_tuple12_free_copy() {
         val out = all("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 ;;println(v)
                 if v > 0 {
                     copy([f(v - 1)])
@@ -412,10 +406,8 @@ class TExec {
     @Test
     fun cc_tuple13_copy_out() {
         val out = all("""
-            var out
-            set out = do {
-                var ins
-                set ins = [1,2,3]
+            val out = do {
+                val ins = [1,2,3]
                 copy(ins)
             }
             println(out)
@@ -425,10 +417,8 @@ class TExec {
     @Test
     fun cc_tuple14_move_out() {
         val out = all("""
-            var out
-            set out = do {
-                var ins
-                set ins = [1,2,3]
+            val out = do {
+                val ins = [1,2,3]
                 move(ins)
             }
             println(out)
@@ -438,12 +428,10 @@ class TExec {
     @Test
     fun cc_tuple15_call_scope() {
         val out = all("""
-            var f
-            set f = func (v) {
+            val f = func (v) {
                 v
             }
-            var x
-            set x = f([10])
+            val x = f([10])
             println(x)
         """)
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
@@ -452,8 +440,7 @@ class TExec {
     @Test
     fun cc_tuple16_move() {
         val out = all("""
-            var v
-            set v = do {
+            val v = do {
                 move([[1,2]])
             }
             println(v)
@@ -463,8 +450,7 @@ class TExec {
     @Test
     fun cc_vector17_move() {
         val out = all("""
-            var ttt
-            set ttt = #[#[1,2]]
+            val ttt = #[#[1,2]]
             println(ttt)
         """)
         assert(out == "#[#[1,2]]\n") { out }
@@ -472,8 +458,7 @@ class TExec {
     @Test
     fun cc_dict18_move() {
         val out = all("""
-            var v
-            set v = do {
+            val v = do {
                 @[(:v,@[(:v,2)])]
             }
             println(v)
@@ -490,8 +475,7 @@ class TExec {
     @Test
     fun cc_vector20() {
         val out = all("""
-            var v
-            set v = #[10]
+            val v = #[10]
             println(v[#v - 1])
         """, true)
         assert(out == "10\n") { out }
@@ -501,7 +485,7 @@ class TExec {
         val out = all("""
             var x = [1,2,3]
             do {
-                var y = copy(x)
+                val y = copy(x)
                 do {
                     set x = y
                 }
@@ -516,7 +500,7 @@ class TExec {
         val out = all("""
             var x = [1,2,3]
             do {
-                var y = copy(x)
+                val y = copy(x)
                 do {
                     set x = copy(y)
                 }
@@ -532,7 +516,7 @@ class TExec {
             do {
                 var x = [1,2,3]
                 do {
-                    var y = copy(x)
+                    val y = copy(x)
                     do {
                         set x = copy(y)
                         set v = x       ;; err
@@ -558,8 +542,7 @@ class TExec {
     @Test
     fun dd_dict2() {
         val out = all("""
-            var t
-            set t = @[(:x,1)]
+            val t = @[(:x,1)]
             println(t[:x])
         """)
         assert(out == "1\n") { out }
@@ -567,8 +550,7 @@ class TExec {
     @Test
     fun dd_dict3() {
         val out = all("""
-            var t
-            set t = @[(:x,1)]
+            val t = @[(:x,1)]
             println(t[:y])
         """)
         assert(out == "nil\n") { out }
@@ -576,8 +558,7 @@ class TExec {
     @Test
     fun dd_dict4() {
         val out = all("""
-            var t
-            set t = @[(:x,1)]
+            val t = @[(:x,1)]
             set t[:x] = 2
             println(t[:x])
         """)
@@ -586,8 +567,7 @@ class TExec {
     @Test
     fun dd_dict5() {
         val out = all("""
-            var t
-            set t = @[]
+            val t = @[]
             set t[:x] = 1
             set t[:y] = 2
             println(t)
@@ -597,13 +577,10 @@ class TExec {
     @Test
     fun dd_dict6_copy() {
         val out = all("""
-            var t1
-            set t1 = @[]
+            val t1 = @[]
             set t1[:x] = 1
-            var t2
-            set t2 = t1
-            var t3
-            set t3 = copy(t1)
+            val t2 = t1
+            val t3 = copy(t1)
             set t1[:y] = 2
             set t3[:y] = 20
             println(t1)
@@ -615,7 +592,7 @@ class TExec {
     @Test
     fun todo_dd_dict7_err() {
         val out = all("""
-            var x
+            val x
             set x = @[(nil,10)]
             println(x[nil])
         """)
@@ -624,7 +601,7 @@ class TExec {
     @Test
     fun todo_dd_dict8_err() {
         val out = all("""
-            var x
+            val x
             set x = @[]
             set x[nil] = 10
             println(x[nil])
@@ -634,8 +611,7 @@ class TExec {
     @Test
     fun dd_dict9_next() {
         val out = all("""
-            var t
-            set t = @[]
+            val t = @[]
             set t[:x] = 1
             set t[:y] = 2
             var k
@@ -651,8 +627,7 @@ class TExec {
     @Test
     fun dd_dict10_next() {
         val out = all("""
-            var t
-            set t = @[]
+            val t = @[]
             set t[:x] = 1
             set t[:y] = 2
             set t[:z] = 3
@@ -661,8 +636,7 @@ class TExec {
             set t[:a] = 10
             set t[:b] = 20
             set t[:c] = 30
-            var k
-            set k = next(t)
+            var k = next(t)
             while k /= nil {
                 println(k, t[k])
                 set k = next(t,k)
@@ -711,8 +685,7 @@ class TExec {
     @Test
     fun vector5() {
         val out = all("""
-            var v
-            set v = #[1,2,3]
+            val v = #[1,2,3]
             println(#v, v)
             set v[#v] = 4
             set v[#v] = 5
@@ -764,12 +737,9 @@ class TExec {
     @Test
     fun vector10_pop_acc() {
         val out = all("""
-            var v
-            set v = #[1,2,3]
-            var x
-            set x = do :unnest :hide {
-                var i
-                set i = v[#v - 1]
+            val v = #[1,2,3]
+            val x = do :unnest :hide {
+                val i = v[#v - 1]
                 set v[#v - 1] = nil
                 i
             }
@@ -780,8 +750,7 @@ class TExec {
     @Test
     fun vector11_copy() {
         val out = all("""
-            var t1
-            set t1 = #[]
+            val t1 = #[]
             set t1[#t1] = 1
             println(t1)
         """, true)
@@ -790,13 +759,10 @@ class TExec {
     @Test
     fun vector12_copy() {
         val out = all("""
-            var t1
-            set t1 = #[]        ;; [1,2]
+            val t1 = #[]        ;; [1,2]
             set t1[#t1] = 1
-            var t2
-            set t2 = t1         ;; [1,2]
-            var t3
-            set t3 = copy(t1)   ;; [1,20]
+            val t2 = t1         ;; [1,2]
+            val t3 = copy(t1)   ;; [1,20]
             set t1[#t1] = 2
             set t3[#t3] = 20
             println(t1)
@@ -809,10 +775,8 @@ class TExec {
     fun vector13_add() {
         val out = all("""
             do {       
-                var ceu_ifs_17
-                set ceu_ifs_17 = true    
-                var v
-                set v = #[]
+                val ceu_ifs_17 = true    
+                val v = #[]
                 if true {                                                           
                     set v[{#}(v)] = 10                                              
                 } else {                                                            
@@ -826,7 +790,7 @@ class TExec {
     @Test
     fun vector14_err() {
         val out = all("""
-            ;;var v
+            ;;val v
             set v[#v-1] = nil
         """, true)
         assert(out == "anon : (lin 3, col 17) : access error : variable \"v\" is not declared") { out }
@@ -834,7 +798,7 @@ class TExec {
     @Test
     fun vector15_err() {
         val out = all("""
-            var v
+            val v
             v[#v-1]
         """, true)
         assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
@@ -845,8 +809,7 @@ class TExec {
     @Test
     fun string1() {
         val out = all("""
-            var v
-            set v = #['a','b','c']
+            val v = #['a','b','c']
             set v[#v] = 'a'
             set v[2] = 'b'
             println(v[0])
@@ -861,7 +824,7 @@ class TExec {
     @Test
     fun dcl() {
         val out = all("""
-            var x
+            val x
             println(x)
         """)
         assert(out == "nil\n") { out }
@@ -869,9 +832,9 @@ class TExec {
     @Test
     fun dcl_chars() {
         val out = all("""
-            var x'
-            var f!
-            var even?
+            val x'
+            val f!
+            val even?
             println(x')
             println(f!)
             println(even?)
@@ -881,8 +844,8 @@ class TExec {
     @Test
     fun dcl_redeclaration_err() {
         val out = all("""
-            var x
-            var x
+            val x
+            val x
         """)
         assert(out == "anon : (lin 3, col 13) : declaration error : variable \"x\" is already declared") { out }
     }
@@ -890,11 +853,11 @@ class TExec {
     fun todo_dcl4_dup() {
         val out = all("""
             do {
-                var x
+                val x
                 println(x)
             }
             do {
-                var x
+                val x
                 println(x)
             }
         """)
@@ -906,8 +869,7 @@ class TExec {
     @Test
     fun set1() {
         val out = all("""
-            var x
-            set x = [10]
+            val x = [10]
             println(x)
         """)
         assert(out == "[10]\n") { out }
@@ -915,8 +877,7 @@ class TExec {
     @Test
     fun set2() {
         val out = all("""
-            var x
-            set x = [10,20,[30]]
+            val x = [10,20,[30]]
             set x[1] = 22
             set x[2][0] = 33
             println(x)
@@ -940,8 +901,7 @@ class TExec {
     @Test
     fun set_index() {
         val out = all("""
-            var i
-            set i = 1
+            val i = 1
             println([1,2,3][i])
         """)
         assert(out == "2\n") { out }
@@ -960,8 +920,7 @@ class TExec {
     fun do2() {
         val out = all("""
             do {
-                var a
-                set a = 1
+                val a = 1
                 println(a)
             }
         """)
@@ -970,10 +929,8 @@ class TExec {
     @Test
     fun do3() {
         val out = all("""
-            var x
-            set x = do {
-                var a
-                set a = 10
+            val x = do {
+                val a = 10
                 a
             }
             print(x)
@@ -983,8 +940,7 @@ class TExec {
     @Test
     fun do4() {
         val out = all("""
-            var x
-            set x = do {nil}
+            val x = do {nil}
             println(x)
         """)
         assert(out == "nil\n") { out }
@@ -996,8 +952,7 @@ class TExec {
     fun group1() {
         val out = all("""
             do :unnest {
-                var a
-                set a = 10
+                val a = 10
             }
             do :unnest {
                 var x
@@ -1023,10 +978,8 @@ class TExec {
     @Test
     fun group3() {
         val out = all("""
-            var x
-            set x = do :unnest :hide {
-                var a       ;; invisible
-                set a = []
+            val x = do :unnest :hide {
+                val a = []
                 a
             }
             print(x)
@@ -1069,8 +1022,7 @@ class TExec {
                 set x = [1,2,3]
                 set x[1] = [4,5,6]
                 do {
-                    var y
-                    set y = [10,20,30]
+                    val y = [10,20,30]
                     set y[1] = x[1]
                     set x[2] = y[1]
                 }
@@ -2424,7 +2376,8 @@ class TExec {
             }
             println(f([])())
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
+        //assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
+        assert(out == "anon : (lin 6, col 17) : invalid set : destination is immutable") { out }
     }
     @Test
     fun clo6_err() {
@@ -2440,7 +2393,8 @@ class TExec {
             }
             println(f([])())
         """)
-        assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
+        //assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
+        assert(out == "anon : (lin 7, col 21) : invalid set : destination is immutable") { out }
     }
     @Test
     fun clo7_err() {
@@ -2932,7 +2886,7 @@ class TExec {
                 yield(nil)
                 do {
                     ;;println(evt)
-                    set v = evt
+                    val v' = evt
                 }
                 nil
                 ;;println(:out)
@@ -2944,7 +2898,7 @@ class TExec {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+                "anon : (lin 6, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 
