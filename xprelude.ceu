@@ -124,7 +124,7 @@ func max (v1, v2) {
 
 ;; tostring, tonumber
 
-func ctostring (v) {
+func c-to-string (v) {
     assert(type(v) == :pointer)
     var i = 0
     var n = `:number strlen($v.Pointer)`
@@ -136,22 +136,22 @@ func ctostring (v) {
     move(str)
 }
 
-func tostring (v) {
+func to-string (v) {
     ifs v {
-        is :pointer -> ctostring(v)
-        is :tag -> ctostring(`:pointer ceu_tag_to_string($v.Tag)`)
+        is :pointer -> c-to-string(v)
+        is :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
         is :number -> {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
             ```
-            tostring(`:pointer str`)
+            to-string(`:pointer str`)
         }
         else -> v   ;; TODO
     }
 }
 
-func tonumber (v) {
+func to-number (v) {
     ifs v {
         is :tag -> `:number $v.Tag`
         ((v is :vector) and (#v > 0)) and (v[0] is :char) -> {
@@ -180,9 +180,9 @@ func {++} (v1, v2) {
     (#[] <++ v1) <++ v2
 }
 
-;; tovector
+;; to-vector
 
-func tovector (v) {
+func to-vector (v) {
     ifs v {
         is :x-coro -> {
             var ret = #[]

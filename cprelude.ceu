@@ -137,10 +137,10 @@ set {<} = func (v1,v2) {
     }
 }
 
-;; tostring, tonumber
+;; to-string, to-number
 
-var tostring
-set tostring = func (v) {
+var to-string
+set to-string = func (v) {
     if type(v) == :pointer {
         var i
         set i = 0
@@ -159,15 +159,15 @@ set tostring = func (v) {
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
             ```
-            tostring(`:pointer str`)
+            to-string(`:pointer str`)
         } else {
             v   ;; TODO
         }
     }
 }
 
-var tonumber
-set tonumber = func (v) {
+var to-number
+set to-number = func (v) {
     if type(v) == :tag {
         `:number $v.Tag`
     } else {

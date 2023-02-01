@@ -263,7 +263,7 @@ class TXExec {
                 yield :all coroutine(foo)
                 yield('y')
             }
-            println(tovector(coroutine(bar)))
+            println(to-vector(coroutine(bar)))
         """, true)
         assert(out == "xaby\n") { out }
     }
@@ -1241,7 +1241,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { var ceu_spw_8829...)\n" +
+        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { val ceu_spw_8829...)\n" +
                 "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
                 "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
                 ":error\n") { out }
@@ -1733,7 +1733,7 @@ class TXExec {
                 yield(2)
                 yield(3)
             }
-            println(tovector(coroutine(T)))
+            println(to-vector(coroutine(T)))
         """, true)
         assert(out == "#[1,2,3]\n") { out }
     }
@@ -2003,12 +2003,12 @@ class TXExec {
         assert(out == "anon : (lin 4, col 24) : expected \"]\" : have \"1\"") { out }
     }
 
-    // tonumber, tostring, tovector
+    // to-number, to-string, to-vector
 
     @Test
     fun tostring1() {
         val out = all("""
-            val s = tostring(10)
+            val s = to-string(10)
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -2016,7 +2016,7 @@ class TXExec {
     @Test
     fun tonumber2() {
         val out = all("""
-            val n = tonumber("10")
+            val n = to-number("10")
             println(type(n), n)
         """, true)
         assert(out == ":number\t10\n") { out }
@@ -2024,7 +2024,7 @@ class TXExec {
     @Test
     fun tonumber_tostring3() {
         val out = all("""
-            val s = tostring(tonumber("10"))
+            val s = to-string(to-number("10"))
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -2036,7 +2036,7 @@ class TXExec {
                 yield([1])
             }
             val t = coroutine(T)
-            val v = tovector(t)
+            val v = to-vector(t)
             println(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
@@ -2076,7 +2076,7 @@ class TXExec {
             pass :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
             while in :tuple t, (i,v) {
-                set t[i] = tonumber(v)
+                set t[i] = to-number(v)
             }
             println(t)
         """, true)
@@ -2387,7 +2387,7 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                is :pointer -> ctostring(v)
+                is :pointer -> c-to-string(v)
                 is :number -> 1
             }
         """)

@@ -1983,13 +1983,13 @@ class TExec {
         assert(out == "8\n2\n2\n") { out }
     }
 
-    // tonumber, tostring
+    // to-number, to-string
 
     @Test
     fun tostring1() {
         val out = all("""
             var s
-            set s = tostring(10)
+            set s = to-string(10)
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -1998,7 +1998,7 @@ class TExec {
     fun tonumber2() {
         val out = all("""
             var n
-            set n = tonumber(#['1','0'])
+            set n = to-number(#['1','0'])
             println(type(n), n)
         """, true)
         assert(out == ":number\t10\n") { out }
@@ -2007,7 +2007,7 @@ class TExec {
     fun tonumber_tostring3() {
         val out = all("""
             var s
-            set s = tostring(tonumber(#['1','0']))
+            set s = to-string(to-number(#['1','0']))
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
@@ -2160,7 +2160,7 @@ class TExec {
         val out = all("""
             var t = tags([], :T,   true)
             var s = tags([], :T.S, true)
-            println(tonumber(:T), tonumber(:T.S))
+            println(to-number(:T), to-number(:T.S))
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
@@ -2224,17 +2224,17 @@ class TExec {
             }
             pass :depois
             println (
-                tonumber(:antes),
-                tonumber(:x),
-                tonumber(:y),
-                tonumber(:z),
-                tonumber(:a),
-                tonumber(:b),
-                tonumber(:c),
-                tonumber(:meio),
-                tonumber(:i),
-                tonumber(:j),
-                tonumber(:depois)
+                to-number(:antes),
+                to-number(:x),
+                to-number(:y),
+                to-number(:z),
+                to-number(:a),
+                to-number(:b),
+                to-number(:c),
+                to-number(:meio),
+                to-number(:i),
+                to-number(:j),
+                to-number(:depois)
             )
         """, true)
         assert(out == "32\t1000\t1001\t1002\t10\t11\t12\t33\t100\t101\t34\n") { out }

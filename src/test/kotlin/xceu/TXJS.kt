@@ -110,7 +110,7 @@ class TXJS {
             ]
             val co = spawn objectEntries(jane)
             while in :coro co, v {
-                println((tostring(v.0) ++ ": ") ++ v.1)
+                println((to-string(v.0) ++ ": ") ++ v.1)
             }
         """, true)
         assert(out == ":first: Jane\n:last: Doe\n") { out }
@@ -129,7 +129,7 @@ class TXJS {
                     url
                 }
                 coro text (url) {
-                    tostring(url)
+                    to-string(url)
                 }
                 coro json (txt) {
                     "json " ++ txt
@@ -176,7 +176,7 @@ class TXJS {
                 yield('a')
                 yield('b')
             }
-            val arr = tovector(coroutine(genFunc))
+            val arr = to-vector(coroutine(genFunc))
             println(arr)
             
             ;; val [x,y] = ...  ;; TODO: destructor
@@ -229,7 +229,7 @@ class TXJS {
                     yield([i,v])
                 }
             }
-            val arr = tovector(coroutine(genFunc))
+            val arr = to-vector(coroutine(genFunc))
             println(arr)
         """, true)
         assert(out == "#[[0,a],[1,b]]\n") { out }
@@ -251,7 +251,7 @@ class TXJS {
                 }
                 yield('y')
             }
-            val arr = tovector(coroutine(bar))
+            val arr = to-vector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -269,7 +269,7 @@ class TXJS {
                 yield :all coroutine(foo)
                 yield('y')
             }
-            val arr = tovector(coroutine(bar))
+            val arr = to-vector(coroutine(bar))
             println(arr)
         """, true)
         assert(out == "xaby\n") { out }
@@ -295,7 +295,7 @@ class TXJS {
                 yield()
                 yield :all genObj
             }
-            println(tovector(spawn logReturned(coroutine(genFuncWithReturn))))
+            println(to-vector(spawn logReturned(coroutine(genFuncWithReturn))))
         """, true)
         assert(out == "abc\n") { out }
     }
@@ -324,7 +324,7 @@ class TXJS {
                     yield :all spawn T(tree.r)
                 }
             }
-            println(tovector(spawn T(tree)))
+            println(to-vector(spawn T(tree)))
         """, true)
         assert(out == "abcde\n") { out }
     }
@@ -468,7 +468,7 @@ class TXJS {
                 while true {
                     val line = yield()
                     set n = n + 1
-                    resume target((tostring(n) ++ ": ") ++ line)
+                    resume target((to-string(n) ++ ": ") ++ line)
                 }
             }
             
@@ -517,7 +517,7 @@ class TXJS {
                 while true {
                     val line = yield(nil)
                     set n = n + 1
-                    yield((tostring(n) ++ ": ") ++ line)
+                    yield((to-string(n) ++ ": ") ++ line)
                 }
             }
 
@@ -638,7 +638,7 @@ class TXJS {
             yield()
             var i = 1
             while in :coro lines, l {
-                yield(tostring(i) ++ (": " ++ l))
+                yield(to-string(i) ++ (": " ++ l))
                 set i = i + 1
             }
         }
