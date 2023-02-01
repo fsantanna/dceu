@@ -342,11 +342,11 @@ class Parser (lexer_: Lexer)
 
                         this.nest("""
                             ${pre0}do {
-                                var ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
+                                val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
                                 var $i = ${eA.tostr(true)} $op (
                                     ${if (tkA.str=="[") 0 else "ceu_step_$N"}
                                 )
-                                var ceu_limit_$N = ${eB.tostr(true)}
+                                val ceu_limit_$N = ${eB.tostr(true)}
                                 while $i $cmp ceu_limit_$N {
                                     ${blk.es.tostr(true)}
                                     set $i = $i $op ceu_step_$N
@@ -382,30 +382,30 @@ class Parser (lexer_: Lexer)
                                 val blk = this.block()
                                 this.nest("""
                                     ${pre0}do {
-                                        var ceu_tasks_$N = ${col.tostr(true)}
+                                        val ceu_tasks_$N = ${col.tostr(true)}
                                         ```
                                         if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
                                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${col.tk.pos.file} : (lin ${col.tk.pos.lin}, col ${col.tk.pos.col}) : while error : expected tasks");
                                         }
                                         ```
-                                        var ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
+                                        val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                         var ceu_i_$N = 0
                                         ${pre0}while ceu_i_$N /= ceu_n_$N {
-                                            var ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                            val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                             if ceu_dyn_$N == `:pointer NULL` {
                                                 ;; empty slot
                                                 set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                             } else {
                                                 ;;;
-                                                var ceu_x_$N
+                                                val ceu_x_$N
                                                 `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                                var ${i.str} = track(ceu_x_$N)
+                                                val ${i.str} = track(ceu_x_$N)
                                                 ;;;
 
                                                 ```
                                                     CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                                 ```
-                                                var ${i.str} ${tag.cond { tag!!.str }} = track(`:ceu ceu_x_$N`)
+                                                val ${i.str} ${tag.cond { tag!!.str }} = track(`:ceu ceu_x_$N`)
                                                 ${blk.es.tostr(true)}
                                                 if detrack(${i.str}) {
                                                     set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -420,12 +420,12 @@ class Parser (lexer_: Lexer)
                             tktag.str == ":coro" -> this.catch_block(this.tk1).let { (C,b) ->
                                 C(this.nest("""
                                     do {
-                                        var ceu_col_$N = ${col.tostr(true)}
+                                        val ceu_col_$N = ${col.tostr(true)}
                                         assert(type(ceu_col_$N) == :x-coro)
                                         var ${i.str} = nil
                                         until {
                                             set ${i.str} = resume ceu_col_$N(${i.str})
-                                            var ceu_stop_$N = (ceu_col_$N.status == :terminated)
+                                            val ceu_stop_$N = (ceu_col_$N.status == :terminated)
                                             if not ceu_stop_$N {
                                                 set ${i.str} = do :unnest {
                                                     ${b.es.tostr(true)}
@@ -441,7 +441,7 @@ class Parser (lexer_: Lexer)
                                 v!!
                                 C(this.nest("""
                                     do {
-                                        var ceu_tup_$N = ${col.tostr(true)}
+                                        val ceu_tup_$N = ${col.tostr(true)}
                                         assert(type(ceu_tup_$N) == :tuple)
                                         var ${i.str} = 0
                                         var ${v.str} = nil
@@ -459,7 +459,7 @@ class Parser (lexer_: Lexer)
                                 v!!
                                 C(this.nest("""
                                     do {
-                                        var ceu_vec_$N = ${col.tostr(true)}
+                                        val ceu_vec_$N = ${col.tostr(true)}
                                         assert(type(ceu_vec_$N) == :vector)
                                         var ${i.str} = 0
                                         var ${v.str} = nil
@@ -477,7 +477,7 @@ class Parser (lexer_: Lexer)
                                 v!!
                                 C(this.nest("""
                                     do {
-                                        var ceu_dict_$N = ${col.tostr(true)}
+                                        val ceu_dict_$N = ${col.tostr(true)}
                                         assert(type(ceu_dict_$N) == :dict)
                                         var ${i.str} = next(ceu_dict_$N)
                                         while ${i.str} /= nil {
@@ -524,7 +524,7 @@ class Parser (lexer_: Lexer)
                     val proto = Expr.Proto(tk0, task, args, body)
                     if (id == null) proto else {
                     this.nest("""
-                        ${tk0.pos.pre()}var ${id.str} = ${proto.tostr(true)} 
+                        ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)} 
                     """)
                 }
                 } else {
@@ -645,7 +645,7 @@ class Parser (lexer_: Lexer)
                     val x = this.expr()
                     this.nest("""
                         do {
-                            var ceu_x_$N = ${x.tostr(true)}
+                            val ceu_x_$N = ${x.tostr(true)}
                             while in :coro ceu_x_$N, ceu_i_$N {
                                 yield(ceu_i_$N)  ;; return of yield is used as arg to iter resume()
                             }
@@ -680,7 +680,7 @@ class Parser (lexer_: Lexer)
                     val blk = this.block()
                     this.nest("""
                         ${pre0}do {
-                            var task_$N = spawn ;;{
+                            val task_$N = spawn ;;{
                                 ${blk.tostr(true)}
                             ;;}
                             par {
@@ -792,7 +792,7 @@ class Parser (lexer_: Lexer)
                 }
                 var ifs = cnd.cond { """
                     ${pre0}do {
-                        var ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
+                        val ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
                 """ }
 
                 val eq1 = (cnd!=null && (this.acceptOp("==") || this.acceptFix("is")))
@@ -856,7 +856,7 @@ class Parser (lexer_: Lexer)
                         }
                         this.nest("""
                             ${pre0}do :unnest {
-                                var evt ${cnd.tk.str}
+                                val evt ${cnd.tk.str}
                                 await (evt is ${cnd.tk.str}) and $xcnd
                             }
                         """)
@@ -868,7 +868,7 @@ class Parser (lexer_: Lexer)
                         }
                         this.nest("""
                             ${pre0}do {
-                                var ceu_spw_$N = ${e.tostr(true)}
+                                val ceu_spw_$N = ${e.tostr(true)}
                                 ${pre0}await :check-now (ceu_spw_$N.status == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
                             }
@@ -975,7 +975,7 @@ class Parser (lexer_: Lexer)
                     ${pre0}do {
                         var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
-                            var ceu_${i}_$n = spawn {
+                            val ceu_${i}_$n = spawn {
                                 set _ceu_$n = do {
                                     ${body.es.tostr(true)}
                                 }
@@ -1003,8 +1003,8 @@ class Parser (lexer_: Lexer)
                     ${pre0}do {
                         var _ceu_$n
                         ${pars.mapIndexed { i,body -> """
-                            var ceu_${i}_$n = spawn {
-                                var _ceu_${i}_$n = do {
+                            val ceu_${i}_$n = spawn {
+                                val _ceu_${i}_$n = do {
                                     ${body.es.tostr(true)}
                                 }
                                 set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
@@ -1080,20 +1080,20 @@ class Parser (lexer_: Lexer)
                             when (op.str) {
                                 "=" -> this.nest("""
                                     do :unnest :hide { 
-                                        var ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val ceu_col_$N :tmp = ${e.tostr(true)}
                                         ceu_col_$N[(#ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
                                     do :unnest :hide { 
-                                        var ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val ceu_col_$N :tmp = ${e.tostr(true)}
                                         ceu_col_$N[#ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
                                     do :unnest :hide { 
-                                        var ceu_col_$N :tmp = ${e.tostr(true)}
-                                        var ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
+                                        val ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
                                         set ceu_col_$N[(#ceu_col_$N)-1] = nil
                                         ceu_i_$N
                                     }
@@ -1168,15 +1168,13 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or"    -> this.nest("""
                     ${op.pos.pre()}do {
-                        var ceu_${e.n} :tmp
-                        set ceu_${e.n} = ${e.tostr(true)} 
+                        val ceu_${e.n} :tmp = ${e.tostr(true)} 
                         if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and"   -> this.nest("""
                     ${op.pos.pre()}do {
-                        var ceu_${e.n} :tmp
-                        set ceu_${e.n} = ${e.tostr(true)} 
+                        val ceu_${e.n} :tmp = ${e.tostr(true)} 
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
