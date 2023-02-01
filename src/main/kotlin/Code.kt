@@ -1,6 +1,6 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val unsf: Unsafe, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
     val defers: MutableMap<Expr.Do, MutableList<Pair<Int,String>>> = mutableMapOf()
     val mem: String = outer.mem()
@@ -45,7 +45,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
     fun Expr.func_issafe (): Int {
         val func = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
-        return if (func==null || sta.funcs_unsafe.contains(func)) 0 else 1
+        return if (func==null || unsf.funcs.contains(func)) 0 else 1
     }
 
     fun Expr.code(): String {

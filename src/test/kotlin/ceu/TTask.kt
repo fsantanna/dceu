@@ -3339,7 +3339,8 @@ class TTask {
             f(a)
             nil
         """)
-        assert(out == "anon : (lin 12, col 13) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 12, col 13) : f(a)\n" +
+                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 

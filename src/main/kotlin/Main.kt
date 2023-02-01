@@ -124,8 +124,9 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)
         val clos  = Clos(outer, ups, vars)
+        val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos, sta)
+        val coder = Coder(outer, ups, vars, clos, unsf, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;
