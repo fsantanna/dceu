@@ -158,6 +158,23 @@ func to-number (v) {
     }
 }
 
+func to-tracks (...) {
+    val ret = #[]
+    while in :tuple ..., (_,v) {
+        ifs v {
+            is :x-task -> {
+                set ret[+] = track(v)
+            }
+            is :x-tasks -> {
+                while in :tasks v, i {
+                    set ret[+] = i
+                }
+            }
+        }
+    }
+    move(ret)
+}
+
 ;; (++) concat
 
 func {<++} (v1, v2) {

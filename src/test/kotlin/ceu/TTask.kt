@@ -3148,8 +3148,9 @@ class TTask {
                 println(x)
             }
         """)
-        assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("x-task: 0x")) { out }
     }
 
     // EVT / DATA
@@ -3343,6 +3344,25 @@ class TTask {
                 "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun nn_05_expose() {
+        val out = all("""
+            var T = task (t) {
+                set task.pub = []
+                if t {
+                    val p = detrack(t).pub
+                } else {
+                    nil
+                }
+                yield(nil)
+                nil
+            }
+            val t = spawn T ()
+            spawn T (track(t))
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     @Test
     fun nn_pub17_err_expose() {
@@ -3438,6 +3458,7 @@ class TTask {
                 println(u.pub())
             }
             spawn T (spawn U())
+            println(:ok)
         """)
         assert(out == "anon : (lin 12, col 28) : U()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
@@ -3454,6 +3475,7 @@ class TTask {
                 nil ;;println(u.pub.0)
             }
             spawn T (spawn U())
+            println(:ok)
         """)
         assert(out == "anon : (lin 10, col 28) : U()\n" +
                 "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }

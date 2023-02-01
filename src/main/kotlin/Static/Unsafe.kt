@@ -19,7 +19,6 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
         }
     }
 
-    // set unsafe, do unsafe, spawn, bcast, resume, call unsafe
     fun Expr.set_up_unsafe() {
         val blk = ups.first(this) { it is Expr.Do } as Expr.Do
         dos.add(blk)
@@ -36,8 +35,8 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Do     -> {
                 this.es.forEach { it.traverse() }
                 when {
-                    ups.intask(this)       -> dos.add(this)
-                    dos.contains(this) -> this.set_up_unsafe()
+                    //ups.intask(this) -> dos.add(this)
+                    dos.contains(this)  -> this.set_up_unsafe()
                 }
             }
             is Expr.Dcl    -> this.src?.traverse()
@@ -82,12 +81,19 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     funcs.add(func as Expr.Proto)
                 }
             }
-            is Expr.Yield  -> this.arg.traverse()
+            is Expr.Yield  -> {
+                this.arg.traverse()
+                this.set_up_unsafe()
+            }
             is Expr.Resume -> {
                 this.set_up_unsafe()
                 this.call.traverse()
             }
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
+            is Expr.Toggle -> {
+                this.set_up_unsafe()
+                this.task.traverse()
+                this.on.traverse()
+            }
             is Expr.Pub    -> this.x.traverse()
             is Expr.Self   -> {}
 
