@@ -50,7 +50,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Acc    -> {
                 val xvar = vars.get(this, this.tk.str)!!
                 when {
-                    (xvar.dcl.tk_.upv==1 && this.tk_.upv==2) -> {
+                    (xvar.dcl.id.upv==1 && this.tk_.upv==2) -> {
                         vars_refs.add(xvar) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
@@ -66,7 +66,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             }
                     }
                     // UPVS_PROTOS_NOCLOS
-                    (xvar.blk !=outer && xvar.dcl.tk_.upv==0 && this.tk_.upv==0) -> {
+                    (xvar.blk !=outer && xvar.dcl.id.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
                         ups.all_until(this) { it == xvar.blk }       // stop at enclosing declaration block
                             .filter { it is Expr.Proto }            // all crossing protos

@@ -21,7 +21,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 .all_until(this) { it==xvar.blk }  // go up until find dcl blk
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
-        val idc = xvar.dcl.tk.str.id2c()
+        val idc = xvar.dcl.id.str.id2c()
         return when {
             (fup == null) -> "(ceu_${mem}_${outer.n}->$idc)"
             (N == 0) -> "(ceu_${mem}->$idc)"
@@ -215,7 +215,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val xvars = vars.pub[this]!!.values.let { dcls ->
                         val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                         dcls.filter { it.dcl.init }
-                            .map    { it.dcl.tk.str }
+                            .map    { it.dcl.id.str }
                             .filter { !GLOBALS.contains(it) }
                             .filter { !(f_b is Expr.Proto && args.contains(it)) }
                             .map    { it.id2c() }
@@ -394,17 +394,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Dcl -> {
-                val id = this.tk.str
+                val id = this.id.str
                 val idc = id.id2c()
                 val bupc = ups.first_block(this)!!.toc(true)
                 val xvar = vars.get(this, id)
-                if (xvar!=null && xvar.dcl.tk_.upv==1 && !clos.vars_refs.contains(xvar)) {
+                if (xvar!=null && xvar.dcl.id.upv==1 && !clos.vars_refs.contains(xvar)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
                 if (id == "evt") "" else {
                     """
                     { // DCL ${this.tk.dump()}
-                        ${(this.init && this.src!=null).cond {
+                        ${(this.init && this.src !=null).cond {
                             this.src!!.code() + """
                                 if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                     ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1}, ${this.func_issafe()});
@@ -728,7 +728,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     this.isdst() -> {
                         val src = this.asdst_src()
-                        if (xvar.dcl.tk_.upv > 0) {
+                        if (xvar.dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
                         //val poly = (ups.pub[this] as Expr.Set).poly
@@ -747,8 +747,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             Var (
                                                 xvar.blk,
                                                 Expr.Dcl (
-                                                    Tk.Id("_${id}_",xvar.dcl.tk.pos,xvar.dcl.tk_.upv),
-                                                    false,/*false,*/null,false, null
+                                                    xvar.dcl.tk_,
+                                                    Tk.Id("_${id}_",xvar.dcl.id.pos,xvar.dcl.id.upv), /*false,*/
+                                                    false, null, false, null
                                                 )
                                             ),
                                             this.tk_.upv

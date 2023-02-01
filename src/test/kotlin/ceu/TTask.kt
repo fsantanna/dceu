@@ -1247,7 +1247,7 @@ class TTask {
         assert(out == "anon : (lin 16, col 13) : f()\n" +
                 "anon : (lin 14, col 17) : g()\n" +
                 "anon : (lin 12, col 21) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -1286,7 +1286,7 @@ class TTask {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 4, col 17) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun ee_11_bcast_err() {
@@ -1306,7 +1306,7 @@ class TTask {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -1329,7 +1329,7 @@ class TTask {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         assert(out == "anon : (lin 11, col 17) : broadcast in :global, e\n" +
-                "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -1360,7 +1360,7 @@ class TTask {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 16, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 16, col 17) : set error : incompatible scopes\n" +
                 ":2\n" +
                 ":error\n") { out }
     }
@@ -3152,7 +3152,7 @@ class TTask {
                 println(x)
             }
         """)
-        assert(out == "anon : (lin 8, col 25) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 
@@ -3284,7 +3284,7 @@ class TTask {
             var x = a.pub
             println(x)
         """)
-        assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 8, col 13) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3324,7 +3324,7 @@ class TTask {
             var x = f(a)        ;; no
             println(x)
         """)
-        assert(out == "anon : (lin 12, col 17) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 12, col 13) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3343,7 +3343,7 @@ class TTask {
             f(a)
             nil
         """)
-        assert(out == "anon : (lin 12, col 17) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 12, col 13) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 
@@ -3508,7 +3508,7 @@ class TTask {
         """)
         //assert(out == "20\n") { out }
         //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 25) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 9, col 17) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun nn_pub27_func_expose() {
@@ -3562,7 +3562,7 @@ class TTask {
         //assert(out == "20\n") { out }
         //assert(out == "anon : (lin 12, col 36) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
         assert(out == "anon : (lin 14, col 17) : f(t)\n" +
-                "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
+                "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test

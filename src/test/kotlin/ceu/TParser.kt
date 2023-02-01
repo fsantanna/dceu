@@ -355,12 +355,20 @@ class TParser {
     // EXPR.DCL
 
     @Test
-    fun expr_dcl() {
+    fun expr_dcl_var() {
         val l = lexer("var x")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Dcl && e.tk.str == "x")
+        assert(e is Expr.Dcl && e.tk.str=="var" && e.id.str=="x")
         assert(e.tostr() == "var x")
+    }
+    @Test
+    fun expr_dcl_val() {
+        val l = lexer("val x")
+        val parser = Parser(l)
+        val e = parser.exprPrim()
+        assert(e is Expr.Dcl && e.tk.str=="val" && e.id.str=="x")
+        assert(e.tostr() == "val x")
     }
     @Test
     fun expr_dcl_err() {
@@ -373,7 +381,7 @@ class TParser {
         val l = lexer("var x = 1")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Dcl && e.tk.str == "x" && e.src is Expr.Num)
+        assert(e is Expr.Dcl && e.id.str == "x" && e.src is Expr.Num)
         assert(e.tostr() == "var x = 1")
     }
 

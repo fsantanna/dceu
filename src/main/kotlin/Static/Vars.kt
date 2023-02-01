@@ -10,7 +10,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     it,
                     Var (
                         outer,
-                        Expr.Dcl(Tk.Id(it,outer.tk.pos,0),/*false,*/ false, null,true,null)
+                        Expr.Dcl (
+                            Tk.Fix("val", outer.tk.pos),
+                            Tk.Id(it,outer.tk.pos,0),
+                            /*false,*/ false, null, true, null
+                        )
                     )
                 )
             }.toMap().toMutableMap()
@@ -125,7 +129,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     err(tk, "access error : variable \"${id}\" is not declared") as Var
                 }
             }
-            (xvar.dcl.tk_.upv==0 && upv>0 || xvar.dcl.tk_.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Var
+            (xvar.dcl.id.upv==0 && upv>0 || xvar.dcl.id.upv==1 && upv==0) -> err(tk, "access error : incompatible upval modifier") as Var
             (upv==2 && nocross) -> err(tk, "access error : unnecessary upref modifier") as Var
             else -> xvar
         }
@@ -148,10 +152,18 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     } else {
                         proto.args.let {
                             (it.map { (id,tag) ->
-                                val dcl = Expr.Dcl(id, /*false,*/ false, tag, true, null)
+                                val dcl = Expr.Dcl (
+                                    Tk.Fix("val", this.tk.pos),
+                                    id, /*false,*/ false, tag, true, null
+                                )
                                 Pair(id.str, Var(this, dcl))
                             } + it.map { (id,_) ->
-                                val dcl = Expr.Dcl(Tk.Id("_${id.str}_",id.pos,id.upv), /*false,*/ false, null, false, null)
+                                val dcl = Expr.Dcl(
+                                    Tk.Fix("val", this.tk.pos),
+                                    Tk.Id("_${id.str}_",id.pos,id.upv),
+                                    /*false,*/
+                                    false, null, false, null
+                                )
                                 Pair("_${id.str}_", Var(this, dcl))
                             })
                         }.toMap().toMutableMap()
@@ -160,23 +172,27 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl    -> {
-                val id = this.tk.str
+                val id = this.id.str
                 val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)
-                val dcl = Expr.Dcl(Tk.Id("_${id}_",this.tk.pos,this.tk_.upv), /*false,*/ false, null, false, null)
+                val dcl = Expr.Dcl (
+                    Tk.Fix("val", this.id.pos),
+                    Tk.Id("_${id}_",this.id.pos,this.id.upv),
+                    /*false,*/ false, null, false, null
+                )
                 xup["_${id}_"] = Var(bup, dcl)
                 when {
-                    (this.tk_.upv == 2) -> {
+                    (this.id.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
                     }
-                    (this.tk_.upv==1 && bup==outer) -> {
+                    (this.id.upv==1 && bup==outer) -> {
                         err(tk, "var error : cannot declare a global upvar")
                     }
                 }
 
-                if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
+                if (id!="evt" && this.tag !=null && !datas.containsKey(this.tag.str)) {
                     //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
 

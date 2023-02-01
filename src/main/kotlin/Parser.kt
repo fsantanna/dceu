@@ -236,7 +236,8 @@ class Parser (lexer_: Lexer)
                 }
                 this.catch_block(tk0,isnest,ishide).let { (C,b)->C(b) }
             }
-            this.acceptFix("var") -> {
+            this.acceptFix("val") || this.acceptFix("var") -> {
+                val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix("evt") || this.acceptEnu_err("Id")
                 val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
                 if (id.str == "...") {
@@ -249,7 +250,7 @@ class Parser (lexer_: Lexer)
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(id, /*false,*/ tmp, tag, true, src)
+                Expr.Dcl(tk0, id, /*false,*/ tmp, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix

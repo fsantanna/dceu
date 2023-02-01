@@ -161,7 +161,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Op && it.pos.lin==1 && it.pos.col==7 && it.str == "-" })
         assert(tks.next().let { it is Tk.Id && it.pos.lin==1 && it.pos.col==9 && it.str == "z" })
         assert(tks.next().let { it is Tk.Fix && it.pos.lin==2 && it.pos.col==1 && it.str == "var" })
-        assert(tks.next().let { it is Tk.Id && it.pos.lin==4 && it.pos.col==1 && it.str == "val" })
+        assert(tks.next().let { it is Tk.Fix && it.pos.lin==4 && it.pos.col==1 && it.str == "val" })
         assert(tks.next().let { it is Tk.Op && it.pos.lin==6 && it.pos.col==1 && it.str == "-" })
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==6 && it.pos.col==2 })
     }

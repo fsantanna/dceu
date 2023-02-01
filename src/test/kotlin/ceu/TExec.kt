@@ -191,6 +191,14 @@ class TExec {
         """)
         assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
     }
+    @Test
+    fun bb_06_val() {
+        val out = all("""
+            val v
+            set v = 10
+        """)
+        assert(out == "nil") { out }
+    }
 
     // INDEX / TUPLE
 
@@ -876,7 +884,7 @@ class TExec {
             var x
             var x
         """)
-        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared") { out }
+        assert(out == "anon : (lin 3, col 13) : declaration error : variable \"x\" is already declared") { out }
     }
     @Test
     fun todo_dcl4_dup() {
@@ -2379,14 +2387,14 @@ class TExec {
             var ^^x     ;; can't declare upref
         """
         )
-        assert(out == "anon : (lin 2, col 17) : var error : cannot declare an upref") { out }
+        assert(out == "anon : (lin 2, col 13) : var error : cannot declare an upref") { out }
     }
     @Test
     fun clo2_err() {
         val out = all("""
             var ^x     ;; upvar can't be global
         """)
-        assert(out == "anon : (lin 2, col 17) : var error : cannot declare a global upvar") { out }
+        assert(out == "anon : (lin 2, col 13) : var error : cannot declare a global upvar") { out }
     }
     @Test
     fun clo3_err() {
@@ -2443,7 +2451,7 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 3, col 21) : var error : unreferenced upvar") { out }
+        assert(out == "anon : (lin 3, col 17) : var error : unreferenced upvar") { out }
     }
     @Test
     fun clo8_err() {
@@ -2900,7 +2908,7 @@ class TExec {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
