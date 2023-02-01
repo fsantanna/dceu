@@ -37,8 +37,8 @@ fun Coder.main (tags: Tags): String {
 
         typedef enum {
             CEU_PERM_TMP = 0,   // not assigned, dst assigns
-            CEU_PERM_FIX,       // set but assignable to narrow 
-            CEU_PERM_ERR        // set and not assignable
+            CEU_PERM_SET,       // set and assignable to narrow 
+            CEU_PERM_ERR        // set but not assignable across unsafe (even if same/narrow)
         } CEU_PERM;
 
         typedef enum {
@@ -1328,7 +1328,7 @@ fun Coder.main (tags: Tags): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, 2, 0));  // 2=cannot be reassigned
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, CEU_PERM_ERR, 0, 0));  // 2=cannot be reassigned
             return CEU_RET_RETURN;
         }
         

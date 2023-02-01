@@ -569,7 +569,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
                     //  - if it was set to 1, we dont need to reset anyways
                     if (ceu_evt_2) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_FIX);
+                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_SET);
                     }
 
                     ceu_gc_dec(&ceu_mem->evt_$n, 1);

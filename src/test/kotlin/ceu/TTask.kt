@@ -2307,14 +2307,31 @@ class TTask {
     @Test
     fun hh_pub4_err() {
         val out = all("""
-            var t
-            set t = task () {
+            var t = task () {
                 set task.pub = []
             }
             var x
             do {
                 var a = spawn (t) ()
                 set x = a.pub
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "anon : (lin 8, col 32) : t()\n" +
+                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun hh_pub4a_err() {
+        val out = all("""
+            val T = task () { nil }
+            var x
+            do {
+                var a = spawn (T) ()
+                set x = a.pub
+                nil
             }
             println(x)
         """)
