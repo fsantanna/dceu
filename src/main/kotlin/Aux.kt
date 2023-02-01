@@ -22,11 +22,15 @@ fun Expr.is_innocuous (): Boolean {
     }
 }
 
-fun Expr.base (): Expr.Acc {
+fun Expr.base (): Expr {
     return when (this) {
         is Expr.Acc   -> this
         is Expr.Index -> this.col.base()
-        else -> TODO()
+        is Expr.Pub   -> this.x
+        else -> {
+            println(this)
+            TODO()
+        }
     }
 }
 
