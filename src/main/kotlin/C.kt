@@ -86,9 +86,9 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_rem (struct CEU_Dyn* dyn);
         CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm, int issafe);
         
-        CEU_RET ceu_tasks_create   (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
-        CEU_RET ceu_x_create    (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        CEU_RET ceu_x_create_in (struct CEU_Dyns* hld, struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        CEU_RET ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
+        CEU_RET ceu_x_create     (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        CEU_RET ceu_x_create_in  (struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -1289,7 +1289,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_x_create_in (CEU_Dyns* hld, CEU_Dyn* tasks, CEU_Value* task, CEU_Value* ret, int* ok) {
+        CEU_RET ceu_x_create_in (CEU_Dyn* tasks, CEU_Value* task, CEU_Value* ret, int* ok) {
             if (tasks->type != CEU_VALUE_X_TASKS) {
                 CEU_THROW_MSG("\0 : coroutine error : expected tasks");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1322,8 +1322,7 @@ fun Coder.main (tags: Tags): String {
                     } }
                 }
             };
-            CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
-            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, blk, mem, {
+            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, tasks->Bcast.Tasks.dyns.up_block, mem, {
                 .X = { x, 0, { CEU_VALUE_NIL } }
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };

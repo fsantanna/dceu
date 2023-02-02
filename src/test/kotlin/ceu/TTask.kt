@@ -3379,6 +3379,32 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun nn_06_expose() {
+        val out = all("""
+            val f = func (t) { false }
+            val T = task () {
+                set task.pub = []
+                yield(nil)
+            }
+            val ts = tasks()
+            do {
+                do {
+                    do {
+                        do {
+                            spawn in ts, T()
+                        }
+                    }
+                }
+            }
+            while in :tasks ts, xx1 {
+                ;;println(xx1)
+                f(detrack(xx1).pub)
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
 
     @Test
     fun nn_pub17_err_expose() {

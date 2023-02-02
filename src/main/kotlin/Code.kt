@@ -979,7 +979,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } else {
                         """
                         ceu_ret = ceu_x_create_in (
-                            &$bupc->dn_dyns,
                             ceu_mem->tasks_${spawn!!.n}.Dyn,
                             &ceu_task_$n,
                             &ceu_x_$n,
