@@ -2307,26 +2307,24 @@ class TTask {
     @Test
     fun hh_pub4_err() {
         val out = all("""
-            var t = task () {
+            val t = task () {
                 set task.pub = []
             }
-            var x
-            do {
-                var a = spawn (t) ()
-                set x = a.pub
-            }
-            println(x)
+            var a = spawn (t) ()
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 8, col 32) : t()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 5, col 28) : t()\n" +
+                "anon : (lin 2, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun hh_pub4a_err() {
         val out = all("""
-            val T = task () { nil }
+            val T = task () {
+                set task.pub = []
+                yield(nil)
+            }
             var x
             do {
                 var a = spawn (T) ()
@@ -2335,11 +2333,11 @@ class TTask {
             }
             println(x)
         """)
-        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
         //assert(out == "anon : (lin 11, col 27) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "anon : (lin 8, col 32) : t()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 8, col 32) : t()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun hh_pub5() {
@@ -2615,6 +2613,7 @@ class TTask {
                 nil
             }
             var a = spawn (t) ()
+            println(a.pub)
             a.pub
         """)
         assert(out == "[]\n") { out }

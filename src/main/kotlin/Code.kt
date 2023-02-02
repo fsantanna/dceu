@@ -635,7 +635,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_${task}.dn_dyns, $src.Dyn, CEU_PERM_ERR, 0);
+                            ceu_ret = ceu_block_set(&ceu_mem->block_$task.dn_dyns, $src.Dyn, CEU_PERM_ERR, 0);
+                            //ceu_ret = ceu_block_set(ceu_x->up_dyns.dyns, $src.Dyn, CEU_PERM_ERR, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);

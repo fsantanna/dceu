@@ -817,7 +817,7 @@ fun Coder.main (tags: Tags): String {
                     assert((isperm!=CEU_PERM_TMP || src->isperm!=CEU_PERM_TMP) && "TODO");
                     break;
             }
-            int no = src->up_dyns.dyns==NULL;
+            //int one = (src->isperm == CEU_PERM_ERR) ? 1 : 0;
             if (dst == src->up_dyns.dyns) {
                 // ok
             } else if (src->up_dyns.dyns==NULL || (src->isperm==CEU_PERM_TMP && dst->up_block->depth<src->up_dyns.dyns->up_block->depth)) {
@@ -829,9 +829,9 @@ fun Coder.main (tags: Tags): String {
                     }
                     ceu_hold_add(dst, src);
                 }
-            } else if (src->isperm==CEU_PERM_ERR && issafe) {
+            //} else if (src->isperm==CEU_PERM_ERR && issafe) {
                 // ok
-            } else if (isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) {
+            } else if (!issafe && isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else if (src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
@@ -1328,7 +1328,7 @@ fun Coder.main (tags: Tags): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, CEU_PERM_ERR, 0, 0));  // 2=cannot be reassigned
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, CEU_PERM_ERR, 0));  // 2=cannot be reassigned
             return CEU_RET_RETURN;
         }
         
