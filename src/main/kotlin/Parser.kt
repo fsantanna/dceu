@@ -683,13 +683,12 @@ class Parser (lexer_: Lexer)
                             val task_$N = spawn ;;{
                                 ${blk.tostr(true)}
                             ;;}
-                            par {
-                                every ${on.tostr(true)} {
-                                    toggle task_$N(true)
-                                }
-                            } with {
-                                every ${off.tostr(true)} {
+                            awaiting task_$N {
+                                while true {
+                                    await ${off.tostr(true)}
                                     toggle task_$N(false)
+                                    await ${on.tostr(true)}
+                                    toggle task_$N(true)
                                 }
                             }
                         }
