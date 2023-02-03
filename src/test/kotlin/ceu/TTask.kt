@@ -2618,6 +2618,18 @@ class TTask {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun hh_18_pub_out() {
+        val out = all("""
+            var t = task () {
+                set task.pub = []
+                task.pub
+            }
+            var a = spawn (t) ()
+            println(a.pub)
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // STATUS
 

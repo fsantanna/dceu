@@ -593,13 +593,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     return CEU_RET_YIELD;
                 case $n:                    // resume here
+                    if (ceu_ret != CEU_RET_THROW) {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    }
                     CEU_CONTINUE_ON_CLEAR_THROW();
                     if (ceu_n == CEU_ARG_EVT) {
-                        ${assrc("(CEU_Value) { CEU_VALUE_NIL }")} // resume single argument
+                        // resume single argument
                     } else {
                         assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
                         if (ceu_n == 0) {
-                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                            // no argument
                         } else {
                             ${assrc("*ceu_args[0]")} // resume single argument
                         }
