@@ -818,6 +818,7 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
             //int one = (src->isperm == CEU_PERM_ERR) ? 1 : 0;
+            int src_is_less = 0;
             if (dst == src->up_dyns.dyns) {
                 // ok
             } else if (src->up_dyns.dyns==NULL || (src->isperm==CEU_PERM_TMP && dst->up_block->depth<src->up_dyns.dyns->up_block->depth)) {
@@ -837,11 +838,17 @@ fun Coder.main (tags: Tags): String {
             } else if (src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
+            } else if (src->up_dyns.dyns->up_block->depth < dst->up_block->depth) {
+                // ok
+                src_is_less = 1;
             } else {
                 // ok
             }
-            //assert(isperm!=2 && src->isperm!=2);
-            src->isperm = MAX(src->isperm, isperm);
+            if (src_is_less && src->isperm==CEU_PERM_SET) {
+                // ok
+            } else {
+                src->isperm = MAX(src->isperm, isperm);
+            }
             return CEU_RET_RETURN;
         }
     """ +

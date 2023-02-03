@@ -2630,6 +2630,21 @@ class TTask {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun hh_19_pub_tasks_tup() {
+        val out = all("""
+            val tup = []
+            val T = task () {
+                set task.pub = tup
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            spawn in ts, T()
+            println(:ok)
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // STATUS
 
