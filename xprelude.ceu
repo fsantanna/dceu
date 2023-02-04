@@ -255,10 +255,19 @@ func iter-dict (t) {
     }
 }
 
+func iter-coro (t) {
+    val co = t.1
+    if co.status == :terminated {
+        nil
+    }
+    resume t.1()
+}
+
 func iter (v) {
     ifs v {
         is :tuple  -> [iter-tuple, v, 0]
         is :vector -> [iter-tuple, v, 0]
         is :dict   -> [iter-dict,  v, nil]
+        is :x-coro -> [iter-coro,  v]
     }
 }
