@@ -1,3 +1,5 @@
+import java.io.PushbackReader
+
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_
@@ -210,6 +212,28 @@ class Parser (lexer_: Lexer)
             }
             return Pair(es, null)
         }
+    }
+
+    data class Await (val now: Boolean, val spw: Boolean, val clk: List<Pair<Expr, Tk.Tag>>?, val cnd: Expr?, val xcnd: Pair<Boolean?,Expr?>?)
+    fun await (): Await {
+        val now = this.acceptTag(":check-now")
+        val spw = this.checkFix("spawn")
+        val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_exp()
+        val xcnd = when {
+            (cnd !is Expr.Tag) -> null   // await :key
+            !this.acceptFix(",") -> Pair(true,null)
+            else -> Pair(null, this.expr())
+        }
+        return Await(now, spw, clk, cnd, xcnd)
+    }
+    fun Await.tostr (): String {
+        val clk_expr = clk_or_exp_tostr(Pair(this.clk,this.cnd))
+        val xcnd = when {
+            (this.xcnd == null) -> ""
+            (this.xcnd.first == true) -> ""
+            else -> ", " + this.xcnd.second!!.tostr(true)
+        }
+        return "await ${this.now.cond { ":check-now" }} $clk_expr $xcnd"
     }
 
     fun clk_or_exp_tostr (clk_exp: Pair<List<Pair<Expr,Tk.Tag>>?,Expr?>): String {
@@ -664,8 +688,13 @@ class Parser (lexer_: Lexer)
             this.acceptFix("toggle") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
-                val task = this.expr()
+                val awt = await()
+                if (!XCEU && (awt.now || awt.spw || awt.clk!=null || awt.xcnd!=null)) {
+                    err(tk0, "invalid toggle")
+                }
+                val task = awt.cnd
                 if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
+                    task!!
                     if (task !is Expr.Call) {
                         err(task.tk, "invalid toggle : expected argument")
                     }
@@ -676,7 +705,7 @@ class Parser (lexer_: Lexer)
                     Expr.Toggle(tk0, task.proto, task.args[0])
                 } else {
                     this.acceptFix_err("->")
-                    val (off,on) = Pair(task, this.expr())
+                    val (off,on) = Pair(awt, await())
                     val blk = this.block()
                     this.nest("""
                         ${pre0}do {
@@ -685,9 +714,9 @@ class Parser (lexer_: Lexer)
                             ;;}
                             awaiting task_$N {
                                 while true {
-                                    await ${off.tostr(true)}
+                                    ${off.tostr()}
                                     toggle task_$N(false)
-                                    await ${on.tostr(true)}
+                                    ${on.tostr()}
                                     toggle task_$N(true)
                                 }
                             }
@@ -845,22 +874,20 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = this.acceptTag(":check-now")
-                val spw = this.checkFix("spawn")
-                val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_exp()
+                val awt = await()
+
                 when {
-                    (cnd is Expr.Tag) -> {   // await :key
-                        val xcnd = if (!this.acceptFix(",")) "true" else {
-                            this.expr().tostr(true)
-                        }
+                    (awt.xcnd != null) -> {   // await :key
+                        awt.cnd!!
+                        val xcnd = awt.xcnd.first ?: awt.xcnd.second!!.tostr(true)
                         this.nest("""
                             ${pre0}do :unnest {
-                                val evt ${cnd.tk.str}
-                                await (evt is ${cnd.tk.str}) and $xcnd
+                                val evt ${awt.cnd.tk.str}
+                                await (evt is ${awt.cnd.tk.str}) and $xcnd
                             }
                         """)
                     }
-                    spw -> { // await spawn T()
+                    awt.spw -> { // await spawn T()
                         val e = this.expr()
                         if (!(e is Expr.Spawn && e.tasks==null)) {
                             err_expected(e.tk, "non-pool spawn")
@@ -873,10 +900,10 @@ class Parser (lexer_: Lexer)
                             }
                         """) //.let { println(it.tostr());it }
                     }
-                    (clk != null) -> { // await 5s
+                    (awt.clk != null) -> { // await 5s
                         this.nest("""
                             ${pre0}do {
-                                var ceu_ms_$N = ${clk.map { (e,tag) ->
+                                var ceu_ms_$N = ${awt.clk.map { (e,tag) ->
                                     val s = e.tostr(true)
                                     "(" + when (tag.str) {
                                         ":h"   -> "($s * ${1000*60*60})"
@@ -885,7 +912,7 @@ class Parser (lexer_: Lexer)
                                         ":ms"  -> "($s * ${1})"
                                         else   -> error("impossible case")
                                     }
-                                }.joinToString("+") + (")").repeat(clk.size)}
+                                }.joinToString("+") + (")").repeat(awt.clk.size)}
                                 while ceu_ms_$N > 0 {
                                     await (evt is :frame)
                                     set ceu_ms_$N = ceu_ms_$N - evt.0
@@ -893,12 +920,12 @@ class Parser (lexer_: Lexer)
                             }
                         """)//.let { println(it.tostr()); it }
                     }
-                    (cnd != null) -> {  // await evt==x | await trk | await coro
+                    (awt.cnd != null) -> {  // await evt==x | await trk | await coro
                         this.nest("""
                             ${pre0}do :unnest {
-                                ${pre0}${(!now).cond { "yield ()" }}
+                                ${pre0}${(!awt.now).cond { "yield ()" }}
                                 until {
-                                    var ceu_cnd_$N = ${cnd.tostr(true)}
+                                    var ceu_cnd_$N = ${awt.cnd.tostr(true)}
                                     ifs {
                                         type(ceu_cnd_$N) == :x-task -> {
                                             set ceu_cnd_$N = (ceu_cnd_$N.status == :terminated)
@@ -923,18 +950,11 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = this.acceptTag(":check-now")
-                val (clk,cnd) = this.clk_or_exp()
-                val clk_expr = this.clk_or_exp_tostr(Pair(clk,cnd))
-                val xcnd = when {
-                    (cnd !is Expr.Tag) -> ""
-                    !this.acceptFix(",") -> ""
-                    else -> ", " + this.expr().tostr(true)
-                }
+                val awt = await()
                 val body = this.block()
                 this.nest("""
                     ${pre0}while true {
-                        await ${now.cond { ":check-now" }} $clk_expr $xcnd
+                        ${awt.tostr()}
                         ${body.es.tostr(true)}
                     }
                 """)//.let { println(it.tostr()); it }
@@ -1020,18 +1040,11 @@ class Parser (lexer_: Lexer)
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val now = this.acceptTag(":check-now")
-                val (clk,cnd) = this.clk_or_exp()
-                val clk_expr = this.clk_or_exp_tostr(Pair(clk,cnd))
-                val xcnd = when {
-                    (cnd !is Expr.Tag) -> ""
-                    !this.acceptFix(",") -> ""
-                    else -> ", " + this.expr().tostr(true)
-                }
+                val awt = await()
                 val body = this.block()
                 this.nest("""
                     ${pre0}par-or {
-                        await ${now.cond { ":check-now" }} $clk_expr $xcnd
+                        ${awt.tostr()}
                     } with {
                         ${body.es.tostr(true)}
                     }
