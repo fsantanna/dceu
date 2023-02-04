@@ -22,17 +22,19 @@ fun Expr.mem (): String {
         """
         is Expr.Dcl -> {
             val id = this.id.str.id2c()
-            if (id == "evt") "" else {
-                """
-                struct { // DCL
-                    struct {
+            """
+            struct { // DCL
+                struct {
+                    ${if (id in listOf("evt","_")) "" else {
+                        """
                         CEU_Value $id;
                         CEU_Block* _${id}_; // can't be static b/c recursion
-                        ${this.src.cond { it.mem() } }
-                    };
+                        """
+                    }}
+                    ${this.src.cond { it.mem() } }
                 };
-                """
-            }
+            };
+            """
         }
         is Expr.Set -> """
             struct { // SET

@@ -285,8 +285,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                         }
                         { // because of "decrement refs" below
-                            ${xvars.map { if (it == "evt") "" else """
-                                ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
+                            ${xvars.map {
+                                if (it in listOf("evt","_")) "" else """
+                                    ceu_mem->${it.id2c()} = (CEU_Value) { CEU_VALUE_NIL };
                             """ }.joinToString("")
                             }
                         }
@@ -355,7 +356,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                                 { // decrement refs
-                                    ${xvars.map { if (it == "evt") "" else
+                                    ${xvars.map { if (it in listOf("evt","_")) "" else
                                         """
                                         if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
                                             // skip globals
@@ -401,17 +402,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 if (xvar!=null && xvar.dcl.id.upv==1 && !clos.vars_refs.contains(xvar)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
-                if (id == "evt") "" else {
-                    """
-                    { // DCL ${this.tk.dump()}
-                        ${(this.init && this.src !=null).cond {
-                            this.src!!.code() + """
-                                if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                    ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1}, ${this.do_issafe()});
-                                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                }
-                            """
-                        }}
+                """
+                { // DCL ${this.tk.dump()}
+                    ${(this.init && this.src!=null).cond {
+                        this.src!!.code() + """
+                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_ret = ceu_block_set(&$bupc->dn_dyns, ceu_acc.Dyn, ${if (this.tmp) 0 else 1}, ${this.do_issafe()});
+                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            }
+                        """
+                    }}
+                    ${if (id in listOf("evt","_")) "" else {
+                        """
                         ${when {
                             /*
                             this.poly -> """
@@ -429,9 +431,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #else // b/c of ret scope
                             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                         #endif
-                    }
-                    """
+                        """
+                    }}
                 }
+                """
             }
             is Expr.Set -> {
                 """

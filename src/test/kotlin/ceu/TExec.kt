@@ -201,6 +201,27 @@ class TExec {
         """)
         assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable") { out }
     }
+    @Test
+    fun bb_07_und() {
+        val out = all("""
+            val _ = 10
+            println(_)
+        """)
+        assert(out == "anon : (lin 3, col 21) : access error : cannot access \"_\"") { out }
+    }
+    @Test
+    fun bb_08_und() {
+        val out = all("""
+            do {
+                val _ = println(10)
+            }
+            do {
+                val _ = println(20)
+            }
+            println(:ok)
+        """)
+        assert(out == "10\n20\n:ok\n") { out }
+    }
 
     // INDEX / TUPLE
 

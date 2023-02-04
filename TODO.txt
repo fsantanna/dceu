@@ -13,6 +13,7 @@
     - todo_status5
 - globals should be dyns like the others
     - currently they are not dealloc in block end
+- copy: tags and upvals
 
 # NEXT
 
@@ -21,12 +22,7 @@
     - 3 {add} 4  -->  add(3,4)
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)
-- test throw/break across fake task
-- pub childs cannot be assigned
-  - not even ahead b/c of coros which may kill pub
-- count memory
 - kill task
-- tag of tag requires higher ID to avoid cycle
 - polymorphism
     - poly var f = func (a:X, b:Y)
     - poly func f (a:X, b:Y)
@@ -36,15 +32,18 @@
     - #x ~= #x.y
     - str ~= ".*"
     - await/awaiting/every :type
-- xceu
-    - ifs exp as it { it==1 {} }
-    - iter xs as x
-    - do exp as it {}
-- unify test/error/continue (macro or func?)
+- all asserts should become throws w/ tags
+- numbers
+    +002
+    -100
+    1_000_010
+- test each ceu_bstack case
+    - if no catch, create test
 
 # BACK
 
 - power assert
+    - pyret check
     group {
         var x = 10
         var y = f(x)
@@ -81,6 +80,8 @@
 # IDEAS
 
 - uv-ceu
+    - example with read in parallel
+    - pipe compose
 - code NAV tree
 - lessmilk
 - 7 guis

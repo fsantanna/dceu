@@ -53,7 +53,11 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {}
+            is Expr.Acc    -> {
+                if (this.tk.str == "_") {
+                    err(this.tk, "access error : cannot access \"_\"")
+                }
+            }
             is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
@@ -70,7 +74,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Call   -> {
                 this.proto.traverse()
                 this.args.forEach { it.traverse() }
-                }
+            }
         }
     }
 }
