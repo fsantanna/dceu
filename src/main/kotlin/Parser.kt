@@ -460,24 +460,6 @@ class Parser (lexer_: Lexer)
                                     """) //.let { println(it.tostr());it })
                                 )
                             }
-                            tktag.str == ":tuple" -> this.catch_block(this.tk1).let { (C,b) ->
-                                v!!
-                                C(this.nest("""
-                                    do {
-                                        val ceu_tup_$N = ${col.tostr(true)}
-                                        assert(type(ceu_tup_$N) == :tuple)
-                                        var ${i.str} = 0
-                                        var ${v.str} = nil
-                                        while ${i.str} < #ceu_tup_$N {
-                                            set ${v.str} = ceu_tup_$N[${i.str}]
-                                            ${b.es.tostr(true)}
-                                            set ${i.str} = ${i.str} + 1
-                                        }
-                                        ;;nil ;; iterators always evaluate to nil (b/c of nested iters)
-                                    }
-                                    """) //.let { println(it.tostr());it })
-                                )
-                            }
                             tktag.str == ":vector" -> this.catch_block(this.tk1).let { (C,b) ->
                                 v!!
                                 C(this.nest("""

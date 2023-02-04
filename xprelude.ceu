@@ -233,3 +233,22 @@ func random-next () {
     `:number rand()`
 }
 
+;; ITERATORS
+
+func iter-tuple (t) {
+    if t.2 >= #t.1 {
+        nil
+    } else {
+        val ret = [t.2, t.1[t.2]]
+        set t.2 = t.2 + 1
+        move(ret)
+    }
+}
+
+func iter (v) {
+    ifs v {
+        is :tuple -> {
+            [iter-tuple, v, 0]
+        }
+    }
+}

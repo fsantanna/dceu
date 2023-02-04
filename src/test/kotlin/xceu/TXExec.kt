@@ -1001,11 +1001,11 @@ class TXExec {
     fun tuple19_iter() {
         val out = all("""
             val t = [1, 2, 3]
-            while in :tuple t, (i, v) {
-                println(i, v)
+            while in iter(t), v {
+                println(v)
             }
         """, true)
-        assert(out == "0\t1\n1\t2\n2\t3\n") { out }
+        assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
     }
     @Test
     fun tupl20_dots() {
