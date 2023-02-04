@@ -38,10 +38,6 @@ val GLOBALS = setOf (
     "{==}", "{#}", "{/=}"
 )
 
-val ITERS = setOf (
-    ":tasks"
-) + if (!XCEU) emptySet() else setOf(":coro", ":tuple", ":vector", ":dict")
-
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)

@@ -1494,6 +1494,65 @@ class TExec {
         """)
         assert(out == "false\n") { out }
     }
+    @Test
+    fun while7() {
+        val out = all("""
+            val f = func (t) {
+                if t.1 == 5 {
+                    nil
+                } else {
+                    set t.1 = t.1 + 1
+                    t.1
+                }
+            }
+            do {
+                val it = [f, 0]
+                var i = it.0(it)
+                while i /= nil {
+                    println(i)
+                    set i = it.0(it)
+                }
+            }
+        """, true)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun while8() {
+        val out = all("""
+            var x
+            set x = true
+            while x {
+                set x = false
+            }
+            println(x)
+            
+            loop if xxx { ... }
+            loop in [1->10], :step 2, v { ... }
+            loop in :tasks ts, t { ... }
+            loop in iter(col), v { ... }
+            
+            loop in :coro
+            loop in :tuple
+            loop in :vector
+            loop in :dict
+            
+            do {
+                val it = [f, ...]
+                loop {
+                    val i = it.0(it)
+                    if i != nil {
+                        ...
+                    }
+                } until (i == nil)
+            }
+                
+        if _var == nil then break end
+        block
+      end
+    end
+        """)
+        assert(out == "false\n") { out }
+    }
 
     // ceu.getTHROW / CATCH
 

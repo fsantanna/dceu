@@ -1652,6 +1652,51 @@ class TXExec {
     // WHILE / TASK ITERATOR
 
     @Test
+    fun nn_01_iter() {
+        val out = all("""
+            func f (t) {
+                if t.1 == 5 {
+                    nil
+                } else {
+                    set t.1 = t.1 + 1
+                    t.1 - 1
+                }
+            }
+            do {
+                val it = [f, 0]
+                until {
+                    val i = it.0(it)
+                    if i /= nil {
+                        println(i)
+                    }
+                    (i == nil)
+                }
+            }
+        """, true)
+        assert(out == "0\n1\n2\n3\n4\n") { out }
+    }
+    @Test
+    fun nn_02_iter() {
+        val out = all("""
+            func f (t) {
+                if t.1 == 5 {
+                    nil
+                } else {
+                    set t.1 = t.1 + 1
+                    t.1 - 1
+                }
+            }
+            val it = [f,0]
+            while in it, v {
+                println(v)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n3\n4\n") { out }
+    }
+
+    // WHILE / TASK ITERATOR
+
+    @Test
     fun iter1() {
         val out = all("""
             coro T () {
