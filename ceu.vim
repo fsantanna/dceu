@@ -15,7 +15,7 @@ let s:ft = matchstr(&ft, '^\([^.]\)\+')
 syn keyword Statement   nil set throw val var native copy move data
 syn keyword Statement   break catch coro defer do else func in if ifs is isnot
 syn keyword Statement   detrack track task spawn resume yield toggle broadcast pub
-syn keyword Statement   coroutine tasks enum while where until pass
+syn keyword Statement   coroutine tasks enum loop where until pass
 syn keyword Statement   not and or
 syn keyword Statement   err evt
 syn keyword Statement   await every par par-and par-or awaiting with

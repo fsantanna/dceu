@@ -11,7 +11,7 @@ val D = "\$"
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coro", "defer", "do", "else", "enum", "err", "evt",
     "false", "func", "if", "in", "nil", "pass", /*"poly",*/ "pub", "resume", "set", "spawn",
-    "status", "task", "data", "toggle", "true", "val", "var", "yield", "while"
+    "status", "task", "data", "toggle", "loop", "true", "val", "var", "yield"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
     "par-and", "par-or", "until", "with", "where"
@@ -54,7 +54,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class While  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
+    data class Loop   (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)

@@ -571,19 +571,27 @@ class TParser {
         assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid set : unexpected ...")
     }
 
-    // WHILE
+    // LOOP
 
     @Test
-    fun expr_while1_err() {
-        val l = lexer("while true { }")
+    fun qq_01_loop_err() {
+        val l = lexer("loop { pass nil }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 14) : expected expression : have \"}\"")
+        val e = parser.expr()
+        assert(e is Expr.Loop)
+        assert(e.tostr() == "loop if true {\npass nil\n}") { e.tostr() }
     }
     @Test
-    fun expr_while2_err() {
-        val l = lexer("while {")
+    fun qq_02_loop_err() {
+        val l = lexer("loop if {")
         val parser = Parser(l)
-        assert(trap { parser.exprBins() } == "anon : (lin 1, col 7) : expected expression : have \"{\"")
+        assert(trap { parser.exprBins() } == "anon : (lin 1, col 9) : expected expression : have \"{\"")
+    }
+    @Test
+    fun qq_03_loop_err() {
+        val l = lexer("loop x { }")
+        val parser = Parser(l)
+        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 6) : expected \"{\" : have \"x\"")
     }
 
     // NATIVE
@@ -839,37 +847,37 @@ class TParser {
         val l = lexer("""
             var ts
             set ts = tasks()
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 nil
             }
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var ts\nset ts = tasks()\nwhile in :tasks ts, t {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "var ts\nset ts = tasks()\nlopp in :tasks ts, t {\nnil\n}\n") { e.tostr() }
     }
     @Test
     fun tasks2_err() {
         val l = lexer("""
             var ts
             set ts = tasks()
-            while in :tasks ts, 1 {
+            loop in :tasks ts, 1 {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 33) : expected identifier : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 32) : expected identifier : have \"1\"")
     }
     @Test
     fun tasks3_err() {
         val l = lexer("""
             var ts
             set ts = tasks()
-            while in :tasks x {
+            loop in :tasks x {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 31) : expected \",\" : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 30) : expected \",\" : have \"{\"")
     }
     @Test
     fun tasks4_err() {
@@ -909,22 +917,22 @@ class TParser {
     @Test
     fun iter1_err() {
         val l = lexer("""
-            while in 1 {
+            loop in 1 {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 22) : expected tag : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : expected \":tasks\" : have \"1\"")
     }
     @Test
     fun iter2_err() {
         val l = lexer("""
-            while in :tasks {
+            loop in :tasks {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 29) : expected expression : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected expression : have \"{\"")
     }
 
     // TRACK

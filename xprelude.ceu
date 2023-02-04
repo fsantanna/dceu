@@ -127,7 +127,7 @@ func max (v1, v2) {
 func c-to-string (v) {
     assert(type(v) == :pointer)
     val str = #[]
-    while in [0 -> `:number strlen($v.Pointer)`), i {
+    loop in [0 -> `:number strlen($v.Pointer)`), i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
     move(str)
@@ -158,10 +158,9 @@ func to-number (v) {
     }
 }
 
-;;;
 func to-tracks (...) {
     val ret = #[]
-    while in :tuple ..., (_,v) {
+    loop in iter(...), (_,v) {
         ifs v {
             is :x-task -> {
                 set ret[+] = track(v)
@@ -175,7 +174,6 @@ func to-tracks (...) {
     }
     move(ret)
 }
-;;;
 
 ;; (++) concat
 

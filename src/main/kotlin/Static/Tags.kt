@@ -28,7 +28,7 @@ class Tags (outer: Expr.Do) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.While  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Loop  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> this.tags.forEach {

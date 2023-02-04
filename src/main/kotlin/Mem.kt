@@ -52,8 +52,8 @@ fun Expr.mem (): String {
                 ${this.f.mem()}
             };
             """
-        is Expr.While -> """
-            $union { // WHILE
+        is Expr.Loop -> """
+            $union { // LOOP
                 ${this.cnd.mem()}
                 ${this.body.mem()}
             };

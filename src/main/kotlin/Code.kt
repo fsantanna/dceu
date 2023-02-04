@@ -461,14 +461,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.While -> """
-                { // WHILE ${this.tk.dump()}
-                CEU_WHILE_START_$n:;
+            is Expr.Loop -> """
+                { // LOOP ${this.tk.dump()}
+                CEU_LOOP_START_$n:;
                     ${this.cnd.code()}
                     CEU_Value ceu_accx = ceu_acc;
                     if (ceu_as_bool(&ceu_accx)) {
                         ${this.body.code()}
-                        goto CEU_WHILE_START_$n;
+                        goto CEU_LOOP_START_$n;
                     }
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }

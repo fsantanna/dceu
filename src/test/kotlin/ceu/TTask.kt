@@ -7,10 +7,10 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 fun yield (ok: String = "ok"): String {
-    return "do { var $ok; set $ok=true; while $ok { yield(nil); if type(evt)/=:x-task { set $ok=false } else { nil } } }"
+    return "do { var $ok; set $ok=true; loop if $ok { yield(nil); if type(evt)/=:x-task { set $ok=false } else { nil } } }"
 }
 fun await (evt: String): String {
-    return "do { var ok; set ok=true; yield(nil); while ok { if $evt { set ok=false } else { yield(nil) } } }"
+    return "do { var ok; set ok=true; yield(nil); loop if ok { if $evt { set ok=false } else { yield(nil) } } }"
 }
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -751,7 +751,7 @@ class TTask {
                         yield(nil)
                         throw(:e1)
                     })()
-                    while true {
+                    loop {
                         yield(nil)
                     }
                 }
@@ -780,7 +780,7 @@ class TTask {
                         throw(:e1)
                         println(:no)
                     } ()
-                    while true { yield(nil) }
+                    loop { yield(nil) }
                 }
                 println(:ok1)
                 throw(:e2)
@@ -789,7 +789,7 @@ class TTask {
             spawn (task () {
                 catch :e2 {
                     spawn T()
-                    while true { yield(nil) }
+                    loop { yield(nil) }
                 }
                 println(:ok2)
                 throw(:e3)
@@ -1017,7 +1017,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 yield(nil)
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                do { var ok; set ok=true; loop if ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 println(evt)                
             }
             var co1 = spawn tk ()
@@ -1064,10 +1064,10 @@ class TTask {
             set tk = task (v) {
                 println(v)
                 ;;yield(nil)
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                do { var ok; set ok=true; loop if ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
-                do { var ok2; set ok2=true; while ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=false } else { nil } } }
+                do { var ok2; set ok2=true; loop if ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=false } else { nil } } }
                 ;;yield(nil)
                 println(evt)                
             }
@@ -1095,7 +1095,7 @@ class TTask {
             """
             var T
             set T = task (v) {
-                do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                do { var ok; set ok=true; loop if ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                 ;;yield(nil)
                 println(v)
             }
@@ -1532,7 +1532,7 @@ class TTask {
                     println(v)
                 }
                 spawn in ts, T(1)
-                while in :tasks ts, t {
+                loop in :tasks ts, t {
                     throw(1)    ;; never reached
                 }
             }
@@ -1557,7 +1557,7 @@ class TTask {
     @Test
     fun ff_pool8_err() {
         val out = all("""
-            while in :tasks nil, x {
+            loop in :tasks nil, x {
                 nil
             }
         """)
@@ -1566,11 +1566,11 @@ class TTask {
     @Test
     fun ff_pool8a_err() {
         val out = all("""
-            while in :tasks nil, x {
+            loop in :tasks nil, x {
                 pass nil
             }
         """)
-        assert(out == "anon : (lin 2, col 29) : while error : expected tasks\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 29) : loop error : expected tasks\n:error\n") { out }
     }
     @Test
     fun ff_pool9_term() {
@@ -1580,7 +1580,7 @@ class TTask {
             }
             var ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 println(1)
                 broadcast in :global, 1
             }
@@ -1598,10 +1598,10 @@ class TTask {
             }
             var ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 println(1)
                 broadcast in :global, 1
-                while in :tasks ts, yyy {
+                loop in :tasks ts, yyy {
                     println(2)
                 }
             }
@@ -1616,7 +1616,7 @@ class TTask {
             var ts = tasks()
             spawn in ts, T()
             var yyy
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 set yyy = xxx
             }
             println(detrack(yyy).status)
@@ -1634,7 +1634,7 @@ class TTask {
             set ts = tasks()
             spawn in ts, T()
             var yyy
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 set yyy = xxx
             }
             broadcast in :global, nil
@@ -1653,9 +1653,9 @@ class TTask {
             var ts
             set ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 var yyy
-                while in :tasks ts, zzz {
+                loop in :tasks ts, zzz {
                     set yyy = zzz
                     println(detrack(yyy).status)
                 }
@@ -1677,9 +1677,9 @@ class TTask {
             var ts
             set ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 var yyy
-                while in :tasks ts, zzz {
+                loop in :tasks ts, zzz {
                     pass nil
                 }
                 set yyy = xxx
@@ -1699,7 +1699,7 @@ class TTask {
             var ts
             set ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, xxx {
+            loop in :tasks ts, xxx {
                 pass xxx
             }
             println(1)
@@ -1759,10 +1759,10 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=true; while ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=false } else { nil } } }
+                do { var ok1; set ok1=true; loop if ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=false } else { nil } } }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=true; while ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                    do { var ok; set ok=true; loop if ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -1820,7 +1820,7 @@ class TTask {
                     yield(nil)
                     println(v)
                 } ()
-                while true { yield(nil) }
+                loop { yield(nil) }
             }
             spawn T(1)
             spawn T(2)
@@ -1848,9 +1848,9 @@ class TTask {
                         } else {
                             nil
                         }
-                        while true { yield(nil) }
+                        loop { yield(nil) }
                     } ()
-                    while true { yield(nil) }
+                    loop { yield(nil) }
                 }
                 println(v)
             }
@@ -1882,9 +1882,9 @@ class TTask {
                         } else {
                             nil
                         }
-                        while true { yield(nil) }
+                        loop { yield(nil) }
                     } ()
-                    while true { yield(nil) }
+                    loop { yield(nil) }
                 }
                 println(v)
             }
@@ -1911,8 +1911,8 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             
-            while in :tasks ts, t1 {
-                while in :tasks ts, t2 {
+            loop in :tasks ts, t1 {
+                loop in :tasks ts, t2 {
                     println(detrack(t1).pub, detrack(t2).pub)
                 }
             }
@@ -1930,7 +1930,7 @@ class TTask {
                         yield(nil)
                         throw(:ok)
                     } ()
-                    while true { yield(nil) }
+                    loop { yield(nil) }
                 }
             })()
             broadcast in :global, nil
@@ -1984,7 +1984,7 @@ class TTask {
                 set task.pub = n
                 yield(nil)
                 ;;println(:awake, evt, n)
-                while evt /= n {
+                loop if evt /= n {
                     yield(nil)
                 }
                 ;;println(:term, n)
@@ -1992,7 +1992,7 @@ class TTask {
             var ts = tasks(2)
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 println(:t, detrack(t).pub)
                 ;;println(:bcast1)
                 broadcast in :global, 2         ;; opens hole for 99 below
@@ -2002,7 +2002,7 @@ class TTask {
             }
             ;;;
             println("-=-=-=-")
-            while in :tasks ts, x {
+            loop in :tasks ts, x {
                 println(:t, detrack(x).pub)
             }
             ;;;
@@ -2023,7 +2023,7 @@ class TTask {
             spawn in ts, T()
             spawn in ts, T()
             spawn task () {
-                while in :tasks ts, xxx {
+                loop in :tasks ts, xxx {
                     println(1)
                     broadcast in :global, 1
                 }
@@ -2130,7 +2130,7 @@ class TTask {
             set fff = func (x) { x }
             spawn task () {
                 yield(nil)
-                while evt[:type]/=:x {
+                loop if evt[:type]/=:x {
                     yield(nil)
                 }
                 println(99)
@@ -2188,7 +2188,7 @@ class TTask {
         val out = ceu.all(
             """
             spawn task () {
-                while (true) {
+                loop {
                     println(evt)
                     yield(nil)
                 }
@@ -2203,7 +2203,7 @@ class TTask {
         val out = ceu.all(
             """
             spawn task () {
-                while (true) {
+                loop {
                     do {
                         yield(nil)
                     }
@@ -2389,7 +2389,7 @@ class TTask {
             set ts = tasks()
             spawn in ts, T()
             var x
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 println(detrack(t).pub[0])
             }
         """)
@@ -2407,7 +2407,7 @@ class TTask {
             set ts = tasks()
             spawn in ts, T()
             var x
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 set x = detrack(t).pub   ;; TODO: incompatible scope
             }
             println(999)
@@ -3012,7 +3012,7 @@ class TTask {
             var x
             var ts = tasks()
             spawn in ts, T(1)
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 set x = track(t)
             }
         """)
@@ -3031,7 +3031,7 @@ class TTask {
             var ts = tasks()
             spawn in ts, T(1)
             spawn in ts, T(2)
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 set x = t
             }
             println(detrack(x).pub[0])   ;; 2
@@ -3054,7 +3054,7 @@ class TTask {
             do {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
-                while in :tasks ts, t {
+                loop in :tasks ts, t {
                     set x = t    ;; track(t) up_hold in
                 }
                 println(detrack(x).pub[0])   ;; 2
@@ -3078,7 +3078,7 @@ class TTask {
                 var ts
                 set ts = tasks()
                 spawn in ts, T(1)
-                while in :tasks ts, t {
+                loop in :tasks ts, t {
                     set x = t       ;; err: escope 
                 }
             }
@@ -3098,7 +3098,7 @@ class TTask {
             spawn in ts, T(1)
             var x
             set x = catch true {
-                while in :tasks ts, t {
+                loop in :tasks ts, t {
                     throw(t)
                 }
             }
@@ -3121,7 +3121,7 @@ class TTask {
             spawn in ts, T(2)
             var x
             set x = catch true {
-                while in :tasks ts, t {
+                loop in :tasks ts, t {
                     throw(t)
                 }
             }
@@ -3170,7 +3170,7 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             var x
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 set x = (t)
             }
             broadcast in :global, nil
@@ -3186,7 +3186,7 @@ class TTask {
             }
             var ts = tasks()
             spawn in ts, T(1)
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 var x = detrack(t)
                 println(x)
             }
@@ -3291,7 +3291,7 @@ class TTask {
                 set task.pub = [10,20]
                 yield(nil)
             } ()
-            while in :tasks ts, t:T {
+            loop in :tasks ts, t:T {
                 println(detrack(t).pub.y)   // TODO: detrack needs to return to grammar
             }
         """, true)
@@ -3424,7 +3424,7 @@ class TTask {
                     }
                 }
             }
-            while in :tasks ts, xx1 {
+            loop in :tasks ts, xx1 {
                 ;;println(xx1)
                 f(detrack(xx1).pub)
             }
@@ -3587,7 +3587,7 @@ class TTask {
             }
             var ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 var x = detrack(t).pub
                 broadcast in detrack(t), nil
                 println(x)
@@ -3637,7 +3637,7 @@ class TTask {
             }
             var ts = tasks()
             spawn in ts, T()
-            while in :tasks ts, t {
+            loop in :tasks ts, t {
                 var f = func (tt) {
                     var x = detrack(tt).pub
                     broadcast in detrack(tt), nil
@@ -3696,7 +3696,7 @@ class TTask {
                 yield(nil)
                 println(evt)
                 spawn (task () {
-                    while (true) {
+                    loop {
                         println(evt)    ;; lost reference
                         yield(nil)
                     }
@@ -3716,7 +3716,7 @@ class TTask {
                 yield(nil)
                 println(evt)
                 spawn (task () :fake {
-                    while (true) {
+                    loop {
                         println(evt)    ;; kept reference
                         yield(nil)
                     }
@@ -3853,16 +3853,16 @@ class TTask {
             spawn task () {
                 ;;println(:cor1, `:pointer ceu_x`)
                 ;;println(:blk11, `:pointer ceu_block`)
-                while true {
+                loop {
                     ;;println(:blk12, `:pointer ceu_block`)
-                    yield(nil); while evt/=10 { yield(nil) }
+                    yield(nil); loop if evt/=10 { yield(nil) }
                     println(:1)
                     var t = spawn task () {
                         ;;println(:cor2, `:pointer ceu_x`)
                         ;;println(:blk2, `:pointer ceu_block`)
-                        yield(nil); while evt/=10 { yield(nil) }
+                        yield(nil); loop if evt/=10 { yield(nil) }
                     } ()
-                    while t.status/=:terminated { yield(nil) }
+                    loop if t.status/=:terminated { yield(nil) }
                     println(:2)
                 }
             } ()

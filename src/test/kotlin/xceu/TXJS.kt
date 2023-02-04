@@ -99,8 +99,8 @@ class TXJS {
         val out = all("""
             coro objectEntries (obj) {
                 yield()
-                while in :dict obj, (k, v) {
-                    yield([k, v])
+                loop in iter(obj), v {
+                    yield([v.0, v.1])
                 }
             }
             
@@ -109,7 +109,7 @@ class TXJS {
                 last  = "Doe",
             ]
             val co = spawn objectEntries(jane)
-            while in :coro co, v {
+            loop in iter(co), v {
                 println((to-string(v.0) ++ ": ") ++ v.1)
             }
         """, true)
@@ -225,8 +225,8 @@ class TXJS {
     fun x9() {
         val out = all("""
             coro genFunc () {
-                while in :vector #['a','b'], (i, v) {
-                    yield([i,v])
+                loop in iter(#['a','b']), v {
+                    yield(v)
                 }
             }
             val arr = to-vector(coroutine(genFunc))
@@ -246,7 +246,7 @@ class TXJS {
             }
             coro bar () {
                 yield('x')
-                while in :coro coroutine(foo), i {
+                loop in iter(coroutine(foo)), i {
                     yield(i)
                 }
                 yield('y')
@@ -359,7 +359,7 @@ class TXJS {
         val out = all("""
             coro gen (input) {
                 println(input)
-                while true {
+                loop {
                     val input' = yield() ;; (B)
                     println(input')
                 }
@@ -450,14 +450,14 @@ class TXJS {
             
             coro splitLines (target) {
                 var cur = ""
-                while true {
+                loop {
                     val tmp = yield()
-                    while in :vector tmp, (_,c) {
-                        if c == '\n' {
+                    loop in iter(tmp), c {
+                        if c.1 == '\n' {
                             resume target(cur)
                             set cur = ""
                         } else {
-                            set cur[+] = c
+                            set cur[+] = c.1
                         }
                     }
                 }
@@ -465,7 +465,7 @@ class TXJS {
             
             coro numberLines (target) {
                 var n = 0
-                while true {
+                loop {
                     val line = yield()
                     set n = n + 1
                     resume target((to-string(n) ++ ": ") ++ line)
@@ -473,7 +473,7 @@ class TXJS {
             }
             
             coro printLines () {
-                while true {
+                loop {
                     val line = yield()
                     println(line)
                 }
@@ -499,14 +499,14 @@ class TXJS {
             
             coro splitLines () {
                 var cur = ""
-                while true {
+                loop {
                     val tmp = yield(nil)
-                    while in :vector tmp, (_,c) {
-                        if c == '\n' {
+                    loop in iter(tmp), c {
+                        if c.1 == '\n' {
                             yield(move(cur))
                             set cur = ""
                         } else {
-                            set cur[+] = c
+                            set cur[+] = c.1
                         }
                     }
                 }
@@ -514,7 +514,7 @@ class TXJS {
             
             coro numberLines () {
                 var n = 0
-                while true {
+                loop {
                     val line = yield(nil)
                     set n = n + 1
                     yield((to-string(n) ++ ": ") ++ line)
@@ -522,7 +522,7 @@ class TXJS {
             }
 
             coro printLines () {
-                while true {
+                loop {
                     val line = yield()
                     println(line)
                 }
@@ -533,7 +533,7 @@ class TXJS {
             val co_nums  = spawn numberLines()
             val co_print = spawn printLines()
             spawn {
-                while in :coro co_read, chars {
+                loop in iter(co_read), chars {
                     until {
                         val line = if chars {
                             resume co_split(chars)
@@ -573,7 +573,7 @@ class TXJS {
     fun x22() {
         val out = all("""
             coro callee () {
-                while true {
+                loop {
                     val x = yield()
                     println(:callee, x)
                 }
@@ -625,7 +625,7 @@ class TXJS {
         coro Split (chars) {
             yield()
             var line = ""
-            while in :coro chars, c {
+            loop in iter(chars), c {
                 if c == '\n' {
                     yield(move(line))
                     set line = ""
@@ -637,7 +637,7 @@ class TXJS {
         coro Number (lines) {
             yield()
             var i = 1
-            while in :coro lines, l {
+            loop in iter(lines), l {
                 yield(to-string(i) ++ (": " ++ l))
                 set i = i + 1
             }
@@ -645,7 +645,7 @@ class TXJS {
         coro Take (n, lines) {
             yield()
             var i = 0
-            while i < n {
+            loop if i < n {
                 yield(resume lines())
                 set i = i + 1
             }
@@ -667,7 +667,7 @@ class TXJS {
             val split1  = spawn Split(read1)
             val number1 = spawn Number(split1)
             val take1   = spawn Take(3, number1)
-            while in :coro take1, l {
+            loop in iter(take1), l {
                 println(l)
             }
         }
@@ -678,13 +678,13 @@ class TXJS {
             val take2   = spawn Take(3, number2)
             coro Show () {
                 var line = yield()
-                while line {
+                loop if line {
                     println(line)
                     set line = yield()
                 }
             }
-            coro Send (iter, next) {
-                while in :coro iter, v {
+            coro Send (co, next) {
+                loop in iter(co), v {
                     resume next(v)
                 }
             }

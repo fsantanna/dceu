@@ -56,12 +56,12 @@ class TXParser {
         assert(e.tostr() == "func () {\npass nil\n}") { e.tostr() }
     }
     @Test
-    fun empty4_while() {
-        val l = lexer("while true { }")
+    fun empty4_loop() {
+        val l = lexer("loop if true { }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.While && e.body.es[0] is Expr.Pass)
-        assert(e.tostr() == "while true {\npass nil\n}") { e.tostr() }
+        assert(e is Expr.Loop && e.body.es[0] is Expr.Pass)
+        assert(e.tostr() == "loop {\npass nil\n}") { e.tostr() }
     }
 
     // IFS
@@ -210,9 +210,9 @@ class TXParser {
 
     @Ignore // N ids vary
     @Test
-    fun while01_n() {
+    fun loop01_n() {
         val l = lexer("""
-            while in [0 -> n), :step +1, i {
+            loop in [0 -> n), :step +1, i {
             }
         """)
         val parser = Parser(l)
@@ -222,7 +222,7 @@ class TXParser {
             var ceu_step_25 = 1
             var i = {+}(0,0)
             var ceu_limit_25 = n
-            while {<}(i,ceu_limit_25) {
+            loop if {<}(i,ceu_limit_25) {
             nil
             set i = {+}(i,ceu_step_25)
             }
