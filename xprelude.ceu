@@ -236,19 +236,29 @@ func random-next () {
 ;; ITERATORS
 
 func iter-tuple (t) {
-    if t.2 >= #t.1 {
+    val i = t.2
+    if i >= #t.1 {
         nil
     } else {
-        val ret = [t.2, t.1[t.2]]
-        set t.2 = t.2 + 1
-        move(ret)
+        set t.2 = i + 1
+        move([i, t.1[i]])
+    }
+}
+
+func iter-dict (t) {
+    val k = next(t.1,t.2)
+    if k == nil {
+        nil
+    } else {
+        set t.2 = k
+        move([k, t.1[k]])
     }
 }
 
 func iter (v) {
     ifs v {
-        is :tuple -> {
-            [iter-tuple, v, 0]
-        }
+        is :tuple  -> [iter-tuple, v, 0]
+        is :vector -> [iter-tuple, v, 0]
+        is :dict   -> [iter-dict,  v, nil]
     }
 }

@@ -879,11 +879,11 @@ class TXExec {
     fun dict10_iter() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            while in :dict t, (k, v) {
-                println(k,v)
+            while in iter(t), v {
+                println(v)
             }
         """, true)
-        assert(out == ":x\t1\n:y\t2\n:z\t3\n") { out }
+        assert(out == "[:x,1]\n[:y,2]\n[:z,3]\n") { out }
     }
     @Test
     fun dict10a_iter() {
