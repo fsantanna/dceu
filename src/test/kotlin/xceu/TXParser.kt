@@ -61,7 +61,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Loop && e.body.es[0] is Expr.Pass)
-        assert(e.tostr() == "loop {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "loop if true {\npass nil\n}") { e.tostr() }
     }
 
     // IFS

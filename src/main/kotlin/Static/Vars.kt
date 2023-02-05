@@ -1,6 +1,8 @@
 // func (args) or block (locals)
 data class Var (val blk: Expr.Do, val dcl: Expr.Dcl)    // blk = [Block,Group,Proto]
 
+typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
+
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val pub = mutableMapOf<Expr,MutableMap<String,Var>> (
         Pair (
@@ -22,36 +24,59 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     )
 
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
-    val datas = mutableMapOf<String,List<Pair<Tk.Id,Tk.Tag?>>>()
+    val datas = mutableMapOf<String,LData>()
 
     init {
         this.outer.traverse()
     }
 
-    fun data_is (e: Expr.Index): Boolean {
-        val id = e.col.tk.str
-        val xvar = get(e, id)
-        return when (e.col) {
-            is Expr.Pub -> when (e.col.x) {
-                // task.pub -> task (...) :T {...}
-                is Expr.Self -> (e.idx is Expr.Tag) && (ups.first_true_x(e,"task").let { it!=null && it.task!!.first!=null })
-                // x.pub -> x:T
-                is Expr.Acc -> (e.idx is Expr.Tag) && (get(e, e.col.x.tk.str)!!.dcl.tag != null)
-                // x.y.pub -> x.y?
-                is Expr.Index -> this.data_is(e.col.x)
-                // detrack(x).pub
-                is Expr.Call -> false   // TODO
-                else -> error("impossible case")
+    fun data (e: Expr): Pair<Int?,LData?>? {
+        return when (e) {
+            is Expr.Acc -> {
+                val xvar = get(e, e.tk.str)!!
+                if (xvar.dcl.tag == null) {
+                    null
+                } else {
+                    Pair(null, this.datas[xvar.dcl.tag.str]!!)
+                }
             }
-            is Expr.EvtErr -> (e.idx is Expr.Tag) && (xvar != null) && (evts[e.col] != null)
-            is Expr.Acc    -> (e.idx is Expr.Tag) && (xvar!!.dcl.tag != null)
-            is Expr.Index  -> this.data_is(e.col)
-            else           -> false
-        }
-    }
-    fun data_lst (e: Expr.Index): List<Pair<Tk.Id, Tk.Tag?>> {
-        val id = e.col.tk.str
-        return when {
+            is Expr.Index -> {
+                val d = this.data(e.col)
+                val l = d?.second
+                when {
+                    (d == null) -> null
+                    (l == null) -> null
+                    (e.idx !is Expr.Tag) -> null
+                    else -> {
+                        val idx = l.indexOfFirst { it.first.str == e.idx.tk.str.drop(1) }
+                        val v = if (idx == -1) null else l[idx]
+                        when {
+                            (v == null) -> {
+                                err(e.idx.tk, "index error : undeclared data field ${e.idx.tk.str}")
+                                error("unreachable")
+                            }
+                            (v.second == null) -> Pair(idx, null)
+                            else -> Pair(idx, this.datas[v.second!!.str]!!)
+                        }
+                    }
+                }
+                /*
+                e.col.idx as Expr.Tag
+                //println(e.col.tostr())
+                //println(e.col.idx.tostr())
+                val xid = e.col.idx.tk.str.drop(1)
+                val lst = this.data_lst(e.col)
+                val id_tag = lst.first { it.first.str==xid }
+                assert(id_tag.second != null)
+                //if (id_tag.second == null) {
+                //    err(e.idx.tk, "index error : field \"$xid\" is not a data")
+                //}
+                this.datas[id_tag.second!!.str]!!
+                */
+            }
+            else -> error("impossible case")
+/*
+
             (e.col is Expr.Pub) -> when (e.col.x) {
                 is Expr.Self -> {
                     // task.pub -> task (...) :T {...}
@@ -74,21 +99,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val tag = evts[e.col]!!
                 this.datas[tag]!!
             }
-            (e.col is Expr.Acc) -> {
-                val xvar = get(e, id)!!
-                this.datas[xvar.dcl.tag!!.str]!!
-            }
-            (e.col is Expr.Index) -> {
-                e.col.idx as Expr.Tag
-                val xid = e.col.idx.tk.str.drop(1)
-                val lst = this.data_lst(e.col)
-                val id_tag = lst.firstOrNull { it.first.str==xid }!!
-                if (id_tag.second == null) {
-                    err(e.idx.tk, "index error : field \"$xid\" is not a data")
-                }
-                this.datas[id_tag.second!!.str]!!
-            }
             else -> error("impossible case")
+            */
         }
     }
 
@@ -193,7 +205,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
 
                 if (id!="evt" && this.tag !=null && !datas.containsKey(this.tag.str)) {
-                    //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
 
                 this.src?.traverse()
@@ -261,14 +273,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()
-
-                if (data_is(this)) {
-                    val id = this.idx.tk.str.drop(1)
-                    val idx = data_lst(this).indexOfFirst { it.first.str==id }
-                    if (idx == -1) {
-                        err(this.idx.tk, "index error : undeclared field \"$id\"")
-                    }
-                }
+                data(this)
             }
             is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
         }

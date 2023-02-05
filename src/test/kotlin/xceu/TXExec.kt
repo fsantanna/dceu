@@ -1653,7 +1653,7 @@ class TXExec {
                     t.1 - 1
                 }
             }
-            val it = [f,0]
+            val it = :Iterator [f,0]
             loop in it, v {
                 println(v)
             }
@@ -2166,6 +2166,25 @@ class TXExec {
             println(t)      ;; [x=3,y=2]
         """, true)
         assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun tplate05_err() {
+        val out = all("""
+            data :T = [v]
+            data :U = [t:T,X]
+            var u :U = [[10]]
+            println(u.X.v)
+        """, true)
+        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+    }
+    @Test
+    fun tplate06_tup() {
+        val out = all("""
+            data :T = [v]
+            val t :T = [[1,2,3]]
+            println(t.v.1)
+        """, true)
+        assert(out == "2\n") { out }
     }
 
     // AWAIT / EVT / TEMPLATE / DATA

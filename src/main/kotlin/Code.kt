@@ -831,12 +831,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Index -> {
-                var idx = -1
-                if (vars.data_is(this)) {
-                    val id = this.idx.tk.str.drop(1)
-                    idx = vars.data_lst(this).indexOfFirst { it.first.str==id }
-                    //assert(idx >= 0)
-                }
+                val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 fun Expr.Index.has_pub_evt (): String? {
                     val up = ups.pub[this]
                     return when {

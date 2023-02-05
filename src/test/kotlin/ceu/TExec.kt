@@ -3008,7 +3008,7 @@ class TExec {
             var t :T
             println(t.x)
         """, true)
-        assert(out == "anon : (lin 4, col 23) : index error : undeclared field \"x\"") { out }
+        assert(out == "anon : (lin 4, col 23) : index error : undeclared data field :x") { out }
     }
     @Test
     fun tplate03_err() {
@@ -3017,8 +3017,8 @@ class TExec {
             var v :U
             println(v)
         """, true)
-        //assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
+        //assert(out == "nil\n") { out }
     }
     @Test
     fun tplate04() {
@@ -3124,7 +3124,9 @@ class TExec {
             var u :U = [[10]]
             println(u.t.X)
         """, true)
-        assert(out == "anon : (lin 5, col 25) : index error : undeclared field \"X\"") { out }
+        //assert(out == "anon : (lin 5, col 25) : index error : undeclared field \"X\"") { out }
+        assert(out == "anon : (lin 5, col 21) : index error : expected number\n" +
+                ":error") { out }
     }
     @Test
     fun tplate14_err() {
@@ -3144,7 +3146,7 @@ class TExec {
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        assert(out == "anon : (lin 5, col 21) : index error : out of bounds") { out }
     }
     @Test
     fun tplate16() {
@@ -3175,10 +3177,10 @@ class TExec {
     fun tplate18_tup() {
         val out = all("""
             data :T = [v]
-            val t = :T [[1,2,3]]
-            println(t.v.1)
+            val t :T = [[1,2,3]]
+            println(t.v[1])
         """, true)
-        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        assert(out == "2\n") { out }
     }
 
     // POLY

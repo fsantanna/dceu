@@ -226,7 +226,7 @@ class TXJS {
         val out = all("""
             coro genFunc () {
                 loop in iter(#['a','b']), v {
-                    yield(v)
+                    yield(v.1)
                 }
             }
             val arr = to-vector(coroutine(genFunc))
