@@ -464,7 +464,10 @@ class Parser (lexer_: Lexer)
                             C(l)
                         }
                     }
-                    else -> error("impossible case")
+                    else -> {
+                        err(this.tk1, "invalid loop : unexpected ${this.tk1.str}")
+                        error("impossible case")
+                    }
                 }
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {

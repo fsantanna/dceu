@@ -60,47 +60,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         }
                     }
                 }
-                /*
-                e.col.idx as Expr.Tag
-                //println(e.col.tostr())
-                //println(e.col.idx.tostr())
-                val xid = e.col.idx.tk.str.drop(1)
-                val lst = this.data_lst(e.col)
-                val id_tag = lst.first { it.first.str==xid }
-                assert(id_tag.second != null)
-                //if (id_tag.second == null) {
-                //    err(e.idx.tk, "index error : field \"$xid\" is not a data")
-                //}
-                this.datas[id_tag.second!!.str]!!
-                */
             }
-            else -> error("impossible case")
-/*
-
-            (e.col is Expr.Pub) -> when (e.col.x) {
-                is Expr.Self -> {
-                    // task.pub -> task (...) :T {...}
-                    val tag = ups.first_true_x(e,"task")!!.task!!.first!!.str
-                    this.datas[tag]!!
-                }
-                is Expr.Acc -> {
-                    // x.pub -> x:T
-                    val tag = get(e, e.col.x.tk.str)!!.dcl.tag!!.str
-                    this.datas[tag]!!
-                }
-                is Expr.Index -> {
-                    // x.y.pub -> x.y?
-                    this.data_is(e.col.x)
-                    TODO()
-                }
-                else -> error("impossible case")
-            }
-            (e.col is Expr.EvtErr) -> {
-                val tag = evts[e.col]!!
-                this.datas[tag]!!
-            }
-            else -> error("impossible case")
-            */
+            else -> null
         }
     }
 

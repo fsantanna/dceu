@@ -3124,9 +3124,9 @@ class TExec {
             var u :U = [[10]]
             println(u.t.X)
         """, true)
-        //assert(out == "anon : (lin 5, col 25) : index error : undeclared field \"X\"") { out }
-        assert(out == "anon : (lin 5, col 21) : index error : expected number\n" +
-                ":error") { out }
+        assert(out == "anon : (lin 5, col 25) : index error : undeclared data field :X") { out }
+        //assert(out == "anon : (lin 5, col 21) : index error : expected number\n" +
+        //        ":error") { out }
     }
     @Test
     fun tplate14_err() {
@@ -3136,7 +3136,7 @@ class TExec {
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 23) : index error : undeclared field \"X\"") { out }
+        assert(out == "anon : (lin 5, col 23) : index error : undeclared data field :X") { out }
     }
     @Test
     fun tplate15_err() {
@@ -3146,7 +3146,7 @@ class TExec {
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 21) : index error : out of bounds") { out }
+        assert(out == "anon : (lin 5, col 21) : index error : out of bounds\n:error\n") { out }
     }
     @Test
     fun tplate16() {

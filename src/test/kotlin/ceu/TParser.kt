@@ -922,7 +922,7 @@ class TParser {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : expected \":tasks\" : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : invalid loop : unexpected 1")
     }
     @Test
     fun iter2_err() {
