@@ -32,9 +32,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
-            is Expr.Acc -> {
-                val xvar = get(e, e.tk.str)!!
-                if (xvar.dcl.tag == null) {
+            is Expr.EvtErr, is Expr.Acc -> {
+                val xvar = get(e, e.tk.str)     // evt may fail !!
+                if (xvar?.dcl?.tag == null) {
                     null
                 } else {
                     Pair(null, this.datas[xvar.dcl.tag.str]!!)
@@ -165,7 +165,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                if (id!="evt" && this.tag !=null && !datas.containsKey(this.tag.str)) {
+                if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
 
