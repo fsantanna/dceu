@@ -1622,7 +1622,7 @@ class TXExec {
         assert(out == ":0\n1\n:1\n1\n2\n:2\n0\n2\n4\n:3\n1\n0\n:4\n:x\n:x\n:5\n:y\n:y\n:6\n") { out }
     }
 
-    // LOOP / TASK ITERATOR
+    // LOOP / ITERATOR
 
     @Test
     fun nn_01_iter() {
@@ -1665,6 +1665,15 @@ class TXExec {
             }
         """, true)
         assert(out == "0\n1\n2\n3\n4\n") { out }
+    }
+    @Test
+    fun nn_03_iter_err() {
+        val out = all("""
+            loop in nil, v {
+                println(v)
+            }
+        """, true)
+        assert(out.contains("assertion error : expecter :Iterator")) { out }
     }
 
     // LOOP / TASK ITERATOR

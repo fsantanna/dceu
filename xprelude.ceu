@@ -112,7 +112,9 @@ func tag-or (t1,t2) {
     `:tag $t1.Tag | $t2.Tag`
 }
 
-;; max, min
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MIN, MAX
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 func min (v1, v2) {
     ((v1 < v2) and v1) or v2
@@ -122,7 +124,52 @@ func max (v1, v2) {
     ((v1 > v2) and v1) or v2
 }
 
-;; tostring, tonumber
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ITERATORS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+data :Iterator = [f,v,i]
+
+func iter-tuple (it :Iterator) {
+    val i = it.i
+    if i >= #it.v {
+        nil
+    } else {
+        set it.i = i + 1
+        move([i, it.1[i]])
+    }
+}
+
+func iter-dict (it :Iterator) {
+    val k = next(it.v,it.i)
+    if k == nil {
+        nil
+    } else {
+        set it.i = k
+        move([k, it.1[k]])
+    }
+}
+
+func iter-coro (it :Iterator) {
+    val co = it.v
+    if co.status == :terminated {
+        nil
+    }
+    resume it.v()
+}
+
+func iter (v) {
+    ifs v {
+        is :tuple  -> :Iterator [iter-tuple, v, 0]
+        is :vector -> :Iterator [iter-tuple, v, 0]
+        is :dict   -> :Iterator [iter-dict,  v, nil]
+        is :x-coro -> :Iterator [iter-coro,  v]
+    }
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TO-*
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 func c-to-string (v) {
     assert(type(v) == :pointer)
@@ -160,13 +207,13 @@ func to-number (v) {
 
 func to-tracks (...) {
     val ret = #[]
-    loop in iter(...), (_,v) {
-        ifs v {
+    loop in iter(...), v {
+        ifs v.1 {
             is :x-task -> {
-                set ret[+] = track(v)
+                set ret[+] = track(v.1)
             }
             is :x-tasks -> {
-                while in :tasks v, i {
+                loop in :tasks v.1, i {
                     set ret[+] = i
                 }
             }
@@ -175,13 +222,15 @@ func to-tracks (...) {
     move(ret)
 }
 
-;; (++) concat
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONCAT:  <++  ++
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 func {<++} (v1, v2) {
     assert(type(v1) == :vector)
     assert(type(v2) == :vector)
     do {
-        while in [0 -> #v2), i {
+        loop in [0 -> #v2), i {
             set v1[+] = v2[i]
         }
     }
@@ -192,23 +241,6 @@ func {++} (v1, v2) {
     (#[] <++ v1) <++ v2
 }
 
-;; to-vector
-
-;;;
-func to-vector (v) {
-    ifs v {
-        is :x-coro -> {
-            val ret = #[]
-            while in :coro v, vv {
-                set ret[+] = vv
-            }
-            move(ret)
-        }
-        else -> throw(:TODO)
-    }
-}
-;;;
-
 ;; composition
 
 func {<|<} (^f,^g) {
@@ -217,7 +249,9 @@ func {<|<} (^f,^g) {
     }
 }
 
-;; random-seed, random
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; RANDOM:  random-seed  random-next
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 func random-seed (n) {
     if n {
@@ -229,43 +263,4 @@ func random-seed (n) {
 
 func random-next () {
     `:number rand()`
-}
-
-;; ITERATORS
-
-func iter-tuple (t) {
-    val i = t.2
-    if i >= #t.1 {
-        nil
-    } else {
-        set t.2 = i + 1
-        move([i, t.1[i]])
-    }
-}
-
-func iter-dict (t) {
-    val k = next(t.1,t.2)
-    if k == nil {
-        nil
-    } else {
-        set t.2 = k
-        move([k, t.1[k]])
-    }
-}
-
-func iter-coro (t) {
-    val co = t.1
-    if co.status == :terminated {
-        nil
-    }
-    resume t.1()
-}
-
-func iter (v) {
-    ifs v {
-        is :tuple  -> [iter-tuple, v, 0]
-        is :vector -> [iter-tuple, v, 0]
-        is :dict   -> [iter-dict,  v, nil]
-        is :x-coro -> [iter-coro,  v]
-    }
 }

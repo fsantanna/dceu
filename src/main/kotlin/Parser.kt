@@ -319,6 +319,59 @@ class Parser (lexer_: Lexer)
                 val pre0 = tk0.pos.pre()
                 val xin = this.acceptFix("in")
                 when {
+                    this.acceptFix("if") -> {
+                        val cnd = this.expr()
+                        this.catch_block(this.tk1).let { (C,b) ->
+                            val e = b.es.last()
+                            if (e.is_innocuous()) {
+                                err(e.tk, "invalid expression : innocuous expression")
+                            }
+                            C(Expr.Loop(tk0, cnd, b))
+                        }
+                    }
+                    xin && this.acceptTag(":tasks") -> {
+                        val tasks = this.expr()
+                        this.acceptFix_err(",")
+                        this.acceptEnu_err("Id")
+                        val i = this.tk0 as Tk.Id
+                        val blk = this.block()
+                        this.nest("""
+                            ${pre0}do {
+                                val ceu_tasks_$N = ${tasks.tostr(true)}
+                                ```
+                                if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
+                                    CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${tasks.tk.pos.file} : (lin ${tasks.tk.pos.lin}, col ${tasks.tk.pos.col}) : loop error : expected tasks");
+                                }
+                                ```
+                                val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
+                                var ceu_i_$N = 0
+                                ${pre0}loop if ceu_i_$N /= ceu_n_$N {
+                                    val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
+                                    if ceu_dyn_$N == `:pointer NULL` {
+                                        ;; empty slot
+                                        set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
+                                    } else {
+                                        ;;;
+                                        val ceu_x_$N
+                                        `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
+                                        val ${i.str} = track(ceu_x_$N)
+                                        ;;;
+
+                                        ```
+                                            CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
+                                        ```
+                                        val ${i.str} = track(`:ceu ceu_x_$N`)
+                                        ${blk.es.tostr(true)}
+                                        if detrack(${i.str}) {
+                                            set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
+                                        } else {
+                                            set ceu_i_$N = ceu_n_$N
+                                        }
+                                    }
+                                }
+                            }
+                        """) //.let { println(it.tostr()); it }
+                    }
                     XCEU && xin && (this.acceptFix("[") || this.acceptFix("(")) -> {
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
@@ -375,6 +428,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 val ceu_it_$N = ${iter.tostr(true)}
+                                assert(ceu_it_$N is :Iterator, "expecter :Iterator")
                                 until {
                                     val ${i.str} = ceu_it_$N.0(ceu_it_$N)
                                     if ${i.str} /= nil {
@@ -385,59 +439,6 @@ class Parser (lexer_: Lexer)
                             }
                         """)
                         }
-                    xin && this.acceptTag_err(":tasks") -> {
-                        val tasks = this.expr()
-                        this.acceptFix_err(",")
-                        this.acceptEnu_err("Id")
-                        val i = this.tk0 as Tk.Id
-                        val blk = this.block()
-                        this.nest("""
-                            ${pre0}do {
-                                val ceu_tasks_$N = ${tasks.tostr(true)}
-                                ```
-                                if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
-                                    CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${tasks.tk.pos.file} : (lin ${tasks.tk.pos.lin}, col ${tasks.tk.pos.col}) : loop error : expected tasks");
-                                }
-                                ```
-                                val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
-                                var ceu_i_$N = 0
-                                ${pre0}loop if ceu_i_$N /= ceu_n_$N {
-                                    val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
-                                    if ceu_dyn_$N == `:pointer NULL` {
-                                        ;; empty slot
-                                        set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
-                                    } else {
-                                        ;;;
-                                        val ceu_x_$N
-                                        `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                        val ${i.str} = track(ceu_x_$N)
-                                        ;;;
-
-                                        ```
-                                            CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
-                                        ```
-                                        val ${i.str} = track(`:ceu ceu_x_$N`)
-                                        ${blk.es.tostr(true)}
-                                        if detrack(${i.str}) {
-                                            set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
-                                        } else {
-                                            set ceu_i_$N = ceu_n_$N
-                                        }
-                                    }
-                                }
-                            }
-                        """) //.let { println(it.tostr()); it }
-                    }
-                    this.acceptFix("if") -> {
-                        val cnd = this.expr()
-                        this.catch_block(this.tk1).let { (C,b) ->
-                            val e = b.es.last()
-                            if (e.is_innocuous()) {
-                                err(e.tk, "invalid expression : innocuous expression")
-                            }
-                            C(Expr.Loop(tk0, cnd, b))
-                        }
-                    }
                     !xin && this.checkFix_err("{") -> {
                         val blk = this.block()
                         this.nest("""
