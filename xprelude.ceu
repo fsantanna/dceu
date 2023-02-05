@@ -152,10 +152,8 @@ func iter-dict (it :Iterator) {
 
 func iter-coro (it :Iterator) {
     val co = it.v
-    if co.status == :terminated {
-        nil
-    }
-    resume it.v()
+    val v = resume co()
+    ((co.status /= :terminated) and v) or nil
 }
 
 func iter (v) {
@@ -203,6 +201,14 @@ func to-number (v) {
         }
         else -> v   ;; TODO
     }
+}
+
+func to-vector (v) {
+    val ret = #[]
+    loop in iter(v), i {
+        set ret[+] = i
+    }
+    move(ret)
 }
 
 func to-tracks (...) {

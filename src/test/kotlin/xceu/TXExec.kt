@@ -914,7 +914,8 @@ class TXExec {
                 println(i, v)
             }
         """, true)
-        assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
+        //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
     }
     @Test
     fun dict13_iter() {
@@ -1214,10 +1215,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { var x = do { val ceu_spw_1052...)\n" +
-                "anon : (lin 3, col 38) : task () :fake { var y = [] y }()\n" +
-                "anon : (lin 3, col 52) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out.contains("anon : (lin 3, col 52) : set error : incompatible scopes")) { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
@@ -1543,9 +1541,8 @@ class TXExec {
     @Test
     fun until4() {
         val out = all("""
-            println(until {
-                10
-            })
+            println(loop {
+            } until 10)
         """)
         assert(out == "10\n") { out }
     }
@@ -1553,11 +1550,10 @@ class TXExec {
     fun until5() {
         val out = all("""
             var x = 0
-            until {
+            loop {
                 set x = x + 1
                 println(x)
-                x == 3
-            }
+            } until x == 3
             println(99)
         """, true)
         assert(out == "1\n2\n3\n99\n") { out }
@@ -1566,14 +1562,13 @@ class TXExec {
     fun until6() {
         val out = all("""
             var x = 0
-            val v = until { {:break}
+            val v = loop { {:break}
                 set x = x + 1
                 println(x)
                 if x == 3 {
                     throw(:break)
                 }
-                false
-            }
+            } until false
             println(v)
         """, true)
         assert(out == "1\n2\n3\n:break\n") { out }
@@ -1637,13 +1632,12 @@ class TXExec {
             }
             do {
                 val it = [f, 0]
-                until {
+                loop {
                     val i = it.0(it)
                     if i /= nil {
                         println(i)
                     }
-                    (i == nil)
-                }
+                } until (i == nil)
             }
         """, true)
         assert(out == "0\n1\n2\n3\n4\n") { out }
@@ -1723,7 +1717,7 @@ class TXExec {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun iter3_err() {
+    fun iter3_ok() {
         val out = all("""
             coro T () {
                 yield(1)
@@ -1935,7 +1929,7 @@ class TXExec {
             }})
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 1, col 31) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 1, col 33) : set error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2107,7 +2101,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[38,1000,1001,1002,10,11,12,39,100,101,40]\n") { out }
+        assert(out == "[41,1000,1001,1002,10,11,12,42,100,101,43]\n") { out }
     }
 
     // TEMPLATE

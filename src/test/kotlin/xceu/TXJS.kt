@@ -534,23 +534,23 @@ class TXJS {
             val co_print = spawn printLines()
             spawn {
                 loop in iter(co_read), chars {
-                    until {
+                    loop {
                         val line = if chars {
                             resume co_split(chars)
                         }
                         if line {
-                            until {
+                            loop {
                                 val nums = if line {
                                     resume co_nums(line)
                                 }
                                 if nums {
                                     resume co_print(nums)
                                 }
+                            } until
                                 (nums == nil)
-                            }
                         }
+                    } until
                         (line == nil)
-                    }
                 }
             }
         """, true)
@@ -656,11 +656,11 @@ class TXJS {
                 `fclose(${D}f.Pointer);`
             }
             yield()
-            until {
+            loop {
                 val c = `:char fgetc(${D}f.Pointer)`
                 yield(c)
+            } until
                 c == `:char EOF`
-            }
         }
         do { ;; PULL
             val read1   = spawn FS-Read("prelude.ceu")

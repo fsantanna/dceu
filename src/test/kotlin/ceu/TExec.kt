@@ -3171,6 +3171,15 @@ class TExec {
         """, true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun tplate18_tup() {
+        val out = all("""
+            data :T = [v]
+            val t = :T [[1,2,3]]
+            println(t.v.1)
+        """, true)
+        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+    }
 
     // POLY
     /*

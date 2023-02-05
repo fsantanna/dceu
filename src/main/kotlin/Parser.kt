@@ -424,28 +424,45 @@ class Parser (lexer_: Lexer)
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
                         val i = this.tk0 as Tk.Id
-                        val blk = this.block()
-                        this.nest("""
-                            ${pre0}do {
-                                val ceu_it_$N = ${iter.tostr(true)}
-                                assert(ceu_it_$N is :Iterator, "expecter :Iterator")
-                                until {
-                                    val ${i.str} = ceu_it_$N.0(ceu_it_$N)
-                                    if ${i.str} /= nil {
-                                        ${blk.es.tostr(true)}
-                                    }
-                                    (${i.str} == nil)
+                        this.catch_block(this.tk1).let { (C,b) ->
+                            val l = this.nest("""
+                                ${pre0}do {
+                                    val ceu_it_$N :Iterator = ${iter.tostr(true)}
+                                    assert(ceu_it_$N is :Iterator, "expecter :Iterator")
+                                    loop {
+                                        val ${i.str} = ceu_it_$N.f(ceu_it_$N)
+                                        if ${i.str} /= nil {
+                                            ${b.es.tostr(true)}
+                                        }
+                                    } until (${i.str} == nil)
                                 }
-                            }
-                        """)
+                            """)
+                            C(l)
                         }
+                    }
                     !xin && this.checkFix_err("{") -> {
-                        val blk = this.block()
-                        this.nest("""
-                            loop if true {
-                                ${blk.es.tostr(true)}
+                        this.catch_block(this.tk1).let { (C,b) ->
+                            val l = if (this.acceptFix("until")) {
+                                val cnd = this.expr()
+                                this.nest("""
+                                do {
+                                    var ceu_cnd_$N = false
+                                    ${pre0}loop if not ceu_cnd_$N {
+                                        ${b.es.tostr(true)}
+                                        set ceu_cnd_$N = ${cnd.tostr(true)}
+                                    }
+                                    ceu_cnd_$N
+                                }
+                            """)
+                            } else {
+                                this.nest("""
+                                ${pre0}loop if true {
+                                    ${b.es.tostr(true)}
+                                }
+                            """)
                             }
-                        """)
+                            C(l)
+                        }
                     }
                     else -> error("impossible case")
                 }
@@ -788,21 +805,6 @@ class Parser (lexer_: Lexer)
                 //println(ifs)
                 this.nest(ifs)
             }
-            (XCEU && this.acceptFix("until")) -> {
-                val pre0 = this.tk0.pos.pre()
-                val (C,cnd) = this.catch_block(this.tk1)
-                C(this.nest("""
-                    ${pre0}do {
-                        var ceu_$N
-                        ${pre0}loop if not (
-                            set ceu_$N = do ${cnd.tostr(true)}
-                        ) {
-                            ;; cnd is the body
-                        }
-                        ceu_$N
-                    }
-                """))
-            }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val awt = await()
@@ -855,7 +857,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do :unnest {
                                 ${pre0}${(!awt.now).cond { "yield ()" }}
-                                until {
+                                loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
                                     ifs {
                                         type(ceu_cnd_$N) == :x-task -> {
@@ -871,8 +873,7 @@ class Parser (lexer_: Lexer)
                                     if not ceu_cnd_$N {
                                         yield ()
                                     }
-                                    (not (not ceu_cnd_$N))
-                                }
+                                } until (not (not ceu_cnd_$N))
                             }
                         """)//.let { println(it.tostr()); it }
                     }
