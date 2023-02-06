@@ -1501,6 +1501,19 @@ class TXExec {
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
+    @Test
+    fun toggle4_ret() {
+        val out = all("""
+            spawn {
+                val x = toggle evt==:hide -> evt==:show {
+                    10
+                }
+                println(x)
+            }
+            println(:ok)
+        """)
+        assert(out == "10\n:ok\n") { out }
+    }
 
     // LOOP / BREAK / UNTIL
 

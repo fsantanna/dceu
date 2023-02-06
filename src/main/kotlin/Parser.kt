@@ -663,7 +663,7 @@ class Parser (lexer_: Lexer)
                             val task_$N = spawn ;;{
                                 ${blk.tostr(true)}
                             ;;}
-                            awaiting task_$N {
+                            awaiting :check-now task_$N {
                                 loop {
                                     ${off.tostr()}
                                     toggle task_$N(false)
@@ -671,6 +671,7 @@ class Parser (lexer_: Lexer)
                                     toggle task_$N(true)
                                 }
                             }
+                            task_$N.pub
                         }
                     """)//.let { println(it.tostr()); it }
                 }
