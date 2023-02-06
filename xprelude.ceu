@@ -213,7 +213,8 @@ func to-vector (v) {
 
 func to-tracks (...) {
     val ret = #[]
-    loop in iter(...), v {
+    val args = ...
+    loop in iter(args), v {
         ifs v.1 {
             is :x-task -> {
                 set ret[+] = track(v.1)
