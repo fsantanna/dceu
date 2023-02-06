@@ -42,8 +42,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.EvtErr -> {
                 val x = evts[e]
-                if (x == null) null else {
-                    Pair(null, this.datas[x]!!)
+                when {
+                    (x == null) -> null
+                    (this.datas[x] == null) -> null
+                    else -> Pair(null, this.datas[x])
                 }
             }
             is Expr.Pub -> when (e.x) {

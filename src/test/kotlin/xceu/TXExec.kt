@@ -2175,7 +2175,9 @@ class TXExec {
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        //assert(out == "anon : (lin 5, col 25) : index error : field \"X\" is not a data") { out }
+        assert(out == "anon : (lin 5, col 21) : index error : out of bounds\n" +
+                ":error") { out }
     }
     @Test
     fun tplate06_tup() {
