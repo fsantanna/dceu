@@ -32,13 +32,44 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     fun data (e: Expr): Pair<Int?,LData?>? {
         return when (e) {
-            is Expr.EvtErr, is Expr.Acc -> {
-                val xvar = get(e, e.tk.str)     // evt may fail !!
-                if (xvar?.dcl?.tag == null) {
+            is Expr.Acc -> {
+                val xvar = get(e, e.tk.str)!!
+                if (xvar.dcl.tag == null) {
                     null
                 } else {
                     Pair(null, this.datas[xvar.dcl.tag.str]!!)
                 }
+            }
+            is Expr.EvtErr -> {
+                val x = evts[e]
+                if (x == null) null else {
+                    Pair(null, this.datas[x]!!)
+                }
+            }
+            is Expr.Pub -> when (e.x) {
+                is Expr.Self -> {
+                    // task.pub -> task (...) :T {...}
+                    val task = ups.first_true_x(e,"task")
+                    when {
+                        (task == null) -> null
+                        (task.task!!.first == null) -> null
+                        else -> {
+                            val tag = task.task.first!!.str
+                            Pair(null, this.datas[tag]!!)
+                        }
+                    }
+                }
+                is Expr.Acc -> {
+                    // x.pub -> x:T
+                    val xvar = get(e, e.x.tk.str)!!
+                    if (xvar.dcl.tag == null) {
+                        null
+                    } else {
+                        val tag = xvar.dcl.tag.str
+                        Pair(null, this.datas[tag]!!)
+                    }
+                }
+                else -> null
             }
             is Expr.Index -> {
                 val d = this.data(e.col)

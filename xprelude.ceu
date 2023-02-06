@@ -136,7 +136,7 @@ func iter-tuple (it :Iterator) {
         nil
     } else {
         set it.i = i + 1
-        move([i, it.1[i]])
+        move([i, it.v[i]])
     }
 }
 
@@ -146,7 +146,7 @@ func iter-dict (it :Iterator) {
         nil
     } else {
         set it.i = k
-        move([k, it.1[k]])
+        move([k, it.v[k]])
     }
 }
 
