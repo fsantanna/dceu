@@ -1067,12 +1067,10 @@ class Parser (lexer_: Lexer)
                         this.acceptEnu("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
                         (XCEU && this.acceptEnu("Num")) -> {
                             val num = this.tk0 as Tk.Num
-                            val l = num.str.split('.')
-                            var idx = Expr.Index(e.tk, e, Expr.Num(Tk.Num(l.first(), tk0.pos)))
-                            for (i in 1..l.size-1) {
-                                idx = Expr.Index(idx.tk, idx, Expr.Num(Tk.Num(l[i], tk0.pos)))
+                            if (num.str.contains('.')) {
+                                err(num, "index error : ambiguous dot : use brackets")
                             }
-                            idx as Expr.Index
+                            Expr.Index(e.tk, e, Expr.Num(num))
                         }
                         XCEU -> {
                             err_expected(this.tk1, "field")

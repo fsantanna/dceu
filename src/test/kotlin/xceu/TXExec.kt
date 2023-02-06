@@ -989,6 +989,16 @@ class TXExec {
             println(x, x.0, x.0.0)
         """
         )
+        assert(out == "anon : (lin 3, col 31) : index error : ambiguous dot : use brackets") { out }
+    }
+    @Test
+    fun tupl21_dots() {
+        val out = ceu.all(
+            """
+            val x = [[10]]
+            println(x, x.0, x.0[0])
+        """
+        )
         assert(out == "[[10]]\t[10]\t10\n") { out }
     }
 
@@ -1364,6 +1374,15 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "10\n10\n") { out }
+    }
+    @Test
+    fun task7_tup_status() {
+        val out = all("""
+            task T () {}
+            val ts = [spawn T()]
+            println(ts[0].status)
+        """)
+        assert(out == ":terminated\n") { out }
     }
 
     // WHERE
