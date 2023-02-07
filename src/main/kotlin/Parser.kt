@@ -498,10 +498,10 @@ class Parser (lexer_: Lexer)
                     }
                     val proto = Expr.Proto(tk0, task, args, body)
                     if (id == null) proto else {
-                    this.nest("""
-                        ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)} 
-                    """)
-                }
+                        this.nest("""
+                            ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)} 
+                        """)
+                    }
                 } else {
                     Expr.Self(tk0)
                 }
@@ -719,7 +719,7 @@ class Parser (lexer_: Lexer)
                 }
                 Pair(k,v)
             })
-            this.checkFix("(") -> this.expr_in_parens(true,false)!!
+            this.checkFix("(")      -> this.expr_in_parens(true,false)!!
 
             /*
             this.acceptFix("poly") -> {
