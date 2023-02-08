@@ -1,0 +1,3 @@
+loop in iter(["hello","world"]), v {
+    println(v)
+}

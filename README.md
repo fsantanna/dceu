@@ -7,8 +7,8 @@ programming with three main functionalities:
 - Structured Concurrency:
     - A set of structured primitives to compose concurrent tasks (e.g.,
       `spawn`, `par-or`, `toggle`).
-    - A deterministic scheduling policy, which provides predictable behavior
-      and safe abortion of tasks.
+    - A synchronous and deterministic scheduling policy, which provides
+      predictable behavior and safe abortion of tasks.
     - A container primitive to hold dynamic tasks, which automatically releases
       them on termination.
 - Event Signaling Mechanisms:
@@ -17,7 +17,7 @@ programming with three main functionalities:
 - Lexical Memory Management:
     - Even dynamic allocation is attached to lexical blocks.
     - Strict escaping rules to preserve structure reasoning.
-    - Garbage collection restricted to local references.
+    - Garbage collection restricted to local references only.
 
 Ceu is inspired by Esterel and Lua.
 
@@ -30,10 +30,40 @@ Follows an extended list of functionalities:
 - Deferred expressions (for finalization)
 - Exception handling
 - Dynamic collections (tuples, vectors, and dictionaries)
-- Hierarchical tuple templates (for data description and inheritance)
+- Hierarchical tuple templates (for data description with inheritance)
 
 Ceu is in an **experimental stage**.
 Both the compiler and runtime can become very slow.
+
+# INSTALL
+
+First, you need to install `java`:
+
+```
+$ sudo apt install default-jre
+```
+
+Then, you are ready to install `ceu`:
+
+```
+$ wget https://github.com/fsantanna/dceu/releases/download/v0.1.0/install-v0.1.0.sh
+$ sh install-v0.1.0.sh ./ceu/  # (you may change the destination directory)
+```
+
+Finally, execute `ceu`:
+
+```
+$ ./ceu/ceu ./ceu/hello-world.ceu
+[0,hello]
+[1,world]
+```
+
+# PICO-CEU
+
+The best way to try Ceu is through `pico-ceu`, a graphical library based on
+SDL:
+
+- https://github.com/fsantanna/pico-ceu
 
 # SYNTAX
 
@@ -89,14 +119,14 @@ Expr  : ...
       | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
       | `toggle´ Call                                   ;; toggle task
 
-List(x) : x { `,´ x }
+List(x) : x { `,´ x }                                   ;; comma-separated list
 
-ID    : [A-Za-z_][A-Za-z0-9_\'\?\!\-]*
-TAG   : :[A-Za-z0-9\.\-]+
-OP    : [+-*/><=!|&~%#]+
-CHAR  : '.' | '\\.'
-NUM   : [0-9][0-9A-Za-z\.]*
-NAT   : `.*`
+ID    : [A-Za-z_][A-Za-z0-9_\'\?\!\-]*                  ;; identifier variable
+TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
+OP    : [+-*/><=!|&~%#]+                                ;; identifier operation
+CHAR  : '.' | '\\.'                                     ;; literal character
+NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
+NAT   : `.*`                                            ;; native expression
 ```
 
 ## Extended Syntax

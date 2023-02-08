@@ -89,3 +89,19 @@ fun err_expected (tk: Tk, str: String) {
     }
     err(tk, "expected $str : have $have")
 }
+
+fun Array<String>.cmds_opts () : Pair<List<String>,Map<String,String?>> {
+    val cmds = this.filter { !it.startsWith("--") }
+    val opts = this
+        .filter { it.startsWith("--") }
+        .map {
+            if (it.contains('=')) {
+                val (k,v) = Regex("(--.*)=(.*)").find(it)!!.destructured
+                Pair(k,v)
+            } else {
+                Pair(it, null)
+            }
+        }
+        .toMap()
+    return Pair(cmds,opts)
+}

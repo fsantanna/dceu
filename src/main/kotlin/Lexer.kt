@@ -11,6 +11,10 @@ fun Lex.toPos (): Pos {
     return Pos(this.file, this.lin, this.col)
 }
 
+fun FileX (path: String): File {
+    return File(File(File(System.getProperty("java.class.path")).absolutePath).parent + "/" + path)
+}
+
 class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
     val stack = ArrayDeque<Lex>()
     val comms = ArrayDeque<String>()
@@ -357,7 +361,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
 
                             when {
                                 (file != null && lin == null && col == null) -> {
-                                    val f = File(file)
+                                    val f = FileX(file)
                                     if (!f.exists()) {
                                         err(pos, "token ^ error : file not found : $file")
                                     }

@@ -18,7 +18,8 @@
 # NEXT
 
 - ifs
-    - {gt} 10 -> ...
+    - > 10 ->
+    - {f-bin} 10 -> ...
     - 3 {add} 4  -->  add(3,4)
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)

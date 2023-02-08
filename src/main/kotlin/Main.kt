@@ -5,8 +5,13 @@ import java.util.*
 val XCEU = false
 //val XCEU = true
 var N = 1
-
 val D = "\$"
+
+// VERSION
+const val MAJOR    = 0
+const val MINOR    = 1
+const val REVISION = 0
+const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coro", "defer", "do", "else", "enum", "err", "evt",
@@ -100,10 +105,10 @@ fun exec (cmds: List<String>): Pair<Boolean,String> {
 fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
-fun all (name: String, reader: Reader, args: List<String>): String {
+fun all (name: String, reader: Reader, out: String, args: List<String>): String {
     val inps = listOf(
         Pair(Triple(name,1,1), reader),
-        Pair(Triple("prelude.ceu",1,1), File("prelude.ceu").reader())
+        Pair(Triple("prelude.ceu",1,1), FileX("prelude.ceu").reader())
     )
     val lexer = Lexer(inps)
     val parser = Parser(lexer)
@@ -128,26 +133,52 @@ fun all (name: String, reader: Reader, args: List<String>): String {
         //throw e;
         return e.message!! + "\n"
     }
-    File("out.c").writeText(c)
-    val (ok2, out2) = exec(listOf("gcc", "out.c", "-o", "out.exe") + args)
+    File("$out.c").writeText(c)
+    val (ok2, out2) = exec(listOf("gcc", "$out.c", "-l", "m", "-o", "$out.exe") + args)
     if (!ok2) {
         return out2
     }
-    val (_, out3) = exec("./out.exe")
+    val (_, out3) = exec("./$out.exe")
     //println(out3)
     return out3
 }
 
 fun main (args: Array<String>) {
+    val (xs, ys) = args.cmds_opts()
+
     var xinp: String? = null
     var xccs = emptyList<String>()
-    var i = 0
-    while (i < args.size) {
-        when {
-            (args[i] == "-cc") -> { i++ ; xccs=args[i].split(" ") }
-            else               -> xinp = args[i]
+    var err: String? = null
+
+    xs.forEachIndexed { i, x ->
+        when (i) {
+            0 -> xinp = x
         }
-        i++
     }
-    print(all(xinp!!, File(xinp).reader(), xccs))
+    ys.forEach { k,v ->
+        when (k) {
+            "--cc" -> {
+                if (v == null) {
+                    err = "invalid argument : $k : expected \"=\""
+                } else {
+                    xccs = v.split(" ")
+                }
+            }
+        }
+    }
+
+    when {
+        (err != null) -> println(err)
+        ys.containsKey("--version") -> println("ceu " + VERSION)
+        (xinp == null) -> println("expected filename")
+        else -> {
+            try {
+                val f = File(xinp!!)
+                val out = all(xinp!!, f.reader(), f.nameWithoutExtension, xccs)
+                print(out)
+            } catch (e: Throwable) {
+                println(e.message!!)
+            }
+        }
+    }
 }
