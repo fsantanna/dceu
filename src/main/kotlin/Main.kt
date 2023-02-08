@@ -13,7 +13,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "false", "func", "if", "in", "nil", "pass", /*"poly",*/ "pub", "resume", "set", "spawn",
     "status", "task", "data", "toggle", "loop", "true", "val", "var", "yield"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "await", "awaiting", "every", "ifs", "is", "isnot", "not", "or", "par",
+    "and", "await", "awaiting", "every", "ifs", "is", "is-not", "not", "or", "par",
     "par-and", "par-or", "until", "with", "where"
 )).toSortedSet()
 

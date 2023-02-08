@@ -1103,7 +1103,7 @@ class Parser (lexer_: Lexer)
         while (
             this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
             (this.acceptEnu("Op") || (XCEU &&
-                (this.acceptFix("or") || this.acceptFix("and") || this.acceptFix("is") || this.acceptFix("isnot")))
+                (this.acceptFix("or") || this.acceptFix("and") || this.acceptFix("is") || this.acceptFix("is-not")))
             )
         ) {
             val op = this.tk0
@@ -1125,7 +1125,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
                 "is"    -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "isnot" -> this.nest("isnot'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "is-not" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 else    -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
             }
             pre = this.tk0
