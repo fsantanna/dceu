@@ -1,3 +1,40 @@
+# The Programming Language Ceu
+
+Ceu is a synchronous programming language that reconciles *Structured
+Concurrency* with *Event-Driven Programming*, extending classical structured
+programming with three main functionalities:
+
+- Structured Concurrency:
+    - A set of structured primitives to compose concurrent tasks (e.g.,
+      `spawn`, `par-or`, `toggle`).
+    - A deterministic scheduling policy, which provides predictable behavior
+      and safe abortion of tasks.
+    - A container primitive to hold dynamic tasks, which automatically releases
+      them on termination.
+- Event Signaling Mechanisms:
+    - An `await` primitive to suspend a task and wait for events.
+    - A `broadcast` primitive to signal events and awake awaiting tasks.
+- Lexical Memory Management:
+    - Even dynamic allocation is attached to lexical blocks.
+    - Strict escaping rules to preserve structure reasoning.
+    - Garbage collection restricted to local references.
+
+Ceu is inspired by Esterel and Lua.
+
+Follows an extended list of functionalities:
+
+- Dynamic typing
+- Expression based (statements are expressions)
+- Stackless coroutines (the basis of tasks)
+- Restricted closures (upvalues must be explicit and final)
+- Deferred expressions (for finalization)
+- Exception handling
+- Dynamic collections (tuples, vectors, and dictionaries)
+- Hierarchical tuple templates (for data description and inheritance)
+
+Ceu is in an **experimental stage**.
+Both the compiler and runtime can become very slow.
+
 # SYNTAX
 
 ## Basic Syntax
@@ -53,6 +90,13 @@ Expr  : ...
       | `toggle´ Call
 
 List(x) : x { `,´ x }
+
+ID    : [A-Za-z_][A-Za-z0-9_\'\?\!\-]*
+TAG   : :[A-Za-z0-9\.\-]+
+OP    : [+-*/><=!|&~%#]+
+CHAR  : '.' | '\\.'
+NUM   : [0-9][0-9A-Za-z\.]*
+NAT   : `.*`
 ```
 
 ## Extended Syntax
