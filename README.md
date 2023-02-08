@@ -42,52 +42,52 @@ Both the compiler and runtime can become very slow.
 ```
 Block : `{´ { Expr } `}´
 Expr  : ...
-      | `do´ Block                                  ;; block
-      | `val´ ID [TAG] [`=´ Expr]                   ;; declaration constant
-      | `var´ ID [TAG] [`=´ Expr]                   ;; declaration variable
-      | `set´ Expr `=´ Expr                         ;; assignment
+      | `do´ Block                                      ;; block
+      | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
+      | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
+      | `set´ Expr `=´ Expr                             ;; assignment
 
-      | `evt´ | `nil´ | `false` | `true´            ;; literals &
-      | NAT | ID | TAG | CHAR | NUM                 ;; identifiers
+      | `evt´ | `nil´ | `false` | `true´                ;; literals &
+      | NAT | ID | TAG | CHAR | NUM                     ;; identifiers
 
-      |  `[´ [List(Expr)] `]´                       ;; tuple
-      | `#[´ [List(Expr)] `]´                       ;; vector
-      | `@[´ [List(Key-Val)] `]´                    ;; dictionary
+      |  `[´ [List(Expr)] `]´                           ;; tuple
+      | `#[´ [List(Expr)] `]´                           ;; vector
+      | `@[´ [List(Key-Val)] `]´                        ;; dictionary
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
 
-      | OP Expr                                     ;; op pre
-      | `#´ Expr                                    ;; op pre length
-      | Expr `[´ Expr `]´                           ;; op pos index
-      | Expr `.´ (`pub´ | `status´)                 ;; op pos task field
-      | Expr `.´ ID                                 ;; op pos dict field
-      | Expr `(´ Expr `)´                           ;; op pos call
-      | Expr OP Expr                                ;; op bin
+      | OP Expr                                         ;; op pre
+      | `#´ Expr                                        ;; op pre length
+      | Expr `[´ Expr `]´                               ;; op pos index
+      | Expr `.´ (`pub´ | `status´)                     ;; op pos task field
+      | Expr `.´ ID                                     ;; op pos dict field
+      | Expr `(´ Expr `)´                               ;; op pos call
+      | Expr OP Expr                                    ;; op bin
 
-      | `(´ Expr `)´                                ;; parenthesis
-      | `pass´ Expr                                 ;; innocuous expression
+      | `(´ Expr `)´                                    ;; parenthesis
+      | `pass´ Expr                                     ;; innocuous expression
 
-      | `if´ Expr Block [`else´ Block]              ;; conditional
-      | `loop´ `if´ Block                           ;; loop while
-      | `loop´ `in´ :tasks Expr `,´ ID Block        ;; loop iterator tasks
+      | `if´ Expr Block [`else´ Block]                  ;; conditional
+      | `loop´ `if´ Block                               ;; loop while
+      | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
 
-      | `func´ `(´ [List(ID)] `)´ Block             ;; function
-      | `coro´ `(´ [List(ID)] `)´ Block             ;; coroutine
-      | `task´ `(´ [List(ID)] `)´ Block             ;; task
+      | `func´ `(´ [List(ID)] `)´ Block                 ;; function
+      | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
+      | `task´ `(´ [List(ID)] `)´ Block                 ;; task
 
-      | `defer´ Block                               ;; defer expressions
-      | `catch´ Expr Block                          ;; catch exception
-      | `throw´ `(´ Expr `)´                        ;; throw exception
+      | `defer´ Block                                   ;; defer expressions
+      | `catch´ Expr Block                              ;; catch exception
+      | `throw´ `(´ Expr `)´                            ;; throw exception
 
-      | `enum´ `{´ List(TAG [`=´ Expr]) `}´         ;; tags enum
-      | `data´ Data                                 ;; tags hierarchy
+      | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
+      | `data´ Data                                     ;; tags hierarchy
             Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
 
-      | `spawn´ [`in´ Expr `,´] Call
-      | `broadcast´ `in´ Expr `,´ Call
-      | `yield´ [`:all´] `(´ Expr `)´
-      | `resume´ Call
-      | `toggle´ Call
+      | `spawn´ [`in´ Expr `,´] Expr `(´ Expr `)´       ;; spawn coro/task
+      | `broadcast´ `in´ Expr `,´  Expr `(´ Expr `)´    ;; broadcast event
+      | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
+      | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
+      | `toggle´ Call                                   ;; toggle task
 
 List(x) : x { `,´ x }
 
@@ -103,39 +103,39 @@ NAT   : `.*`
 
 ```
 Expr  : ...
-      | `not´ Expr                                  ;; op not
-      | Expr `[´ (`=´|`+´|`-´) `]´                  ;; ops peek,push,pop
-      | Expr `.´ NUM                                ;; op tuple index
-      | Expr (`or´|`and´|`is´|`is-not´) Expr        ;; op bin
+      | `not´ Expr                                      ;; op not
+      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
+      | Expr `.´ NUM                                    ;; op tuple index
+      | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
 
-      | `ifs´ `{´ {Case} [Else] `}´                 ;; conditionals
+      | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
             Case : Expr `->´ (Expr | Block)
             Else : `else´ `->´ (Expr | Block)
-      | `ifs´ Expr `{´ {Case} [Else] `}´            ;; switch + conditionals
+      | `ifs´ Expr `{´ {Case} [Else] `}´                ;; switch + conditionals
             Case : [`==´ | `is´] Expr `->´ (Expr | Block)
             Else : `else´ `->´ (Expr | Block)
 
-      | `loop´ Block                                ;; loop infinite
-      | `loop´ `in´ Expr `,´ ID Block               ;; loop iterator
-      | `loop´ `in´                                 ;; loop iterator numeric
+      | `loop´ Block                                    ;; loop infinite
+      | `loop´ `in´ Expr `,´ ID Block                   ;; loop iterator
+      | `loop´ `in´                                     ;; loop iterator numeric
             (`[´ | `(´)
             Expr `->´ Expr
             (`]´ | `)´)
             [`,´ :step Expr]
             `,´ ID Block
 
-      | `func´ ID `(´ [List(ID)] `)´ Block
-      | `coro´ ID `(´ [List(ID)] `)´ Block
-      | `task´ ID `(´ [List(ID)] `)´ Block
+      | `func´ ID `(´ [List(ID)] `)´ Block              ;; declaration func
+      | `coro´ ID `(´ [List(ID)] `)´ Block              ;; declaration coro
+      | `task´ ID `(´ [List(ID)] `)´ Block              ;; declaration task
 
-      | `spawn´ Block
-      | `await´ Await
-      | `every´ Await Block
-      | `awaiting´ Await Block
-      | `par´ Block { `with´ Block }
-      | `par-and´ Block { `with´ Block }
-      | `par-or´ Block { `with´ Block }
-      | `toggle´ Await `->´ Await Block
+      | `spawn´ Block                                   ;; spawn anonymous task
+      | `await´ Await                                   ;; await event
+      | `every´ Await Block                             ;; await event in loop
+      | `awaiting´ Await Block                          ;; abort on event
+      | `par´ Block { `with´ Block }                    ;; spawn tasks
+      | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
+      | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
+      | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
 
 Await : [`:check-now`] (
             | `spawn´ Call
