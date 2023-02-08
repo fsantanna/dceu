@@ -5,33 +5,15 @@
 #   - Main.kt
 #   - install.sh
 #   - build.sh
-# 2. Build version:
+# 2. Build:
 #   - XCEU = true
 #   - Build artifacts...
 #   - ./build.sh
-
-# EDIT:
-# - build.sh
-# - install.sh
-# - README.md
-#
-# BUILD:
-# $ ./build.sh
-# $ ls -l *.zip
-#
-# UPLOAD:
-# - https://github.com/Freechains/README/releases/new
-# - tag    = <version>
-# - title  = <version>
-# - Attach = { .zip, install.sh }
-#
-# TEST
-# $ cd /data/freechains/bin/
-# $ wget https://github.com/Freechains/README/releases/download/v0.10.0/install-v0.10.0.sh
-# $ sudo sh install-v0.10.0.sh /usr/local/bin
-# $ freechains --version
-# $ ./start-sync-xx.sh      (crontab -e, see ssmtp)
-# $ ./setup-post.sh         (only once)
+# 3. Upload:
+#   - https://github.com/fsantanna/dceu/releases/new
+#   - tag    = <version>
+#   - title  = <version>
+#   - Attach = { .zip, install.sh }
 
 VER=v0.1.0
 DIR=/tmp/ceu-build/

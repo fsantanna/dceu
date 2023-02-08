@@ -35,7 +35,7 @@ Follows an extended list of functionalities:
 Ceu is in an **experimental stage**.
 Both the compiler and runtime can become very slow.
 
-# INSTALL
+# Install
 
 First, you need to install `java`:
 
@@ -58,7 +58,7 @@ $ ./ceu/ceu ./ceu/hello-world.ceu
 [1,world]
 ```
 
-# PICO-CEU
+# pico-ceu
 
 The best way to try Ceu is through `pico-ceu`, a graphical library based on
 SDL:

@@ -12,7 +12,10 @@ fun Lex.toPos (): Pos {
 }
 
 fun FileX (path: String): File {
-    return File(File(File(System.getProperty("java.class.path")).absolutePath).parent + "/" + path)
+    val xpath = if (path[0] != '@') path else {
+        File(File(System.getProperty("java.class.path")).absolutePath).parent + "/" + path.drop(2)
+    }
+    return File(xpath)
 }
 
 class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {

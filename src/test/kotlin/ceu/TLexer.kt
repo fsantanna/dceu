@@ -4,6 +4,7 @@ import D
 import Lexer
 import Tk
 import org.junit.Test
+import java.io.File
 
 fun trap (f: ()->Unit): String {
     try {
