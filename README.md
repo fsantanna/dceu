@@ -37,20 +37,20 @@ Both the compiler and runtime can become very slow.
 
 # Install
 
-First, you need to install `java`:
+1. Install `java`:
 
 ```
 $ sudo apt install default-jre
 ```
 
-Then, you are ready to install `ceu`:
+2. Install `ceu`:
 
 ```
 $ wget https://github.com/fsantanna/dceu/releases/download/v0.1.0/install-v0.1.0.sh
 $ sh install-v0.1.0.sh ./ceu/  # (you may change the destination directory)
 ```
 
-Finally, execute `ceu`:
+3. Execute `ceu`:
 
 ```
 $ ./ceu/ceu ./ceu/hello-world.ceu
@@ -58,12 +58,43 @@ $ ./ceu/ceu ./ceu/hello-world.ceu
 [1,world]
 ```
 
+You may want to add `ceu/` to your `PATH`.
+
 # pico-ceu
 
 The best way to try Ceu is through `pico-ceu`, a graphical library based on
 SDL:
 
 - https://github.com/fsantanna/pico-ceu
+
+1. Clone `pico-ceu`
+
+```
+$ cd ceu/
+$ git clone https://github.com/fsantanna/pico-ceu pico/
+```
+
+2. Clone `pico-sdl`
+
+```
+$ cd pico/
+$ git clone https://github.com/fsantanna/pico-sdl sdl/
+```
+
+3. Execute `pico-ceu`:
+
+```
+$ cd ../../ # back to your initial working directory
+$ ./ceu/ceu --lib=pico ./ceu/pico/tst/par.ceu
+```
+
+- Your directory hierarchy should become as follows:
+
+```
++ ceu/
++-- pico/
++---- sdl/
+```
 
 # SYNTAX
 

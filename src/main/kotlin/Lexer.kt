@@ -13,7 +13,7 @@ fun Lex.toPos (): Pos {
 
 fun FileX (path: String): File {
     val xpath = if (path[0] != '@') path else {
-        File(File(System.getProperty("java.class.path")).absolutePath).parent + "/" + path.drop(2)
+        PATH + "/" + path.drop(2)
     }
     return File(xpath)
 }
