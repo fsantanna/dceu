@@ -318,12 +318,12 @@ class TLexer {
             xxx
         """.trimIndent())
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.pos.file=="anon"     && it.pos.lin==1 && it.pos.col==1 && it.str == "before" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==1 && it.pos.col==1 && it.str == "before" })
         assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==1 && it.pos.col==1 && it.str == "1" })
         assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==2 && it.pos.col==1 && it.str == "2" })
-        assert(tks.next().let { it is Tk.Id && it.pos.file=="anon"     && it.pos.lin==3 && it.pos.col==1 && it.str == "after" })
-        assert(tks.next().let { it is Tk.Id && it.pos.file=="anon"     && it.pos.lin==5 && it.pos.col==1 && it.str == "first" })
-        assert(tks.next().let { it is Tk.Id && it.pos.file=="xxx.ceu"  && it.pos.lin==7 && it.pos.col==9 && it.str == "xxx" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==3 && it.pos.col==1 && it.str == "after" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==5 && it.pos.col==1 && it.str == "first" })
+        assert(tks.next().let { it is Tk.Id  && it.pos.file=="xxx.ceu"  && it.pos.lin==7 && it.pos.col==9 && it.str == "xxx" })
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==7 && it.pos.col==12 })
     }
     @Test

@@ -32,7 +32,7 @@ Follows an extended list of functionalities:
 - Dynamic collections (tuples, vectors, and dictionaries)
 - Hierarchical tuple templates (for data description with inheritance)
 
-Ceu is in an **experimental stage**.
+Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
 # Install

@@ -5,6 +5,3 @@ install:
 	ls -l /x/ceu/
 	ceu --version
 	ceu build/hello-world.ceu
-
-one:
-	ceu $(SRC).ceu -cc "-g"
