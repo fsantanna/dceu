@@ -37,18 +37,22 @@ Both the compiler and runtime can become very slow.
 
 # Install
 
-1. Install `java`:
+1. Install `gcc` and `java`:
 
 ```
-$ sudo apt install default-jre
+$ sudo apt install gcc default-jre  # (assuming a Linux/Ubuntu machine)
 ```
 
 2. Install `ceu`:
 
 ```
 $ wget https://github.com/fsantanna/dceu/releases/download/v0.1.0/install-v0.1.0.sh
-$ sh install-v0.1.0.sh ./ceu/  # (you may change the destination directory)
+$ sh install-v0.1.0.sh ./ceu/
 ```
+
+- You may want to
+    - add directory `./ceu/` to your `PATH`
+    - change from `./ceu/` to another destination
 
 3. Execute `ceu`:
 
@@ -58,14 +62,18 @@ $ ./ceu/ceu ./ceu/hello-world.ceu
 [1,world]
 ```
 
-You may want to add `ceu/` to your `PATH`.
-
 # pico-ceu
 
 The best way to try Ceu is through `pico-ceu`, a graphical library based on
 SDL:
 
 - https://github.com/fsantanna/pico-ceu
+
+1. Install `SDL`:
+
+```
+$ sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
+```
 
 1. Clone `pico-ceu`
 
