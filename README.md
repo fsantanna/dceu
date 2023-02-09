@@ -1,8 +1,8 @@
 # The Programming Language Ceu
 
 Ceu is a [synchronous programming language][1] that reconciles *[Structured
-Concurrency][2]* with *[Event-Driven Programming][3]*, extending classical
-structured programming with three main functionalities:
+Concurrency][2]* with *[Event-Driven Programming][3]*.
+Ceu extends classical structured programming with three main functionalities:
 
 - Structured Concurrency:
     - A set of structured primitives to compose concurrent tasks (e.g.,
@@ -19,7 +19,7 @@ structured programming with three main functionalities:
     - Strict escaping rules to preserve structure reasoning.
     - Garbage collection restricted to local references only.
 
-Ceu is inspired by Esterel and Lua.
+Ceu is inspired by [Esterel][4] and [Lua][5].
 
 Follows an extended list of functionalities:
 
@@ -38,13 +38,19 @@ Both the compiler and runtime can become very slow.
 [1]: https://en.wikipedia.org/wiki/Synchronous_programming_language
 [2]: https://en.wikipedia.org/wiki/Structured_concurrency
 [3]: https://en.wikipedia.org/wiki/Event-driven_programming
+[4]: https://en.wikipedia.org/wiki/Esterel
+[5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
+
+# Manual
+
+`TODO`
 
 # Install
 
 1. Install `gcc` and `java`:
 
 ```
-$ sudo apt install gcc default-jre  # (assuming a Linux/Ubuntu machine)
+$ sudo apt install gcc default-jre
 ```
 
 2. Install `ceu`:
@@ -68,8 +74,8 @@ $ ./ceu/ceu ./ceu/hello-world.ceu
 
 # pico-ceu
 
-The best way to try Ceu is through [`pico-ceu`][4], a graphical library based
-on [SDL][5]:
+The best way to try Ceu is through [`pico-ceu`][6], a graphical library based
+on [SDL][7]:
 
 1. Install `SDL`:
 
@@ -106,8 +112,8 @@ $ ./ceu/ceu --lib=pico ./ceu/pico/tst/par.ceu
     |---+ sdl/
 ```
 
-[4]: https://github.com/fsantanna/pico-ceu
-[5]: https://www.libsdl.org/
+[6]: https://github.com/fsantanna/pico-ceu
+[7]: https://www.libsdl.org/
 
 # Resources
 
