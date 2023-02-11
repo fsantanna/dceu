@@ -223,7 +223,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || x=='.' || (x=='-' && y.isLetterOrDigit()) }
+                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetterOrDigit()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }

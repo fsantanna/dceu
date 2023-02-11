@@ -31,6 +31,7 @@ Follows an extended list of functionalities:
 - Exception handling
 - Dynamic collections (tuples, vectors, and dictionaries)
 - Hierarchical tuple templates (for data description with inheritance)
+- Seamless integration with C (source-level compatibility)
 
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
