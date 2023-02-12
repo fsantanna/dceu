@@ -1,4 +1,19 @@
-# 1. LEXICAL RULES
+1. LEXICON
+    1. Keywords
+    2. Symbols
+    3. Operators
+    4. Identifiers
+    5. Literals
+    6. Comments
+2. TYPES
+    1. Simple Types
+    2. Collections
+    3. Code Abstractions
+A. SYNTAX
+    1. Basic Syntax
+    2. Extended Syntax
+
+# 1. LEXICON
 
 ## 1.1. Keywords
 
@@ -79,9 +94,9 @@ The following symbols are reserved in Ceu:
 The following operator symbols can be combined to form operator names in Ceu:
 
 ```
-    +     -     *     /
-    >     <     =     !
-    |     &     ~     %     #
+    +    -    *    /
+    >    <    =    !
+    |    &    ~    %    #
 ```
 
 Operators names cannot clash with reserved symbols.
@@ -147,27 +162,126 @@ A string literal is a sequence of characters enclosed by double quotes (`"`).
 It is expanded to a [vector](#TODO) of character literals, e.g., `"abc"`
 expands to `#['a','b','c']`.
 
-A native literal is a sequence of characters enclosed by back quotes (`````).
-
-Nat:
-- $
-- :ret
+A native literal is a sequence of characters enclosed by multiple back quotes
+(`` ` ``).
+The same number of backquotes must be used to open and close the literal.
+`TODO: $, :type, :pre, :ceu`
 
 Examples:
 
 ```
-nil             ;; nil literal
-false           ;; bool literal
-:X.Y            ;; tag literal
-1.25            ;; number literal
-'a'             ;; char literal
-"Hello!"        ;; string literal
-`sin($x)`       ;; native literal
+nil                 ;; nil literal
+false               ;; bool literal
+:X.Y                ;; tag literal
+1.25                ;; number literal
+'a'                 ;; char literal
+"Hello!"            ;; string literal
+`puts("hello");`    ;; native literal
+`:number sin($x)`   ;; native with type and interpolation
 ```
 
-# SYNTAX
+## 1.6. Comments
 
-## Basic Syntax
+Ceu provides single-line and multi-line comments.
+
+Single-line comments start with double semi-colons (`;;`) and run until the end
+of the line.
+
+Multi-line comments use balanced semi-colons, starting with three or more
+semi-colons and running until the same number of semi-colons.
+Multi-line comments can contain sequences of semi-colons, as long as they are
+shorter than the opening sequence.
+
+Examples:
+
+```
+;; a comment        ;; single-line comment
+;;;                 ;; multi-line comment
+;; a
+;; comment
+;;;
+```
+
+# 2. TYPES
+
+## 2.1. Simple Types
+
+Ceu has 6 basic types:
+
+```
+nil    bool    char    number    pointer    tag
+```
+
+The `nil` type represents the absence of values with its single value
+[`nil`](#TODO).
+
+The `bool` type represents boolean values with [`true`](#TODO) and
+[`false`](#TODO).
+
+The `char` type represents [character literals](#TODO).
+
+The `number` type represents real numbers (i.e., *C floats*) with
+[number literals](#TODO).
+
+The `pointer` type represents opaque native pointer values from [native
+literals](#TODO).
+
+The `tag` type represents [tag identifiers](#TODO).
+Each tag represents a unique value in a global enumeration.
+Tags are also known as *symbols* or *atoms* in other programming languages.
+`TODO: tag hierarchy, subtyping`
+
+## 2.2. Collections
+
+Ceu has 3 collection types:
+
+```
+tuple    vector    dict
+```
+
+The `tuple` type represents a fixed collection of heterogeneous values, in
+which each numeric index holds a value of a (possibly) different type.
+
+The `vector` type represents a variable collection of homogeneous values, in
+which each numeric index holds a value of the same type.
+
+The `dict` type (dictionary) represents a variable collection of heterogeneous
+values, in which each index of any type maps to a value of a (possibly)
+different type.
+
+Examples:
+
+```
+[1, 'a', nil]           ;; a tuple with 3 values
+#[1, 2, 3]              ;; a vector of numbers
+@[(:x,10), (:y,20)]     ;; a dictionary with 2 mappings
+```
+
+## 2.3. Code Abstractions
+
+Ceu provide 3 types of code abstractions:
+
+```
+func    coro    task
+x-coro  x-task  x-tasks  x-track
+```
+
+The `func` type represents [functions](#TODO) (subroutines).
+
+The `coro` type represents [coroutines](#TODO), while the `x-coro` type
+represents spawned coroutines.
+
+The `task` type represents [tasks](#TODO), while the `x-task` type represents
+spawned tasks.
+The `x-tasks` type represents [task pools](#TODO) holding running tasks.
+The `x-track` type represents [track references](#TODO) pointing to running
+tasks.
+
+Code abstractions are described in [Section X.Y](#TODO).
+
+# A. SYNTAX
+
+## A.1. Basic Syntax
 
 ```
 Block : `{´ { Expr } `}´
@@ -229,7 +343,7 @@ NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
 NAT   : `.*`                                            ;; native expression
 ```
 
-## Extended Syntax
+## A.2. Extended Syntax
 
 ```
 Expr  : ...
