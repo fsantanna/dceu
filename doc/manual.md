@@ -101,7 +101,7 @@ exclamation marks (`!`), or dashes (`-`).
 A dash must be followed by a letter or digit.
 
 An operator identifier is a sequence of operator symbols
-(see [Operators][#TODO]).
+(see [Operators](#TODO)).
 
 Examples:
 
@@ -129,25 +129,25 @@ STR  ::= ".*"                   ;; string expression
 NAT  ::= `.*`                   ;; native expression
 ```
 
-The literal `nil` is the single value of the [*nil* type][#TODO].
+The literal `nil` is the single value of the [*nil* type](#TODO).
 
-The literals `true` and `false` are the values of the [*bool* type][#TODO].
+The literals `true` and `false` are the values of the [*bool* type](#TODO).
 
-A [*tag* type][#TODO] literal starts with a colon (`:`) and is followed by
+A [*tag* type](#TODO) literal starts with a colon (`:`) and is followed by
 letters, digits, dots (`.`), or dashes (`-`).
 A dot or dash must be followed by a letter or digit.
 
-A [*number* type][#TODO] literal starts with a digit and is followed by digits,
+A [*number* type](#TODO) literal starts with a digit and is followed by digits,
 letters, and dots (`.`), and adheres to the [C standard](#TODO).
 
-A [*char* type][#TODO] literal is a single or backslashed (`\`) character
+A [*char* type](#TODO) literal is a single or backslashed (`\`) character
 enclosed by single quotes (`'`), and adheres to the [C standard](#TODO).
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
-It is expanded to a [vector][#TODO] of character literals, e.g., `"abc"`
+It is expanded to a [vector](#TODO) of character literals, e.g., `"abc"`
 expands to `#['a','b','c']`.
 
-A native literal is a sequence of characters enclosed by back quotes (`\``).
+A native literal is a sequence of characters enclosed by back quotes (`````).
 
 Nat:
 - $
