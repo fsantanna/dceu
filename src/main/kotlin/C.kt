@@ -217,7 +217,7 @@ fun Coder.main (tags: Tags): String {
                 struct {
                     int refs;                       // number of refs to it (free when 0)
                     union {
-                        CEU_Proto Proto;            // func or task
+                        CEU_Proto Proto;            // func, coro, task
                         struct {
                             int its;                // number of items
                             CEU_Value buf[0];       // beginning of CEU_Value[n]

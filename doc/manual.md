@@ -1,17 +1,69 @@
+```
 1. LEXICON
-    1. Keywords
-    2. Symbols
-    3. Operators
-    4. Identifiers
-    5. Literals
-    6. Comments
+    1. Keywords         4. Identifiers
+    2. Symbols          5. Literals
+    3. Operators        6. Comments
 2. TYPES
     1. Simple Types
     2. Collections
     3. Code Abstractions
+3. VALUES
+4. EXPRESSIONS
+    1. Block
 A. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
+```
+
+<!--
+Ceu is a expression-based, dynamically-typed synchronous programming language
+that reconciles Structured Concurrency with Event-Driven Programming.
+
+Ceu extends classical structured programming with three main functionalities:
+
+# 0. DESIGN
+
+## 0.1. Basics
+
+## 0.2. Lexical Memory Management
+
+## 0.3. Structured Concurrency
+
+- coro vs task
+- tasks, tracks
+- bcast, await
+- synchronous
+
+## 0.3. Tags
+
+    Structured Concurrency:
+        A set of structured primitives to compose concurrent tasks (e.g., spawn, par-or, toggle).
+        A synchronous and deterministic scheduling policy, which provides predictable behavior and safe abortion of tasks.
+        A container primitive to hold dynamic tasks, which automatically releases them on termination.
+    Event Signaling Mechanisms:
+        An await primitive to suspend a task and wait for events.
+        A broadcast primitive to signal events and awake awaiting tasks.
+    Lexical Memory Management:
+        Even dynamic allocation is attached to lexical blocks.
+        Strict escaping rules to preserve structure reasoning.
+        Garbage collection restricted to local references only.
+
+Ceu is inspired by Esterel and Lua.
+
+Follows an extended list of functionalities:
+
+    Dynamic typing
+    Expression based (statements are expressions)
+    Stackless coroutines (the basis of tasks)
+    Restricted closures (upvalues must be explicit and final)
+    Deferred expressions (for finalization)
+    Exception handling
+    Dynamic collections (tuples, vectors, and dictionaries)
+    Hierarchical tuple templates (for data description with inheritance)
+    Seamless integration with C (source-level compatibility)
+
+Ceu is in experimental stage. Both the compiler and runtime can become very slow.
+-->
 
 # 1. LEXICON
 
@@ -204,6 +256,9 @@ Examples:
 
 # 2. TYPES
 
+Ceu is a dynamic language in which values carry their own types during
+execution.
+
 ## 2.1. Simple Types
 
 Ceu has 6 basic types:
@@ -277,16 +332,134 @@ The `x-tasks` type represents [task pools](#TODO) holding running tasks.
 The `x-track` type represents [track references](#TODO) pointing to running
 tasks.
 
-Code abstractions are described in [Section X.Y](#TODO).
+Code abstractions are described in [Section TODO](#TODO).
+
+# 3. VALUES
+
+As a dynamic language, each value in Ceu carries extra information, such as its
+own type.
+
+## 3.1. Plain Values
+
+A *plain value* does not require dynamic allocation since it only carries extra
+information about its type.
+The following types have plain values:
+
+```
+nil    bool    char    number    pointer    tag
+```
+
+Plain values are immutable and are copied between variables and blocks as a
+whole without any restrictions.
+
+## 3.2. Dynamic Values
+
+A *dynamic value* requires dynamic allocation since its internal data is too
+big to fit in a plain value.
+The following types have dynamic values:
+
+```
+tuple    vector    dict
+func     coro      task
+x-coro   x-task    x-tasks   x-track
+```
+
+Dynamic values are mutable and are manipulated through references, allowing
+that multiple aliases refer to the same value.
+
+Dynamic values are always attached to the enclosing [block](#TODO) in which
+they were created, and cannot escape to outer blocks in assignments or as
+return expressions.
+This restriction permits that terminating blocks deallocate all dynamic values
+attached to them.
+Nevertheless, a dynamic value is still subject to garbage collection, given
+that it may loose all references to it, even with its enclosing block active.
+
+## 3.3. Executing Values
+
+An *executing value* corresponds to an active coroutine, task, pool of tasks,
+or tracked reference:
+
+```
+x-coro  x-task  x-tasks  x-track
+```
+
+Besides being deallocated, an executing value also requires to run a
+finalization routine when going out of scope.
+
+`TODO: move`
+`TODO: evt, err`
+
+# 4. EXPRESSIONS
+
+Ceu is an expression-based language in which all statements are expressions and
+evaluate to a value.
+
+## 4.1. Program and Blocks
+
+A program in Ceu is a sequence of expressions, and a block is a sequence of
+expressions enclosed by braces (`{` and `}´):
+
+```
+Prog  ::= { Expr }
+Block ::= `{` { Expr } `}`
+```
+
+A sequence of expressions evaluate to its last expression.
+
+### Blocks
+
+A Block delimits a lexical scope for variables and dynamic values:
+A variable is only visible to expressions in the block in which it was
+declared.
+A dynamic value cannot escape the block in which it was created (e.g., from
+assignments or returns), unless it is [moved](#TODO) out.
+For this reason, when a block terminates, all memory that was allocated inside
+it is automatically reclaimed.
+
+A block is not an expression by itself, but it can be turned into one by
+prefixing it with an explicit `do`:
+
+```
+Do ::= `do´ Block       ;; an explicit block expression
+```
+
+Examples:
+
+```
+do {                    ;; block prints :ok and evals to 1
+    println(:ok)
+    1
+}
+
+do {
+    val a = 1           ;; `a` is only visible in the block
+}
+a                       ;; ERR: `a` is out of scope
+
+do {
+    #[1,2,3]            ;; ERR: vector cannot escape block
+}
+
+do {
+    move(#[1,2,3])      ;; OK
+}
+```
+
+Blocks also appear in compound statements, such as [conditionals](#TODO),
+[loops](#TODO), and many others.
+
+## 3.2. Declarations and Assignments
 
 # A. SYNTAX
 
 ## A.1. Basic Syntax
 
 ```
+Prog  : { Expr }
 Block : `{´ { Expr } `}´
 Expr  : ...
-      | `do´ Block                                      ;; block
+      | `do´ Block                                      ;; explicit block
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
