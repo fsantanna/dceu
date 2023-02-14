@@ -372,23 +372,26 @@ they were created, and cannot escape to outer blocks in assignments or as
 return expressions.
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
+Ceu also provides an explicit [move](#TODO) operation to reattach a dynamic
+value to an outer scope.
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
 
-## 3.3. Executing Values
+## 3.3. Running Values
 
-An *executing value* corresponds to an active coroutine, task, pool of tasks,
+A *running value* corresponds to an active coroutine, task, pool of tasks,
 or tracked reference:
 
 ```
 x-coro  x-task  x-tasks  x-track
 ```
 
-Besides being deallocated, an executing value also requires to run a
-finalization routine when going out of scope.
-
-`TODO: move`
-`TODO: evt, err`
+A running value is still a dynamic value, with all properties described above.
+In addition, it also requires to run a finalization routine when going out of
+scope in order to terminate active blocks.
+An `x-track` is set to `nil` when its referred task terminates or goes out of
+scope.
+This is all automated by Ceu.
 
 # 4. EXPRESSIONS
 
@@ -437,8 +440,10 @@ do {
 }
 a                       ;; ERR: `a` is out of scope
 
+var x
 do {
-    #[1,2,3]            ;; ERR: vector cannot escape block
+    set x = [1,2,3]     ;; ERR: tuple cannot be assigned to outer block
+    #[1,2,3]            ;; ERR: vector cannot return from block
 }
 
 do {
@@ -450,6 +455,40 @@ Blocks also appear in compound statements, such as [conditionals](#TODO),
 [loops](#TODO), and many others.
 
 ## 3.2. Declarations and Assignments
+
+Regardless of being dynamically typed, all variables in Ceu must be declared
+before use:
+
+```
+Val ::= `val´ ID [TAG] [`=´ Expr]
+Var ::= `var´ ID [TAG] [`=´ Expr]
+```
+
+The difference between `val` and `var` is that a `val` is immutable, while a
+`var` declaration can be modified by further `set` expressions:
+
+```
+`set´ Expr `=´ Expr
+```
+
+The optional initialization expression assigns an initial value to the
+variable, which is set to `nil` otherwise.
+
+The `val` modifier forbids that a name is reassigned, but it does not prevent
+that dynamic values are modified.
+
+Examples:
+
+```
+var x
+set x = 20      ;; OK
+
+val y = [10]
+set y = 0       ;; ERR: cannot reassign `y`
+set y[0] = 20   ;; OK
+```
+
+`TODO: tag, evt`
 
 # A. SYNTAX
 
