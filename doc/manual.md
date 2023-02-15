@@ -158,8 +158,8 @@ Operators names cannot clash with reserved symbols.
 Ceu uses identifiers to refer to variables and operators:
 
 ```
-VAR ::= [A-Za-z_][A-Za-z0-9_'?!-]*      ;; letter/under/digit/quote/quest/excl/dash
-OP  ::= [+-*/><=!|&~%#]+                ;; see Operators
+ID : [A-Za-z_][A-Za-z0-9_'?!-]*      ;; letter/under/digit/quote/quest/excl/dash
+OP : [+-*/><=!|&~%#]+                ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
@@ -187,13 +187,13 @@ Ceu provides literals for *nils*, *booleans*, *numbers*, *characters*,
 *strings*, and *native expressions*:
 
 ```
-NIL  ::= nil
-BOOL ::= true | false
-TAG  ::= :[A-Za-z0-9\.\-]+      ;; colon + leter/digit/dot/dash
-NUM  ::= [0-9][0-9A-Za-z\.]*    ;; digit/letter/dot
-CHR  ::= '.' | '\.'             ;; single/backslashed character
-STR  ::= ".*"                   ;; string expression
-NAT  ::= `.*`                   ;; native expression
+NIL  : nil
+BOOL : true | false
+TAG  : :[A-Za-z0-9\.\-]+      ;; colon + leter/digit/dot/dash
+NUM  : [0-9][0-9A-Za-z\.]*    ;; digit/letter/dot
+CHR  : '.' | '\.'             ;; single/backslashed character
+STR  : ".*"                   ;; string expression
+NAT  : `.*`                   ;; native expression
 ```
 
 The literal `nil` is the single value of the [*nil* type](#TODO).
@@ -406,8 +406,8 @@ A program in Ceu is a sequence of expressions, and a block is a sequence of
 expressions enclosed by braces (`{` and `}´):
 
 ```
-Prog  ::= { Expr }
-Block ::= `{` { Expr } `}`
+Prog  : { Expr }
+Block : `{` { Expr } `}`
 ```
 
 A sequence of expressions evaluate to its last expression.
@@ -426,7 +426,7 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do ::= `do´ Block       ;; an explicit block expression
+Do : `do´ Block       ;; an explicit block expression
 ```
 
 Examples:
@@ -462,8 +462,8 @@ Regardless of being dynamically typed, all variables in Ceu must be declared
 before use:
 
 ```
-Val ::= `val´ ID [TAG] [`=´ Expr]
-Var ::= `var´ ID [TAG] [`=´ Expr]
+Val : `val´ ID [TAG] [`=´ Expr]
+Var : `var´ ID [TAG] [`=´ Expr]
 ```
 
 `TODO: tag, evt`
@@ -530,6 +530,44 @@ loop if i<5 {
 Ceu also provides syntactic extensions for [`ifs`](#TODO) with multiple
 conditions and [`loop in`](#TODO) iterators.
 
+## 3.4. Literals, Identifiers, and Constructors
+
+[Literals](#TODO) (for the simple types) and [identifiers](#TODO) (for
+variables and operators) are the most basic expressions of Ceu:
+
+```
+Basic : `nil´ | `false` | `true´
+      | NAT | TAG | CHR | NUM
+      | ID | `err´ | `evt´ | OP
+```
+
+Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
+and dictionaries:
+
+```
+Cons : `[´ [List(Expr)] `]´             ;; tuple
+     | `#[´ [List(Expr)] `]´            ;; vector
+     | `@[´ [List(Key-Val)] `]´         ;; dictionary
+            Key-Val : ID `=´ Expr
+                    | `(´ Expr `,´ Expr `)´
+```
+
+Tuples (`[...]`) and vectors (`#[...]`) are described as a list of expressions.
+
+Dictionaries (`@[...]`) are described as a list of pairs of expressions
+(`(key,val)`), in which each expression maps a key to a value.
+The first expression is the key, and the second is the value.
+If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
+tag `:`).
+
+Examples:
+
+```
+10                  ;; a nil expression
+:x                  ;; a tag expression
+[(:x,10), x=10]     ;; a dictionary with equivalent key mappings
+```
+
 # A. SYNTAX
 
 ## A.1. Basic Syntax
@@ -543,8 +581,9 @@ Expr  : ...
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
 
-      | `evt´ | `nil´ | `false` | `true´                ;; literals &
-      | NAT | ID | TAG | CHR | NUM                      ;; identifiers
+      | `nil´ | `false` | `true´                        ;; literals &
+      | NAT | TAG | CHR | NUM                           ;; identifiers
+      | ID | `err´ | `evt´
 
       |  `[´ [List(Expr)] `]´                           ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
