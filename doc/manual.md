@@ -513,7 +513,7 @@ test condition or [`throw`-`catch`](#TODO) pair.
 Examples:
 
 ```
-val x-or-y =        ;; max betwen x and y
+val x-or-y =        ;; max between x and y
     if x > y {
         x
     } else {
@@ -538,7 +538,7 @@ variables and operators) are the most basic expressions of Ceu:
 ```
 Basic : `nil´ | `false` | `true´
       | NAT | TAG | CHR | NUM
-      | ID | `err´ | `evt´ | OP
+      | ID | `err´ | `evt´
 ```
 
 Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
@@ -555,7 +555,7 @@ Cons : `[´ [List(Expr)] `]´             ;; tuple
 Tuples (`[...]`) and vectors (`#[...]`) are described as a list of expressions.
 
 Dictionaries (`@[...]`) are described as a list of pairs of expressions
-(`(key,val)`), in which each expression maps a key to a value.
+(`(key,val)`), in which each pair maps a key to a value.
 The first expression is the key, and the second is the value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag `:`).
@@ -567,6 +567,45 @@ Examples:
 :x                  ;; a tag expression
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
 ```
+
+## 3.5. Calls, Operations, and Indexing
+
+### Calls and Operations
+
+In Ceu, calls and operations are equivalent, i.e., an operation is a call that
+uses an operator with a special syntax:
+
+```
+Call : OP Expr              ;; unary operation
+     | `#´ Expr             ;; length operation
+     | Expr `(´ Expr `)´    ;; function call
+     | Expr OP Expr         ;; binary operation
+```
+
+<!--
+     | `{´ OP `}` `(´ Expr `)´                         ;; pos op call
+     | Expr `{´ Expr `}` Expr                          ;; op bin
+     | `{´ OP `}´   -- TODO: basic expr
+-->
+
+`TODO: x-y`
+
+Examples:
+
+```
+-x
+#vec
+f(10,20)
+x + 10
+```
+
+### Fields and Indexes
+
+      | Expr `[´ Expr `]´                               ;; op pos index
+      | Expr `.´ (`pub´ | `status´)                     ;; op pos task field
+      | Expr `.´ ID                                     ;; op pos dict field
+
+### Precedence
 
 # A. SYNTAX
 
@@ -591,13 +630,14 @@ Expr  : ...
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
 
-      | OP Expr                                         ;; op pre
-      | `#´ Expr                                        ;; op pre length
-      | Expr `[´ Expr `]´                               ;; op pos index
-      | Expr `.´ (`pub´ | `status´)                     ;; op pos task field
-      | Expr `.´ ID                                     ;; op pos dict field
-      | Expr `(´ Expr `)´                               ;; op pos call
-      | Expr OP Expr                                    ;; op bin
+      | OP Expr                                         ;; pre op
+      | `#´ Expr                                        ;; pre length
+      | Expr `(´ Expr `)´                               ;; pos call
+      | Expr OP Expr                                    ;; bin op
+
+      | Expr `[´ Expr `]´                               ;; pos index
+      | Expr `.´ (`pub´ | `status´)                     ;; pos task field
+      | Expr `.´ ID                                     ;; pos dict field
 
       | `(´ Expr `)´                                    ;; parenthesis
       | `pass´ Expr                                     ;; innocuous expression
