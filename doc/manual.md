@@ -272,6 +272,8 @@ The `nil` type represents the absence of values with its single value
 
 The `bool` type represents boolean values with [`true`](#TODO) and
 [`false`](#TODO).
+In a boolean context, `nil` is interpreted as `false` and all other values from
+all other types are interpreted as `true`.
 
 The `char` type represents [character literals](#TODO).
 
@@ -464,6 +466,8 @@ Val ::= `val´ ID [TAG] [`=´ Expr]
 Var ::= `var´ ID [TAG] [`=´ Expr]
 ```
 
+`TODO: tag, evt`
+
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` expressions:
 
@@ -488,7 +492,43 @@ set y = 0       ;; ERR: cannot reassign `y`
 set y[0] = 20   ;; OK
 ```
 
-`TODO: tag, evt`
+## 3.3. Conditionals and Loops
+
+Ceu supports conditionals and loops as follows:
+
+```
+`if´ Expr Block [`else´ Block]
+`loop´ `if´ Block
+```
+
+An `if` tests a boolean expression and, if true, executes the associated block.
+Otherwise, it executes the optional `else` block.
+
+A `loop if` tests a boolean expression and, if true, executes an iteration of
+the associated block, before testing the condition again.
+When the condition is false, the loop terminates.
+There is no `break` expression in Ceu, which can be substituted by a proper
+test condition or [`throw`-`catch`](#TODO) pair.
+
+Examples:
+
+```
+val x-or-y =        ;; max betwen x and y
+    if x > y {
+        x
+    } else {
+        y
+    }
+
+var i = 0           ;; prints 0,1,2,3,4
+loop if i<5 {
+    println(i)
+    set i = i + 1
+}
+```
+
+Ceu also provides syntactic extensions for [`ifs`](#TODO) with multiple
+conditions and [`loop in`](#TODO) iterators.
 
 # A. SYNTAX
 
