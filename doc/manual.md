@@ -134,8 +134,8 @@ The following symbols are reserved in Ceu:
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
     ...             ;; variable arguments
-    #               ;; vector constructor
-    @               ;; dictionary constructor
+    #[              ;; vector constructor
+    @[              ;; dictionary constructor
     '   "   `       ;; character/string/native delimiters
     $               ;; native interpolation
     ^               ;; lexer annotation
@@ -148,10 +148,11 @@ The following operator symbols can be combined to form operator names in Ceu:
 ```
     +    -    *    /
     >    <    =    !
-    |    &    ~    %    #
+    |    &    ~    %
+    #    @
 ```
 
-Operators names cannot clash with reserved symbols.
+Operators names cannot clash with reserved symbols (e.g., `->`).
 
 ## 1.4. Identifiers
 
@@ -159,7 +160,8 @@ Ceu uses identifiers to refer to variables and operators:
 
 ```
 ID : [A-Za-z_][A-Za-z0-9_'?!-]*      ;; letter/under/digit/quote/quest/excl/dash
-OP : [+-*/><=!|&~%#]+                ;; see Operators
+   | `{´ OP `}´                      ;; operator enclosed by braces as identifier
+OP : [+-*/><=!|&~%#@]+               ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
@@ -167,8 +169,14 @@ by letters, digits, underscores, single quotes (`'`), question marks (`?`),
 exclamation marks (`!`), or dashes (`-`).
 A dash must be followed by a letter or digit.
 
+Note that dashes are ambiguous with the minus operator.
+For this reason, (i) the minus operation requires spaces between operands
+(e.g., `x - 1`), and (ii) co-existing variables with common parts in
+identifiers are rejected (e.g., `x` vs `x-1` vs `a-x`).
+
 An operator identifier is a sequence of operator symbols
 (see [Operators](#TODO)).
+An operator can be used as a variable when enclosed by braces (`{` and `}`).
 
 Examples:
 
@@ -179,6 +187,7 @@ empty?          ;; var with question
 map'            ;; var with prime
 >               ;; simple op id
 ++              ;; op with multi chars
+{-}             ;; op as var id
 ```
 
 ## 1.5. Literals
@@ -407,7 +416,7 @@ expressions enclosed by braces (`{` and `}´):
 
 ```
 Prog  : { Expr }
-Block : `{` { Expr } `}`
+Block : `{´ { Expr } `}´
 ```
 
 A sequence of expressions evaluate to its last expression.
@@ -536,10 +545,12 @@ conditions and [`loop in`](#TODO) iterators.
 variables and operators) are the most basic expressions of Ceu:
 
 ```
-Basic : `nil´ | `false` | `true´
+Basic : `nil´ | `false´ | `true´
       | NAT | TAG | CHR | NUM
-      | ID | `err´ | `evt´
+      | ID | `err´ | `evt´ | `...´
 ```
+
+`TODO: err, evt, ...`
 
 Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
 and dictionaries:
@@ -565,6 +576,7 @@ Examples:
 ```
 10                  ;; a nil expression
 :x                  ;; a tag expression
+{++}                ;; an op as an expression
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
 ```
 
@@ -576,11 +588,23 @@ In Ceu, calls and operations are equivalent, i.e., an operation is a call that
 uses an operator with a special syntax:
 
 ```
-Call : OP Expr              ;; unary operation
-     | `#´ Expr             ;; length operation
-     | Expr `(´ Expr `)´    ;; function call
-     | Expr OP Expr         ;; binary operation
+Call : OP Expr                      ;; unary operation
+     | Expr OP Expr                 ;; binary operation
+     | Expr `(´ [List(Expr)] `)´    ;; function call
 ```
+
+Operations can be infixed or prefixed.
+They are interpreted as function calls, i.e., `x + y` is equivalent to
+`{+} (x, y)`.
+
+A call expects an expression as a function and a list of expressions as
+arguments between parenthesis (`(` and `)`).
+The arguments are optional.
+The last argument can be `...`.
+
+support operators in prefix and infix positions in comparison to the
+operand(s).
+
 
 <!--
      | `{´ OP `}` `(´ Expr `)´                         ;; pos op call
@@ -614,15 +638,14 @@ x + 10
 ```
 Prog  : { Expr }
 Block : `{´ { Expr } `}´
-Expr  : ...
-      | `do´ Block                                      ;; explicit block
+Expr  : `do´ Block                                      ;; explicit block
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
 
-      | `nil´ | `false` | `true´                        ;; literals &
+      | `nil´ | `false´ | `true´                        ;; literals &
       | NAT | TAG | CHR | NUM                           ;; identifiers
-      | ID | `err´ | `evt´
+      | ID | `err´ | `evt´ | `...´
 
       |  `[´ [List(Expr)] `]´                           ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
@@ -631,9 +654,8 @@ Expr  : ...
                     | `(´ Expr `,´ Expr `)´
 
       | OP Expr                                         ;; pre op
-      | `#´ Expr                                        ;; pre length
-      | Expr `(´ Expr `)´                               ;; pos call
       | Expr OP Expr                                    ;; bin op
+      | Expr `(´ [List(Expr)] `)´                       ;; pos call
 
       | Expr `[´ Expr `]´                               ;; pos index
       | Expr `.´ (`pub´ | `status´)                     ;; pos task field
@@ -667,8 +689,9 @@ Expr  : ...
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
 ID    : [A-Za-z_][A-Za-z0-9_\'\?\!\-]*                  ;; identifier variable
+      | `{´ OP `}´                                      ;; identifier operation
 TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
-OP    : [+-*/><=!|&~%#]+                                ;; identifier operation
+OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
 CHR   : '.' | '\\.'                                     ;; literal character
 NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
 NAT   : `.*`                                            ;; native expression
@@ -677,8 +700,7 @@ NAT   : `.*`                                            ;; native expression
 ## A.2. Extended Syntax
 
 ```
-Expr  : ...
-      | STR
+Expr  : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
@@ -722,4 +744,3 @@ Await : [`:check-now`] (
 
 STR   : ".*"                                            ;; string expression
 ```
-
