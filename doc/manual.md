@@ -1,15 +1,25 @@
 ```
 1. LEXICON
-    1. Keywords         4. Identifiers
-    2. Symbols          5. Literals
-    3. Operators        6. Comments
+    1. Keywords
+    2. Symbols
+    3. Operators
+    4. Identifiers
+    5. Literals
+    6. Comments
 2. TYPES
     1. Simple Types
     2. Collections
     3. Code Abstractions
 3. VALUES
+    1. Plain Values
+    2. Dynamic Values
+    3. Running Values
 4. EXPRESSIONS
-    1. Block
+    1. Program and Blocks
+    2. Declarations and Assignments
+    3. Conditionals and Loops
+    4. Literals, Identifiers, and Constructors
+    5. Calls, Operations, and Indexing
 A. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
@@ -550,7 +560,15 @@ Basic : `nil´ | `false´ | `true´
       | ID | `err´ | `evt´ | `...´
 ```
 
-`TODO: err, evt, ...`
+The symbol `...` represents the variable arguments (*varargs*) a function
+receives in a call.
+In the context of a [function](#TODO) that expects varargs, it evaluates to a
+tuple holding the varargs.
+In other scenarios, accessing `...` raises an error.
+When `...` is the last argument of a call, its tuple is expanded as the last
+arguments.
+
+`TODO: err, evt`
 
 Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
 and dictionaries:
@@ -585,7 +603,7 @@ Examples:
 ### Calls and Operations
 
 In Ceu, calls and operations are equivalent, i.e., an operation is a call that
-uses an operator with a special syntax:
+uses an operator with prefix or infix notation:
 
 ```
 Call : OP Expr                      ;; unary operation
@@ -593,37 +611,26 @@ Call : OP Expr                      ;; unary operation
      | Expr `(´ [List(Expr)] `)´    ;; function call
 ```
 
-Operations can be infixed or prefixed.
-They are interpreted as function calls, i.e., `x + y` is equivalent to
+Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
 A call expects an expression as a function and a list of expressions as
 arguments between parenthesis (`(` and `)`).
 The arguments are optional.
-The last argument can be `...`.
 
-support operators in prefix and infix positions in comparison to the
-operand(s).
-
-
-<!--
-     | `{´ OP `}` `(´ Expr `)´                         ;; pos op call
-     | Expr `{´ Expr `}` Expr                          ;; op bin
-     | `{´ OP `}´   -- TODO: basic expr
--->
-
-`TODO: x-y`
+As discussed in [Identifiers](#TODO), the binary minus requires spaces around
+it to prevent ambiguity with identifiers containing dashes.
 
 Examples:
 
 ```
--x
-#vec
-f(10,20)
-x + 10
+#vec            ;; unary operation
+x - 10          ;; binary operation
+{-}(x,10)       ;; operation as call
+f(10,20)        ;; normal call
 ```
 
-### Fields and Indexes
+### Indexes and Fields
 
       | Expr `[´ Expr `]´                               ;; op pos index
       | Expr `.´ (`pub´ | `status´)                     ;; op pos task field
