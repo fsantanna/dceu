@@ -24,7 +24,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "par-and", "par-or", "until", "with", "where"
 )).toSortedSet()
 
-val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#')
+val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
 
 val TAGS = listOf (
     ":nil", ":tag", ":bool", ":char", ":number", ":pointer",

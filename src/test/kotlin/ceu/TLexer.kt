@@ -48,7 +48,8 @@ class TLexer {
         val tks = l.lex().iterator()
         assert(tks.next().str == "@[")
         assert(tks.next().str == "#[")
-        assert(trap { tks.next() } == "anon : (lin 1, col 7) : operator error : expected \"@[\"")
+        assert(tks.next().str == "@")
+        assert(tks.next().str == "1")
     }
 
     @Test
