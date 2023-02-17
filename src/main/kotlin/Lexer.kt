@@ -239,10 +239,10 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x.isLetter() || x=='_') -> {
                     val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetterOrDigit()) }
-                    if (KEYWORDS.contains(id)) {
-                         yield(Tk.Fix(id, pos))
-                    } else {
-                        yield(Tk.Id(id, pos, 0))
+                    when {
+                        XOPERATORS.contains(id) -> yield(Tk.Op(id, pos))
+                        KEYWORDS.contains(id) -> yield(Tk.Fix(id, pos))
+                        else -> yield(Tk.Id(id, pos, 0))
                     }
                 }
                 x.isDigit() -> {
