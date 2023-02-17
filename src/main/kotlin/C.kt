@@ -1123,7 +1123,7 @@ fun Coder.main (tags: Tags): String {
             }
         }        
         CEU_RET ceu_dict_set (CEU_Dyn* col, CEU_Value* key, CEU_Value* val) {
-            assert(key->type != CEU_VALUE_NIL);     // TODO
+            //assert(key->type != CEU_VALUE_NIL);     // TODO
             int old;
             ceu_dict_key_to_index(col, key, &old);
             if (old == -1) {
