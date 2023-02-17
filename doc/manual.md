@@ -316,10 +316,11 @@ tuple    vector    dict
 ```
 
 The `tuple` type represents a fixed collection of heterogeneous values, in
-which each numeric index holds a value of a (possibly) different type.
+which each numeric index, starting at `0`, holds a value of a (possibly)
+different type.
 
 The `vector` type represents a variable collection of homogeneous values, in
-which each numeric index holds a value of the same type.
+which each numeric index, starting at `0`,  holds a value of the same type.
 
 The `dict` type (dictionary) represents a variable collection of heterogeneous
 values, in which each index of any type maps to a value of a (possibly)
@@ -431,9 +432,9 @@ Block : `{´ { Expr } `}´
 
 A sequence of expressions evaluate to its last expression.
 
-### Blocks
+### 4.1.1. Blocks
 
-A Block delimits a lexical scope for variables and dynamic values:
+A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
 declared.
 A dynamic value cannot escape the block in which it was created (e.g., from
@@ -475,7 +476,47 @@ do {
 Blocks also appear in compound statements, such as [conditionals](#TODO),
 [loops](#TODO), and many others.
 
-## 3.2. Declarations and Assignments
+### 4.1.2. Defer
+
+A deferred block executes only when its enclosing block terminates:
+
+```
+Defer : `defer´ Block
+```
+
+Examples:
+
+```
+do {                    ;; prints 1, 3, 2
+    println(1)
+    defer {
+        println(2)      ;; last to execute
+    }
+    println(3)
+}
+```
+
+
+### 4.1.3. Pass
+
+The `pass` expression permits that an innocuous expression is used in the
+middle of a block:
+
+```
+Pass : `pass´ Expr
+```
+
+Examples:
+
+```
+do {
+    1           ;; ERR: innocuous expression
+    pass 1      ;; OK:  innocuous but explicit
+    ...
+}
+```
+
+## 4.2. Declarations and Assignments
 
 Regardless of being dynamically typed, all variables in Ceu must be declared
 before use:
@@ -511,7 +552,7 @@ set y = 0       ;; ERR: cannot reassign `y`
 set y[0] = 20   ;; OK
 ```
 
-## 3.3. Conditionals and Loops
+## 4.3. Conditionals and Loops
 
 Ceu supports conditionals and loops as follows:
 
@@ -549,7 +590,7 @@ loop if i<5 {
 Ceu also provides syntactic extensions for [`ifs`](#TODO) with multiple
 conditions and [`loop in`](#TODO) iterators.
 
-## 3.4. Literals, Identifiers, and Constructors
+## 4.4. Literals, Identifiers, and Constructors
 
 [Literals](#TODO) (for the simple types) and [identifiers](#TODO) (for
 variables and operators) are the most basic expressions of Ceu:
@@ -598,12 +639,12 @@ Examples:
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
 ```
 
-## 3.5. Calls, Operations, and Indexing
+## 4.5. Calls, Operations, and Indexing
 
-### Calls and Operations
+### 4.5.1. Calls and Operations
 
 In Ceu, calls and operations are equivalent, i.e., an operation is a call that
-uses an operator with prefix or infix notation:
+uses an [operator](#TODO) with prefix or infix notation:
 
 ```
 Call : OP Expr                      ;; unary operation
@@ -630,13 +671,87 @@ x - 10          ;; binary operation
 f(10,20)        ;; normal call
 ```
 
-### Indexes and Fields
+### 4.5.2. Indexes and Fields
 
-      | Expr `[´ Expr `]´                               ;; op pos index
-      | Expr `.´ (`pub´ | `status´)                     ;; op pos task field
-      | Expr `.´ ID                                     ;; op pos dict field
+Collections in Ceu are ([tuples](#TODO), [vectors](#TODO), and
+[dictionaries](#TODO)) are accessed through indexes or fields:
 
-### Precedence
+```
+Index : Expr `[´ Expr `]´
+Field : Expr `.´ (NUM | ID)
+```
+
+An index operation expects an expression as a collection, and an index enclosed
+by brackets (`[` and `]`).
+For tuples and vectors, the index must be an number.
+For dictionaries, the index can be of any type.
+
+The operation evaluates to the current value the collection holds on the index,
+or `nil` if non existent.
+
+A field operation expects an expression as a collection, a dot separator (`.`),
+and a field identifier.
+A field operation expands to an index operation as follows:
+For a tuple or vector `v`, and a numeric identifier `i`, the operation expands
+to `v[i]`.
+For a dictionary `v`, and a [tag literal](#TODO) `k` (with the colon `:`
+omitted), the operation expands to `v[:k]`.
+
+Examples:
+
+```
+tup[3]      ;; tuple access by index
+tup.3       ;; tuple access by numeric field
+
+vec[i]      ;; vector access by index
+
+dict[:x]    ;; dict access by index
+dict.x      ;; dict access by field
+```
+
+### 4.5.3. Precedence and Associativity
+
+Operations in Ceu can be combined in complex expressions with the following
+precedence priority (from higher to lower):
+
+``
+1. sufix  operations       ;; t[0], x.i, f(x)
+2. prefix operations       ;; -x, #t
+3. binary operations       ;; x + y
+```
+
+Currently, binary operators in Ceu have no precedence or associativity rules,
+requiring parenthesis for disambiguation:
+
+```
+Parens : `(´ Expr `)´
+```
+
+Examples:
+
+```
+#f(10).x        ;; # ((f(10)) .x)
+x + 10 - 1      ;; ERR: requires parenthesis
+- x + y         ;; (-x) + y
+```
+
+<!-- ---------------------------------------------------------------------- -->
+
+<!--
+# EXTENSIONS
+
+## Operations
+
+Ceu
+      | `not´ Expr                                      ;; op not
+      | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
+      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
+
+not, or, and are really special
+
+TODO
+| Expr `.´ (`pub´ | `status´)                     ;; op pos task field
+-->
 
 # A. SYNTAX
 
@@ -646,6 +761,9 @@ f(10,20)        ;; normal call
 Prog  : { Expr }
 Block : `{´ { Expr } `}´
 Expr  : `do´ Block                                      ;; explicit block
+      | `defer´ Block                                   ;; defer expressions
+      | `pass´ Expr                                     ;; innocuous expression
+
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
       | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
@@ -660,16 +778,14 @@ Expr  : `do´ Block                                      ;; explicit block
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
 
+      | `(´ Expr `)´                                    ;; parenthesis
       | OP Expr                                         ;; pre op
       | Expr OP Expr                                    ;; bin op
       | Expr `(´ [List(Expr)] `)´                       ;; pos call
 
       | Expr `[´ Expr `]´                               ;; pos index
-      | Expr `.´ (`pub´ | `status´)                     ;; pos task field
       | Expr `.´ ID                                     ;; pos dict field
-
-      | `(´ Expr `)´                                    ;; parenthesis
-      | `pass´ Expr                                     ;; innocuous expression
+      | Expr `.´ (`pub´ | `status´)                     ;; pos task field
 
       | `if´ Expr Block [`else´ Block]                  ;; conditional
       | `loop´ `if´ Block                               ;; loop while
@@ -679,7 +795,6 @@ Expr  : `do´ Block                                      ;; explicit block
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
 
-      | `defer´ Block                                   ;; defer expressions
       | `catch´ Expr Block                              ;; catch exception
       | `throw´ `(´ Expr `)´                            ;; throw exception
 
