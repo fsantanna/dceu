@@ -157,7 +157,7 @@ func iter-dict (it :Iterator) {
 func iter-coro (it :Iterator) {
     val co = it.v
     val v = resume co()
-    ((co.status /= :terminated) and v) or nil
+    ((status(co) /= :terminated) and v) or nil
 }
 
 func iter (v) {
