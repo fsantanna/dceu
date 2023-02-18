@@ -9,7 +9,7 @@
 2. TYPES
     1. Simple Types
     2. Collections
-    3. Code Abstractions
+    3. Execution Units
 3. VALUES
     1. Plain Values
     2. Dynamic Values
@@ -20,6 +20,11 @@
     3. Conditionals and Loops
     4. Literals, Identifiers, and Constructors
     5. Calls, Operations, and Indexing
+    6. Execution Units
+    7. Exceptions
+5. STANDARD LIBRARY
+    1. Primary Library
+    2. Auxiliary Library
 A. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
@@ -186,7 +191,8 @@ identifiers are rejected (e.g., `x` vs `x-1` vs `a-x`).
 
 An operator identifier is a sequence of operator symbols
 (see [Operators](#TODO)).
-An operator can be used as a variable when enclosed by braces (`{` and `}`).
+An operator can be used as a variable identifier when enclosed by braces (`{`
+and `}`).
 
 Examples:
 
@@ -278,6 +284,13 @@ Examples:
 Ceu is a dynamic language in which values carry their own types during
 execution.
 
+The function `type` returns the type of a value as a [tag](#TODO):
+
+```
+type(10)  --> :number
+type('x') --> :char
+```
+
 ## 2.1. Simple Types
 
 Ceu has 6 basic types:
@@ -334,9 +347,9 @@ Examples:
 @[(:x,10), (:y,20)]     ;; a dictionary with 2 mappings
 ```
 
-## 2.3. Code Abstractions
+## 2.3. Execution Units
 
-Ceu provide 3 types of code abstractions:
+Ceu provide 3 types of execution units, functions, coroutines, and tasks:
 
 ```
 func    coro    task
@@ -354,7 +367,7 @@ The `x-tasks` type represents [task pools](#TODO) holding running tasks.
 The `x-track` type represents [track references](#TODO) pointing to running
 tasks.
 
-Code abstractions are described in [Section TODO](#TODO).
+Execution units are described in [Section TODO](#TODO).
 
 # 3. VALUES
 
@@ -496,7 +509,6 @@ do {                    ;; prints 1, 3, 2
 }
 ```
 
-
 ### 4.1.3. Pass
 
 The `pass` expression permits that an innocuous expression is used in the
@@ -597,8 +609,9 @@ variables and operators) are the most basic expressions of Ceu:
 
 ```
 Basic : `nil´ | `false´ | `true´
-      | NAT | TAG | CHR | NUM
-      | ID | `err´ | `evt´ | `...´
+      | NAT | TAG | CHR | NUM | ID
+      | `...´
+      | `err´ | `evt´
 ```
 
 The symbol `...` represents the variable arguments (*varargs*) a function
@@ -609,7 +622,9 @@ In other scenarios, accessing `...` raises an error.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
 
-`TODO: err, evt`
+The variables `err` and `evt` have special scopes and are automatically setup
+in the context of [`throw`](#TODO) and [`broadcast`](#TODO) expressions,
+respectively.
 
 Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
 and dictionaries:
@@ -655,9 +670,11 @@ Call : OP Expr                      ;; unary operation
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
-A call expects an expression as a function and a list of expressions as
-arguments between parenthesis (`(` and `)`).
-The arguments are optional.
+A call expects an expression as a [function](#TODO) and an optional list of
+expressions as arguments enclosed by parenthesis (`(` and `)`).
+Each argument is expected to match a parameter of the function declaration.
+A call transfers control to the function, which runs to completion and returns
+control with a value, which substitutes the call.
 
 As discussed in [Identifiers](#TODO), the binary minus requires spaces around
 it to prevent ambiguity with identifiers containing dashes.
@@ -734,6 +751,116 @@ Examples:
 x + 10 - 1      ;; ERR: requires parenthesis
 - x + y         ;; (-x) + y
 ```
+
+## 4.6. Execution Units
+
+Ceu supports functions, coroutines, and tasks as execution units:
+
+```
+Func : `func´ `(´ [List(ID)] `)´ Block
+Coro : `coro´ `(´ [List(ID)] `)´ Block
+Task : `task´ `(´ [List(ID)] `)´ Block
+```
+
+Each keyword is followed by an optional list of identifiers as parameters
+enclosed by parenthesis (`(` and `)`).
+The last parameter can be the symbol `...`, which captures as a tuple all
+remaining arguments of a call.
+The associated block executes when the unit is [called](#TODO).
+Each argument in the call is evaluated and copied to the parameter identifier,
+which becomes a local variable in the execution block.
+
+### 4.6.1. Functions
+
+A `func` is a conventional function or subroutine, which blocks the caller and
+runs to completion, finally returning a value to the caller, which resumes
+execution.
+
+### 4.6.2. Coroutines
+
+A `coro` and a `task` are coroutines that can suspend themselves in the middle
+of execution, before they terminate.
+A coroutine retains its execution state and can be resumed from the suspension
+point.
+
+The basic API for coroutines has 5 operations:
+
+1. [`coroutine`](#TODO): creates a fresh coroutine
+2. [`yield`](#TODO): suspends the running coroutine
+3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
+4. [`toggle`](#TODO): `TODO`
+5. [`kill`](#TODO): `TODO`
+
+Note that `yield` is the only operation that is called from the coroutine
+itself, all others are called from the coroutine controller.
+Just like function call arguments and return values, the `yield` and `resume`
+operations can transfer values between themselves.
+
+A spawned coroutine has 4 possible states:
+
+1. `yielded`: idle and ready to be resumed
+2. `toggled`: paused and ignoring resumes
+3. `resumed`: currently executing
+4. `terminated`: terminated and unable to be resumed
+
+Examples:
+
+```
+coro F (x) {
+    println(x)
+    val y = yield(x + 1)
+    println(y)
+}
+val co = spawn F(10)
+```
+
+### 4.6.3. Tasks
+
+A `task` is a coroutine that can awake automatically from events without an
+explicit `resume`.
+Tasks form a dependency tree is traversed on [event broadcasts](#TODO), which
+awake tasks the events.
+
+As another difference to coroutines, tasks can be spawned in [pools of
+anonymous tasks](#TODO).
+A pool controls the lifecycle of tasks and automatically releases them from
+memory on termination.
+
+Tasks can also be [tracked](#TODO) from outside with a safe reference to it.
+When a task terminates, it generates an event that clears all of its tracked
+references.
+
+Tasks have a public `pub` variable that can be accessed from outside.
+
+```
+task T () {
+    task.pub = 10
+    yield()
+}
+
+- bcast itself
+- pub field
+
+## 4.7. Exceptions
+
+A `throw` raises an exception that terminates all enclosing blocks up to a
+matching `catch` block:
+
+```
+Throw : `throw´ `(´ Expr `)´
+Catch : `catch´ Expr Block
+```
+
+A `throw` receives an expression that is evaluated and assigned to the special
+variable `err`, which is visible to enclosing `catch` statements.
+A `throw` is propagated upwards and terminates all enclosing blocks and
+execution units on the way.
+When crossing an execution unit, a `throw` jumps back to the calling site and
+continues to propagate upwards.
+
+A `catch` executes its block normally, but also registers a catch expression to
+be compared against `err` on `throw`.
+If they match, the exception is caught and the `catch` terminates.
 
 <!-- ---------------------------------------------------------------------- -->
 
