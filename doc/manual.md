@@ -25,6 +25,7 @@
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
+X. EXTENSIONS
 A. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
@@ -92,7 +93,8 @@ The following keywords are reserved in Ceu:
     awaiting        ;; awaiting block
     broadcast       ;; broadcast event
     catch           ;; catch exception
-    coro            ;; coroutine declaration
+    coro            ;; coroutine prototype
+    coroutine       ;; coroutine creation
     data            ;; data declaration
     defer           ;; defer block
     do              ;; do block
@@ -102,7 +104,7 @@ The following keywords are reserved in Ceu:
     every           ;; every block
     evt             ;; event variable
     false           ;; false value
-    func            ;; function declaration
+    func            ;; function prototype
     if              ;; if block
     ifs             ;; ifs block
     in              ;; in keyword
@@ -122,7 +124,7 @@ The following keywords are reserved in Ceu:
     set             ;; assign expression
     spawn           ;; spawn expression
     status          ;; status variable
-    task            ;; task declaration/identifier
+    task            ;; task prototype/self identifier
     toggle          ;; toggle expression/block
     true            ;; true value
     until           ;; until loop modifier
@@ -221,18 +223,18 @@ STR  : ".*"                   ;; string expression
 NAT  : `.*`                   ;; native expression
 ```
 
-The literal `nil` is the single value of the [*nil* type](#TODO).
+The literal `nil` is the single value of the [*nil*](#TODO) type.
 
-The literals `true` and `false` are the values of the [*bool* type](#TODO).
+The literals `true` and `false` are the values of the [*bool*](#TODO) type.
 
-A [*tag* type](#TODO) literal starts with a colon (`:`) and is followed by
+A [*tag*](#TODO) type literal starts with a colon (`:`) and is followed by
 letters, digits, dots (`.`), or dashes (`-`).
 A dot or dash must be followed by a letter or digit.
 
-A [*number* type](#TODO) literal starts with a digit and is followed by digits,
+A [*number*](#TODO) type literal starts with a digit and is followed by digits,
 letters, and dots (`.`), and adheres to the [C standard](#TODO).
 
-A [*char* type](#TODO) literal is a single or backslashed (`\`) character
+A [*char*](#TODO) type literal is a single or backslashed (`\`) character
 enclosed by single quotes (`'`), and adheres to the [C standard](#TODO).
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
@@ -497,7 +499,7 @@ A deferred block executes only when its enclosing block terminates:
 Defer : `defer´ Block
 ```
 
-Examples:
+Example:
 
 ```
 do {                    ;; prints 1, 3, 2
@@ -518,7 +520,7 @@ middle of a block:
 Pass : `pass´ Expr
 ```
 
-Examples:
+Example:
 
 ```
 do {
@@ -778,50 +780,55 @@ execution.
 
 ### 4.6.2. Coroutines
 
-A `coro` and a `task` are coroutines that can suspend themselves in the middle
-of execution, before they terminate.
+The `coro` and `task` are coroutine prototypes that, when instantiated, can
+suspend themselves in the middle of execution, before they terminate.
 A coroutine retains its execution state and can be resumed from the suspension
 point.
 
-The basic API for coroutines has 5 operations:
+The basic API for coroutines has 6 operations:
 
-1. [`coroutine`](#TODO): creates a fresh coroutine
+1. [`coroutine`](#TODO): creates a new coroutine from a prototype
 2. [`yield`](#TODO): suspends the running coroutine
 3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
 4. [`toggle`](#TODO): `TODO`
 5. [`kill`](#TODO): `TODO`
+5. [`status`](#TODO): returns coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
 itself, all others are called from the coroutine controller.
 Just like function call arguments and return values, the `yield` and `resume`
 operations can transfer values between themselves.
 
-A spawned coroutine has 4 possible states:
+A coroutine has 4 possible status:
 
 1. `yielded`: idle and ready to be resumed
 2. `toggled`: paused and ignoring resumes
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
-Examples:
+Example:
 
 ```
-coro F (x) {
-    println(x)
-    val y = yield(x + 1)
-    println(y)
+coro F (a) {				;; first resume
+    println(a)				;; --> 10
+    val c = yield(a + 1)	;; returns 11, receives 12
+    println(c)				;; --> 12
+    c + 1					;; returns 13
 }
-val co = spawn F(10)
+val f = coroutine(F)		;; creates `f` from prototype `F`
+val b = resume f(10)		;; starts  `f`, receives `11`
+val d = resume f(b+1)		;; resumes `f`, receives `13`
+println(f.status)			;; prints :terminated
 ```
 
 ### 4.6.3. Tasks
 
-A `task` is a coroutine that can awake automatically from events without an
-explicit `resume`.
-Tasks form a dependency tree is traversed on [event broadcasts](#TODO), which
-awake tasks the events.
+A `task` is a coroutine prototype that, when instantiated, can awake
+automatically from events without an explicit `resume`.
+Tasks form a dependency tree that is traversed on [event broadcasts](#TODO),
+which awake tasks matching the events.
 
-As another difference to coroutines, tasks can be spawned in [pools of
+Another difference to coroutines is that tasks can be spawned in [pools of
 anonymous tasks](#TODO).
 A pool controls the lifecycle of tasks and automatically releases them from
 memory on termination.
@@ -832,11 +839,14 @@ references.
 
 Tasks have a public `pub` variable that can be accessed from outside.
 
+Examples:
+
 ```
 task T () {
     task.pub = 10
     yield()
 }
+```
 
 - bcast itself
 - pub field
@@ -929,6 +939,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | `data´ Data                                     ;; tags hierarchy
             Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
 
+      | `coroutine´ `(´ Expr `)´       			;; create coro
       | `spawn´ [`in´ Expr `,´] Expr `(´ Expr `)´       ;; spawn coro/task
       | `broadcast´ `in´ Expr `,´  Expr `(´ Expr `)´    ;; broadcast event
       | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
@@ -949,7 +960,8 @@ NAT   : `.*`                                            ;; native expression
 ## A.2. Extended Syntax
 
 ```
-Expr  : STR
+Expr  : Expr' [`where´ Block]				;; where clause
+Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
@@ -963,6 +975,7 @@ Expr  : STR
             Else : `else´ `->´ (Expr | Block)
 
       | `loop´ Block                                    ;; loop infinite
+      | `loop´ Block `until´ Expr                       ;; loop until
       | `loop´ `in´ Expr `,´ ID Block                   ;; loop iterator
       | `loop´ `in´                                     ;; loop iterator numeric
             (`[´ | `(´)
