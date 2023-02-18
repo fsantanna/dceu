@@ -94,7 +94,7 @@ The following keywords are reserved in Ceu:
     broadcast       ;; broadcast event
     catch           ;; catch exception
     coro            ;; coroutine prototype
-    coroutine       ;; coroutine creation
+    coroutine       ;; create coroutine
     data            ;; data declaration
     defer           ;; defer block
     do              ;; do block
@@ -120,19 +120,19 @@ The following keywords are reserved in Ceu:
     pass            ;; innocuous expression
     poly            ;; TODO
     pub             ;; public variable              (30)
-    resume          ;; resume expression
+    resume          ;; resume coroutine
     set             ;; assign expression
-    spawn           ;; spawn expression
-    status          ;; status variable
+    spawn           ;; spawn coroutine
+    status          ;; coroutine status
     task            ;; task prototype/self identifier
-    toggle          ;; toggle expression/block
+    toggle          ;; toggle coroutine/block
     true            ;; true value
     until           ;; until loop modifier
     val             ;; constant declaration
     var             ;; variable declaration         (40)
     where           ;; where block
     with            ;; with block
-    yield           ;; yield expression
+    yield           ;; yield coroutine
 ```
 
 Keywords cannot be used as variable identifiers.
@@ -697,7 +697,7 @@ Collections in Ceu are ([tuples](#TODO), [vectors](#TODO), and
 
 ```
 Index : Expr `[´ Expr `]´
-Field : Expr `.´ (NUM | ID)
+Field : Expr `.´ (NUM | ID | `pub´)
 ```
 
 An index operation expects an expression as a collection, and an index enclosed
@@ -716,6 +716,9 @@ to `v[i]`.
 For a dictionary `v`, and a [tag literal](#TODO) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
 
+A [task](#TODO) `t` also relies on a field operation to access its public
+field `pub` (i.e., `t.pub`).
+
 Examples:
 
 ```
@@ -726,6 +729,8 @@ vec[i]      ;; vector access by index
 
 dict[:x]    ;; dict access by index
 dict.x      ;; dict access by field
+
+t.pub        ;; task public field
 ```
 
 ### 4.5.3. Precedence and Associativity
@@ -792,12 +797,12 @@ The basic API for coroutines has 6 operations:
 3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
 4. [`toggle`](#TODO): `TODO`
 5. [`kill`](#TODO): `TODO`
-5. [`status`](#TODO): returns coroutine status
+5. [`status`](#TODO): returns the coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
-itself, all others are called from the coroutine controller.
-Just like function call arguments and return values, the `yield` and `resume`
-operations can transfer values between themselves.
+itself, all others are called from the user code controlling the coroutine.
+Just like call arguments and return values from functions, the `yield` and
+`resume` operations can transfer values between themselves.
 
 A coroutine has 4 possible status:
 
@@ -809,35 +814,36 @@ A coroutine has 4 possible status:
 Example:
 
 ```
-coro F (a) {				;; first resume
-    println(a)				;; --> 10
-    val c = yield(a + 1)	;; returns 11, receives 12
-    println(c)				;; --> 12
-    c + 1					;; returns 13
+coro F (a) {                ;; first resume
+    println(a)                ;; --> 10
+    val c = yield(a + 1)    ;; returns 11, second resume, receives 12
+    println(c)                ;; --> 12
+    c + 1                    ;; returns 13
 }
-val f = coroutine(F)		;; creates `f` from prototype `F`
-val b = resume f(10)		;; starts  `f`, receives `11`
-val d = resume f(b+1)		;; resumes `f`, receives `13`
-println(f.status)			;; prints :terminated
+val f = coroutine(F)        ;; creates `f` from prototype `F`
+val b = resume f(10)        ;; starts  `f`, receives `11`
+val d = resume f(b+1)        ;; resumes `f`, receives `13`
+println(status(f))            ;; --> :terminated
 ```
 
 ### 4.6.3. Tasks
 
-A `task` is a coroutine prototype that, when instantiated, can awake
-automatically from events without an explicit `resume`.
-Tasks form a dependency tree that is traversed on [event broadcasts](#TODO),
-which awake tasks matching the events.
+A `task` is a coroutine prototype that, when instantiated, awakes automatically
+from [event broadcasts](#TODO) without an explicit `resume`.
 
-Another difference to coroutines is that tasks can be spawned in [pools of
-anonymous tasks](#TODO).
-A pool controls the lifecycle of tasks and automatically releases them from
-memory on termination.
+A task can be spawned in a [pool](#TODO) of anonymous tasks, which will
+control the task lifecycle and automatically releases it from memory on
+termination.
 
-Tasks can also be [tracked](#TODO) from outside with a safe reference to it.
-When a task terminates, it generates an event that clears all of its tracked
+A task can be [tracked](#TODO) from outside with a safe reference to it.
+When a task terminates, it broadcasts an event that clears all of its tracked
 references.
 
-Tasks have a public `pub` variable that can be accessed from outside.
+A task can refer to itself with the identifier `task`.
+
+A task has a public `pub` variable that can be accessed as a [field](#TODO):
+    internally as `task.pub`, and
+    externally as `x.pub` where `x` is a reference to the task.
 
 Examples:
 
@@ -885,9 +891,6 @@ Ceu
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
 
 not, or, and are really special
-
-TODO
-| Expr `.´ (`pub´ | `status´)                     ;; op pos task field
 -->
 
 # A. SYNTAX
@@ -922,7 +925,7 @@ Expr  : `do´ Block                                      ;; explicit block
 
       | Expr `[´ Expr `]´                               ;; pos index
       | Expr `.´ ID                                     ;; pos dict field
-      | Expr `.´ (`pub´ | `status´)                     ;; pos task field
+      | Expr `.´ `pub´                                  ;; pos task pub
 
       | `if´ Expr Block [`else´ Block]                  ;; conditional
       | `loop´ `if´ Block                               ;; loop while
@@ -939,12 +942,13 @@ Expr  : `do´ Block                                      ;; explicit block
       | `data´ Data                                     ;; tags hierarchy
             Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
 
-      | `coroutine´ `(´ Expr `)´       			;; create coro
+      | `coroutine´ `(´ Expr `)´                        ;; create coro
       | `spawn´ [`in´ Expr `,´] Expr `(´ Expr `)´       ;; spawn coro/task
-      | `broadcast´ `in´ Expr `,´  Expr `(´ Expr `)´    ;; broadcast event
+      | `status´ `(´ Expr `)´                           ;; coro status
       | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
       | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
       | `toggle´ Call                                   ;; toggle task
+      | `broadcast´ `in´ Expr `,´ Expr `(´ Expr `)´     ;; broadcast event
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
@@ -960,7 +964,7 @@ NAT   : `.*`                                            ;; native expression
 ## A.2. Extended Syntax
 
 ```
-Expr  : Expr' [`where´ Block]				;; where clause
+Expr  : Expr' [`where´ Block]                ;; where clause
 Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop

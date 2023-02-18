@@ -1556,6 +1556,17 @@ fun Coder.main (tags: Tags): String {
             }
             return ceu_x_create(&frame->up_block->dn_dyns, coro, &ceu_acc);
         }
+        
+        CEU_RET ceu_status_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* coro = args[0];
+            if (coro->type!=CEU_VALUE_X_CORO && coro->type!=CEU_VALUE_X_TASK) {
+                CEU_THROW_MSG("\0 : status error : expected coroutine");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
+            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro->Dyn->Bcast.status + CEU_TAG_yielded - 1} };
+            return CEU_RET_RETURN;
+        }
 
         CEU_RET ceu_tasks_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n <= 1);
@@ -1785,6 +1796,11 @@ fun Coder.main (tags: Tags): String {
                             .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_status = { 
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} }
+                        }
+                    };
                     static CEU_Dyn ceu_supof = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
                             .Proto = { NULL, ceu_supof_f, {0,NULL}, {{0}} }
@@ -1832,6 +1848,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
+                    ceu_mem->status     = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_status}       };
                     ceu_mem->supof      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_supof}        };
                     ceu_mem->tags       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tags}         };
                     ceu_mem->tasks      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tasks}        };

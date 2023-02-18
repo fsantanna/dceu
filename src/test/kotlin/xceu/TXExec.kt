@@ -675,7 +675,7 @@ class TXExec {
                     println(x.pub[0])   ;; never printed
                     await false
                 }
-                println(x.status)
+                println(status(x))
             }
             println(:ok)
         """, true)
@@ -696,7 +696,7 @@ class TXExec {
                     println(x.pub)   ;; never printed
                     await false
                 }
-                println(x.status)
+                println(status(x))
             }
             println(:ok)
         """, true)
@@ -1380,7 +1380,7 @@ class TXExec {
         val out = all("""
             task T () {}
             val ts = [spawn T()]
-            println(ts[0].status)
+            println(status(ts[0]))
         """)
         assert(out == ":terminated\n") { out }
     }
@@ -2447,8 +2447,8 @@ class TXExec {
                 every :e {
                     ;;println(:while)
                     loop in :tasks ts, t {
-                        ;;println(t, detrack(t), detrack(t).status)
-                        assert(detrack(t).status /= :terminated)
+                        ;;println(t, detrack(t), status(detrack(t)))
+                        assert(status(detrack(t)) /= :terminated)
                     }
                 }
             }

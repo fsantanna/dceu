@@ -832,7 +832,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do {
                                 val ceu_spw_$N = ${e.tostr(true)}
-                                ${pre0}await :check-now (ceu_spw_$N.status == :terminated)
+                                ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
                             }
                         """) //.let { println(it.tostr());it }
@@ -865,7 +865,7 @@ class Parser (lexer_: Lexer)
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
                                     ifs {
                                         type(ceu_cnd_$N) == :x-task -> {
-                                            set ceu_cnd_$N = (ceu_cnd_$N.status == :terminated)
+                                            set ceu_cnd_$N = (status(ceu_cnd_$N) == :terminated)
                                         }
                                         type(ceu_cnd_$N) == :x-track -> {
                                             set ceu_cnd_$N = (detrack(ceu_cnd_$N) == nil)
@@ -938,7 +938,7 @@ class Parser (lexer_: Lexer)
                         """}.joinToString("")}
                         await :check-now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status == :terminated) and
+                                ((status(ceu_${i}_$n) == :terminated) and
                             """}.joinToString("")} true ${")".repeat(pars.size)}
                         )
                         _ceu_$n
@@ -967,7 +967,7 @@ class Parser (lexer_: Lexer)
                         """}.joinToString("")}
                         await :check-now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((ceu_${i}_$n.status == :terminated) or
+                                ((status(ceu_${i}_$n) == :terminated) or
                             """}.joinToString("")} false ${")".repeat(pars.size)}
                         )
                         _ceu_$n
@@ -1063,7 +1063,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix(".") -> {
                     e = when {
-                        this.acceptFix("pub") || this.acceptFix("status") -> Expr.Pub(this.tk0 as Tk.Fix, e)
+                        this.acceptFix("pub") -> Expr.Pub(this.tk0 as Tk.Fix, e)
                         this.acceptEnu("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
                         (XCEU && this.acceptEnu("Num")) -> {
                             val num = this.tk0 as Tk.Num

@@ -1619,7 +1619,7 @@ class TTask {
             loop in :tasks ts, xxx {
                 set yyy = xxx
             }
-            println(detrack(yyy).status)
+            println(status(detrack(yyy)))
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
@@ -1657,9 +1657,9 @@ class TTask {
                 var yyy
                 loop in :tasks ts, zzz {
                     set yyy = zzz
-                    println(detrack(yyy).status)
+                    println(status(detrack(yyy)))
                 }
-                println(detrack(yyy).status)
+                println(status(detrack(yyy)))
                 set yyy = xxx
             }
         """
@@ -2652,24 +2652,24 @@ class TTask {
     fun ii_status1_err() {
         val out = all("""
             var a
-            a.status
+            status(a)
         """, true)
-        assert(out == "anon : (lin 3, col 15) : status error : expected task\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 13) : status(a) : status error : expected coroutine\n:error\n") { out }
     }
     @Test
     fun ii_status2_err() {
         val out = all("""
-            task.status
+            status(task)
         """, true)
         //assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
-        assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
+        assert(out == "anon : (lin 2, col 20) : task error : missing enclosing task") { out }
     }
     @Test
     fun ii_status3_err() {
         val out = all("""
             var t
             set t = task () {
-                set task.status = nil     ;; error: cannot assign to status
+                set status(task) = nil     ;; error: cannot assign to status
             }
         """, true)
         assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination") { out }
@@ -2679,17 +2679,17 @@ class TTask {
         val out = all("""
             var t
             set t = coro () {
-                println(10, coro.status)
+                println(10, status(coro))
                 yield(nil)
-                println(20, coro.status)
+                println(20, status(coro))
             }
             var a
             set a = coroutine(t)
-            println(1, a.status)
+            println(1, status(a))
             resume a()
-            println(2, a.status)
+            println(2, status(a))
             resume a()
-            println(3, a.status)
+            println(3, status(a))
         """)
         //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
@@ -2700,14 +2700,14 @@ class TTask {
         val out = all("""
             var T
             set T = task (x) {
-                println(10, status)
+                println(10, status(task))
                 yield(nil)
                 if x {
                     yield(nil)
                 } else {
                     nil
                 }
-                println(20, status)
+                println(20, status(task))
             }
             spawn task () {
                 do {
@@ -2961,7 +2961,7 @@ class TTask {
                 var t = spawn (T) ()
                 set x = track(t)         ;; error scope
             }
-            println(detrack(x).status)
+            println(status(detrack(x)))
             println(x)
         """)
         assert(out.contains("terminated\nx-track: 0x")) { out }
@@ -2997,7 +2997,7 @@ class TTask {
                 set x = track(t)         ;; scope x < t
                 println(detrack(x).pub[0])
             }
-            println(detrack(x).status)
+            println(status(detrack(x)))
             println(x)
         """)
         assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
@@ -3126,7 +3126,7 @@ class TTask {
                 }
             }
             println(detrack(x).pub[0])   ;; 1
-            println(detrack(x).status)   ;; :yielded
+            println(status(detrack(x)))   ;; :yielded
             broadcast in :global, nil
             println(detrack(x))   ;; nil
         """)
@@ -3144,7 +3144,7 @@ class TTask {
             spawn task () {
                 catch :par-or {
                     spawn task () {
-                        ${await("if detrack(x).status==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
+                        ${await("if status(detrack(x))==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
                         throw(:par-or)
                     } ()
                     println(detrack(x).pub[0])
@@ -3574,7 +3574,7 @@ class TTask {
                 nil
             }
             var a = spawn (t) ()
-            println(a.status)
+            println(status(a))
         """, true)
         assert(out == ":terminated\n") { out }
     }
@@ -3862,7 +3862,7 @@ class TTask {
                         ;;println(:blk2, `:pointer ceu_block`)
                         yield(nil); loop if evt/=10 { yield(nil) }
                     } ()
-                    loop if t.status/=:terminated { yield(nil) }
+                    loop if status(t)/=:terminated { yield(nil) }
                     println(:2)
                 }
             } ()
