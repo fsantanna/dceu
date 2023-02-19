@@ -506,16 +506,22 @@ A deferred block executes only when its enclosing block terminates:
 Defer : `defer´ Block
 ```
 
+Deferred expression execute in reverse order in which they appear in the source
+code.
+
 Example:
 
 ```
-do {                    ;; prints 1, 3, 2
+do {
     println(1)
     defer {
         println(2)      ;; last to execute
     }
-    println(3)
-}
+    defer {
+        println(3)
+    }
+    println(4)
+}                       ;; --> 1, 4, 3, 2
 ```
 
 ### 4.1.3. Pass
@@ -601,8 +607,8 @@ val x-or-y =        ;; max between x and y
         y
     }
 
-var i = 0           ;; prints 0,1,2,3,4
-loop if i<5 {
+var i = 0
+loop if i<5 {       ;; --> 0,1,2,3,4
     println(i)
     set i = i + 1
 }
@@ -818,19 +824,39 @@ A coroutine has 4 possible status:
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
-Example:
+A coroutine is [attached](#TODO) to the enclosing block in which it was
+created.
+This means that it is possible that a coroutine goes out of scope with the
+yielded status.
+In this case, the coroutine body is aborted and nested [`defer`](#TODO)
+expressions are properly triggered.
+
+Examples:
 
 ```
 coro F (a) {                ;; first resume
-    println(a)                ;; --> 10
+    println(a)              ;; --> 10
     val c = yield(a + 1)    ;; returns 11, second resume, receives 12
-    println(c)                ;; --> 12
-    c + 1                    ;; returns 13
+    println(c)              ;; --> 12
+    c + 1                   ;; returns 13
 }
 val f = coroutine(F)        ;; creates `f` from prototype `F`
 val b = resume f(10)        ;; starts  `f`, receives `11`
-val d = resume f(b+1)        ;; resumes `f`, receives `13`
-println(status(f))            ;; --> :terminated
+val d = resume f(b+1)       ;; resumes `f`, receives `13`
+println(status(f))          ;; --> :terminated
+```
+
+```
+coro F () {
+    defer {
+        println("aborted")
+    }
+    yield()
+}
+do {
+    val f = coroutine(F)
+    resume f()
+}                           ;; --> aborted
 ```
 
 ### 4.6.3. Tasks
@@ -847,8 +873,10 @@ A task has a public `pub` variable that can be accessed as a [field](#TODO):
     externally as `x.pub` where `x` is a reference to the task.
 
 A task can be spawned in a [pool](#TODO) of anonymous tasks, which will
-control the task lifecycle and automatically releases it from memory on
+control the task lifecycle and automatically release it from memory on
 termination.
+In this case, the task is also attached to the block in which the pool is
+declared.
 
 A task can be [tracked](#TODO) from outside with a safe reference to it.
 When a task terminates, it broadcasts an event that clears all of its tracked
@@ -865,7 +893,7 @@ Examples:
 ```
 task T (x) {
     set task.pub = x            ;; sets 1 or 2
-    yield()                     ;; awakes from broadcast
+    await :number               ;; awakes from broadcast
     println(task.pub + evt)     ;; --> 11 or 12
 }
 val t1 = spawn T(1)
@@ -875,11 +903,28 @@ broadcast 10                    ;; evt = 10
 ```
 
 ```
+task T () {
+    await true
+}
+val tsk = spawn T()
+val trk = track(tsk)
+println(tsk, detrack(trk))      ;; --> x-task: 0x...    x-task: 0x...
+broadcast true                  ;; terminates task, clears track
+println(tsk, detrack(trk))      ;; --> x-task: 0x...    x-task: nil
 ```
 
-- spawn, spawn in
-- bcast itself
-- pub field
+```
+task T () {
+    await :number
+    println(evt)
+}
+val ts = tasks()                ;; pool of tasks
+do {
+    spawn in ts, T()            ;; attached to outer pool,
+    spawn in ts, T()            ;; not to enclosing block
+}
+broadcast 10                    ;; --> 10 \n 10
+```
 
 ## 4.7. Exceptions
 
