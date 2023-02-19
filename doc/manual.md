@@ -782,16 +782,58 @@ Throw : `throw´ `(´ Expr `)´
 Catch : `catch´ Expr Block
 ```
 
-A `throw` receives an expression that is evaluated and assigned to the special
-variable `err`, which is visible to enclosing `catch` statements.
-A `throw` is propagated upwards and terminates all enclosing blocks and
-execution units on the way.
+A `throw` receives an expression that is assigned to the special variable
+`err`, which is visible to enclosing `catch` statements.
+A `throw` is propagated upwards and aborts all enclosing blocks and [execution
+units](#TODO) on the way.
 When crossing an execution unit, a `throw` jumps back to the calling site and
 continues to propagate upwards.
 
-A `catch` executes its block normally, but also registers a catch expression to
-be compared against `err` on `throw`.
-If they match, the exception is caught and the `catch` terminates.
+A `catch` executes its associated block normally, but also registers a catch
+expression to be compared against `err` when a `throw` is crossing it.
+If they match, the exception is caught and the `catch` terminates, aborting its
+associated block, and properly triggering nested [`defer`](#TODO) expressions.
+
+To match an exception, the `catch` expression can access `err` and needs to
+evaluate to `true`.
+If the matching expression `x` is of type [tag](#TODO), it expands to match
+`err is x`, allowing to check [tuple templates](#TODO).
+
+Examples:
+
+```
+catch err == 1 {        ;; catches
+    defer {
+        println(1)
+    }
+    catch err == 2 {    ;; no catches
+        defer {
+            println(2)
+        }
+        throw(1)        ;; throws
+        ;; unreachable
+    }
+    ;; unreachable
+}                       ;; --> 2, 1
+```
+
+```
+func f () {
+    catch :Err.One {                  ;; catches specific error
+        defer {
+            println(1)
+        }
+        throw(:Err.Two ["err msg"])   ;; throws another error
+    }
+}
+catch :Err {                          ;; catches generic error
+    defer {
+        println(2)
+    }
+    f()
+    ;; unreachable
+}                                     ;; --> 1, 2
+```
 
 ## 4.7. Execution Units
 
