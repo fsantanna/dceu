@@ -1,3 +1,5 @@
+# XXX
+
 ```
 1. LEXICON
     1. Keywords
@@ -407,10 +409,13 @@ that multiple aliases refer to the same value.
 Dynamic values are always attached to the enclosing [block](#TODO) in which
 they were created, and cannot escape to outer blocks in assignments or as
 return expressions.
+This is also valid for [coroutines](#TODO) and [tasks](#TODO).
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
+
 Ceu also provides an explicit [move](#TODO) operation to reattach a dynamic
 value to an outer scope.
+
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
 
@@ -456,6 +461,8 @@ A dynamic value cannot escape the block in which it was created (e.g., from
 assignments or returns), unless it is [moved](#TODO) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
+This is also valid for [coroutines](#TODO) and [tasks](#TODO), which are
+attached to the block in which they were created.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
@@ -797,7 +804,7 @@ The basic API for coroutines has 6 operations:
 3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
 4. [`toggle`](#TODO): `TODO`
 5. [`kill`](#TODO): `TODO`
-5. [`status`](#TODO): returns the coroutine status
+6. [`status`](#TODO): returns the coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
 itself, all others are called from the user code controlling the coroutine.
@@ -830,6 +837,14 @@ println(status(f))            ;; --> :terminated
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
 from [event broadcasts](#TODO) without an explicit `resume`.
+When awaking, tasks have access to the special variable `evt` set from
+broadcasts.
+
+A task can refer to itself with the identifier `task`.
+
+A task has a public `pub` variable that can be accessed as a [field](#TODO):
+    internally as `task.pub`, and
+    externally as `x.pub` where `x` is a reference to the task.
 
 A task can be spawned in a [pool](#TODO) of anonymous tasks, which will
 control the task lifecycle and automatically releases it from memory on
@@ -839,21 +854,30 @@ A task can be [tracked](#TODO) from outside with a safe reference to it.
 When a task terminates, it broadcasts an event that clears all of its tracked
 references.
 
-A task can refer to itself with the identifier `task`.
+In addition to the coroutines API, tasks also rely on the following operations:
 
-A task has a public `pub` variable that can be accessed as a [field](#TODO):
-    internally as `task.pub`, and
-    externally as `x.pub` where `x` is a reference to the task.
+1. [`spawn`](#TODO): creates and resumes a new task from a prototype
+2. [`await`](#TODO): yields the running task until it matches an event
+3. [`broadcast`](#TODO): broadcasts an event to all tasks
 
 Examples:
 
 ```
-task T () {
-    task.pub = 10
-    yield()
+task T (x) {
+    set task.pub = x            ;; sets 1 or 2
+    yield()                     ;; awakes from broadcast
+    println(task.pub + evt)     ;; --> 11 or 12
 }
+val t1 = spawn T(1)
+val t2 = spawn T(2)
+println(t1.pub, t2.pub)         ;; --> 1, 2
+broadcast 10                    ;; evt = 10
 ```
 
+```
+```
+
+- spawn, spawn in
 - bcast itself
 - pub field
 
@@ -948,7 +972,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
       | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
       | `toggle´ Call                                   ;; toggle task
-      | `broadcast´ `in´ Expr `,´ Expr `(´ Expr `)´     ;; broadcast event
+      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
