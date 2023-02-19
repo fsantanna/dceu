@@ -242,9 +242,9 @@ class TXExec {
             }
             val co1 = spawn(tk)()
             val co2 = spawn(tk)()
-            broadcast in :global, 1
+            broadcast 1
             broadcast in :global, 2
-            broadcast in :global, 3
+            broadcast 3
         """, true)
         assert(out == "1\n1\n2\n2\n") { out }
     }
@@ -447,7 +447,7 @@ class TXExec {
                 println(999)
             } ()
              broadcast in :global, nil
-             broadcast in :global, nil
+             broadcast nil
         """, true)
         assert(out == "2\n1\n1\n3\n3\n999\n") { out }
     }
@@ -496,7 +496,7 @@ class TXExec {
             println(0)
             broadcast in :global, tags([5000], :frame, true)
             println(1)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(2)
         """, true)
         assert(out == "0\n1\n10\n999\n2\n") { out }
@@ -1014,7 +1014,7 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast in :global, @[(:type,:y)]
+                broadcast @[(:type,:y)]
                 println(2)
                 broadcast in :global, @[(:type,:x)]
                 println(3)
@@ -1129,7 +1129,7 @@ class TXExec {
             println(0)
             broadcast in :global, tags([5000], :frame, true)
             println(1)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(2)
             broadcast in :global, tags([10000], :frame, true)
             println(3)
@@ -1352,8 +1352,8 @@ class TXExec {
                 }
             }) ()
              broadcast in :global, :b
-             broadcast in :global, :b
-             broadcast in :global, :a
+             broadcast :b
+             broadcast :a
              broadcast in :global, :b
         """, true)
         assert(out == "1\n1\n") { out }

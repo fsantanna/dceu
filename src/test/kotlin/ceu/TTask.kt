@@ -1046,7 +1046,7 @@ class TTask {
                     println(1)
                     broadcast in :global, 1
                     println(2)
-                    broadcast in :global, 2
+                    broadcast 2
                     println(3)
                     broadcast in :global, 3
                 }()
@@ -1079,7 +1079,7 @@ class TTask {
                     println(2)
                     broadcast in :global, [20]
                     println(3)
-                    broadcast in :global, @[(30,30)]
+                    broadcast @[(30,30)]
                 }()
             }
         """
@@ -1188,7 +1188,7 @@ class TTask {
             spawn (task () {
                 spawn (task () {
                     yield(nil)
-                    broadcast in :global, nil
+                    broadcast nil
                 }) ()
                 yield(nil)
             }) ()

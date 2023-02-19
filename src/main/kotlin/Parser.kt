@@ -606,9 +606,13 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("broadcast") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("in")
-                val xin = this.expr()
-                this.acceptFix_err(",")
+                val xin = if (!this.acceptFix("in")) {
+                    Expr.Tag(Tk.Tag(":global", tk0.pos))
+                } else {
+                    val e = this.expr()
+                    this.acceptFix_err(",")
+                    e
+                }
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
