@@ -22,8 +22,8 @@
     3. Conditionals and Loops
     4. Literals, Identifiers, and Constructors
     5. Calls, Operations, and Indexing
-    6. Execution Units
-    7. Exceptions
+    6. Exceptions
+    7. Execution Units
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
@@ -772,7 +772,28 @@ x + 10 - 1      ;; ERR: requires parenthesis
 - x + y         ;; (-x) + y
 ```
 
-## 4.6. Execution Units
+## 4.6. Exceptions
+
+A `throw` raises an exception that terminates all enclosing blocks up to a
+matching `catch` block:
+
+```
+Throw : `throw´ `(´ Expr `)´
+Catch : `catch´ Expr Block
+```
+
+A `throw` receives an expression that is evaluated and assigned to the special
+variable `err`, which is visible to enclosing `catch` statements.
+A `throw` is propagated upwards and terminates all enclosing blocks and
+execution units on the way.
+When crossing an execution unit, a `throw` jumps back to the calling site and
+continues to propagate upwards.
+
+A `catch` executes its block normally, but also registers a catch expression to
+be compared against `err` on `throw`.
+If they match, the exception is caught and the `catch` terminates.
+
+## 4.7. Execution Units
 
 Ceu supports functions, coroutines, and tasks as execution units:
 
@@ -790,13 +811,13 @@ The associated block executes when the unit is [called](#TODO).
 Each argument in the call is evaluated and copied to the parameter identifier,
 which becomes a local variable in the execution block.
 
-### 4.6.1. Functions
+### 4.7.1. Functions
 
 A `func` is a conventional function or subroutine, which blocks the caller and
 runs to completion, finally returning a value to the caller, which resumes
 execution.
 
-### 4.6.2. Coroutines
+### 4.7.2. Coroutines
 
 The `coro` and `task` are coroutine prototypes that, when instantiated, can
 suspend themselves in the middle of execution, before they terminate.
@@ -859,7 +880,7 @@ do {
 }                           ;; --> aborted
 ```
 
-### 4.6.3. Tasks
+### 4.7.3. Tasks
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
 from [event broadcasts](#TODO) without an explicit `resume`.
@@ -926,27 +947,6 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-## 4.7. Exceptions
-
-A `throw` raises an exception that terminates all enclosing blocks up to a
-matching `catch` block:
-
-```
-Throw : `throw´ `(´ Expr `)´
-Catch : `catch´ Expr Block
-```
-
-A `throw` receives an expression that is evaluated and assigned to the special
-variable `err`, which is visible to enclosing `catch` statements.
-A `throw` is propagated upwards and terminates all enclosing blocks and
-execution units on the way.
-When crossing an execution unit, a `throw` jumps back to the calling site and
-continues to propagate upwards.
-
-A `catch` executes its block normally, but also registers a catch expression to
-be compared against `err` on `throw`.
-If they match, the exception is caught and the `catch` terminates.
-
 <!-- ---------------------------------------------------------------------- -->
 
 <!--
@@ -1000,12 +1000,12 @@ Expr  : `do´ Block                                      ;; explicit block
       | `loop´ `if´ Block                               ;; loop while
       | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
 
+      | `catch´ Expr Block                              ;; catch exception
+      | `throw´ `(´ Expr `)´                            ;; throw exception
+
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
-
-      | `catch´ Expr Block                              ;; catch exception
-      | `throw´ `(´ Expr `)´                            ;; throw exception
 
       | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
       | `data´ Data                                     ;; tags hierarchy
