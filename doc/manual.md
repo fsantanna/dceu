@@ -9,7 +9,7 @@
     5. Literals
     6. Comments
 2. TYPES
-    1. Simple Types
+    1. Basic Types
     2. Collections
     3. Execution Units
 3. VALUES
@@ -24,7 +24,7 @@
     5. Calls, Operations, and Indexing
     6. Exceptions
     7. Execution Units
-    8. Working with Coroutines and Tasks
+    8. Operating Coroutines and Tasks
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
@@ -296,7 +296,7 @@ type(10)  --> :number
 type('x') --> :char
 ```
 
-## 2.1. Simple Types
+## 2.1. Basic Types
 
 Ceu has 6 basic types:
 
@@ -323,7 +323,6 @@ literals](#TODO).
 The `tag` type represents [tag identifiers](#TODO).
 Each tag represents a unique value in a global enumeration.
 Tags are also known as *symbols* or *atoms* in other programming languages.
-`TODO: tag hierarchy, subtyping`
 
 ## 2.2. Collections
 
@@ -374,6 +373,34 @@ tasks.
 
 Execution units are described in [Section TODO](#TODO).
 
+## 2.4. User Types
+
+Values from non-basic types (i.e., collections and execution units) can be
+associated with [tags](#TODO) that represent user types.
+
+The function [`tags`](#TODO) associates tags with values, and also checks if a
+value is of the given tag:
+
+```
+val x = []              ;; an empty tuple
+tags(x, :T, true)       ;; x is now of user type :T
+println(tags(x,:T))     ;; --> true
+```
+
+Tags form type hierarchies based on the dots in their identifiers, i.e., `:T.A`
+is a subtype of `:T`.
+
+The function [`is`](#TODO) checks if values match types or tags:
+
+```
+val x = []              ;; an empty tuple
+tags(x, :T.A, true)     ;; x is now of user type :X
+println(x is :tuple)    ;; --> true
+println(x is :T)        ;; --> true
+```
+
+User types can be used in conjunction with [tuple templates](#TODO).
+
 # 3. VALUES
 
 As a dynamic language, each value in Ceu carries extra information, such as its
@@ -383,7 +410,7 @@ own type.
 
 A *plain value* does not require dynamic allocation since it only carries extra
 information about its type.
-The following types have plain values:
+All [basic types](#TODO) have plain values:
 
 ```
 nil    bool    char    number    pointer    tag
@@ -990,7 +1017,7 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-## 4.8. Working with Coroutines and Tasks
+## 4.8. Operating Coroutines and Tasks
 
 ### 4.8.1. Create, Resume, Spawn
 
@@ -1014,17 +1041,50 @@ The coroutine executes until it yields or terminates.
 The `resume` evaluates to the argument of `yield` or to the coroutine return
 value.
 
-The operation `spawn T(...)` expands to the operations `coroutine` and `resume`
-as `resume (coroutine(T))(e)`.
+The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
+follows: `resume (coroutine(T))(e)`.
 
- then resumes the coroutine, expression of type [`x-coro`](#TODO) or
-[`x-task`], and returns one of the two possibilities:
+### 4.8.2. Yield and Await
 
-1. .
+The operations `yield` and `await` suspend the execution of coroutines and
+tasks:
+
+```
+Yield : `yield´ `(´ Expr `)´
+Y-All : `yield´ `:all´ Expr
+Await : `await´ [`:check-now`] (
+            | Expr
+            | TAG `,´ Expr
+            | { Expr (`:h´|`:min´|`:s´|`:ms´) }
+        )
+```
+
+The operation `yield` suspends the running coroutine and expects an expression
+between parenthesis (`(` and `)`) that is returned to whom resumed the
+coroutine.
+If the resume came from a [`broadcast`](#TODO), then the given expression is
+lost.
+Eventually, the suspended coroutine is resumed again with a value and the whole
+`yield` is substituted by that value.
+
+The `yield :all` operation continuously resumes the given active coroutine, and
+yields each of its values upwards.
+The expression `yield :all co` is equivalent to the expansion as follows:
+
+```
+loop in iter(co), v {
+    yield(v)
+}
+```
+
+2. [`await`](#TODO): yields the resumed task until it matches an event
+
+
+
+            | `spawn´ Call
 
 
       | `status´ `(´ Expr `)´                           ;; coro status
-      | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
       | `toggle´ Call                                   ;; toggle task
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
@@ -1092,11 +1152,10 @@ Expr  : `do´ Block                                      ;; explicit block
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
 
       | `coroutine´ `(´ Expr `)´                        ;; create coro
-      | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro/task
       | `status´ `(´ Expr `)´                           ;; coro status
-      | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
-      | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
-      | `toggle´ Call                                   ;; toggle task
+      | `yield´ `(´ Expr `)´                            ;; yield from coro
+      | `resume´ Expr `(´ Expr `)´                      ;; resume coro
+      | `toggle´ Call                                   ;; toggle coro
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
@@ -1147,7 +1206,9 @@ Expr' : STR
       | `coro´ ID `(´ [List(ID)] `)´ Block              ;; declaration coro
       | `task´ ID `(´ [List(ID)] `)´ Block              ;; declaration task
 
+      | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
       | `spawn´ Block                                   ;; spawn anonymous task
+      | `yield´ `:all´ Expr                             ;; yield from other coro
       | `await´ Await                                   ;; await event
       | `every´ Await Block                             ;; await event in loop
       | `awaiting´ Await Block                          ;; abort on event
