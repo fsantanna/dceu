@@ -15,7 +15,7 @@
 3. VALUES
     1. Plain Values
     2. Dynamic Values
-    3. Running Values
+    3. Active Values
 4. EXPRESSIONS
     1. Program and Blocks
     2. Declarations and Assignments
@@ -24,6 +24,7 @@
     5. Calls, Operations, and Indexing
     6. Exceptions
     7. Execution Units
+    8. Working with Coroutines and Tasks
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
@@ -360,15 +361,15 @@ func    coro    task
 x-coro  x-task  x-tasks  x-track
 ```
 
-The `func` type represents [functions](#TODO) (subroutines).
+The `func` type represents [function prototypes](#TODO).
 
-The `coro` type represents [coroutines](#TODO), while the `x-coro` type
-represents spawned coroutines.
+The `coro` type represents [coroutine prototypes](#TODO), while the `x-coro`
+type represents [active coroutines](#TODO).
 
-The `task` type represents [tasks](#TODO), while the `x-task` type represents
-spawned tasks.
-The `x-tasks` type represents [task pools](#TODO) holding running tasks.
-The `x-track` type represents [track references](#TODO) pointing to running
+The `task` type represents [task prototypes](#TODO), while the `x-task` type
+represents [active tasks](#TODO).
+The `x-tasks` type represents [task pools](#TODO) holding active tasks.
+The `x-track` type represents [track references](#TODO) pointing to active
 tasks.
 
 Execution units are described in [Section TODO](#TODO).
@@ -419,16 +420,16 @@ value to an outer scope.
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
 
-## 3.3. Running Values
+## 3.3. Active Values
 
-A *running value* corresponds to an active coroutine, task, pool of tasks,
+An *active value* corresponds to an active coroutine, task, pool of tasks,
 or tracked reference:
 
 ```
 x-coro  x-task  x-tasks  x-track
 ```
 
-A running value is still a dynamic value, with all properties described above.
+An active value is still a dynamic value, with all properties described above.
 In addition, it also requires to run a finalization routine when going out of
 scope in order to terminate active blocks.
 An `x-track` is set to `nil` when its referred task terminates or goes out of
@@ -685,7 +686,7 @@ Call : OP Expr                      ;; unary operation
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
-A call expects an expression as a [function](#TODO) and an optional list of
+A call expects an expression of type [`func`](#TODO) and an optional list of
 expressions as arguments enclosed by parenthesis (`(` and `)`).
 Each argument is expected to match a parameter of the function declaration.
 A call transfers control to the function, which runs to completion and returns
@@ -869,7 +870,7 @@ point.
 The basic API for coroutines has 6 operations:
 
 1. [`coroutine`](#TODO): creates a new coroutine from a prototype
-2. [`yield`](#TODO): suspends the running coroutine
+2. [`yield`](#TODO): suspends the resumed coroutine
 3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
 4. [`toggle`](#TODO): `TODO`
 5. [`kill`](#TODO): `TODO`
@@ -948,7 +949,7 @@ references.
 In addition to the coroutines API, tasks also rely on the following operations:
 
 1. [`spawn`](#TODO): creates and resumes a new task from a prototype
-2. [`await`](#TODO): yields the running task until it matches an event
+2. [`await`](#TODO): yields the resumed task until it matches an event
 3. [`broadcast`](#TODO): broadcasts an event to all tasks
 
 Examples:
@@ -989,9 +990,50 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
+## 4.8. Working with Coroutines and Tasks
+
+### 4.8.1. Create, Resume, Spawn
+
+The operation `coroutine` creates a new coroutine from a [protoype](#TODO).
+The operation `resume` executes a coroutine starting from its last suspension
+point.
+The operation `spawn` creates and resumes a coroutine:
+
+```
+Create : `coroutine´ `(´ Expr `)´
+Resume : `resume´ Expr `(´ Expr `)´
+Spawn  : `spawn´ Expr `(´ Expr `)´
+```
+
+The operation `coroutine` expects a coroutine prototype (type [`coro`](#TODO)
+or [`task`](#TODO)) and returns an active coroutine (type [`x-coro`](#TODO) or
+[`x-task`](#TODO)).
+
+The operation `resume` expects an active coroutine, and resumes it.
+The coroutine executes until it yields or terminates.
+The `resume` evaluates to the argument of `yield` or to the coroutine return
+value.
+
+The operation `spawn T(...)` expands to the operations `coroutine` and `resume`
+as `resume (coroutine(T))(e)`.
+
+ then resumes the coroutine, expression of type [`x-coro`](#TODO) or
+[`x-task`], and returns one of the two possibilities:
+
+1. .
+
+
+      | `status´ `(´ Expr `)´                           ;; coro status
+      | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
+      | `toggle´ Call                                   ;; toggle task
+      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
+      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
+      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+
 <!-- ---------------------------------------------------------------------- -->
 
 <!--
+
 # EXTENSIONS
 
 ## Operations
@@ -1049,17 +1091,19 @@ Expr  : `do´ Block                                      ;; explicit block
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
 
-      | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
-      | `data´ Data                                     ;; tags hierarchy
-            Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
-
       | `coroutine´ `(´ Expr `)´                        ;; create coro
-      | `spawn´ [`in´ Expr `,´] Expr `(´ Expr `)´       ;; spawn coro/task
+      | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro/task
       | `status´ `(´ Expr `)´                           ;; coro status
       | `yield´ [`:all´] `(´ Expr `)´                   ;; yield from coro/task
       | `resume´ Expr `(´ Expr `)´                      ;; resume coro/task
       | `toggle´ Call                                   ;; toggle task
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
+      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
+      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+
+      | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
+      | `data´ Data                                     ;; tags hierarchy
+            Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
