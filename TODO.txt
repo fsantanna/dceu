@@ -17,6 +17,8 @@
 
 # NEXT
 
+- val x = assert(f() as :number, "xxx")
+    - as checks but returns e if successful
 - ifs
     - > 10 ->
     - {f-bin} 10 -> ...

@@ -632,22 +632,22 @@ The first variation is a simple expansion to nested ifs, i.e.:
 
 ```
 ifs {
-    cnd1 -> exp1
-    cnd2 -> exp2
-    else -> exp3
+    <cnd1> -> <exp1>
+    <cnd2> -> <exp2>
+    else   -> <exp3>
 }
 ```
 
 expands to
 
 ```
-if cnd1 {
-    exp1
+if <cnd1> {
+    <exp1>
 } else {
-    if cnd2 {
-        exp2
+    if <cnd2> {
+        <exp2>
     } else {
-        exp3
+        <exp3>
     }
 }
 ```
@@ -658,48 +658,132 @@ Each test can start with `==` or `is`, which implies that the matching
 expression is hidden on the left, i.e.:
 
 ```
-ifs x {
-    is :T -> exp1
-    == 10 -> exp2
-    f()   -> exp3
-    else  -> exp4
+ifs f(x) {
+    is :T -> <exp1>
+    == 10 -> <exp2>
+    g()   -> <exp3>
+    else  -> <exp4>
 }
 ```
 
 expands to
 
 ```
-if x is :T {
-    exp1
-} else {
-    if x == 10 {
-        exp2
+do {
+    val x' = f(x)   ;; f(x) is only evaluated once
+    if x' is :T {
+        <exp1>
     } else {
-        if f() {
-            exp3
+        if x' == 10 {
+            <exp2>
         } else {
-            exp4
+            if f() {
+                <exp3>
+            } else {
+                <exp4>
+            }
         }
     }
+}                   ;; evaluates to whatever the if evaluates
+```
+
+Examples:
+
+```
+val x-or-y =        ;; max between x and y
+    if x > y {
+        x
+    } else {
+        y
+    }
+
+ifs :T.Y [] {
+    is :T.X -> println(:T.X)
+    is :T.Y -> println(:T.Y)    ;; <-- :T.Y
+    is :T.Z -> println(:T.Z)
 }
 ```
 
-### 4.3.2. Loops
+### 4.3.2. Loops and Iterators
 
-Ceu supports conditionals and loops as follows:
+Ceu supports loops and iterators as follows:
 
 ```
-`if´ Expr Block [`else´ Block]
-`loop´ `if´ Block
+Loop : `loop´ `if´ Expr Block       ;; loop if (while loop)
+     | `loop´ Block                 ;; infinite loop
+     | `loop´ Block `until´ Expr    ;; loop until
+     | `loop´ `in´ <...>            ;; iterators
 ```
 
 A `loop if` tests a boolean expression and, if true, executes an iteration of
 the associated block, before testing the condition again.
 When the condition is false, the loop terminates.
+
 There is no `break` expression in Ceu, which can be substituted by a proper
-test condition or [`throw`-`catch`](#TODO) pair.
+test condition or [`throw-catch`](#TODO) pair.
+
+All other loops and iterators may be expressed in terms of `loop if`.
+For instance, an infinite loop uses `true` as its condition.
+
+A `loop-until` executes at least one loop iteration, and terminates when the
+given condition is true.
+The condition expression may use variables defined inside the loop.
+A `loop { <es> } until <e>` expands to
+
+```
+do {
+    var cnd = false
+    loop if not cnd {
+        <es>
+        set cnd = <e>   ;; <e> may use variables defined in <es>
+    }
+    cnd                 ;; evaluates to the final condition
+}
+```
+
+Examples:
+
+```
+var i = 0
+loop if i<5 {       ;; --> 0,1,2,3,4
+    println(i)
+    set i = i + 1
+}
+
+loop {
+} until 
+```
 
 #### 4.3.2.1. Iterators
+
+Ceu supports generic iterators, tasks iterators, and numeric iterators as
+follows:
+
+```
+Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
+     | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
+     | `loop´ `in´                              ;; numeric iterator
+            (`[´ | `(´)
+            Expr `->´ Expr
+            (`]´ | `)´)
+            [`,´ :step Expr]
+            `,´ ID Block
+```
+
+```
+do {
+    val it :Iterator = <it>
+    assert(it is :Iterator, "expected :Iterator")
+    loop {
+        val i = it.f(it)
+        if i /= nil {
+            <b>
+        }
+    } until (i == nil)
+}
+```
+
+
 
 Examples:
 
@@ -1145,13 +1229,15 @@ Eventually, the suspended coroutine is resumed again with a value and the whole
 
 The `yield :all` operation continuously resumes the given active coroutine, and
 yields each of its values upwards.
-The expression `yield :all co` is equivalent to the expansion as follows:
+The expression `yield :all <co>` is equivalent to the expansion as follows:
 
 ```
-loop in iter(co), v {
+loop in iter(<co>), v {
     yield(v)
 }
 ```
+
+TODO: `iter`
 
 2. [`await`](#TODO): yields the resumed task until it matches an event
 
@@ -1217,7 +1303,7 @@ Expr  : `do´ Block                                      ;; explicit block
       | Expr `.´ `pub´                                  ;; pos task pub
 
       | `if´ Expr Block [`else´ Block]                  ;; conditional
-      | `loop´ `if´ Block                               ;; loop while
+      | `loop´ `if´ Expr Block                          ;; loop while
       | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
 
       | `catch´ Expr Block                              ;; catch exception

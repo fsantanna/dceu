@@ -428,7 +428,7 @@ class Parser (lexer_: Lexer)
                             val l = this.nest("""
                                 ${pre0}do {
                                     val ceu_it_$N :Iterator = ${iter.tostr(true)}
-                                    assert(ceu_it_$N is :Iterator, "expecter :Iterator")
+                                    assert(ceu_it_$N is :Iterator, "expected :Iterator")
                                     loop {
                                         val ${i.str} = ceu_it_$N.f(ceu_it_$N)
                                         if ${i.str} /= nil {
