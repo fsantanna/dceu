@@ -12,6 +12,7 @@
     1. Basic Types
     2. Collections
     3. Execution Units
+    4. User Types
 3. VALUES
     1. Plain Values
     2. Dynamic Values
@@ -609,6 +610,82 @@ set y[0] = 20   ;; OK
 
 ## 4.3. Conditionals and Loops
 
+### 4.3.1. Conditionals
+
+Ceu supports conditionals as follows:
+
+```
+If  : `if´ Expr Block [`else´ Block]
+Ifs : `ifs´ `{´ {Case} [Else] `}´
+        Case : Expr `->´ (Expr | Block)
+        Else : `else´ `->´ (Expr | Block)
+    | `ifs´ Expr `{´ {Case} [Else] `}´
+        Case : [`==´ | `is´] Expr `->´ (Expr | Block)
+        Else : `else´ `->´ (Expr | Block)
+```
+
+An `if` tests a boolean expression and, if true, executes the associated block.
+Otherwise, it executes the optional `else` block.
+
+Ceu also supports `ifs` to test multiple conditions.
+The first variation is a simple expansion to nested ifs, i.e.:
+
+```
+ifs {
+    cnd1 -> exp1
+    cnd2 -> exp2
+    else -> exp3
+}
+```
+
+expands to
+
+```
+if cnd1 {
+    exp1
+} else {
+    if cnd2 {
+        exp2
+    } else {
+        exp3
+    }
+}
+```
+
+The second variation of `ifs` also receives a matching expression to switch
+over and apply multiple tests.
+Each test can start with `==` or `is`, which implies that the matching
+expression is hidden on the left, i.e.:
+
+```
+ifs x {
+    is :T -> exp1
+    == 10 -> exp2
+    f()   -> exp3
+    else  -> exp4
+}
+```
+
+expands to
+
+```
+if x is :T {
+    exp1
+} else {
+    if x == 10 {
+        exp2
+    } else {
+        if f() {
+            exp3
+        } else {
+            exp4
+        }
+    }
+}
+```
+
+### 4.3.2. Loops
+
 Ceu supports conditionals and loops as follows:
 
 ```
@@ -616,14 +693,13 @@ Ceu supports conditionals and loops as follows:
 `loop´ `if´ Block
 ```
 
-An `if` tests a boolean expression and, if true, executes the associated block.
-Otherwise, it executes the optional `else` block.
-
 A `loop if` tests a boolean expression and, if true, executes an iteration of
 the associated block, before testing the condition again.
 When the condition is false, the loop terminates.
 There is no `break` expression in Ceu, which can be substituted by a proper
 test condition or [`throw`-`catch`](#TODO) pair.
+
+#### 4.3.2.1. Iterators
 
 Examples:
 
@@ -1178,7 +1254,7 @@ NAT   : `.*`                                            ;; native expression
 ## A.2. Extended Syntax
 
 ```
-Expr  : Expr' [`where´ Block]                ;; where clause
+Expr  : Expr' [`where´ Block]                           ;; where clause
 Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
