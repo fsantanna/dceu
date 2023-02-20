@@ -648,17 +648,19 @@ Cons : `[´ [List(Expr)] `]´             ;; tuple
      | `@[´ [List(Key-Val)] `]´         ;; dictionary
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
+     | TAG `[´ [List(Expr)] `]´         ;; tagged tuple
 ```
 
-`TODO: tag constr`
+Tuples (`[...]`) and vectors (`#[...]`) are built with a list of expressions.
 
-Tuples (`[...]`) and vectors (`#[...]`) are described as a list of expressions.
-
-Dictionaries (`@[...]`) are described as a list of pairs of expressions
+Dictionaries (`@[...]`) are built with a list of pairs of expressions
 (`(key,val)`), in which each pair maps a key to a value.
 The first expression is the key, and the second is the value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag `:`).
+
+tags(<tup>, <tag>, true)
+`TODO: tag constr`
 
 Examples:
 
@@ -728,6 +730,8 @@ For a tuple or vector `v`, and a numeric identifier `i`, the operation expands
 to `v[i]`.
 For a dictionary `v`, and a [tag literal](#TODO) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
+
+`TODO: tuple template`
 
 A [task](#TODO) `t` also relies on a field operation to access its public
 field `pub` (i.e., `t.pub`).
@@ -1355,6 +1359,7 @@ Expr' : STR
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
       | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
+      | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
 
       | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
             Case : Expr `->´ (Expr | Block)
