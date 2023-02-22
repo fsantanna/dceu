@@ -202,7 +202,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Do -> {
                 defers[this] = mutableListOf()
                 val ES = this.es.map { it.code() }.joinToString("")
-                if (!this.isnest) ES else {
+                if (this.tag != null) ES else {
                     val up = ups.pub[this]
                     val bup = up?.let { ups.first_block(it) }
                     val f_b = up?.let { ups.first_proto_or_block(it) }
@@ -909,7 +909,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val resume = ups.all_until(up) { it is Expr.Resume }.let { es ->
                     when {
                         es.isEmpty() -> null
-                        es.drop(1).all { it is Expr.Do && !it.isnest } -> es.first() as Expr.Resume
+                        es.drop(1).all { it is Expr.Do && (it.tag != null) } -> es.first() as Expr.Resume
                         else -> null
                     }
                 }
@@ -919,7 +919,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (fst == null) -> null
                         (fst.tasks == this) -> null
                         es.drop(1).all { grp ->
-                            (grp is Expr.Do && !grp.isnest) && (grp.es.last() is Expr.Call) && ups.pub[grp].let { it is Expr.Spawn && it.call==grp }
+                            (grp is Expr.Do && (grp.tag != null)) && (grp.es.last() is Expr.Call) && ups.pub[grp].let { it is Expr.Spawn && it.call==grp }
                         } -> fst
                         else -> null
                     }

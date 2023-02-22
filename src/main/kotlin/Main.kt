@@ -36,7 +36,7 @@ val TAGS = listOf (
     ":tuple", ":vector", ":dict",
     ":bcast",
     ":x-coro", ":x-task", ":x-tasks", ":x-track",
-    ":fake", ":hide", ":check-now", ":all",
+    ":fake", ":unnest", ":unnest-hide", ":check-now", ":all",
     ":ceu", ":clear", ":error",           // bcast-clear
     ":tmp", ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"
@@ -60,7 +60,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Tk.Tag?,Boolean>?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
-    data class Do     (val tk_: Tk, val isnest: Boolean, val ishide: Boolean, val es: List<Expr>) : Expr(N++, tk_)
+    data class Do     (val tk_: Tk, val tag: Tk.Tag?, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
@@ -125,7 +125,7 @@ fun all (name: String, reader: Reader, out: String, args: List<String>): String 
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
-        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), true, true, es)
+        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), null, es)
         val ups   = Ups(outer)
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)

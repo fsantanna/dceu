@@ -13,10 +13,10 @@ class Ups (outer: Expr.Do) {
         return this.all_until(e,cnd).firstOrNull()
     }
     fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do && it.isnest && it.ishide } as Expr.Do?
+        return this.first(e) { it is Expr.Do && it.tag==null } as Expr.Do?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || (it is Expr.Do && it.isnest && it.ishide) }
+        return this.first(e) { it is Expr.Proto || (it is Expr.Do && it.tag==null) }
     }
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }

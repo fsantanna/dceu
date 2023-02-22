@@ -489,11 +489,11 @@ class TParser {
     }
     @Test
     fun group3() {
-        val l = lexer("do :unnest :hide { pass x; pass y; z; }")
+        val l = lexer("do :unnest-hide { pass x; pass y; z; }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Do && e.es.size==3)
-        assert(e.tostr() == "do :unnest :hide {\npass x\npass y\nz\n}") { e.tostr() }
+        assert(e.tostr() == "do :unnest-hide {\npass x\npass y\nz\n}") { e.tostr() }
     }
 
     // FUNC

@@ -2,7 +2,7 @@ val union = "union"
 
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
-        val s = if (this[i].let { it is Expr.Do && it.ishide }) "$union" else "struct"
+        val s = if (this[i].let { it is Expr.Do && it.tag?.str!=":unnest" }) "$union" else "struct"
         """
             $s {
                 ${this[i].mem()}

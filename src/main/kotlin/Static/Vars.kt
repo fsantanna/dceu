@@ -151,7 +151,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.body.traverse()
             }
             is Expr.Do     -> {
-                if (this!=outer && this.ishide) {
+                if (this!=outer && this.tag?.str!=":unnest") {
                     val proto = ups.pub[this]
                     pub[this] = if (proto !is Expr.Proto) {
                         mutableMapOf()
@@ -179,7 +179,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Dcl    -> {
                 val id = this.id.str
-                val bup = ups.first(this) { it is Expr.Do && it.ishide }!! as Expr.Do
+                val bup = ups.first(this) { it is Expr.Do && it.tag?.str!=":unnest" }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)

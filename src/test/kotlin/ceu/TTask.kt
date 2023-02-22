@@ -599,7 +599,7 @@ class TTask {
                 println(v)
             }
             var t
-            set t = do :unnest :hide {
+            set t = do :unnest-hide {
                 var v
                 set v = 10
                 spawn T(v)  
@@ -618,7 +618,7 @@ class TTask {
             }
             do :unnest {
                 var t
-                set t = spawn do :unnest :hide {
+                set t = spawn do :unnest-hide {
                     do :unnest {
                         var v
                         set v = 10
@@ -638,7 +638,7 @@ class TTask {
                 nil
             }
             spawn task () :fake {
-                do :unnest :hide {
+                do :unnest-hide {
                     f()
                 }
             }()
