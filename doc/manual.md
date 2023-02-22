@@ -604,8 +604,11 @@ The `val` modifier forbids that a name is reassigned, but it does not prevent
 that [dynamic values](#TODO) are modified.
 
 Optionally, a declaration can be associated with a [tuple template](#TODO) tag,
-which allows that a tuple is indexed by a field name, instead of a numeric
+which allows the variable to be indexed by a field name, instead of a numeric
 position.
+Note that the variable is not guaranteed to hold a value matching the template,
+not even a tuple is guaranteed.
+The template association is static but with no runtime guarantees.
 
 `TODO: evt`
 
@@ -682,20 +685,49 @@ Each field can be followed by a tag to represent nested templates.
 Examples:
 
 ```
-data :Pos = [x,y]                   ;; a flat template
-val pos :Pos = [10,20]              ;; pos uses :Pos as template
-println(pos.x, pos.y)               ;; <-- 10, 20
+data :Pos = [x,y]                       ;; a flat template
+val pos :Pos = [10,20]                  ;; pos uses :Pos as template
+println(pos.x, pos.y)                   ;; <-- 10, 20
 
 data :Dim = [w,h]
-data :Rect = [pos :Pos, dim :Dim]   ;; a nested template
-val r :Rect = [pos, [100,100]]      ;; r uses :Rect as template
-println(r.dim, r.pos.x)             ;; <-- [100,100], 10
+data :Rect = [pos :Pos, dim :Dim]       ;; a nested template
+val r1 :Rect = [pos, [100,100]]         ;; r uses :Rect as template
+println(r1.dim, r1.pos.x)               ;; <-- [100,100], 10
+
+val r2 :Rect = :Rect [[0,0],[10,10]]    ;; combining tag template/constructor
+println(r2 is :Rect, r2.dim.h)          ;; <-- true, 0
 ```
 
 Based on [tags and sub-tags](#TODO), tuple templates can define hierarchies and
 reuse fields from parents.
 A declaration can be followed by a list of sub-templates enclosed by curly
 braces (`{` and `}`), which can nest to at most 4 levels.
+Each nested tag identifier assumes an implicit prefix of its super-tag, e.g.,
+in the context of tag `:X`, a sub-tag `:A` is actually `:X.A`.
+Templates are reused by concatenating a sub-template after its corresponding
+super-templates, e.g., `:X.A [a]` with `:X [x]` becomes `:X.A [x,a]`.
+
+Examples:
+
+```
+data :Event = [ts] {            ;; All events carry a timestamp
+    :Key = [key] {              ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
+        :Dn = []                ;; :Event.Key.Dn [ts,key] and :Event.Key.Up [ts,key]
+        :Up = []                ;;  are sub-types of :Event [ts]
+    }
+    :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
+        :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
+        :Button = [but] {       ;; :Event.Mouse.Button [ts, pos :Pos, but]
+            :Dn = []            ;; :Event.Mouse.Button.Dn [ts, pos :Pos, but]
+            :Up = []            ;; :Event.Mouse.Button.Up [ts, pos :Pos, but]
+        }
+    }
+}
+
+val but :Event.Mouse.Button.Dn = [0, [10,20], 1]
+val evt :Event = but
+println(evt.ts, but.pos.y)      ;; <-- 0, 20
+```
 
 ## 4.4. Literals, Identifiers, and Constructors
 
@@ -741,8 +773,9 @@ The first expression is the key, and the second is the value.
 If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
 tag `:`).
 
-tags(<tup>, <tag>, true)
-`TODO: tag constr`
+A tuple constructor may also be prefixed with a tag, which associates the tag
+with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
+Tag constructors are typically used in conjunction with [tuple templates](#TODO)
 
 Examples:
 
@@ -751,6 +784,7 @@ Examples:
 :x                  ;; a tag expression
 {++}                ;; an op as an expression
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
+:Pos [10,10]        ;; a tagged tuple
 ```
 
 ## 4.5. Calls, Operations, and Indexing
