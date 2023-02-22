@@ -1,4 +1,4 @@
-# XXX
+# The Programming Language Ceu
 
 ```
 1. LEXICON
@@ -1350,32 +1350,49 @@ Await : `await´ [`:check-now`] (
         )
 ```
 
-The operation `yield` suspends the running coroutine and expects an expression
-between parenthesis (`(` and `)`) that is returned to whom resumed the
-coroutine.
+#### 4.9.2.1 Yield
+
+An `yield` suspends the running coroutine and expects an expression between
+parenthesis (`(` and `)`) that is returned to whom resumed the coroutine.
 If the resume came from a [`broadcast`](#TODO), then the given expression is
 lost.
 Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
 
-The `yield :all` operation continuously resumes the given active coroutine, and
-yields each of its values upwards.
+An `yield :all` continuously resumes the given active coroutine, and yields
+each of its values upwards.
 The expression `yield :all <co>` is equivalent to the expansion as follows:
 
 ```
-loop in iter(<co>), v {
-    yield(v)
+loop in iter(<co>), <v> {
+    yield(<v>)
 }
 ```
 
-TODO: `iter`
+The expansion transforms the active coroutine into an [iterator](#TODO), which
+resumes the coroutine until it terminates.
+For each resume iteration, it collects the yielded values from `<co>` into `<v>`.
+Each collected value is yielded upwards.
 
-2. [`await`](#TODO): yields the resumed task until it matches an event
+#### 4.9.2.2 Await
 
+An `await` suspends the running coroutine until a condition is true.
+In its simplest form `await <e>`, it expands as follows:
 
+```
+yield()                 ;; ommit if :check-now is set
+loop if not <e> {
+    yield ()
+}
+```
 
-            | `spawn´ Call
+The expansion yields while the condition is false.
+When the optional tag `:check-now` is set, the condition is tested immeditally,
+and the coroutine may not yield at all.
 
+The `await` is expected to be used in conjuntion with [event broadcasts](#TODO),
+allowing the condition expression to query the variable `evt` with the
+occurring event.
 
       | `status´ `(´ Expr `)´                           ;; coro status
       | `toggle´ Call                                   ;; toggle task
