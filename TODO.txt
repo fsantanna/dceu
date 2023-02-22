@@ -17,6 +17,9 @@
 
 # NEXT
 
+- var x :T = y
+- set x = y
+    - assert(y is :T)
 - val x = assert(f() as :number, "xxx")
     - as checks but returns e if successful
 - ifs

@@ -20,7 +20,7 @@
 4. EXPRESSIONS
     1. Program and Blocks
     2. Declarations and Assignments
-    3. Enumeration and Tuple Templates
+    3. Tag Enumerations and Tuple Templates
     4. Literals, Identifiers, and Constructors
     5. Calls, Operations, and Indexing
     6. Conditionals and Loops
@@ -323,8 +323,13 @@ The `pointer` type represents opaque native pointer values from [native
 literals](#TODO).
 
 The `tag` type represents [tag identifiers](#TODO).
-Each tag represents a unique value in a global enumeration.
+Each tag is internally associated with a natural number that represents a
+unique value in a global enumeration.
 Tags are also known as *symbols* or *atoms* in other programming languages.
+Tags can be explicitly [enumerated](#TODO) to interface with [native
+expressions](#TODO).
+Tags can form [hierachies](#TODO) to represent user types and describe
+[tuple templates](#TODO).
 
 ## 2.2. Collections
 
@@ -390,18 +395,20 @@ println(tags(x,:T))     ;; --> true
 ```
 
 Tags form type hierarchies based on the dots in their identifiers, i.e., `:T.A`
-is a subtype of `:T`.
+and `:T.B` are subtypes of `:T`.
+Tag hierarchies can nest up to 4 levels.
 
 The function [`is`](#TODO) checks if values match types or tags:
 
 ```
 val x = []              ;; an empty tuple
-tags(x, :T.A, true)     ;; x is now of user type :X
+tags(x, :T.A, true)     ;; x is now of user type :T.A
 println(x is :tuple)    ;; --> true
 println(x is :T)        ;; --> true
 ```
 
-User types can be used in conjunction with [tuple templates](#TODO).
+User types do not require to be predeclared, but can appear in [tuple
+template](#TODO) declarations.
 
 # 3. VALUES
 
@@ -583,8 +590,6 @@ Val : `val´ ID [TAG] [`=´ Expr]
 Var : `var´ ID [TAG] [`=´ Expr]
 ```
 
-`TODO: tag, evt`
-
 The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` expressions:
 
@@ -596,24 +601,101 @@ The optional initialization expression assigns an initial value to the
 variable, which is set to `nil` otherwise.
 
 The `val` modifier forbids that a name is reassigned, but it does not prevent
-that dynamic values are modified.
+that [dynamic values](#TODO) are modified.
+
+Optionally, a declaration can be associated with a [tuple template](#TODO) tag,
+which allows that a tuple is indexed by a field name, instead of a numeric
+position.
+
+`TODO: evt`
 
 Examples:
 
 ```
 var x
-set x = 20      ;; OK
+set x = 20              ;; OK
 
 val y = [10]
-set y = 0       ;; ERR: cannot reassign `y`
-set y[0] = 20   ;; OK
+set y = 0               ;; ERR: cannot reassign `y`
+set y[0] = 20           ;; OK
+
+val pos :Pos = [10,20]  ;; assumes :Pos has fields [x,y]
+println(pos.x)          ;; <-- 10
 ```
 
-## 4.3. Declarations and Assignments
+## 4.3. Tag Enumerations and Tuple Templates
 
-      | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
-      | `data´ Data                                     ;; tags hierarchy
-            Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
+Tags are global identifiers that need not to be predeclared.
+However, they may be explicitly delcared when used as enumerations or tuple
+templates.
+
+### 4.3.1. Tag Enumerations
+
+An `enum` groups related tags in sequence so that they are associated with
+numbers in the same order:
+
+```
+Enum : `enum´ `{´ List(TAG [`=´ Expr]) `}´
+```
+
+Optionally, a tag may receive an explicit numeric value, which is implicitly
+incremented for tags in sequence.
+
+Enumerations can be used to interface with external libraries that use
+constants to represent a group of related values (e.g., key symbols).
+
+Examples:
+
+```
+enum {
+    :Key-Left = `:number KEY_LEFT`  ;; explicitly associates with C enumeration
+    :Key-Right                      ;; implicitly associates with remaining
+    :Key-Up                         ;; keys in sequence
+    :Key-Down
+}
+if lib-key-pressed() == :Key-Up {
+    ;; lib-key-pressed is an external library
+    ;; do something if key UP is pressed
+}
+```
+
+### 4.3.2. Tuple Templates
+
+A `data` declaration associates a tag with a tuple template, which associates
+tuple positions with field identifiers:
+
+```
+Temp : `data´ Data
+            Data : TAG `=´ `[´ List(ID [TAG]) `]´
+                    [`{´ { Data } `}´]
+```
+
+Then, a [variable declaration](#TODO) can specify a tuple template and hold a
+tuple that can be accessed by field.
+
+After the keyword `data`, a declaration expects a tag followed by `=` and a
+template.
+A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
+includes a list of identifiers, each mapping an index into a field.
+Each field can be followed by a tag to represent nested templates.
+
+Examples:
+
+```
+data :Pos = [x,y]                   ;; a flat template
+val pos :Pos = [10,20]              ;; pos uses :Pos as template
+println(pos.x, pos.y)               ;; <-- 10, 20
+
+data :Dim = [w,h]
+data :Rect = [pos :Pos, dim :Dim]   ;; a nested template
+val r :Rect = [pos, [100,100]]      ;; r uses :Rect as template
+println(r.dim, r.pos.x)             ;; <-- [100,100], 10
+```
+
+Based on [tags and sub-tags](#TODO), tuple templates can define hierarchies and
+reuse fields from parents.
+A declaration can be followed by a list of sub-templates enclosed by curly
+braces (`{` and `}`), which can nest to at most 4 levels.
 
 ## 4.4. Literals, Identifiers, and Constructors
 
@@ -1297,8 +1379,9 @@ Expr  : `do´ Block                                      ;; explicit block
       | `set´ Expr `=´ Expr                             ;; assignment
 
       | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
-      | `data´ Data                                     ;; tags hierarchy
-            Data : TAG `=´ List(ID [TAG]) [`{´ { Data } `}´]
+      | `data´ Data                                     ;; tags templates
+            Data : TAG `=´ `[´ List(ID [TAG]) `]´
+                    [`{´ { Data } `}´]
 
       | `nil´ | `false´ | `true´                        ;; literals &
       | NAT | TAG | CHR | NUM                           ;; identifiers
