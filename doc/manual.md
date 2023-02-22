@@ -505,8 +505,10 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ Block       ;; an explicit block expression
+Do : `do´ [:unnest[-hide]] Block   ;; an explicit block expression
 ```
+
+`TODO: unnest, hide`
 
 Examples:
 
@@ -1404,7 +1406,7 @@ not, or, and are really special
 ```
 Prog  : { Expr }
 Block : `{´ { Expr } `}´
-Expr  : `do´ Block                                      ;; explicit block
+Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `defer´ Block                                   ;; defer expressions
       | `pass´ Expr                                     ;; innocuous expression
 
