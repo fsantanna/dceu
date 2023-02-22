@@ -1344,8 +1344,8 @@ tasks:
 Yield : `yield´ `(´ Expr `)´
 Await : `await´ [`:check-now`] (
             | Expr
-            | TAG `,´ Expr
-            | { Expr (`:h´|`:min´|`:s´|`:ms´) }
+            | TAG [`,´ Expr]
+            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´]
         )
 ```
 
@@ -1357,7 +1357,9 @@ Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
 
 An `await` suspends the running coroutine until a condition is true.
-In its simplest form `await <e>`, it expands as follows:
+All await variations are expansions based on `yield`.
+
+An `await <e>` expands as follows:
 
 ```
 yield()                 ;; ommit if :check-now is set
@@ -1374,6 +1376,37 @@ The `await` is expected to be used in conjuntion with [event broadcasts](#TODO),
 allowing the condition expression to query the variable `evt` with the
 occurring event.
 
+An `await <tag>, <e>` expands as follows:
+
+```
+yield() ;; (unless :check-now)
+loop if not ((evt is <tag>) [and <e>]) {
+    yield ()
+}
+```
+
+The expansion yields until the `evt` is of the given tag.
+The optional `<e>` is also required to be true if provided.
+
+Given a time expression, an `await <time>` sleeps for a number of milliseconds
+and expands as follows:
+
+```
+val ms = <...>              ;; time expression
+loop if ms > 0 {
+    await :frame            ;; assumes a :frame event
+    set ms = ms - evt[0]    ;;  with the elapsed ms at [0]
+}
+```
+
+The expansion yields until the expected number of milliseconds elapses from
+occurrences of `:frame` events representing the passage of time.
+The time expression in the format `<e>:h <e>:min <e>:s <e>:ms` is converted to
+milliseconds.
+
+`TODO: configurable :frame event`
+
+ expects `evt` to match a specific tag
       | `status´ `(´ Expr `)´                           ;; coro status
       | `toggle´ Call                                   ;; toggle task
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
@@ -1541,7 +1574,7 @@ Expr' : STR
 
 Await : [`:check-now`] (
             | `spawn´ Call
-            | { Expr (`:h´|`:min´|`:s´|`:ms´) }
+            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´]
             | TAG `,´ Expr
             | Expr
         )
