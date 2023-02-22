@@ -26,7 +26,7 @@
     6. Conditionals and Loops
     7. Exceptions
     8. Execution Units
-    9. Operating Coroutines and Tasks
+    9. Coroutine and Task Operations
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
@@ -1308,7 +1308,7 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-## 4.9. Operating Coroutines and Tasks
+## 4.9. Coroutine and Task Operations
 
 ### 4.9.1. Create, Resume, Spawn
 
@@ -1335,7 +1335,22 @@ value.
 The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
 follows: `resume (coroutine(T))(e)`.
 
-### 4.9.2. Yield and Await
+### 4.9.2. Status
+
+The operation `status` returns the status of the given active coroutine:
+
+```
+Status : `status´ `(´ Expr `)´
+```
+
+As described in [Section TODO](#TODO), a coroutine has 4 possible status:
+
+1. `yielded`: idle and ready to be resumed
+2. `toggled`: paused and ignoring resumes
+3. `resumed`: currently executing
+4. `terminated`: terminated and unable to be resumed
+
+### 4.9.3. Yield and Await
 
 The operations `yield` and `await` suspend the execution of coroutines and
 tasks:
@@ -1401,51 +1416,74 @@ loop if ms > 0 {
 
 The expansion yields until the expected number of milliseconds elapses from
 occurrences of `:frame` events representing the passage of time.
-The time expression in the format `<e>:h <e>:min <e>:s <e>:ms` is converted to
-milliseconds.
+The time expression expects the format `<e>:h <e>:min <e>:s <e>:ms` and is
+converted to milliseconds.
 
 `TODO: configurable :frame event`
 
- expects `evt` to match a specific tag
-      | `status´ `(´ Expr `)´                           ;; coro status
-      | `toggle´ Call                                   ;; toggle task
-      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
-      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
-      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+### 4.9.4. Resume/Yield All
 
-<!--
-Y-All : `yield´ `:all´ Expr
-An `yield :all` continuously resumes the given active coroutine, and yields
-each of its values upwards.
-The expression `yield :all <co>` is equivalent to the expansion as follows:
+The operation `resume-yield-all´ continuously resumes the given active
+coroutine, collects its yields, and yields upwards each value, one at a time.
+It is typically use to delegate its job transparently to a local coroutine:
 
 ```
-loop in iter(<co>), <v> {
-    yield(<v>)
+All : `resume-yield-all´ Expr `(´ [Expr] `)´
+```
+
+The operation expects an active coroutine and an optional initial resume value
+between parenthesis (`(` and `)`), which defaults to `nil`.
+A `resume-yield-all <co> (<arg>)` expands as follows:
+
+```
+do {
+    val co  = <co>                  ;; given active coroutine
+    var arg = <arg>                 ;; given initial value (or nil)
+    loop {
+        val v = resume co(arg)      ;; resumes with current arg
+        if (status(co) /= :terminated) or (v /= nil) {
+            set arg = yield(v)      ;; takes next arg from upwards
+        }
+    } until (status(co) == :terminated)
+    arg                         
 }
 ```
 
-The expansion transforms the active coroutine into an [iterator](#TODO), which
-resumes the coroutine until it terminates.
-For each resume iteration, it collects the yielded values from `<co>` into `<v>`.
-Each collected value is yielded upwards.
+The loop in the expansion continuously resumes the target coroutine with a
+given argument, collects its yielded value, yields the same value upwards.
+Then, it expects to be resumed with the next target value, and loops until the
+target coroutine terminates.
 
 Examples:
 
 ```
-coro T1 () {
-    yield("X")
-    yield("Y")
+coro G (b1) {                           ;; b1=1
+    coro L (c1) {                       ;; c1=4
+        val c2 = yield(c1+1)            ;; y(5), c2=6
+        val c3 = yield(c2+1)            ;; y(7), c3=8
+        c3                              ;; 8
+    }
+    val l = coroutine(L)
+    val b2 = yield(b1+1)                ;; y(2), b2=3
+    val b3 = resume-yield-all l(b2+1)   ;; b3=9
+    val b4 = yield(b3+1)                ;; y(10)
+    b4
 }
-coro T2 () {
-    yield :all 
-}
-```
--->
 
+val g = coroutine(G)
+val a1 = resume g(1)                    ;; g(1), a1=2
+val a2 = resume g(a1+1)                 ;; g(3), a2=5
+val a3 = resume g(a2+1)                 ;; g(6), a3=7
+val a4 = resume g(a3+1)                 ;; g(8), a4=8
+val a5 = resume g(a4+1)                 ;; g(9), a5=10
+println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
+```
 <!-- ---------------------------------------------------------------------- -->
 
-<!--
+      | `toggle´ Call                                   ;; toggle task
+      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
+      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
+      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
 
 # EXTENSIONS
 
