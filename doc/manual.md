@@ -1342,7 +1342,6 @@ tasks:
 
 ```
 Yield : `yield´ `(´ Expr `)´
-Y-All : `yield´ `:all´ Expr
 Await : `await´ [`:check-now`] (
             | Expr
             | TAG `,´ Expr
@@ -1350,31 +1349,12 @@ Await : `await´ [`:check-now`] (
         )
 ```
 
-#### 4.9.2.1 Yield
-
 An `yield` suspends the running coroutine and expects an expression between
 parenthesis (`(` and `)`) that is returned to whom resumed the coroutine.
 If the resume came from a [`broadcast`](#TODO), then the given expression is
 lost.
 Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
-
-An `yield :all` continuously resumes the given active coroutine, and yields
-each of its values upwards.
-The expression `yield :all <co>` is equivalent to the expansion as follows:
-
-```
-loop in iter(<co>), <v> {
-    yield(<v>)
-}
-```
-
-The expansion transforms the active coroutine into an [iterator](#TODO), which
-resumes the coroutine until it terminates.
-For each resume iteration, it collects the yielded values from `<co>` into `<v>`.
-Each collected value is yielded upwards.
-
-#### 4.9.2.2 Await
 
 An `await` suspends the running coroutine until a condition is true.
 In its simplest form `await <e>`, it expands as follows:
@@ -1399,6 +1379,36 @@ occurring event.
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+
+<!--
+Y-All : `yield´ `:all´ Expr
+An `yield :all` continuously resumes the given active coroutine, and yields
+each of its values upwards.
+The expression `yield :all <co>` is equivalent to the expansion as follows:
+
+```
+loop in iter(<co>), <v> {
+    yield(<v>)
+}
+```
+
+The expansion transforms the active coroutine into an [iterator](#TODO), which
+resumes the coroutine until it terminates.
+For each resume iteration, it collects the yielded values from `<co>` into `<v>`.
+Each collected value is yielded upwards.
+
+Examples:
+
+```
+coro T1 () {
+    yield("X")
+    yield("Y")
+}
+coro T2 () {
+    yield :all 
+}
+```
+-->
 
 <!-- ---------------------------------------------------------------------- -->
 
@@ -1520,8 +1530,8 @@ Expr' : STR
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
       | `spawn´ Block                                   ;; spawn anonymous task
-      | `yield´ `:all´ Expr                             ;; yield from other coro
       | `await´ Await                                   ;; await event
+      | `resume-yield-all´ Expr `(´ Expr `)´            ;; resume-yield nested coro
       | `every´ Await Block                             ;; await event in loop
       | `awaiting´ Await Block                          ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
