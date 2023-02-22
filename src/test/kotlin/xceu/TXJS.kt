@@ -266,7 +266,7 @@ class TXJS {
             }
             coro bar () {
                 yield('x')
-                yield :all coroutine(foo)
+                resume-yield-all coroutine(foo) ()
                 yield('y')
             }
             val arr = to-vector(coroutine(bar))
@@ -293,7 +293,7 @@ class TXJS {
             }
             coro logReturned (genObj) {
                 yield()
-                yield :all genObj
+                resume-yield-all genObj ()
             }
             println(to-vector(spawn logReturned(coroutine(genFuncWithReturn))))
         """, true)
@@ -318,10 +318,10 @@ class TXJS {
                 yield()
                 yield(tree.v)
                 if tree.l {
-                    yield :all spawn T(tree.l)
+                    resume-yield-all (spawn T(tree.l)) ()
                 }
                 if tree.r {
-                    yield :all spawn T(tree.r)
+                    resume-yield-all (spawn T(tree.r)) ()
                 }
             }
             println(to-vector(spawn T(tree)))
@@ -579,7 +579,7 @@ class TXJS {
                 }
             }
             coro caller () {
-                yield :all coroutine(callee)
+                resume-yield-all coroutine(callee) ()
             }
             val co_caller = spawn caller ()
             println(:resume, resume co_caller('a'))

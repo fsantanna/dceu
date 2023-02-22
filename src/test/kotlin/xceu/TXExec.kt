@@ -252,7 +252,7 @@ class TXExec {
     // YIELD ALL
 
     @Test
-    fun yieldall1() {
+    fun kk_01_yieldall() {
         val out = all("""
             coro foo () {
                 yield('a')
@@ -260,12 +260,41 @@ class TXExec {
             }
             coro bar () {
                 yield('x')
-                yield :all coroutine(foo)
+                resume-yield-all coroutine(foo) ()
                 yield('y')
             }
             println(to-vector(coroutine(bar)))
         """, true)
         assert(out == "xaby\n") { out }
+    }
+    @Test
+    fun kk_02_yieldall() {
+        val out = all("""
+            coro foo (x4) {
+                val x6 = yield(x4+1)
+                val x8 = yield(x6+1)
+                nil
+            }
+            coro bar (x1) {
+                val x3 = yield(x1+1)
+                val x8 = resume-yield-all coroutine(foo) (x3+1)
+                val x10 = yield(x8+1)
+                nil
+            }
+            val co = coroutine(bar)
+            val x2 = resume co(1)
+            ;;println(:x2, x2)
+            val x5 = resume co(x2+1)
+            ;;println(:x5, x5)
+            val x7 = resume co(x5+1)
+            ;;println(:x7, x7)
+            val x9 = resume co(x7+1)
+            ;;println(:x9, x9)
+            val xN = resume co(x9+1)
+            ;;println(:xN, xN)
+            println(x2, x5, x7, x9, xN)
+        """, true)
+        assert(out == "2\t5\t7\t9\tnil\n") { out }
     }
 
 

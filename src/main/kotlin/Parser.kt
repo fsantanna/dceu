@@ -143,7 +143,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err(")")
                 e
             }
-            nil -> {
+            nil -> {    // can be empty
                 this.acceptFix_err(")")
                 Expr.Nil(Tk.Fix("nil", this.tk0.pos))
             }
@@ -611,22 +611,7 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-            this.acceptFix("yield") -> {
-                val all = XCEU && this.acceptTag(":all")
-                if (!all) {
-                    Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU, XCEU)!!)
-                } else {
-                    val x = this.expr()
-                    this.nest("""
-                        do {
-                            val ceu_x_$N = ${x.tostr(true)}
-                            loop in iter(ceu_x_$N), ceu_i_$N {
-                                yield(ceu_i_$N)  ;; return of yield is used as arg to iter resume()
-                            }
-                        }
-                    """)
-                }
-            }
+            this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU, XCEU)!!)
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
@@ -807,6 +792,34 @@ class Parser (lexer_: Lexer)
                 ifs += cnd.cond { "}" }
                 //println(ifs)
                 this.nest(ifs)
+            }
+            (XCEU && this.acceptFix("resume-yield-all")) -> {
+                val call = this.expr()
+                if (call !is Expr.Call) {
+                    err(call.tk, "resume-yield-call error : expected call")
+                }
+                call as Expr.Call
+                val arg = if (call.args.size == 0) {
+                    Expr.Nil(Tk.Fix("nil", call.tk.pos.copy()))
+                } else {
+                    call.args[0]
+                }
+                this.nest("""
+                    do {
+                        val ceu_co_$N  = ${call.proto.tostr(true)}
+                        var ceu_arg_$N = ${arg.tostr(true)}
+                        loop {
+                            ;;println(:resume, ceu_arg_$N)
+                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            ;;println(:yield, ceu_v_$N)
+                            if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
+                                set ceu_arg_$N = yield(ceu_v_$N)
+                                ;;println(:loop, ceu_arg_$N)
+                            }
+                        } until (status(ceu_co_$N) == :terminated) ;; or (ceu_v_$N == nil)
+                        ceu_arg_$N
+                    }
+                """)
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()

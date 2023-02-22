@@ -186,7 +186,7 @@ class TXParser {
         assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected field : have \".\"")
     }
 
-    // SPAWN, PAR
+    // SPAWN, PAR, RESUME-YIELD-ALL
 
     @Test
     fun par2_err() {
@@ -204,6 +204,12 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "spawn task () :fake {\n1\n}()") { e.tostr() }
+    }
+    @Test
+    fun kk_03_resume_yield() {
+        val l = lexer("resume-yield-all f")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-call error : expected call")
     }
 
     // ITER
