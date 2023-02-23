@@ -19,16 +19,16 @@
     - <a href="#user-types">3.4.</a> User Types
 - <a href="#values">4.</a> VALUES
     - <a href="#literal-values">4.1.</a> Literal Values
-        - `nil` (`nil`) `bool` (`false`,`true`)
-        - `tag` (`:x`) `number` (`1`) `char` (`'a'`) `pointer` (`` `x` ``)
+        - `nil`: `nil`, `bool`: `false` `true`
+        - `tag`: `:x`, `number`: `1`, `char`: `'a'`, `pointer`: `` `x` ``
     - <a href="#dynamic-values">4.2.</a> Dynamic Values
-        - `tuple` (`[...]`) `vector` (`#[...]`) `dict` (`@[...]`)
+        - `tuple` `[...]`, `vector` `#[...]`, `dict` `@[...]`
         - `func` `coro` `task`
     - <a href="#active-values">4.3.</a> Active Values
         - `x-coro` `x-task` `x-tasks` `x-track`
 - <a href="#statements">5.</a> STATEMENTS
     - <a href="#program-sequences-and-blocks">5.1.</a> Program, Sequences and Blocks
-        - `do` `defer` `pass`
+        - `;` `do` `defer` `pass`
     - <a href="#variables-declarations-and-assignments">5.2.</a> Variables, Declarations and Assignments
         - `val` `var` `set`
         - `...` `err` `evt`
