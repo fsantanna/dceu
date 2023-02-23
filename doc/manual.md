@@ -501,7 +501,8 @@ assignments or returns), unless it is [moved](#TODO) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for [coroutines](#TODO) and [tasks](#TODO), which are
-attached to the block in which they were created.
+attached to the block in which they were created, and are aborted on
+termination.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
@@ -1363,8 +1364,8 @@ operations, otherwise it will execute normally.
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
 from [event broadcasts](#TODO) without an explicit `resume`.
-When awaking, tasks have access to the special variable `evt` set from
-broadcasts.
+When awaking, tasks have access to the special variable `evt` with the
+occurring event.
 
 A task can refer to itself with the identifier `task`.
 
@@ -1488,26 +1489,130 @@ converted to milliseconds.
 
 `TODO: configurable :frame event`
 
-### 4.9.6. Parallel Blocks
+Examples:
+
+```
+```
+
+#### 4.8.3.2. Broadcast
+#### 4.8.3.3. Track and Detrack
+#### 4.8.3.4. Pools of Tasks
+#### 4.8.3.5. Sintax Extensions Blocks
+##### 4.8.3.5.1. Every Block
+
+An `every` block is a loop that iterates whenever an await condition is
+satisfied:
+
+```
+Every : `every´ <awt> Block
+```
+
+An `every <awt> { <es> }` expands to a loop as follows:
+
+```
+loop {
+    await <awt>
+    <es>
+}
+```
+
+Any [`await`](#TODO) variation can be used as `<awt>`.
+It is assumed that `<es>` does not `await` to satisfy the meaning of "every".
+
+Examples:
+
+```
+```
+
+##### 4.8.3.5.2. Spawn Blocks
+
+A spawn block spawns an anonymous task:
+
+##### 4.8.3.5.3. Parallel Blocks
+
+A parallel block spawns multiple anonymous tasks concurrently:
+
+```
+Par     : `par´     Block { `with´ Block }
+Par-And : `par-and´ Block { `with´ Block }
+Par-Or  : `par-or´  Block { `with´ Block }
+```
+
+A `par` never rejoins, even if all spawned tasks terminate.
+A `par-and` rejoins when all spawned tasks terminate.
+A `par-or` rejoins when any spawned task terminates, aborting the others.
+
+A `par { <es1> } with { <es2> }` expands as follows:
+
+```
+do {
+    spawn {
+        <es1>           ;; first task
+    }
+    spawn {
+        <es2>           ;; second task
+    }
+    await false         ;; never rejoins
+}
+
+```
+
+A `par-and { <es1> } with { <es2> }` expands as follows:
+
+```
+do {
+    val t1 = spawn {
+        <es1>           ;; first task
+    }
+    val t2 = spawn {
+        <es2>           ;; second task
+    }
+    await :check-now (  ;; rejoins when all terminate
+        status(t1)==:terminated and status(t2)==:terminated
+    )
+}
+```
+
+A `par-or { <es1> } with { <es2> }` expands as follows:
+
+```
+do {
+    val t1 = spawn {
+        <es1>           ;; first task
+    }
+    val t2 = spawn {
+        <es2>           ;; second task
+    }
+    await :check-now (  ;; rejoins when any terminates
+        status(t1)==:terminated or status(t2)==:terminated
+    )
+}                       ;; aborts other active tasks
+```
+
+Examples:
+
+```
+```
+
+##### 4.8.3.5.3. Awaiting Block
+##### 4.8.3.5.4. Toggle Block
 
 <!-- ---------------------------------------------------------------------- -->
 
 <!--
-     | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+      | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
 
-# EXTENSIONS
+      | `awaiting´ Await Block                          ;; abort on event
+      | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
 
-## Operations
-
-Ceu
+Operations
       | `not´ Expr                                      ;; op not
       | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
-
-not, or, and are really special
+        not, or, and are really special
 -->
 
 # A. SYNTAX
