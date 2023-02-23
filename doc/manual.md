@@ -3,13 +3,13 @@
 * DESIGN
 * LEXICON
     * Keywords
-        - `and`, `await`, `awaiting`, `broadcast`, `catch`, `coro`,
-        - `coroutine`, `data`, `defer`, `detrack`, `do`, `else`, `enum`,
-        - `err`, `every`, `evt`, `false`, `func`, `if`, `ifs`, `in`,
-        - `is`, `is-not`, `loop`, `nil`, `not`, `or`, `par`, `par-and`,
-        - `par-or`, `pass`, `poly`, `pub`, `resume`, `resume-yield-all`,
-        - `set`, `spawn`, `status`, `task`, `tasks`, `toggle`, `track`,
-        - `true`, `until`, `val`, `var`, `where`, `with`, `yield`
+        - `and` `await` `awaiting` `broadcast` `catch` `coro`
+        - `coroutine` `data` `defer` `detrack` `do` `else` `enum`
+        - `err` `every` `evt` `false` `func` `if` `ifs` `in`
+        - `is` `is-not` `loop` `nil` `not` `or` `par` `par-and`
+        - `par-or` `pass` `poly` `pub` `resume` `resume-yield-all`
+        - `set` `spawn` `status` `task` `tasks` `toggle` `track`
+        - `true` `until` `val` `var` `where` `with` `yield`
     * Symbols
         - `{` `}` `(` `)` `[` `]` `=` `->` `;` `,`
         - `.` `...` `#[` `@[` `'` `"` `` ` `` `$` `^`
@@ -17,53 +17,53 @@
         - `+` `-` `*` `/` `>` `<` `=`
         - `!` `|` `&` `~` `%` `#` `@`
     * Identifiers
-        - `ID`, `OP`
+        - `x` `+`
     * Literals
-        - `nil´, `bool`, `false´, `true´
-        - `:x`, `10`, `'a'`, `"abc"`, `` ` ``x`` ` ``
+        - `nil` `bool` `false` `true`
+        - `:x` `10` `'a'` `"abc"` `` `x` ``
     * Comments
 * TYPES
     * Basic Types
-        - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
+        - `nil` `bool` `char` `number` `pointer` `tag`
     * Collections
-        - `tuple`, `vector`, `dict`
+        - `tuple` `vector` `dict`
     * Execution Units
-        - `func`, `coro`, `task`
-        - `x-coro`, `x-task`, `x-tasks`, `x-track`
+        - `func` `coro` `task`
+        - `x-coro` `x-task` `x-tasks` `x-track`
     * User Types
 * VALUES
     * Literal Values
-        - `nil` (`nil´), `bool` (`false´,`true´)
-        - `tag` (`:x`), `number` (`1`), `char` (`'a'`), `pointer` (`` ` ``x`` ` ``)
+        - `nil` (`nil`) `bool` (`false`,`true`)
+        - `tag` (`:x`) `number` (`1`) `char` (`'a'`) `pointer` (`` `x` ``)
     * Dynamic Values
-        - `tuple` (`[...]`), `vector` (`#[...]`), `dict` (`@[...]`)
-        - `func`, `coro`, `task`
+        - `tuple` (`[...]`) `vector` (`#[...]`) `dict` (`@[...]`)
+        - `func` `coro` `task`
     * Active Values
-        - `x-coro`, `x-task`, `x-tasks`, `x-track`
+        - `x-coro` `x-task` `x-tasks` `x-track`
 * EXPRESSIONS
     * Program and Blocks
-        - `do`, `defer`, `pass`
-    * Variables, Declarations, and Assignments
-        - `val`, `var`, `set`
-        - `...`, `err`, `evt`
+        - `do` `defer` `pass`
+    * Variables, Declarations and Assignments
+        - `val` `var` `set`
+        - `...` `err` `evt`
     * Tag Enumerations and Tuple Templates
-        - `enum`, `data`
-    * Calls, Operations, and Indexing
-        - `f()`, `x+y`, `t[]`, `t.x`
+        - `enum` `data`
+    * Calls, Operations and Indexing
+        - `f()` `x+y` `t[]` `t.x`
     * Conditionals and Loops
-        - `if`, `ifs`
-        - `loop`, `loop if`, `loop until`, `loop in`
+        - `if` `ifs`
+        - `loop` `loop if` `loop until` `loop in`
     * Exceptions
-        - `throw`, `catch`
+        - `throw` `catch`
     * Coroutine Operations
-        - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
-        - `spawn`, `resume-yield-all`
+        - `coroutine` `yield` `resume` `toggle` `kill` `status`
+        - `spawn` `resume-yield-all`
     * Task Operations
-        - `pub`, `spawn`, `await`, `broadcast`
-        - `track`, `detrack`
-        - `tasks`, `spawn in`, `loop in`
-        - `every`, `spawn {}`, `awaiting`, `toggle {}`
-        - `par`, `par-and`, `par-or`
+        - `pub` `spawn` `await` `broadcast`
+        - `track` `detrack`
+        - `tasks` `spawn in` `loop in`
+        - `every` `spawn {}` `awaiting` `toggle {}`
+        - `par` `par-and` `par-or`
 * STANDARD LIBRARY
     * Primary Library
     * Auxiliary Library
@@ -724,7 +724,7 @@ do {
 }
 ```
 
-## Variables, Declarations, and Assignments
+## Variables, Declarations and Assignments
 
 Regardless of being dynamically typed, all variables in Ceu must be declared
 before use:
@@ -884,7 +884,7 @@ val evt :Event = but
 println(evt.ts, but.pos.y)      ;; <-- 0, 20
 ```
 
-## Calls, Operations, and Indexing
+## Calls, Operations and Indexing
 
 ### Calls and Operations
 
