@@ -41,7 +41,7 @@
         - `throw`, `catch`
     7. Coroutine Operations
         - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
-        - `spawn`, `resume-yield-all´
+        - `spawn`, `resume-yield-all`
     8. Task Operations
         - `pub`, `spawn`, `await`, `broadcast`
         - `track`, `detrack`
@@ -51,7 +51,7 @@
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
-A. SYNTAX
+6. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
 
@@ -1639,9 +1639,19 @@ Operations
         not, or, and are really special
 -->
 
-# A. SYNTAX
+# 5. STANDARD LIBRARY
 
-## A.1. Basic Syntax
+## 5.1. Primary Library
+
+`TODO`
+
+## 5.2. Auxiliary Library
+
+`TODO`
+
+# 6. SYNTAX
+
+## 6.1. Basic Syntax
 
 ```
 Prog  : { Expr }
@@ -1712,7 +1722,7 @@ NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
 NAT   : `.*`                                            ;; native expression
 ```
 
-## A.2. Extended Syntax
+## 6.2. Extended Syntax
 
 ```
 Expr  : Expr' [`where´ Block]                           ;; where clause
