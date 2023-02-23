@@ -95,51 +95,55 @@ Ceu is in experimental stage. Both the compiler and runtime can become very slow
 The following keywords are reserved in Ceu:
 
 ```
-    and             ;; and operator                 (00)
-    await           ;; await event
-    awaiting        ;; awaiting block
-    broadcast       ;; broadcast event
-    catch           ;; catch exception
-    coro            ;; coroutine prototype
-    coroutine       ;; create coroutine
-    data            ;; data declaration
-    defer           ;; defer block
-    do              ;; do block
-    else            ;; else block
-    enum            ;; enum declaration             (10)
-    err             ;; exception variable
-    every           ;; every block
-    evt             ;; event variable
-    false           ;; false value
-    func            ;; function prototype
-    if              ;; if block
-    ifs             ;; ifs block
-    in              ;; in keyword
-    is              ;; is operator
-    is-not          ;; is-not operator              (20)
-    loop            ;; loop block
-    nil             ;; nil value
-    not             ;; not operator
-    or              ;; or operator
-    par             ;; par block
-    par-and         ;; par-and block
-    par-or          ;; par-or block
-    pass            ;; innocuous expression
-    poly            ;; TODO
-    pub             ;; public variable              (30)
-    resume          ;; resume coroutine
-    set             ;; assign expression
-    spawn           ;; spawn coroutine
-    status          ;; coroutine status
-    task            ;; task prototype/self identifier
-    toggle          ;; toggle coroutine/block
-    true            ;; true value
-    until           ;; until loop modifier
-    val             ;; constant declaration
-    var             ;; variable declaration         (40)
-    where           ;; where block
-    with            ;; with block
-    yield           ;; yield coroutine
+    and                 ;; and operator                 (00)
+    await               ;; await event
+    awaiting            ;; awaiting block
+    broadcast           ;; broadcast event
+    catch               ;; catch exception
+    coro                ;; coroutine prototype
+    coroutine           ;; create coroutine
+    data                ;; data declaration
+    defer               ;; defer block
+    detrack             ;; detrack task
+    do                  ;; do block                     (10)
+    else                ;; else block
+    enum                ;; enum declaration
+    err                 ;; exception variable
+    every               ;; every block
+    evt                 ;; event variable
+    false               ;; false value
+    func                ;; function prototype
+    if                  ;; if block
+    ifs                 ;; ifs block
+    in                  ;; in keyword                   (20)
+    is                  ;; is operator
+    is-not              ;; is-not operator
+    loop                ;; loop block
+    nil                 ;; nil value
+    not                 ;; not operator
+    or                  ;; or operator
+    par                 ;; par block
+    par-and             ;; par-and block
+    par-or              ;; par-or block
+    pass                ;; innocuous expression         (30)
+    poly                ;; TODO
+    pub                 ;; public variable
+    resume              ;; resume coroutine
+    resume-yield-all    ;; resume coroutine
+    set                 ;; assign expression
+    spawn               ;; spawn coroutine
+    status              ;; coroutine status
+    task                ;; task prototype/self identifier
+    tasks               ;; pool of tasks
+    toggle              ;; toggle coroutine/block       (40)
+    track               ;; track task
+    true                ;; true value
+    until               ;; until loop modifier
+    val                 ;; constant declaration
+    var                 ;; variable declaration
+    where               ;; where block
+    with                ;; with block
+    yield               ;; yield coroutine              (48)
 ```
 
 Keywords cannot be used as variable identifiers.
@@ -1567,7 +1571,7 @@ do {
     val t2 = spawn {
         <es2>           ;; second task
     }
-    await :check-now (  ;; rejoins when all terminate
+    await :check-now (  ;; rejoins when all tasks terminate
         status(t1)==:terminated and status(t2)==:terminated
     )
 }
@@ -1583,7 +1587,7 @@ do {
     val t2 = spawn {
         <es2>           ;; second task
     }
-    await :check-now (  ;; rejoins when any terminates
+    await :check-now (  ;; rejoins when any task terminates
         status(t1)==:terminated or status(t2)==:terminated
     )
 }                       ;; aborts other active tasks
