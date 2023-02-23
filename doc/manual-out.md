@@ -1,59 +1,62 @@
 # The Programming Language Ceu
 
-1. LEXICON
-    1. Keywords
-    2. Symbols
-    3. Operators
-    4. Identifiers
-    5. Literals
-    6. Comments
-2. TYPES
-    1. Basic Types
+- <a href=#"design">1.</a> DESIGN
+- <a href=#"lexicon">2.</a> LEXICON
+    - <a href=#"keywords">2.1.</a> Keywords
+    - <a href=#"symbols">2.2.</a> Symbols
+    - <a href=#"operators">2.3.</a> Operators
+    - <a href=#"identifiers">2.4.</a> Identifiers
+    - <a href=#"literals">2.5.</a> Literals
+    - <a href=#"comments">2.6.</a> Comments
+- <a href=#"types">3.</a> TYPES
+    - <a href=#"basic-types">3.1.</a> Basic Types
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    2. Collections
+    - <a href=#"collections">3.2.</a> Collections
         - `tuple`, `vector`, `dict`
-    3. Execution Units
+    - <a href=#"execution-units">3.3.</a> Execution Units
         - `func`, `coro`, `task`
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-    4. User Types
-3. VALUES
-    1. Plain Values
+    - <a href=#"user-types">3.4.</a> User Types
+- <a href=#"values">4.</a> VALUES
+    - <a href=#"literal-values">4.1.</a> Literal Values
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    2. Dynamic Values
+    - <a href=#"dynamic-values">4.2.</a> Dynamic Values
         - `tuple`, `vector`, `dict`
         - `func`, `coro`, `task`
-    3. Active Values
+    - <a href=#"active-values">4.3.</a> Active Values
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-4. EXPRESSIONS
-    1. Program and Blocks
+- <a href=#"expressions">5.</a> EXPRESSIONS
+    - <a href=#"program-and-blocks">5.1.</a> Program and Blocks
         - `do`, `defer`, `pass`
-    2. Variables, Declarations, and Assignments
+    - <a href=#"variables-declarations-and-assignments">5.2.</a> Variables, Declarations, and Assignments
         - `val`, `var`, `set`
         - `...`, `err`, `evt`
-    3. Tag Enumerations and Tuple Templates
+    - <a href=#"tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
         - `enum`, `data`
-    4. Calls, Operations, and Indexing
+    - <a href=#"calls-operations-and-indexing">5.4.</a> Calls, Operations, and Indexing
         - `f()`, `x+y`, `t[]`, `t.x`
-    5. Conditionals and Loops
+    - <a href=#"conditionals-and-loops">5.5.</a> Conditionals and Loops
         - `if`, `ifs`
         - `loop`, `loop if`, `loop until`, `loop in`
-    6. Exceptions
+    - <a href=#"exceptions">5.6.</a> Exceptions
         - `throw`, `catch`
-    7. Coroutine Operations
+    - <a href=#"coroutine-operations">5.7.</a> Coroutine Operations
         - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
         - `spawn`, `resume-yield-all`
-    8. Task Operations
+    - <a href=#"task-operations">5.8.</a> Task Operations
         - `pub`, `spawn`, `await`, `broadcast`
         - `track`, `detrack`
         - `tasks`, `spawn in`, `loop in`
         - `every`, `spawn {}`, `awaiting`, `toggle {}`
         - `par`, `par-and`, `par-or`
-5. STANDARD LIBRARY
-    1. Primary Library
-    2. Auxiliary Library
-6. SYNTAX
-    1. Basic Syntax
-    2. Extended Syntax
+- <a href=#"standard-library">6.</a> STANDARD LIBRARY
+    - <a href=#"primary-library">6.1.</a> Primary Library
+    - <a href=#"auxiliary-library">6.2.</a> Auxiliary Library
+- <a href=#"syntax">7.</a> SYNTAX
+    - <a href=#"basic-syntax">7.1.</a> Basic Syntax
+    - <a href=#"extended-syntax">7.2.</a> Extended Syntax
+
+<!-- CONTENTS -->
 
 <a name="design"/>
 
@@ -492,7 +495,7 @@ without any restrictions.
 ## 4.2. Dynamic Values
 
 A *dynamic value* requires dynamic allocation since its internal data is too
-big to fit in a plain value.
+big to fit in a literal value.
 The following types have dynamic values:
 
 ```
