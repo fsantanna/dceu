@@ -14,42 +14,33 @@
     - <a href="#collections">3.2.</a> Collections
         - `tuple` `vector` `dict`
     - <a href="#execution-units">3.3.</a> Execution Units
-        - `func` `coro` `task`
-        - `x-coro` `x-task` `x-tasks` `x-track`
+        - `func` `coro` `task` `x-coro` `x-task` `x-tasks` `x-track`
     - <a href="#user-types">3.4.</a> User Types
 - <a href="#values">4.</a> VALUES
     - <a href="#literal-values">4.1.</a> Literal Values
-        - `nil`: `nil`, `bool`: `false` `true`
-        - `tag`: `:x`, `number`: `1`, `char`: `'a'`, `pointer`: `` `x` ``
+        - `nil` `bool` `tag` `number` `char` `pointer`
     - <a href="#dynamic-values">4.2.</a> Dynamic Values
-        - `tuple` `[...]`, `vector` `#[...]`, `dict` `@[...]`
-        - `func` `coro` `task`
+        - `tuple` `vector` `dict` `func` `coro` `task`
     - <a href="#active-values">4.3.</a> Active Values
         - `x-coro` `x-task` `x-tasks` `x-track`
 - <a href="#statements">5.</a> STATEMENTS
     - <a href="#program-sequences-and-blocks">5.1.</a> Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
     - <a href="#variables-declarations-and-assignments">5.2.</a> Variables, Declarations and Assignments
-        - `val` `var` `set`
-        - `...` `err` `evt`
+        - `val` `var` `set` `...` `err` `evt`
     - <a href="#tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
         - `enum` `data`
     - <a href="#calls-operations-and-indexing">5.4.</a> Calls, Operations and Indexing
         - `f(...)` `x+y` `t[...]` `t.x`
     - <a href="#conditionals-and-loops">5.5.</a> Conditionals and Loops
-        - `if` `ifs`
-        - `loop` `loop if` `loop until` `loop in`
+        - `if` `ifs` `loop` `loop if` `loop until` `loop in`
     - <a href="#exceptions">5.6.</a> Exceptions
         - `throw` `catch`
     - <a href="#coroutine-operations">5.7.</a> Coroutine Operations
-        - `coroutine` `yield` `resume` `toggle` `kill` `status`
-        - `spawn` `resume-yield-all`
+        - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
     - <a href="#task-operations">5.8.</a> Task Operations
-        - `pub` `spawn` `await` `broadcast`
-        - `track` `detrack`
-        - `tasks` `spawn in` `loop in`
-        - `every` `spawn {}` `awaiting` `toggle {}`
-        - `par` `par-and` `par-or`
+        - `pub` `spawn` `await` `broadcast` `track` `detrack` `tasks` `spawn in`
+        - `loop in` `every` `spawn {}` `awaiting` `toggle {}` `par` `par-and` `par-or`
 - <a href="#standard-library">6.</a> STANDARD LIBRARY
     - <a href="#primary-library">6.1.</a> Primary Library
     - <a href="#auxiliary-library">6.2.</a> Auxiliary Library
