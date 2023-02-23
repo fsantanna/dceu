@@ -275,18 +275,18 @@ The literal `nil` is the single value of the [*nil*](#basic-types) type.
 The literals `true` and `false` are the only values of the [*bool*](#basic-types)
 type.
 
-A [*tag*](#TODO) type literal starts with a colon (`:`) and is followed by
-letters, digits, dots (`.`), or dashes (`-`).
+A [*tag*](#basic-types) type literal starts with a colon (`:`) and is followed
+by letters, digits, dots (`.`), or dashes (`-`).
 A dot or dash must be followed by a letter or digit.
 
-A [*number*](#TODO) type literal starts with a digit and is followed by digits,
-letters, and dots (`.`), and adheres to the [C standard](#TODO).
+A [*number*](#basic-types) type literal starts with a digit and is followed by
+digits, letters, and dots (`.`), and is represented as a *C float*.
 
-A [*char*](#TODO) type literal is a single or backslashed (`\`) character
-enclosed by single quotes (`'`), and adheres to the [C standard](#TODO).
+A [*char*](#basic-types) type literal is a single or backslashed (`\`)
+character enclosed by single quotes (`'`), and is representaed as a *C char*.
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
-It is expanded to a [vector](#TODO) of character literals, e.g., `"abc"`
+It is expanded to a [vector](#collections) of character literals, e.g., `"abc"`
 expands to `#['a','b','c']`.
 
 A native literal is a sequence of characters enclosed by multiple back quotes
@@ -294,7 +294,8 @@ A native literal is a sequence of characters enclosed by multiple back quotes
 The same number of backquotes must be used to open and close the literal.
 `TODO: $, :type, :pre, :ceu`
 
-All literals are valid [values](#TODO) and [expressions](#TODO) in Ceu.
+All literals are valid [values](#values) and [expressions](#expressions) in
+Ceu.
 
 Examples:
 
@@ -340,7 +341,7 @@ Examples:
 Ceu is a dynamic language in which values carry their own types during
 execution.
 
-The function `type` returns the type of a value as a [tag](#TODO):
+The function `type` returns the type of a value as a [tag](#basic-types):
 
 ```
 type(10)  --> :number
@@ -358,29 +359,29 @@ nil    bool    char    number    pointer    tag
 ```
 
 The `nil` type represents the absence of values with its single value
-[`nil`](#TODO).
+[`nil`](#literals).
 
-The `bool` type represents boolean values with [`true`](#TODO) and
-[`false`](#TODO).
+The `bool` type represents boolean values with [`true`](#literals) and
+[`false`](#literals).
 In a boolean context, `nil` is interpreted as `false` and all other values from
 all other types are interpreted as `true`.
 
-The `char` type represents [character literals](#TODO).
+The `char` type represents [character literals](#literals).
 
 The `number` type represents real numbers (i.e., *C floats*) with
-[number literals](#TODO).
+[number literals](#literals).
 
 The `pointer` type represents opaque native pointer values from [native
-literals](#TODO).
+literals](#literals).
 
-The `tag` type represents [tag identifiers](#TODO).
+The `tag` type represents [tag identifiers](#literals).
 Each tag is internally associated with a natural number that represents a
 unique value in a global enumeration.
 Tags are also known as *symbols* or *atoms* in other programming languages.
-Tags can be explicitly [enumerated](#TODO) to interface with [native
-expressions](#TODO).
-Tags can form [hierarchies](#TODO) to represent user types and describe
-[tuple templates](#TODO).
+Tags can be explicitly [enumerated](#tag-enumerations-and-tuple-templates) to
+interface with [native expressions](#literals).
+Tags can form [hierarchies](#tag-enumerations-and-tuple-templates) to represent
+user types and describe [tuple templates](#tag-enumerations-and-tuple-templates).
 
 <a name="collections"/>
 
@@ -422,18 +423,17 @@ func    coro    task
 x-coro  x-task  x-tasks  x-track
 ```
 
-The `func` type represents [function prototypes](#TODO).
+The `func` type represents [function prototypes](#prototypes).
 
-The `coro` type represents [coroutine prototypes](#TODO), while the `x-coro`
-type represents [active coroutines](#TODO).
+The `coro` type represents [coroutine prototypes](#prototypes), while the
+`x-coro` type represents [active coroutines](#active-values).
 
-The `task` type represents [task prototypes](#TODO), while the `x-task` type
-represents [active tasks](#TODO).
-The `x-tasks` type represents [task pools](#TODO) holding active tasks.
-The `x-track` type represents [track references](#TODO) pointing to active
+The `task` type represents [task prototypes](#prototypes), while the `x-task`
+type represents [active tasks](#active-values).
+The `x-tasks` type represents [task pools](#active-values) holding active
 tasks.
-
-Execution units are described in [Section TODO](#TODO).
+The `x-track` type represents [track references](#active-values) pointing to
+active tasks.
 
 <a name="user-types"/>
 
@@ -480,7 +480,7 @@ own type.
 
 A *literal value* does not require dynamic allocation since it only carries
 extra information about its type.
-All [basic types](#TODO) have [literal](#TODO) values:
+All [basic types](#basic-types) have [literal](#literals) values:
 
 ```
 Types : nil | bool | char | number | pointer | tag
@@ -507,10 +507,11 @@ Actvs  : x-coro | x-task | x-tasks | x-track    ;; active values (next section)
 Dynamic values are mutable and are manipulated through references, allowing
 that multiple aliases refer to the same value.
 
-Dynamic values are always attached to the enclosing [block](#TODO) in which
+Dynamic values are always attached to the enclosing [block](#blocks) in which
 they were created, and cannot escape to outer blocks in assignments or as
 return expressions.
-This is also valid for [coroutines](#TODO) and [tasks](#TODO).
+This is also valid for active [coroutines](#active-values) and
+[tasks](#active-values).
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
 
@@ -524,8 +525,8 @@ that it may loose all references to it, even with its enclosing block active.
 
 ### 4.2.1. Constructors
 
-Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
-and dictionaries:
+Ceu provides constructors for [collections](#collections) to allocate tuples,
+vectors, and dictionaries:
 
 ```
 Cons : `[´ [List(Expr)] `]´             ;; tuple
@@ -548,7 +549,7 @@ tag `:`).
 A tuple constructor may also be prefixed with a tag, which associates the tag
 with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
 Tag constructors are typically used in conjunction with
-[tuple templates](#TODO)
+[tuple templates](#tag-enumerations-and-tuple-templates)
 
 Examples:
 
@@ -574,8 +575,9 @@ Task : `task´ `(´ [List(ID)] [`...´] `)´ Block
 Each keyword is followed by an optional list of identifiers as parameters
 enclosed by parenthesis.
 
-The last parameter can be the symbol [`...`](#TODO), which captures as a tuple
-all remaining arguments of a call.
+The last parameter can be the symbol
+[`...`](#variables-declarations-and-assignments), which captures as a tuple all
+remaining arguments of a call.
 
 The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
@@ -595,11 +597,42 @@ x-coro  x-task  x-tasks  x-track
 ```
 
 An active value is still a dynamic value, with all properties described above.
-In addition, it also runs a finalization routine when going out of scope in
-order to terminate active blocks.
-Finally, an `x-track` is set to `nil` when its referred task terminates or goes
-out of scope.
+
+Active coroutines and tasks (`x-coro` and `x-task`) are running instances of
+[prototypes](#prototypes) that can suspend themselves in the middle of
+execution, before they terminate.
+Tasks are also considered coroutines (but not the other way around).
+A coroutine retains its execution state and can be
+[resumed](#create-resume-spawn) from its current suspension point.
+
+Coroutines have 4 possible status:
+
+1. `yielded`: idle and ready to be resumed
+2. `toggled`: ignoring resumes
+3. `resumed`: currently executing
+4. `terminated`: terminated and unable to be resumed
+
+A coroutine is attached to the enclosing [block](#block) in which it was
+instantiated.
+This means that it is possible that a coroutine goes out of scope with the
+yielded status.
+In this case, the coroutine body is aborted and nested [`defer`](#defer)
+expressions are properly triggered.
+
+Unlike coroutines, a task can also awake automatically from
+[event broadcasts](#broadcast) without an explicit `resume`.
+It can also be spawned in a [pool](#pools-of-tasks) of anonymous tasks
+(`x-tasks`), which will control the task life cycle and automatically release
+it from memory on termination.
+In this case, the task is also attached to the block in which the pool is
+declared.
+Finally, a task can be [tracked](#track-and-detrack) from outside with a safe
+reference to it (`x-track`).
+A track is set to `nil` when its referred task terminates or goes out of scope.
 This is all automated by the Ceu runtime.
+
+The operations on [coroutines](#coroutine-operations) and
+[tasks](#tasks-operations) are discussed further.
 
 <a name="expressions"/>
 
@@ -608,7 +641,7 @@ This is all automated by the Ceu runtime.
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
 
-All [values](#TODO) are also expressions.
+All [values](#values) are also expressions.
 
 <a name="program-and-blocks"/>
 
@@ -635,9 +668,9 @@ A dynamic value cannot escape the block in which it was created (e.g., from
 assignments or returns), unless it is [moved](#TODO) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
-This is also valid for [coroutines](#TODO) and [tasks](#TODO), which are
-attached to the block in which they were created, and are aborted on
-termination.
+This is also valid for active [coroutines](#active-values) and
+[tasks](#active-values), which are attached to the block in which they were
+created, and are aborted on termination.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
@@ -672,8 +705,8 @@ do {
 }
 ```
 
-Blocks also appear in compound statements, such as [conditionals](#TODO),
-[loops](#TODO), and many others.
+Blocks also appear in compound statements, such as
+[conditionals](#conditionals), [loops](#loops-and-iterators), and many others.
 
 <a name="defer"/>
 
@@ -748,26 +781,26 @@ The optional initialization expression assigns an initial value to the
 variable, which is set to `nil` otherwise.
 
 The `val` modifier forbids that a name is reassigned, but it does not prevent
-that [dynamic values](#TODO) are modified.
+that [dynamic values](#dynamic-values) are modified.
 
-Optionally, a declaration can be associated with a [tuple template](#TODO) tag,
-which allows the variable to be indexed by a field name, instead of a numeric
-position.
+Optionally, a declaration can be associated with a [tuple
+template](#tag-enumerations-and-tuple-templates) tag, which allows the variable
+to be indexed by a field name, instead of a numeric position.
 Note that the variable is not guaranteed to hold a value matching the template,
 not even a tuple is guaranteed.
 The template association is static but with no runtime guarantees.
 
 The symbol `...` represents the variable arguments (*varargs*) a function
 receives in a call.
-In the context of a [function](#TODO) that expects varargs, it evaluates to a
-tuple holding the varargs.
+In the context of a [function](#prototypes) that expects varargs, it evaluates
+to a tuple holding the varargs.
 In other scenarios, accessing `...` raises an error.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
 
 The variables `err` and `evt` have special scopes and are automatically setup
-in the context of [`throw`](#TODO) and [`broadcast`](#TODO) expressions,
-respectively.
+in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
+expressions, respectively.
 
 Examples:
 
@@ -836,8 +869,8 @@ Temp : `data´ Data
                     [`{´ { Data } `}´]
 ```
 
-Then, a [variable declaration](#TODO) can specify a tuple template and hold a
-tuple that can be accessed by field.
+Then, a [variable declaration](#variables-declarations-and-assignments) can
+specify a tuple template and hold a tuple that can be accessed by field.
 
 After the keyword `data`, a declaration expects a tag followed by `=` and a
 template.
@@ -861,8 +894,8 @@ val r2 :Rect = :Rect [[0,0],[10,10]]    ;; combining tag template/constructor
 println(r2 is :Rect, r2.dim.h)          ;; <-- true, 0
 ```
 
-Based on [tags and sub-tags](#TODO), tuple templates can define hierarchies and
-reuse fields from parents.
+Based on [tags and sub-tags](#user-types), tuple templates can define
+hierarchies and reuse fields from parents.
 A declaration can be followed by a list of sub-templates enclosed by curly
 braces (`{` and `}`), which can nest to at most 4 levels.
 Each nested tag identifier assumes an implicit prefix of its super-tag, e.g.,
@@ -901,7 +934,7 @@ println(evt.ts, but.pos.y)      ;; <-- 0, 20
 ### 5.4.1. Calls and Operations
 
 In Ceu, calls and operations are equivalent, i.e., an operation is a call that
-uses an [operator](#TODO) with prefix or infix notation:
+uses an [operator](#operatos) with prefix or infix notation:
 
 ```
 Call : OP Expr                      ;; unary operation
@@ -912,14 +945,14 @@ Call : OP Expr                      ;; unary operation
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
-A call expects an expression of type [`func`](#TODO) and an optional list of
-expressions as arguments enclosed by parenthesis.
+A call expects an expression of type [`func`](#prototypes) and an optional list
+of expressions as arguments enclosed by parenthesis.
 Each argument is expected to match a parameter of the function declaration.
 A call transfers control to the function, which runs to completion and returns
 control with a value, which substitutes the call.
 
-As discussed in [Identifiers](#TODO), the binary minus requires spaces around
-it to prevent ambiguity with identifiers containing dashes.
+As discussed in [Identifiers](#identifiers), the binary minus requires spaces
+around it to prevent ambiguity with identifiers containing dashes.
 
 Examples:
 
@@ -934,8 +967,8 @@ f(10,20)        ;; normal call
 
 ### 5.4.2. Indexes and Fields
 
-Collections in Ceu are ([tuples](#TODO), [vectors](#TODO), and
-[dictionaries](#TODO)) are accessed through indexes or fields:
+[Collections](#collections) in Ceu (tuples, vectors, and dictionaries) are
+accessed through indexes or fields:
 
 ```
 Index : Expr `[´ Expr `]´
@@ -955,13 +988,13 @@ and a field identifier.
 A field operation expands to an index operation as follows:
 For a tuple or vector `v`, and a numeric identifier `i`, the operation expands
 to `v[i]`.
-For a dictionary `v`, and a [tag literal](#TODO) `k` (with the colon `:`
+For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
 
 `TODO: tuple template`
 
-A [task](#TODO) `t` also relies on a field operation to access its public
-field `pub` (i.e., `t.pub`).
+A [task](#active-values) `t` also relies on a field operation to access its
+public field `pub` (i.e., `t.pub`).
 
 Examples:
 
@@ -1123,7 +1156,7 @@ the associated block, before testing the condition again.
 When the condition is false, the loop terminates.
 
 There is no `break` expression in Ceu, which can be substituted by a proper
-test condition or [`throw-catch`](#TODO) pair.
+test condition or [`throw-catch`](#exceptions) pair.
 
 All other loops and iterators may be expressed in terms of `loop if`.
 For instance, an infinite loop uses `true` as its condition.
@@ -1209,20 +1242,21 @@ Catch : `catch´ Expr Block
 
 A `throw` receives an expression that is assigned to the special variable
 `err`, which is visible to enclosing `catch` statements.
-A `throw` is propagated upwards and aborts all enclosing blocks and [execution
-units](#TODO) on the way.
+A `throw` is propagated upwards and aborts all enclosing [blocks](#blocks) and
+[execution units](#prototypes) (functions, coroutines, and tasks) on the way.
 When crossing an execution unit, a `throw` jumps back to the calling site and
 continues to propagate upwards.
 
 A `catch` executes its associated block normally, but also registers a catch
 expression to be compared against `err` when a `throw` is crossing it.
 If they match, the exception is caught and the `catch` terminates, aborting its
-associated block, and properly triggering nested [`defer`](#TODO) expressions.
+associated block, and properly triggering nested [`defer`](#defer) expressions.
 
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
-If the matching expression `x` is of type [tag](#TODO), it expands to match
-`err is x`, allowing to check [tuple templates](#TODO).
+If the matching expression `x` is of type [tag](#basic-types), it expands to
+match `err is x`, allowing to check [tuple
+templates](#tag-enumerations-and-tuple-templates).
 
 Examples:
 
@@ -1266,38 +1300,19 @@ catch :Err {                          ;; catches generic error
 
 ## 5.7. Coroutine Operations
 
-The `coro` and `task` are coroutine prototypes that, when instantiated, can
-suspend themselves in the middle of execution, before they terminate.
-A coroutine retains its execution state and can be resumed from the suspension
-point.
-
 The basic API for coroutines has 6 operations:
 
-1. [`coroutine`](#TODO): creates a new coroutine from a prototype
-2. [`yield`](#TODO): suspends the resumed coroutine
-3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
-4. [`toggle`](#TODO): either ignore or acknowledge resumes
+1. [`coroutine`](#create-resume-spawn): creates a new coroutine from a prototype
+2. [`yield`](#yield): suspends the resumed coroutine
+3. [`resume`](#create-resume-spawn): starts or resumes a coroutine from its current suspension point
+4. [`toggle`](#toggle): either ignore or acknowledge resumes
 5. [`kill`](#TODO): `TODO`
-6. [`status`](#TODO): returns the coroutine status
+6. [`status`](#status): returns the coroutine status
 
 Note that `yield` is the only operation that is called from the coroutine
 itself, all others are called from the user code controlling the coroutine.
 Just like call arguments and return values from functions, the `yield` and
 `resume` operations can transfer values between themselves.
-
-A coroutine has 4 possible status:
-
-1. `yielded`: idle and ready to be resumed
-2. `toggled`: ignoring resumes
-3. `resumed`: currently executing
-4. `terminated`: terminated and unable to be resumed
-
-A coroutine is [attached](#TODO) to the enclosing block in which it was
-created.
-This means that it is possible that a coroutine goes out of scope with the
-yielded status.
-In this case, the coroutine body is aborted and nested [`defer`](#TODO)
-expressions are properly triggered.
 
 Examples:
 
@@ -1331,7 +1346,8 @@ do {
 
 ### 5.7.1. Create, Resume, Spawn
 
-The operation `coroutine` creates a new coroutine from a [prototype](#TODO).
+The operation `coroutine` creates a new coroutine from a
+[prototype](#prototypes).
 The operation `resume` executes a coroutine starting from its last suspension
 point.
 The operation `spawn` creates and resumes a coroutine:
@@ -1342,9 +1358,9 @@ Resume : `resume´ Expr `(´ Expr `)´
 Spawn  : `spawn´ Expr `(´ Expr `)´
 ```
 
-The operation `coroutine` expects a coroutine prototype (type [`coro`](#TODO)
-or [`task`](#TODO)) and returns an active coroutine (type [`x-coro`](#TODO) or
-[`x-task`](#TODO)).
+The operation `coroutine` expects a coroutine prototype (type
+[`coro`](#execution-units) or [`task`](#execution-units)) and returns an active
+coroutine (type [`x-coro`](#execution-units) or [`x-task`](#executions-units)).
 
 The operation `resume` expects an active coroutine, and resumes it.
 The coroutine executes until it yields or terminates.
@@ -1364,7 +1380,8 @@ The operation `status` returns the status of the given active coroutine:
 Status : `status´ `(´ Expr `)´
 ```
 
-As described in [Section TODO](#TODO), a coroutine has 4 possible status:
+As described in [Active Values](#active-values), a coroutine has 4 possible
+status:
 
 1. `yielded`: idle and ready to be resumed
 2. `toggled`: ignoring resumes
@@ -1387,7 +1404,7 @@ Eventually, the suspended coroutine is resumed again with a value and the whole
 `yield` is substituted by that value.
 
 <!--
-If the resume came from a [`broadcast`](#TODO), then the given expression is
+If the resume came from a [`broadcast`](#broadcast), then the given expression is
 lost.
 -->
 
@@ -1463,8 +1480,8 @@ further `resume` operations:
 Toggle : `toggle´ Expr `(´ Expr `)´
 ```
 
-A `toggle` expects an active coroutine and a [boolean](#TODO) value between
-parenthesis.
+A `toggle` expects an active coroutine and a [boolean](#basic-types) value
+between parenthesis.
 If the toggle is set to `true`, the coroutine will ignore further `resume`
 operations, otherwise it will execute normally.
 
@@ -1472,32 +1489,18 @@ operations, otherwise it will execute normally.
 
 ## 5.8. Task Operations
 
-A `task` is a coroutine prototype that, when instantiated, awakes automatically
-from [event broadcasts](#TODO) without an explicit `resume`.
-When awaking, tasks have access to the special variable `evt` with the
-occurring event.
-
 A task can refer to itself with the identifier `task`.
 
-A task has a public `pub` variable that can be accessed as a [field](#TODO):
+A task has a public `pub` variable that can be accessed as a
+[field](#indexes-and-fields):
     internally as `task.pub`, and
     externally as `x.pub` where `x` is a reference to the task.
 
-A task can be spawned in a [pool](#TODO) of anonymous tasks, which will
-control the task life cycle and automatically release it from memory on
-termination.
-In this case, the task is also attached to the block in which the pool is
-declared.
-
-A task can be [tracked](#TODO) from outside with a safe reference to it.
-When a task terminates, it broadcasts an event that clears all of its tracked
-references.
-
 In addition to the coroutines API, tasks also rely on the following operations:
 
-1. [`spawn`](#TODO): creates and resumes a new task from a prototype
-2. [`await`](#TODO): yields the resumed task until it matches an event
-3. [`broadcast`](#TODO): broadcasts an event to all tasks
+1. [`spawn`](#create-resume-spawn): creates and resumes a new task from a prototype
+2. [`await`](#await): yields the resumed task until it matches an event
+3. [`broadcast`](#broadcast): broadcasts an event to all tasks
 
 Examples:
 
@@ -1553,8 +1556,8 @@ Await : `await´ [`:check-now`] (
 ```
 
 An `await` is expected to be used in conjunction with [event
-broadcasts](#TODO), allowing the condition expression to query the variable
-`evt` with the occurring event.
+broadcasts](#broadcast), allowing the condition expression to query the
+variable `evt` with the occurring event.
 
 All await variations are expansions based on `yield`.
 
@@ -1641,7 +1644,7 @@ loop {
 }
 ```
 
-Any [`await`](#TODO) variation can be used as `<awt>`.
+Any [`await`](#await) variation can be used as `<awt>`.
 It is assumed that `<es>` does not `await` to satisfy the meaning of "every".
 
 Examples:
