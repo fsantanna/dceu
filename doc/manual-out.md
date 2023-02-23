@@ -3,24 +3,10 @@
 - <a href="#design">1.</a> DESIGN
 - <a href="#lexicon">2.</a> LEXICON
     - <a href="#keywords">2.1.</a> Keywords
-        - `and` `await` `awaiting` `broadcast` `catch` `coro`
-        - `coroutine` `data` `defer` `detrack` `do` `else` `enum`
-        - `err` `every` `evt` `false` `func` `if` `ifs` `in`
-        - `is` `is-not` `loop` `nil` `not` `or` `par` `par-and`
-        - `par-or` `pass` `poly` `pub` `resume` `resume-yield-all`
-        - `set` `spawn` `status` `task` `tasks` `toggle` `track`
-        - `true` `until` `val` `var` `where` `with` `yield`
     - <a href="#symbols">2.2.</a> Symbols
-        - `{` `}` `(` `)` `[` `]` `=` `->` `;` `,`
-        - `.` `...` `#[` `@[` `'` `"` `` ` `` `$` `^`
     - <a href="#operators">2.3.</a> Operators
-        - `+` `-` `*` `/` `>` `<` `=`
-        - `!` `|` `&` `~` `%` `#` `@`
     - <a href="#identifiers">2.4.</a> Identifiers
-        - `x` `+`
     - <a href="#literals">2.5.</a> Literals
-        - `nil` `bool` `false` `true`
-        - `:x` `10` `'a'` `"abc"` `` `x` ``
     - <a href="#comments">2.6.</a> Comments
 - <a href="#types">3.</a> TYPES
     - <a href="#basic-types">3.1.</a> Basic Types
@@ -40,8 +26,8 @@
         - `func` `coro` `task`
     - <a href="#active-values">4.3.</a> Active Values
         - `x-coro` `x-task` `x-tasks` `x-track`
-- <a href="#expressions">5.</a> EXPRESSIONS
-    - <a href="#program-and-blocks">5.1.</a> Program and Blocks
+- <a href="#statements">5.</a> STATEMENTS
+    - <a href="#program-sequences-and-blocks">5.1.</a> Program, Sequences and Blocks
         - `do` `defer` `pass`
     - <a href="#variables-declarations-and-assignments">5.2.</a> Variables, Declarations and Assignments
         - `val` `var` `set`
@@ -49,7 +35,7 @@
     - <a href="#tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
         - `enum` `data`
     - <a href="#calls-operations-and-indexing">5.4.</a> Calls, Operations and Indexing
-        - `f()` `x+y` `t[]` `t.x`
+        - `f(...)` `x+y` `t[...]` `t.x`
     - <a href="#conditionals-and-loops">5.5.</a> Conditionals and Loops
         - `if` `ifs`
         - `loop` `loop if` `loop until` `loop in`
@@ -309,8 +295,7 @@ A native literal is a sequence of characters enclosed by multiple back quotes
 The same number of backquotes must be used to open and close the literal.
 `TODO: $, :type, :pre, :ceu`
 
-All literals are valid [values](#values) and [expressions](#expressions) in
-Ceu.
+All literals are valid [values](#values) in Ceu.
 
 Examples:
 
@@ -649,27 +634,25 @@ This is all automated by the Ceu runtime.
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
 
-<a name="expressions"/>
+<a name="statements"/>
 
-# 5. EXPRESSIONS
+# 5. STATEMENTS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
 
-All [values](#values) are also expressions.
+<a name="program-sequences-and-blocks"/>
 
-<a name="program-and-blocks"/>
+## 5.1. Program, Sequences and Blocks
 
-## 5.1. Program and Blocks
-
-A program in Ceu is a sequence of expressions, and a block is a sequence of
-expressions enclosed by braces (`{` and `}´):
+A program in Ceu is a sequence of statements (expressions), and a block is a
+sequence of expressions enclosed by braces (`{` and `}´):
 
 ```
-Prog  : { Expr }
-Block : `{´ { Expr } `}´
+Prog  : { Expr [`;´] }
+Block : `{´ { Expr [`;´] } `}´
 ```
-
+Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
 <a name="blocks"/>
@@ -691,7 +674,7 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ [:unnest[-hide]] Block   ;; an explicit block expression
+Do : `do´ [:unnest[-hide]] Block   ;; an explicit block statement
 ```
 
 `TODO: unnest, hide`
@@ -733,8 +716,8 @@ A `defer` block executes only when its enclosing block terminates:
 Defer : `defer´ Block
 ```
 
-Deferred expression execute in reverse order in which they appear in the source
-code.
+Deferred statements execute in reverse order in which they appear in the
+source code.
 
 Example:
 
@@ -755,7 +738,7 @@ do {
 
 ### 5.1.3. Pass
 
-The `pass` expression permits that an innocuous expression is used in the
+The `pass` statement permits that an innocuous expression is used in the
 middle of a block:
 
 ```
@@ -786,7 +769,7 @@ Spc : `...´ | `err´ | `evt´             ;; special variables
 ```
 
 The difference between `val` and `var` is that a `val` is immutable, while a
-`var` declaration can be modified by further `set` expressions:
+`var` declaration can be modified by further `set` statements:
 
 ```
 `set´ Expr `=´ Expr
@@ -815,7 +798,7 @@ arguments.
 
 The variables `err` and `evt` have special scopes and are automatically setup
 in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
-expressions, respectively.
+statements, respectively.
 
 Examples:
 
@@ -1170,7 +1153,7 @@ A `loop if` tests a boolean expression and, if true, executes an iteration of
 the associated block, before testing the condition again.
 When the condition is false, the loop terminates.
 
-There is no `break` expression in Ceu, which can be substituted by a proper
+There is no `break` statement in Ceu, which can be substituted by a proper
 test condition or [`throw-catch`](#exceptions) pair.
 
 All other loops and iterators may be expressed in terms of `loop if`.
@@ -1265,7 +1248,7 @@ continues to propagate upwards.
 A `catch` executes its associated block normally, but also registers a catch
 expression to be compared against `err` when a `throw` is crossing it.
 If they match, the exception is caught and the `catch` terminates, aborting its
-associated block, and properly triggering nested [`defer`](#defer) expressions.
+associated block, and properly triggering nested [`defer`](#defer) statements.
 
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
@@ -1795,10 +1778,10 @@ Operations
 ## 7.1. Basic Syntax
 
 ```
-Prog  : { Expr }
-Block : `{´ { Expr } `}´
+Prog  : { Expr [`;´] }
+Block : `{´ { Expr [`;´] } `}´
 Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
-      | `defer´ Block                                   ;; defer expressions
+      | `defer´ Block                                   ;; defer statements
       | `pass´ Expr                                     ;; innocuous expression
 
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant

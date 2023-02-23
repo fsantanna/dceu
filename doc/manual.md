@@ -3,24 +3,10 @@
 * DESIGN
 * LEXICON
     * Keywords
-        - `and` `await` `awaiting` `broadcast` `catch` `coro`
-        - `coroutine` `data` `defer` `detrack` `do` `else` `enum`
-        - `err` `every` `evt` `false` `func` `if` `ifs` `in`
-        - `is` `is-not` `loop` `nil` `not` `or` `par` `par-and`
-        - `par-or` `pass` `poly` `pub` `resume` `resume-yield-all`
-        - `set` `spawn` `status` `task` `tasks` `toggle` `track`
-        - `true` `until` `val` `var` `where` `with` `yield`
     * Symbols
-        - `{` `}` `(` `)` `[` `]` `=` `->` `;` `,`
-        - `.` `...` `#[` `@[` `'` `"` `` ` `` `$` `^`
     * Operators
-        - `+` `-` `*` `/` `>` `<` `=`
-        - `!` `|` `&` `~` `%` `#` `@`
     * Identifiers
-        - `x` `+`
     * Literals
-        - `nil` `bool` `false` `true`
-        - `:x` `10` `'a'` `"abc"` `` `x` ``
     * Comments
 * TYPES
     * Basic Types
@@ -40,8 +26,8 @@
         - `func` `coro` `task`
     * Active Values
         - `x-coro` `x-task` `x-tasks` `x-track`
-* EXPRESSIONS
-    * Program and Blocks
+* STATEMENTS
+    * Program, Sequences and Blocks
         - `do` `defer` `pass`
     * Variables, Declarations and Assignments
         - `val` `var` `set`
@@ -49,7 +35,7 @@
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
-        - `f()` `x+y` `t[]` `t.x`
+        - `f(...)` `x+y` `t[...]` `t.x`
     * Conditionals and Loops
         - `if` `ifs`
         - `loop` `loop if` `loop until` `loop in`
@@ -295,8 +281,7 @@ A native literal is a sequence of characters enclosed by multiple back quotes
 The same number of backquotes must be used to open and close the literal.
 `TODO: $, :type, :pre, :ceu`
 
-All literals are valid [values](#values) and [expressions](#expressions) in
-Ceu.
+All literals are valid [values](#values) in Ceu.
 
 Examples:
 
@@ -611,23 +596,21 @@ This is all automated by the Ceu runtime.
 The operations on [coroutines](#coroutine-operations) and
 [tasks](#tasks-operations) are discussed further.
 
-# EXPRESSIONS
+# STATEMENTS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
 
-All [values](#values) are also expressions.
+## Program, Sequences and Blocks
 
-## Program and Blocks
-
-A program in Ceu is a sequence of expressions, and a block is a sequence of
-expressions enclosed by braces (`{` and `}´):
+A program in Ceu is a sequence of statements (expressions), and a block is a
+sequence of expressions enclosed by braces (`{` and `}´):
 
 ```
-Prog  : { Expr }
-Block : `{´ { Expr } `}´
+Prog  : { Expr [`;´] }
+Block : `{´ { Expr [`;´] } `}´
 ```
-
+Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
 ### Blocks
@@ -647,7 +630,7 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ [:unnest[-hide]] Block   ;; an explicit block expression
+Do : `do´ [:unnest[-hide]] Block   ;; an explicit block statement
 ```
 
 `TODO: unnest, hide`
@@ -687,8 +670,8 @@ A `defer` block executes only when its enclosing block terminates:
 Defer : `defer´ Block
 ```
 
-Deferred expression execute in reverse order in which they appear in the source
-code.
+Deferred statements execute in reverse order in which they appear in the
+source code.
 
 Example:
 
@@ -707,7 +690,7 @@ do {
 
 ### Pass
 
-The `pass` expression permits that an innocuous expression is used in the
+The `pass` statement permits that an innocuous expression is used in the
 middle of a block:
 
 ```
@@ -736,7 +719,7 @@ Spc : `...´ | `err´ | `evt´             ;; special variables
 ```
 
 The difference between `val` and `var` is that a `val` is immutable, while a
-`var` declaration can be modified by further `set` expressions:
+`var` declaration can be modified by further `set` statements:
 
 ```
 `set´ Expr `=´ Expr
@@ -765,7 +748,7 @@ arguments.
 
 The variables `err` and `evt` have special scopes and are automatically setup
 in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
-expressions, respectively.
+statements, respectively.
 
 Examples:
 
@@ -1100,7 +1083,7 @@ A `loop if` tests a boolean expression and, if true, executes an iteration of
 the associated block, before testing the condition again.
 When the condition is false, the loop terminates.
 
-There is no `break` expression in Ceu, which can be substituted by a proper
+There is no `break` statement in Ceu, which can be substituted by a proper
 test condition or [`throw-catch`](#exceptions) pair.
 
 All other loops and iterators may be expressed in terms of `loop if`.
@@ -1191,7 +1174,7 @@ continues to propagate upwards.
 A `catch` executes its associated block normally, but also registers a catch
 expression to be compared against `err` when a `throw` is crossing it.
 If they match, the exception is caught and the `catch` terminates, aborting its
-associated block, and properly triggering nested [`defer`](#defer) expressions.
+associated block, and properly triggering nested [`defer`](#defer) statements.
 
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
@@ -1677,10 +1660,10 @@ Operations
 ## Basic Syntax
 
 ```
-Prog  : { Expr }
-Block : `{´ { Expr } `}´
+Prog  : { Expr [`;´] }
+Block : `{´ { Expr [`;´] } `}´
 Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
-      | `defer´ Block                                   ;; defer expressions
+      | `defer´ Block                                   ;; defer statements
       | `pass´ Expr                                     ;; innocuous expression
 
       | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
