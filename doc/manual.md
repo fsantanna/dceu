@@ -1,59 +1,62 @@
 # The Programming Language Ceu
 
-1. LEXICON
-    1. Keywords
-    2. Symbols
-    3. Operators
-    4. Identifiers
-    5. Literals
-    6. Comments
-2. TYPES
-    1. Basic Types
+* DESIGN
+* LEXICON
+    * Keywords
+    * Symbols
+    * Operators
+    * Identifiers
+    * Literals
+    * Comments
+* TYPES
+    * Basic Types
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    2. Collections
+    * Collections
         - `tuple`, `vector`, `dict`
-    3. Execution Units
+    * Execution Units
         - `func`, `coro`, `task`
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-    4. User Types
-3. VALUES
-    1. Plain Values
+    * User Types
+* VALUES
+    * Literal Values
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    2. Dynamic Values
+    * Dynamic Values
         - `tuple`, `vector`, `dict`
         - `func`, `coro`, `task`
-    3. Active Values
+    * Active Values
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-4. EXPRESSIONS
-    1. Program and Blocks
+* EXPRESSIONS
+    * Program and Blocks
         - `do`, `defer`, `pass`
-    2. Variables, Declarations, and Assignments
+    * Variables, Declarations, and Assignments
         - `val`, `var`, `set`
         - `...`, `err`, `evt`
-    3. Tag Enumerations and Tuple Templates
+    * Tag Enumerations and Tuple Templates
         - `enum`, `data`
-    4. Calls, Operations, and Indexing
+    * Calls, Operations, and Indexing
         - `f()`, `x+y`, `t[]`, `t.x`
-    5. Conditionals and Loops
+    * Conditionals and Loops
         - `if`, `ifs`
         - `loop`, `loop if`, `loop until`, `loop in`
-    6. Exceptions
+    * Exceptions
         - `throw`, `catch`
-    7. Coroutine Operations
+    * Coroutine Operations
         - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
         - `spawn`, `resume-yield-all`
-    8. Task Operations
+    * Task Operations
         - `pub`, `spawn`, `await`, `broadcast`
         - `track`, `detrack`
         - `tasks`, `spawn in`, `loop in`
         - `every`, `spawn {}`, `awaiting`, `toggle {}`
         - `par`, `par-and`, `par-or`
-5. STANDARD LIBRARY
-    1. Primary Library
-    2. Auxiliary Library
-6. SYNTAX
-    1. Basic Syntax
-    2. Extended Syntax
+* STANDARD LIBRARY
+    * Primary Library
+    * Auxiliary Library
+* SYNTAX
+    * Basic Syntax
+    * Extended Syntax
+
+<!-- CONTENTS -->
 
 # DESIGN
 
@@ -460,7 +463,7 @@ without any restrictions.
 ## Dynamic Values
 
 A *dynamic value* requires dynamic allocation since its internal data is too
-big to fit in a plain value.
+big to fit in a literal value.
 The following types have dynamic values:
 
 ```
