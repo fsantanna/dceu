@@ -54,6 +54,7 @@ do
     end
 end
 
+--[[
 function summary (T)
     for i=1, #T do
         local t = T[i]
@@ -61,8 +62,8 @@ function summary (T)
         summary(t)
     end
 end
-
 summary(S1)
+]]
 
 do
     local TITLE = false         -- ignore title
@@ -70,6 +71,9 @@ do
     for l in io.lines(...) do
         local n, tit = string.match(l, '^(#+) (.+)$')
         if TITLE and n then
+            local lnk = string.lower(string.gsub(string.gsub(tit, "[%p]", ""), "%s+", "-"))
+            print('<a name="'..lnk..'"/>')
+            print()
             print(n .. ' ' .. S2[tit] .. ' ' .. tit)
         else
             print(l)

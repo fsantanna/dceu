@@ -222,7 +222,7 @@ For this reason, (i) the minus operation requires spaces between operands
 identifiers are rejected (e.g., `x` vs `x-1` vs `a-x`).
 
 An operator identifier is a sequence of operator symbols
-(see [Operators](#TODO)).
+(see [Operators](#operators)).
 An operator can be used as a variable identifier when enclosed by braces (`{`
 and `}`).
 
@@ -253,9 +253,9 @@ STR  : ".*"                   ;; string expression
 NAT  : `.*`                   ;; native expression
 ```
 
-The literal `nil` is the single value of the [*nil*](#TODO) type.
+The literal `nil` is the single value of the [*nil*](#basic-types) type.
 
-The literals `true` and `false` are the only values of the [*bool*](#TODO)
+The literals `true` and `false` are the only values of the [*bool*](#basic-types)
 type.
 
 A [*tag*](#TODO) type literal starts with a colon (`:`) and is followed by
