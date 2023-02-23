@@ -3,10 +3,24 @@
 * DESIGN
 * LEXICON
     * Keywords
+        - `and`, `await`, `awaiting`, `broadcast`, `catch`, `coro`,
+        - `coroutine`, `data`, `defer`, `detrack`, `do`, `else`, `enum`,
+        - `err`, `every`, `evt`, `false`, `func`, `if`, `ifs`, `in`,
+        - `is`, `is-not`, `loop`, `nil`, `not`, `or`, `par`, `par-and`,
+        - `par-or`, `pass`, `poly`, `pub`, `resume`, `resume-yield-all`,
+        - `set`, `spawn`, `status`, `task`, `tasks`, `toggle`, `track`,
+        - `true`, `until`, `val`, `var`, `where`, `with`, `yield`
     * Symbols
+        - `{` `}` `(` `)` `[` `]` `=` `->` `;` `,`
+        - `.` `...` `#[` `@[` `'` `"` `` ` `` `$` `^`
     * Operators
+        - `+` `-` `*` `/` `>` `<` `=`
+        - `!` `|` `&` `~` `%` `#` `@`
     * Identifiers
+        - `ID`, `OP`
     * Literals
+        - `nil´, `bool`, `false´, `true´
+        - `:x`, `10`, `'a'`, `"abc"`, `` ` ``x`` ` ``
     * Comments
 * TYPES
     * Basic Types
@@ -19,9 +33,10 @@
     * User Types
 * VALUES
     * Literal Values
-        - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
+        - `nil` (`nil´), `bool` (`false´,`true´)
+        - `tag` (`:x`), `number` (`1`), `char` (`'a'`), `pointer` (`` ` ``x`` ` ``)
     * Dynamic Values
-        - `tuple`, `vector`, `dict`
+        - `tuple` (`[...]`), `vector` (`#[...]`), `dict` (`@[...]`)
         - `func`, `coro`, `task`
     * Active Values
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
