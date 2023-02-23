@@ -14,42 +14,33 @@
     * Collections
         - `tuple` `vector` `dict`
     * Execution Units
-        - `func` `coro` `task`
-        - `x-coro` `x-task` `x-tasks` `x-track`
+        - `func` `coro` `task` `x-coro` `x-task` `x-tasks` `x-track`
     * User Types
 * VALUES
     * Literal Values
-        - `nil`: `nil`, `bool`: `false` `true`
-        - `tag`: `:x`, `number`: `1`, `char`: `'a'`, `pointer`: `` `x` ``
+        - `nil` `bool` `tag` `number` `char` `pointer`
     * Dynamic Values
-        - `tuple` `[...]`, `vector` `#[...]`, `dict` `@[...]`
-        - `func` `coro` `task`
+        - `tuple` `vector` `dict` `func` `coro` `task`
     * Active Values
         - `x-coro` `x-task` `x-tasks` `x-track`
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
     * Variables, Declarations and Assignments
-        - `val` `var` `set`
-        - `...` `err` `evt`
+        - `val` `var` `set` `...` `err` `evt`
     * Tag Enumerations and Tuple Templates
         - `enum` `data`
     * Calls, Operations and Indexing
         - `f(...)` `x+y` `t[...]` `t.x`
     * Conditionals and Loops
-        - `if` `ifs`
-        - `loop` `loop if` `loop until` `loop in`
+        - `if` `ifs` `loop` `loop if` `loop until` `loop in`
     * Exceptions
         - `throw` `catch`
     * Coroutine Operations
-        - `coroutine` `yield` `resume` `toggle` `kill` `status`
-        - `spawn` `resume-yield-all`
+        - `coroutine` `yield` `resume` `toggle` `kill` `status` `spawn` `resume-yield-all`
     * Task Operations
-        - `pub` `spawn` `await` `broadcast`
-        - `track` `detrack`
-        - `tasks` `spawn in` `loop in`
-        - `every` `spawn {}` `awaiting` `toggle {}`
-        - `par` `par-and` `par-or`
+        - `pub` `spawn` `await` `broadcast` `track` `detrack` `tasks` `spawn in`
+        - `loop in` `every` `spawn {}` `awaiting` `toggle {}` `par` `par-and` `par-or`
 * STANDARD LIBRARY
     * Primary Library
     * Auxiliary Library
