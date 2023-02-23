@@ -92,7 +92,7 @@ do
         if not CONTENTS and n1 then
             --print('>', S3[s3][2], tit1)
             assert(S3[s3][2] == tit1)
-            print(n1..'- <a href=#"'..tolink(tit1)..'">'..S3[s3][1]..'</a> '..tit1)
+            print(n1..'- <a href="#'..tolink(tit1)..'">'..S3[s3][1]..'</a> '..tit1)
             s3 = s3 + 1
         elseif CONTENTS and n2 then
             print('<a name="'..tolink(tit2)..'"/>')

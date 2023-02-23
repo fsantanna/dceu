@@ -1,60 +1,60 @@
 # The Programming Language Ceu
 
-- <a href=#"design">1.</a> DESIGN
-- <a href=#"lexicon">2.</a> LEXICON
-    - <a href=#"keywords">2.1.</a> Keywords
-    - <a href=#"symbols">2.2.</a> Symbols
-    - <a href=#"operators">2.3.</a> Operators
-    - <a href=#"identifiers">2.4.</a> Identifiers
-    - <a href=#"literals">2.5.</a> Literals
-    - <a href=#"comments">2.6.</a> Comments
-- <a href=#"types">3.</a> TYPES
-    - <a href=#"basic-types">3.1.</a> Basic Types
+- <a href="#design">1.</a> DESIGN
+- <a href="#lexicon">2.</a> LEXICON
+    - <a href="#keywords">2.1.</a> Keywords
+    - <a href="#symbols">2.2.</a> Symbols
+    - <a href="#operators">2.3.</a> Operators
+    - <a href="#identifiers">2.4.</a> Identifiers
+    - <a href="#literals">2.5.</a> Literals
+    - <a href="#comments">2.6.</a> Comments
+- <a href="#types">3.</a> TYPES
+    - <a href="#basic-types">3.1.</a> Basic Types
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    - <a href=#"collections">3.2.</a> Collections
+    - <a href="#collections">3.2.</a> Collections
         - `tuple`, `vector`, `dict`
-    - <a href=#"execution-units">3.3.</a> Execution Units
+    - <a href="#execution-units">3.3.</a> Execution Units
         - `func`, `coro`, `task`
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-    - <a href=#"user-types">3.4.</a> User Types
-- <a href=#"values">4.</a> VALUES
-    - <a href=#"literal-values">4.1.</a> Literal Values
+    - <a href="#user-types">3.4.</a> User Types
+- <a href="#values">4.</a> VALUES
+    - <a href="#literal-values">4.1.</a> Literal Values
         - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
-    - <a href=#"dynamic-values">4.2.</a> Dynamic Values
+    - <a href="#dynamic-values">4.2.</a> Dynamic Values
         - `tuple`, `vector`, `dict`
         - `func`, `coro`, `task`
-    - <a href=#"active-values">4.3.</a> Active Values
+    - <a href="#active-values">4.3.</a> Active Values
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
-- <a href=#"expressions">5.</a> EXPRESSIONS
-    - <a href=#"program-and-blocks">5.1.</a> Program and Blocks
+- <a href="#expressions">5.</a> EXPRESSIONS
+    - <a href="#program-and-blocks">5.1.</a> Program and Blocks
         - `do`, `defer`, `pass`
-    - <a href=#"variables-declarations-and-assignments">5.2.</a> Variables, Declarations, and Assignments
+    - <a href="#variables-declarations-and-assignments">5.2.</a> Variables, Declarations, and Assignments
         - `val`, `var`, `set`
         - `...`, `err`, `evt`
-    - <a href=#"tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
+    - <a href="#tag-enumerations-and-tuple-templates">5.3.</a> Tag Enumerations and Tuple Templates
         - `enum`, `data`
-    - <a href=#"calls-operations-and-indexing">5.4.</a> Calls, Operations, and Indexing
+    - <a href="#calls-operations-and-indexing">5.4.</a> Calls, Operations, and Indexing
         - `f()`, `x+y`, `t[]`, `t.x`
-    - <a href=#"conditionals-and-loops">5.5.</a> Conditionals and Loops
+    - <a href="#conditionals-and-loops">5.5.</a> Conditionals and Loops
         - `if`, `ifs`
         - `loop`, `loop if`, `loop until`, `loop in`
-    - <a href=#"exceptions">5.6.</a> Exceptions
+    - <a href="#exceptions">5.6.</a> Exceptions
         - `throw`, `catch`
-    - <a href=#"coroutine-operations">5.7.</a> Coroutine Operations
+    - <a href="#coroutine-operations">5.7.</a> Coroutine Operations
         - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
         - `spawn`, `resume-yield-all`
-    - <a href=#"task-operations">5.8.</a> Task Operations
+    - <a href="#task-operations">5.8.</a> Task Operations
         - `pub`, `spawn`, `await`, `broadcast`
         - `track`, `detrack`
         - `tasks`, `spawn in`, `loop in`
         - `every`, `spawn {}`, `awaiting`, `toggle {}`
         - `par`, `par-and`, `par-or`
-- <a href=#"standard-library">6.</a> STANDARD LIBRARY
-    - <a href=#"primary-library">6.1.</a> Primary Library
-    - <a href=#"auxiliary-library">6.2.</a> Auxiliary Library
-- <a href=#"syntax">7.</a> SYNTAX
-    - <a href=#"basic-syntax">7.1.</a> Basic Syntax
-    - <a href=#"extended-syntax">7.2.</a> Extended Syntax
+- <a href="#standard-library">6.</a> STANDARD LIBRARY
+    - <a href="#primary-library">6.1.</a> Primary Library
+    - <a href="#auxiliary-library">6.2.</a> Auxiliary Library
+- <a href="#syntax">7.</a> SYNTAX
+    - <a href="#basic-syntax">7.1.</a> Basic Syntax
+    - <a href="#extended-syntax">7.2.</a> Extended Syntax
 
 <!-- CONTENTS -->
 
