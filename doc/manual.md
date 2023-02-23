@@ -1,6 +1,5 @@
 # The Programming Language Ceu
 
-```
 1. LEXICON
     1. Keywords
     2. Symbols
@@ -10,33 +9,51 @@
     6. Comments
 2. TYPES
     1. Basic Types
+        - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
     2. Collections
+        - `tuple`, `vector`, `dict`
     3. Execution Units
+        - `func`, `coro`, `task`
+        - `x-coro`, `x-task`, `x-tasks`, `x-track`
     4. User Types
 3. VALUES
     1. Plain Values
+        - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
     2. Dynamic Values
+        - `tuple`, `vector`, `dict`
+        - `func`, `coro`, `task`
     3. Active Values
+        - `x-coro`, `x-task`, `x-tasks`, `x-track`
 4. EXPRESSIONS
     1. Program and Blocks
-    2. Declarations and Assignments
+        - `do`, `defer`, `pass`
+    2. Variables, Declarations, and Assignments
+        - `val`, `var`, `set`
+        - `...`, `err`, `evt`
     3. Tag Enumerations and Tuple Templates
-    4. Literals, Identifiers, and Constructors
-    5. Calls, Operations, and Indexing
-    6. Conditionals and Loops
-    7. Exceptions
-    8. Execution Units
-        1. Functions
-        2. Coroutines
-        3. Tasks
+        - `enum`, `data`
+    4. Calls, Operations, and Indexing
+        - `f()`, `x+y`, `t[]`, `t.x`
+    5. Conditionals and Loops
+        - `if`, `ifs`
+        - `loop`, `loop if`, `loop until`, `loop in`
+    6. Exceptions
+        - `throw`, `catch`
+    7. Coroutine Operations
+        - `coroutine`, `yield`, `resume`, `toggle`, `kill`, `status`
+        - `spawn`, `resume-yield-all´
+    8. Task Operations
+        - `pub`, `spawn`, `await`, `broadcast`
+        - `track`, `detrack`
+        - `tasks`, `spawn in`, `loop in`
+        - `every`, `spawn {}`, `awaiting`, `toggle {}`
+        - `par`, `par-and`, `par-or`
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
-X. EXTENSIONS
 A. SYNTAX
     1. Basic Syntax
     2. Extended Syntax
-```
 
 <!--
 Ceu is a expression-based, dynamically-typed synchronous programming language
@@ -236,7 +253,8 @@ NAT  : `.*`                   ;; native expression
 
 The literal `nil` is the single value of the [*nil*](#TODO) type.
 
-The literals `true` and `false` are the values of the [*bool*](#TODO) type.
+The literals `true` and `false` are the only values of the [*bool*](#TODO)
+type.
 
 A [*tag*](#TODO) type literal starts with a colon (`:`) and is followed by
 letters, digits, dots (`.`), or dashes (`-`).
@@ -256,6 +274,8 @@ A native literal is a sequence of characters enclosed by multiple back quotes
 (`` ` ``).
 The same number of backquotes must be used to open and close the literal.
 `TODO: $, :type, :pre, :ceu`
+
+All literals are valid [values](#TODO) and [expressions](#TODO) in Ceu.
 
 Examples:
 
@@ -421,18 +441,19 @@ template](#TODO) declarations.
 As a dynamic language, each value in Ceu carries extra information, such as its
 own type.
 
-## 3.1. Plain Values
+## 3.1. Literal Values
 
-A *plain value* does not require dynamic allocation since it only carries extra
-information about its type.
-All [basic types](#TODO) have plain values:
+A *literal value* does not require dynamic allocation since it only carries
+extra information about its type.
+All [basic types](#TODO) have [literal](#TODO) values:
 
 ```
-nil    bool    char    number    pointer    tag
+Types : nil | bool | char | number | pointer | tag
+Lits  : `nil´ | `false´ | `true´ | TAG | NUM | CHR | STR | NAT
 ```
 
-Plain values are immutable and are copied between variables and blocks as a
-whole without any restrictions.
+Literals are immutable and are copied between variables and blocks as a whole
+without any restrictions.
 
 ## 3.2. Dynamic Values
 
@@ -441,9 +462,9 @@ big to fit in a plain value.
 The following types have dynamic values:
 
 ```
-tuple    vector    dict
-func     coro      task
-x-coro   x-task    x-tasks   x-track
+Colls  : tuple | vector | dict                  ;; collections
+Protos : func | coro | task                     ;; prototypes
+Actvs  : x-coro | x-task | x-tasks | x-track    ;; active values (next section)
 ```
 
 Dynamic values are mutable and are manipulated through references, allowing
@@ -462,6 +483,65 @@ value to an outer scope.
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
 
+### 3.2.1. Collections
+
+Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
+and dictionaries:
+
+```
+Cons : `[´ [List(Expr)] `]´             ;; tuple
+     | `#[´ [List(Expr)] `]´            ;; vector
+     | `@[´ [List(Key-Val)] `]´         ;; dictionary
+            Key-Val : ID `=´ Expr
+                    | `(´ Expr `,´ Expr `)´
+     | TAG `[´ [List(Expr)] `]´         ;; tagged tuple
+```
+
+Tuples (`[...]`) and vectors (`#[...]`) are built providing a list of
+expressions.
+
+Dictionaries (`@[...]`) are built providing a list of pairs of expressions
+(`(key,val)`), in which each pair maps a key to a value.
+The first expression is the key, and the second is the value.
+If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
+tag `:`).
+
+A tuple constructor may also be prefixed with a tag, which associates the tag
+with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
+Tag constructors are typically used in conjunction with
+[tuple templates](#TODO)
+
+Examples:
+
+```
+[1,2,3]             ;; a tuple
+:Pos [10,10]        ;; a tagged tuple
+#[1,2,3]            ;; a vector
+[(:x,10), x=10]     ;; a dictionary with equivalent key mappings
+```
+
+### 3.2.2. Prototypes
+
+Ceu supports functions, coroutines, and tasks as prototype values:
+
+```
+Func : `func´ `(´ [List(ID)] [`...´] `)´ Block
+Coro : `coro´ `(´ [List(ID)] [`...´] `)´ Block
+Task : `task´ `(´ [List(ID)] [`...´] `)´ Block
+```
+
+Each keyword is followed by an optional list of identifiers as parameters
+enclosed by parenthesis.
+
+The last parameter can be the symbol [`...`](#TODO), which captures as a tuple
+all remaining arguments of a call.
+
+The associated block executes when the unit is [invoked](#TODO).
+Each argument in the invocation is evaluated and copied to the parameter
+identifier, which becomes a local variable in the execution block.
+
+`TODO: closures (reason why dynamic)`
+
 ## 3.3. Active Values
 
 An *active value* corresponds to an active coroutine, task, pool of tasks,
@@ -472,16 +552,18 @@ x-coro  x-task  x-tasks  x-track
 ```
 
 An active value is still a dynamic value, with all properties described above.
-In addition, it also requires to run a finalization routine when going out of
-scope in order to terminate active blocks.
-An `x-track` is set to `nil` when its referred task terminates or goes out of
-scope.
-This is all automated by Ceu.
+In addition, it also runs a finalization routine when going out of scope in
+order to terminate active blocks.
+Finally, an `x-track` is set to `nil` when its referred task terminates or goes
+out of scope.
+This is all automated by the Ceu runtime.
 
 # 4. EXPRESSIONS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
+
+All [values](#TODO) are also expressions.
 
 ## 4.1. Program and Blocks
 
@@ -546,7 +628,7 @@ Blocks also appear in compound statements, such as [conditionals](#TODO),
 
 ### 4.1.2. Defer
 
-A deferred block executes only when its enclosing block terminates:
+A `defer` block executes only when its enclosing block terminates:
 
 ```
 Defer : `defer´ Block
@@ -589,14 +671,15 @@ do {
 }
 ```
 
-## 4.2. Declarations and Assignments
+## 4.2. Variables, Declarations, and Assignments
 
 Regardless of being dynamically typed, all variables in Ceu must be declared
 before use:
 
 ```
-Val : `val´ ID [TAG] [`=´ Expr]
-Var : `var´ ID [TAG] [`=´ Expr]
+Val : `val´ ID [TAG] [`=´ Expr]         ;; constants
+Var : `var´ ID [TAG] [`=´ Expr]         ;; variables
+Spc : `...´ | `err´ | `evt´             ;; special variables
 ```
 
 The difference between `val` and `var` is that a `val` is immutable, while a
@@ -619,7 +702,17 @@ Note that the variable is not guaranteed to hold a value matching the template,
 not even a tuple is guaranteed.
 The template association is static but with no runtime guarantees.
 
-`TODO: evt`
+The symbol `...` represents the variable arguments (*varargs*) a function
+receives in a call.
+In the context of a [function](#TODO) that expects varargs, it evaluates to a
+tuple holding the varargs.
+In other scenarios, accessing `...` raises an error.
+When `...` is the last argument of a call, its tuple is expanded as the last
+arguments.
+
+The variables `err` and `evt` have special scopes and are automatically setup
+in the context of [`throw`](#TODO) and [`broadcast`](#TODO) expressions,
+respectively.
 
 Examples:
 
@@ -736,64 +829,6 @@ data :Event = [ts] {            ;; All events carry a timestamp
 val but :Event.Mouse.Button.Dn = [0, [10,20], 1]
 val evt :Event = but
 println(evt.ts, but.pos.y)      ;; <-- 0, 20
-```
-
-## 4.4. Literals, Identifiers, and Constructors
-
-[Literals](#TODO) (for the simple types) and [identifiers](#TODO) (for
-variables and operators) are the most basic expressions of Ceu:
-
-```
-Basic : `nil´ | `false´ | `true´
-      | NAT | TAG | CHR | NUM | ID
-      | `...´
-      | `err´ | `evt´
-```
-
-The symbol `...` represents the variable arguments (*varargs*) a function
-receives in a call.
-In the context of a [function](#TODO) that expects varargs, it evaluates to a
-tuple holding the varargs.
-In other scenarios, accessing `...` raises an error.
-When `...` is the last argument of a call, its tuple is expanded as the last
-arguments.
-
-The variables `err` and `evt` have special scopes and are automatically setup
-in the context of [`throw`](#TODO) and [`broadcast`](#TODO) expressions,
-respectively.
-
-Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
-and dictionaries:
-
-```
-Cons : `[´ [List(Expr)] `]´             ;; tuple
-     | `#[´ [List(Expr)] `]´            ;; vector
-     | `@[´ [List(Key-Val)] `]´         ;; dictionary
-            Key-Val : ID `=´ Expr
-                    | `(´ Expr `,´ Expr `)´
-     | TAG `[´ [List(Expr)] `]´         ;; tagged tuple
-```
-
-Tuples (`[...]`) and vectors (`#[...]`) are built with a list of expressions.
-
-Dictionaries (`@[...]`) are built with a list of pairs of expressions
-(`(key,val)`), in which each pair maps a key to a value.
-The first expression is the key, and the second is the value.
-If the key is a tag, the alternate syntax `tag=val` may be used (omitting the
-tag `:`).
-
-A tuple constructor may also be prefixed with a tag, which associates the tag
-with the tuple, e.g., `:X [...]` is equivalent to `tags([...], :X, true)`.
-Tag constructors are typically used in conjunction with [tuple templates](#TODO)
-
-Examples:
-
-```
-10                  ;; a nil expression
-:x                  ;; a tag expression
-{++}                ;; an op as an expression
-[(:x,10), x=10]     ;; a dictionary with equivalent key mappings
-:Pos [10,10]        ;; a tagged tuple
 ```
 
 ## 4.5. Calls, Operations, and Indexing
@@ -1080,6 +1115,7 @@ do {
 Examples:
 
 ```
+TODO
 ```
 
 ## 4.7. Exceptions
@@ -1145,32 +1181,9 @@ catch :Err {                          ;; catches generic error
 }                                     ;; --> 1, 2
 ```
 
-## 4.8. Execution Units
 
-Ceu supports functions, coroutines, and tasks as execution units:
 
-```
-Func : `func´ `(´ [List(ID)] [`...´] `)´ Block
-Coro : `coro´ `(´ [List(ID)] [`...´] `)´ Block
-Task : `task´ `(´ [List(ID)] [`...´] `)´ Block
-```
-
-Each keyword is followed by an optional list of identifiers as parameters
-enclosed by parenthesis.
-The last parameter can be the symbol `...`, which captures as a tuple all
-remaining arguments of a call.
-The associated block executes when the unit is invoked.
-Each argument in the invocation is evaluated and copied to the parameter
-identifier, which becomes a local variable in the execution block.
-
-### 4.8.1. Functions
-
-A `func` is a conventional function or subroutine, which suspends the caller
-and runs its associated block to completion.
-When the block terminates, it returns its last expression to the caller, which
-resumes execution.
-
-### 4.8.2. Coroutines
+## 4.8. Coroutine Operations
 
 The `coro` and `task` are coroutine prototypes that, when instantiated, can
 suspend themselves in the middle of execution, before they terminate.
@@ -1233,7 +1246,7 @@ do {
 }                           ;; --> aborted
 ```
 
-#### 4.8.2.1. Create, Resume, Spawn
+### 4.8.1. Create, Resume, Spawn
 
 The operation `coroutine` creates a new coroutine from a [prototype](#TODO).
 The operation `resume` executes a coroutine starting from its last suspension
@@ -1258,7 +1271,7 @@ value.
 The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
 follows: `resume (coroutine(T))(e)`.
 
-#### 4.8.2.2. Status
+### 4.8.2. Status
 
 The operation `status` returns the status of the given active coroutine:
 
@@ -1273,7 +1286,7 @@ As described in [Section TODO](#TODO), a coroutine has 4 possible status:
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
-#### 4.8.2.3. Yield
+### 4.8.3. Yield
 
 The operation `yield` suspends the execution of a running coroutine:
 
@@ -1291,7 +1304,7 @@ If the resume came from a [`broadcast`](#TODO), then the given expression is
 lost.
 -->
 
-#### 4.8.2.4. Resume/Yield All
+### 4.8.4. Resume/Yield All
 
 The operation `resume-yield-all´ continuously resumes the given active
 coroutine, collects its yields, and yields upwards each value, one at a time.
@@ -1350,7 +1363,7 @@ val a5 = resume g(a4+1)                 ;; g(9), a5=10
 println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
 ```
 
-#### 4.8.2.5. Toggle
+### 4.8.5. Toggle
 
 The operation `toggle` configures an active coroutine to ignore or acknowledge
 further `resume` operations:
@@ -1364,7 +1377,7 @@ parenthesis.
 If the toggle is set to `true`, the coroutine will ignore further `resume`
 operations, otherwise it will execute normally.
 
-### 4.8.3. Tasks
+## 4.9. Task Operations
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
 from [event broadcasts](#TODO) without an explicit `resume`.
@@ -1431,7 +1444,7 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-#### 4.8.3.1. Await
+### 4.9.1. Await
 
 The operation `await` suspends the execution of a running task until a
 condition is true:
@@ -1496,16 +1509,19 @@ converted to milliseconds.
 Examples:
 
 ```
+await true                          ;; awakes on any broadcast
+await :key, evt.press==:release     ;; awakes on :key with press=:release
+await 1:h 10:min 30:s               ;; awakes after the specified time
 ```
 
-#### 4.8.3.2. Broadcast
-#### 4.8.3.3. Track and Detrack
-#### 4.8.3.4. Pools of Tasks
-#### 4.8.3.5. Sintax Extensions Blocks
-##### 4.8.3.5.1. Every Block
+### 4.9.2. Broadcast
+### 4.9.3. Track and Detrack
+### 4.9.4. Pools of Tasks
+### 4.9.5. Sintax Extensions Blocks
+#### 4.9.5.1. Every Block
 
-An `every` block is a loop that iterates whenever an await condition is
-satisfied:
+An `every` block is a loop that makes an iteration whenever an await condition
+is satisfied:
 
 ```
 Every : `every´ <awt> Block
@@ -1526,13 +1542,16 @@ It is assumed that `<es>` does not `await` to satisfy the meaning of "every".
 Examples:
 
 ```
+every 1:s {
+    println("1 more second has elapsed")
+}
 ```
 
-##### 4.8.3.5.2. Spawn Blocks
+#### 4.9.5.2. Spawn Blocks
 
 A spawn block spawns an anonymous task:
 
-##### 4.8.3.5.3. Parallel Blocks
+#### 4.9.5.3. Parallel Blocks
 
 A parallel block spawns multiple anonymous tasks concurrently:
 
@@ -1596,10 +1615,11 @@ do {
 Examples:
 
 ```
+TODO
 ```
 
-##### 4.8.3.5.3. Awaiting Block
-##### 4.8.3.5.4. Toggle Block
+#### 4.9.5.3. Awaiting Block
+#### 4.9.5.4. Toggle Block
 
 <!-- ---------------------------------------------------------------------- -->
 
