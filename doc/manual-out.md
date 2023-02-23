@@ -1,3 +1,63 @@
+1. DESIGN
+2. LEXICON
+    1. Keywords
+    2. Symbols
+    3. Operators
+    4. Identifiers
+    5. Literals
+    6. Comments
+3. TYPES
+    1. Basic Types
+    2. Collections
+    3. Execution Units
+    4. User Types
+4. VALUES
+    1. Literal Values
+    2. Dynamic Values
+        1. Constructors
+        2. Prototypes
+    3. Active Values
+5. EXPRESSIONS
+    1. Program and Blocks
+        1. Blocks
+        2. Defer
+        3. Pass
+    2. Variables, Declarations, and Assignments
+    3. Tag Enumerations and Tuple Templates
+        1. Tag Enumerations
+        2. Tuple Templates
+    4. Calls, Operations, and Indexing
+        1. Calls and Operations
+        2. Indexes and Fields
+        3. Precedence and Associativity
+    5. Conditionals and Loops
+        1. Conditionals
+        2. Loops and Iterators
+            1. Iterators
+    6. Exceptions
+    7. Coroutine Operations
+        1. Create, Resume, Spawn
+        2. Status
+        3. Yield
+        4. Resume/Yield All
+        5. Toggle
+    8. Task Operations
+        1. Await
+        2. Broadcast
+        3. Track and Detrack
+        4. Pools of Tasks
+        5. Sintax Extensions Blocks
+            1. Every Block
+            2. Spawn Blocks
+            3. Parallel Blocks
+            4. Awaiting Block
+            5. Toggle Block
+6. STANDARD LIBRARY
+    1. Primary Library
+    2. Auxiliary Library
+7. SYNTAX
+    1. Basic Syntax
+    2. Extended Syntax
 # The Programming Language Ceu
 
 1. LEXICON
@@ -55,7 +115,7 @@
     1. Basic Syntax
     2. Extended Syntax
 
-# DESIGN
+# 1. DESIGN
 
 `TODO`
 
@@ -107,9 +167,9 @@ Follows an extended list of functionalities:
 Ceu is in experimental stage. Both the compiler and runtime can become very slow.
 -->
 
-# LEXICON
+# 2. LEXICON
 
-## Keywords
+## 2.1. Keywords
 
 The following keywords are reserved in Ceu:
 
@@ -167,7 +227,7 @@ The following keywords are reserved in Ceu:
 
 Keywords cannot be used as variable identifiers.
 
-## Symbols
+## 2.2. Symbols
 
 The following symbols are reserved in Ceu:
 
@@ -188,7 +248,7 @@ The following symbols are reserved in Ceu:
     ^               ;; lexer annotation
 ```
 
-## Operators
+## 2.3. Operators
 
 The following operator symbols can be combined to form operator names in Ceu:
 
@@ -201,7 +261,7 @@ The following operator symbols can be combined to form operator names in Ceu:
 
 Operators names cannot clash with reserved symbols (e.g., `->`).
 
-## Identifiers
+## 2.4. Identifiers
 
 Ceu uses identifiers to refer to variables and operators:
 
@@ -238,7 +298,7 @@ map'            ;; var with prime
 {-}             ;; op as var id
 ```
 
-## Literals
+## 2.5. Literals
 
 Ceu provides literals for *nils*, *booleans*, *numbers*, *characters*,
 *strings*, and *native expressions*:
@@ -292,7 +352,7 @@ false               ;; bool literal
 `:number sin($x)`   ;; native with type and interpolation
 ```
 
-## Comments
+## 2.6. Comments
 
 Ceu provides single-line and multi-line comments.
 
@@ -314,7 +374,7 @@ Examples:
 ;;;
 ```
 
-# TYPES
+# 3. TYPES
 
 Ceu is a dynamic language in which values carry their own types during
 execution.
@@ -326,7 +386,7 @@ type(10)  --> :number
 type('x') --> :char
 ```
 
-## Basic Types
+## 3.1. Basic Types
 
 Ceu has 6 basic types:
 
@@ -359,7 +419,7 @@ expressions](#TODO).
 Tags can form [hierarchies](#TODO) to represent user types and describe
 [tuple templates](#TODO).
 
-## Collections
+## 3.2. Collections
 
 Ceu has 3 collection types:
 
@@ -386,7 +446,7 @@ Examples:
 @[(:x,10), (:y,20)]     ;; a dictionary with 2 mappings
 ```
 
-## Execution Units
+## 3.3. Execution Units
 
 Ceu provide 3 types of execution units, functions, coroutines, and tasks:
 
@@ -408,7 +468,7 @@ tasks.
 
 Execution units are described in [Section TODO](#TODO).
 
-## User Types
+## 3.4. User Types
 
 Values from non-basic types (i.e., collections and execution units) can be
 associated with [tags](#TODO) that represent user types.
@@ -438,12 +498,12 @@ println(x is :T)        ;; --> true
 User types do not require to be predeclared, but can appear in [tuple
 template](#TODO) declarations.
 
-# VALUES
+# 4. VALUES
 
 As a dynamic language, each value in Ceu carries extra information, such as its
 own type.
 
-## Literal Values
+## 4.1. Literal Values
 
 A *literal value* does not require dynamic allocation since it only carries
 extra information about its type.
@@ -457,7 +517,7 @@ Lits  : `nil´ | `false´ | `true´ | TAG | NUM | CHR | STR | NAT
 Literals are immutable and are copied between variables and blocks as a whole
 without any restrictions.
 
-## Dynamic Values
+## 4.2. Dynamic Values
 
 A *dynamic value* requires dynamic allocation since its internal data is too
 big to fit in a plain value.
@@ -485,7 +545,7 @@ value to an outer scope.
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
 
-### Constructors
+### 4.2.1. Constructors
 
 Ceu provides constructors for [collections](#TODO) to allocate tuples, vectors,
 and dictionaries:
@@ -522,7 +582,7 @@ Examples:
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
 ```
 
-### Prototypes
+### 4.2.2. Prototypes
 
 Ceu supports functions, coroutines, and tasks as prototype values:
 
@@ -544,7 +604,7 @@ identifier, which becomes a local variable in the execution block.
 
 `TODO: closures (reason why dynamic)`
 
-## Active Values
+## 4.3. Active Values
 
 An *active value* corresponds to an active coroutine, task, pool of tasks,
 or tracked reference:
@@ -560,14 +620,14 @@ Finally, an `x-track` is set to `nil` when its referred task terminates or goes
 out of scope.
 This is all automated by the Ceu runtime.
 
-# EXPRESSIONS
+# 5. EXPRESSIONS
 
 Ceu is an expression-based language in which all statements are expressions and
 evaluate to a value.
 
 All [values](#TODO) are also expressions.
 
-## Program and Blocks
+## 5.1. Program and Blocks
 
 A program in Ceu is a sequence of expressions, and a block is a sequence of
 expressions enclosed by braces (`{` and `}´):
@@ -579,7 +639,7 @@ Block : `{´ { Expr } `}´
 
 A sequence of expressions evaluate to its last expression.
 
-### Blocks
+### 5.1.1. Blocks
 
 A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
@@ -628,7 +688,7 @@ do {
 Blocks also appear in compound statements, such as [conditionals](#TODO),
 [loops](#TODO), and many others.
 
-### Defer
+### 5.1.2. Defer
 
 A `defer` block executes only when its enclosing block terminates:
 
@@ -654,7 +714,7 @@ do {
 }                       ;; --> 1, 4, 3, 2
 ```
 
-### Pass
+### 5.1.3. Pass
 
 The `pass` expression permits that an innocuous expression is used in the
 middle of a block:
@@ -673,7 +733,7 @@ do {
 }
 ```
 
-## Variables, Declarations, and Assignments
+## 5.2. Variables, Declarations, and Assignments
 
 Regardless of being dynamically typed, all variables in Ceu must be declared
 before use:
@@ -730,13 +790,13 @@ val pos :Pos = [10,20]  ;; assumes :Pos has fields [x,y]
 println(pos.x)          ;; <-- 10
 ```
 
-## Tag Enumerations and Tuple Templates
+## 5.3. Tag Enumerations and Tuple Templates
 
 Tags are global identifiers that need not to be predeclared.
 However, they may be explicitly delcared when used as enumerations or tuple
 templates.
 
-### Tag Enumerations
+### 5.3.1. Tag Enumerations
 
 An `enum` groups related tags in sequence so that they are associated with
 numbers in the same order:
@@ -766,7 +826,7 @@ if lib-key-pressed() == :Key-Up {
 }
 ```
 
-### Tuple Templates
+### 5.3.2. Tuple Templates
 
 A `data` declaration associates a tag with a tuple template, which associates
 tuple positions with field identifiers:
@@ -833,9 +893,9 @@ val evt :Event = but
 println(evt.ts, but.pos.y)      ;; <-- 0, 20
 ```
 
-## Calls, Operations, and Indexing
+## 5.4. Calls, Operations, and Indexing
 
-### Calls and Operations
+### 5.4.1. Calls and Operations
 
 In Ceu, calls and operations are equivalent, i.e., an operation is a call that
 uses an [operator](#TODO) with prefix or infix notation:
@@ -867,7 +927,7 @@ x - 10          ;; binary operation
 f(10,20)        ;; normal call
 ```
 
-### Indexes and Fields
+### 5.4.2. Indexes and Fields
 
 Collections in Ceu are ([tuples](#TODO), [vectors](#TODO), and
 [dictionaries](#TODO)) are accessed through indexes or fields:
@@ -912,7 +972,7 @@ dict.x      ;; dict access by field
 t.pub        ;; task public field
 ```
 
-### Precedence and Associativity
+### 5.4.3. Precedence and Associativity
 
 Operations in Ceu can be combined in complex expressions with the following
 precedence priority (from higher to lower):
@@ -938,9 +998,9 @@ x + 10 - 1      ;; ERR: requires parenthesis
 - x + y         ;; (-x) + y
 ```
 
-## Conditionals and Loops
+## 5.5. Conditionals and Loops
 
-### Conditionals
+### 5.5.1. Conditionals
 
 Ceu supports conditionals as follows:
 
@@ -1034,7 +1094,7 @@ ifs :T.Y [] {
 }
 ```
 
-### Loops and Iterators
+### 5.5.2. Loops and Iterators
 
 Ceu supports loops and iterators as follows:
 
@@ -1084,7 +1144,7 @@ loop {
 } until 
 ```
 
-#### Iterators
+#### 5.5.2.1. Iterators
 
 Ceu supports generic iterators, tasks iterators, and numeric iterators as
 follows:
@@ -1120,7 +1180,7 @@ Examples:
 TODO
 ```
 
-## Exceptions
+## 5.6. Exceptions
 
 A `throw` raises an exception that terminates all enclosing blocks up to a
 matching `catch` block:
@@ -1185,7 +1245,7 @@ catch :Err {                          ;; catches generic error
 
 
 
-## Coroutine Operations
+## 5.7. Coroutine Operations
 
 The `coro` and `task` are coroutine prototypes that, when instantiated, can
 suspend themselves in the middle of execution, before they terminate.
@@ -1248,7 +1308,7 @@ do {
 }                           ;; --> aborted
 ```
 
-### Create, Resume, Spawn
+### 5.7.1. Create, Resume, Spawn
 
 The operation `coroutine` creates a new coroutine from a [prototype](#TODO).
 The operation `resume` executes a coroutine starting from its last suspension
@@ -1273,7 +1333,7 @@ value.
 The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
 follows: `resume (coroutine(T))(e)`.
 
-### Status
+### 5.7.2. Status
 
 The operation `status` returns the status of the given active coroutine:
 
@@ -1288,7 +1348,7 @@ As described in [Section TODO](#TODO), a coroutine has 4 possible status:
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
-### Yield
+### 5.7.3. Yield
 
 The operation `yield` suspends the execution of a running coroutine:
 
@@ -1306,7 +1366,7 @@ If the resume came from a [`broadcast`](#TODO), then the given expression is
 lost.
 -->
 
-### Resume/Yield All
+### 5.7.4. Resume/Yield All
 
 The operation `resume-yield-all´ continuously resumes the given active
 coroutine, collects its yields, and yields upwards each value, one at a time.
@@ -1365,7 +1425,7 @@ val a5 = resume g(a4+1)                 ;; g(9), a5=10
 println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
 ```
 
-### Toggle
+### 5.7.5. Toggle
 
 The operation `toggle` configures an active coroutine to ignore or acknowledge
 further `resume` operations:
@@ -1379,7 +1439,7 @@ parenthesis.
 If the toggle is set to `true`, the coroutine will ignore further `resume`
 operations, otherwise it will execute normally.
 
-## Task Operations
+## 5.8. Task Operations
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
 from [event broadcasts](#TODO) without an explicit `resume`.
@@ -1446,7 +1506,7 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-### Await
+### 5.8.1. Await
 
 The operation `await` suspends the execution of a running task until a
 condition is true:
@@ -1516,11 +1576,11 @@ await :key, evt.press==:release     ;; awakes on :key with press=:release
 await 1:h 10:min 30:s               ;; awakes after the specified time
 ```
 
-### Broadcast
-### Track and Detrack
-### Pools of Tasks
-### Sintax Extensions Blocks
-#### Every Block
+### 5.8.2. Broadcast
+### 5.8.3. Track and Detrack
+### 5.8.4. Pools of Tasks
+### 5.8.5. Sintax Extensions Blocks
+#### 5.8.5.1. Every Block
 
 An `every` block is a loop that makes an iteration whenever an await condition
 is satisfied:
@@ -1549,11 +1609,11 @@ every 1:s {
 }
 ```
 
-#### Spawn Blocks
+#### 5.8.5.2. Spawn Blocks
 
 A spawn block spawns an anonymous task:
 
-#### Parallel Blocks
+#### 5.8.5.3. Parallel Blocks
 
 A parallel block spawns multiple anonymous tasks concurrently:
 
@@ -1620,8 +1680,8 @@ Examples:
 TODO
 ```
 
-#### Awaiting Block
-#### Toggle Block
+#### 5.8.5.4. Awaiting Block
+#### 5.8.5.5. Toggle Block
 
 <!-- ---------------------------------------------------------------------- -->
 
@@ -1641,19 +1701,19 @@ Operations
         not, or, and are really special
 -->
 
-# STANDARD LIBRARY
+# 6. STANDARD LIBRARY
 
-## Primary Library
-
-`TODO`
-
-## Auxiliary Library
+## 6.1. Primary Library
 
 `TODO`
 
-# SYNTAX
+## 6.2. Auxiliary Library
 
-## Basic Syntax
+`TODO`
+
+# 7. SYNTAX
+
+## 7.1. Basic Syntax
 
 ```
 Prog  : { Expr }
@@ -1724,7 +1784,7 @@ NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
 NAT   : `.*`                                            ;; native expression
 ```
 
-## Extended Syntax
+## 7.2. Extended Syntax
 
 ```
 Expr  : Expr' [`where´ Block]                           ;; where clause
