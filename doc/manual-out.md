@@ -3,10 +3,24 @@
 - <a href="#design">1.</a> DESIGN
 - <a href="#lexicon">2.</a> LEXICON
     - <a href="#keywords">2.1.</a> Keywords
+        - `and`, `await`, `awaiting`, `broadcast`, `catch`, `coro`,
+        - `coroutine`, `data`, `defer`, `detrack`, `do`, `else`, `enum`,
+        - `err`, `every`, `evt`, `false`, `func`, `if`, `ifs`, `in`,
+        - `is`, `is-not`, `loop`, `nil`, `not`, `or`, `par`, `par-and`,
+        - `par-or`, `pass`, `poly`, `pub`, `resume`, `resume-yield-all`,
+        - `set`, `spawn`, `status`, `task`, `tasks`, `toggle`, `track`,
+        - `true`, `until`, `val`, `var`, `where`, `with`, `yield`
     - <a href="#symbols">2.2.</a> Symbols
+        - `{` `}` `(` `)` `[` `]` `=` `->` `;` `,`
+        - `.` `...` `#[` `@[` `'` `"` `` ` `` `$` `^`
     - <a href="#operators">2.3.</a> Operators
+        - `+` `-` `*` `/` `>` `<` `=`
+        - `!` `|` `&` `~` `%` `#` `@`
     - <a href="#identifiers">2.4.</a> Identifiers
+        - `ID`, `OP`
     - <a href="#literals">2.5.</a> Literals
+        - `nil´, `bool`, `false´, `true´
+        - `:x`, `10`, `'a'`, `"abc"`, `` ` ``x`` ` ``
     - <a href="#comments">2.6.</a> Comments
 - <a href="#types">3.</a> TYPES
     - <a href="#basic-types">3.1.</a> Basic Types
@@ -19,9 +33,10 @@
     - <a href="#user-types">3.4.</a> User Types
 - <a href="#values">4.</a> VALUES
     - <a href="#literal-values">4.1.</a> Literal Values
-        - `nil`, `bool`, `char`, `number`, `pointer`, `tag`
+        - `nil` (`nil´), `bool` (`false´,`true´)
+        - `tag` (`:x`), `number` (`1`), `char` (`'a'`), `pointer` (`` ` ``x`` ` ``)
     - <a href="#dynamic-values">4.2.</a> Dynamic Values
-        - `tuple`, `vector`, `dict`
+        - `tuple` (`[...]`), `vector` (`#[...]`), `dict` (`@[...]`)
         - `func`, `coro`, `task`
     - <a href="#active-values">4.3.</a> Active Values
         - `x-coro`, `x-task`, `x-tasks`, `x-track`
