@@ -876,7 +876,7 @@ t.pub        ;; task public field
 Operations in Ceu can be combined in complex expressions with the following
 precedence priority (from higher to lower):
 
-``
+```
 1. sufix  operations       ;; t[0], x.i, f(x)
 2. prefix operations       ;; -x, #t
 3. binary operations       ;; x + y
