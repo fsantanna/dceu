@@ -26,7 +26,9 @@
     6. Conditionals and Loops
     7. Exceptions
     8. Execution Units
-    9. Coroutine and Task Operations
+        1. Functions
+        2. Coroutines
+        3. Tasks
 5. STANDARD LIBRARY
     1. Primary Library
     2. Auxiliary Library
@@ -328,7 +330,7 @@ unique value in a global enumeration.
 Tags are also known as *symbols* or *atoms* in other programming languages.
 Tags can be explicitly [enumerated](#TODO) to interface with [native
 expressions](#TODO).
-Tags can form [hierachies](#TODO) to represent user types and describe
+Tags can form [hierarchies](#TODO) to represent user types and describe
 [tuple templates](#TODO).
 
 ## 2.2. Collections
@@ -806,7 +808,7 @@ Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 `{+} (x, y)`.
 
 A call expects an expression of type [`func`](#TODO) and an optional list of
-expressions as arguments enclosed by parenthesis (`(` and `)`).
+expressions as arguments enclosed by parenthesis.
 Each argument is expected to match a parameter of the function declaration.
 A call transfers control to the function, which runs to completion and returns
 control with a value, which substitutes the call.
@@ -1047,7 +1049,6 @@ follows:
 
 ```
 Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
-     | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
      | `loop´ `in´                              ;; numeric iterator
             (`[´ | `(´)
             Expr `->´ Expr
@@ -1055,6 +1056,8 @@ Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
             [`,´ :step Expr]
             `,´ ID Block
 ```
+
+`TODO`
 
 ```
 do {
@@ -1069,27 +1072,10 @@ do {
 }
 ```
 
-
-
 Examples:
 
 ```
-val x-or-y =        ;; max between x and y
-    if x > y {
-        x
-    } else {
-        y
-    }
-
-var i = 0
-loop if i<5 {       ;; --> 0,1,2,3,4
-    println(i)
-    set i = i + 1
-}
 ```
-
-Ceu also provides syntactic extensions for [`ifs`](#TODO) with multiple
-conditions and [`loop in`](#TODO) iterators.
 
 ## 4.7. Exceptions
 
@@ -1159,24 +1145,25 @@ catch :Err {                          ;; catches generic error
 Ceu supports functions, coroutines, and tasks as execution units:
 
 ```
-Func : `func´ `(´ [List(ID)] `)´ Block
-Coro : `coro´ `(´ [List(ID)] `)´ Block
-Task : `task´ `(´ [List(ID)] `)´ Block
+Func : `func´ `(´ [List(ID)] [`...´] `)´ Block
+Coro : `coro´ `(´ [List(ID)] [`...´] `)´ Block
+Task : `task´ `(´ [List(ID)] [`...´] `)´ Block
 ```
 
 Each keyword is followed by an optional list of identifiers as parameters
-enclosed by parenthesis (`(` and `)`).
+enclosed by parenthesis.
 The last parameter can be the symbol `...`, which captures as a tuple all
 remaining arguments of a call.
-The associated block executes when the unit is [called](#TODO).
-Each argument in the call is evaluated and copied to the parameter identifier,
-which becomes a local variable in the execution block.
+The associated block executes when the unit is invoked.
+Each argument in the invocation is evaluated and copied to the parameter
+identifier, which becomes a local variable in the execution block.
 
 ### 4.8.1. Functions
 
-A `func` is a conventional function or subroutine, which blocks the caller and
-runs to completion, finally returning a value to the caller, which resumes
-execution.
+A `func` is a conventional function or subroutine, which suspends the caller
+and runs its associated block to completion.
+When the block terminates, it returns its last expression to the caller, which
+resumes execution.
 
 ### 4.8.2. Coroutines
 
@@ -1190,7 +1177,7 @@ The basic API for coroutines has 6 operations:
 1. [`coroutine`](#TODO): creates a new coroutine from a prototype
 2. [`yield`](#TODO): suspends the resumed coroutine
 3. [`resume`](#TODO): starts or resumes a coroutine from its current suspension point
-4. [`toggle`](#TODO): `TODO`
+4. [`toggle`](#TODO): either ignore or acknowledge resumes
 5. [`kill`](#TODO): `TODO`
 6. [`status`](#TODO): returns the coroutine status
 
@@ -1202,7 +1189,7 @@ Just like call arguments and return values from functions, the `yield` and
 A coroutine has 4 possible status:
 
 1. `yielded`: idle and ready to be resumed
-2. `toggled`: paused and ignoring resumes
+2. `toggled`: ignoring resumes
 3. `resumed`: currently executing
 4. `terminated`: terminated and unable to be resumed
 
@@ -1241,6 +1228,137 @@ do {
 }                           ;; --> aborted
 ```
 
+#### 4.8.2.1. Create, Resume, Spawn
+
+The operation `coroutine` creates a new coroutine from a [prototype](#TODO).
+The operation `resume` executes a coroutine starting from its last suspension
+point.
+The operation `spawn` creates and resumes a coroutine:
+
+```
+Create : `coroutine´ `(´ Expr `)´
+Resume : `resume´ Expr `(´ Expr `)´
+Spawn  : `spawn´ Expr `(´ Expr `)´
+```
+
+The operation `coroutine` expects a coroutine prototype (type [`coro`](#TODO)
+or [`task`](#TODO)) and returns an active coroutine (type [`x-coro`](#TODO) or
+[`x-task`](#TODO)).
+
+The operation `resume` expects an active coroutine, and resumes it.
+The coroutine executes until it yields or terminates.
+The `resume` evaluates to the argument of `yield` or to the coroutine return
+value.
+
+The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
+follows: `resume (coroutine(T))(e)`.
+
+#### 4.8.2.2. Status
+
+The operation `status` returns the status of the given active coroutine:
+
+```
+Status : `status´ `(´ Expr `)´
+```
+
+As described in [Section TODO](#TODO), a coroutine has 4 possible status:
+
+1. `yielded`: idle and ready to be resumed
+2. `toggled`: ignoring resumes
+3. `resumed`: currently executing
+4. `terminated`: terminated and unable to be resumed
+
+#### 4.8.2.3. Yield
+
+The operation `yield` suspends the execution of a running coroutine:
+
+```
+Yield : `yield´ `(´ Expr `)´
+```
+
+An `yield` expects an expression between parenthesis that is returned to whom
+resumed the coroutine.
+Eventually, the suspended coroutine is resumed again with a value and the whole
+`yield` is substituted by that value.
+
+<!--
+If the resume came from a [`broadcast`](#TODO), then the given expression is
+lost.
+-->
+
+#### 4.8.2.4. Resume/Yield All
+
+The operation `resume-yield-all´ continuously resumes the given active
+coroutine, collects its yields, and yields upwards each value, one at a time.
+It is typically use to delegate job of an outer coroutine transparently to an
+inner coroutine:
+
+```
+All : `resume-yield-all´ Expr `(´ [Expr] `)´
+```
+
+The operation expects an active coroutine and an optional initial resume value
+between parenthesis, which defaults to `nil`.
+A `resume-yield-all <co> (<arg>)` expands as follows:
+
+```
+do {
+    val co  = <co>                  ;; given active coroutine
+    var arg = <arg>                 ;; given initial value (or nil)
+    loop {
+        val v = resume co(arg)      ;; resumes with current arg
+        if (status(co) /= :terminated) or (v /= nil) {
+            set arg = yield(v)      ;; takes next arg from upwards
+        }
+    } until (status(co) == :terminated)
+    arg                         
+}
+```
+
+The loop in the expansion continuously resumes the target coroutine with a
+given argument, collects its yielded value, yields the same value upwards.
+Then, it expects to be resumed with the next target value, and loops until the
+target coroutine terminates.
+
+Examples:
+
+```
+coro G (b1) {                           ;; b1=1
+    coro L (c1) {                       ;; c1=4
+        val c2 = yield(c1+1)            ;; y(5), c2=6
+        val c3 = yield(c2+1)            ;; y(7), c3=8
+        c3                              ;; 8
+    }
+    val l = coroutine(L)
+    val b2 = yield(b1+1)                ;; y(2), b2=3
+    val b3 = resume-yield-all l(b2+1)   ;; b3=9
+    val b4 = yield(b3+1)                ;; y(10)
+    b4
+}
+
+val g = coroutine(G)
+val a1 = resume g(1)                    ;; g(1), a1=2
+val a2 = resume g(a1+1)                 ;; g(3), a2=5
+val a3 = resume g(a2+1)                 ;; g(6), a3=7
+val a4 = resume g(a3+1)                 ;; g(8), a4=8
+val a5 = resume g(a4+1)                 ;; g(9), a5=10
+println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
+```
+
+#### 4.8.2.5. Toggle
+
+The operation `toggle` configures an active coroutine to ignore or acknowledge
+further `resume` operations:
+
+```
+Toggle : `toggle´ Expr `(´ Expr `)´
+```
+
+A `toggle` expects an active coroutine and a [boolean](#TODO) value between
+parenthesis.
+If the toggle is set to `true`, the coroutine will ignore further `resume`
+operations, otherwise it will execute normally.
+
 ### 4.8.3. Tasks
 
 A `task` is a coroutine prototype that, when instantiated, awakes automatically
@@ -1255,7 +1373,7 @@ A task has a public `pub` variable that can be accessed as a [field](#TODO):
     externally as `x.pub` where `x` is a reference to the task.
 
 A task can be spawned in a [pool](#TODO) of anonymous tasks, which will
-control the task lifecycle and automatically release it from memory on
+control the task life cycle and automatically release it from memory on
 termination.
 In this case, the task is also attached to the block in which the pool is
 declared.
@@ -1308,55 +1426,12 @@ do {
 broadcast 10                    ;; --> 10 \n 10
 ```
 
-## 4.9. Coroutine and Task Operations
+#### 4.8.3.1. Await
 
-### 4.9.1. Create, Resume, Spawn
-
-The operation `coroutine` creates a new coroutine from a [protoype](#TODO).
-The operation `resume` executes a coroutine starting from its last suspension
-point.
-The operation `spawn` creates and resumes a coroutine:
+The operation `await` suspends the execution of a running task until a
+condition is true:
 
 ```
-Create : `coroutine´ `(´ Expr `)´
-Resume : `resume´ Expr `(´ Expr `)´
-Spawn  : `spawn´ Expr `(´ Expr `)´
-```
-
-The operation `coroutine` expects a coroutine prototype (type [`coro`](#TODO)
-or [`task`](#TODO)) and returns an active coroutine (type [`x-coro`](#TODO) or
-[`x-task`](#TODO)).
-
-The operation `resume` expects an active coroutine, and resumes it.
-The coroutine executes until it yields or terminates.
-The `resume` evaluates to the argument of `yield` or to the coroutine return
-value.
-
-The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
-follows: `resume (coroutine(T))(e)`.
-
-### 4.9.2. Status
-
-The operation `status` returns the status of the given active coroutine:
-
-```
-Status : `status´ `(´ Expr `)´
-```
-
-As described in [Section TODO](#TODO), a coroutine has 4 possible status:
-
-1. `yielded`: idle and ready to be resumed
-2. `toggled`: paused and ignoring resumes
-3. `resumed`: currently executing
-4. `terminated`: terminated and unable to be resumed
-
-### 4.9.3. Yield and Await
-
-The operations `yield` and `await` suspend the execution of coroutines and
-tasks:
-
-```
-Yield : `yield´ `(´ Expr `)´
 Await : `await´ [`:check-now`] (
             | Expr
             | TAG [`,´ Expr]
@@ -1364,32 +1439,24 @@ Await : `await´ [`:check-now`] (
         )
 ```
 
-An `yield` suspends the running coroutine and expects an expression between
-parenthesis (`(` and `)`) that is returned to whom resumed the coroutine.
-If the resume came from a [`broadcast`](#TODO), then the given expression is
-lost.
-Eventually, the suspended coroutine is resumed again with a value and the whole
-`yield` is substituted by that value.
+An `await` is expected to be used in conjunction with [event
+broadcasts](#TODO), allowing the condition expression to query the variable
+`evt` with the occurring event.
 
-An `await` suspends the running coroutine until a condition is true.
 All await variations are expansions based on `yield`.
 
 An `await <e>` expands as follows:
 
 ```
-yield()                 ;; ommit if :check-now is set
+yield()                 ;; omit if :check-now is set
 loop if not <e> {
     yield ()
 }
 ```
 
 The expansion yields while the condition is false.
-When the optional tag `:check-now` is set, the condition is tested immeditally,
+When the optional tag `:check-now` is set, the condition is tested immediately,
 and the coroutine may not yield at all.
-
-The `await` is expected to be used in conjuntion with [event broadcasts](#TODO),
-allowing the condition expression to query the variable `evt` with the
-occurring event.
 
 An `await <tag>, <e>` expands as follows:
 
@@ -1421,66 +1488,12 @@ converted to milliseconds.
 
 `TODO: configurable :frame event`
 
-### 4.9.4. Resume/Yield All
+### 4.9.6. Parallel Blocks
 
-The operation `resume-yield-all´ continuously resumes the given active
-coroutine, collects its yields, and yields upwards each value, one at a time.
-It is typically use to delegate its job transparently to a local coroutine:
-
-```
-All : `resume-yield-all´ Expr `(´ [Expr] `)´
-```
-
-The operation expects an active coroutine and an optional initial resume value
-between parenthesis (`(` and `)`), which defaults to `nil`.
-A `resume-yield-all <co> (<arg>)` expands as follows:
-
-```
-do {
-    val co  = <co>                  ;; given active coroutine
-    var arg = <arg>                 ;; given initial value (or nil)
-    loop {
-        val v = resume co(arg)      ;; resumes with current arg
-        if (status(co) /= :terminated) or (v /= nil) {
-            set arg = yield(v)      ;; takes next arg from upwards
-        }
-    } until (status(co) == :terminated)
-    arg                         
-}
-```
-
-The loop in the expansion continuously resumes the target coroutine with a
-given argument, collects its yielded value, yields the same value upwards.
-Then, it expects to be resumed with the next target value, and loops until the
-target coroutine terminates.
-
-Examples:
-
-```
-coro G (b1) {                           ;; b1=1
-    coro L (c1) {                       ;; c1=4
-        val c2 = yield(c1+1)            ;; y(5), c2=6
-        val c3 = yield(c2+1)            ;; y(7), c3=8
-        c3                              ;; 8
-    }
-    val l = coroutine(L)
-    val b2 = yield(b1+1)                ;; y(2), b2=3
-    val b3 = resume-yield-all l(b2+1)   ;; b3=9
-    val b4 = yield(b3+1)                ;; y(10)
-    b4
-}
-
-val g = coroutine(G)
-val a1 = resume g(1)                    ;; g(1), a1=2
-val a2 = resume g(a1+1)                 ;; g(3), a2=5
-val a3 = resume g(a2+1)                 ;; g(6), a3=7
-val a4 = resume g(a3+1)                 ;; g(8), a4=8
-val a5 = resume g(a4+1)                 ;; g(9), a5=10
-println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
-```
 <!-- ---------------------------------------------------------------------- -->
 
-      | `toggle´ Call                                   ;; toggle task
+<!--
+     | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
@@ -1538,7 +1551,6 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
 
       | `if´ Expr Block [`else´ Block]                  ;; conditional
       | `loop´ `if´ Expr Block                          ;; loop while
-      | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
 
       | `catch´ Expr Block                              ;; catch exception
       | `throw´ `(´ Expr `)´                            ;; throw exception
@@ -1551,10 +1563,14 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `status´ `(´ Expr `)´                           ;; coro status
       | `yield´ `(´ Expr `)´                            ;; yield from coro
       | `resume´ Expr `(´ Expr `)´                      ;; resume coro
-      | `toggle´ Call                                   ;; toggle coro
+      | `toggle´ Expr `(´ Expr `)´                      ;; toggle coro
+
       | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
+      | `track´ `(´ Expr `)´                            ;; track task
+      | `detrack´ `(´ Expr `)´                          ;; detrack task
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
+      | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
@@ -1595,9 +1611,9 @@ Expr' : STR
             [`,´ :step Expr]
             `,´ ID Block
 
-      | `func´ ID `(´ [List(ID)] `)´ Block              ;; declaration func
-      | `coro´ ID `(´ [List(ID)] `)´ Block              ;; declaration coro
-      | `task´ ID `(´ [List(ID)] `)´ Block              ;; declaration task
+      | `func´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration func
+      | `coro´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration coro
+      | `task´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration task
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
       | `spawn´ Block                                   ;; spawn anonymous task
@@ -1610,11 +1626,11 @@ Expr' : STR
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
       | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
 
-Await : [`:check-now`] (
-            | `spawn´ Call
-            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´]
-            | TAG `,´ Expr
-            | Expr
+Await : [`:check-now`] (                                ;; check before yield
+            | Expr                                      ;; await condition
+            | TAG `,´ Expr                              ;; await tag
+            | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´] ;; await time
+            | `spawn´ Expr `(´ Expr `)´                 ;; await task
         )
 
 STR   : ".*"                                            ;; string expression
