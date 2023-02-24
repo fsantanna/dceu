@@ -33,6 +33,9 @@ Follows an extended list of functionalities:
 - Hierarchical tuple templates (for data description with inheritance)
 - Seamless integration with C (source-level compatibility)
 
+- DESIGN OF CEU:
+    - https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md#1-design
+
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
 
