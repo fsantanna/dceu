@@ -21,6 +21,10 @@ Ceu extends classical structured programming with three main functionalities:
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
+The main ideas in the design of Ceu:
+
+- https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md#1-design
+
 Follows an extended list of functionalities:
 
 - Dynamic typing
@@ -32,9 +36,6 @@ Follows an extended list of functionalities:
 - Dynamic collections (tuples, vectors, and dictionaries)
 - Hierarchical tuple templates (for data description with inheritance)
 - Seamless integration with C (source-level compatibility)
-
-- Main ideas in the design of Ceu:
-    - https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md#1-design
 
 Ceu is in **experimental stage**.
 Both the compiler and runtime can become very slow.
