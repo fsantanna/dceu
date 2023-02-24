@@ -4,7 +4,7 @@ Ceu is a [synchronous programming language][1] that reconciles *[Structured
 Concurrency][2]* with *[Event-Driven Programming][3]*.
 Ceu extends classical structured programming with three main functionalities:
 
-- Structured Concurrency:
+- Structured Deterministic Concurrency:
     - A set of structured primitives to compose concurrent tasks (e.g.,
       `spawn`, `par-or`, `toggle`).
     - A synchronous and deterministic scheduling policy, which provides
@@ -27,7 +27,7 @@ Follows an extended list of functionalities:
 - Expression based (statements are expressions)
 - Stackless coroutines (the basis of tasks)
 - Restricted closures (upvalues must be explicit and final)
-- Deferred expressions (for finalization)
+- Deferred statements (for finalization)
 - Exception handling
 - Dynamic collections (tuples, vectors, and dictionaries)
 - Hierarchical tuple templates (for data description with inheritance)
@@ -44,7 +44,7 @@ Both the compiler and runtime can become very slow.
 
 # Manual
 
-`TODO`
+- https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md
 
 # Install
 

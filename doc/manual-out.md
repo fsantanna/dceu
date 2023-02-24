@@ -1,6 +1,10 @@
 # The Programming Language Ceu
 
 - <a href="#design">1.</a> DESIGN
+    - <a href="#structured-deterministic-concurrency">1.1.</a> Structured Deterministic Concurrency
+    - <a href="#event-signaling-mechanisms">1.2.</a> Event Signaling Mechanisms
+    - <a href="#lexical-memory-management">1.3.</a> Lexical Memory Management
+    - <a href="#hierarchical-tags">1.4.</a> Hierarchical Tags
 - <a href="#lexicon">2.</a> LEXICON
     - <a href="#keywords">2.1.</a> Keywords
     - <a href="#symbols">2.2.</a> Symbols
@@ -54,26 +58,132 @@
 
 # 1. DESIGN
 
+Ceu is a [synchronous programming language][1] that reconciles *[Structured
+Concurrency][2]* with *[Event-Driven Programming][3]*.
+Ceu extends classical structured programming with three main functionalities:
+
+- Structured Deterministic Concurrency:
+    - A set of structured primitives to compose concurrent tasks (e.g.,
+      `spawn`, `par-or`, `toggle`).
+    - A synchronous and deterministic scheduling policy, which provides
+      predictable behavior and safe abortion of tasks.
+    - A container primitive to hold dynamic tasks, which automatically releases
+      them on termination.
+- Event Signaling Mechanisms:
+    - An `await` primitive to suspend a task and wait for events.
+    - A `broadcast` primitive to signal events and awake awaiting tasks.
+- Lexical Memory Management:
+    - Even dynamic allocation is attached to lexical blocks.
+    - Strict escaping rules to preserve structure reasoning.
+    - Garbage collection restricted to local references only.
+
+Ceu is inspired by [Esterel][4] and [Lua][5].
+
+Follows an extended list of functionalities:
+
+- Dynamic typing
+- Statements as expressions
+- Dynamic collections (tuples, vectors, and dictionaries)
+- Stackless coroutines (the basis of tasks)
+- Restricted closures (upvalues must be explicit and final)
+- Deferred statements (for finalization)
+- Exception handling (throw & catch)
+- Hierarchical tuple templates (for data description with inheritance)
+- Seamless integration with C (source-level compatibility)
+
+[1]: https://en.wikipedia.org/wiki/Synchronous_programming_language
+[2]: https://en.wikipedia.org/wiki/Structured_concurrency
+[3]: https://en.wikipedia.org/wiki/Event-driven_programming
+[4]: https://en.wikipedia.org/wiki/Esterel
+[5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
+
+<a name="structured-deterministic-concurrency"/>
+
+## 1.1. Structured Deterministic Concurrency
+
+In structured concurrency, the life cycle of processes or tasks respect the
+structure of the source code in blocks.
+In this sense, tasks in Ceu are treated in the same way as local variables in
+structured programming:
+When a [block of code](#TODO) terminates or goes out of scope, all of its
+[local variables](#TODO) and [tasks](#TODO) become inaccessible to enclosing
+blocks.
+In addition, tasks are automatically aborted and properly finalized (by
+[deferred statements](#TODO)).
+
+Tasks in Ceu are built on top of [coroutines](#TODO), which unlike OS threads,
+have a predictable run-to-completion semantics, in which they execute
+uninterruptedly up to an explicit [yield](#TODO) operation.
+
+The next example illustrates structured concurrency, abortion, and determinism.
+It uses a `par-or` to spawn two concurrent tasks:
+    one that terminates after 10 seconds, and
+    another that increments variable `n` every second, showing its value on
+    termination:
+
+```
+spawn {
+    par-or {
+        await 10:s
+    } with {
+        var n = 0
+        defer {
+            println("I counted ", n)    ;; invariably outputs 9
+        }
+        every 1:s {
+            set n = n + 1
+        }
+    }
+}
+```
+
+The `par-or` is a structured mechanism that combines tasks in blocks and
+rejoins as a whole when one of its tasks terminates, aborting the others.
+
+The `every` loop in the second task iterates exactly 9 times before the first
+task awakes and terminates the composition.
+For this reason, the second task is aborted before it has the opportunity to
+awake for the 10th time, but its `defer` statement still executes and outputs
+`"I counted 9"`.
+
+Being coroutines, tasks are expected to yield control explicitly, which makes
+scheduling entirely deterministic.
+In addition, tasks awake in the order they appear in the source code, which
+makes the scheduling order predictable.
+This rule allows us to infer that the example will invariably output `9`, no
+matter how many times we execute it.
+
+<a name="event-signaling-mechanisms"/>
+
+## 1.2. Event Signaling Mechanisms
+
+`TODO`
+
+<a name="lexical-memory-management"/>
+
+## 1.3. Lexical Memory Management
+
+`TODO`
+
+<a name="hierarchical-tags"/>
+
+## 1.4. Hierarchical Tags
+
 `TODO`
 
 <!--
-Ceu is a expression-based, dynamically-typed synchronous programming language
-that reconciles Structured Concurrency with Event-Driven Programming.
+- graph of tasks
+    - image!
+- traverse on broadcast
 
-Ceu extends classical structured programming with three main functionalities:
 
- ## Basics
-
- ## Lexical Memory Management
-
- ## Structured Concurrency
+Just like local variables, 
+For instance, if ...
 
 - coro vs task
 - tasks, tracks
 - bcast, await
 - synchronous
-
- ## Tags
 
     Structured Concurrency:
         A set of structured primitives to compose concurrent tasks (e.g., spawn, par-or, toggle).
@@ -354,8 +464,8 @@ The `nil` type represents the absence of values with its single value
 
 The `bool` type represents boolean values with [`true`](#literals) and
 [`false`](#literals).
-In a boolean context, `nil` is interpreted as `false` and all other values from
-all other types are interpreted as `true`.
+In a boolean context, `nil` and `false` are interpreted as `false` and all
+other values from all other types are interpreted as `true`.
 
 The `char` type represents [character literals](#literals).
 
