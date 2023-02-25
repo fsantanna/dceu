@@ -182,7 +182,7 @@ traversed at its single yielded execution point `(5)`.
 A broadcast traversal runs to completion before proceeding to the next
 statement, just like a function call.
 
-The next example illustrates event broadcast and the tasks traversal.
+The next example illustrates event broadcasts and the tasks traversal.
 The example uses an `awaiting` statement to observe an event condition while
 executing a nested task.
 When the condition is satisfied, the nested task is aborted:
@@ -220,7 +220,29 @@ terminating the main block.
 
 ## 1.3. Lexical Memory Management
 
-`TODO`
+Ceu respects the lexical structure of the program also when dealing with
+dynamic allocation of memory.
+Every [dynamic value](#dynamic-values) is attached to the [block](#block) in
+which it was first assigned and cannot escape it in further assignments or as
+return expressions.
+This is valid not only for [collections](#constructors) (tuples, vectors, and
+dictionaries), but also to [closures](#prototypes),
+[coroutines](#active-values), and [tasks](#active-values).
+This restriction ensures that terminating blocks (and consequently tasks)
+deallocate all memory it allocates at once.
+More importantly, it provides static means to reason about the program.
+To overcome this restriction, Ceu also provides an explicit [move](#TODO)
+operation to reattach a dynamic value to an outer scope.
+
+<!--
+The next example illustrates event broadcasts and the tasks traversal.
+
+```
+println("the end")
+```
+
+- GC
+-->
 
 <a name="hierarchical-tags"/>
 
@@ -661,8 +683,8 @@ Dynamic values are mutable and are manipulated through references, allowing
 that multiple aliases refer to the same value.
 
 Dynamic values are always attached to the enclosing [block](#blocks) in which
-they were created, and cannot escape to outer blocks in assignments or as
-return expressions.
+they were first assigned, and cannot escape to outer blocks in further
+assignments or as return expressions.
 This is also valid for active [coroutines](#active-values) and
 [tasks](#active-values).
 This restriction permits that terminating blocks deallocate all dynamic values
@@ -821,7 +843,7 @@ For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for active [coroutines](#active-values) and
 [tasks](#active-values), which are attached to the block in which they were
-created, and are aborted on termination.
+first assigned, and are aborted on termination.
 
 A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
