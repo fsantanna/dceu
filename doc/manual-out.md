@@ -105,18 +105,20 @@ In structured concurrency, the life cycle of processes or tasks respect the
 structure of the source code in blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
-When a [block of code](#TODO) terminates or goes out of scope, all of its
-[local variables](#TODO) and [tasks](#TODO) become inaccessible to enclosing
-blocks.
+When a [block](#blocks) of code terminates or goes out of scope, all of its
+[local variables](variables-declarations-and-assignments) and
+[tasks](#active-values) become inaccessible to enclosing blocks.
+
 In addition, tasks are automatically aborted and properly finalized (by
-[deferred statements](#TODO)).
+[deferred statements](#defer)).
 
-Tasks in Ceu are built on top of [coroutines](#TODO), which unlike OS threads,
-have a predictable run-to-completion semantics, in which they execute
-uninterruptedly up to an explicit [yield](#TODO) operation.
+Tasks in Ceu are built on top of [coroutines](#active-values), which unlike OS
+threads, have a predictable run-to-completion semantics, in which they execute
+uninterruptedly up to an explicit [yield](#yield) or [await](#await) operation.
 
-The next example illustrates structured concurrency, abortion, and determinism.
-It uses a `par-or` to spawn two concurrent tasks:
+The next example illustrates structured concurrency, abortion of tasks, and
+deterministic scheduling.
+The example uses a `par-or` to spawn two concurrent tasks:
     one that terminates after 10 seconds, and
     another that increments variable `n` every second, showing its value on
     termination:
@@ -137,11 +139,12 @@ spawn {
 }
 ```
 
-The `par-or` is a structured mechanism that combines tasks in blocks and
-rejoins as a whole when one of its tasks terminates, aborting the others.
+The [`par-or`](parallel-blocks) is a structured mechanism that combines tasks
+in blocks and rejoins as a whole when one of its tasks terminates,
+automatically aborting the others.
 
-The `every` loop in the second task iterates exactly 9 times before the first
-task awakes and terminates the composition.
+The [`every`](every-block) loop in the second task iterates exactly 9 times
+before the first task awakes and terminates the composition.
 For this reason, the second task is aborted before it has the opportunity to
 awake for the 10th time, but its `defer` statement still executes and outputs
 `"I counted 9"`.
@@ -150,14 +153,37 @@ Being coroutines, tasks are expected to yield control explicitly, which makes
 scheduling entirely deterministic.
 In addition, tasks awake in the order they appear in the source code, which
 makes the scheduling order predictable.
-This rule allows us to infer that the example will invariably output `9`, no
-matter how many times we execute it.
+This rule allows us to infer that the example invariably outputs `9`, no matter
+how many times we execute it.
 
 <a name="event-signaling-mechanisms"/>
 
 ## 1.2. Event Signaling Mechanisms
 
-`TODO`
+Tasks can communicate through events as follows:
+
+- The [`await`](#await) statement suspends a task until it mathes an event
+  condition.
+- The [`broadcast`](#broadcast) statement signals an event to all awaiting
+  tasks.
+
+<img src="bcast.png" align="right"/>
+
+The active tasks form a dynamic tree representing the structure of the program,
+as illustrated in the figure.
+The three is traversed on every broadcast in a predictable way, since it
+respects the lexical structure of the program:
+A task has exactly one active block at a time, which is first traversed `(1)`.
+The active block has a list of active tasks, which are traversed in sequence
+`(2)``(3)`, and exactly one nested block, which is traversed after the nested
+tasks `(4)`.
+After the nested blocks and tasks are traversed, the outer task itself is
+traversed at its single yielded execution point `(5)`.
+
+- graph of tasks
+    - image!
+- environment is invariant during bradcast
+- tasks can be cousins
 
 <a name="lexical-memory-management"/>
 
@@ -172,11 +198,6 @@ matter how many times we execute it.
 `TODO`
 
 <!--
-- graph of tasks
-    - image!
-- traverse on broadcast
-
-
 Just like local variables, 
 For instance, if ...
 
