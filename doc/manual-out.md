@@ -162,7 +162,7 @@ how many times we execute it.
 
 Tasks can communicate through events as follows:
 
-- The [`await`](#await) statement suspends a task until it mathes an event
+- The [`await`](#await) statement suspends a task until it matches an event
   condition.
 - The [`broadcast`](#broadcast) statement signals an event to all awaiting
   tasks.
@@ -175,15 +175,46 @@ The three is traversed on every broadcast in a predictable way, since it
 respects the lexical structure of the program:
 A task has exactly one active block at a time, which is first traversed `(1)`.
 The active block has a list of active tasks, which are traversed in sequence
-`(2)``(3)`, and exactly one nested block, which is traversed after the nested
+`(2,3)`, and exactly one nested block, which is traversed after the nested
 tasks `(4)`.
 After the nested blocks and tasks are traversed, the outer task itself is
 traversed at its single yielded execution point `(5)`.
+A broadcast traversal runs to completion before proceeding to the next
+statement, just like a function call.
 
-- graph of tasks
-    - image!
-- environment is invariant during bradcast
-- tasks can be cousins
+The next example illustrates event broadcast and the tasks traversal.
+The example uses an `awaiting` statement to observe an event condition while
+executing a nested task.
+When the condition is satisfied, the nested task is aborted:
+
+```
+spawn {
+    awaiting evt==:done {
+        par {
+            every evt==:tick {
+                println(":tick-1")      ;; always awakes first
+            }
+        } with {
+            every evt==:tick {
+                println(":tick-2")      ;; always awakes last
+            }
+        }
+    }
+    println(:done)
+}
+broadcast :tick                         ;; <-- :tick-1, tick-2
+broadcast :tick                         ;; <-- :tick-1, tick-2
+broadcast :done                         ;; <-- :done
+println("the end")                      ;; <-- the end
+```
+
+The main block has an outermost `spawn` task, which awaits `:done`, and has two
+nested tasks awaiting `:tick` events.
+Then, the main block broadcasts three events in sequence.
+The first two `:tick` events awake the nested tasks respecting the structure of
+the program, printing `:tick-1` and `:tick-2` in this order.
+The last event aborts the `awaiting` block and prints `:done`, before
+terminating the main block.
 
 <a name="lexical-memory-management"/>
 
