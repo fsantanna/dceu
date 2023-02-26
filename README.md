@@ -21,11 +21,11 @@ Ceu extends classical structured programming with three main functionalities:
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
-Summary of the main ideas in the design of Ceu:
+Follows a summary of the main ideas in the design of Ceu:
 
 - https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md#1-design
 
-Follows an extended list of functionalities:
+Follows an extended list of functionalities in Ceu:
 
 - Dynamic typing
 - Expression based (statements are expressions)

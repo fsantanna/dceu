@@ -278,45 +278,92 @@ handle references in long-lasting blocks.
 
 ## 1.4. Hierarchical Tags
 
-`TODO`
+A [tag](#basic-type) is a basic type of Ceu that represents unique values in a
+human-readable form.
+Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
+be unique in comparison to others, i.e., `:tag-1 /= :tag-2`.
+Tags are global identifiers and need not to be declared.
+Tags are typically used as keys in dictionaries (e.g., `:x`, `:y`), or as
+enumerations representing states (e.g., `:pending`, `:done`).
+Tags are also known as *symbols* or *atoms* in other programming languages.
 
-<!--
-Just like local variables, 
-For instance, if ...
+The next example uses tags as keys in a dictionary:
 
-- coro vs task
-- tasks, tracks
-- bcast, await
-- synchronous
+```
+val pos = @[]               ;; a new dictionary
+set pos[:x] = 10
+set pos.y   = 20            ;; equivalent to pos[:y]=20
+println(pos.x, pos[:y])     ;; <-- 10, 20
+```
 
-    Structured Concurrency:
-        A set of structured primitives to compose concurrent tasks (e.g., spawn, par-or, toggle).
-        A synchronous and deterministic scheduling policy, which provides predictable behavior and safe abortion of tasks.
-        A container primitive to hold dynamic tasks, which automatically releases them on termination.
-    Event Signaling Mechanisms:
-        An await primitive to suspend a task and wait for events.
-        A broadcast primitive to signal events and awake awaiting tasks.
-    Lexical Memory Management:
-        Even dynamic allocation is attached to lexical blocks.
-        Strict escaping rules to preserve structure reasoning.
-        Garbage collection restricted to local references only.
+Tags can also be used to "tag" dynamic objects, such as dictionaries and
+tuples, to support a notion of user types in Ceu.
+For instance, the call `tags(pos,:Pos,true)` associates the tag `:Pos` with the
+value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
 
-Ceu is inspired by Esterel and Lua.
+In Ceu, tag identifiers using dots (`.`) can describe user type hierarchies
+when combined with the function `tags`.
+A tag such as `:T.A.x` matches the types `:T`, `:T.A`, and `:T.A.x` at the same
+time.
+The next example illustrates hierarchical tags combined with the function
+`tags`:
 
-Follows an extended list of functionalities:
+```
+val x = []                  ;; an empty tuple
+tags(x, :T.A, true)         ;; x is of user type :T.A
+println(tags(x,:T))         ;; --> true
+println(tags(x,:T.A))       ;; --> true
+println(tags(x,:T.B))       ;; --> false
+println(x is :T)            ;; --> true  (equivalent to tags(x,:T))
+```
 
-    Dynamic typing
-    Expression based (statements are expressions)
-    Stackless coroutines (the basis of tasks)
-    Restricted closures (upvalues must be explicit and final)
-    Deferred expressions (for finalization)
-    Exception handling
-    Dynamic collections (tuples, vectors, and dictionaries)
-    Hierarchical tuple templates (for data description with inheritance)
-    Seamless integration with C (source-level compatibility)
+In the example, `x` is set to user type `:T.A`, which is compatible with types
+`:T` and `:T.A`, but not with type `:T.B`.
 
-Ceu is in experimental stage. Both the compiler and runtime can become very slow.
--->
+Ceu also provides a `data` construct that associates tags with tuple templates
+enumerating field identifiers.
+A template provides field names for a tuple, which becomes similar to a
+`struct` in C or a `class` in Java.
+The next example defines a template `:Pos`, which serves the same purpose as
+the dictionary of the first example:
+
+```
+data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
+val p1 :Pos = [10,20]   ;; declares that `p1` satisfies template `:Pos`
+println(p1.x, p1.y)     ;; <-- 10, 20
+```
+
+The template mechanism of Ceu can also describe a tag hierarchy to support
+data inheritance, akin to class hierarchy in Object-Oriented Programming.
+A `data` description can precede a block enclosed by braces (`{` and `}`) to
+nest templates, in in which inner tags reuse fields from outer tags.
+The next example illustrates an `:Event` supertype, in which each subtype adds
+extra data to the tuple template:
+
+```
+data :Event = [ts] {            ;; All events carry a timestamp
+    :Key = [key] {              ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
+        :Dn = []                ;; :Event.Key.Dn [ts,key] and :Event.Key.Up [ts,key]
+        :Up = []                ;;  are sub-types of :Event [ts]
+    }
+    :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
+        :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
+        :Button = [but] {       ;; :Event.Mouse.Button [ts, pos :Pos, but]
+            :Dn = []            ;; :Event.Mouse.Button.Dn [ts, pos :Pos, but]
+            :Up = []            ;; :Event.Mouse.Button.Up [ts, pos :Pos, but]
+        }
+    }
+}
+
+val but = :Event.Mouse.Button.Dn [0, [10,20], 1]    ;; [ts,[x,y],but]
+println(but.ts, but.pos.y, but is :Event)           ;; <-- 0, 20, true
+```
+
+Considering the last two lines, a declaration such as
+    `val x = :T [...]` is equivalent to
+    `val x :T = tags([...], :T, true)`,
+which not only tags the tuple with the appropriate user type, but also declares
+that the variable satisfies the template.
 
 <a name="lexicon"/>
 
