@@ -342,21 +342,15 @@ extra data to the tuple template:
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
-    :Key = [key] {              ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
-        :Dn = []                ;; :Event.Key.Dn [ts,key] and :Event.Key.Up [ts,key]
-        :Up = []                ;;  are sub-types of :Event [ts]
-    }
+    :Key = [key]                ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
     :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
         :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
-        :Button = [but] {       ;; :Event.Mouse.Button [ts, pos :Pos, but]
-            :Dn = []            ;; :Event.Mouse.Button.Dn [ts, pos :Pos, but]
-            :Up = []            ;; :Event.Mouse.Button.Up [ts, pos :Pos, but]
-        }
+        :Button = [but]         ;; :Event.Mouse.Button [ts, pos :Pos, but]
     }
 }
 
-val but = :Event.Mouse.Button.Dn [0, [10,20], 1]    ;; [ts,[x,y],but]
-println(but.ts, but.pos.y, but is :Event)           ;; <-- 0, 20, true
+val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
+println(but.ts, but.pos.y, but is :Event)       ;; <-- 0, 20, true
 ```
 
 Considering the last two lines, a declaration such as
@@ -1158,19 +1152,13 @@ Examples:
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
     :Key = [key] {              ;; :Event.Key [ts,key] is a sub-type of :Event [ts]
-        :Dn = []                ;; :Event.Key.Dn [ts,key] and :Event.Key.Up [ts,key]
-        :Up = []                ;;  are sub-types of :Event [ts]
-    }
-    :Mouse = [pos :Pos] {       ;; :Event.Mouse [ts, pos :Pos]
+    :Mouse = [pos :Pos]         ;; :Event.Mouse [ts, pos :Pos]
         :Motion = []            ;; :Event.Mouse.Motion [ts, pos :Pos]
-        :Button = [but] {       ;; :Event.Mouse.Button [ts, pos :Pos, but]
-            :Dn = []            ;; :Event.Mouse.Button.Dn [ts, pos :Pos, but]
-            :Up = []            ;; :Event.Mouse.Button.Up [ts, pos :Pos, but]
-        }
+        :Button = [but]         ;; :Event.Mouse.Button [ts, pos :Pos, but]
     }
 }
 
-val but :Event.Mouse.Button.Dn = [0, [10,20], 1]
+val but :Event.Mouse.Button = [0, [10,20], 1]
 val evt :Event = but
 println(evt.ts, but.pos.y)      ;; <-- 0, 20
 ```
