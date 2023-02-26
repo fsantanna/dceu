@@ -1,5 +1,6 @@
 # BUGS
 
+- bug move closure
 - detrack, scope 999
     - ll_track16_hold_err
 - block defer should be after block clean up

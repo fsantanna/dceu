@@ -689,7 +689,7 @@ println(x is :T)        ;; --> true
 ```
 
 User types do not require to be predeclared, but can appear in [tuple
-template](#TODO) declarations.
+template](#tag-enumerations-and-tuple-templates) declarations.
 
 # VALUES
 
