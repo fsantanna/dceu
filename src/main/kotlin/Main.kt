@@ -16,10 +16,10 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "coro", /*"coroutine",*/ "data", "defer", /*"detrack",*/
-    "do", "else", "enum", "err", "evt", "false", "func", "if", "in", "loop", "nil",
-    "pass", /*"poly",*/ "pub", "resume", "set", "spawn", /*"status",*/ "task",
-    /*"tasks",*/ "toggle", /*"track",*/ "true", "val", "var", "yield"
+    "broadcast", "catch", "coro", "data", "defer", "do", "else", "enum",
+    "err", "evt", "false", "func", "if", "in", "loop", "nil",
+    "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
+    "toggle", "true", "val", "var", "yield"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "is", "is-not", "not", "or",
     "par", "par-and", "par-or", "resume-yield-all", "until", "where", "with"
@@ -45,7 +45,7 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "copy", "coroutine", "detrack", "move", "next", "print", "println",
-    "status", "supof", "tags", "tasks", "throw", "track", "type",
+    "status", "sup?", "tags", "tasks", "throw", "track", "type",
     "{==}", "{#}", "{/=}"
 )
 

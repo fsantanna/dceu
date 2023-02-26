@@ -417,7 +417,7 @@ fun Coder.main (tags: Tags): String {
             ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0]->type} };
             return CEU_RET_RETURN;
         }
-        CEU_RET ceu_supof_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+        CEU_RET ceu_sup_question__f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 2);
             CEU_Value* sup = args[0];
             CEU_Value* sub = args[1];
@@ -484,7 +484,7 @@ fun Coder.main (tags: Tags): String {
                         while (cur != NULL) {
                             CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
                             CEU_Value* args[] = { tag, &x };
-                            assert(CEU_RET_RETURN == ceu_supof_f(frame, _2, 2, args));
+                            assert(CEU_RET_RETURN == ceu_sup_question__f(frame, _2, 2, args));
                             if (ceu_acc.Bool) {
                                 break;
                             }
@@ -1801,9 +1801,9 @@ fun Coder.main (tags: Tags): String {
                             .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} }
                         }
                     };
-                    static CEU_Dyn ceu_supof = { 
+                    static CEU_Dyn ceu_sup_question_ = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_supof_f, {0,NULL}, {{0}} }
+                            .Proto = { NULL, ceu_sup_question__f, {0,NULL}, {{0}} }
                         }
                     };
                     static CEU_Dyn ceu_tags = { 
@@ -1849,13 +1849,13 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
                     ceu_mem->status     = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_status}       };
-                    ceu_mem->supof      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_supof}        };
                     ceu_mem->tags       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tags}         };
                     ceu_mem->tasks      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tasks}        };
                     ceu_mem->throw      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_throw}        };
                     ceu_mem->track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
                     ceu_mem->type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
                     ceu_mem->op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
+                    ceu_mem->sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
                     ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
                     ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
                 }

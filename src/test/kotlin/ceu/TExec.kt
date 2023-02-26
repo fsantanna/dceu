@@ -2222,12 +2222,12 @@ class TExec {
             pass :B.I
             pass :B.I.X
             pass :B.I.X.1
-            println(supof(:A, :A.I))
-            println(supof(:A, :A.I.X))
-            println(supof(:A.I.X, :A.I.Y))
-            println(supof(:A.J, :A.I.Y))
-            println(supof(:A.I.X, :A))
-            println(supof(:B, :B.I.X.1))
+            println(sup?(:A, :A.I))
+            println(sup?(:A, :A.I.X))
+            println(sup?(:A.I.X, :A.I.Y))
+            println(sup?(:A.J, :A.I.Y))
+            println(sup?(:A.I.X, :A))
+            println(sup?(:B, :B.I.X.1))
         """, true)
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
