@@ -213,28 +213,58 @@ terminating the main block.
 ## Lexical Memory Management
 
 Ceu respects the lexical structure of the program also when dealing with
-dynamic allocation of memory.
+dynamic memory allocation.
 Every [dynamic value](#dynamic-values) is attached to the [block](#block) in
 which it was first assigned and cannot escape it in further assignments or as
 return expressions.
 This is valid not only for [collections](#constructors) (tuples, vectors, and
-dictionaries), but also to [closures](#prototypes),
+dictionaries), but also for [closures](#prototypes),
 [coroutines](#active-values), and [tasks](#active-values).
 This restriction ensures that terminating blocks (and consequently tasks)
-deallocate all memory it allocates at once.
-More importantly, it provides static means to reason about the program.
+deallocate all memory at once.
+*More importantly, it provides static means to reason about the program.*
 To overcome this restriction, Ceu also provides an explicit [move](#TODO)
 operation to reattach a dynamic value to an outer scope.
 
-<!--
-The next example illustrates event broadcasts and the tasks traversal.
+The next example illustrates lexical memory management and the validity of
+assignments:
 
 ```
-println("the end")
+var x1 = [1,2,3]
+var x2 = do {
+    val y1 = x1         ;; ok, scope of x1>y1
+    val y2 = [4,5,6]
+    set x1 = y2         ;; no, scope of y2<x1
+    [7,8,9]             ;; ok, tuple no assigned yet
+}                       ;; deallocates [4,5,6], but not [7,8,9]
 ```
 
-- GC
--->
+The assignment `y1=x1` is valid because the tuple `[1,2,3]` held in `x1` is
+guaranteed to be in memory while `y1` is visible.
+However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
+`y2` is deallocated at the end of the block, but `x1` remains visible.
+
+The next example uses `move` to reattach a local vector to an outer scope:
+
+```
+func to-vector (it) {           ;; it -> vector
+    val ret = #[]               ;; vector is allocated locally
+    loop in iter(it), v {
+        set ret[+] = v          ;; each value is appended to vector
+    }
+    move(ret)                   ;; local vector is moved out
+}
+```
+
+The function `to-vector` receives an iterable value, and copies all of its
+values to a new vector, which is finally returned.
+Since the vector `ret` is allocated inside the function, it requires an
+explicit `move` be reattached to the caller scope.
+
+Note that [literal values](#literal-values), such as numbers, have no
+assignment restrictions because they are copied as a whole.
+Note also that Ceu still supports garbage collection for dynamic values to
+handle references in long-lasting blocks.
 
 ## Hierarchical Tags
 

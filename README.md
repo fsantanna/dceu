@@ -21,7 +21,7 @@ Ceu extends classical structured programming with three main functionalities:
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
-The main ideas in the design of Ceu:
+Summary of the main ideas in the design of Ceu:
 
 - https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md#1-design
 
