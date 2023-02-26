@@ -294,7 +294,16 @@ value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
 In Ceu, tag identifiers using dots (`.`) can describe user type hierarchies
 when combined with the function `tags`.
 A tag such as `:T.A.x` matches the types `:T`, `:T.A`, and `:T.A.x` at the same
-time.
+time, as verified by function `sup?`:
+
+```
+println(sup?(:T,     :T.A.x))    ;; --> true
+println(sup?(:T.A,   :T.A.x))    ;; --> true
+println(sup?(:T.A.x, :T.A.x))    ;; --> true
+println(sup?(:T.A.x, :T))        ;; --> false
+println(sup?(:T.A,   :T.B))      ;; --> false
+```
+
 The next example illustrates hierarchical tags combined with the function
 `tags`:
 
@@ -356,19 +365,17 @@ that the variable satisfies the template.
 The following keywords are reserved in Ceu:
 
 ```
-    and                 ;; and operator                 (00)
+    and                 ;; and operator                     (00)
     await               ;; await event
     awaiting            ;; awaiting block
     broadcast           ;; broadcast event
     catch               ;; catch exception
     coro                ;; coroutine prototype
-    coroutine           ;; create coroutine
     data                ;; data declaration
     defer               ;; defer block
-    detrack             ;; detrack task
-    do                  ;; do block                     (10)
+    do                  ;; do block
     else                ;; else block
-    enum                ;; enum declaration
+    enum                ;; enum declaration                 (10)
     err                 ;; exception variable
     every               ;; every block
     evt                 ;; event variable
@@ -376,9 +383,9 @@ The following keywords are reserved in Ceu:
     func                ;; function prototype
     if                  ;; if block
     ifs                 ;; ifs block
-    in                  ;; in keyword                   (20)
+    in                  ;; in keyword
     is                  ;; is operator
-    is-not              ;; is-not operator
+    is-not              ;; is-not operator                  (20)
     loop                ;; loop block
     nil                 ;; nil value
     not                 ;; not operator
@@ -386,25 +393,22 @@ The following keywords are reserved in Ceu:
     par                 ;; par block
     par-and             ;; par-and block
     par-or              ;; par-or block
-    pass                ;; innocuous expression         (30)
+    pass                ;; innocuous expression
     poly                ;; TODO
-    pub                 ;; public variable
+    pub                 ;; public variable                  (30)
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     set                 ;; assign expression
     spawn               ;; spawn coroutine
-    status              ;; coroutine status
     task                ;; task prototype/self identifier
-    tasks               ;; pool of tasks
-    toggle              ;; toggle coroutine/block       (40)
-    track               ;; track task
+    toggle              ;; toggle coroutine/block
     true                ;; true value
     until               ;; until loop modifier
     val                 ;; constant declaration
-    var                 ;; variable declaration
+    var                 ;; variable declaration             (40)
     where               ;; where block
     with                ;; with block
-    yield               ;; yield coroutine              (48)
+    yield               ;; yield coroutine                  (43)
 ```
 
 Keywords cannot be used as variable identifiers.
@@ -652,7 +656,7 @@ active tasks.
 ## User Types
 
 Values from non-basic types (i.e., collections and execution units) can be
-associated with [tags](#TODO) that represent user types.
+associated with [tags](#basic-types) that represent user types.
 
 The function [`tags`](#TODO) associates tags with values, and also checks if a
 value is of the given tag:
@@ -666,6 +670,14 @@ println(tags(x,:T))     ;; --> true
 Tags form type hierarchies based on the dots in their identifiers, i.e., `:T.A`
 and `:T.B` are subtypes of `:T`.
 Tag hierarchies can nest up to 4 levels.
+
+The function [`sup?`](#TODO) checks supertype relations between tags:
+
+```
+println(sup?(:T, :T.A)    ;; --> true
+println(sup?(:T.A, :T)    ;; --> false
+println(sup?(:T.A, :T.B)  ;; --> false
+```
 
 The function [`is`](#TODO) checks if values match types or tags:
 
@@ -1347,7 +1359,8 @@ loop if i<5 {       ;; --> 0,1,2,3,4
 }
 
 loop {
-} until 
+    TODO
+} until TODO
 ```
 
 #### Iterators
@@ -1581,7 +1594,7 @@ do {
             set arg = yield(v)      ;; takes next arg from upwards
         }
     } until (status(co) == :terminated)
-    arg                         
+    arg
 }
 ```
 
@@ -1881,7 +1894,14 @@ Operations
 
 ## Primary Library
 
-`TODO`
+```
+ # == /=
+copy coroutine
+detrack move next
+print println status
+sup? tags tasks
+throw track type
+```
 
 ## Auxiliary Library
 
