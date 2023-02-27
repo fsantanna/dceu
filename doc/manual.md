@@ -102,7 +102,7 @@ structure of the source code in blocks.
 In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
-[local variables](variables-declarations-and-assignments) and
+[local variables](#variables-declarations-and-assignments) and
 [tasks](#active-values) become inaccessible to enclosing blocks.
 
 In addition, tasks are automatically aborted and properly finalized (by
@@ -452,15 +452,17 @@ Operators names cannot clash with reserved symbols (e.g., `->`).
 Ceu uses identifiers to refer to variables and operators:
 
 ```
-ID : [A-Za-z_][A-Za-z0-9_'?!-]*      ;; letter/under/digit/quote/quest/excl/dash
-   | `{´ OP `}´                      ;; operator enclosed by braces as identifier
-OP : [+-*/><=!|&~%#@]+               ;; see Operators
+ID : [^|^^] [A-Za-z_][A-Za-z0-9_'?!-]*  ;; letter/under/digit/quote/quest/excl/dash
+   | `{´ OP `}´                         ;; operator enclosed by braces as identifier
+OP : [+-*/><=!|&~%#@]+                  ;; see Operators
 ```
 
 A variable identifier starts with a letter or underscore (`_`) and is followed
 by letters, digits, underscores, single quotes (`'`), question marks (`?`),
 exclamation marks (`!`), or dashes (`-`).
 A dash must be followed by a letter or digit.
+Identifiers can be prefixed with carets (`^` or `^^`), which are associated
+with [closure](#prototypes) access modifiers.
 
 Note that dashes are ambiguous with the minus operator.
 For this reason, (i) the minus operation requires spaces between operands
@@ -797,7 +799,27 @@ The associated block executes when the unit is [invoked](#TODO).
 Each argument in the invocation is evaluated and copied to the parameter
 identifier, which becomes a local variable in the execution block.
 
-`TODO: closures (reason why dynamic)`
+Ceu supports a restricted form of closures, in which *upvalues* must be
+explicit and final.
+A closure is a prototype that accesses variables from blocks that terminate,
+but which the closure escapes and survives along with these variables, known as
+*upvalues*.
+Upvalues must be explicitly declared and accessed with the caret prefix (`^`),
+and cannot be modified (declarations must use the modifier
+[`val`](#variables-declarations-and-assignments))
+Finally, inside closures the accesses must be prefixed with double carets
+(`^^`).
+
+Examples:
+
+```
+func (^v1) {
+    val ^v2 = ^v1 + 1   ;; single caret
+    func () {           ;; closure survives block of v1/v2
+        ^^v1 + ^^v2     ;; double caret
+    }
+}
+```
 
 ## Active Values
 
@@ -1171,10 +1193,12 @@ to `v[i]`.
 For a dictionary `v`, and a [tag literal](#literals) `k` (with the colon `:`
 omitted), the operation expands to `v[:k]`.
 
-`TODO: tuple template`
-
 A [task](#active-values) `t` also relies on a field operation to access its
 public field `pub` (i.e., `t.pub`).
+
+A [variable](#variables-declarations-and-assignments) associated with a
+[tuple template](#tag-enumerations-and-tuple-templates) can also be indexed
+using a field operation.
 
 Examples:
 
@@ -1187,7 +1211,10 @@ vec[i]      ;; vector access by index
 dict[:x]    ;; dict access by index
 dict.x      ;; dict access by field
 
-t.pub        ;; task public field
+t.pub       ;; task public field
+
+val t :T    ;; tuple template
+t.x
 ```
 
 ### Precedence and Associativity
@@ -1359,8 +1386,9 @@ loop if i<5 {       ;; --> 0,1,2,3,4
 }
 
 loop {
-    TODO
-} until TODO
+    val x = random-next() % 100
+    println(x)
+} until x > 80
 ```
 
 #### Iterators
@@ -1971,7 +1999,7 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
-ID    : [A-Za-z_][A-Za-z0-9_\'\?\!\-]*                  ;; identifier variable
+ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable (`^´ upval)
       | `{´ OP `}´                                      ;; identifier operation
 TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
 OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
