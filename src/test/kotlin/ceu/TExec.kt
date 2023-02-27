@@ -2734,6 +2734,25 @@ class TExec {
         )
         assert(out == "2\n") { out }
     }
+    @Test
+    fun clo27_escape_err() {
+        val out = all(
+        """
+            val x = 10
+            val f = func (y) {
+                val g = func () {
+                    y
+                }
+                move(g)
+            }
+            println(f(1)())
+            """,
+        )
+        assert(out == "anon : (lin 9, col 21) : f(1)\n" +
+                "anon : (lin 7, col 17) : move(g)\n" +
+                "move error : value is not movable\n" +
+                ":error\n") { out }
+    }
 
     //  MEM-GC-REF-COUNT
 

@@ -1601,6 +1601,10 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
+            if (src->type>CEU_VALUE_DYNAMIC && dyn->isperm==CEU_PERM_ERR) {
+                CEU_THROW_MSG("move error : value is not movable");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:

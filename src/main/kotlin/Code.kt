@@ -168,11 +168,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
                 tops.second.add(type)
+                //println(listOf(this.tk.pos, clos.protos_noclos.contains(this)))
                 tops.third.add(func)
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                    ${if (clos.protos_noclos.contains(this)) 1 else 0},     // noclo must be perm=1
+                    ${if (clos.protos_noclos.contains(this)) "CEU_PERM_ERR" else "CEU_PERM_TMP"},
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,

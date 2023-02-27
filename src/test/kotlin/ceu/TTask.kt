@@ -2582,7 +2582,7 @@ class TTask {
         //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun hh_pub16() {
+    fun hh_pub16_err() {
         val out = all("""
             var t
             set t = task (v) {
@@ -2596,13 +2596,17 @@ class TTask {
                 move(task.pub)
             }
             var a = spawn (t) ([1])
-            println(a.pub)
+            ;;println(a.pub)
             broadcast in a, nil
-            println(a.pub)
+            ;;println(a.pub)
             broadcast in a, [3]
-            println(a.pub)
+            ;;println(a.pub)
         """, true)
-        assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
+        //assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
+        assert(out == "anon : (lin 17, col 13) : broadcast in a, [3]\n" +
+                "anon : (lin 11, col 17) : move(task.pub)\n" +
+                "move error : value is not movable\n" +
+                ":error\n") { out }
     }
     @Test
     fun hh_17_pub_out() {
@@ -2619,7 +2623,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun hh_18_pub_out() {
+    fun hh_18_pub_out_err() {
         val out = all("""
             var t = task () {
                 set task.pub = []
@@ -2628,7 +2632,10 @@ class TTask {
             var a = spawn (t) ()
             println(a.pub)
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 6, col 28) : t()\n" +
+                "anon : (lin 2, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun hh_19_pub_tasks_tup() {
@@ -2643,7 +2650,7 @@ class TTask {
             spawn in ts, T()
             println(:ok)
         """)
-        assert(out == "[]\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // STATUS
@@ -3328,7 +3335,7 @@ class TTask {
                 ":error\n") { out }
     }
     @Test
-    fun nn_02_expose() {
+    fun nn_02_expose_err() {
         val out = all("""
             var f = func (t) {
                 var p = t.pub   ;; ok
@@ -3346,7 +3353,11 @@ class TTask {
             f(a)
             nil
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 15, col 13) : f(a)\n" +
+                "anon : (lin 2, col 30) : set error : incompatible scopes\n" +
+                "[]\n" +
+                ":error\n") { out }
     }
     @Test
     fun nn_03_expose_err() {
@@ -3364,7 +3375,8 @@ class TTask {
             var x = f(a)        ;; no
             println(x)
         """)
-        assert(out == "anon : (lin 12, col 13) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 12, col 21) : f(a)\n" +
+                "anon : (lin 2, col 30) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3666,10 +3678,13 @@ class TTask {
             var t = spawn (T) ()
             println(f(t))
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
         //        "anon : (lin 9, col 25) : f()\n" +
         //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 10, col 21) : f(t)\n" +
+                "anon : (lin 2, col 30) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // XCEU
