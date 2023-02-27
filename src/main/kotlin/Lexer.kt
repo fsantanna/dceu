@@ -295,7 +295,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     when {
                         (x3.isLetter() || x3 == '_') -> {
-                            val id = x3 + read2While { (it.isLetterOrDigit() || it=='_') }
+                            val id = x3 + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetterOrDigit()) }
                             if (KEYWORDS.contains(id)) {
                                 err(pos, "token ^ error : unexpected keyword")
                                 yield(Tk.Fix(id, pos))
