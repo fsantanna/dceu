@@ -1393,8 +1393,7 @@ loop {
 
 #### Iterators
 
-Ceu supports generic iterators, tasks iterators, and numeric iterators as
-follows:
+Ceu supports generic iterator loops and numeric iterator loops as follows:
 
 ```
 Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
@@ -1402,30 +1401,74 @@ Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
             (`[´ | `(´)
             Expr `->´ Expr
             (`]´ | `)´)
-            [`,´ :step Expr]
+            [`,´ :step (`-´|`+´) Expr]
             `,´ ID Block
 ```
 
-`TODO`
+A generic loop expects an iterator `<it>`, a variable identifier `<i>`, and a
+block `<b>`.
+It expands as follows:
 
 ```
 do {
-    val it :Iterator = <it>
-    assert(it is :Iterator, "expected :Iterator")
     loop {
-        val i = it.f(it)
-        if i /= nil {
+        val <i> = <it>[0](<it>)
+        if <i> /= nil {
             <b>
         }
-    } until (i == nil)
+    } until (<i> == nil)
+}
+```
+
+The iterator `<it>` is expected to be a tuple holding a function at index `0`
+and any other state required to operate at the other indexes.
+The function `<it>[0]` expects the iterator itself as argument, and returns its
+next value or `nil` to signal termination.
+The loop calls the function repeatedly, assigning each result to variable
+`<i>`, which can be accessed in block `<b>`.
+
+The function [`iter`](#TODO) converts many values, such as vectors and
+coroutines into iterators, so that they can be used in iterator loops.
+
+A numeric loop expects an interval from `<ini>` to `<end>`, with open (`(` and
+`)`) or closed (`[` and `]`) delimiters, an optional `:step` expression `<s>`
+(defaults to `+1`), a variable identifier `<i>`, and a block `<b>`.
+It expands as follows:
+
+```
+do {
+    var <i> = <ini>             ;; +<s>, if open interval
+    val lim = <end>
+    loop if <i> <cmp> lim {     ;; <cmp>: <=, if <s> is positive (<, if open interval)
+        <b>                     ;;        >=, if <s> is negative (>, if open interval)
+        set <i> = <i> +<s>
+    }
 }
 ```
 
 Examples:
 
 ```
-TODO
+val f = func (t) {              ;; t = [f, V]
+    val ret = t.1               ;; V
+    set t.1 = t.1 - 1           ;; V = V - 1
+    ((ret > 0) and ret) or nil  ;; V or nil
+}
+loop in [f, 5], v {
+    println(v)                  ;; -> 5, 4, 3, 2, 1
+}
+
+loop in iter([1,2,3]), v {
+    println(v)                  ;; --> [0,1], [1,2], [2,3]
+}
+
+loop in [10 -> 0), :step -2, v {
+    println(v)                  ;; --> 10, 8, 6, 4, 2
+}
 ```
+
+Ceu also supports [tasks iterators](#pools-of-tasks), which are primitives and
+not simple `loop` expansions.
 
 ## Exceptions
 
@@ -1935,6 +1978,10 @@ throw track type
 
 `TODO`
 
+<!--
+- :Iterator
+-->
+
 # SYNTAX
 
 ## Basic Syntax
@@ -2033,7 +2080,7 @@ Expr' : STR
             (`[´ | `(´)
             Expr `->´ Expr
             (`]´ | `)´)
-            [`,´ :step Expr]
+            [`,´ :step (`-´|`+´) Expr]
             `,´ ID Block
 
       | `func´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration func
