@@ -358,6 +358,18 @@ Considering the last two lines, a declaration such as
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
 
+## Integration with C
+
+`TODO`
+
+<!--
+- gcc
+- :pre
+- $x.Tag
+- tag,char,bool,number C types
+- C errors
+-->
+
 # LEXICON
 
 ## Keywords
@@ -512,16 +524,16 @@ A [*number*](#basic-types) type literal starts with a digit and is followed by
 digits, letters, and dots (`.`), and is represented as a *C float*.
 
 A [*char*](#basic-types) type literal is a single or backslashed (`\`)
-character enclosed by single quotes (`'`), and is representaed as a *C char*.
+character enclosed by single quotes (`'`), and is represented as a *C char*.
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
 It is expanded to a [vector](#collections) of character literals, e.g., `"abc"`
 expands to `#['a','b','c']`.
 
-A native literal is a sequence of characters enclosed by multiple back quotes
-(`` ` ``).
+A native literal is a sequence of characters interpreted as C code enclosed by
+multiple back quotes (`` ` ``).
 The same number of backquotes must be used to open and close the literal.
-`TODO: $, :type, :pre, :ceu`
+Native literals are detailed further.
 
 All literals are valid [values](#values) in Ceu.
 
@@ -535,7 +547,39 @@ false               ;; bool literal
 'a'                 ;; char literal
 "Hello!"            ;; string literal
 `puts("hello");`    ;; native literal
-`:number sin($x)`   ;; native with type and interpolation
+```
+
+### Native Literals
+
+A native literal can specify a tag modifier as follows:
+
+```
+`:<type> <...>`
+`:ceu <...>`
+`:pre <...>`
+`<...>`
+```
+
+The `:<type>` modifier assumes the C code in `<...>` is an expression of the
+given type and converts it to Ceu.
+The `:ceu` modifier assumes the code is already a value in Ceu and does not
+convert it.
+The `:pre` modifier assumes the code is a C statement that should be placed
+*as is* at the top of the [output file](#TODO).
+The lack of a modifier also assumes a C statement, but to be inlined at the
+current position.
+
+Native literals can include Ceu expressions with an identifier prefixed by
+dollar sign (`$`) suffixed by dot (`.`) with one of the desired types:
+    `.Tag`, `.Bool`, `.Char`, `.Number`, `.Pointer`.
+
+Examples:
+
+```
+val n = `:number 10`            ;; native 10 is converted to Ceu number
+val x = `$n`                    ;; `x` is set to Ceu `n` as is
+`:pre #include <x.h>`           ;; includes x.h at the top of the final
+`printf("> %f\n", $n.Number);`  ;; outputs `n` as a number
 ```
 
 ## Comments
