@@ -1948,8 +1948,8 @@ the sense that they cannot be written in Ceu itself:
 - `detrack`:    See [Track and Detrack](#track-and-detrack).
 - `move`:       See [Copy and Move](#copy-and-move).
 - `next`
-- `print`
-- `println`
+- `print`:      See [Print](#print).
+- `println`:    See [Print](#print).
 - `status`:     See [Status](#status).
 - `sup?`
 - `tags`
@@ -2008,10 +2008,14 @@ val u = do {
 
 ```
 
-### `print` and `println`
+### Print
+
+The functions `print` and `println` outputs the given values.
+
+Examples:
 
 ```
-next
+println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
 sup? tags
 throw type
 ```
