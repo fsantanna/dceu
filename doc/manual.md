@@ -223,8 +223,8 @@ dictionaries), but also for [closures](#prototypes),
 This restriction ensures that terminating blocks (and consequently tasks)
 deallocate all memory at once.
 *More importantly, it provides static means to reason about the program.*
-To overcome this restriction, Ceu also provides an explicit [move](#TODO)
-operation to reattach a dynamic value to an outer scope.
+To overcome this restriction, Ceu also provides an explicit
+[move](#copy-and-move) operation to reattach a dynamic value to an outer scope.
 
 The next example illustrates lexical memory management and the validity of
 assignments:
@@ -261,7 +261,7 @@ values to a new vector, which is finally returned.
 Since the vector `ret` is allocated inside the function, it requires an
 explicit `move` be reattached to the caller scope.
 
-Note that [literal values](#literal-values), such as numbers, have no
+Note that values of the [basic types](#basic-types), such as numbers, have no
 assignment restrictions because they are copied as a whole.
 Note also that Ceu still supports garbage collection for dynamic values to
 handle references in long-lasting blocks.
@@ -565,7 +565,7 @@ given type and converts it to Ceu.
 The `:ceu` modifier assumes the code is already a value in Ceu and does not
 convert it.
 The `:pre` modifier assumes the code is a C statement that should be placed
-*as is* at the top of the [output file](#TODO).
+*as is* at the top of the [output file](#integration-with-c).
 The lack of a modifier also assumes a C statement, but to be inlined at the
 current position.
 
@@ -777,8 +777,8 @@ This is also valid for active [coroutines](#active-values) and
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
 
-Ceu also provides an explicit [move](#TODO) operation to reattach a dynamic
-value to an outer scope.
+Ceu also provides an explicit [move](#copy-and-move) operation to reattach a
+dynamic value to an outer scope.
 
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
@@ -913,7 +913,7 @@ A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
 declared.
 A dynamic value cannot escape the block in which it was created (e.g., from
-assignments or returns), unless it is [moved](#TODO) out.
+assignments or returns), unless it is [moved](#copy-and-move) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for active [coroutines](#active-values) and
@@ -1938,13 +1938,82 @@ Operations
 
 ## Primary Library
 
+The primary library provides functions and operations that are primitive in
+the sense that they cannot be written in Ceu itself:
+
+- `/=`:         See [Equality Operators](#equality-operators).
+- `==`:         See [Equality Operators](#equality-operators).
+- `copy`:       See [Copy and Move](#copy-and-move).
+- `coroutine`:  See [Create, Resume, Spawn](#create-resume-spawn).
+- `detrack`:    See [Track and Detrack](#track-and-detrack).
+- `move`:       See [Copy and Move](#copy-and-move).
+- `next`
+- `print`
+- `println`
+- `status`:     See [Status](#status).
+- `sup?`
+- `tags`
+- `tasks`:      See [Pool of Tasks](#pool-of-tasks).
+- `throw`:      See [Exceptions](#exceptions).
+- `track`:      See [Track and Detrack](#track-and-detrack).
+- `type`
+
+### Equality Operators
+
+The operator `==` compares two values and returns a boolean.
+The operator `/=` is the negation of `==`.
+To be considered equal, the values must be of the same type and hold the same
+value.
+All values of the [basic types](#basic-types) are compared by value, while all
+[dynamic values](#dynamic-values) are compared by reference.
+The exception are tuples, which are compared by value, i.e., they must be of
+the same size, with all positions having the same value (using `==`).
+
+Examples:
+
 ```
- # == /=
-copy coroutine
-detrack move next
-print println status
-sup? tags tasks
-throw track type
+1 == 1          ;; --> true
+1 /= 1          ;; --> false
+1 == '1'        ;; --> false
+#[1] == #[1]    ;; --> false
+[1] == [1]      ;; --> true
+```
+
+### Copy and Move
+
+The function `copy` makes a deep copy of the given value.
+Only values of the [basic types](#basic-types) and [collections](#collections)
+are supported.
+
+The function `move` makes a deep move of the given value.
+A move [deattaches](#lexical-memory-management) the value from its current
+[block](#blocks), allowing it to be reattached to an outer scope.
+Only values of the [basic types](#basic-types) and [collections](#collections)
+are supported.
+
+Examples:
+
+```
+copy(10)            ;; --> 10
+copy(func() {})     ;; --> ERR: cannot copy function
+copy([1,[2],3])     ;; --> [1,[2],3]
+
+val v = 10
+move(v)             ;; --> 10 (innocuous move)
+
+val u = do {
+    val t = [10]
+    move(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
+
+```
+
+### `print` and `println`
+
+```
+next
+sup? tags
+throw type
 ```
 
 ## Auxiliary Library
