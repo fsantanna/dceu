@@ -1602,6 +1602,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             switch (src->type) {
+#if 0
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
@@ -1612,6 +1613,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     ceu_acc = *src;
                     break;
+#endif
                 case CEU_VALUE_TUPLE: {
                     dyn->isperm = CEU_PERM_TMP;
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
@@ -1643,6 +1645,14 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = *src;
                     break;
                 }
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
+                case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
+                case CEU_VALUE_X_TASKS:
+                case CEU_VALUE_X_TRACK:
+                    assert(0 && "TODO: not supported");
                 default:
                     ceu_acc = *src;
                     break;
@@ -1655,9 +1665,6 @@ fun Coder.main (tags: Tags): String {
             CEU_Value* src = args[0];
             CEU_Dyn* old = src->Dyn;
             switch (src->type) {
-                case CEU_VALUE_P_FUNC:
-                case CEU_VALUE_P_TASK:
-                    assert(0 && "TODO");
                 case CEU_VALUE_TUPLE: {
                     CEU_Dyn* new = ceu_tuple_create(NULL, old->Ncast.Tuple.its);
                     assert(new != NULL);
@@ -1707,6 +1714,14 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=new} };
                     break;
                 }
+                case CEU_VALUE_P_FUNC:
+                case CEU_VALUE_P_CORO:
+                case CEU_VALUE_P_TASK:
+                case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK:
+                case CEU_VALUE_X_TASKS:
+                case CEU_VALUE_X_TRACK:
+                    assert(0 && "TODO: not supported");
                 default:
                     ceu_acc = *src;
                     break;
