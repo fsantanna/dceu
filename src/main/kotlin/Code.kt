@@ -537,8 +537,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_mem->evt_$n = ceu_acc;
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
-                    int ceu_evt_2 = (ceu_mem->evt_$n.type>=CEU_VALUE_TUPLE && ceu_mem->evt_$n.type<=CEU_VALUE_DICT);
-                    if (ceu_evt_2) {
+                    int ceu_evt_err = (ceu_mem->evt_$n.type>CEU_VALUE_DYNAMIC); //TUPLE && ceu_mem->evt_$n.type<=CEU_VALUE_DICT);
+                    if (ceu_evt_err) {
                         ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_ERR);
                     }
                     
@@ -572,7 +572,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // it is safe to modify after check above:
                     //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
                     //  - if it was set to 1, we dont need to reset anyways
-                    if (ceu_evt_2) {
+                    if (ceu_evt_err) {
                         ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_SET);
                     }
 

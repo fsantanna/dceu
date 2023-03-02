@@ -1606,7 +1606,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             switch (src->type) {
-#if 0
+#if 1
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
@@ -1649,6 +1649,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = *src;
                     break;
                 }
+#if 0
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
@@ -1657,6 +1658,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_X_TASKS:
                 case CEU_VALUE_X_TRACK:
                     assert(0 && "TODO: not supported");
+#endif
                 default:
                     ceu_acc = *src;
                     break;
