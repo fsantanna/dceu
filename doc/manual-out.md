@@ -5,7 +5,6 @@
     - <a href="#event-signaling-mechanisms">1.2.</a> Event Signaling Mechanisms
     - <a href="#lexical-memory-management">1.3.</a> Lexical Memory Management
     - <a href="#hierarchical-tags">1.4.</a> Hierarchical Tags
-    - <a href="#integration-with-c">1.5.</a> Integration with C
 - <a href="#lexicon">2.</a> LEXICON
     - <a href="#keywords">2.1.</a> Keywords
     - <a href="#symbols">2.2.</a> Symbols
@@ -369,13 +368,14 @@ Considering the last two lines, a declaration such as
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
 
-<a name="integration-with-c"/>
-
-## 1.5. Integration with C
-
-`TODO`
-
 <!--
+ ## Integration with C
+
+The compiler of Ceu converts an input program into an output in C, which is
+further compiled to a final executable file.
+For this reason, Ceu has source-level compatibility with C, allowing it to
+embed native expressions in programs.
+
 - gcc
 - :pre
 - $x.Tag
@@ -2472,6 +2472,8 @@ throw type
 - `is-not`:     [Operator Is](#operator-is)
 - `not`:        [Logical Operators](#boolean-operators)
 - `or`:         [Logical Operators](#boolean-operators)
+
+`TODO: many others`
 
 <!--
 - :Iterator
