@@ -5,6 +5,7 @@
     - <a href="#event-signaling-mechanisms">1.2.</a> Event Signaling Mechanisms
     - <a href="#lexical-memory-management">1.3.</a> Lexical Memory Management
     - <a href="#hierarchical-tags">1.4.</a> Hierarchical Tags
+    - <a href="#integration-with-c">1.5.</a> Integration with C
 - <a href="#lexicon">2.</a> LEXICON
     - <a href="#keywords">2.1.</a> Keywords
     - <a href="#symbols">2.2.</a> Symbols
@@ -231,8 +232,8 @@ dictionaries), but also for [closures](#prototypes),
 This restriction ensures that terminating blocks (and consequently tasks)
 deallocate all memory at once.
 *More importantly, it provides static means to reason about the program.*
-To overcome this restriction, Ceu also provides an explicit [move](#TODO)
-operation to reattach a dynamic value to an outer scope.
+To overcome this restriction, Ceu also provides an explicit
+[move](#copy-and-move) operation to reattach a dynamic value to an outer scope.
 
 The next example illustrates lexical memory management and the validity of
 assignments:
@@ -269,7 +270,7 @@ values to a new vector, which is finally returned.
 Since the vector `ret` is allocated inside the function, it requires an
 explicit `move` be reattached to the caller scope.
 
-Note that [literal values](#literal-values), such as numbers, have no
+Note that values of the [basic types](#basic-types), such as numbers, have no
 assignment restrictions because they are copied as a whole.
 Note also that Ceu still supports garbage collection for dynamic values to
 handle references in long-lasting blocks.
@@ -367,6 +368,20 @@ Considering the last two lines, a declaration such as
     `val x :T = tags([...], :T, true)`,
 which not only tags the tuple with the appropriate user type, but also declares
 that the variable satisfies the template.
+
+<a name="integration-with-c"/>
+
+## 1.5. Integration with C
+
+`TODO`
+
+<!--
+- gcc
+- :pre
+- $x.Tag
+- tag,char,bool,number C types
+- C errors
+-->
 
 <a name="lexicon"/>
 
@@ -536,16 +551,16 @@ A [*number*](#basic-types) type literal starts with a digit and is followed by
 digits, letters, and dots (`.`), and is represented as a *C float*.
 
 A [*char*](#basic-types) type literal is a single or backslashed (`\`)
-character enclosed by single quotes (`'`), and is representaed as a *C char*.
+character enclosed by single quotes (`'`), and is represented as a *C char*.
 
 A string literal is a sequence of characters enclosed by double quotes (`"`).
 It is expanded to a [vector](#collections) of character literals, e.g., `"abc"`
 expands to `#['a','b','c']`.
 
-A native literal is a sequence of characters enclosed by multiple back quotes
-(`` ` ``).
+A native literal is a sequence of characters interpreted as C code enclosed by
+multiple back quotes (`` ` ``).
 The same number of backquotes must be used to open and close the literal.
-`TODO: $, :type, :pre, :ceu`
+Native literals are detailed further.
 
 All literals are valid [values](#values) in Ceu.
 
@@ -559,7 +574,41 @@ false               ;; bool literal
 'a'                 ;; char literal
 "Hello!"            ;; string literal
 `puts("hello");`    ;; native literal
-`:number sin($x)`   ;; native with type and interpolation
+```
+
+<a name="native-literals"/>
+
+### 2.5.1. Native Literals
+
+A native literal can specify a tag modifier as follows:
+
+```
+`:<type> <...>`
+`:ceu <...>`
+`:pre <...>`
+`<...>`
+```
+
+The `:<type>` modifier assumes the C code in `<...>` is an expression of the
+given type and converts it to Ceu.
+The `:ceu` modifier assumes the code is already a value in Ceu and does not
+convert it.
+The `:pre` modifier assumes the code is a C statement that should be placed
+*as is* at the top of the [output file](#integration-with-c).
+The lack of a modifier also assumes a C statement, but to be inlined at the
+current position.
+
+Native literals can include Ceu expressions with an identifier prefixed by
+dollar sign (`$`) suffixed by dot (`.`) with one of the desired types:
+    `.Tag`, `.Bool`, `.Char`, `.Number`, `.Pointer`.
+
+Examples:
+
+```
+val n = `:number 10`            ;; native 10 is converted to Ceu number
+val x = `$n`                    ;; `x` is set to Ceu `n` as is
+`:pre #include <x.h>`           ;; includes x.h at the top of the final
+`printf("> %f\n", $n.Number);`  ;; outputs `n` as a number
 ```
 
 <a name="comments"/>
@@ -775,8 +824,8 @@ This is also valid for active [coroutines](#active-values) and
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
 
-Ceu also provides an explicit [move](#TODO) operation to reattach a dynamic
-value to an outer scope.
+Ceu also provides an explicit [move](#copy-and-move) operation to reattach a
+dynamic value to an outer scope.
 
 Nevertheless, a dynamic value is still subject to garbage collection, given
 that it may loose all references to it, even with its enclosing block active.
@@ -908,7 +957,7 @@ In this case, the task is also attached to the block in which the pool is
 declared.
 Finally, a task can be [tracked](#track-and-detrack) from outside with a safe
 reference to it (`x-track`).
-A track is set to `nil` when its referred task terminates or goes out of scope.
+A track is cleared when its referred task terminates or goes out of scope.
 This is all automated by the Ceu runtime.
 
 The operations on [coroutines](#coroutine-operations) and
@@ -943,7 +992,7 @@ A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
 declared.
 A dynamic value cannot escape the block in which it was created (e.g., from
-assignments or returns), unless it is [moved](#TODO) out.
+assignments or returns), unless it is [moved](#copy-and-move) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for active [coroutines](#active-values) and
@@ -1877,8 +1926,8 @@ Await : `await´ [`:check-now`] (
         )
 ```
 
-An `await` is expected to be used in conjunction with [event
-broadcasts](#broadcast), allowing the condition expression to query the
+An `await` is expected to be used in conjunction with event
+[broadcasts](#broadcast), allowing the condition expression to query the
 variable `evt` with the occurring event.
 
 All await variations are expansions based on `yield`.
@@ -1937,9 +1986,72 @@ await 1:h 10:min 30:s               ;; awakes after the specified time
 <a name="broadcast"/>
 
 ### 5.8.2. Broadcast
+
+The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
+
+```
+Bcast : `broadcast´ [`in´ Expr `,´] Expr
+```
+
+A `broadcast` expects an event expression and an optional target between `in`
+and `,`.
+The event is any valid expression, which is assigned to the special variable
+[`evt`](#variables-declarations-and-assignments) and can be queried by await
+operations to decide if tasks should awake.
+The target expression restricts the scope of the broadcast:
+    if set to `:local`, it is restricted to tasks in the enclosing block;
+    if set to `:task`, it is restricted to tasks nested in the current task;
+    if set to an active task expresion, it is restricted to that task; and
+    if omited or set to `:global`, all tasks receive the broadcast.
+
+Examples:
+
+```
+<...>
+task T () {
+    <...>
+    do {
+        <...>
+        val x = spawn X()
+        <...>
+        val e = :Evt [1,2]
+        broadcast in :local,  e     ;; restricted to enclosing `do { ... }`
+        broadcast in :task,   e     ;; restricted to enclosing `task T () { ... }`
+        broadcast in x,       e     ;; restricted to spawned `x`
+        broadcast in :global, e     ;; no restriction
+        broadcast e                 ;; no restriction
+    }
+}
+```
+
 <a name="track-and-detrack"/>
 
 ### 5.8.3. Track and Detrack
+
+The `track` and `detrack` operations manipulate [dynamic
+references](#active-values) to tasks:
+
+```
+Track   : `track´ `(´ Expr `)´
+Detrack : `detrack´ `(´ Expr `)´
+```
+
+A `track` expects an [active task](#active-values) and returns a reference to
+it.
+A reference is automatically cleared when the referred task terminates or goes
+out of scope.
+A reference cannot manipulate a task directly, requiring a `detrack`.
+
+A `detrack` expects a [track reference](#active-values) and returns the
+referred task or `nil` if it was cleared.
+
+- across yield
+
+
+<!--
+They are both functions in the [primary library](#primary-library) of Ceu.
+-->
+
 <a name="pools-of-tasks"/>
 
 ### 5.8.4. Pools of Tasks
@@ -2085,13 +2197,92 @@ Operations
 
 ## 6.1. Primary Library
 
+The primary library provides functions and operations that are primitive in
+the sense that they cannot be written in Ceu itself:
+
+- `/=`:         See [Equality Operators](#equality-operators).
+- `==`:         See [Equality Operators](#equality-operators).
+- `copy`:       See [Copy and Move](#copy-and-move).
+- `coroutine`:  See [Create, Resume, Spawn](#create-resume-spawn).
+- `detrack`:    See [Track and Detrack](#track-and-detrack).
+- `move`:       See [Copy and Move](#copy-and-move).
+- `next`
+- `print`:      See [Print](#print).
+- `println`:    See [Print](#print).
+- `status`:     See [Status](#status).
+- `sup?`
+- `tags`
+- `tasks`:      See [Pool of Tasks](#pool-of-tasks).
+- `throw`:      See [Exceptions](#exceptions).
+- `track`:      See [Track and Detrack](#track-and-detrack).
+- `type`
+
+<a name="equality-operators"/>
+
+### 6.1.1. Equality Operators
+
+The operator `==` compares two values and returns a boolean.
+The operator `/=` is the negation of `==`.
+To be considered equal, the values must be of the same type and hold the same
+value.
+All values of the [basic types](#basic-types) are compared by value, while all
+[dynamic values](#dynamic-values) are compared by reference.
+The exception are tuples, which are compared by value, i.e., they must be of
+the same size, with all positions having the same value (using `==`).
+
+Examples:
+
 ```
- # == /=
-copy coroutine
-detrack move next
-print println status
-sup? tags tasks
-throw track type
+1 == 1          ;; --> true
+1 /= 1          ;; --> false
+1 == '1'        ;; --> false
+#[1] == #[1]    ;; --> false
+[1] == [1]      ;; --> true
+```
+
+<a name="copy-and-move"/>
+
+### 6.1.2. Copy and Move
+
+The function `copy` makes a deep copy of the given value.
+Only values of the [basic types](#basic-types) and [collections](#collections)
+are supported.
+
+The function `move` makes a deep move of the given value.
+A move [deattaches](#lexical-memory-management) the value from its current
+[block](#blocks), allowing it to be reattached to an outer scope.
+Only values of the [basic types](#basic-types) and [collections](#collections)
+are supported.
+
+Examples:
+
+```
+copy(10)            ;; --> 10
+copy(func() {})     ;; --> ERR: cannot copy function
+copy([1,[2],3])     ;; --> [1,[2],3]
+
+val v = 10
+move(v)             ;; --> 10 (innocuous move)
+
+val u = do {
+    val t = [10]
+    move(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+}
+
+```
+
+<a name="print"/>
+
+### 6.1.3. Print
+
+The functions `print` and `println` outputs the given values.
+
+Examples:
+
+```
+println(1, :x, [1,2,3])     ;; --> 1   :x   [1,2,3]
+sup? tags
+throw type
 ```
 
 <a name="auxiliary-library"/>

@@ -5,6 +5,7 @@
     * Event Signaling Mechanisms
     * Lexical Memory Management
     * Hierarchical Tags
+    * Integration with C
 * LEXICON
     * Keywords
     * Symbols
