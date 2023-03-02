@@ -298,11 +298,11 @@ A tag such as `:T.A.x` matches the types `:T`, `:T.A`, and `:T.A.x` at the same
 time, as verified by function `sup?`:
 
 ```
-println(sup?(:T,     :T.A.x))    ;; --> true
-println(sup?(:T.A,   :T.A.x))    ;; --> true
-println(sup?(:T.A.x, :T.A.x))    ;; --> true
-println(sup?(:T.A.x, :T))        ;; --> false
-println(sup?(:T.A,   :T.B))      ;; --> false
+sup?(:T,     :T.A.x)    ;; --> true
+sup?(:T.A,   :T.A.x)    ;; --> true
+sup?(:T.A.x, :T.A.x)    ;; --> true
+sup?(:T.A.x, :T)        ;; --> false
+sup?(:T.A,   :T.B)      ;; --> false
 ```
 
 The next example illustrates hierarchical tags combined with the function
@@ -337,8 +337,8 @@ The template mechanism of Ceu can also describe a tag hierarchy to support
 data inheritance, akin to class hierarchy in Object-Oriented Programming.
 A `data` description can precede a block enclosed by braces (`{` and `}`) to
 nest templates, in in which inner tags reuse fields from outer tags.
-The next example illustrates an `:Event` supertype, in which each subtype adds
-extra data to the tuple template:
+The next example illustrates an `:Event` super-type, in which each sub-type
+adds extra data to the tuple template:
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
@@ -705,8 +705,8 @@ active tasks.
 Values from non-basic types (i.e., collections and execution units) can be
 associated with [tags](#basic-types) that represent user types.
 
-The function [`tags`](#TODO) associates tags with values, and also checks if a
-value is of the given tag:
+The function [`tags`](#types-and-tags) associates tags with values, and also
+checks if a value is of the given tag:
 
 ```
 val x = []              ;; an empty tuple
@@ -715,10 +715,11 @@ println(tags(x,:T))     ;; --> true
 ```
 
 Tags form type hierarchies based on the dots in their identifiers, i.e., `:T.A`
-and `:T.B` are subtypes of `:T`.
+and `:T.B` are sub-types of `:T`.
 Tag hierarchies can nest up to 4 levels.
 
-The function [`sup?`](#TODO) checks supertype relations between tags:
+The function [`sup?`](#types-and-tags) checks super-type relations between
+tags:
 
 ```
 println(sup?(:T, :T.A)    ;; --> true
@@ -2053,23 +2054,106 @@ do {
 Examples:
 
 ```
-TODO
+par {
+    every 1:s {
+        println("1 second has elapsed")
+    }
+} with {
+    every 1:min {
+        println("1 minute has elapsed")
+    }
+} with {
+    every 1:h {
+        println("1 hour has elapsed")
+    }
+}
+println("never reached")
+```
+
+```
+par-or {
+    await 1:s
+} with {
+    await :X
+    println(":X occurred before 1 second")
+}
+```
+
+```
+par-and {
+    await :X
+} with {
+    await :Y
+}
+println(":X and :Y have occurred")
 ```
 
 #### Awaiting Block
+
+An `awaiting` block executes a given block until an await condition is
+satisfied:
+
+```
+Awting : `awaiting´ <awt> Block
+```
+
+An `awaiting <awt> { <es> }` expands to a [`par-or`](#parallel-blocks) as
+follows:
+
+```
+par-or {
+    await <awt>
+} with {
+    <es>
+}
+```
+
+Examples:
+
+```
+awaiting 1:s {
+    every :X {
+        println("one more :X occurred before 1 second")
+    }
+}
+```
+
 #### Toggle Block
+
+A `toggle` block executes a given block and [toggles](#toggle) it according to
+given off and on events:
+
+```
+Toggle : `toggle´ Await `->´ Await Block
+```
+
+A `toggle <off> -> <on> { <es> }` expands as follows:
+
+```
+do {
+    val t = spawn {
+        <es>
+    }
+    awaiting :check-now t {
+        loop {
+            await <off>
+            toggle t(false)
+            await <on>
+            toggle t(true)
+        }
+    }
+    t.pub
+}
+```
+
+The block executes normally, until `<off>` toggles it off, until `<on>` toggles
+if on again.
+The whole composition terminates when the task representing the given block
+terminates.
 
 <!-- ---------------------------------------------------------------------- -->
 
 <!--
-      | `broadcast´ [`in´ Expr `,´] Expr                ;; broadcast event
-      | `tasks´ `(´ Expr `)´                            ;; pool of tasks
-      | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
-      | `loop´ `in´ :tasks Expr `,´ ID Block     ;; tasks iterator
-
-      | `awaiting´ Await Block                          ;; abort on event
-      | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
-
 Operations
       | `not´ Expr                                      ;; op not
       | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
@@ -2090,21 +2174,27 @@ the sense that they cannot be written in Ceu itself:
 - `coroutine`:  [Create, Resume, Spawn](#create-resume-spawn)
 - `detrack`:    [Track and Detrack](#track-and-detrack)
 - `move`:       [Copy and Move](#copy-and-move)
-- `next`
+- `next`:       [Dictionary Next](#dictionary-next)
 - `print`:      [Print](#print)
 - `println`:    [Print](#print)
 - `status`:     [Status](#status)
-- `sup?`
-- `tags`
+- `sup?`:       [Types and Tags](#types-and-tags)
+- `tags`:       [Types and Tags](#types-and-tags)
 - `tasks`:      [Pool of Tasks](#pool-of-tasks)
 - `throw`:      [Exceptions](#exceptions)
 - `track`:      [Track and Detrack](#track-and-detrack)
-- `type`
+- `type`:       [Types and Tags](#types-and-tags)
 
 ### Equality Operators
 
-The operator `==` compares two values and returns a boolean.
+```
+func {==} (v1, v2)  ;; --> yes/no
+func {/=} (v1, v2)  ;; --> yes/no
+```
+
+The operator `==` compares two values `v1` and `v2` and returns a boolean.
 The operator `/=` is the negation of `==`.
+
 To be considered equal, the values must be of the same type and hold the same
 value.
 All values of the [basic types](#basic-types) are compared by value, while all
@@ -2122,13 +2212,53 @@ Examples:
 [1] == [1]      ;; --> true
 ```
 
+### Types and Tags
+
+```
+func type (v)           ;; --> :type
+func up? (sup, sub)     ;; --> yes/no
+func tags (v, t, set)   ;; --> v
+func tags (v, t))       ;; --> yes/no
+```
+
+The function `type` receives a value `v` and returns its [type](#types) as one
+of these tags:
+    `:nil`, `:bool`, `:char`, `:number`, `:pointer`, `:tag`,
+    `:tuple`, `:vector`, `:dict`,
+    `:func`, `:coro`, `:task`, `:x-coro`, `:x-task`, `:x-tasks`, `:x-track`.
+
+The function `sup?` receives a tag `sup`, a tag `sub`, and returns a boolean
+to answer if `sup` is a [super-tag](#hierarchical-tags) of `sub`.
+
+The function `tags` sets or queries tags associated with values of [non-basic
+types](#user-types).
+To set or unset a tag, the function receives a value `v`, a tag `t`, and a
+boolean `set` to set or unset the tag.
+The function returns the same value passed to it.
+To query a tag, the function receives a value `v`, a tag `t` to check, and
+returns a boolean to answer if the tag (or any sub-tag) is associated with the
+value.
+
+Examples:
+
+```
+type(10)                        ;; --> :number
+val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
+tags(x, :x)                     ;; --> true
+```
+
 ### Copy and Move
 
-The function `copy` makes a deep copy of the given value.
+```
+func move (v)   ;; --> v
+func copy (v)   ;; --> v'
+```
+
+The function `copy` makes a deep copy of the given value `v`.
 Only values of the [basic types](#basic-types) and [collections](#collections)
 are supported.
 
-The function `move` makes a deep move of the given value.
+The function `move` makes a deep move of the given value `v`.
 A move [deattaches](#lexical-memory-management) the value from its current
 [block](#blocks), allowing it to be reattached to an outer scope.
 Only values of the [basic types](#basic-types) and [collections](#collections)
@@ -2148,12 +2278,27 @@ val u = do {
     val t = [10]
     move(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
+```
+
+### Dictionary Next
 
 ```
+func next (d, k)
+```
+
+The function `next` allows to enumerate the keys of a dictionary.
+It receives a dictionary `d` and a key `k`, and returns the next key after `k`.
+If `k` is `nil`, the function returns the initial key.
+The function returns `nil` if there are no reamining keys to enumerate.
 
 ### Print
 
-The functions `print` and `println` outputs the given values.
+```
+func print (...)
+func println (...)
+```
+
+The functions `print` and `println` outputs the given values and return `nil`.
 
 Examples:
 

@@ -2,7 +2,8 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // Dangerous function:
     //  - set vars in enclosing tasks
     //  - broadcast events
-    // They cannot receive "evt" or "pub"
+    //  - yield
+    // They cannot receive "evt" or "pub" or "detrack"
     //  - they are marked and cannot receive "evt"
     //  - otherwise, we do not check with ceu_block_set
     val funcs = mutableSetOf<Expr.Proto>()
