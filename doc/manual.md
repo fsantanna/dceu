@@ -727,7 +727,7 @@ println(sup?(:T.A, :T)    ;; --> false
 println(sup?(:T.A, :T.B)  ;; --> false
 ```
 
-The function [`is`](#TODO) checks if values match types or tags:
+The function [`is`](#operator-is) checks if values match types or tags:
 
 ```
 val x = []              ;; an empty tuple
@@ -1068,6 +1068,8 @@ The variables `err` and `evt` have special scopes and are automatically setup
 in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
 statements, respectively.
 
+`TODO: :tmp`
+
 Examples:
 
 ```
@@ -1261,6 +1263,31 @@ t.pub       ;; task public field
 
 val t :T    ;; tuple template
 t.x
+```
+
+#### Peek, Push, Pop
+
+The *ppp operators* (peek, push, pop) manipulate a vector as a stack:
+
+```
+PPP : Expr `[´ (`=´|`+´|`-´) `]´
+```
+
+A peek operation `vec[=]` sets or gets the last element of a vector.
+The push operation `vec[+]` adds a new element to the end of a vector.
+The pop operation `vec[-]` gets and removes the last element of a vector.
+
+Examples:
+
+```
+val stk = [1,2,3]
+println(stk[=])         ;; --> 3
+set stk[=] = 30
+println(stk)            ;; --> [1, 2, 30]
+println(stk[-])         ;; --> 30
+println(stk)            ;; --> [1, 2]
+set stk[+] = 3
+println(stk)            ;; --> [1, 2, 3]
 ```
 
 ### Precedence and Associativity
@@ -2153,14 +2180,6 @@ terminates.
 
 <!-- ---------------------------------------------------------------------- -->
 
-<!--
-Operations
-      | `not´ Expr                                      ;; op not
-      | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
-      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
-        not, or, and are really special
--->
-
 # STANDARD LIBRARY
 
 ## Primary Library
@@ -2310,11 +2329,91 @@ throw type
 
 ## Auxiliary Library
 
-`TODO`
+- `and`:        [Logical Operators](#boolean-operators)
+- `is`:         [Operator Is](#operator-is)
+- `is-not`:     [Operator Is](#operator-is)
+- `not`:        [Logical Operators](#boolean-operators)
+- `or`:         [Logical Operators](#boolean-operators)
 
 <!--
 - :Iterator
 -->
+
+### Logical Operators
+
+```
+func not (v)
+func and (v1, v2)
+func or  (v1, v2)
+```
+
+The logical operators `not`, `and`, and `or` are functions with a special
+syntax to be used as prefix (`not`) and infix operators (`and`,`or`).
+
+A `not` receives a value `v` and expands as follows:
+
+```
+if v { false } else { true }
+```
+
+The operators `and` and `or` returns one of their operands `v1` or `v2`.
+
+An `and` expands as follows:
+
+```
+do {
+    val x :tmp = v1
+    if x { v2 } else { x }
+}
+```
+
+An `or` expands as follows:
+
+```
+do {
+    val x :tmp = v1
+    if x { x } else { v2 }
+}
+```
+
+Examples:
+
+```
+not not nil     ;; --> false
+nil or 10       ;; --> 10
+10 and nil      ;; --> nil
+```
+
+### Operator Is
+
+```
+func is (v1, v2)
+func is-not (v1, v2)
+```
+
+The operators `is` and `is-not` are functions with a special syntax to be used
+as infix operators.
+
+The operator `is` checks if `v1` matches `v2` as follows:
+
+```
+ifs {
+    (v1 == v2)       -> true
+    (type(v1) == v2) -> true
+    tags(v1,v2)      -> true
+    else             -> false
+}
+```
+
+The operator `is-not` is the negation of `is`.
+
+Examples:
+
+```
+10 is :number           -> true
+10 is nil               -> false
+tags([],:x,true) is :x  -> true
+```
 
 # SYNTAX
 
