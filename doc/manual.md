@@ -87,7 +87,7 @@ Follows an extended list of functionalities:
 - Restricted closures (upvalues must be explicit and final)
 - Deferred statements (for finalization)
 - Exception handling (throw & catch)
-- Hierarchical tuple templates (for data description with inheritance)
+- Hierarchical tuple templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
 [1]: https://en.wikipedia.org/wiki/Synchronous_programming_language
@@ -858,10 +858,10 @@ Finally, inside closures the accesses must be prefixed with double carets
 Examples:
 
 ```
-func (^v1) {
-    val ^v2 = ^v1 + 1   ;; single caret
-    func () {           ;; closure survives block of v1/v2
-        ^^v1 + ^^v2     ;; double caret
+func (^v1) {            ;; v1 survives func
+    val ^v2 = ^v1 + 1   ;; v2 survives func (outside closure: single caret)
+    func () {           ;; closure survives func
+        ^^v1 + ^^v2     ;; (inside closure: double caret)
     }
 }
 ```
@@ -1526,16 +1526,18 @@ Catch : `catch´ Expr Block
 ```
 
 A `throw` receives an expression that is assigned to the special variable
-`err`, which is visible to enclosing `catch` statements.
+`err`, which is only visible to enclosing `catch` condition expressions.
 A `throw` is propagated upwards and aborts all enclosing [blocks](#blocks) and
 [execution units](#prototypes) (functions, coroutines, and tasks) on the way.
 When crossing an execution unit, a `throw` jumps back to the calling site and
 continues to propagate upwards.
 
-A `catch` executes its associated block normally, but also registers a catch
-expression to be compared against `err` when a `throw` is crossing it.
-If they match, the exception is caught and the `catch` terminates, aborting its
-associated block, and properly triggering nested [`defer`](#defer) statements.
+A `catch` executes its associated block normally, but also registers a
+condition expression to be compared against `err` when a `throw` is crossing
+it.
+If they match, the exception is caught and the `catch` terminates and evaluates
+to `err`, also aborting its associated block, and properly triggering nested
+[`defer`](#defer) statements.
 
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
@@ -1544,6 +1546,14 @@ match `err is x`, allowing to check [tuple
 templates](#tag-enumerations-and-tuple-templates).
 
 Examples:
+
+```
+val x = catch (err == 1) {
+    throw(1)
+    println("unreachable")
+}
+println(x)              ;; --> 1
+```
 
 ```
 catch err == 1 {        ;; catches
@@ -1578,8 +1588,6 @@ catch :Err {                          ;; catches generic error
     ;; unreachable
 }                                     ;; --> 1, 2
 ```
-
-
 
 ## Coroutine Operations
 
@@ -2076,21 +2084,21 @@ Operations
 The primary library provides functions and operations that are primitive in
 the sense that they cannot be written in Ceu itself:
 
-- `/=`:         See [Equality Operators](#equality-operators).
-- `==`:         See [Equality Operators](#equality-operators).
-- `copy`:       See [Copy and Move](#copy-and-move).
-- `coroutine`:  See [Create, Resume, Spawn](#create-resume-spawn).
-- `detrack`:    See [Track and Detrack](#track-and-detrack).
-- `move`:       See [Copy and Move](#copy-and-move).
+- `/=`:         [Equality Operators](#equality-operators)
+- `==`:         [Equality Operators](#equality-operators)
+- `copy`:       [Copy and Move](#copy-and-move)
+- `coroutine`:  [Create, Resume, Spawn](#create-resume-spawn)
+- `detrack`:    [Track and Detrack](#track-and-detrack)
+- `move`:       [Copy and Move](#copy-and-move)
 - `next`
-- `print`:      See [Print](#print).
-- `println`:    See [Print](#print).
-- `status`:     See [Status](#status).
+- `print`:      [Print](#print)
+- `println`:    [Print](#print)
+- `status`:     [Status](#status)
 - `sup?`
 - `tags`
-- `tasks`:      See [Pool of Tasks](#pool-of-tasks).
-- `throw`:      See [Exceptions](#exceptions).
-- `track`:      See [Track and Detrack](#track-and-detrack).
+- `tasks`:      [Pool of Tasks](#pool-of-tasks)
+- `throw`:      [Exceptions](#exceptions)
+- `track`:      [Track and Detrack](#track-and-detrack)
 - `type`
 
 ### Equality Operators

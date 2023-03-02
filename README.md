@@ -34,7 +34,7 @@ Follows an extended list of functionalities in Ceu:
 - Deferred statements (for finalization)
 - Exception handling
 - Dynamic collections (tuples, vectors, and dictionaries)
-- Hierarchical tuple templates (for data description with inheritance)
+- Hierarchical tuple templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
 Ceu is in **experimental stage**.
