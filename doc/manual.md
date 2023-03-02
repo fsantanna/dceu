@@ -862,7 +862,7 @@ In this case, the task is also attached to the block in which the pool is
 declared.
 Finally, a task can be [tracked](#track-and-detrack) from outside with a safe
 reference to it (`x-track`).
-A track is set to `nil` when its referred task terminates or goes out of scope.
+A track is cleared when its referred task terminates or goes out of scope.
 This is all automated by the Ceu runtime.
 
 The operations on [coroutines](#coroutine-operations) and
@@ -1779,8 +1779,8 @@ Await : `await´ [`:check-now`] (
         )
 ```
 
-An `await` is expected to be used in conjunction with [event
-broadcasts](#broadcast), allowing the condition expression to query the
+An `await` is expected to be used in conjunction with event
+[broadcasts](#broadcast), allowing the condition expression to query the
 variable `evt` with the occurring event.
 
 All await variations are expansions based on `yield`.
@@ -1837,7 +1837,70 @@ await 1:h 10:min 30:s               ;; awakes after the specified time
 ```
 
 ### Broadcast
+
+The operation `broadcast` signals an event to awake [awaiting](#await) tasks:
+
+```
+Bcast : `broadcast´ [`in´ Expr `,´] Expr
+```
+
+A `broadcast` expects an event expression and an optional target between `in`
+and `,`.
+The event is any valid expression, which is assigned to the special variable
+[`evt`](#variables-declarations-and-assignments) and can be queried by await
+operations to decide if tasks should awake.
+The target expression restricts the scope of the broadcast:
+    if set to `:local`, it is restricted to tasks in the enclosing block;
+    if set to `:task`, it is restricted to tasks nested in the current task;
+    if set to an active task expresion, it is restricted to that task; and
+    if omited or set to `:global`, all tasks receive the broadcast.
+
+Examples:
+
+```
+<...>
+task T () {
+    <...>
+    do {
+        <...>
+        val x = spawn X()
+        <...>
+        val e = :Evt [1,2]
+        broadcast in :local,  e     ;; restricted to enclosing `do { ... }`
+        broadcast in :task,   e     ;; restricted to enclosing `task T () { ... }`
+        broadcast in x,       e     ;; restricted to spawned `x`
+        broadcast in :global, e     ;; no restriction
+        broadcast e                 ;; no restriction
+    }
+}
+```
+
 ### Track and Detrack
+
+The `track` and `detrack` operations manipulate [dynamic
+references](#active-values) to tasks:
+
+```
+Track   : `track´ `(´ Expr `)´
+Detrack : `detrack´ `(´ Expr `)´
+```
+
+A `track` expects an [active task](#active-values) and returns a reference to
+it.
+A reference is automatically cleared when the referred task terminates or goes
+out of scope.
+A reference cannot manipulate a task directly, requiring a `detrack`.
+
+A `detrack` expects a [track reference](#active-values) and returns the
+referred task or `nil` if it was cleared.
+
+- across yield
+
+
+<!--
+They are both functions in the [primary library](#primary-library) of Ceu.
+-->
+
 ### Pools of Tasks
 ### Sintax Extensions Blocks
 #### Every Block
