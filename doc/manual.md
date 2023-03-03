@@ -194,10 +194,10 @@ spawn {
             }
         }
     }
-    println(:done)
+    println(":done")
 }
-broadcast :tick                         ;; <-- :tick-1, tick-2
-broadcast :tick                         ;; <-- :tick-1, tick-2
+broadcast :tick                         ;; <-- :tick-1, :tick-2
+broadcast :tick                         ;; <-- :tick-1, :tick-2
 broadcast :done                         ;; <-- :done
 println("the end")                      ;; <-- the end
 ```
