@@ -89,7 +89,7 @@ Follows an extended list of functionalities:
 - Hierarchical tuple templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
-[1]: https://en.wikipedia.org/wiki/Synchronous_programming_language
+[1]: https://fsantanna.github.io/sc.html
 [2]: https://en.wikipedia.org/wiki/Structured_concurrency
 [3]: https://en.wikipedia.org/wiki/Event-driven_programming
 [4]: https://en.wikipedia.org/wiki/Esterel
