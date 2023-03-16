@@ -46,6 +46,20 @@ Both the compiler and runtime can become very slow.
 [4]: https://en.wikipedia.org/wiki/Esterel
 [5]: https://en.wikipedia.org/wiki/Lua_(programming_language)
 
+# Hello World!
+
+Displays `Hello World!` every second, until 10 seconds elapse:
+
+```
+spawn {
+    awaiting 10:s {
+        every 1:s {
+            print("Hello World!")
+        }
+    }
+}
+```
+
 # Manual
 
 - https://github.com/fsantanna/dceu/blob/main/doc/manual-out.md
