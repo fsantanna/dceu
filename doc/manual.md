@@ -66,7 +66,7 @@ Ceu extends classical structured programming with three main functionalities:
     - A synchronous and deterministic scheduling policy, which provides
       predictable behavior and safe abortion of tasks.
     - A container primitive to hold dynamic tasks, which automatically releases
-      them on termination.
+      them as they terminate.
 - Event Signaling Mechanisms:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
@@ -77,7 +77,7 @@ Ceu extends classical structured programming with three main functionalities:
 
 Ceu is inspired by [Esterel][4] and [Lua][5].
 
-Follows an extended list of functionalities:
+Follows an extended list of functionalities in Ceu:
 
 - Dynamic typing
 - Statements as expressions
@@ -103,10 +103,10 @@ In this sense, tasks in Ceu are treated in the same way as local variables in
 structured programming:
 When a [block](#blocks) of code terminates or goes out of scope, all of its
 [local variables](#variables-declarations-and-assignments) and
-[tasks](#active-values) become inaccessible to enclosing blocks.
-
-In addition, tasks are automatically aborted and properly finalized (by
-[deferred statements](#defer)).
+[tasks](#active-values) are deallocated and become inaccessible to enclosing
+blocks.
+In addition, tasks are properly aborted and finalized by [deferred
+statements](#defer).
 
 Tasks in Ceu are built on top of [coroutines](#active-values), which unlike OS
 threads, have a predictable run-to-completion semantics, in which they execute
@@ -116,7 +116,7 @@ The next example illustrates structured concurrency, abortion of tasks, and
 deterministic scheduling.
 The example uses a `par-or` to spawn two concurrent tasks:
     one that terminates after 10 seconds, and
-    another that increments variable `n` every second, showing its value on
+    another one that increments variable `n` every second, showing its value on
     termination:
 
 ```
@@ -151,6 +151,8 @@ In addition, tasks awake in the order they appear in the source code, which
 makes the scheduling order predictable.
 This rule allows us to infer that the example invariably outputs `9`, no matter
 how many times we execute it.
+Likewise, if the order of the two tasks inside the `par-or` were inverted, the
+example would always output `10`.
 
 ## Event Signaling Mechanisms
 
@@ -163,9 +165,9 @@ Tasks can communicate through events as follows:
 
 <img src="bcast.png" align="right"/>
 
-The active tasks form a dynamic tree representing the structure of the program,
-as illustrated in the figure.
-The three is traversed on every broadcast in a predictable way, since it
+Active tasks form a dynamic tree representing the structure of the program, as
+illustrated in the figure.
+This three is traversed on every broadcast in a predictable way, since it
 respects the lexical structure of the program:
 A task has exactly one active block at a time, which is first traversed `(1)`.
 The active block has a list of active tasks, which are traversed in sequence
@@ -214,9 +216,10 @@ terminating the main block.
 
 Ceu respects the lexical structure of the program also when dealing with
 dynamic memory allocation.
-Every [dynamic value](#dynamic-values) is attached to the [block](#block) in
-which it was first assigned and cannot escape it in further assignments or as
-return expressions.
+When a [dynamic value](#dynamic-values) is first assigned to a variable, it
+becomes attached to the [block](#block) in which the variable is declared, and
+the value cannot escape that block in further assignments or as return
+expressions.
 This is valid not only for [collections](#constructors) (tuples, vectors, and
 dictionaries), but also for [closures](#prototypes),
 [coroutines](#active-values), and [tasks](#active-values).
@@ -235,7 +238,7 @@ var x2 = do {
     val y1 = x1         ;; ok, scope of x1>y1
     val y2 = [4,5,6]
     set x1 = y2         ;; no, scope of y2<x1
-    [7,8,9]             ;; ok, tuple no assigned yet
+    [7,8,9]             ;; ok, tuple not yet assigned
 }                       ;; deallocates [4,5,6], but not [7,8,9]
 ```
 
@@ -247,7 +250,7 @@ However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
 The next example uses `move` to reattach a local vector to an outer scope:
 
 ```
-func to-vector (it) {           ;; it -> vector
+func to-vector (it) {           ;; iterable -> vector
     val ret = #[]               ;; vector is allocated locally
     loop in iter(it), v {
         set ret[+] = v          ;; each value is appended to vector
@@ -259,7 +262,7 @@ func to-vector (it) {           ;; it -> vector
 The function `to-vector` receives an iterable value, and copies all of its
 values to a new vector, which is finally returned.
 Since the vector `ret` is allocated inside the function, it requires an
-explicit `move` be reattached to the caller scope.
+explicit `move` to reattach it to the caller scope.
 
 Note that values of the [basic types](#basic-types), such as numbers, have no
 assignment restrictions because they are copied as a whole.
@@ -271,8 +274,9 @@ handle references in long-lasting blocks.
 A [tag](#basic-type) is a basic type of Ceu that represents unique values in a
 human-readable form.
 Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
-be unique in comparison to others, i.e., `:tag-1 /= :tag-2`.
-Tags are global identifiers and need not to be declared.
+be unique in comparison to others (i.e., `:x == :x` and `:x /= :y`).
+Just like the number `10`, the tag `:x` is a value in itself and needs not to
+be declared.
 Tags are typically used as keys in dictionaries (e.g., `:x`, `:y`), or as
 enumerations representing states (e.g., `:pending`, `:done`).
 Tags are also known as *symbols* or *atoms* in other programming languages.
@@ -287,14 +291,13 @@ println(pos.x, pos[:y])     ;; <-- 10, 20
 ```
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
-tuples, to support a notion of user types in Ceu.
+tuples, to support the notion of user types in Ceu.
 For instance, the call `tags(pos,:Pos,true)` associates the tag `:Pos` with the
 value `pos`, such that the query `tags(pos,:Pos)` returns `true`.
 
-In Ceu, tag identifiers using dots (`.`) can describe user type hierarchies
-when combined with the function `tags`.
-A tag such as `:T.A.x` matches the types `:T`, `:T.A`, and `:T.A.x` at the same
-time, as verified by function `sup?`:
+In Ceu, tag identifiers using dots (`.`) can describe user type hierarchies.
+For instance, a tag such as `:T.A.x` matches the types `:T`, `:T.A`, and
+`:T.A.x` at the same time, as verified by function `sup?`:
 
 ```
 sup?(:T,     :T.A.x)    ;; --> true
@@ -319,10 +322,14 @@ println(x is :T)            ;; --> true  (equivalent to tags(x,:T))
 In the example, `x` is set to user type `:T.A`, which is compatible with types
 `:T` and `:T.A`, but not with type `:T.B`.
 
-Ceu also provides a `data` construct that associates tags with tuple templates
-enumerating field identifiers.
-A template provides field names for a tuple, which becomes similar to a
-`struct` in C or a `class` in Java.
+### Hierarchical Tuple Templates
+
+Ceu also provides a `data` construct to associate a tag with a tuple template
+that enumerates field identifiers.
+Templates provide field names for tuples, which become similar to *structs* in
+C or *classes* in Java.
+Each field identifier in the data declaration corresponds to a numeric index in
+the tuple, which can then be indexed by field or by number interchangeably.
 The next example defines a template `:Pos`, which serves the same purpose as
 the dictionary of the first example:
 
@@ -332,12 +339,16 @@ val p1 :Pos = [10,20]   ;; declares that `p1` satisfies template `:Pos`
 println(p1.x, p1.y)     ;; <-- 10, 20
 ```
 
+Each field identifier in the template is associated
+
+In the example, `p1.x` is equivalent to `p1[0]`.
+
 The template mechanism of Ceu can also describe a tag hierarchy to support
 data inheritance, akin to class hierarchy in Object-Oriented Programming.
-A `data` description can precede a block enclosed by braces (`{` and `}`) to
-nest templates, in in which inner tags reuse fields from outer tags.
+A `data` description can be sufixed with a block to nest templates, in which
+inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
-adds extra data to the tuple template:
+appends additional data to the tuple template:
 
 ```
 data :Event = [ts] {            ;; All events carry a timestamp
@@ -349,7 +360,7 @@ data :Event = [ts] {            ;; All events carry a timestamp
 }
 
 val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
-println(but.ts, but.pos.y, but is :Event)       ;; <-- 0, 20, true
+println(but.ts, but.pos.y, but is :Event.Mouse) ;; <-- 0, 20, true
 ```
 
 Considering the last two lines, a declaration such as

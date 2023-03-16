@@ -10,7 +10,7 @@ Ceu extends classical structured programming with three main functionalities:
     - A synchronous and deterministic scheduling policy, which provides
       predictable behavior and safe abortion of tasks.
     - A container primitive to hold dynamic tasks, which automatically releases
-      them on termination.
+      them as they terminate.
 - Event Signaling Mechanisms:
     - An `await` primitive to suspend a task and wait for events.
     - A `broadcast` primitive to signal events and awake awaiting tasks.
@@ -28,12 +28,12 @@ Follows a summary of the main ideas in the design of Ceu:
 Follows an extended list of functionalities in Ceu:
 
 - Dynamic typing
-- Expression based (statements are expressions)
+- Statements as expressions
+- Dynamic collections (tuples, vectors, and dictionaries)
 - Stackless coroutines (the basis of tasks)
 - Restricted closures (upvalues must be explicit and final)
 - Deferred statements (for finalization)
-- Exception handling
-- Dynamic collections (tuples, vectors, and dictionaries)
+- Exception handling (throw & catch)
 - Hierarchical tuple templates (for data description)
 - Seamless integration with C (source-level compatibility)
 
