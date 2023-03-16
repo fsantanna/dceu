@@ -132,3 +132,5 @@ $ ./ceu/ceu --lib=pico ./ceu/pico/tst/par.ceu
     - https://github.com/fsantanna/pico-ceu-rocks
     - Clone, cd to it, and run with `pico-ceu`:
         - `ceu --lib=pico main.ceu`
+- Academic publications:
+    - http://ceu-lang.org/chico/#ceu
