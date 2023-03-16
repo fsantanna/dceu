@@ -54,7 +54,7 @@ Displays `Hello World!` every second, until 10 seconds elapse:
 spawn {
     awaiting 10:s {
         every 1:s {
-            print("Hello World!")
+            println("Hello World!")
         }
     }
 }
