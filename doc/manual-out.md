@@ -404,6 +404,8 @@ embed native expressions in programs.
 
 ## 2.1. Keywords
 
+Keywords cannot be used as [variable identifiers](#identifiers).
+
 The following keywords are reserved in Ceu:
 
 ```
@@ -453,8 +455,6 @@ The following keywords are reserved in Ceu:
     yield               ;; yield coroutine                  (43)
 ```
 
-Keywords cannot be used as variable identifiers.
-
 <a name="symbols"/>
 
 ## 2.2. Symbols
@@ -493,6 +493,14 @@ The following operator symbols can be combined to form operator names in Ceu:
 
 Operators names cannot clash with reserved symbols (e.g., `->`).
 
+Examples:
+
+```
+|>
+<|
++++
+```
+
 <a name="identifiers"/>
 
 ## 2.4. Identifiers
@@ -509,13 +517,13 @@ A variable identifier starts with a letter or underscore (`_`) and is followed
 by letters, digits, underscores, single quotes (`'`), question marks (`?`),
 exclamation marks (`!`), or dashes (`-`).
 A dash must be followed by a letter or digit.
-Identifiers can be prefixed with carets (`^` or `^^`), which are associated
-with [closure](#prototypes) access modifiers.
+Identifiers can be prefixed with carets (`^` or `^^`), which denote
+[closure](#prototypes) access modifiers.
 
 Note that dashes are ambiguous with the minus operator.
 For this reason, (i) the minus operation requires spaces between operands
-(e.g., `x - 1`), and (ii) co-existing variables with common parts in
-identifiers are rejected (e.g., `x` vs `x-1` vs `a-x`).
+(e.g., `x - 1`), and (ii) variables with common parts in identifiers are
+rejected (e.g., `x` vs `x-1` vs `a-x`).
 
 An operator identifier is a sequence of operator symbols
 (see [Operators](#operators)).
