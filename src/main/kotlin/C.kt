@@ -89,6 +89,8 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create     (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
         CEU_RET ceu_x_create_in  (struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        struct CEU_Dyn* ceu_vector_create (struct CEU_Dyns* hld);
+        struct CEU_Dyn* ceu_tuple_create  (struct CEU_Dyns* hld, int n);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -99,13 +101,13 @@ fun Coder.main (tags: Tags): String {
         void ceu_max_depth (struct CEU_Dyn* dyn, int n, struct CEU_Value* childs);
         CEU_RET ceu_vector_get (struct CEU_Dyn* vec, int i);
         void ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
+        struct CEU_Dyn* ceu_vector_from_c_string (struct CEU_Dyns* hld, const char* str);
         
         int ceu_dict_key_to_index (struct CEU_Dyn* col, struct CEU_Value* key, int* idx);
         struct CEU_Value ceu_dict_get (struct CEU_Dyn* col, struct CEU_Value* key);
         CEU_RET ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
         
-        struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         void ceu_tuple_set (struct CEU_Dyn* tup, int i, struct CEU_Value v);
 
         struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
@@ -1077,6 +1079,15 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
+        CEU_Dyn* ceu_vector_from_c_string (CEU_Dyns* hld, const char* str) {
+            CEU_Dyn* vec = ceu_vector_create(hld);
+            int N = strlen(str);
+            for (int i=0; i<N; i++) {
+                ceu_vector_set(vec, vec->Ncast.Vector.its, (CEU_Value) { CEU_VALUE_CHAR, str[i] });
+            }
+            return vec;
+        }
+
         CEU_RET ceu_next_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             CEU_Value NIL = (CEU_Value) { CEU_VALUE_NIL };
             assert(n==1 || n==2);
@@ -1773,7 +1784,7 @@ fun Coder.main (tags: Tags): String {
         ${tops.third.joinToString("")}
     """ +
     """ // MAIN
-        int main (void) {
+        int main (int ceu_argc, char** ceu_argv) {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
                 {

@@ -228,6 +228,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #ifdef CEU_DEBUG
                         printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
                         #endif
+                        ${(f_b == null).cond { """
+                        {   // ... for main block
+                            CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
+                            for (int i=0; i<ceu_argc; i++) {
+                                CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
+                                ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} });
+                            }
+                            ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+                        }
+                        """ }}
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
                             val istask = (f_b.tk.str != "func")

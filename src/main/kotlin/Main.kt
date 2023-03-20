@@ -46,7 +46,7 @@ val TAGS = listOf (
 val GLOBALS = setOf (
     "copy", "coroutine", "detrack", "move", "next", "print", "println",
     "status", "sup?", "tags", "tasks", "throw", "track", "type",
-    "{==}", "{#}", "{/=}"
+    "{==}", "{#}", "{/=}", "..."
 )
 
 sealed class Tk (val str: String, val pos: Pos) {

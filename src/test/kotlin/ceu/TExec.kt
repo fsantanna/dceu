@@ -1479,6 +1479,13 @@ class TExec {
         """)
         assert(out == "0\t[]\n") { out }
     }
+    @Test
+    fun nn_07_dots_main() {
+        val out = all("""
+            println(...)
+        """)
+        assert(out == "./out.exe\n") { out }
+    }
 
     // LOOP
 
