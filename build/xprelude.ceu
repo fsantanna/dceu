@@ -132,30 +132,30 @@ func between (min_max, v) {
 ;; ITERATORS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Iterator = [f,v,i]
+data :Iterator = [f,s,i]
 
 func iter-tuple (it :Iterator) {
     val i = it.i
-    if i >= #it.v {
+    if i >= #it.s {
         nil
     } else {
         set it.i = i + 1
-        move([i, it.v[i]])
+        move([i, it.s[i]])
     }
 }
 
 func iter-dict (it :Iterator) {
-    val k = next(it.v,it.i)
+    val k = next(it.s,it.i)
     if k == nil {
         nil
     } else {
         set it.i = k
-        move([k, it.v[k]])
+        move([k, it.s[k]])
     }
 }
 
 func iter-coro (it :Iterator) {
-    val co = it.v
+    val co = it.s
     val v = resume co()
     ((status(co) /= :terminated) and v) or nil
 }
