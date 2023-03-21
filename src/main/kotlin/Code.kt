@@ -691,7 +691,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             var no = ""
                             while (i < it.length) {
                                 val x2 = read()
-                                if (x2.isLetterOrDigit() || x2=='_') {
+                                if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
                                     id += x2
                                 } else {
                                     no += x2
