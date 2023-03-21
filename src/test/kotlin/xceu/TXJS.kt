@@ -543,11 +543,9 @@ class TXJS {
                                 val nums = if line {
                                     resume co_nums(line)
                                 }
-                                if nums {
-                                    resume co_print(nums)
-                                }
-                            } until
-                                (nums == nil)
+                            } until (nums == nil) {
+                                resume co_print(nums)
+                            }
                         }
                     } until
                         (line == nil)

@@ -426,10 +426,9 @@ class Parser (lexer_: Lexer)
                                     ;;assert(ceu_it_$N is :Iterator, "expected :Iterator")
                                     loop {
                                         val ${i.str} = ceu_it_$N.f(ceu_it_$N)
-                                        if ${i.str} /= nil {
-                                            ${b.es.tostr(true)}
-                                        }
-                                    } until (${i.str} == nil)
+                                    } until (${i.str} == nil) {
+                                        ${b.es.tostr(true)}
+                                    }
                                 }
                             """)
                             C(l)
@@ -439,12 +438,18 @@ class Parser (lexer_: Lexer)
                         this.catch_block(this.tk1).let { (C,b) ->
                             val l = if (this.acceptFix("until")) {
                                 val cnd = this.expr()
+                                val blk = if (!this.checkFix("{")) null else this.block()
                                 this.nest("""
                                 do {
                                     var ceu_cnd_$N = false
                                     ${pre0}loop if not ceu_cnd_$N {
                                         ${b.es.tostr(true)}
                                         set ceu_cnd_$N = ${cnd.tostr(true)}
+                                        ${blk.cond { """
+                                            if not ceu_cnd_$N {
+                                                ${it.es.tostr(true)}
+                                            }
+                                        """ }}
                                     }
                                     ceu_cnd_$N
                                 }
@@ -886,10 +891,9 @@ class Parser (lexer_: Lexer)
                                             ;;set ceu_cnd_$N = ceu_cnd_$N
                                         }
                                     }
-                                    if not ceu_cnd_$N {
-                                        yield ()
-                                    }
-                                } until (not (not ceu_cnd_$N))
+                                } until (not (not ceu_cnd_$N)) {
+                                    yield ()
+                                }
                             }
                         """)//.let { println(it.tostr()); it }
                     }

@@ -1634,6 +1634,34 @@ class TXExec {
         """, true)
         assert(out == "1\n2\n3\n:break\n") { out }
     }
+    @Test
+    fun until7() {
+        val out = all("""
+            println(0)
+            loop {
+                println(1)
+            } until true {
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "0\n1\n3\n") { out }
+    }
+    @Test
+    fun until8() {
+        val out = all("""
+            println(0)
+            var x = false
+            loop {
+                println(1)
+            } until x {
+                set x = true
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "0\n1\n2\n1\n3\n") { out }
+    }
 
     // LOOP / NUMERIC
 
@@ -1695,10 +1723,9 @@ class TXExec {
                 val it = [f, 0]
                 loop {
                     val i = it.0(it)
-                    if i /= nil {
-                        println(i)
-                    }
-                } until (i == nil)
+                } until (i == nil) {
+                    println(i)
+                }
             }
         """, true)
         assert(out == "0\n1\n2\n3\n4\n") { out }

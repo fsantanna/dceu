@@ -225,12 +225,12 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            var ceu_step_25 = 1
+            var ceu_step_27 = 1
             var i = {+}(0,0)
-            var ceu_limit_25 = n
-            loop if {<}(i,ceu_limit_25) {
+            var ceu_limit_27 = n
+            loop if {<}(i,ceu_limit_27) {
             nil
-            set i = {+}(i,ceu_step_25)
+            set i = {+}(i,ceu_step_27)
             }
             }
             """.trimIndent()) { e.tostr() }
