@@ -26,7 +26,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Dcl    -> /*this.poly.cond { "poly " } +*/ this.tk_.str + " " + this.id.tostr() + this.tmp.cond { " :tmp" } + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
-        is Expr.Loop   -> "loop if " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
+        is Expr.Loop   -> "loop ${this.nn} " + this.body.tostr(pre)
         is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)
         is Expr.Enum   -> "enum {\n" + this.tags.map {

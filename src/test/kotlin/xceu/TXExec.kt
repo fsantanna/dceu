@@ -236,7 +236,7 @@ class TXExec {
             val tk = task () {
                 yield()
                 println(evt)
-                do { var ok; set ok=true; loop if ok { yield(nil); if (evt is-not :x-task) { set ok=false } else { nil } } }
+                do { var ok; set ok=true; loop until not ok { yield(nil); if (evt is-not :x-task) { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
@@ -305,13 +305,13 @@ class TXExec {
         val out = all("""
             spawn task () {
                 par {
-                    do { var ok1; set ok1=true; loop if ok1 { yield(nil); if type(evt)/=:x-task { set ok1=false } else { nil } } }
+                    do { var ok1; set ok1=true; loop until not ok1 { yield(nil); if type(evt)/=:x-task { set ok1=false } else { nil } } }
                     ;;yield()
-                    do { var ok2; set ok2=true; loop if ok2 { yield(nil); if type(evt)/=:x-task { set ok2=false } else { nil } } }
+                    do { var ok2; set ok2=true; loop until not ok2 { yield(nil); if type(evt)/=:x-task { set ok2=false } else { nil } } }
                     ;;yield()
                     println(1)
                 } with {
-                    do { var ok3; set ok3=true; loop if ok3 { yield(nil); if type(evt)/=:x-task { set ok3=false } else { nil } } }
+                    do { var ok3; set ok3=true; loop until not ok3 { yield(nil); if type(evt)/=:x-task { set ok3=false } else { nil } } }
                     ;;yield()
                     println(2)
                 } with {
@@ -1565,6 +1565,7 @@ class TXExec {
 
     // LOOP / BREAK / UNTIL
 
+    /*
     @Test
     fun break1() {
         val out = all("""
@@ -1599,6 +1600,8 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    */
+
     @Test
     fun until4() {
         val out = all("""
@@ -1623,12 +1626,10 @@ class TXExec {
     fun until6() {
         val out = all("""
             var x = 0
-            val v = loop { {:break}
+            val v = loop {
                 set x = x + 1
                 println(x)
-                if x == 3 {
-                    throw(:break)
-                }
+            } until x == 3 {
             } until false
             println(v)
         """, true)
@@ -1661,6 +1662,25 @@ class TXExec {
             println(3)
         """)
         assert(out == "0\n1\n2\n1\n3\n") { out }
+    }
+    @Test
+    fun until9() {
+        val out = all("""
+            println(0)
+            var x = false
+            loop {
+                println(1)
+            } until x {
+                set x = true
+                println(2)
+            } until x {
+                println(3)
+            } until x {
+                println(4)
+            }
+            println(5)
+        """)
+        assert(out == "0\n1\n2\n5\n") { out }
     }
 
     // LOOP / NUMERIC
@@ -1861,6 +1881,24 @@ class TXExec {
             println(resume co())
         """, true)
         assert(out == "anon : (lin 11, col 21) : resume error : expected yielded coro\n1\n2\n3\n:error\n") { out }
+    }
+    @Test
+    fun iter7() {
+        val out = all("""
+            val y = loop in iter([1,2,3]), x {
+            } until x == 2
+            println(y)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun iter8() {
+        val out = all("""
+            val y = loop in iter([1,2,3]), x {
+            } until x == 4
+            println(y)
+        """, true)
+        assert(out == "false\n") { out }
     }
 
     // THROW / CATCH

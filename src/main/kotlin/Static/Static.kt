@@ -20,7 +20,16 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Loop   -> {
+                val up = ups.pub[this]
+                assert(up is Expr.Do && up.es.size==1) { "bug found: invalid do-loop" }
+                this.body.es.last().let {
+                    if (it.is_innocuous()) {
+                        err(it.tk, "invalid expression : innocuous expression")
+                    }
+                }
+                this.body.traverse()
+            }
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> {}

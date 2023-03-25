@@ -52,12 +52,7 @@ fun Expr.mem (): String {
                 ${this.f.mem()}
             };
             """
-        is Expr.Loop -> """
-            $union { // LOOP
-                ${this.cnd.mem()}
-                ${this.body.mem()}
-            };
-            """
+        is Expr.Loop -> this.body.mem()
         is Expr.Catch -> """
             $union { // CATCH
                 ${this.cnd.mem()}

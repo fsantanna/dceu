@@ -660,7 +660,7 @@ class TExec {
             set t[:b] = 20
             set t[:c] = 30
             var k = next(t)
-            loop if k /= nil {
+            loop until k == nil {
                 println(k, t[k])
                 set k = next(t,k)
             }
@@ -1493,13 +1493,13 @@ class TExec {
     fun loop1() {
         val out = all("""
             var x
-            set x = true
-            loop if x {
-                set x = false
+            set x = false
+            loop until x {
+                set x = true
             }
             println(x)
         """)
-        assert(out == "false\n") { out }
+        assert(out == "true\n") { out }
     }
     @Test
     fun loop2() {
@@ -1515,7 +1515,7 @@ class TExec {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop if i /= nil {
+                loop until i == nil {
                     println(i)
                     set i = it[0](it)
                 }

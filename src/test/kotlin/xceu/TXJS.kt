@@ -643,7 +643,7 @@ class TXJS {
         coro Take (n, lines) {
             yield()
             var i = 0
-            loop if i < n {
+            loop until i == n {
                 yield(resume lines())
                 set i = i + 1
             }
@@ -676,7 +676,7 @@ class TXJS {
             val take2   = spawn Take(3, number2)
             coro Show () {
                 var line = yield()
-                loop if line {
+                loop until not line {
                     println(line)
                     set line = yield()
                 }

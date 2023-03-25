@@ -297,23 +297,17 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
                 val xin = this.acceptFix("in")
-                when {
-                    this.acceptFix("if") -> {
-                        val cnd = this.expr()
-                        val blk = this.block(this.tk1)
-                        val e = blk.es.last()
-                        if (e.is_innocuous()) {
-                            err(e.tk, "invalid expression : innocuous expression")
-                        }
-                        Expr.Loop(tk0, cnd, blk)
-                    }
-                    xin && this.acceptTag(":tasks") -> {
+                val raw = this.acceptEnu("Num")
+                val nn = if (raw) this.tk0.str.toInt() else N++
+
+                val f = when {
+                    (raw || !xin) -> { { blk -> blk } }
+                    this.acceptTag(":tasks") -> {
                         val tasks = this.expr()
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
                         val i = this.tk0 as Tk.Id
-                        val blk = this.block()
-                        this.nest("""
+                        { blk: String -> """
                             ${pre0}do {
                                 val ceu_tasks_$N = ${tasks.tostr(true)}
                                 ```
@@ -323,7 +317,7 @@ class Parser (lexer_: Lexer)
                                 ```
                                 val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                 var ceu_i_$N = 0
-                                ${pre0}loop if ceu_i_$N /= ceu_n_$N {
+                                ${pre0}loop until ceu_i_$N == ceu_n_$N {
                                     val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                     if ceu_dyn_$N == `:pointer NULL` {
                                         ;; empty slot
@@ -339,7 +333,7 @@ class Parser (lexer_: Lexer)
                                             CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
                                         val ${i.str} = track(`:ceu ceu_x_$N`)
-                                        ${blk.es.tostr(true)}
+                                        $blk
                                         if detrack(${i.str}) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         } else {
@@ -348,9 +342,10 @@ class Parser (lexer_: Lexer)
                                     }
                                 }
                             }
-                        """) //.let { println(it.tostr()); it }
+                            """
+                        }
                     }
-                    XCEU && xin && (this.acceptFix("[") || this.acceptFix("(")) -> {
+                    XCEU && (this.acceptFix("[") || this.acceptFix("(")) -> {
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
                         val eA = this.expr()
@@ -372,81 +367,95 @@ class Parser (lexer_: Lexer)
                         x = (step==null && x) || this.acceptFix(",")
                         val i = if (x && this.acceptEnu_err("Id")) this.tk0.str else "ceu_i_$N"
 
-                        // { ... }
-                        val blk = this.block()
-
                         val cmp = when {
-                            (tkB.str=="]" && op=="+") -> "<="
-                            (tkB.str==")" && op=="+") -> "<"
-                            (tkB.str=="]" && op=="-") -> ">="
-                            (tkB.str==")" && op=="-") -> ">"
+                            (tkB.str=="]" && op=="+") -> ">"
+                            (tkB.str==")" && op=="+") -> ">="
+                            (tkB.str=="]" && op=="-") -> "<"
+                            (tkB.str==")" && op=="-") -> "<="
                             else -> error("impossible case")
                         }
 
-                        this.nest("""
+                        { blk: String ->"""
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
                                 var $i = ${eA.tostr(true)} $op (
                                     ${if (tkA.str=="[") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
-                                loop if $i $cmp ceu_limit_$N {
-                                    ${blk.es.tostr(true)}
+                                loop until $i $cmp ceu_limit_$N {
+                                    $blk
                                     set $i = $i $op ceu_step_$N
                                 }                                
                             }
-                        """)
+                            """
+                        }
                     }
-                    XCEU && xin -> {
+                    XCEU -> {
                         val iter = this.expr()
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
                         val i = this.tk0 as Tk.Id
-                        val blk = this.block(this.tk1)
-                        this.nest("""
+                        { blk: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is :Iterator, "expected :Iterator")
                                 loop {
                                     val ${i.str} = ceu_it_$N.f(ceu_it_$N)
                                 } until (${i.str} == nil) {
-                                    ${blk.es.tostr(true)}
+                                    $blk
                                 }
                             }
-                        """)
-                    }
-                    !xin && this.checkFix_err("{") -> {
-                        val blk1 = this.block(this.tk1)
-                        if (this.acceptFix("until")) {
-                            val cnd = this.expr()
-                            val blk2 = if (!this.checkFix("{")) null else this.block()
-                            this.nest("""
-                            do {
-                                var ceu_brk_$N = false
-                                ${pre0}loop if not ceu_brk_$N {
-                                    ${blk1.es.tostr(true)}
-                                    set ceu_brk_$N = ${cnd.tostr(true)}
-                                    ${blk2.cond { """
-                                        if not ceu_brk_$N {
-                                            ${it.es.tostr(true)}
-                                        }
-                                    """ }}
-                                }
-                                ceu_brk_$N
-                            }
-                        """)
-                        } else {
-                            this.nest("""
-                            ${pre0}loop if true {
-                                ${blk1.es.tostr(true)}
-                            }
-                        """)
+                            """
                         }
                     }
                     else -> {
                         err(this.tk1, "invalid loop : unexpected ${this.tk1.str}")
-                        error("impossible case")
+                        error("unreachable")
                     }
+                }
+
+                val brk = if (raw || !this.acceptFix("until")) "" else {
+                    val cnd = this.expr().tostr(true)
+                    """
+                    if $cnd {
+                        `goto CEU_LOOP_DONE_$nn;`
+                    } else { nil }
+                    """
+                }
+
+                val blk = this.block().es
+
+                fun untils (): String {
+                    return if (!this.acceptFix("until")) "" else {
+                        val cnd = this.expr().tostr(true)
+                        val xblk = if (!this.checkFix("{")) "" else {
+                            this.block().es.tostr(true) + untils()
+                        }
+                        """
+                        if $cnd {
+                            `goto CEU_LOOP_DONE_$nn;`
+                        } else { nil }
+                        $xblk
+                        """
+                    }
+                }
+
+                if (raw) {
+                    Expr.Loop(tk0, nn, Expr.Do(tk0, null, blk))
+                } else {
+                    val loop = """
+                        do {
+                            loop $nn {
+                                ;; brk
+                                $brk
+                                ;; blk
+                                ${blk.tostr(true)}
+                                ;; untils
+                                ${untils()}
+                            }
+                        }
+                    """
+                    this.nest(f(loop))
                 }
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
@@ -844,7 +853,7 @@ class Parser (lexer_: Lexer)
                                         else   -> error("impossible case")
                                     }
                                 }.joinToString("+") + (")").repeat(awt.clk.size)}
-                                loop if ceu_ms_$N > 0 {
+                                loop until ceu_ms_$N <= 0 {
                                     await (evt is :frame)
                                     set ceu_ms_$N = ceu_ms_$N - evt.0
                                 }

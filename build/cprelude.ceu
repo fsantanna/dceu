@@ -125,7 +125,7 @@ val to-string = func (v) {
         var i = 0
         val n = `:number strlen($v.Pointer)`
         var str = #[]
-        loop if i < n {
+        loop until i == n {
             set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
             set i = i + 1
         }

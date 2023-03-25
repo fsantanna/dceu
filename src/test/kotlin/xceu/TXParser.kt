@@ -57,11 +57,11 @@ class TXParser {
     }
     @Test
     fun empty4_loop() {
-        val l = lexer("loop if true { }")
+        val l = lexer("loop until false { }")
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Loop && e.body.es[0] is Expr.Pass)
-        assert(e.tostr() == "loop if true {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
     }
 
     // IFS
@@ -228,7 +228,7 @@ class TXParser {
             var ceu_step_27 = 1
             var i = {+}(0,0)
             var ceu_limit_27 = n
-            loop if {<}(i,ceu_limit_27) {
+            loop until {==}(i,ceu_limit_27) {
             nil
             set i = {+}(i,ceu_step_27)
             }
