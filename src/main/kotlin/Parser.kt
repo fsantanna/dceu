@@ -307,7 +307,7 @@ class Parser (lexer_: Lexer)
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
                         val i = this.tk0 as Tk.Id
-                        { blk: String -> """
+                        { body: String -> """
                             ${pre0}do {
                                 val ceu_tasks_$N = ${tasks.tostr(true)}
                                 ```
@@ -317,7 +317,10 @@ class Parser (lexer_: Lexer)
                                 ```
                                 val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                 var ceu_i_$N = 0
-                                ${pre0}loop until ceu_i_$N == ceu_n_$N {
+                                ${pre0}loop $nn {
+                                    if ceu_i_$N == ceu_n_$N {
+                                        `goto CEU_LOOP_DONE_$nn;`
+                                    } else { nil }
                                     val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                     if ceu_dyn_$N == `:pointer NULL` {
                                         ;; empty slot
@@ -333,7 +336,7 @@ class Parser (lexer_: Lexer)
                                             CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
                                         val ${i.str} = track(`:ceu ceu_x_$N`)
-                                        $blk
+                                        $body
                                         if detrack(${i.str}) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         } else {
@@ -375,15 +378,18 @@ class Parser (lexer_: Lexer)
                             else -> error("impossible case")
                         }
 
-                        { blk: String ->"""
+                        { body: String ->"""
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
                                 var $i = ${eA.tostr(true)} $op (
                                     ${if (tkA.str=="[") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
-                                loop until $i $cmp ceu_limit_$N {
-                                    $blk
+                                loop $nn {
+                                    if $i $cmp ceu_limit_$N {
+                                        `goto CEU_LOOP_DONE_$nn;`
+                                    } else { nil }
+                                    $body
                                     set $i = $i $op ceu_step_$N
                                 }                                
                             }
@@ -395,14 +401,16 @@ class Parser (lexer_: Lexer)
                         this.acceptFix_err(",")
                         this.acceptEnu_err("Id")
                         val i = this.tk0 as Tk.Id
-                        { blk: String -> """
+                        { body: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is :Iterator, "expected :Iterator")
-                                loop {
+                                loop $nn {
                                     val ${i.str} = ceu_it_$N.f(ceu_it_$N)
-                                } until (${i.str} == nil) {
-                                    $blk
+                                    if ${i.str} == nil {
+                                        `goto CEU_LOOP_DONE_$nn;`
+                                    } else { nil }
+                                    $body
                                 }
                             }
                             """
@@ -443,19 +451,15 @@ class Parser (lexer_: Lexer)
                 if (raw) {
                     Expr.Loop(tk0, nn, Expr.Do(tk0, null, blk))
                 } else {
-                    val loop = """
-                        do {
-                            loop $nn {
-                                ;; brk
-                                $brk
-                                ;; blk
-                                ${blk.tostr(true)}
-                                ;; untils
-                                ${untils()}
-                            }
-                        }
+                    val body = """
+                        ;; brk
+                        $brk
+                        ;; blk
+                        ${blk.tostr(true)}
+                        ;; untils
+                        ${untils()}
                     """
-                    this.nest(f(loop))
+                    this.nest(f(body))
                 }
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
