@@ -1633,7 +1633,7 @@ class TXExec {
             } until false
             println(v)
         """, true)
-        assert(out == "1\n2\n3\n:break\n") { out }
+        assert(out == "1\n2\n3\n3\n") { out }
     }
     @Test
     fun until7() {
@@ -1803,9 +1803,11 @@ class TXExec {
                 yield(2)
                 yield(3)
             }
-            loop in iter(coroutine(T)), i { {:x}
-                println(i)
-                throw(:x)
+            catch :x {
+                loop in iter(coroutine(T)), i {
+                    println(i)
+                    throw(:x)
+                }
             }
         """, true)
         assert(out == "1\n") { out }

@@ -478,7 +478,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.body.code()}
                     goto CEU_LOOP_NEXT_${this.nn};
                 CEU_LOOP_DONE_${this.nn}:;
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    //ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
             is Expr.Catch -> """

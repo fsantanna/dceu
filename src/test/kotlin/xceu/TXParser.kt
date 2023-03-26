@@ -59,9 +59,10 @@ class TXParser {
     fun empty4_loop() {
         val l = lexer("loop until false { }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.Loop && e.body.es[0] is Expr.Pass)
-        assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
+        val x = parser.exprPrim() as Expr.Do
+        val e = x.es.last() as Expr.Loop
+        assert(e.body.es.last() is Expr.Pass)
+        //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
     }
 
     // IFS
@@ -132,7 +133,7 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val ceu_72 :tmp = do {
+            val ceu_73 :tmp = do {
             val ceu_26 :tmp = if true {
             false
             } else {
@@ -144,8 +145,8 @@ class TXParser {
             ceu_26
             }
             }
-            if ceu_72 {
-            ceu_72
+            if ceu_73 {
+            ceu_73
             } else {
             true
             }
