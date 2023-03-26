@@ -1759,7 +1759,7 @@ class TExec {
                 throw(xxx)
             }
             println(1)
-        """, true)
+        """)
         assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
                 "anon : (lin 5, col 17) : throw(xxx)\n" +
                 "throw error : uncaught exception\n" +

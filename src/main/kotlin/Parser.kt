@@ -296,12 +296,21 @@ class Parser (lexer_: Lexer)
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
-                val xin = this.acceptFix("in")
                 val raw = this.acceptEnu("Num")
+                val xin = !raw && this.acceptFix("in")
                 val nn = if (raw) this.tk0.str.toInt() else N++
 
                 val f = when {
-                    (raw || !xin) -> { { blk -> blk } }
+                    raw -> { { blk -> error("never called") } }
+                    !xin -> {
+                        { body -> """
+                            do {
+                                loop $nn {
+                                    $body
+                                }
+                            }
+                        """ }
+                    }
                     this.acceptTag(":tasks") -> {
                         val tasks = this.expr()
                         this.acceptFix_err(",")

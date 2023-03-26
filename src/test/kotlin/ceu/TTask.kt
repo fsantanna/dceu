@@ -10,7 +10,7 @@ fun yield (ok: String = "ok"): String {
     return "do { var $ok=false; loop until $ok { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } }"
 }
 fun await (evt: String): String {
-    return "do { var ok; set ok=true; yield(nil); loop until not ok { if $evt { set ok=false } else { yield(nil) } } }"
+    return "do { var ok; set ok=false; yield(nil); loop until ok { if $evt { set ok=true } else { yield(nil) } } }"
 }
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -1759,10 +1759,10 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=true; loop until not ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=false } else { nil } } }
+                do { var ok1; set ok1=false; loop until ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=true } else { nil } } }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=true; loop until not ok { yield(nil;) if type(evt)/=:x-task { set ok=false } else { nil } } }
+                    do { var ok; set ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
                     ;;yield(nil)
                 } else {
                     nil
