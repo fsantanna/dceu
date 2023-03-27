@@ -148,6 +148,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     val tag = this.task.first!!
                     err(tag, "declaration error : data ${tag.str} is not declared")
                 }
+
+                this.args.forEach { (_,tag) ->
+                    if (tag!=null && !datas.containsKey(tag.str)) {
+                        err(tag, "declaration error : data ${tag.str} is not declared")
+                    }
+                }
+
                 this.body.traverse()
             }
             is Expr.Do     -> {

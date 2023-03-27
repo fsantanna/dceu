@@ -3219,6 +3219,13 @@ class TExec {
         """, true)
         assert(out == "2\n") { out }
     }
+    @Test
+    fun tplate19_err() {
+        val out = all("""
+            func f (x :X) { x.s }
+        """)
+        assert(out == "anon : (lin 2, col 21) : declaration error : data :X is not declared") { out }
+    }
 
     // POLY
     /*
