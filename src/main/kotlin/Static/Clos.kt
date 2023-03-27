@@ -40,7 +40,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
-            is Expr.Yield  -> {}
+            is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> this.call.traverse()
             is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
             is Expr.Pub    -> {}

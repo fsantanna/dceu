@@ -2254,6 +2254,17 @@ class TExec {
         """)
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
     }
+    @Test
+    fun tags14() {
+        val out = all("""
+            val co = coro () {
+                yield(:x)
+            }
+            println(:y)
+        """)
+        assert(out == ":y\n") { out }
+    }
+
 
     // ENUM
 
