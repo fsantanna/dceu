@@ -328,6 +328,7 @@ class Parser (lexer_: Lexer)
                                 var ceu_i_$N = 0
                                 ${pre0}loop $nn {
                                     if ceu_i_$N == ceu_n_$N {
+                                        pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
                                     } else { nil }
                                     val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
@@ -396,6 +397,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_limit_$N = ${eB.tostr(true)}
                                 loop $nn {
                                     if $i $cmp ceu_limit_$N {
+                                        pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
                                     } else { nil }
                                     $body
@@ -417,6 +419,7 @@ class Parser (lexer_: Lexer)
                                 loop $nn {
                                     val ${i.str} = ceu_it_$N.f(ceu_it_$N)
                                     if ${i.str} == nil {
+                                        pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
                                     } else { nil }
                                     $body
