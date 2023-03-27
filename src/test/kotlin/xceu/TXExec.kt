@@ -152,6 +152,17 @@ class TXExec {
         """)
         assert(out == "anon : (lin 5, col 20) : access error : variable \"is'\" is not declared") { out }
     }
+    @Test
+    fun bb_ifs9() {
+        val out = all("""
+            var x = ifs 20 {
+                in [1,20,1] -> true
+                else  -> false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
 
     // OPS: not, and, or
 
@@ -188,7 +199,7 @@ class TXExec {
         assert(out == "[]\n") { out }
     }
 
-    // is, is-not
+    // is, is-not, in?
 
     @Test
     fun is1() {
@@ -212,6 +223,15 @@ class TXExec {
             println(t is-not :x)
         """, true)
         assert(out == "true\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun in3() {
+        val out = all("""
+            val t = [1,2,3]
+            println(2 in? t)
+            println(4 in? t)
+        """, true)
+        assert(out == "true\nfalse\n") { out }
     }
 
     // assert

@@ -122,10 +122,11 @@ class TLexer {
     }
     @Test
     fun is_isnot() {
-        val l = lexer("is is-not")
+        val l = lexer("is is-not in?")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "is" })
         assert(tks.next().let { it is Tk.Id && it.str == "is-not" })
+        assert(tks.next().let { it is Tk.Id && it.str == "in?" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
