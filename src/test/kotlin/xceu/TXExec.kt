@@ -199,15 +199,15 @@ class TXExec {
         assert(out == "[]\n") { out }
     }
 
-    // is, is-not, in?
+    // is, is-not?, in?
 
     @Test
     fun is1() {
         val out = all("""
             println([] is :bool)
             println([] is :tuple)
-            println(1 is-not :tuple)
-            println(1 is-not :number)
+            println(1 is-not? :tuple)
+            println(1 is-not? :number)
         """, true)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
@@ -218,9 +218,9 @@ class TXExec {
             tags(t,:x,true)
             println(t is :x)
             tags(t,:y,true)
-            println(t is-not :y)
+            println(t is-not? :y)
             tags(t,:x,false)
-            println(t is-not :x)
+            println(t is-not? :x)
         """, true)
         assert(out == "true\nfalse\ntrue\n") { out }
     }
@@ -242,7 +242,7 @@ class TXExec {
             catch :assert {
                 assert([] is :bool, "ok")
             }
-            assert(1 is-not :number)
+            assert(1 is-not? :number)
         """, true)
         assert(out.contains("assertion error : ok\n" +
                 "assertion error : no reason given\n")) { out }
@@ -256,7 +256,7 @@ class TXExec {
             val tk = task () {
                 yield()
                 println(evt)
-                do { var ok; set ok=true; loop until not ok { yield(nil); if (evt is-not :x-task) { set ok=false } else { nil } } }
+                do { var ok; set ok=true; loop until not ok { yield(nil); if (evt is-not? :x-task) { set ok=false } else { nil } } }
                 ;;yield()
                 println(evt)                
             }
