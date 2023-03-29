@@ -415,7 +415,7 @@ class Parser (lexer_: Lexer)
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
-                                ;;assert(ceu_it_$N is :Iterator, "expected :Iterator")
+                                ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
                                     val ${i.str} = ceu_it_$N.f(ceu_it_$N)
                                     if ${i.str} == nil {
@@ -512,7 +512,7 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr()
                 val blk = this.block()
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
-                    this.nest("catch (err is ${cnd.tostr(true)}) ${blk.tostr(true)}")
+                    this.nest("catch (err is? ${cnd.tostr(true)}) ${blk.tostr(true)}")
                 } else {
                     Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
                 }
@@ -766,7 +766,7 @@ class Parser (lexer_: Lexer)
                         val ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
                 """ }
 
-                val eq1 = (cnd!=null && (this.acceptOp("==") || this.acceptOp("is")))
+                val eq1 = (cnd!=null && (this.acceptOp("==") || this.acceptOp("is?") || this.acceptOp("is-not?")))
                 val eq1_op = this.tk0.str
                 val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eq1_op ${it.tostr(true)})" }
                 this.acceptFix_err("->")
@@ -784,7 +784,7 @@ class Parser (lexer_: Lexer)
                         break
                     }
                     val pre1 = this.tk0.pos.pre()
-                    val eqi = (cnd!=null && (this.acceptOp("==") || this.acceptOp("is")))
+                    val eqi = (cnd!=null && (this.acceptOp("==") || this.acceptOp("is?") || this.acceptOp("is-not?")))
                     val eqi_op = this.tk0.str
                     val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eqi_op ${it.tostr(true)})" }
                     this.acceptFix_err("->")
@@ -839,7 +839,7 @@ class Parser (lexer_: Lexer)
                         this.nest("""
                             ${pre0}do :unnest {
                                 val evt ${awt.cnd.tk.str}
-                                await (evt is ${awt.cnd.tk.str}) and $xcnd
+                                await (evt is? ${awt.cnd.tk.str}) and $xcnd
                             }
                         """)
                     }
@@ -870,7 +870,7 @@ class Parser (lexer_: Lexer)
                                     }
                                 }.joinToString("+") + (")").repeat(awt.clk.size)}
                                 loop until ceu_ms_$N <= 0 {
-                                    await (evt is :frame)
+                                    await (evt is? :frame)
                                     set ceu_ms_$N = ceu_ms_$N - evt.0
                                 }
                             }
@@ -1140,7 +1140,7 @@ class Parser (lexer_: Lexer)
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
-                "is" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "is?" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
                 else -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))

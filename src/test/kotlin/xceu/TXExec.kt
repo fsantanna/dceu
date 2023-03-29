@@ -131,9 +131,9 @@ class TXExec {
     fun bb_ifs7() {
         val out = all("""
             var x = ifs 20 {
-                is 10 -> false
+                is? 10 -> false
                 true  -> true
-                is 20 -> false
+                is? 20 -> false
                 else  -> false
             }
             println(x)
@@ -146,7 +146,7 @@ class TXExec {
             data :T = []
             val x = ifs 10 {
                 true -> :T []
-                is 0 -> nil
+                is? 0 -> nil
             }
             println(x)
         """)
@@ -156,7 +156,7 @@ class TXExec {
     fun bb_ifs9() {
         val out = all("""
             var x = ifs 20 {
-                in [1,20,1] -> true
+                in? [1,20,1] -> true
                 else  -> false
             }
             println(x)
@@ -204,8 +204,8 @@ class TXExec {
     @Test
     fun is1() {
         val out = all("""
-            println([] is :bool)
-            println([] is :tuple)
+            println([] is? :bool)
+            println([] is? :tuple)
             println(1 is-not? :tuple)
             println(1 is-not? :number)
         """, true)
@@ -216,7 +216,7 @@ class TXExec {
         val out = all("""
             val t = []
             tags(t,:x,true)
-            println(t is :x)
+            println(t is? :x)
             tags(t,:y,true)
             println(t is-not? :y)
             tags(t,:x,false)
@@ -240,7 +240,7 @@ class TXExec {
     fun assert1() {
         val out = all("""
             catch :assert {
-                assert([] is :bool, "ok")
+                assert([] is? :bool, "ok")
             }
             assert(1 is-not? :number)
         """, true)
@@ -1076,7 +1076,7 @@ class TXExec {
         val out = all("""
             spawn {
                 println(0)
-                await evt is :x
+                await evt is? :x
                 println(99)
             }
             do {
@@ -1534,7 +1534,7 @@ class TXExec {
                 set task.pub = v
                 toggle evt==:hide -> evt==:show {
                     println(task.pub)
-                    every (evt is :dict) and (evt.sub==:draw) {
+                    every (evt is? :dict) and (evt.sub==:draw) {
                         println(evt.v)
                     }
                 }
@@ -1653,7 +1653,7 @@ class TXExec {
             } until false
             println(v)
         """, true)
-        assert(out == "1\n2\n3\n3\n") { out }
+        assert(out == "1\n2\n3\ntrue\n") { out }
     }
     @Test
     fun until7() {
@@ -1908,7 +1908,7 @@ class TXExec {
     fun iter7() {
         val out = all("""
             val y = loop in iter([1,2,3]), x {
-            } until x == 2
+            } until x.1 == 2
             println(y)
         """, true)
         assert(out == "true\n") { out }
@@ -1917,10 +1917,10 @@ class TXExec {
     fun iter8() {
         val out = all("""
             val y = loop in iter([1,2,3]), x {
-            } until x == 4
+            } until x.1 == 4
             println(y)
         """, true)
-        assert(out == "false\n") { out }
+        assert(out == "nil\n") { out }
     }
 
     // THROW / CATCH
@@ -2262,8 +2262,8 @@ class TXExec {
             val t :T = :T []
             var s :T.S
             set s = :T.S []
-            println(t is :T, t is :T.S)
-            println(s is :T, s is :T.S)
+            println(t is? :T, t is? :T.S)
+            println(s is? :T, s is? :T.S)
         """, true)
         assert(out == "true\tfalse\ntrue\ttrue\n") { out }
     }
@@ -2275,9 +2275,9 @@ class TXExec {
             data :T.S = [z:U]
             var s :T.S
             set s = :T.S [1,2,:U[3]]
-            println(s is :T, s.z is :U)
+            println(s is? :T, s.z is? :U)
             set s.z = :U [10]
-            println(s is :T.S, s.z is :U)
+            println(s is? :T.S, s.z is? :U)
         """, true)
         assert(out == "true\ttrue\ntrue\ttrue\n") { out }
     }
@@ -2301,7 +2301,7 @@ class TXExec {
             val b :T     = :T.B [30]
             val c :T.C.Q = :T.C.Q.Y [40,50]
             println(a.a, b.t, c.q)
-            println(a is :T, b is :T.C, c is :T.C.Q.Y)
+            println(a is? :T, b is? :T.C, c is? :T.C.Q.Y)
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }
@@ -2577,8 +2577,8 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                is :pointer -> c-to-string(v)
-                is :number -> 1
+                is? :pointer -> c-to-string(v)
+                is? :number -> 1
             }
         """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }

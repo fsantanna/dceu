@@ -25,7 +25,7 @@ func {+} (v1, v2) {
 
 func {-} (v1, v2) {
     ifs {
-        (v1 is :number) and (v2 is :nil) -> {
+        (v1 is? :number) and (v2 is? :nil) -> {
             `:number (- $v1.Number)`
         }
         (v1 is-not? :number) or (v2 is-not? :number) -> {
@@ -76,8 +76,8 @@ func {%} (v1, v2) {
 
 func {>} (v1,v2) {
     ifs {
-        (v1 is :tag)    and (v2 is :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
-        (v1 is :number) and (v2 is :number) -> `:bool ($v1.Number > $v2.Number)`
+        (v1 is? :tag)    and (v2 is? :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
+        (v1 is? :number) and (v2 is? :number) -> `:bool ($v1.Number > $v2.Number)`
         else -> throw(:error)
     }
 }
@@ -162,10 +162,10 @@ func iter-coro (it :Iterator) {
 
 func iter (v) {
     ifs v {
-        is :tuple  -> :Iterator [iter-tuple, v, 0]
-        is :vector -> :Iterator [iter-tuple, v, 0]
-        is :dict   -> :Iterator [iter-dict,  v, nil]
-        is :x-coro -> :Iterator [iter-coro,  v]
+        is? :tuple  -> :Iterator [iter-tuple, v, 0]
+        is? :vector -> :Iterator [iter-tuple, v, 0]
+        is? :dict   -> :Iterator [iter-dict,  v, nil]
+        is? :x-coro -> :Iterator [iter-coro,  v]
     }
 }
 
@@ -190,9 +190,9 @@ func c-to-string (v) {
 
 func to-string (v) {
     ifs v {
-        is :pointer -> c-to-string(v)
-        is :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
-        is :number -> {
+        is? :pointer -> c-to-string(v)
+        is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        is? :number -> {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
@@ -205,8 +205,8 @@ func to-string (v) {
 
 func to-number (v) {
     ifs v {
-        is :tag -> `:number $v.Tag`
-        ((v is :vector) and (#v > 0)) and (v[0] is :char) -> {
+        is? :tag -> `:number $v.Tag`
+        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> {
             `:number atoi($v.Dyn->Ncast.Vector.buf)`
         }
         else -> v   ;; TODO
@@ -226,10 +226,10 @@ func to-tracks (...) {
     val args = ...
     loop in iter(args), v {
         ifs v.1 {
-            is :x-task -> {
+            is? :x-task -> {
                 set ret[+] = track(v.1)
             }
-            is :x-tasks -> {
+            is? :x-tasks -> {
                 loop in :tasks v.1, i {
                     set ret[+] = i
                 }

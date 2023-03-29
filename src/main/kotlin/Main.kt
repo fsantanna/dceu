@@ -21,13 +21,13 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
     "toggle", "true", "until", "val", "var", "yield"
 ) + if (!XCEU) setOf() else setOf (
-    "and", "await", "awaiting", "every", "ifs", "in?", "is", "is-not?", "not", "or",
+    "and", "await", "awaiting", "every", "ifs", "in?", "is?", "is-not?", "not", "or",
     "par", "par-and", "par-or", "resume-yield-all", "where", "with"
 )).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
 val XOPERATORS = if (!XCEU) setOf() else {
-    setOf("and", "in?", "is", "is-not?", "not", "or")
+    setOf("and", "in?", "is?", "is-not?", "not", "or")
 }
 
 val TAGS = listOf (
