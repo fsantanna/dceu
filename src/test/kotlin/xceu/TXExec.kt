@@ -1434,6 +1434,21 @@ class TXExec {
         assert(out == ":terminated\n") { out }
     }
 
+    // LAMBDA
+
+    @Test
+    fun cc_01_lambda () {
+        val out = ceu.all(
+            """
+            func f (g) {
+                g(10)
+            }
+            println(f { it })
+        """
+        )
+        assert(out == "10\n") { out }
+    }
+
     // WHERE
 
     @Test
