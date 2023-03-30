@@ -590,6 +590,14 @@ class Parser (lexer_: Lexer)
                         }
                         Expr.Spawn(tk0, tasks, call)
                     }
+                    (XCEU && this.acceptFix("coro")) -> {
+                        this.checkFix_err("{")
+                        this.nest("""
+                            ${tk0.pos.pre()}spawn (coro () {
+                                ${this.block().es.tostr(true)}
+                            }) ()
+                        """)
+                    }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
                             ${tk0.pos.pre()}spawn (task () :fake {

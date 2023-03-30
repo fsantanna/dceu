@@ -376,6 +376,18 @@ class TXExec {
         """)
         assert(out == "anon : (lin 3, col 23) : access error : variable \"ts\" is not declared") { out }
     }
+    @Test
+    fun spawn5_coro() {
+        val out = all("""
+            val co = spawn coro {
+                println(1)
+                val v = yield()
+                println(v)
+            }
+            resume co(10)
+        """)
+        assert(out == "1\n10\n") { out }
+    }
 
     // PARAND / PAROR / WATCHING
 
