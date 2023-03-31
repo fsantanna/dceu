@@ -163,7 +163,6 @@ class Parser (lexer_: Lexer)
                 break
             }
         }
-        this.acceptFix_err(close)
         return l
     }
 
@@ -193,6 +192,37 @@ class Parser (lexer_: Lexer)
             }
             return Pair(es, null)
         }
+    }
+
+    fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>> {
+        return this.list0(close) {
+            this.acceptEnu_err("Id")
+            val xid = this.tk0 as Tk.Id
+            if (this.tk0.str == "...") {
+                this.checkFix_err(")")
+            }
+            val tag = if (!this.acceptEnu("Tag")) null else {
+                this.tk0 as Tk.Tag
+            }
+            Pair(xid, tag)
+        }
+    }
+
+    fun lambda (): Expr.Proto {
+        this.acceptFix_err("\\")
+        val args = if (!this.checkEnu("Id")) {
+            listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
+        } else {
+            this.args("{")
+        }.let {
+            it.map { it.first.str + (it.second?.str?:"") }.joinToString(",")
+        }
+        val blk = this.block()
+        return this.nest("""
+            func ($args) {
+                ${blk.es.tostr(true)}
+            }
+        """) as Expr.Proto
     }
 
     data class Await (val now: Boolean, val spw: Boolean, val clk: List<Pair<Expr, Tk.Tag>>?, val cnd: Expr?, val xcnd: Pair<Boolean?,Expr?>?)
@@ -480,17 +510,8 @@ class Parser (lexer_: Lexer)
                 if (isnote) {
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                     this.acceptFix_err("(")
-                    val args = this.list0(")") {
-                        this.acceptEnu_err("Id")
-                        val xid = this.tk0 as Tk.Id
-                        if (this.tk0.str == "...") {
-                            this.checkFix_err(")")
-                        }
-                        val tag = if (!this.acceptEnu("Tag")) null else {
-                            this.tk0 as Tk.Tag
-                        }
-                        Pair(xid, tag)
-                    }
+                    val args = this.args(")")
+                    this.acceptFix_err(")")
                     val task = when {
                         (tk0.str != "task") -> null
                         this.acceptTag(":fake") -> Pair(null, true)
@@ -530,6 +551,7 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(tag, nat)
                 }
+                this.acceptFix_err("}")
                 Expr.Enum(tk0, tags)
             }
             this.acceptFix("data") -> {
@@ -552,6 +574,7 @@ class Parser (lexer_: Lexer)
                             }
                             Pair(id, tp)
                         }
+                        this.acceptFix_err("]")
                         listOf(Expr.Data(tag, ids)) + when {
                             !XCEU -> emptyList()
                             !this.acceptFix("{") -> emptyList()
@@ -698,8 +721,14 @@ class Parser (lexer_: Lexer)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Chr")  -> Expr.Char(this.tk0 as Tk.Chr)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() })
-            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() })
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() }).let {
+                this.acceptFix_err("]")
+                it
+            }
+            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() }).let {
+                this.acceptFix_err("]")
+                it
+            }
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]") {
                 val tk1 = this.tk1
                 val k = if (XCEU && this.acceptEnu("Id")) {
@@ -717,7 +746,10 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err(")")
                 }
                 Pair(k,v)
-            })
+            }).let {
+                this.acceptFix_err("]")
+                it
+            }
             this.checkFix("(")      -> this.expr_in_parens(true,false)!!
 
             /*
@@ -760,6 +792,7 @@ class Parser (lexer_: Lexer)
             }
             */
 
+            (XCEU && this.checkFix("\\")) -> this.lambda()
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
 
@@ -1117,14 +1150,13 @@ class Parser (lexer_: Lexer)
                         }
                         x
                     })
+                    this.acceptFix_err(")")
                 }
                 // LAMBDA
-                XCEU && this.acceptFix("\\") -> {
-                    val blk = this.block()
+                XCEU && this.checkFix("\\") -> {
+                    val f = this.lambda()
                     e = this.nest("""
-                        ${e.tostr(true)}(func (it) {
-                            ${blk.es.tostr(true)}
-                        })
+                        ${e.tostr(true)}(${f.tostr(true)})
                     """)
                 }
                 else -> break

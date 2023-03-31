@@ -1450,14 +1450,50 @@ class TXExec {
 
     @Test
     fun cc_01_lambda () {
+        val out = ceu.all("""
+            println(\{ it })
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
+    @Test
+    fun cc_02_lambda () {
+        val out = ceu.all("""
+            println(\x,y{x+y}(1,2))
+        """, true)
+        assert(out.contains("3\n")) { out }
+    }
+    @Test
+    fun cc_03_lambda () {
+        val out = ceu.all("""
+            println(\x,{x}(1))
+        """, true)
+        assert(out.contains("1\n")) { out }
+    }
+    @Test
+    fun cc_04_lambda () {
+        val out = ceu.all(
+            """
+            println(\{ it }(10))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_05_lambda () {
         val out = ceu.all(
             """
             func f (g) {
                 g(10)
             }
             println(f \{ it })
-        """
-        )
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_0c_lambda () {
+        val out = ceu.all(
+            """
+            \{ \{ it } }
+        """)
         assert(out == "10\n") { out }
     }
 
