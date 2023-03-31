@@ -150,7 +150,7 @@ class TXExec {
             }
             println(x)
         """)
-        assert(out == "anon : (lin 5, col 20) : access error : variable \"is'\" is not declared") { out }
+        assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared") { out }
     }
     @Test
     fun bb_ifs9() {
@@ -1455,7 +1455,7 @@ class TXExec {
             func f (g) {
                 g(10)
             }
-            println(f { it })
+            println(f \{ it })
         """
         )
         assert(out == "10\n") { out }

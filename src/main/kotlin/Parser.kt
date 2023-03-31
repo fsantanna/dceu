@@ -1119,7 +1119,7 @@ class Parser (lexer_: Lexer)
                     })
                 }
                 // LAMBDA
-                XCEU && this.checkFix("{") -> {
+                XCEU && this.acceptFix("\\") -> {
                     val blk = this.block()
                     e = this.nest("""
                         ${e.tostr(true)}(func (it) {
