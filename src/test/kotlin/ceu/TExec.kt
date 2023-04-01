@@ -47,6 +47,7 @@ fun all (inp: String, pre: Boolean=false): String {
         }
         return e.message!!
     }
+    //println(es)
     //println(es.map { it.tostr(false)+"\n" }.joinToString(""))
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), null, es)

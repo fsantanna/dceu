@@ -796,50 +796,34 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
 
-                val noexp = this.acceptFix("{")
-                val cnd = if (noexp) null else {
+                val v = if (this.acceptFix("{")) null else {
                     val e = this.expr()
                     this.acceptFix_err("{")
                     e
                 }
-                var ifs = cnd.cond { """
-                    ${pre0}do {
-                        val ceu_ifs_${cnd!!.n} = ${cnd.tostr(true)}
-                """ }
-
-                val eq1 = (cnd!=null && (this.acceptOp("==") || this.acceptOp("in?") || this.acceptOp("is?") || this.acceptOp("is-not?")))
-                val eq1_op = this.tk0.str
-                val e1 = this.expr().let { if (!eq1) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eq1_op ${it.tostr(true)})" }
-                this.acceptFix_err("->")
-                val b1 = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
-                ifs += """
-                    ${pre0}if $e1 ${b1.tostr(true)} else {
-                """
-                var n = 1
-                while (!this.acceptFix("}")) {
-                    if (this.acceptFix("else")) {
-                        this.acceptFix_err("->")
-                        val be = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
-                        ifs += be.es.map { it.tostr(true)+"\n" }.joinToString("")
-                        this.acceptFix("}")
-                        break
+                val ifs = list0("}") {
+                    val cnd = if (this.acceptFix("else")) {
+                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                    } else {
+                        this.expr()
                     }
-                    val pre1 = this.tk0.pos.pre()
-                    val eqi = (cnd!=null && (this.acceptOp("==") || this.acceptOp("in?") || this.acceptOp("is?") || this.acceptOp("is-not?")))
-                    val eqi_op = this.tk0.str
-                    val ei = this.expr().let { if (!eqi) it.tostr(true) else "(ceu_ifs_${cnd!!.n} $eqi_op ${it.tostr(true)})" }
                     this.acceptFix_err("->")
-                    val bi = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
-                    ifs += """
-                        ${pre1}if $ei ${bi.tostr(true)}
-                        else {
-                    """
-                    n++
+                    val blk = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
+                    Pair(cnd,blk)
                 }
-                ifs += "}\n".repeat(n)
-                ifs += cnd.cond { "}" }
-                //println(ifs)
-                this.nest(ifs)
+                this.acceptFix_err("}")
+                this.nest("""
+                    ${pre0}(\{
+                         ${ifs.map { """
+                             if ${it.first.tostr(true)} {
+                                ${it.second.es.tostr(true)}
+                             } else {
+                         """}.joinToString("")}
+                         ${ifs.map { """
+                             }
+                         """}.joinToString("")}
+                    }(${v?.tostr(true) ?: ""}))
+                """)
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
                 val call = this.expr()
