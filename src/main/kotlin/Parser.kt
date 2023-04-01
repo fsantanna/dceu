@@ -795,12 +795,18 @@ class Parser (lexer_: Lexer)
             (XCEU && this.checkFix("\\")) -> this.lambda()
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
-
-                val v = if (this.acceptFix("{")) null else {
+                val (x,v) = if (this.checkFix("{")) {
+                    Pair(null, null)
+                } else {
                     val e = this.expr()
-                    this.acceptFix_err("{")
-                    e
+                    if (e is Expr.Acc && this.acceptFix("=")) {
+                        Pair(e.tk as Tk.Id, this.expr())
+                    } else {
+                        Pair(null, e)
+                    }
                 }
+                this.acceptFix_err("{")
+
                 val ifs = list0("}",null) {
                     val cnd = if (this.acceptFix("else")) {
                         Expr.Bool(Tk.Fix("true",this.tk0.pos))
@@ -814,8 +820,9 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ${pre0}(\{
-                         ${ifs.map { """
+                    ${pre0}do {
+                        val ${x?.str ?: "it"} = ${v?.tostr(true) ?: "nil"}
+                        ${ifs.map { """
                              if ${it.first.tostr(true)} {
                                 ${it.second.es.tostr(true)}
                              } else {
@@ -823,7 +830,7 @@ class Parser (lexer_: Lexer)
                          ${ifs.map { """
                              }
                          """}.joinToString("")}
-                    }(${v?.tostr(true) ?: ""}))
+                    }
                 """)
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
@@ -857,7 +864,6 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val awt = await()
-
                 when {
                     (awt.xcnd != null) -> {   // await :key
                         awt.cnd!!
@@ -908,7 +914,7 @@ class Parser (lexer_: Lexer)
                                 ${pre0}${(!awt.now).cond { "yield ()" }}
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
-                                    ifs {
+                                    ifs _ = ceu_cnd_$N {
                                         type(ceu_cnd_$N) == :x-task -> {
                                             set ceu_cnd_$N = (status(ceu_cnd_$N) == :terminated)
                                         }
