@@ -162,11 +162,11 @@ func iter-coro (it :Iterator) {
 
 func iter (v) {
     ifs v {
-        is? :tuple  -> :Iterator [iter-tuple, v, 0]
-        is? :vector -> :Iterator [iter-tuple, v, 0]
-        is? :dict   -> :Iterator [iter-dict,  v, nil]
-        is? :func   -> :Iterator [v]
-        is? :x-coro -> :Iterator [iter-coro,  v]
+        it is? :tuple  -> :Iterator [iter-tuple, v, 0]
+        it is? :vector -> :Iterator [iter-tuple, v, 0]
+        it is? :dict   -> :Iterator [iter-dict,  v, nil]
+        it is? :func   -> :Iterator [v]
+        it is? :x-coro -> :Iterator [iter-coro,  v]
     }
 }
 
@@ -191,9 +191,9 @@ func c-to-string (v) {
 
 func to-string (v) {
     ifs v {
-        is? :pointer -> c-to-string(v)
-        is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
-        is? :number -> {
+        it is? :pointer -> c-to-string(v)
+        it is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        it is? :number -> {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
@@ -206,11 +206,11 @@ func to-string (v) {
 
 func to-number (v) {
     ifs v {
-        is? :tag -> `:number $v.Tag`
-        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> {
-            `:number atoi($v.Dyn->Ncast.Vector.buf)`
+        it is? :tag -> `:number $v.Tag`
+        ((it is? :vector) and (#it > 0)) and (it[0] is? :char) -> {
+            `:number atoi($it.Dyn->Ncast.Vector.buf)`
         }
-        else -> v   ;; TODO
+        else -> it   ;; TODO
     }
 }
 
@@ -227,11 +227,11 @@ func to-tracks (...) {
     val args = ...
     loop in iter(args), v {
         ifs v.1 {
-            is? :x-task -> {
-                set ret[+] = track(v.1)
+            it is? :x-task -> {
+                set ret[+] = track(it)
             }
-            is? :x-tasks -> {
-                loop in :tasks v.1, i {
+            it is? :x-tasks -> {
+                loop in :tasks it, i {
                     set ret[+] = i
                 }
             }

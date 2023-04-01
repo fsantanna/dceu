@@ -72,19 +72,40 @@ class TXParser {
         val l = lexer("ifs { a->{1} else->{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n} else {\n0\n}") { e.tostr() }
+        assert(e.tostr() == "func (it) {\n" +
+                "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "if true {\n" +
+                "0\n" +
+                "} else {\n" +
+                "pass nil\n" +
+                "}\n" +
+                "}\n" +
+                "}()") { e.tostr() }
     }
     @Test
     fun ifs2_err() {
         val l = lexer("ifs { }")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
+        val e = parser.expr()
+        assert(e.tostr() == "func (it) {\n" +
+                "pass nil\n" +
+                "}()") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
     @Test
     fun ifs3_err() {
         val l = lexer("ifs { else -> {} }")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"else\"")
+        val e = parser.expr()
+        assert(e.tostr() == "func (it) {\n" +
+                "if true {\n" +
+                "pass nil\n" +
+                "} else {\n" +
+                "pass nil\n" +
+                "}\n" +
+                "}()") { e.tostr() }
     }
     @Test
     fun ifs4_err() {
@@ -97,14 +118,34 @@ class TXParser {
         val l = lexer("ifs { a -> {1} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n} else {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "func (it) {\n" +
+                "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "pass nil\n" +
+                "}\n" +
+                "}()") { e.tostr() }
     }
     @Test
     fun ifs6() {
         val l = lexer("ifs { a->{1} b->2 else->{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n1\n} else {\nif b {\n2\n} else {\n0\n}\n}") { e.tostr() }
+        assert(e.tostr() == "func (it) {\n" +
+                "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "if b {\n" +
+                "2\n" +
+                "} else {\n" +
+                "if true {\n" +
+                "0\n" +
+                "} else {\n" +
+                "pass nil\n" +
+                "}\n" +
+                "}\n" +
+                "}\n" +
+                "}()") { e.tostr() }
     }
 
     // BIN AND OR

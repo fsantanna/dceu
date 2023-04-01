@@ -83,8 +83,8 @@ class TXExec {
     fun bb_ifs3() {
         val out = all("""
             val x = ifs 20 {
-                == 10 -> false
-                == 20 -> true
+                it == 10 -> false
+                it == 20 -> true
                 else  -> false
             }
             println(x)
@@ -95,9 +95,9 @@ class TXExec {
     fun bb_ifs4() {
         val out = all("""
             var x = ifs 20 {
-                == 10 -> false
+                it == 10 -> false
                 true  -> true
-                == 20 -> false
+                it == 20 -> false
                 else  -> false
             }
             println(x)
@@ -108,7 +108,7 @@ class TXExec {
     fun bb_ifs5() {
         val out = all("""
             val x = ifs 20 {
-                == 10 -> false
+                it == 10 -> false
                 else -> true
             }
             println(x)
@@ -120,7 +120,7 @@ class TXExec {
         val out = all("""
             val x = ifs 20 {
                 true -> ifs {
-                    == 20 -> true   ;; err: no ifs expr
+                    it == 20 -> true   ;; err: no ifs expr
                 }
             }
             println(x)
@@ -131,9 +131,9 @@ class TXExec {
     fun bb_ifs7() {
         val out = all("""
             var x = ifs 20 {
-                is? 10 -> false
+                it is? 10 -> false
                 true  -> true
-                is? 20 -> false
+                it is? 20 -> false
                 else  -> false
             }
             println(x)
@@ -146,17 +146,17 @@ class TXExec {
             data :T = []
             val x = ifs 10 {
                 true -> :T []
-                is? 0 -> nil
+                it is? 0 -> nil
             }
             println(x)
         """)
-        assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared") { out }
+        assert(out == "anon : (lin 5, col 24) : access error : variable \"is'\" is not declared") { out }
     }
     @Test
     fun bb_ifs9() {
         val out = all("""
             var x = ifs 20 {
-                in? [1,20,1] -> true
+                it in? [1,20,1] -> true
                 else  -> false
             }
             println(x)
@@ -533,11 +533,11 @@ class TXExec {
         val out = all("""
             do {
                 var xxx
-                val t = spawn coro () {
+                val t = spawn (coro () {
                     set xxx = defer { println(2) }
                     println(:111, xxx)
                     xxx
-                }()
+                }())
                 xxx
             }
         """, true)
@@ -1489,10 +1489,10 @@ class TXExec {
         assert(out == "10\n") { out }
     }
     @Test
-    fun cc_0c_lambda () {
+    fun cc_06_it_it () {
         val out = ceu.all(
             """
-            \{ \{ it } }
+            \{ \{ it } }    ;; it1/it2
         """)
         assert(out == "10\n") { out }
     }
@@ -2640,11 +2640,11 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                is? :pointer -> c-to-string(v)
-                is? :number -> 1
+                it is? :pointer -> c-to-string(v)
+                it is? :number -> 1
             }
         """)
-        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
+        assert(out == "anon : (lin 2, col 24) : access error : variable \"v\" is not declared") { out }
     }
     @Test
     fun all13_self_kill () {

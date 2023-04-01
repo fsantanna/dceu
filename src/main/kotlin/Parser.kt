@@ -155,11 +155,11 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun <T> list0 (close: String, func: ()->T): List<T> {
+    fun <T> list0 (close: String, sep: String?, func: ()->T): List<T> {
         val l = mutableListOf<T>()
         while (!this.checkFix(close)) {
             l.add(func())
-            if (!this.acceptFix(",")) {
+            if (sep!=null && !this.acceptFix(sep)) {
                 break
             }
         }
@@ -195,7 +195,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>> {
-        return this.list0(close) {
+        return this.list0(close,",") {
             this.acceptEnu_err("Id")
             val xid = this.tk0 as Tk.Id
             if (this.tk0.str == "...") {
@@ -219,9 +219,9 @@ class Parser (lexer_: Lexer)
         }
         val blk = this.block()
         return this.nest("""
-            func ($args) {
+            (func ($args) {
                 ${blk.es.tostr(true)}
-            }
+            })
         """) as Expr.Proto
     }
 
@@ -542,7 +542,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("enum") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("{")
-                val tags = this.list0("}") {
+                val tags = this.list0("}",",") {
                     this.acceptEnu_err("Tag")
                     val tag = this.tk0 as Tk.Tag
                     val nat = if (!this.acceptFix("=")) null else {
@@ -566,7 +566,7 @@ class Parser (lexer_: Lexer)
                         }
                         this.acceptFix_err("=")
                         this.acceptFix_err("[")
-                        val ids = this.list0("]") {
+                        val ids = this.list0("]",",") {
                             this.acceptEnu_err("Id")
                             val id = this.tk0 as Tk.Id
                             val tp = if (!this.acceptEnu("Tag")) null else {
@@ -721,15 +721,15 @@ class Parser (lexer_: Lexer)
             this.acceptFix("true")  -> Expr.Bool(this.tk0 as Tk.Fix)
             this.acceptEnu("Chr")  -> Expr.Char(this.tk0 as Tk.Chr)
             this.acceptEnu("Num")  -> Expr.Num(this.tk0 as Tk.Num)
-            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]") { this.expr() }).let {
+            this.acceptFix("[")     -> Expr.Tuple(this.tk0 as Tk.Fix, list0("]",",") { this.expr() }).let {
                 this.acceptFix_err("]")
                 it
             }
-            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]") { this.expr() }).let {
+            this.acceptFix("#[")    -> Expr.Vector(this.tk0 as Tk.Fix, list0("]",",") { this.expr() }).let {
                 this.acceptFix_err("]")
                 it
             }
-            this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]") {
+            this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]",",") {
                 val tk1 = this.tk1
                 val k = if (XCEU && this.acceptEnu("Id")) {
                     val e = Expr.Tag(Tk.Tag(':'+tk1.str, tk1.pos))
@@ -801,7 +801,7 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("{")
                     e
                 }
-                val ifs = list0("}") {
+                val ifs = list0("}",null) {
                     val cnd = if (this.acceptFix("else")) {
                         Expr.Bool(Tk.Fix("true",this.tk0.pos))
                     } else {
@@ -811,6 +811,7 @@ class Parser (lexer_: Lexer)
                     val blk = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
                     Pair(cnd,blk)
                 }
+                //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}(\{
@@ -1127,7 +1128,7 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, list0(")") {
+                    e = Expr.Call(e.tk, e, list0(")",",") {
                         val x = this.expr()
                         if (x is Expr.Acc && x.tk.str=="...") {
                             this.checkFix_err(")")
