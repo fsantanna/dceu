@@ -3211,11 +3211,12 @@ class TTask {
             val t1 = spawn T()
             val r1 = track(t1)
             val x1 = detrack(r1)
-            println(t1, r1, x1, status(t1))
+            ;;println(t1, r1, x1, status(t1))
             broadcast in :global, nil
-            println(t1, r1, x1, status(t1))
+            ;;println(t1, r1, x1, status(t1))
+            println(status(t1))
         """)
-        assert(out == ("x-task: 0x")) { out }
+        assert(out == ":terminated\n") { out }
     }
 
     // EVT / DATA

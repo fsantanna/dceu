@@ -3223,9 +3223,9 @@ class TExec {
     @Test
     fun tplate19_err() {
         val out = all("""
-            func f (x :X) { x.s }
+            val f = func (x :X) { x.s }
         """)
-        assert(out == "anon : (lin 2, col 21) : declaration error : data :X is not declared") { out }
+        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared") { out }
     }
 
     // POLY
