@@ -2644,7 +2644,7 @@ class TXExec {
                 it is? :number -> 1
             }
         """)
-        assert(out == "anon : (lin 2, col 24) : access error : variable \"v\" is not declared") { out }
+        assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
     }
     @Test
     fun all13_self_kill () {
