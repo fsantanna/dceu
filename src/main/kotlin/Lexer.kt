@@ -388,13 +388,22 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                 }
                 (x == '\'') -> {
-                    var c = '\''
-                    val v = read2Until {
-                        val brk = (it=='\'' && c!='\\')
-                        c = it
-                        brk
+                    val (n2,x2) = read2()
+                    if (iseof(n2)) {
+                        err(stack.first().toPos(), "char error : expected '")
                     }
-                    yield(Tk.Chr("'$v'", pos))
+                    val c = if (x2 != '\\') x2.toString() else {
+                        val (n3,x3) = read2()
+                        if (iseof(n3)) {
+                            err(stack.first().toPos(), "char error : expected '")
+                        }
+                        x2.toString()+x3
+                    }
+                    val (n3,x3) = read2()
+                    if (iseof(n3) || x3!='\'') {
+                        err(stack.first().toPos(), "char error : expected '")
+                    }
+                    yield(Tk.Chr("'$c'", pos))
                 }
                 XCEU && (x == '"') -> {
                     var c = '"'

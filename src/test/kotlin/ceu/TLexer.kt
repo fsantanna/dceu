@@ -296,13 +296,38 @@ class TLexer {
 
     @Test
     fun chr1() {
-        val l = lexer("'x' '\\n' 'abc' '\\\''")
+        val l = lexer("'x' '\\n' '\\'' '\\\\'")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
         assert(tks.next().let { it is Tk.Chr && it.str == "'\\n'" })
-        assert(tks.next().let { it is Tk.Chr && it.str == "'abc'" })
         assert(tks.next().let { it is Tk.Chr && it.str == "'\\\''" })
-        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==20 })
+        assert(tks.next().let { it is Tk.Chr && it.str == "'\\\\'" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==19 })
+    }
+    @Test
+    fun chr2_err() {
+        val l = lexer("'x")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
+    }
+    @Test
+    fun chr3_err() {
+        val l = lexer("'\\'")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
+    }
+    @Test
+    fun chr4_err() {
+        val l = lexer("'\n")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
+    }
+    @Test
+    fun chr5_err() {
+        val l = lexer("'abc'")
+        val tks = l.lex().iterator()
+        println(tks.next())
+        assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }
 
 
