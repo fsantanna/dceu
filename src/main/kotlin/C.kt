@@ -74,6 +74,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_RET ceu_tags_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         char* ceu_tag_to_string (int tag);
+        int ceu_string_dash_to_dash_tag (char* str);
         
         void ceu_dyn_free (struct CEU_Dyn* dyn);
         void ceu_dyns_free (struct CEU_Dyns* dyns);
@@ -539,6 +540,21 @@ fun Coder.main (tags: Tags): String {
                 cur = cur->next;
             }
             assert(0 && "bug found");
+        }
+        CEU_RET ceu_string_dash_to_dash_tag_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n == 1);
+            CEU_Value* str = args[0];
+            assert(str->type==CEU_VALUE_VECTOR && str->Dyn->Ncast.Vector.type==CEU_VALUE_CHAR);
+            CEU_Tags_Names* cur = CEU_TAGS;
+            while (cur != NULL) {
+                if (!strcmp(cur->name+1,str->Dyn->Ncast.Vector.buf)) {
+                    ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                    return CEU_RET_RETURN;
+                }
+                cur = cur->next;
+            }
+            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+            return CEU_RET_RETURN;
         }
     """ +
     """ // GC
@@ -1873,6 +1889,12 @@ fun Coder.main (tags: Tags): String {
                             .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} }
                         }
                     };
+                    static CEU_Dyn ceu_string_dash_to_dash_tag = { 
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
+                            .Proto = { NULL, ceu_string_dash_to_dash_tag_f, {0,NULL}, {{0}} }
+                        }
+                    };
+
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
                     ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
@@ -1890,6 +1912,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
                     ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
                     ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
+                    ceu_mem->string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_string_dash_to_dash_tag}  };
                 }
                 ${this.code}
                 return 0;

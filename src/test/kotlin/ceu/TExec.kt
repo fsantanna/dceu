@@ -2100,6 +2100,17 @@ class TExec {
         assert(out == ":vector\t10\n") { out }
     }
 
+    // string-to-tag
+
+    @Test
+    fun ff_01_string_to_tag() {
+        val out = all("""
+            pass :xyz
+            println(string-to-tag("x"), string-to-tag("xyz"))
+        """, true)
+        assert(out == "nil\t:xyz\n") { out }
+    }
+
     // TYPE
 
     @Test
