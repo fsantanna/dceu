@@ -171,9 +171,14 @@ func iter (v) {
 }
 
 func in' (v, xs) {
-    val ok = loop in iter(xs), x {
-    } until x.1 == v
-    not (not ok)
+    ifs {
+        type(xs) == :dict -> not (not xs[v])
+        else -> {
+            val ok = loop in iter(xs), x {
+            } until x.1 == v
+            not (not ok)
+        }
+    }
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -238,6 +243,14 @@ func to-tracks (...) {
         }
     }
     move(ret)
+}
+
+func vector-to-dict (vect) {
+    val dict = @[]
+    loop in iter(vect), v {
+        set dict[v] = true
+    }
+    move(dict)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
