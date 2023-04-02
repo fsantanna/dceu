@@ -134,49 +134,49 @@ func between (min_max, v) {
 
 data :Iterator = [f,s,tp,i]
 
-func iter-tuple (it :Iterator) {
-    val i = it.i
-    if i >= #it.s {
+func iter-tuple (itr :Iterator) {
+    val i = itr.i
+    if i >= #itr.s {
         nil
     } else {
-        set it.i = i + 1
-        ifs it.tp {
-            it == :all -> move([i, it.s[i]])
+        set itr.i = i + 1
+        ifs itr.tp {
+            it == :all -> move([i, itr.s[i]])
             it == :idx -> i
-            it == :val -> it.s[i]
-            else       -> it.s[i]
+            it == :val -> itr.s[i]
+            else       -> itr.s[i]
         }
     }
 }
 
-func iter-dict (it :Iterator) {
-    val k = next(it.s,it.i)
+func iter-dict (itr :Iterator) {
+    val k = next(itr.s,itr.i)
     if k == nil {
         nil
     } else {
-        set it.i = k
-        ifs it.tp {
-            it == :all -> move([k, it.s[k]])
+        set itr.i = k
+        ifs itr.tp {
+            it == :all -> move([k, itr.s[k]])
             it == :key -> k
-            it == :val -> it.s[k]
-            else       -> it.s[k]
+            it == :val -> itr.s[k]
+            else       -> itr.s[k]
         }
     }
 }
 
-func iter-coro (it :Iterator) {
-    val co = it.s
+func iter-coro (itr :Iterator) {
+    val co = itr.s
     val v = resume co()
     ((status(co) /= :terminated) and v) or nil
 }
 
 func iter (v, tp) {
-    ifs v {
-        it is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
-        it is? :vector -> :Iterator [iter-tuple, v, tp, 0]
-        it is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
-        it is? :func   -> :Iterator [v]
-        it is? :x-coro -> :Iterator [iter-coro,  v]
+    ifs {
+        v is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+        v is? :vector -> :Iterator [iter-tuple, v, tp, 0]
+        v is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
+        v is? :func   -> :Iterator [v]
+        v is? :x-coro -> :Iterator [iter-coro,  v]
     }
 }
 
@@ -205,10 +205,10 @@ func c-to-string (v) {
 }
 
 func to-string (v) {
-    ifs v {
-        it is? :pointer -> c-to-string(v)
-        it is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
-        it is? :number -> {
+    ifs {
+        v is? :pointer -> c-to-string(v)
+        v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        v is? :number -> {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
@@ -220,12 +220,12 @@ func to-string (v) {
 }
 
 func to-number (v) {
-    ifs v {
-        it is? :tag -> `:number $v.Tag`
-        ((it is? :vector) and (#it > 0)) and (it[0] is? :char) -> {
-            `:number atoi($it.Dyn->Ncast.Vector.buf)`
+    ifs {
+        v is? :tag -> `:number $v.Tag`
+        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> {
+            `:number atoi($v.Dyn->Ncast.Vector.buf)`
         }
-        else -> it   ;; TODO
+        else -> v   ;; TODO
     }
 }
 
@@ -241,12 +241,12 @@ func to-tracks (...) {
     val ret = #[]
     val args = ...
     loop in iter(args), v {
-        ifs v.1 {
-            it is? :x-task -> {
-                set ret[+] = track(it)
+        ifs {
+            v is? :x-task -> {
+                set ret[+] = track(v)
             }
-            it is? :x-tasks -> {
-                loop in :tasks it, i {
+            v is? :x-tasks -> {
+                loop in :tasks v, i {
                     set ret[+] = i
                 }
             }
