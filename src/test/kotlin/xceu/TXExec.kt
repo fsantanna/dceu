@@ -173,6 +173,16 @@ class TXExec {
         """, true)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun bb_11_ifs () {
+        val out = all("""
+            val x = ifs {
+                true -> it
+            }
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 3, col 25) : access error : variable \"it\" is not declared") { out }
+    }
 
     // OPS: not, and, or
 
@@ -1600,6 +1610,17 @@ class TXExec {
         """,true)
         assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
     }
+    @Test
+    fun where8() {
+        val out = ceu.all("""
+            val x = y
+                where {
+                    val y = 10
+                }
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // THUS
     @Test
@@ -2305,6 +2326,17 @@ class TXExec {
             println(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
+    }
+
+    // string-to-tag
+
+    @Test
+    fun ff_01_string_to_tag() {
+        val out = all("""
+            pass :xyz
+            println(string-to-tag("x"), string-to-tag("xyz"))
+        """, true)
+        assert(out == "nil\t:xyz\n") { out }
     }
 
     // COMPOSITION

@@ -824,7 +824,9 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        val ${x?.str ?: "it"} :tmp = ${v?.tostr(true) ?: "nil"}
+                        ${v.cond { """
+                            val ${x?.str ?: "it"} :tmp = ${v?.tostr(true) ?: "nil"}
+                        """}}
                         ${ifs.map { """
                              if ${it.first.tostr(true)} {
                                 ${it.second.es.tostr(true)}
@@ -1069,8 +1071,14 @@ class Parser (lexer_: Lexer)
     }
     fun exprSufs (): Expr {
         var e = this.exprPrim()
-        // only accept sufix in the same line
-        while (this.tk0.pos.isSameLine(this.tk1.pos)) {
+        while (true) {
+            // only accept simple sufix in the same line
+            val same = this.tk0.pos.isSameLine(this.tk1.pos)
+            val cplx = this.checkFix("where") || this.checkFix("thus")
+            if (!(same || cplx)) {
+                break
+            }
+
             when {
                 // INDEX / PUB / FIELD
                 this.acceptFix("[") -> {

@@ -380,9 +380,9 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 10, col 21) : f(3)\n" +
-                "anon : (lin 4, col 29) : f({-}(v,1))\n" +
-                "anon : (lin 3, col 26) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 11, col 21) : f(3)\n" +
+                "anon : (lin 5, col 29) : f({-}(v,1))\n" +
+                "anon : (lin 4, col 26) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -2098,17 +2098,6 @@ class TExec {
             println(type(s), s)
         """, true)
         assert(out == ":vector\t10\n") { out }
-    }
-
-    // string-to-tag
-
-    @Test
-    fun ff_01_string_to_tag() {
-        val out = all("""
-            pass :xyz
-            println(string-to-tag("x"), string-to-tag("xyz"))
-        """, true)
-        assert(out == "nil\t:xyz\n") { out }
     }
 
     // TYPE
