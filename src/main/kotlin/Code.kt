@@ -876,6 +876,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } else {
                         val src = this.asdst_src()
                         """
+                        if (ceu_mem->idx_$n.type > CEU_VALUE_DYNAMIC) {
+                            ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->idx_$n.Dyn, 0, ${this.do_issafe()});
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        }
                         if ($src.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set(ceu_acc.Dyn->up_dyns.dyns, $src.Dyn, 0, ${this.do_issafe()});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");

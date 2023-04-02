@@ -682,6 +682,30 @@ class TExec {
         """)
         assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
     }
+    @Test
+    fun dd_11_dict_set() {
+        val out = all("""
+            val v = @[]
+            do {
+                set v[[]] = true
+            }
+            println(v)
+        """)
+        assert(out == "@[([],true)]\n") { out }
+    }
+    @Test
+    fun dd_12_dict_set_err() {
+        val out = all("""
+            val v = @[]
+            do {
+                val k = []
+                set v[k] = true
+            }
+            println(v)
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
 
     // VECTOR
 
