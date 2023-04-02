@@ -38,7 +38,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
         val n = pos.reader.read()
         val x = n.toChar()
         if (x == '\n') {
-            pos.lin++; pos.col =1
+            pos.lin++; pos.col=1
         } else if (!iseof(n)) {
             pos.col++
         }
@@ -228,7 +228,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetterOrDigit()) }
+                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetter()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
@@ -238,7 +238,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
-                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetterOrDigit()) }
+                    val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
                     when {
                         XOPERATORS.contains(id) -> yield(Tk.Op(id, pos))
                         KEYWORDS.contains(id) -> yield(Tk.Fix(id, pos))
@@ -295,7 +295,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     when {
                         (x3.isLetter() || x3 == '_') -> {
-                            val id = x3 + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetterOrDigit()) }
+                            val id = x3 + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
                             if (KEYWORDS.contains(id)) {
                                 err(pos, "token ^ error : unexpected keyword")
                                 yield(Tk.Fix(id, pos))

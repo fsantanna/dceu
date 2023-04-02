@@ -112,10 +112,10 @@ class TLexer {
     fun ids3() {
         val l = lexer("x-1 x-a")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id  && it.str == "x-1" })
-        //assert(tks.next().let { it is Tk.Id  && it.str == "x" })
-        //assert(tks.next().let { it is Tk.Op  && it.str == "-" })
-        //assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        //assert(tks.next().let { it is Tk.Id  && it.str == "x-1" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "-" })
+        assert(tks.next().let { it is Tk.Num && it.str == "1" })
         assert(tks.next().let { it is Tk.Id  && it.str == "x-a" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
@@ -453,9 +453,18 @@ class TLexer {
     }
     @Test
     fun tags4() {
+        val l = lexer(":X.y.z")
+        val tks = l.lex().iterator()
+        assert(tks.next().str == ":X.y.z")
+        assert(tks.next() is Tk.Eof)
+    }
+    @Test
+    fun tags4a() {
         val l = lexer(":X.y.1")
         val tks = l.lex().iterator()
-        assert(tks.next().str == ":X.y.1")
+        assert(tks.next().str == ":X.y")
+        assert(tks.next().str == ".")
+        assert(tks.next().str == "1")
         assert(tks.next() is Tk.Eof)
     }
     @Test
@@ -467,7 +476,7 @@ class TLexer {
     }
     @Test
     fun tags7() {
-        val l = lexer(":1.2.3.4.5")
+        val l = lexer(":a.b.c.d.e")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' : max hierarchy of 4")
     }
