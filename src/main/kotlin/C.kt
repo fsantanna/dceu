@@ -1770,7 +1770,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // FUNCS
         typedef struct {
-            ${GLOBALS.map { "CEU_Value ${it.id2c()};\n" }.joinToString("")}
+            ${GLOBALS.map { "CEU_Value ${it.id2c(null)};\n" }.joinToString("")}
             ${this.mem}
         } CEU_Proto_Mem_${this.outer.n};
         CEU_Proto_Mem_${this.outer.n} _ceu_mem_;

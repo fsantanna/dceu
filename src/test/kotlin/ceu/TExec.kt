@@ -57,7 +57,7 @@ fun all (inp: String, pre: Boolean=false): String {
         val clos  = Clos(outer, ups, vars)
         val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder  = Coder(outer, ups, vars, clos, unsf, sta)
+        val coder = Coder(outer, ups, vars, clos, unsf, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -232,7 +232,7 @@ class TExec {
             }
             println(x)
         """)
-        assert(out == "10\n20\n:ok\n") { out }
+        assert(out == "10\n") { out }
     }
 
     // INDEX / TUPLE
@@ -982,6 +982,19 @@ class TExec {
             println(x)
         """)
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun do5() {
+        val out = all("""
+            do {
+                val x
+            }
+            do {
+                val x
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // GROUP

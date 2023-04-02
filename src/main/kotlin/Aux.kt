@@ -41,7 +41,7 @@ fun String.tag2c (): String {
         .replace('-','_')
 }
 
-fun String.id2c (): String {
+fun String.id2c (n: Int?): String {
     fun String.aux (): String {
         return if (this[0] == '{') {
             val MAP = mapOf(
@@ -73,6 +73,12 @@ fun String.id2c (): String {
         '_' + this.drop(1).dropLast(1).aux() + '_'
     } else {
         this.aux()
+    }.let {
+        if (n==null || this in GLOBALS) {
+            it
+        } else {
+            it + "_" + n
+        }
     }
 }
 

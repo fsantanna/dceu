@@ -141,6 +141,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun id2c (me: Expr, id: String): String {
+        val xvar = this.get(me, id)!!
+        return id.id2c(xvar.dcl.n)
+    }
+
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {

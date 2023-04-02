@@ -21,13 +21,13 @@ fun Expr.mem (): String {
             };
         """
         is Expr.Dcl -> {
-            val id = this.id.str.id2c()
+            val id = this.id.str.id2c(this.n)
             """
             struct { // DCL
                 struct {
                     ${if (id in listOf("evt","_")) "" else {
                         """
-                        CEU_Value $id;
+                        CEU_Value ${id};
                         CEU_Block* _${id}_; // can't be static b/c recursion
                         """
                     }}
