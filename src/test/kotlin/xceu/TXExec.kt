@@ -163,6 +163,16 @@ class TXExec {
         """, true)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun bb_ifs10() {
+        val out = all("""
+            val x = ifs [] {
+                true -> it
+            }
+            println(x)
+        """, true)
+        assert(out == "[]\n") { out }
+    }
 
     // OPS: not, and, or
 

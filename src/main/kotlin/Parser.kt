@@ -821,7 +821,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        val ${x?.str ?: "it"} = ${v?.tostr(true) ?: "nil"}
+                        val ${x?.str ?: "it"} :tmp = ${v?.tostr(true) ?: "nil"}
                         ${ifs.map { """
                              if ${it.first.tostr(true)} {
                                 ${it.second.es.tostr(true)}

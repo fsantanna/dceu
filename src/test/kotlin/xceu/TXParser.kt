@@ -73,7 +73,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val it :tmp = nil\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -91,7 +91,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val it :tmp = nil\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
@@ -101,7 +101,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val it :tmp = nil\n" +
                 "if true {\n" +
                 "pass nil\n" +
                 "} else {\n" +
@@ -121,7 +121,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val it :tmp = nil\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -135,7 +135,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val it :tmp = nil\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
