@@ -132,7 +132,7 @@ func between (min_max, v) {
 ;; ITERATORS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Iterator = [f,s,i]
+data :Iterator = [f,s,tp,i]
 
 func iter-tuple (it :Iterator) {
     val i = it.i
@@ -140,7 +140,12 @@ func iter-tuple (it :Iterator) {
         nil
     } else {
         set it.i = i + 1
-        move([i, it.s[i]])
+        ifs it.tp {
+            it == :all -> move([i, it.s[i]])
+            it == :idx -> i
+            it == :val -> it.s[i]
+            else       -> it.s[i]
+        }
     }
 }
 
@@ -150,7 +155,12 @@ func iter-dict (it :Iterator) {
         nil
     } else {
         set it.i = k
-        move([k, it.s[k]])
+        ifs it.tp {
+            it == :all -> move([k, it.s[k]])
+            it == :key -> k
+            it == :val -> it.s[k]
+            else       -> it.s[k]
+        }
     }
 }
 
@@ -160,11 +170,11 @@ func iter-coro (it :Iterator) {
     ((status(co) /= :terminated) and v) or nil
 }
 
-func iter (v) {
+func iter (v, tp) {
     ifs v {
-        it is? :tuple  -> :Iterator [iter-tuple, v, 0]
-        it is? :vector -> :Iterator [iter-tuple, v, 0]
-        it is? :dict   -> :Iterator [iter-dict,  v, nil]
+        it is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+        it is? :vector -> :Iterator [iter-tuple, v, tp, 0]
+        it is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
         it is? :func   -> :Iterator [v]
         it is? :x-coro -> :Iterator [iter-coro,  v]
     }
@@ -175,7 +185,7 @@ func in' (v, xs) {
         type(xs) == :dict -> not (not xs[v])
         else -> {
             val ok = loop in iter(xs), x {
-            } until x.1 == v
+            } until x == v
             not (not ok)
         }
     }

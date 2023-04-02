@@ -99,7 +99,7 @@ class TXJS {
         val out = all("""
             coro objectEntries (obj) {
                 yield()
-                loop in iter(obj), v {
+                loop in iter(obj,:all), v {
                     yield([v.0, v.1])
                 }
             }
@@ -225,7 +225,7 @@ class TXJS {
     fun x9() {
         val out = all("""
             coro genFunc () {
-                loop in iter(#['a','b']), v {
+                loop in iter(#['a','b'],:all), v {
                     yield(move(v))
                 }
             }
@@ -452,12 +452,12 @@ class TXJS {
                 var cur = ""
                 loop {
                     val tmp = yield()
-                    loop in iter(tmp), c {
-                        if c.1 == '\n' {
+                    loop in iter(tmp,:val), c {
+                        if c == '\n' {
                             resume target(cur)
                             set cur = ""
                         } else {
-                            set cur[+] = c.1
+                            set cur[+] = c
                         }
                     }
                 }
@@ -502,11 +502,11 @@ class TXJS {
                 loop {
                     val tmp = yield(nil)
                     loop in iter(tmp), c {
-                        if c.1 == '\n' {
+                        if c == '\n' {
                             yield(move(cur))
                             set cur = ""
                         } else {
-                            set cur[+] = c.1
+                            set cur[+] = c
                         }
                     }
                 }

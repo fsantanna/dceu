@@ -957,10 +957,40 @@ class TXExec {
         assert(out == "#[1,2,3,4,5,6]\n") { out }
     }
     @Test
-    fun dict10_iter() {
+    fun dict10_iter_nil() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
             loop in iter(t), v {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun dict10_iter_val() {
+        val out = all("""
+            val t = @[x=1, y=2, z=3]
+            loop in iter(t,:val), v {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun dict10_iter_key() {
+        val out = all("""
+            val t = @[x=1, y=2, z=3]
+            loop in iter(t,:key), v {
+                println(v)
+            }
+        """, true)
+        assert(out == ":x\n:y\n:z\n") { out }
+    }
+    @Test
+    fun dict10_iter_all() {
+        val out = all("""
+            val t = @[x=1, y=2, z=3]
+            loop in iter(t,:all), v {
                 println(v)
             }
         """, true)
@@ -978,14 +1008,44 @@ class TXExec {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun vect11_iter() {
+    fun vect11_iter_nil() {
         val out = all("""
             val t = #[1, 2, 3]
             loop in iter(t), v {
                 println(v)
             }
         """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun vect11_iter_val() {
+        val out = all("""
+            val t = #[1, 2, 3]
+            loop in iter(t,:val), v {
+                println(v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun vect11_iter_all() {
+        val out = all("""
+            val t = #[1, 2, 3]
+            loop in iter(t,:all), v {
+                println(v)
+            }
+        """, true)
         assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
+    }
+    @Test
+    fun vect11_iter_idx() {
+        val out = all("""
+            val t = #[1, 2, 3]
+            loop in iter(t,:id), v {
+                println(v)
+            }
+        """, true)
+        assert(out == "0\n1\n2\n") { out }
     }
     @Test
     fun vect12_iter_err() {
@@ -1002,7 +1062,7 @@ class TXExec {
     fun dict13_iter() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop in iter(t), x {
+            loop in iter(t,:all), x {
                 val k = x.0
                 val v = x.1
                 println(k, v)
@@ -1056,7 +1116,7 @@ class TXExec {
     fun tuple19_iter() {
         val out = all("""
             val t = [1, 2, 3]
-            loop in iter(t), v {
+            loop in iter(t,:all), v {
                 println(v)
             }
         """, true)
@@ -2025,7 +2085,7 @@ class TXExec {
     fun iter7() {
         val out = all("""
             val y = loop in iter([1,2,3]), x {
-            } until x.1 == 2
+            } until x == 2
             println(y)
         """, true)
         assert(out == "true\n") { out }
@@ -2034,7 +2094,7 @@ class TXExec {
     fun iter8() {
         val out = all("""
             val y = loop in iter([1,2,3]), x {
-            } until x.1 == 4
+            } until x == 4
             println(y)
         """, true)
         assert(out == "nil\n") { out }
@@ -2372,7 +2432,7 @@ class TXExec {
             }
             pass :depois
             val t = [:antes, :x, :y, :z, :a, :b, :c, :meio, :i, :j, :depois]
-            loop in iter(t), v {
+            loop in iter(t,:all), v {
                 set t[v.0] = to-number(v.1)
             }
             println(t)

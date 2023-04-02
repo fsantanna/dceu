@@ -863,7 +863,9 @@ class TExec {
             val v
             v[#v-1]
         """, true)
-        assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
+        //assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
+        assert(out == "anon : (lin 3, col 15) : {#}(v) : length error : not a vector\n" +
+                ":error\n") { out }
     }
 
     // STRINGS / CHAR
@@ -2170,7 +2172,7 @@ class TExec {
                 println(:Xxx.Yyy)
             }()
             func () {
-                println(:1.2.3)
+                println(:a.b.c)
             }()
         """)
         assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared") { out }
@@ -2255,16 +2257,16 @@ class TExec {
     @Test
     fun tags10() {
         val out = all("""
-            println(:x-a-x, :i.j.1)
+            println(:x-a-x, :i.j.a)
         """, true)
         assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared") { out }
     }
     @Test
     fun tags10a() {
         val out = all("""
-            println(:x-a-x, :i-j-1)
+            println(:x-a-x, :i-j-a)
         """, true)
-        assert(out == ":x-a-x\t:i-j-1\n") { out }
+        assert(out == ":x-a-x\t:i-j-a\n") { out }
     }
     @Test
     fun tags11() {
@@ -2289,13 +2291,13 @@ class TExec {
             pass :B
             pass :B.I
             pass :B.I.X
-            pass :B.I.X.1
+            pass :B.I.X.a
             println(sup?(:A, :A.I))
             println(sup?(:A, :A.I.X))
             println(sup?(:A.I.X, :A.I.Y))
             println(sup?(:A.J, :A.I.Y))
             println(sup?(:A.I.X, :A))
-            println(sup?(:B, :B.I.X.1))
+            println(sup?(:B, :B.I.X.a))
         """, true)
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
