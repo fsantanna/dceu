@@ -73,7 +73,6 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it :tmp = nil\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -91,19 +90,19 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it :tmp = nil\n" +
+                "pass nil\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
     @Test
     fun ifs3_err() {
-        val l = lexer("ifs { else -> {} }")
+        val l = lexer("ifs nil { else -> it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
                 "val it :tmp = nil\n" +
                 "if true {\n" +
-                "pass nil\n" +
+                "it\n" +
                 "} else {\n" +
                 "pass nil\n" +
                 "}\n" +
@@ -117,13 +116,13 @@ class TXParser {
     }
     @Test
     fun ifs5() {
-        val l = lexer("ifs { a -> {1} }")
+        val l = lexer("ifs v { a -> {it} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it :tmp = nil\n" +
+                "val it :tmp = v\n" +
                 "if a {\n" +
-                "1\n" +
+                "it\n" +
                 "} else {\n" +
                 "pass nil\n" +
                 "}\n" +
@@ -131,16 +130,16 @@ class TXParser {
     }
     @Test
     fun ifs6() {
-        val l = lexer("ifs { a->{1} b->2 else->{0} }")
+        val l = lexer("ifs v { a->{1} b->it else->{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it :tmp = nil\n" +
+                "val it :tmp = v\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
                 "if b {\n" +
-                "2\n" +
+                "it\n" +
                 "} else {\n" +
                 "if true {\n" +
                 "0\n" +
