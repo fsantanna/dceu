@@ -74,7 +74,7 @@ fun String.id2c (n: Int?): String {
     } else {
         this.aux()
     }.let {
-        if (n==null || this in GLOBALS) {
+        if (n==null || this in GLOBALS || this.startsWith("ceu_")) {
             it
         } else {
             it + "_" + n

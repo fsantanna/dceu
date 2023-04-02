@@ -188,6 +188,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
                     val dcl = vars.assertIsDeclared(this, Pair(it,1), this.tk)
+                    val idc = vars.id2c(this.body, it)
                     val btw = ups
                         .all_until(this) { dcl.blk==it }
                         .filter { it is Expr.Proto }
@@ -195,7 +196,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val upv = min(2, btw)
                     """
                     ceu_gc_inc(&${ups.pub[this]!!.id2c(dcl,upv).first});
-                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${it} = ${ups.pub[this]!!.id2c(dcl,upv).first};
+                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = ${ups.pub[this]!!.id2c(dcl,upv).first};
                     """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
