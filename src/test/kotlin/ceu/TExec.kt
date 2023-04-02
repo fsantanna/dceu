@@ -223,6 +223,17 @@ class TExec {
         """)
         assert(out == "10\n20\n:ok\n") { out }
     }
+    @Test
+    fun bb_09_nested_var() {
+        val out = all("""
+            val x = do {
+                val x = 10
+                x
+            }
+            println(x)
+        """)
+        assert(out == "10\n20\n:ok\n") { out }
+    }
 
     // INDEX / TUPLE
 
@@ -323,7 +334,8 @@ class TExec {
     @Test
     fun cc_tuple6_free() {
         val out = all("""
-            val f = func (v) {
+            var f
+            set f = func (v) {
                 ;;println(v)
                 if v > 0 {
                     [f(v - 1)]
@@ -357,7 +369,8 @@ class TExec {
     @Test
     fun cc_tuple8_hold_err() {
         val out = all("""
-            val f = func (v) {
+            var f
+            set f = func (v) {
                 if v > 0 {
                     val x = f(v - 1)
                     [x] ;; invalid return
@@ -415,7 +428,8 @@ class TExec {
     @Test
     fun cc_tuple12_free_copy() {
         val out = all("""
-            val f = func (v) {
+            var f
+            set f = func (v) {
                 ;;println(v)
                 if v > 0 {
                     copy([f(v - 1)])
@@ -1414,6 +1428,15 @@ class TExec {
             f()
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun func18_err_rec() {
+        val out = all("""
+            val f = func () {
+                f()
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared") { out }
     }
 
     // FUNC / ARGS / DOTS / ...

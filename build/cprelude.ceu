@@ -120,7 +120,8 @@ val {<} = func (v1,v2) {
 
 ;; to-string, to-number
 
-val to-string = func (v) {
+var to-string
+set to-string = func (v) {
     if type(v) == :pointer {
         var i = 0
         val n = `:number strlen($v.Pointer)`

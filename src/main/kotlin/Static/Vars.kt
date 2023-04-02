@@ -185,6 +185,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.es.forEach { it.traverse() }
             }
             is Expr.Dcl    -> {
+                this.src?.traverse()
+
                 val id = this.id.str
                 val bup = ups.first(this) { it is Expr.Do && it.tag?.str!=":unnest" }!! as Expr.Do
                 val xup = pub[bup]!!
@@ -208,8 +210,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (id!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-
-                this.src?.traverse()
             }
             is Expr.Set    -> {
                 this.dst.traverse()

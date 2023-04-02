@@ -522,7 +522,10 @@ class Parser (lexer_: Lexer)
                     val proto = Expr.Proto(tk0, task, args, blk)
                     if (id == null) proto else {
                         this.nest("""
-                            ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)} 
+                            do :unnest {
+                                ${tk0.pos.pre()}var ${id.str}
+                                set ${id.str} = ${proto.tostr(true)}
+                            }
                         """)
                     }
                 } else {
