@@ -1506,7 +1506,7 @@ class TXExec {
             println(x) where {
                 val x = 1
             }
-            val z = y + 10 where {
+            val z = (y + 10) where {
                 val y = 20
             }
             println(z)
@@ -1579,6 +1579,29 @@ class TXExec {
             }
         """)
         assert(out == "10\n:x-track\n") { out }
+    }
+    @Test
+    fun where7_err() {
+        val out = ceu.all(
+            """
+            val z = y + 10 where {
+                val y = 20
+            }
+        """,true)
+        assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
+    }
+
+    // THUS
+    @Test
+    fun qq_01_thus() {
+        val out = ceu.all(
+            """
+            val x = 1 thus {
+                it
+            }
+            println(x)
+        """,true)
+        assert(out == "1\n") { out }
     }
 
     // TOGGLE

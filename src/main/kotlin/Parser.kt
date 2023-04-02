@@ -1150,6 +1150,29 @@ class Parser (lexer_: Lexer)
                         ${e.tostr(true)}(${f.tostr(true)})
                     """)
                 }
+                // WHERE
+                XCEU && this.acceptFix("where") -> {
+                    val tk0 = this.tk0
+                    val body = this.block()
+                    e = this.nest("""
+                        ${tk0.pos.pre()}do :unnest-hide {
+                            ${body.es.tostr(true)}
+                            ${e.tostr(true)}
+                        }
+                    """)
+                }
+                // THUS
+                XCEU && this.acceptFix("thus") -> {
+                    val tk0 = this.tk0
+                    val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
+                    val body = this.block()
+                    e = this.nest("""
+                        ${tk0.pos.pre()}do {
+                            val ${x?.str ?: "it"} :tmp = ${e.tostr(true)}
+                            ${body.es.tostr(true)}
+                        }
+                    """)
+                }
                 else -> break
             }
         }
@@ -1190,21 +1213,7 @@ class Parser (lexer_: Lexer)
         return e
     }
     fun expr (): Expr {
-        val e = this.exprBins()
-        return when {
-            !XCEU -> e
-            !this.acceptFix("where") -> e
-            else -> {
-                val tk0 = this.tk0
-                val body = this.block()
-                this.nest("""
-                    ${tk0.pos.pre()}do :unnest-hide {
-                        ${body.es.tostr(true)}
-                        ${e.tostr(true)}
-                    }
-                """)
-            }
-        }
+        return this.exprBins()
     }
 
     fun exprs (): List<Expr> {
