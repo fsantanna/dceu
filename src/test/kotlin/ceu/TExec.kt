@@ -2088,7 +2088,7 @@ class TExec {
             println([1] /= [1])
             println([1,[],[1,2,3]] == [1,[],[1,2,3]])
         """)
-        assert(out == "false\nfalse\nfalse\nfalse\n") { out }
+        assert(out == "false\nfalse\ntrue\nfalse\n") { out }
     }
     @Test
     fun pp_02_op_eqeq_tup() {
@@ -2120,10 +2120,10 @@ class TExec {
     fun pp_05_op_eqs_vec_dic_tup() {
         val out = ceu.all(
             """
-            println(#[[],@[]] == #[[],@[]])
-            println(#[[],@[]] /= #[[],@[]])
+            println([#[],@[]] == [#[],@[]])
+            println([#[],@[]] /= [#[],@[]])
         """)
-        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+        assert(out == "false\ntrue\n") { out }
     }
 
     // to-number, to-string

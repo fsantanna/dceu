@@ -187,15 +187,10 @@ func iter (v, tp) {
 ;; IN, EQUALS: === =/=
 
 func in' (v, xs) {
-    ifs {
-        type(xs) == :dict -> not (not xs[v])
-        else -> {
-            loop in iter(xs), x {
-            } until x == v {
-            } thus {
-                to-bool(it)
-            }
-        }
+    loop in iter(xs), x {
+    } until x == v {
+    } thus {
+        to-bool(it)
     }
 }
 

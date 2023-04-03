@@ -25,7 +25,8 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 assert(up is Expr.Do && up.es.last().n==this.n) { "bug found: invalid do-loop" }
                 this.body.es.last().let {
                     if (it.is_innocuous()) {
-                        err(it.tk, "invalid expression : innocuous expression")
+                        //err(it.tk, "invalid expression : innocuous expression")
+                        TODO("never reachable - checked in parser - remove in the future")
                     }
                 }
                 this.body.traverse()
