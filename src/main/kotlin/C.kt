@@ -547,7 +547,7 @@ fun Coder.main (tags: Tags): String {
             assert(str->type==CEU_VALUE_VECTOR && str->Dyn->Ncast.Vector.type==CEU_VALUE_CHAR);
             CEU_Tags_Names* cur = CEU_TAGS;
             while (cur != NULL) {
-                if (!strcmp(cur->name+1,str->Dyn->Ncast.Vector.buf)) {
+                if (!strcmp(cur->name,str->Dyn->Ncast.Vector.buf)) {
                     ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
                     return CEU_RET_RETURN;
                 }
