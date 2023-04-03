@@ -2159,9 +2159,9 @@ class TExec {
     fun ff_01_string_to_tag() {
         val out = all("""
             pass :xyz
-            println(string-to-tag(":x"))
-            println(string-to-tag(":xyz"))
-            println(string-to-tag("xyz"))
+            println(string-to-tag(#[':','x']))
+            println(string-to-tag(#[':','x','y','z']))
+            println(string-to-tag(#['x','y','z']))
         """)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
@@ -2173,7 +2173,7 @@ class TExec {
                     :C = []
                 }
             }
-            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+            println(string-to-tag(#[':','A']), string-to-tag(#[':','A','.','B']), string-to-tag(#[':','A','.','B','.','C']))
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
