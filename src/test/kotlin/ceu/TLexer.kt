@@ -481,13 +481,13 @@ class TLexer {
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' : max hierarchy of 4")
     }
     @Test
-    fun tags8_err() {
+    fun todo_tags8_err() {
         val l = lexer(":{x")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token : error : unterminated {")
     }
     @Test
-    fun tags9() {
+    fun todo_tags9() {
         val l = lexer(":{()}")
         val tks = l.lex().iterator()
         //println(tks.next())
