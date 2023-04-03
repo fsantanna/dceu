@@ -228,7 +228,17 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetter()) }
+                    val (_,x2) = read2()
+                    val tag = if (x2 == '{') {
+                        x + read2Until('}').let {
+                            if (it == null) {
+                                err(pos, "token : error : unterminated {")
+                            }
+                            it!!
+                        }
+                    } else {
+                        x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetter()) }
+                    }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
