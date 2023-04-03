@@ -254,6 +254,61 @@ class TXExec {
         assert(out == "true\nfalse\n") { out }
     }
 
+    // ==, ===, /=, =/=
+
+    @Test
+    fun ii_01_op_eqeqeq_tup() {
+        val out = ceu.all(
+            """
+            println([1] === [1])
+            println([ ] === [1])
+            println([1] =/= [1])
+            println([1,[],[1,2,3]] === [1,[],[1,2,3]])
+        """, true)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+    @Test
+    fun ii_02_op_eqeqeq_tup() {
+        val out = ceu.all(
+            """
+            println([1,[1],1] === [1,[1],1])
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun ii_03_op_eqs_dic() {
+        val out = ceu.all(
+            """
+            println(@[] ==  @[])
+            println(@[] === @[])
+            println(@[] /=  @[])
+            println(@[] =/= @[])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun ii_04_op_eqs_vec() {
+        val out = ceu.all(
+            """
+            println(#[]  ==  #[])
+            println(#[1] === #[1])
+            println(#[1] /=  #[1])
+            println(#[]  =/= #[])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun ii_05_op_eqs_vec_dic_tup() {
+        val out = ceu.all(
+            """
+            println(#[[],@[]] ==  #[[],@[]])
+            println(#[[],@[]] /=  #[[],@[]])
+            println([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
+            println([#[],@[]] =/= [#[],@[]])
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+
     // assert
 
     @Test
@@ -1041,7 +1096,7 @@ class TXExec {
     fun vect11_iter_idx() {
         val out = all("""
             val t = #[1, 2, 3]
-            loop in iter(t,:id), v {
+            loop in iter(t,:idx), v {
                 println(v)
             }
         """, true)

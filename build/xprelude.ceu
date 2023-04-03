@@ -1,5 +1,9 @@
 ;; is', is-not'
 
+func to-bool (v) {
+    not (not v)
+}
+
 func is' (v1,v2) {
     ifs {
         (v1 == v2)         -> true
@@ -180,15 +184,56 @@ func iter (v, tp) {
     }
 }
 
+;; IN, EQUALS: === =/=
+
 func in' (v, xs) {
     ifs {
         type(xs) == :dict -> not (not xs[v])
         else -> {
-            val ok = loop in iter(xs), x {
-            } until x == v
-            not (not ok)
+            loop in iter(xs), x {
+            } until x == v {
+            } thus {
+                to-bool(it)
+            }
         }
     }
+}
+
+func {===} (v1,v2) {
+    val t1 = type(v1)
+    val t2 = type(v2)
+    ifs {
+        v1 == v2 -> true
+        t1 /= t2 -> false
+        (t1 == :tuple) or (t1==:vector) -> equals-tuple-vector(v1,v2)
+        t1 == :dict -> contains-dict(v1,v2) and contains-dict(v2,v1)
+        else -> false
+    } where {
+         func equals-tuple-vector (v1, v2) {
+             (#v1 == #v2) and catch {
+                 loop in iter(v1,:all), x {
+                     if not (v2[x.0] === x.1) {
+                         throw false
+                     }
+                 }
+                 true
+             }
+         }
+         func contains-dict (v1, v2) {
+             catch {
+                 loop in iter(v1), x {
+                     if not (v2[x.0] === x.2) {
+                         throw false
+                     }
+                 }
+                 true
+             }
+         }
+     }
+}
+
+func {=/=} (v1,v2) {
+    not (v1 === v2)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

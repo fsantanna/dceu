@@ -2068,25 +2068,6 @@ class TExec {
         assert(out == "5\n") { out }
     }
     @Test
-    fun op_eq_tup() {
-        val out = ceu.all(
-            """
-            println([1] == [1])
-            println([ ] == [1])
-            println([1] /= [1])
-            println([1,[],[1,2,3]] == [1,[],[1,2,3]])
-        """)
-        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
-    }
-    @Test
-    fun op_eq_tupXX() {
-        val out = ceu.all(
-            """
-            println([1,[1],1] == [1,[1],1])
-        """)
-        assert(out == "true\n") { out }
-    }
-    @Test
     fun ops_oth() {
         val out = all("""
             println(2**3)
@@ -2094,6 +2075,55 @@ class TExec {
             println(8%3)
         """, true)
         assert(out == "8\n2\n2\n") { out }
+    }
+
+    // ==, ===, /=, =/=
+
+    @Test
+    fun pp_01_op_eqeq_tup() {
+        val out = ceu.all(
+            """
+            println([1] == [1])
+            println([ ] == [1])
+            println([1] /= [1])
+            println([1,[],[1,2,3]] == [1,[],[1,2,3]])
+        """)
+        assert(out == "false\nfalse\nfalse\nfalse\n") { out }
+    }
+    @Test
+    fun pp_02_op_eqeq_tup() {
+        val out = ceu.all(
+            """
+            println([1,[1],1] == [1,[1],1])
+        """)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun pp_03_op_eqs_dic() {
+        val out = ceu.all(
+            """
+            println(@[] == @[])
+            println(@[] /= @[])
+        """)
+        assert(out == "false\ntrue\n") { out }
+    }
+    @Test
+    fun pp_04_op_eqs_vec() {
+        val out = ceu.all(
+            """
+            println(#[] ==  #[])
+            println(#[] /=  #[])
+        """)
+        assert(out == "false\ntrue\n") { out }
+    }
+    @Test
+    fun pp_05_op_eqs_vec_dic_tup() {
+        val out = ceu.all(
+            """
+            println(#[[],@[]] == #[[],@[]])
+            println(#[[],@[]] /= #[[],@[]])
+        """)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
 
     // to-number, to-string

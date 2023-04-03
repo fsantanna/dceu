@@ -1520,6 +1520,7 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_POINTER:
                         v = (e1->Pointer == e2->Pointer);
                         break;
+                    /*
                     case CEU_VALUE_TUPLE:
                         v = (e1->Dyn == e2->Dyn);
                         if (v) {
@@ -1537,6 +1538,8 @@ fun Coder.main (tags: Tags): String {
                             }
                         }
                         break;
+                    */
+                    case CEU_VALUE_TUPLE:
                     case CEU_VALUE_VECTOR:
                     case CEU_VALUE_DICT:
                     case CEU_VALUE_P_FUNC:
