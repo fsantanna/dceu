@@ -208,7 +208,7 @@ func {===} (v1,v2) {
              (#v1 == #v2) and catch {
                  loop in iter(v1,:all), x {
                      if not (v2[x.0] === x.1) {
-                         throw false
+                         throw(false)
                      }
                  }
                  true
@@ -218,7 +218,7 @@ func {===} (v1,v2) {
              catch {
                  loop in iter(v1), x {
                      if not (v2[x.0] === x.2) {
-                         throw false
+                         throw(false)
                      }
                  }
                  true

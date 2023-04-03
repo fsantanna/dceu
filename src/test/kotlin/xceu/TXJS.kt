@@ -692,7 +692,7 @@ class TXJS {
         """, true)
         assert(out == "1: ;; is', is-not'\n" +
                 "2: \n" +
-                "3: func is' (v1,v2) {\n" +
+                "3: func to-bool (v) {\n" +
                 "1: ;; is', is-not'\n" +
                 "2: \n" +
                 "3: func to-bool (v) {\n") { out }
