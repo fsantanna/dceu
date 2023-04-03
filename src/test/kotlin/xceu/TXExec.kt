@@ -2579,6 +2579,21 @@ class TXExec {
         """, true)
         assert(out == "2\n") { out }
     }
+    @Test
+    fun todo_tplate07_nest() {
+        val out = all("""
+            data :T = [] {
+                :A = [v] {
+                    :x,:y,:z        ;; TODO: list of subtypes w/o data
+                }
+            }
+            val x :T.A.x = :T.A.x [10]
+            println(x)
+            println(x.v)
+            println(string-to-tag(":T.A.z"))
+        """, true)
+        assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
+    }
 
     // AWAIT / EVT / TEMPLATE / DATA
 
