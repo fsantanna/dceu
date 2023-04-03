@@ -533,7 +533,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("catch") -> {
-                val cnd = this.expr()
+                val cnd = if (XCEU && this.checkFix("{")) Expr.Bool(Tk.Fix("true",this.tk0.pos)) else this.expr()
                 val blk = this.block()
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
                     this.nest("catch (err is? ${cnd.tostr(true)}) ${blk.tostr(true)}")

@@ -301,8 +301,8 @@ class TXExec {
     fun ii_05_op_eqs_vec_dic_tup() {
         val out = ceu.all(
             """
-            println(#[[],@[]] ==  #[[],@[]])
-            println(#[[],@[]] /=  #[[],@[]])
+            println([#[],@[]] ==  [#[],@[]])
+            println([#[],@[]] /=  [#[],@[]])
             println([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
             println([#[],@[]] =/= [#[],@[]])
         """, true)
@@ -2238,7 +2238,7 @@ class TXExec {
     fun catch8() {
         val out = all("""
             catch false {
-                catch true {
+                catch {
                     throw([10])
                 }
             }

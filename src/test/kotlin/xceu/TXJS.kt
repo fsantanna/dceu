@@ -695,7 +695,7 @@ class TXJS {
                 "3: func is' (v1,v2) {\n" +
                 "1: ;; is', is-not'\n" +
                 "2: \n" +
-                "3: func is' (v1,v2) {\n") { out }
+                "3: func to-bool (v) {\n") { out }
     }
 
     // 22.6.2.2.1 Step 1 – tokenize
