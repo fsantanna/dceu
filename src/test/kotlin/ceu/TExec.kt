@@ -2168,11 +2168,9 @@ class TExec {
     @Test
     fun ff_02_string_to_tag() {
         val out = all("""
-            data :A = [] {
-                :B = [] {
-                    :C = []
-                }
-            }
+            data :A = []
+            data :A.B = []
+            data :A.B.C = []
             println(string-to-tag(#[':','A']), string-to-tag(#[':','A','.','B']), string-to-tag(#[':','A','.','B','.','C']))
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }

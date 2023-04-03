@@ -248,6 +248,7 @@ func to-string (v) {
     ifs {
         v is? :pointer -> c-to-string(v)
         v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        v is? :char -> #[v]
         v is? :number -> {
             ```
             static char str[255];

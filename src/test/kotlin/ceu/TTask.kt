@@ -1558,7 +1558,7 @@ class TTask {
     fun ff_pool8_err() {
         val out = all("""
             loop in :tasks nil, x {
-                nil
+                10
             }
         """)
         assert(out == "anon : (lin 3, col 17) : invalid expression : innocuous expression") { out }
