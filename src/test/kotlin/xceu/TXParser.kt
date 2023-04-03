@@ -69,7 +69,7 @@ class TXParser {
 
     @Test
     fun ifs1() {
-        val l = lexer("ifs { a->{1} else->{0} }")
+        val l = lexer("ifs { a->1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -112,11 +112,12 @@ class TXParser {
     fun ifs4_err() {
         val l = lexer("ifs { nil }")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"->\" : have \"}\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"{\" : have \"}\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"->\" : have \"}\"")
     }
     @Test
     fun ifs5() {
-        val l = lexer("ifs v { a -> {it} }")
+        val l = lexer("ifs v { a -> it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -130,7 +131,7 @@ class TXParser {
     }
     @Test
     fun ifs6() {
-        val l = lexer("ifs v { a->{1} b->it else->{0} }")
+        val l = lexer("ifs v { a{1} b->it else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +

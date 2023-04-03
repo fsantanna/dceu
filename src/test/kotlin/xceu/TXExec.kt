@@ -56,6 +56,36 @@ class TXExec {
         assert(out == "nil\n") { out }
     }
 
+    // IF cnd -> t -> f
+
+    @Test
+    fun aa_if6() {
+        val out = all("""
+            println(if false -> 1 -> 2)
+        """.trimIndent())
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun aa_if7() {
+        val out = all("""
+            println(if true -> 1 -> 2)
+        """.trimIndent())
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun aa_if8_err() {
+        val out = all("""
+            println(if true -> 1)
+        """.trimIndent())
+        assert(out == "anon : (lin 1, col 21) : expected \"->\" : have \")\"") { out }
+    }
+    @Test
+    fun aa_if9() {
+        val out = all("""
+            println(if true -> if true -> 1 -> 99 -> 99)
+        """.trimIndent())
+        assert(out == "1\n") { out }
+    }
 
     // IFS
 
@@ -64,7 +94,7 @@ class TXExec {
         val out = all("""
             val x = ifs {
                 10 < 1 -> 99
-                (5+5)==0 -> { 99 }
+                (5+5)==0 { 99 }
                 else -> 10
             }
             println(x)
@@ -992,7 +1022,7 @@ class TXExec {
             var v
             set v = #[]
             ifs true {
-                true -> {
+                true {
                     set v[#v] = 10
                 }
             }

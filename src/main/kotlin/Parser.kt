@@ -310,14 +310,24 @@ class Parser (lexer_: Lexer)
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
-                val t = this.block()
-                val f = if (!XCEU) {
-                    this.acceptFix_err("else")
-                    this.block()
+                val arr = XCEU && this.acceptFix("->")
+                val t = if (arr) {
+                    Expr.Do(this.tk0, null, listOf(this.expr()))
                 } else {
-                    if (this.acceptFix("else")) {
+                    this.block()
+                }
+                val f = when {
+                    !XCEU -> {
+                        this.acceptFix_err("else")
                         this.block()
-                    } else {
+                    }
+                    this.acceptFix("else") -> {
+                        this.block()
+                    }
+                    arr && this.acceptFix_err("->") -> {
+                        Expr.Do(this.tk0, null, listOf(this.expr()))
+                    }
+                    else -> {
                         Expr.Do(tk0, null, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
                     }
                 }
@@ -816,8 +826,11 @@ class Parser (lexer_: Lexer)
                     } else {
                         this.expr()
                     }
-                    this.acceptFix_err("->")
-                    val blk = if (this.checkFix("{")) this.block() else Expr.Do(this.tk0, null, listOf(this.expr()))
+                    val blk = if (this.acceptFix("->")) {
+                        Expr.Do(this.tk0, null, listOf(this.expr()))
+                    } else {
+                        this.block()
+                    }
                     Pair(cnd,blk)
                 }
                 //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
@@ -920,13 +933,13 @@ class Parser (lexer_: Lexer)
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
                                     ifs _ = ceu_cnd_$N {
-                                        type(ceu_cnd_$N) == :x-task -> {
+                                        type(ceu_cnd_$N) == :x-task {
                                             set ceu_cnd_$N = (status(ceu_cnd_$N) == :terminated)
                                         }
-                                        type(ceu_cnd_$N) == :x-track -> {
+                                        type(ceu_cnd_$N) == :x-track {
                                             set ceu_cnd_$N = (detrack(ceu_cnd_$N) == nil)
                                         }
-                                        else -> {
+                                        else {
                                             ;;set ceu_cnd_$N = ceu_cnd_$N
                                         }
                                     }

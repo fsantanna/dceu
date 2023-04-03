@@ -45,6 +45,19 @@ class TXBook {
         assert(out == "9\n") { out }
     }
     @Test
+    fun pg_3_square_smaller_a() {
+        val out = ceu.all("""
+            func square (x) {
+                x * x
+            }
+            func smaller (x,y) {
+                if (x < y) -> x -> y
+            }
+            println(square(smaller(3,5)))
+        """, true)
+        assert(out == "9\n") { out }
+    }
+    @Test
     fun pg_3_delta() {
         val out = ceu.all("""
             func delta (a,b,c) {

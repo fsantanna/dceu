@@ -29,15 +29,9 @@ func {+} (v1, v2) {
 
 func {-} (v1, v2) {
     ifs {
-        (v1 is? :number) and (v2 is? :nil) -> {
-            `:number (- $v1.Number)`
-        }
-        (v1 is-not? :number) or (v2 is-not? :number) -> {
-            throw(:error)
-        }
-        else -> {
-            `:number ($v1.Number - $v2.Number)`
-        }
+        (v1 is? :number) and (v2 is? :nil)           -> `:number (- $v1.Number)`
+        (v1 is-not? :number) or (v2 is-not? :number) -> throw(:error)
+        else                                         -> `:number ($v1.Number - $v2.Number)`
     }
 }
 
@@ -249,7 +243,7 @@ func to-string (v) {
         v is? :pointer -> c-to-string(v)
         v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
         v is? :char -> #[v]
-        v is? :number -> {
+        v is? :number -> do {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
@@ -263,7 +257,7 @@ func to-string (v) {
 func to-number (v) {
     ifs {
         v is? :tag -> `:number $v.Tag`
-        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> {
+        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> do {
             `:number atoi($v.Dyn->Ncast.Vector.buf)`
         }
         else -> v   ;; TODO
@@ -283,10 +277,10 @@ func to-tracks (...) {
     val args = ...
     loop in iter(args), v {
         ifs {
-            v is? :x-task -> {
+            v is? :x-task {
                 set ret[+] = track(v)
             }
-            v is? :x-tasks -> {
+            v is? :x-tasks {
                 loop in :tasks v, i {
                     set ret[+] = i
                 }
