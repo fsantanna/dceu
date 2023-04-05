@@ -905,10 +905,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Call -> {
                 val bupc = ups.first_block(this)!!.toc(true)
                 val up = ups.pub[this]!!
+                val resume = if (up is Expr.Resume) up else null
+                val spawn  = if (up is Expr.Spawn && up.tasks!=this) up else null
+                /*
                 val resume = ups.all_until(up) { it is Expr.Resume }.let { es ->
                     when {
                         es.isEmpty() -> null
-                        es.drop(1).all { it is Expr.Do && (it.tag != null) } -> es.first() as Expr.Resume
+                        es.drop(1).all { it is Expr.Export } -> es.first() as Expr.Resume
                         else -> null
                     }
                 }
@@ -918,11 +921,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (fst == null) -> null
                         (fst.tasks == this) -> null
                         es.drop(1).all { grp ->
-                            (grp is Expr.Do && (grp.tag != null)) && (grp.es.last() is Expr.Call) && ups.pub[grp].let { it is Expr.Spawn && it.call==grp }
+                            (grp is Expr.Export) && (grp.body.es.last() is Expr.Call) && ups.pub[grp].let { it is Expr.Spawn && it.call==grp }
                         } -> fst
                         else -> null
                     }
                 }
+                */
 
                 val iscall = (resume==null && spawn==null)
                 val istasks = (spawn?.tasks != null)

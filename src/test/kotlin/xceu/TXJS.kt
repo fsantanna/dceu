@@ -121,7 +121,7 @@ class TXJS {
     @Test
     fun x4() {
         val out = all("""
-            do :unnest { ;; mock functions
+            export [fetch, text, json] { ;; mock functions
                 coro fetch (url) {
                     if url == :error {
                         throw(:error)

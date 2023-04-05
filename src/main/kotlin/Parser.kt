@@ -527,8 +527,8 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || this.checkFix("(") || (XCEU && this.checkEnu("Id")))
-                if (isnote) {
+                val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || (XCEU && this.checkEnu("Id")))
+                if (!isnote) Expr.Self(tk0) else {
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                     val args = if (XCEU && !this.checkFix("(")) {
                         listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
@@ -548,14 +548,12 @@ class Parser (lexer_: Lexer)
                     val proto = Expr.Proto(tk0, task, args, blk)
                     if (id == null) proto else {
                         this.nest("""
-                            do :unnest {
+                            export [${id.str}] {
                                 ${tk0.pos.pre()}var ${id.str}
                                 set ${id.str} = ${proto.tostr(true)}
                             }
                         """)
                     }
-                } else {
-                    Expr.Self(tk0)
                 }
             }
             this.acceptFix("catch") -> {
@@ -903,7 +901,7 @@ class Parser (lexer_: Lexer)
                         awt.cnd!!
                         val xcnd = awt.xcnd.first ?: awt.xcnd.second!!.tostr(true)
                         this.nest("""
-                            ${pre0}do :unnest {
+                            ${pre0}export [evt] {
                                 val evt ${awt.cnd.tk.str}
                                 await (evt is? ${awt.cnd.tk.str}) and $xcnd
                             }
@@ -944,7 +942,7 @@ class Parser (lexer_: Lexer)
                     }
                     (awt.cnd != null) -> {  // await evt==x | await trk | await coro
                         this.nest("""
-                            ${pre0}do :unnest {
+                            ${pre0}export [] {
                                 ${pre0}${(!awt.now).cond { "yield ()" }}
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
@@ -1117,19 +1115,19 @@ class Parser (lexer_: Lexer)
                         if (isclose) {
                             when (op.str) {
                                 "=" -> this.nest("""
-                                    do :unnest-hide { 
+                                    export [] { 
                                         val ceu_col_$N :tmp = ${e.tostr(true)}
                                         ceu_col_$N[(#ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
-                                    do :unnest-hide { 
+                                    export [] { 
                                         val ceu_col_$N :tmp = ${e.tostr(true)}
                                         ceu_col_$N[#ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
-                                    do :unnest-hide { 
+                                    export [] { 
                                         val ceu_col_$N :tmp = ${e.tostr(true)}
                                         val ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
                                         set ceu_col_$N[(#ceu_col_$N)-1] = nil
@@ -1195,7 +1193,7 @@ class Parser (lexer_: Lexer)
                     val tk0 = this.tk0
                     val body = this.block()
                     e = this.nest("""
-                        ${tk0.pos.pre()}do :unnest-hide {
+                        ${tk0.pos.pre()}export [] {
                             ${body.es.tostr(true)}
                             ${e.tostr(true)}
                         }

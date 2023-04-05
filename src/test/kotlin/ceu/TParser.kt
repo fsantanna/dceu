@@ -505,7 +505,7 @@ class TParser {
         val l = lexer("export [x,y] { nil }")
         val parser = Parser(l)
         val e = parser.exprPrim()
-        assert(e is Expr.Export && e.ids.last().str=="y" && e.body.es.size==2)
+        assert(e is Expr.Export && e.ids.last().str=="y" && e.body.es.size==1 && e.ids.size==2)
         assert(e.tostr() == "export [x,y] {\nnil\n}") { e.tostr() }
     }
 

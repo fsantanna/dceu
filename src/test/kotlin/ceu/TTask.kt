@@ -599,7 +599,7 @@ class TTask {
                 println(v)
             }
             var t
-            set t = do :unnest-hide {
+            set t = export [] {
                 var v
                 set v = 10
                 spawn T(v)  
@@ -610,16 +610,16 @@ class TTask {
     @Test
     fun cc_group2() {
         val out = all("""
-            do :unnest {
+            export [T] {
                 var T
                 set T = task (v) {
                     println(v)
                 }
             }
-            do :unnest {
+            export [t] {
                 var t
-                set t = spawn do :unnest-hide {
-                    do :unnest {
+                set t = spawn export [] {
+                    export [v] {
                         var v
                         set v = 10
                     }
@@ -638,7 +638,7 @@ class TTask {
                 nil
             }
             spawn task () :fake {
-                do :unnest-hide {
+                export {
                     f()
                 }
             }()
