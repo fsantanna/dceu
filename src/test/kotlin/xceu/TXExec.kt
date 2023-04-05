@@ -1560,7 +1560,8 @@ class TXExec {
             }
         """
         )
-        assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"") { out }
+        //assert(out == "anon : (lin 2, col 20) : expected \"(\" : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 25) : access error : variable \"x\" is not declared") { out }
     }
     @Test
     fun task4_pub_fake_err() {
