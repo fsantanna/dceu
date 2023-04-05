@@ -157,7 +157,7 @@ func iter-dict (itr :Iterator) {
             it == :all -> move([k, itr.s[k]])
             it == :key -> k
             it == :val -> itr.s[k]
-            else       -> itr.s[k]
+            else       -> k
         }
     }
 }

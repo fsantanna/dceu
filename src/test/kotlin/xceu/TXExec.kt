@@ -1049,7 +1049,7 @@ class TXExec {
                 println(v)
             }
         """, true)
-        assert(out == "1\n2\n3\n") { out }
+        assert(out == ":x\n:y\n:z\n") { out }
     }
     @Test
     fun dict10_iter_val() {
