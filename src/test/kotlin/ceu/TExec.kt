@@ -1063,6 +1063,36 @@ class TExec {
         """)
         assert(out == "[]") { out }
     }
+    @Test
+    fun export4() {
+        val out = all("""
+            export [aaa] {
+                val aaa = 10
+            }
+            export [bbb] {
+                val bbb = 20
+            }
+            println(aaa,bbb)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun if5() {
+        val out = all("""
+            if true {
+                val aaa = 10
+            } else {
+                val xxx = 10
+            }
+            if true {
+                val bbb = 20
+            } else {
+                val yyy = 20
+            }
+            println(:ok)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
 
     // SCOPE
 
