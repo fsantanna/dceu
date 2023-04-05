@@ -2,9 +2,9 @@ val union = "union"
 
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
-        val s = if (this[i].let { it is Expr.Do && it.tag?.str!=":unnest" }) "$union" else "struct"
+        val s = if (this[i].let { it is Expr.Dcl || it is Expr.Export }) "struct" else union
         """
-            $s {
+            $s { // SEQ
                 ${this[i].mem()}
                 ${this.seq(i+1)}
             };
@@ -14,6 +14,7 @@ fun List<Expr>.seq (i: Int): String {
 
 fun Expr.mem (): String {
     return when (this) {
+        is Expr.Export -> this.body.mem()
         is Expr.Do -> """
             struct { // BLOCK
                 CEU_Block block_$n;

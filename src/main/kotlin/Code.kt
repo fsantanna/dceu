@@ -206,6 +206,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
                 defers[this] = mutableListOf()
+                val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val up = ups.pub[this]
                 val bup = up?.let { ups.first_block(it) }
                 val f_b = up?.let { ups.first_proto_or_block(it) }
@@ -308,7 +309,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }.joinToString("")}
                     }
                     do { // block
-                        ${this.es.map { it.code() }.joinToString("")}
+                        $body
                     } while (0); // block
                     #ifdef CEU_DEBUG
                     printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, $x);
