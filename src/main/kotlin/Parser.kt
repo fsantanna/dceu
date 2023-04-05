@@ -354,8 +354,7 @@ class Parser (lexer_: Lexer)
                     this.acceptTag(":tasks") -> {
                         val tasks = this.expr()
                         this.acceptFix_err(",")
-                        this.acceptEnu_err("Id")
-                        val i = this.tk0 as Tk.Id
+                        val i = if (this.acceptEnu("Id")) this.tk0.str else "it"
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_tasks_$N = ${tasks.tostr(true)}
@@ -379,15 +378,15 @@ class Parser (lexer_: Lexer)
                                         ;;;
                                         val ceu_x_$N
                                         `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                        val ${i.str} = track(ceu_x_$N)
+                                        val $i = track(ceu_x_$N)
                                         ;;;
 
                                         ```
                                             CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        val ${i.str} = track(`:ceu ceu_x_$N`)
+                                        val $i = track(`:ceu ceu_x_$N`)
                                         $body
-                                        if detrack(${i.str}) {
+                                        if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         } else {
                                             set ceu_i_$N = ceu_n_$N
@@ -418,7 +417,7 @@ class Parser (lexer_: Lexer)
 
                         // , i
                         x = (step==null && x) || this.acceptFix(",")
-                        val i = if (x && this.acceptEnu_err("Id")) this.tk0.str else "ceu_i_$N"
+                        val i = if (x && this.acceptEnu_err("Id")) this.tk0.str else "it"
 
                         val cmp = when {
                             (tkB.str=="]" && op=="+") -> ">"
@@ -450,15 +449,14 @@ class Parser (lexer_: Lexer)
                     XCEU -> {
                         val iter = this.expr()
                         this.acceptFix_err(",")
-                        this.acceptEnu_err("Id")
-                        val i = this.tk0 as Tk.Id
+                        val i = if (this.acceptEnu("Id")) this.tk0.str else "it"
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val ${i.str} = ceu_it_$N.f(ceu_it_$N)
-                                    if ${i.str} == nil {
+                                    val $i = ceu_it_$N.f(ceu_it_$N)
+                                    if $i == nil {
                                         pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
                                     } else { nil }

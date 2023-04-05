@@ -1227,6 +1227,16 @@ class TXExec {
         )
         assert(out == "[[10]]\t[10]\t10\n") { out }
     }
+    @Test
+    fun dict22_iter_it() {
+        val out = all("""
+            val t = @[x=1, y=2, z=3]
+            loop in iter(t) {
+                println(it)
+            }
+        """, true)
+        assert(out == ":x\n:y\n:z\n") { out }
+    }
 
     // AWAIT / EVERY
 
@@ -2007,6 +2017,15 @@ class TXExec {
         """, true)
         assert(out == ":0\n1\n:1\n1\n2\n:2\n0\n2\n4\n:3\n1\n0\n:4\n:x\n:x\n:5\n:y\n:y\n:6\n") { out }
     }
+    @Test
+    fun loop_03_num_it() {
+        val out = all("""
+            loop in [0 -> 1] {
+                println(it)
+            }
+        """, true)
+        assert(out == "0\n1\n") { out }
+    }
 
     // LOOP / ITERATOR
 
@@ -2180,6 +2199,14 @@ class TXExec {
         val out = all("""
             val y = loop in iter([1,2,3]), x {
             } until x == 4
+            println(y)
+        """, true)
+        assert(out == "nil\n") { out }
+    }
+    fun iter9_it() {
+        val out = all("""
+            val y = loop in iter([1,2,3]) {
+            } until it == 4
             println(y)
         """, true)
         assert(out == "nil\n") { out }
@@ -2914,4 +2941,26 @@ class TXExec {
         """)
         assert(out == ":10\n:a\n:20\n:1\n:2\n:b\n:30\n:10\n:a\n:20\n:3\n") { out }
     }
-}
+    @Test
+    fun all14_tasks_it() {
+        val out = all("""
+            var ts
+            set ts = tasks()
+            println(type(ts))
+            var T
+            set T = task (v) {
+                set task.pub = v
+                val v' = yield(nil)
+            }
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            
+            loop in :tasks ts, t1 {
+                loop in :tasks ts {
+                    println(detrack(t1).pub, detrack(it).pub)
+                }
+            }
+             broadcast in :global, 2
+        """)
+        assert(out == ":x-tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
+    }}
