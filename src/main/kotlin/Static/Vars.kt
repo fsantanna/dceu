@@ -194,7 +194,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src?.traverse()
 
                 val id = this.id.str
-                val bup = ups.first(this) { it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it.str == id } } }!! as Expr.Do
+                val bup = ups.first(this) { it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == id } } }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)

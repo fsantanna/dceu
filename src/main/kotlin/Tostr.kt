@@ -22,7 +22,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }
             this.tk.str + " (" + args + ") " + task + this.body.tostr(pre)
         }
-        is Expr.Export -> "export [" + this.ids.map { it.str }.joinToString(",") + "] {\n" + this.body.es.tostr(pre) + "}"
+        is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.body.es.tostr(pre) + "}"
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> /*this.poly.cond { "poly " } +*/ this.tk_.str + " " + this.id.tostr() + this.tmp.cond { " :tmp" } + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)

@@ -263,8 +263,8 @@ class Parser (lexer_: Lexer)
                 val ids = if (XCEU && this.checkFix("{")) emptyList() else {
                     this.acceptFix_err("[")
                     val l = list0("]",",") {
-                        this.acceptEnu_err("Id")
-                        this.tk0 as Tk.Id
+                        this.acceptFix("evt") || this.acceptEnu_err("Id")
+                        this.tk0.str
                     }
                     this.acceptFix_err("]")
                     l
