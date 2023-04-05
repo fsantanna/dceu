@@ -353,8 +353,11 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptTag(":tasks") -> {
                         val tasks = this.expr()
-                        this.acceptFix_err(",")
-                        val i = if (this.acceptEnu("Id")) this.tk0.str else "it"
+                        val i = if (XCEU && !this.checkFix(",")) "it" else {
+                            this.acceptFix_err(",")
+                            this.acceptEnu_err("Id")
+                            this.tk0.str
+                        }
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_tasks_$N = ${tasks.tostr(true)}
@@ -417,7 +420,10 @@ class Parser (lexer_: Lexer)
 
                         // , i
                         x = (step==null && x) || this.acceptFix(",")
-                        val i = if (x && this.acceptEnu_err("Id")) this.tk0.str else "it"
+                        val i = if (!x) "it" else {
+                            this.acceptEnu_err("Id")
+                            this.tk0.str
+                        }
 
                         val cmp = when {
                             (tkB.str=="]" && op=="+") -> ">"
@@ -448,8 +454,11 @@ class Parser (lexer_: Lexer)
                     }
                     XCEU -> {
                         val iter = this.expr()
-                        this.acceptFix_err(",")
-                        val i = if (this.acceptEnu("Id")) this.tk0.str else "it"
+                        val i = if (!this.checkFix(",")) "it" else {
+                            this.acceptFix_err(",")
+                            this.acceptEnu_err("Id")
+                            this.tk0.str
+                        }
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
@@ -517,9 +526,14 @@ class Parser (lexer_: Lexer)
                 val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || this.checkFix("(") || (XCEU && this.checkEnu("Id")))
                 if (isnote) {
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
-                    this.acceptFix_err("(")
-                    val args = this.args(")")
-                    this.acceptFix_err(")")
+                    val args = if (XCEU && !this.checkFix("(")) {
+                        listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
+                    } else {
+                        this.acceptFix_err("(")
+                        val x = this.args(")")
+                        this.acceptFix_err(")")
+                        x
+                    }
                     val task = when {
                         (tk0.str != "task") -> null
                         this.acceptTag(":fake") -> Pair(null, true)
