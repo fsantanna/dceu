@@ -18,78 +18,83 @@ func is-not' (v1,v2) {
     not is'(v1,v2)
 }
 
-;; ARITHMETIC:  +  -  *  /  %  **  //
+;; ARITHMETIC
 
-func {+} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+export [{+}, {-}, {*}, {**}, {/}, {//}, {%}]
+{
+    func {+} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number ($v1.Number + $v2.Number)`
     }
-    `:number ($v1.Number + $v2.Number)`
-}
 
-func {-} (v1, v2) {
-    ifs {
-        (v1 is? :number) and (v2 is? :nil)           -> `:number (- $v1.Number)`
-        (v1 is-not? :number) or (v2 is-not? :number) -> throw(:error)
-        else                                         -> `:number ($v1.Number - $v2.Number)`
+    func {-} (v1, v2) {
+        ifs {
+            (v1 is? :number) and (v2 is? :nil)           -> `:number (- $v1.Number)`
+            (v1 is-not? :number) or (v2 is-not? :number) -> throw(:error)
+            else                                         -> `:number ($v1.Number - $v2.Number)`
+        }
     }
-}
 
-func {*} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+    func {*} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number ($v1.Number * $v2.Number)`
     }
-    `:number ($v1.Number * $v2.Number)`
-}
 
-func {**} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+    func {**} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number powf($v1.Number, $v2.Number)`
     }
-    `:number powf($v1.Number, $v2.Number)`
-}
 
-func {/} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+    func {/} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number ($v1.Number / $v2.Number)`
     }
-    `:number ($v1.Number / $v2.Number)`
-}
 
-func {//} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+    func {//} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number powf($v1.Number, 1/$v2.Number)`
     }
-    `:number powf($v1.Number, 1/$v2.Number)`
-}
 
-func {%} (v1, v2) {
-    if (v1 is-not? :number) or (v2 is-not? :number) {
-        throw(:error)
+    func {%} (v1, v2) {
+        if (v1 is-not? :number) or (v2 is-not? :number) {
+            throw(:error)
+        }
+        `:number fmod($v1.Number, $v2.Number)`
     }
-    `:number fmod($v1.Number, $v2.Number)`
 }
 
 ;; RELATIONAL:  >=  >  <=  <
 
-func {>} (v1,v2) {
-    ifs {
-        (v1 is? :tag)    and (v2 is? :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
-        (v1 is? :number) and (v2 is? :number) -> `:bool ($v1.Number > $v2.Number)`
-        else -> throw(:error)
+export [{>}, {<}, {>=}, {<=}] {
+    func {>} (v1,v2) {
+        ifs {
+            (v1 is? :tag)    and (v2 is? :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
+            (v1 is? :number) and (v2 is? :number) -> `:bool ($v1.Number > $v2.Number)`
+            else -> throw(:error)
+        }
     }
-}
 
-func {<} (v1,v2) {
-    not ((v1 == v2) or (v1 > v2))
-}
+    func {<} (v1,v2) {
+        not ((v1 == v2) or (v1 > v2))
+    }
 
-func {>=} (v1,v2) {
-    (v1 == v2) or (v1 > v2)
-}
+    func {>=} (v1,v2) {
+        (v1 == v2) or (v1 > v2)
+    }
 
-func {<=} (v1,v2) {
-    (v1 == v2) or (v1 < v2)
+    func {<=} (v1,v2) {
+        (v1 == v2) or (v1 < v2)
+    }
 }
 
 ;; ASSERT
@@ -132,49 +137,51 @@ func between (min_max, v) {
 
 data :Iterator = [f,s,tp,i]
 
-func iter-tuple (itr :Iterator) {
-    val i = itr.i
-    if i >= #itr.s {
-        nil
-    } else {
-        set itr.i = i + 1
-        ifs itr.tp {
-            it == :all -> move([i, itr.s[i]])
-            it == :idx -> i
-            it == :val -> itr.s[i]
-            else       -> itr.s[i]
+export [iter] {
+    func iter-tuple (itr :Iterator) {
+        val i = itr.i
+        if i >= #itr.s {
+            nil
+        } else {
+            set itr.i = i + 1
+            ifs itr.tp {
+                it == :all -> move([i, itr.s[i]])
+                it == :idx -> i
+                it == :val -> itr.s[i]
+                else       -> itr.s[i]
+            }
         }
     }
-}
 
-func iter-dict (itr :Iterator) {
-    val k = next(itr.s,itr.i)
-    if k == nil {
-        nil
-    } else {
-        set itr.i = k
-        ifs itr.tp {
-            it == :all -> move([k, itr.s[k]])
-            it == :key -> k
-            it == :val -> itr.s[k]
-            else       -> k
+    func iter-dict (itr :Iterator) {
+        val k = next(itr.s,itr.i)
+        if k == nil {
+            nil
+        } else {
+            set itr.i = k
+            ifs itr.tp {
+                it == :all -> move([k, itr.s[k]])
+                it == :key -> k
+                it == :val -> itr.s[k]
+                else       -> k
+            }
         }
     }
-}
 
-func iter-coro (itr :Iterator) {
-    val co = itr.s
-    val v = resume co()
-    ((status(co) /= :terminated) and v) or nil
-}
+    func iter-coro (itr :Iterator) {
+        val co = itr.s
+        val v = resume co()
+        ((status(co) /= :terminated) and v) or nil
+    }
 
-func iter (v, tp) {
-    ifs {
-        v is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
-        v is? :vector -> :Iterator [iter-tuple, v, tp, 0]
-        v is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
-        v is? :func   -> :Iterator [v]
-        v is? :x-coro -> :Iterator [iter-coro,  v]
+    func iter (v, tp) {
+        ifs {
+            v is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+            v is? :vector -> :Iterator [iter-tuple, v, tp, 0]
+            v is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
+            v is? :func   -> :Iterator [v]
+            v is? :x-coro -> :Iterator [iter-coro,  v]
+        }
     }
 }
 
@@ -290,10 +297,10 @@ func to-tracks (...) {
     move(ret)
 }
 
-func vector-to-dict (vect) {
+func iterable-to-dict (itb) {
     val dict = @[]
-    loop in iter(vect), v {
-        set dict[v] = true
+    loop in iter(itb) {
+        set dict[it] = true
     }
     move(dict)
 }

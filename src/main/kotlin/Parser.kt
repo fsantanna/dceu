@@ -166,7 +166,7 @@ class Parser (lexer_: Lexer)
         return l
     }
 
-    fun block (tk0: Tk? = null, tag: Tk.Tag? = null): Expr.Do {
+    fun block (tk0: Tk? = null): Expr.Do {
         val tk = when {
             (tk0 != null) -> tk0
             (this.tk0.str=="do") -> this.tk0
@@ -175,7 +175,7 @@ class Parser (lexer_: Lexer)
         this.acceptFix_err("{")
         val es = this.exprs()
         this.acceptFix_err("}")
-        return Expr.Do(tk, tag, es)
+        return Expr.Do(tk, es)
     }
 
     fun clk_or_exp (): Pair<List<Pair<Expr,Tk.Tag>>?,Expr?> {
@@ -257,15 +257,19 @@ class Parser (lexer_: Lexer)
 
     fun exprPrim (): Expr {
         return when {
-            this.acceptFix("do") -> {
+            this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
+            this.acceptFix("export") -> {
                 val tk0 = this.tk0
-                val tag = if (this.acceptTag(":unnest") || this.acceptTag(":unnest-hide")) {
-                    this.tk0 as Tk.Tag
-                } else {
-                    null
+                val ids = if (XCEU && this.checkFix("{")) emptyList() else {
+                    this.acceptFix_err("[")
+                    val l = list0("]",",") {
+                        this.acceptEnu_err("Id")
+                        this.tk0 as Tk.Id
+                    }
+                    this.acceptFix_err("]")
+                    l
                 }
-                val blk = this.block(tag)
-                Expr.Do(tk0, tag, blk.es)
+                Expr.Export(tk0, ids, this.block())
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -291,7 +295,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (!XCEU || !(dst is Expr.Do && (dst.tag != null))) {
+                if (!XCEU || !(dst is Expr.Export)) {
                     if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
                         err(tk0, "invalid set : invalid destination")
                     }
@@ -312,7 +316,7 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr()
                 val arr = XCEU && this.acceptFix("->")
                 val t = if (arr) {
-                    Expr.Do(this.tk0, null, listOf(this.expr()))
+                    Expr.Do(this.tk0, listOf(this.expr()))
                 } else {
                     this.block()
                 }
@@ -325,10 +329,10 @@ class Parser (lexer_: Lexer)
                         this.block()
                     }
                     arr && this.acceptFix_err("->") -> {
-                        Expr.Do(this.tk0, null, listOf(this.expr()))
+                        Expr.Do(this.tk0, listOf(this.expr()))
                     }
                     else -> {
-                        Expr.Do(tk0, null, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
+                        Expr.Do(tk0, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
                     }
                 }
                 Expr.If(tk0, cnd, t, f)
@@ -508,7 +512,7 @@ class Parser (lexer_: Lexer)
                 }
 
                 if (raw) {
-                    Expr.Loop(tk0, nn, Expr.Do(tk0, null, blk))
+                    Expr.Loop(tk0, nn, Expr.Do(tk0, blk))
                 } else {
                     val body = """
                         ;; brk
@@ -621,7 +625,7 @@ class Parser (lexer_: Lexer)
                 val l = one(null)
                 //l.forEach { println(it.tostr()) }
                 if (l.size == 1) l.first() else {
-                    Expr.Do(Tk.Fix("do",tpl.pos), null, l)
+                    Expr.Do(Tk.Fix("do",tpl.pos), l)
                 }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
@@ -633,7 +637,7 @@ class Parser (lexer_: Lexer)
                         val tasks = this.expr()
                         this.acceptFix_err(",")
                         val call = this.expr()
-                        if (call !is Expr.Call && !((call is Expr.Do && (call.tag!=null)) && call.es.last() is Expr.Call)) {
+                        if (call !is Expr.Call && !(call is Expr.Export && call.body.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, tasks, call)
@@ -655,7 +659,7 @@ class Parser (lexer_: Lexer)
                     }
                     else -> {
                         val call = this.expr()
-                        if (call !is Expr.Call && !((call is Expr.Do && (call.tag!=null)) && call.es.last() is Expr.Call)) {
+                        if (call !is Expr.Call && !(call is Expr.Export && call.body.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
                         Expr.Spawn(tk0, null, call)
@@ -839,7 +843,7 @@ class Parser (lexer_: Lexer)
                         this.expr()
                     }
                     val blk = if (this.acceptFix("->")) {
-                        Expr.Do(this.tk0, null, listOf(this.expr()))
+                        Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
                     }

@@ -203,208 +203,206 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${assrc("(CEU_Value) { CEU_VALUE_P_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
             }
+            is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
                 defers[this] = mutableListOf()
-                val ES = this.es.map { it.code() }.joinToString("")
-                if (this.tag != null) ES else {
-                    val up = ups.pub[this]
-                    val bup = up?.let { ups.first_block(it) }
-                    val f_b = up?.let { ups.first_proto_or_block(it) }
-                    val depth = when {
-                        (f_b == null) -> "(0 + 1)"
-                        (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
-                        else -> "(${bup!!.toc(false)}.depth + 1)"
-                    }
-                    val x = if (ups.intask(this)) "ceu_x" else "NULL"
-                    val xvars = vars.pub[this]!!.values.let { dcls ->
-                        val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                        dcls.filter { it.dcl.init }
-                            .filter { !GLOBALS.contains(it.dcl.id.str) }
-                            .filter { !(f_b is Expr.Proto && args.contains(it.dcl.id.str)) }
-                            .map    { it.dcl.id.str.id2c(it.dcl.n) }
-                    }
-                    """
-                    { // BLOCK ${this.tk.dump()}
-                        ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
-                        void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
-                        #ifdef CEU_DEBUG
-                        printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
-                        #endif
-                        ${(f_b == null).cond { """
-                        {   // ... for main block
-                            CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
-                            for (int i=0; i<ceu_argc; i++) {
-                                CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
-                                ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} });
-                            }
-                            ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+                val up = ups.pub[this]
+                val bup = up?.let { ups.first_block(it) }
+                val f_b = up?.let { ups.first_proto_or_block(it) }
+                val depth = when {
+                    (f_b == null) -> "(0 + 1)"
+                    (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
+                    else -> "(${bup!!.toc(false)}.depth + 1)"
+                }
+                val x = if (ups.intask(this)) "ceu_x" else "NULL"
+                val xvars = vars.pub[this]!!.values.let { dcls ->
+                    val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
+                    dcls.filter { it.dcl.init }
+                        .filter { !GLOBALS.contains(it.dcl.id.str) }
+                        .filter { !(f_b is Expr.Proto && args.contains(it.dcl.id.str)) }
+                        .map    { it.dcl.id.str.id2c(it.dcl.n) }
+                }
+                """
+                { // BLOCK ${this.tk.dump()}
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                    void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
+                    #ifdef CEU_DEBUG
+                    printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
+                    #endif
+                    ${(f_b == null).cond { """
+                    {   // ... for main block
+                        CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
+                        for (int i=0; i<ceu_argc; i++) {
+                            CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
+                            ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} });
                         }
-                        """ }}
-                        ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
-                            f_b as Expr.Proto
-                            val istask = (f_b.tk.str != "func")
-                            val dots = (f_b.args.lastOrNull()?.first?.str == "...")
-                            val args_n = f_b.args.size - 1
+                        ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+                    }
+                    """ }}
+                    ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
+                        f_b as Expr.Proto
+                        val istask = (f_b.tk.str != "func")
+                        val dots = (f_b.args.lastOrNull()?.first?.str == "...")
+                        val args_n = f_b.args.size - 1
+                        """
+                        {
+                            int ceu_i = 0;
+                            ${f_b.args.filter { it.first.str!="..." }.map {
+                                val idc = vars.id2c(this, it.first.str)
+                                """
+                                ${istask.cond { """
+                                    if (ceu_x->Bcast.X.up_tasks != NULL) {
+                                        ceu_mem->_${idc}_ = ceu_x->up_dyns.dyns->up_block;
+                                    } else
+                                """}}
+                                { // else
+                                    ceu_mem->_${idc}_ = &ceu_mem->block_$n;
+                                }
+                                if (ceu_i < ceu_n) {
+                                    if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
+                                        ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0, ${this.do_issafe()});
+                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                    }
+                                    ceu_mem->$idc = *ceu_args[ceu_i];
+                                    ceu_gc_inc(&ceu_mem->$idc);
+                                } else {
+                                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };
+                                }
+                                ceu_i++;
+                                """
+                            }.joinToString("")}
+                            ${dots.cond {
+                                val idc = f_b.args.last()!!.first.str.id2c(null)
+                                """
+                                int ceu_tup_n = MAX(0,ceu_n-$args_n);
+                                CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
+                                for (int i=0; i<ceu_tup_n; i++) {
+                                    ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]);
+                                }
+                                ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
+                                ceu_gc_inc(&ceu_mem->$idc);
+                            """ }}
+                        }
+                        """ 
+                    }}
+                    ${
+                        (f_b is Expr.Proto && f_b.tk.str != "func").cond {
+                            "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
+                        }
+                    }
+                    ${
+                        (f_b is Expr.Do).cond {
+                            "ceu_mem->block_${bup!!.n}.dn_block = &ceu_mem->block_$n;"
+                        }
+                    }
+                    { // because of "decrement refs" below
+                        ${xvars.map {
+                            if (it in listOf("evt","_")) "" else """
+                                ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
+                        """ }.joinToString("")
+                        }
+                    }
+                    { // reset defers
+                        ${defers[this]!!.map {
+                            "ceu_mem->defer_${it.first} = 0;\n"
+                        }.joinToString("")}
+                    }
+                    do { // block
+                        ${this.es.map { it.code() }.joinToString("")}
+                    } while (0); // block
+                    #ifdef CEU_DEBUG
+                    printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, $x);
+                    #endif
+                    if (ceu_ret == CEU_RET_THROW) {
+                        // must be before frees
+                        ${(f_b == null).cond { "ceu_error_list_print();" }}
+                    }
+                    { // ceu_ret/ceu_acc: save/restore
+                        CEU_RET   ceu_ret_$n = ceu_ret;
+                        CEU_Value ceu_acc_$n = ceu_acc;
+                        ${(f_b is Expr.Proto).cond {
                             """
-                            {
-                                int ceu_i = 0;
-                                ${f_b.args.filter { it.first.str!="..." }.map {
-                                    val idc = vars.id2c(this, it.first.str)
-                                    """
-                                    ${istask.cond { """
-                                        if (ceu_x->Bcast.X.up_tasks != NULL) {
-                                            ceu_mem->_${idc}_ = ceu_x->up_dyns.dyns->up_block;
-                                        } else
-                                    """}}
-                                    { // else
-                                        ceu_mem->_${idc}_ = &ceu_mem->block_$n;
-                                    }
-                                    if (ceu_i < ceu_n) {
-                                        if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(&ceu_mem->_${idc}_->dn_dyns, ceu_args[ceu_i]->Dyn, 0, ${this.do_issafe()});
-                                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            if (ceu_ret != CEU_RET_THROW) {
+                                ceu_gc_inc(&ceu_acc);
+                            }
+                            """
+                        }}
+                        {
+                            ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);
+                            { // move up dynamic ceu_acc (return or error)
+                                ${
+                                    (f_b != null).cond {
+                                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
+                                        """
+                                        ${
+                                            (f_b!!.tk.str != "func").cond {
+                                                "ceu_mem->block_$n.ispub = 0;"
+                                            }
                                         }
-                                        ceu_mem->$idc = *ceu_args[ceu_i];
-                                        ceu_gc_inc(&ceu_mem->$idc);
-                                    } else {
-                                        ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };
+                                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                                            ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, 0, ${this.do_issafe()});
+                                            if (ceu_ret == CEU_RET_THROW) {
+                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                                // prioritize scope error over whatever there is now
+                                                ceu_acc_$n = ceu_acc;
+                                            }
+                                            ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                                        }
+                                        """
+                                        }
+                                }
+                            }
+                            int dead; {
+                                // cleanup active nested spawns in this block
+                                CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
+                                assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
+                                dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
+                            }
+                            { // DEFERS ${this.tk.dump()}
+                                ceu_ret = CEU_RET_RETURN;
+                                ${defers[this]!!.map{it.second}.reversed().joinToString("")}
+                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                    ceu_acc_$n = ceu_acc;
+                                }
+                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                            }
+                            { // decrement refs
+                                ${xvars.map { if (it in listOf("evt","_")) "" else
+                                    """
+                                    if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
+                                        // skip globals
+                                        ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n));
                                     }
-                                    ceu_i++;
                                     """
                                 }.joinToString("")}
-                                ${dots.cond {
-                                    val idc = f_b.args.last()!!.first.str.id2c(null)
-                                    """
-                                    int ceu_tup_n = MAX(0,ceu_n-$args_n);
-                                    CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
-                                    for (int i=0; i<ceu_tup_n; i++) {
-                                        ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]);
-                                    }
-                                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
-                                    ceu_gc_inc(&ceu_mem->$idc);
-                                """ }}
+                                ${(f_b is Expr.Proto).cond {
+                                    (f_b as Expr.Proto).args.map {
+                                        val idc = vars.id2c(this, it.first.str)
+                                        "ceu_gc_dec(&ceu_mem->$idc, 1);"
+                                    }.joinToString("")
+                                }}
                             }
-                            """ 
-                        }}
-                        ${
-                            (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                                "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
-                            }
-                        }
-                        ${
-                            (f_b is Expr.Do).cond {
-                                "ceu_mem->block_${bup!!.n}.dn_block = &ceu_mem->block_$n;"
-                            }
-                        }
-                        { // because of "decrement refs" below
-                            ${xvars.map {
-                                if (it in listOf("evt","_")) "" else """
-                                    ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
-                            """ }.joinToString("")
-                            }
-                        }
-                        { // reset defers
-                            ${defers[this]!!.map {
-                                "ceu_mem->defer_${it.first} = 0;\n"
-                            }.joinToString("")}
-                        }
-                        do { // block
-                            $ES
-                        } while (0); // block
-                        #ifdef CEU_DEBUG
-                        printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, $x);
-                        #endif
-                        if (ceu_ret == CEU_RET_THROW) {
-                            // must be before frees
-                            ${(f_b == null).cond { "ceu_error_list_print();" }}
-                        }
-                        { // ceu_ret/ceu_acc: save/restore
-                            CEU_RET   ceu_ret_$n = ceu_ret;
-                            CEU_Value ceu_acc_$n = ceu_acc;
-                            ${(f_b is Expr.Proto).cond {
-                                """
-                                if (ceu_ret != CEU_RET_THROW) {
-                                    ceu_gc_inc(&ceu_acc);
-                                }
-                                """
-                            }}
-                            {
-                                ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);
-                                { // move up dynamic ceu_acc (return or error)
-                                    ${
-                                        (f_b != null).cond {
-                                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
-                                            """
-                                            ${
-                                                (f_b!!.tk.str != "func").cond {
-                                                    "ceu_mem->block_$n.ispub = 0;"
-                                                }
-                                            }
-                                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                                ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, 0, ${this.do_issafe()});
-                                                if (ceu_ret == CEU_RET_THROW) {
-                                                    CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                                    // prioritize scope error over whatever there is now
-                                                    ceu_acc_$n = ceu_acc;
-                                                }
-                                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
-                                            }
-                                            """
-                                            }
+                            if (!dead) {
+                                // blocks: relink up, free down
+                                ${
+                                    (f_b is Expr.Do).cond {
+                                        "ceu_mem->block_${bup!!.n}.dn_block = NULL;"
                                     }
                                 }
-                                int dead; {
-                                    // cleanup active nested spawns in this block
-                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
-                                    dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
-                                }
-                                { // DEFERS ${this.tk.dump()}
-                                    ceu_ret = CEU_RET_RETURN;
-                                    ${defers[this]!!.map{it.second}.reversed().joinToString("")}
-                                    if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
-                                        ceu_acc_$n = ceu_acc;
+                                ${
+                                    (f_b is Expr.Proto && f_b.tk.str != "func").cond {
+                                        "ceu_x->Bcast.X.dn_block = NULL;"
                                     }
-                                    ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
-                                { // decrement refs
-                                    ${xvars.map { if (it in listOf("evt","_")) "" else
-                                        """
-                                        if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
-                                            // skip globals
-                                            ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n));
-                                        }
-                                        """
-                                    }.joinToString("")}
-                                    ${(f_b is Expr.Proto).cond {
-                                        (f_b as Expr.Proto).args.map {
-                                            val idc = vars.id2c(this, it.first.str)
-                                            "ceu_gc_dec(&ceu_mem->$idc, 1);"
-                                        }.joinToString("")
-                                    }}
-                                }
-                                if (!dead) {
-                                    // blocks: relink up, free down
-                                    ${
-                                        (f_b is Expr.Do).cond {
-                                            "ceu_mem->block_${bup!!.n}.dn_block = NULL;"
-                                        }
-                                    }
-                                    ${
-                                        (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                                            "ceu_x->Bcast.X.dn_block = NULL;"
-                                        }
-                                    }
-                                    ceu_block_free(&ceu_mem->block_$n);
-                                }
+                                ceu_block_free(&ceu_mem->block_$n);
                             }
-                            ceu_acc = ceu_acc_$n;
-                            ceu_ret = ceu_ret_$n;
-                            CEU_CONTINUE_ON_CLEAR_THROW();
-                        } // ceu_ret/ceu_acc: save/restore
-                    }
-                    """
+                        }
+                        ceu_acc = ceu_acc_$n;
+                        ceu_ret = ceu_ret_$n;
+                        CEU_CONTINUE_ON_CLEAR_THROW();
+                    } // ceu_ret/ceu_acc: save/restore
                 }
+                """
             }
             is Expr.Dcl -> {
                 val id = this.id.str

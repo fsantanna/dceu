@@ -7,6 +7,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> this.body.traverse()
+            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> this.src?.traverse()
             is Expr.Set    -> {

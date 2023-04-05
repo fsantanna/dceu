@@ -50,7 +50,7 @@ fun all (inp: String, pre: Boolean=false): String {
     //println(es)
     //println(es.map { it.tostr(false)+"\n" }.joinToString(""))
     val c = try {
-        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), null, es)
+        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups   = Ups(outer)
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)
@@ -800,7 +800,7 @@ class TExec {
     fun vector10_pop_acc() {
         val out = all("""
             val v = #[1,2,3]
-            val x = do :unnest-hide {
+            val x = export [] {
                 val i = v[#v - 1]
                 set v[#v - 1] = nil
                 i
@@ -1028,10 +1028,10 @@ class TExec {
     @Test
     fun group1() {
         val out = all("""
-            do :unnest {
+            export [a] {
                 val a = 10
             }
-            do :unnest {
+            export [x] {
                 var x
                 set x = a
             }
@@ -1042,7 +1042,7 @@ class TExec {
     @Test
     fun group2_err() {
         val out = all("""
-            do :unnest-hide {
+            export [] {
                 var a       ;; invisible
                 set a = 10
             }
@@ -1055,7 +1055,7 @@ class TExec {
     @Test
     fun group3() {
         val out = all("""
-            val x = do :unnest-hide {
+            val x = export [] {
                 val a = []
                 a
             }

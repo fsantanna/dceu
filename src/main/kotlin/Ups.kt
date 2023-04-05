@@ -13,10 +13,10 @@ class Ups (outer: Expr.Do) {
         return this.all_until(e,cnd).firstOrNull()
     }
     fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do && it.tag==null } as Expr.Do?
+        return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || (it is Expr.Do && it.tag==null) }
+        return this.first(e) { it is Expr.Proto || (it is Expr.Do && this.pub[it] !is Expr.Export) }
     }
     fun intask (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
@@ -41,6 +41,7 @@ class Ups (outer: Expr.Do) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
+            is Expr.Export -> this.map(listOf(this.body))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))

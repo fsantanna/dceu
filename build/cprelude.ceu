@@ -1,165 +1,177 @@
-;; LOGICAL:  &&  ||  (TODO: remove after and/or ok)
+;; LOGICAL
 
-val {&&} = func (v1, v2) {
-    if v1 {
-        v2
-    } else {
-        false
+export [{&&}, {||}]
+{
+    val {&&} = func (v1, v2) {
+        if v1 {
+            v2
+        } else {
+            false
+        }
+    }
+
+    val {||} = func (v1, v2) {
+        if v1 {
+            true
+        } else {
+            v2
+        }
     }
 }
 
-val {||} = func (v1, v2) {
-    if v1 {
-        true
-    } else {
-        v2
-    }
-}
+;; ARITHMETIC
 
-;; ARITHMETIC:  +  -  *  /  %  **  //
-
-val {+} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number ($v1.Number + $v2.Number)`
-    }
-}
-
-val {-} = func (v1, v2) {
-    val t1 = type(v1)
-    val t2 = type(v2)
-    if (t1 == :number) && (t2 == :nil) {
-        `:number (- $v1.Number)`
-    } else {
-        if (t1 /= :number) || (t2 /= :number) {
+export [{+}, {-}, {*}, {**}, {/}, {//}, {%}]
+{
+    val {+} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
             throw(:error)
         } else {
-            `:number ($v1.Number - $v2.Number)`
+            `:number ($v1.Number + $v2.Number)`
         }
     }
-}
 
-val {*} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number ($v1.Number * $v2.Number)`
-    }
-}
-
-val {**} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number powf($v1.Number, $v2.Number)`
-    }
-}
-
-val {/} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number ($v1.Number / $v2.Number)`
-    }
-}
-
-val {//} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number powf($v1.Number, 1/$v2.Number)`
-    }
-}
-
-val {%} = func (v1, v2) {
-    if (type(v1) /= :number) || (type(v2) /= :number) {
-        throw(:error)
-    } else {
-        `:number fmod($v1.Number, $v2.Number)`
-    }
-}
-
-;; RELATIONAL:  >=  >  <=  <
-
-val {>=} = func (v1,v2) {
-    val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        throw(:error)
-    } else {
-        `:bool ($v1.Number >= $v2.Number)`
-    }
-}
-
-val {>} = func (v1,v2) {
-    val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        throw(:error)
-    } else {
-        `:bool ($v1.Number > $v2.Number)`
-    }
-}
-
-val {<=} = func (v1,v2) {
-    val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        throw(:error)
-    } else {
-        `:bool ($v1.Number <= $v2.Number)`
-    }
-}
-
-val {<} = func (v1,v2) {
-    val t1 = type(v1)
-    if (t1 /= type(v2)) || (t1 /= :number) {
-        throw(:error)
-    } else {
-        `:bool ($v1.Number < $v2.Number)`
-    }
-}
-
-;; to-string, to-number
-
-var to-string
-set to-string = func (v) {
-    if type(v) == :pointer {
-        var i = 0
-        val n = `:number strlen($v.Pointer)`
-        var str = #[]
-        loop until i == n {
-            set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
-            set i = i + 1
-        }
-        move(str)
-    } else {
-        if type(v) == :number {
-            ```
-            static char str[255];
-            snprintf(str, 255, "%g", $v.Number);
-            ```
-            to-string(`:pointer str`)
+    val {-} = func (v1, v2) {
+        val t1 = type(v1)
+        val t2 = type(v2)
+        if (t1 == :number) && (t2 == :nil) {
+            `:number (- $v1.Number)`
         } else {
-            v   ;; TODO
+            if (t1 /= :number) || (t2 /= :number) {
+                throw(:error)
+            } else {
+                `:number ($v1.Number - $v2.Number)`
+            }
+        }
+    }
+
+    val {*} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
+            throw(:error)
+        } else {
+            `:number ($v1.Number * $v2.Number)`
+        }
+    }
+
+    val {**} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
+            throw(:error)
+        } else {
+            `:number powf($v1.Number, $v2.Number)`
+        }
+    }
+
+    val {/} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
+            throw(:error)
+        } else {
+            `:number ($v1.Number / $v2.Number)`
+        }
+    }
+
+    val {//} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
+            throw(:error)
+        } else {
+            `:number powf($v1.Number, 1/$v2.Number)`
+        }
+    }
+
+    val {%} = func (v1, v2) {
+        if (type(v1) /= :number) || (type(v2) /= :number) {
+            throw(:error)
+        } else {
+            `:number fmod($v1.Number, $v2.Number)`
         }
     }
 }
 
-val to-number = func (v) {
-    if type(v) == :tag {
-        `:number $v.Tag`
-    } else {
-        if type(v) == :vector {
-            if #v > 0 {
-                if type(v[0]) == :char {
-                    `:number atoi($v.Dyn->Ncast.Vector.buf)`
+;; RELATIONAL
+
+export [{>}, {<}, {>=}, {<=}]
+{
+    val {>=} = func (v1,v2) {
+        val t1 = type(v1)
+        if (t1 /= type(v2)) || (t1 /= :number) {
+            throw(:error)
+        } else {
+            `:bool ($v1.Number >= $v2.Number)`
+        }
+    }
+
+    val {>} = func (v1,v2) {
+        val t1 = type(v1)
+        if (t1 /= type(v2)) || (t1 /= :number) {
+            throw(:error)
+        } else {
+            `:bool ($v1.Number > $v2.Number)`
+        }
+    }
+
+    val {<=} = func (v1,v2) {
+        val t1 = type(v1)
+        if (t1 /= type(v2)) || (t1 /= :number) {
+            throw(:error)
+        } else {
+            `:bool ($v1.Number <= $v2.Number)`
+        }
+    }
+
+    val {<} = func (v1,v2) {
+        val t1 = type(v1)
+        if (t1 /= type(v2)) || (t1 /= :number) {
+            throw(:error)
+        } else {
+            `:bool ($v1.Number < $v2.Number)`
+        }
+    }
+}
+
+;; TO-*
+
+export [to-string, to-number]
+{
+    var to-string
+    set to-string = func (v) {
+        if type(v) == :pointer {
+            var i = 0
+            val n = `:number strlen($v.Pointer)`
+            var str = #[]
+            loop until i == n {
+                set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
+                set i = i + 1
+            }
+            move(str)
+        } else {
+            if type(v) == :number {
+                ```
+                static char str[255];
+                snprintf(str, 255, "%g", $v.Number);
+                ```
+                to-string(`:pointer str`)
+            } else {
+                v   ;; TODO
+            }
+        }
+    }
+
+    val to-number = func (v) {
+        if type(v) == :tag {
+            `:number $v.Tag`
+        } else {
+            if type(v) == :vector {
+                if #v > 0 {
+                    if type(v[0]) == :char {
+                        `:number atoi($v.Dyn->Ncast.Vector.buf)`
+                    } else {
+                        v   ;; TODO
+                    }
                 } else {
-                    v   ;; TODO
+                    v       ;; TODO
                 }
             } else {
-                v       ;; TODO
+                v           ;; TODO
             }
-        } else {
-            v           ;; TODO
         }
     }
 }

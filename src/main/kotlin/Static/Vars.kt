@@ -162,13 +162,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 this.body.traverse()
             }
+            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> {
-                if (this!=outer && this.tag?.str!=":unnest") {
-                    val proto = ups.pub[this]
-                    pub[this] = if (proto !is Expr.Proto) {
+                val up = ups.pub[this]
+                if (this != outer) {
+                    pub[this] = if (up !is Expr.Proto) {
                         mutableMapOf()
                     } else {
-                        proto.args.let {
+                        up.args.let {
                             (it.map { (id,tag) ->
                                 val dcl = Expr.Dcl (
                                     Tk.Fix("val", this.tk.pos),
@@ -193,7 +194,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src?.traverse()
 
                 val id = this.id.str
-                val bup = ups.first(this) { it is Expr.Do && it.tag?.str!=":unnest" }!! as Expr.Do
+                val bup = ups.first(this) { it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it.str == id } } }!! as Expr.Do
                 val xup = pub[bup]!!
                 assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)

@@ -33,6 +33,7 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     funcs.add(this)
                 }
             }
+            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> {
                 this.es.forEach { it.traverse() }
                 when {
