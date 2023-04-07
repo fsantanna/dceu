@@ -1093,6 +1093,61 @@ class TExec {
         """)
         assert(out == "10\t20\n") { out }
     }
+    @Test
+    fun export6() {
+        val out = all("""
+            export [f] {
+                val v = []
+                val f = func () {
+                    v
+                }
+                ;;println(v, f)
+            }
+            do {
+                val x = f
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun export7() {
+        val out = all("""
+            do {
+                export [f] {
+                    val v = []
+                    val f = func () {
+                        v
+                    }
+                    ;;println(v, f)
+                }
+                do {
+                    val x = f
+                    nil
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun export8() {
+        val out = all("""
+            do {
+                val v = []
+                val f = func () {
+                    v                   ;; holds outer v
+                }
+                do {
+                    val x = f           ;; nested do, but could be in par block from bcast
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
 
     // SCOPE
 

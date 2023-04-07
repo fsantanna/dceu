@@ -2216,12 +2216,32 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
+    @Test
     fun iter9_it() {
         val out = all("""
             val y = loop in iter([1,2,3]) {
             } until it == 4
             println(y)
         """, true)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun iter10_it() {
+        val out = all("""
+            data :Iterator = [f,s,tp,i]
+            func iter (v, tp) {
+                :Iterator [v]
+            }
+            export [f] {
+                val cur = []
+                func f () {
+                    cur
+                }
+            }
+            loop in iter(f) {
+            }
+            println(:ok)
+        """)
         assert(out == "nil\n") { out }
     }
 

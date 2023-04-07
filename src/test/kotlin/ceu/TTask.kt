@@ -646,6 +646,29 @@ class TTask {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun cc_group4() {
+        val out = all("""
+            export [f] {
+                var cur = nil
+                val f = func () {
+                    set cur = 65
+                    cur
+                }
+            }
+            val co = spawn (coro () {
+                yield(nil)
+                loop {
+                    println(f())
+                }
+            }) ()
+            loop {
+                var v = resume co()
+                println(v)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // THROW
 
