@@ -391,7 +391,7 @@ fun Coder.main (tags: Tags): String {
         const CEU_Value* ceu_evt = &CEU_EVT_NIL;    // also b/c of `evt` outside task
     """ +
     """ // IMPLS
-        void ceu_error_list_print (CEU_Frame* _1) {
+        void ceu_error_list_print (void) {
             CEU_Error_List* cur = ceu_error_list;
             while (cur != NULL) {
                 char* msg = (cur->msg[0] == '\0') ? cur->msg+1 : cur->msg;
@@ -408,7 +408,7 @@ fun Coder.main (tags: Tags): String {
                 cur = cur->next;
             }
             CEU_Value ceu_accx = ceu_acc;
-            ceu_print1(_1, &ceu_accx);
+            ceu_print1(NULL, &ceu_accx);
             puts("");
         }
         
@@ -681,7 +681,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_TASK:
                     free(dyn->Ncast.Proto.upvs.buf);
                     break;
-                case CEU_VALUE_TUPLE:
+                case CEU_VALUE_TUPLE:       // buf w/ dyn
                 case CEU_VALUE_X_TRACK:
                     break;
                 case CEU_VALUE_VECTOR:
@@ -1384,7 +1384,8 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Frame* _1, CEU_Value* v) {
-            if (v->type > CEU_VALUE_DYNAMIC) {  // TAGS
+            // no tags when _1==NULL (ceu_error_list_print)
+            if (_1!=NULL && v->type>CEU_VALUE_DYNAMIC) {  // TAGS
                 CEU_Value* args[1] = { v };
                 int ok = ceu_tags_f(_1, NULL, 1, args);
                 CEU_Value tup = ceu_acc;
@@ -1405,7 +1406,8 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_gc_free(tup.Dyn);
+                ceu_hold_rem(tup.Dyn);
+                ceu_dyn_free(tup.Dyn);
             }
             switch (v->type) {
                 case CEU_VALUE_NIL:

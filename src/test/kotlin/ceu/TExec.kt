@@ -1091,7 +1091,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "10\t20\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun export6() {
@@ -1109,7 +1109,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "10\t20\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun export7() {
@@ -1129,7 +1129,7 @@ class TExec {
                 println(:ok)
             }
         """)
-        assert(out == "10\t20\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun export8() {
@@ -1146,7 +1146,7 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "10\t20\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // SCOPE
@@ -1871,15 +1871,13 @@ class TExec {
     }
     @Test
     fun catch12() {
-        val out = all(
-            """
+        val out = all("""
             catch err==[] {
                 throw([])
                 println(9)
             }
             println(1)
-        """.trimIndent()
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -2373,7 +2371,7 @@ class TExec {
             set x2 = tags(t,:x,false)
             println(x1, x2, x1==t)
         """)
-        assert(out == "[]\tnil\ttrue\n[]\tnil\ttrue\n") { out }
+        assert(out == ":x []\tnil\ttrue\n[]\tnil\ttrue\n") { out }
     }
     @Test
     fun tags9() {
@@ -2412,7 +2410,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "32\t288\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "30\t286\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2496,7 +2494,7 @@ class TExec {
                 to-number(:depois)
             )
         """, true)
-        assert(out == "32\t1000\t1001\t1002\t10\t11\t12\t33\t100\t101\t34\n") { out }
+        assert(out == "30\t1000\t1001\t1002\t10\t11\t12\t31\t100\t101\t32\n") { out }
     }
     @Test
     fun enum02() {

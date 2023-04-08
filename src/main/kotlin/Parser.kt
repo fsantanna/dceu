@@ -24,7 +24,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun checkSep (): Boolean {
-        return (this.tk1 is Tk.Fix && this.tk1.str in listOf("}",",","]",")"))
+        return (this.tk1 is Tk.Fix && this.tk1.str in listOf("{","}",",","]",")","->") || this.tk1 is Tk.Op)
     }
 
     fun checkFix (str: String): Boolean {

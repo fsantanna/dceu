@@ -659,15 +659,20 @@ class TTask {
             val co = spawn (coro () {
                 yield(nil)
                 loop {
-                    println(f())
+                    val v = f()
+                    yield(v)
                 }
             }) ()
             loop {
                 var v = resume co()
                 println(v)
+                throw(99)
             }
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 19, col 17) : throw(99)\n" +
+                "throw error : uncaught exception\n" +
+                "65\n" +
+                "99\n") { out }
     }
 
     // THROW
