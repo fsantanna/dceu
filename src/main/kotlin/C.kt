@@ -113,7 +113,7 @@ fun Coder.main (tags: Tags): String {
 
         struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
         
-        void ceu_print1 (struct CEU_Value* v);
+        void ceu_print1 (struct CEU_Frame* _1, struct CEU_Value* v);
         CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
     """ +
     """ // CEU_Value
@@ -391,7 +391,7 @@ fun Coder.main (tags: Tags): String {
         const CEU_Value* ceu_evt = &CEU_EVT_NIL;    // also b/c of `evt` outside task
     """ +
     """ // IMPLS
-        void ceu_error_list_print (void) {
+        void ceu_error_list_print (CEU_Frame* _1) {
             CEU_Error_List* cur = ceu_error_list;
             while (cur != NULL) {
                 char* msg = (cur->msg[0] == '\0') ? cur->msg+1 : cur->msg;
@@ -408,7 +408,7 @@ fun Coder.main (tags: Tags): String {
                 cur = cur->next;
             }
             CEU_Value ceu_accx = ceu_acc;
-            ceu_print1(&ceu_accx);
+            ceu_print1(_1, &ceu_accx);
             puts("");
         }
         
@@ -1383,7 +1383,30 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // PRINT
-        void ceu_print1 (CEU_Value* v) {
+        void ceu_print1 (CEU_Frame* _1, CEU_Value* v) {
+            if (v->type > CEU_VALUE_DYNAMIC) {  // TAGS
+                CEU_Value* args[1] = { v };
+                int ok = ceu_tags_f(_1, NULL, 1, args);
+                CEU_Value tup = ceu_acc;
+                assert(ok == CEU_RET_RETURN);
+                int N = tup.Dyn->Ncast.Tuple.its;
+                if (N > 0) {
+                    if (N > 1) {
+                        printf("[");
+                    }
+                    for (int i=0; i<N; i++) {
+                        ceu_print1(_1, &tup.Dyn->Ncast.Tuple.buf[i]);
+                        if (i < N-1) {
+                            printf(",");
+                        }
+                    }
+                    if (N > 1) {
+                        printf("]");
+                    }
+                    printf(" ");
+                }
+                ceu_gc_free(tup.Dyn);
+            }
             switch (v->type) {
                 case CEU_VALUE_NIL:
                     printf("nil");
@@ -1413,7 +1436,7 @@ fun Coder.main (tags: Tags): String {
                         if (i > 0) {
                             printf(",");
                         }
-                        ceu_print1(&v->Dyn->Ncast.Tuple.buf[i]);
+                        ceu_print1(_1, &v->Dyn->Ncast.Tuple.buf[i]);
                     }                    
                     printf("]");
                     break;
@@ -1428,7 +1451,7 @@ fun Coder.main (tags: Tags): String {
                             }
                             assert(CEU_RET_RETURN == ceu_vector_get(v->Dyn, i));
                             CEU_Value ceu_accx = ceu_acc;
-                            ceu_print1(&ceu_accx);
+                            ceu_print1(_1, &ceu_accx);
                         }                    
                         printf("]");
                     }
@@ -1443,9 +1466,9 @@ fun Coder.main (tags: Tags): String {
                             }
                             comma = 1;
                             printf("(");
-                            ceu_print1(&(*v->Dyn->Ncast.Dict.buf)[i][0]);
+                            ceu_print1(_1, &(*v->Dyn->Ncast.Dict.buf)[i][0]);
                             printf(",");
-                            ceu_print1(&(*v->Dyn->Ncast.Dict.buf)[i][1]);
+                            ceu_print1(_1, &(*v->Dyn->Ncast.Dict.buf)[i][1]);
                             printf(")");
                         }
                     }                    
@@ -1481,7 +1504,7 @@ fun Coder.main (tags: Tags): String {
                 if (i > 0) {
                     printf("\t");
                 }
-                ceu_print1(args[i]);
+                ceu_print1(_1, args[i]);
             }
             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
             return CEU_RET_RETURN;
