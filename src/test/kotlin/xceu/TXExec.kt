@@ -645,7 +645,23 @@ class TXExec {
                 }())
                 xxx
             }
-        """, true)
+        """)
+        assert(out == ":111\tnil\n2\n") { out }
+    }
+    @Test
+    fun watchingXX() {
+        val out = all("""
+            do {
+                var xxx
+                val t = spawn (coro () {
+                    set xxx = nil
+                    defer { println(2) }
+                    println(:111, xxx)
+                    xxx
+                }())
+                xxx
+            }
+        """)
         assert(out == ":111\tnil\n2\n") { out }
     }
     @Test
@@ -1743,7 +1759,7 @@ class TXExec {
             coro T (v) {
                 println(v)
             }
-            val t = spawn T(v) where {
+            val t = (spawn T(v)) where {
                 val v = 10
             }
             println(type(t))
@@ -1759,7 +1775,7 @@ class TXExec {
                 yield()
             }
             val ts = tasks()
-            spawn in ts, T(v) where {
+            (spawn in ts, T(v)) where {
                 val v = 10
             }
             loop in :tasks ts, t {
@@ -2238,11 +2254,12 @@ class TXExec {
                     cur
                 }
             }
-            loop in iter(f) {
+            loop in iter(f) {   ;; assigns f to local which confronts cur
             }
             println(:ok)
         """)
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 13, col 33) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // THROW / CATCH
@@ -2322,7 +2339,7 @@ class TXExec {
                 })
             }
         """, true)
-        assert(out == "[10]\n") { out }
+        assert(out == ":x [10]\n") { out }
     }
     @Test
     fun catch8() {
@@ -2376,7 +2393,7 @@ class TXExec {
         val out = all("""
             println(catch :2 { loop { throw(tags([1],:2,true)) }})
         """, true)
-        assert(out == "[1]\n") { out }
+        assert(out == ":2 [1]\n") { out }
     }
     @Test
     fun loop_04() {
@@ -2586,7 +2603,7 @@ class TXExec {
             }
             pass :meio
             enum {
-                :i = `100`,
+                :i = `100`,     ;; ignored b/c of itr.i in iter-tuple
                 :j,
             }
             pass :depois
@@ -2596,7 +2613,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[41,1000,1001,1002,10,11,12,42,100,101,43]\n") { out }
+        assert(out == "[43,1000,1001,1002,10,11,12,44,36,101,45]\n") { out }
     }
 
     // TAGS / PRE

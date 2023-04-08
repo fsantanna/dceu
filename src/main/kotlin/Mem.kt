@@ -1,10 +1,34 @@
 val union = "union"
 
+fun Expr.coexists (): Boolean {
+    return when (this) {
+        is Expr.Export, is Expr.Dcl, is Expr.Defer -> true
+        is Expr.Set    -> this.dst.coexists() || this.src.coexists()
+        is Expr.If     -> this.cnd.coexists()
+        is Expr.Catch  -> this.cnd.coexists()
+        is Expr.Spawn  -> this.call.coexists()
+        is Expr.Bcast  -> this.xin.coexists() || this.evt.coexists()
+        is Expr.Yield  -> this.arg.coexists()
+        is Expr.Resume -> this.call.coexists()
+        is Expr.Toggle -> this.task.coexists() || this.on.coexists()
+        is Expr.Pub    -> this.x.coexists()
+        is Expr.Tuple  -> this.args.any { it.coexists() }
+        is Expr.Vector -> this.args.any { it.coexists() }
+        is Expr.Dict   -> this.args.any { it.first.coexists() || it.second.coexists() }
+        is Expr.Index  -> this.col.coexists() || this.idx.coexists()
+        is Expr.Call   -> this.proto.coexists() || this.args.any { it.coexists() }
+        else -> false
+    }
+}
+
+fun Expr.union_or_struct (): String {
+    return if (this.coexists()) "struct" else union
+}
+
 fun List<Expr>.seq (i: Int): String {
     return (i != this.size).cond {
-        val s = if (this[i].let { it is Expr.Dcl || it is Expr.Export }) "struct" else union
         """
-            $s { // SEQ
+            ${this[i].union_or_struct()} { // SEQ
                 ${this[i].mem()}
                 ${this.seq(i+1)}
             };
