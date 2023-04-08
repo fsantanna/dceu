@@ -2599,6 +2599,37 @@ class TXExec {
         assert(out == "[41,1000,1001,1002,10,11,12,42,100,101,43]\n") { out }
     }
 
+    // TAGS / PRE
+
+    @Test
+    fun tt_00_tags() {
+        val out = all("""
+            val x  = tags([],:X,true)
+            val xy = tags(tags([],:X,true), :Y, true)
+            println(x, xy)
+        """)
+        assert(out == ":X []\t[:Y,:X] []\n") { out }
+    }
+    @Test
+    fun tt_01_tags() {
+        val out = all("""
+            data :T = [x]
+            val x = :T [1]
+            println(x, tags(x))
+        """)
+        assert(out == ":T [1]\t[:T]\n") { out }
+    }
+    @Test
+    fun tt_02_tags() {
+        val out = all("""
+            data :T = [x]
+            val x = :T [1]
+            val y = :T x.x
+            println(y)
+        """)
+        assert(out == "1\n") { out }
+    }
+
     // TEMPLATE
 
     @Test

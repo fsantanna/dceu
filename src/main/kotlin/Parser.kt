@@ -23,6 +23,10 @@ class Parser (lexer_: Lexer)
         return parser.expr()
     }
 
+    fun checkSep (): Boolean {
+        return (this.tk1 is Tk.Fix && this.tk1.str in listOf("}",",","]",")"))
+    }
+
     fun checkFix (str: String): Boolean {
         return (this.tk1 is Tk.Fix && this.tk1.str == str)
     }
@@ -733,14 +737,26 @@ class Parser (lexer_: Lexer)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Tag")  -> {
                 val tag = this.tk0 as Tk.Tag
-                if (XCEU && this.checkFix("[")) {
-                    val tup = this.exprPrim()
-                    assert(tup is Expr.Tuple)
-                    this.nest("""
-                        ${tag.pos.pre()}tags(${tup.tostr(true)}, ${tag.str}, true)
-                    """)
-                } else {
+                val same = this.tk0.pos.isSameLine(this.tk1.pos)
+                if (!XCEU || !same || this.checkSep()) {
                     Expr.Tag(tag)
+                } else {
+                    val nn = N
+                    val e = this.exprPrim()
+                    if (e is Expr.Tuple) {
+                        this.nest("""
+                            ${tag.pos.pre()}tags(${e.tostr(true)}, ${tag.str}, true)
+                        """)
+                    } else {
+                        val e1 = this.exprSufsX(Expr.Acc(Tk.Id("ceu_$nn",tag.pos,0)))
+                        val e2 = this.nest("""
+                            ${tag.pos.pre()}export {
+                                val ceu_$nn ${tag.str} = ${e.tostr(true)}
+                                ${e1.tostr(true)}
+                            }
+                        """)
+                        e2
+                    }
                 }
             }
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
@@ -1096,8 +1112,12 @@ class Parser (lexer_: Lexer)
         }
         return e
     }
+
     fun exprSufs (): Expr {
-        var e = this.exprPrim()
+        return this.exprSufsX(this.exprPrim())
+    }
+    fun exprSufsX (ex: Expr): Expr {
+        var e = ex
         while (true) {
             // only accept simple sufix in the same line
             val same = this.tk0.pos.isSameLine(this.tk1.pos)
