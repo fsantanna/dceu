@@ -2,7 +2,7 @@ val union = "union"
 
 fun Expr.coexists (): Boolean {
     return when (this) {
-        is Expr.Export, is Expr.Dcl, is Expr.Defer -> true
+        is Expr.Export, is Expr.Dcl -> true
         is Expr.Set    -> this.dst.coexists() || this.src.coexists()
         is Expr.If     -> this.cnd.coexists()
         is Expr.Catch  -> this.cnd.coexists()
@@ -25,24 +25,25 @@ fun Expr.union_or_struct (): String {
     return if (this.coexists()) "struct" else union
 }
 
-fun List<Expr>.seq (i: Int): String {
+fun List<Expr>.seq (defers: Defers, i: Int): String {
     return (i != this.size).cond {
         """
             ${this[i].union_or_struct()} { // SEQ
-                ${this[i].mem()}
-                ${this.seq(i+1)}
+                ${this[i].mem(defers)}
+                ${this.seq(defers, i+1)}
             };
         """
     }
 }
 
-fun Expr.mem (): String {
+fun Expr.mem (defers: Defers): String {
     return when (this) {
-        is Expr.Export -> this.body.mem()
+        is Expr.Export -> this.body.mem(defers)
         is Expr.Do -> """
             struct { // BLOCK
                 CEU_Block block_$n;
-                ${es.seq(0)}
+                ${defers.pub[this]!!.map { "int defer_${it.key.n};\n" }.joinToString("")}
+                ${es.seq(defers, 0)}
             };
         """
         is Expr.Dcl -> {
@@ -56,7 +57,7 @@ fun Expr.mem (): String {
                         CEU_Block* _${id}_; // can't be static b/c recursion
                         """
                     }}
-                    ${this.src.cond { it.mem() } }
+                    ${this.src.cond { it.mem(defers) } }
                 };
             };
             """
@@ -65,39 +66,34 @@ fun Expr.mem (): String {
             struct { // SET
                 CEU_Value set_$n;
                 $union {
-                    ${this.dst.mem()}
-                    ${this.src.mem()}
+                    ${this.dst.mem(defers)}
+                    ${this.src.mem(defers)}
                 };
             };
             """
         is Expr.If -> """
             $union { // IF
-                ${this.cnd.mem()}
-                ${this.t.mem()}
-                ${this.f.mem()}
+                ${this.cnd.mem(defers)}
+                ${this.t.mem(defers)}
+                ${this.f.mem(defers)}
             };
             """
-        is Expr.Loop -> this.body.mem()
+        is Expr.Loop -> this.body.mem(defers)
         is Expr.Catch -> """
             $union { // CATCH
-                ${this.cnd.mem()}
-                ${this.body.mem()}
+                ${this.cnd.mem(defers)}
+                ${this.body.mem(defers)}
             };
             """
-        is Expr.Defer -> """
-            struct { // DEFER
-                int defer_$n;
-                ${this.body.mem()}
-            };
-        """
-        is Expr.Pass -> this.e.mem()
+        is Expr.Defer -> this.body.mem(defers)
+        is Expr.Pass -> this.e.mem(defers)
 
         is Expr.Spawn -> """
             struct { // SPAWN
                 ${this.tasks.cond{"CEU_Value tasks_$n;"}}
                 $union {
-                    ${this.tasks.cond { it.mem() }}
-                    ${this.call.mem()}
+                    ${this.tasks.cond { it.mem(defers) }}
+                    ${this.call.mem(defers)}
                 };
             };
         """
@@ -105,29 +101,29 @@ fun Expr.mem (): String {
             struct { // BCAST
                 CEU_Value evt_$n;
                 $union {
-                    ${this.xin.mem()}
-                    ${this.evt.mem()}
+                    ${this.xin.mem(defers)}
+                    ${this.evt.mem(defers)}
                 };
             };
             """
-        is Expr.Yield -> this.arg.mem()
-        is Expr.Resume -> this.call.mem()
+        is Expr.Yield -> this.arg.mem(defers)
+        is Expr.Resume -> this.call.mem(defers)
         is Expr.Toggle -> """
             struct { // TOGGLE
                 CEU_Value on_$n;
                 $union {
-                    ${this.task.mem()}
-                    ${this.on.mem()}
+                    ${this.task.mem(defers)}
+                    ${this.on.mem(defers)}
                 };
             };
             """
-        is Expr.Pub -> this.x.mem()
+        is Expr.Pub -> this.x.mem(defers)
 
         is Expr.Tuple -> """
             struct { // TUPLE
                 CEU_Dyn* tup_$n;
                 $union {
-                    ${this.args.map { it.mem() }.joinToString("")}
+                    ${this.args.map { it.mem(defers) }.joinToString("")}
                 };
             };
             """
@@ -135,7 +131,7 @@ fun Expr.mem (): String {
             struct { // VECTOR
                 CEU_Dyn* vec_$n;
                 $union {
-                    ${this.args.map { it.mem() }.joinToString("")}
+                    ${this.args.map { it.mem(defers) }.joinToString("")}
                 };
             };
             """
@@ -145,7 +141,7 @@ fun Expr.mem (): String {
                 CEU_Value key_$n;
                 $union {
                     ${this.args.map {
-                        listOf(it.first.mem(),it.second.mem())
+                        listOf(it.first.mem(defers),it.second.mem(defers))
                     }.flatten().joinToString("")}
                 };
             };
@@ -154,8 +150,8 @@ fun Expr.mem (): String {
             struct { // INDEX
                 CEU_Value idx_$n;
                 $union {
-                    ${this.col.mem()}
-                    ${this.idx.mem()}
+                    ${this.col.mem(defers)}
+                    ${this.idx.mem(defers)}
                 };
             };
             """
@@ -163,8 +159,8 @@ fun Expr.mem (): String {
             struct { // CALL
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 $union {
-                    ${this.proto.mem()}
-                    ${this.args.map { it.mem() }.joinToString("")}
+                    ${this.proto.mem(defers)}
+                    ${this.args.map { it.mem(defers) }.joinToString("")}
                 };
             };
             """

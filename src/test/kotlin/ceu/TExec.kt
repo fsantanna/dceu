@@ -6,6 +6,7 @@ import Lexer
 import Parser
 import Expr
 import Coder
+import Defers
 import Pos
 import Static
 import Tags
@@ -52,12 +53,13 @@ fun all (inp: String, pre: Boolean=false): String {
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups   = Ups(outer)
+        val defs  = Defers(outer, ups)
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)
         val clos  = Clos(outer, ups, vars)
         val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos, unsf, sta)
+        val coder = Coder(outer, ups, defs, vars, clos, unsf, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {

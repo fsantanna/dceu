@@ -340,7 +340,7 @@ class TTask {
             resume (coroutine(T)) ()
             println(2)
         """)
-        assert(out == "0\n1\n4\n3\n") { out }
+        assert(out == "1\n2\n") { out }
     }
     @Test
     fun aa_coro22_defer() {

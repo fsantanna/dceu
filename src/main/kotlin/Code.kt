@@ -1,9 +1,8 @@
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val unsf: Unsafe, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe, val sta: Static) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
-    val defers: MutableMap<Expr.Do, MutableList<Pair<Int,String>>> = mutableMapOf()
-    val mem: String = outer.mem()
+    val mem: String = outer.mem(defers)
     val code: String = outer.code()
 
     fun Expr.Do.toc (isptr: Boolean): String {
@@ -72,7 +71,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Block* _${idc}_;
                         """
                 }.joinToString("")}
-                    ${this.body.mem()}
+                    ${this.body.mem(defers)}
                 } CEU_Proto_Mem_$n;
                 """
                 val func = """ // BODY ${this.tk.dump()}
@@ -205,7 +204,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
-                defers[this] = mutableListOf()
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val up = ups.pub[this]
                 val bup = up?.let { ups.first_block(it) }
@@ -304,8 +302,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }
                     { // reset defers
-                        ${defers[this]!!.map {
-                            "ceu_mem->defer_${it.first} = 0;\n"
+                        ${defers.pub[this]!!.map {
+                            "ceu_mem->defer_${it.key.n} = 0;\n"
                         }.joinToString("")}
                     }
                     do { // block
@@ -361,7 +359,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             { // DEFERS ${this.tk.dump()}
                                 ceu_ret = CEU_RET_RETURN;
-                                ${defers[this]!!.map{it.second}.reversed().joinToString("")}
+                                ${defers.pub[this]!!.map{it.value}.reversed().joinToString("")}
                                 if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                     ceu_acc_$n = ceu_acc;
                                 }
@@ -509,15 +507,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
             is Expr.Defer -> {
-                defers[ups.first_block(this)!!]!!.add(
-                    Pair(n,
-                        """
-                        if (ceu_mem->defer_$n) {
-                            ${this.body.code()}
-                        }
-                        """
-                    )
-                )
+                defers.pub[ups.first_block(this)!!]!![this] = """
+                    if (ceu_mem->defer_$n) {
+                        ${this.body.code()}
+                    }
+                """
                 """
                 ceu_mem->defer_$n = 1;
                 ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
