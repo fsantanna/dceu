@@ -2421,6 +2421,18 @@ class TXExec {
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun catch10() {
+        val out = all("""
+            catch err===[] {
+                throw([])
+                println(9)
+            }
+            println(1)
+        """, true)
+        assert(out == "1\n") { out }
+    }
+
 
     // PEEK, PUSH, POP
 

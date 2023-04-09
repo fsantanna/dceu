@@ -1878,7 +1878,9 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 3, col 17) : throw([])\n" +
+                "throw error : uncaught exception\n" +
+                "[]\n") { out }
     }
     @Test
     fun catch13() {

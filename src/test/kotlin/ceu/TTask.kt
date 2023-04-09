@@ -608,7 +608,7 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun cc_group2() {
+    fun cc_group2_no_more_spawn_export() {
         val out = all("""
             export [T] {
                 var T
@@ -628,7 +628,9 @@ class TTask {
             }
             println(type(t))
         """)
-        assert(out == "10\n:x-task\n") { out }
+        //assert(out == "10\n:x-task\n") { out }
+        assert(out == "anon : (lin 15, col 21) : call error : expected function\n" +
+                ":error\n") { out }
     }
     @Test
     fun cc_group3() {
@@ -638,7 +640,7 @@ class TTask {
                 nil
             }
             spawn task () :fake {
-                export {
+                export [] {
                     f()
                 }
             }()
