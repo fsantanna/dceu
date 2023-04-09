@@ -328,6 +328,21 @@ class TTask {
         assert(out == "anon : (lin 3, col 13) : resume error : expected yielded coro\n:error\n") { out }
     }
     @Test
+    fun aa_coro22a_defer() {
+        val out = all("""
+            val T = coro () {
+                println(1)
+                yield(nil)   ;; never awakes
+                defer {
+                    println(999)
+                }
+            }
+            resume (coroutine(T)) ()
+            println(2)
+        """)
+        assert(out == "0\n1\n4\n3\n") { out }
+    }
+    @Test
     fun aa_coro22_defer() {
         val out = all("""
             var T

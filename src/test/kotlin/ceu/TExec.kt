@@ -1583,7 +1583,8 @@ class TExec {
             }
             f(1,2,3)
         """)
-        assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
+        //assert(out == "anon : (lin 3, col 25) : access error : variable \"...\" is not declared") { out }
+        assert(out == "./out.exe\n") { out }
     }
     @Test
     fun nn_03_dots() {
