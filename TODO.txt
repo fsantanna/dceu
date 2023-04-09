@@ -17,6 +17,7 @@
 
 # NEXT
 
+- copy tags
 - export [...] { }
 - var x :T = y
 - set x = y

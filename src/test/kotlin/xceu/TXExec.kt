@@ -86,6 +86,13 @@ class TXExec {
         """.trimIndent())
         assert(out == "1\n") { out }
     }
+    @Test
+    fun aa_if10() {
+        val out = all("""
+            println(if x=10 -> x -> 99)
+        """.trimIndent())
+        assert(out == "10\n") { out }
+    }
 
     // IFS
 
