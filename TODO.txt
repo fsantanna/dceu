@@ -17,6 +17,7 @@
 
 # NEXT
 
+- export [...] { }
 - var x :T = y
 - set x = y
     - assert(y is :T)

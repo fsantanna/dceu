@@ -661,7 +661,7 @@ class TXJS {
                 c == `:char EOF`
         }
         do { ;; PULL
-            val read1   = spawn FS-Read("build/prelude.ceu")
+            val read1   = spawn FS-Read("build/cprelude.ceu")
             val split1  = spawn Split(read1)
             val number1 = spawn Number(split1)
             val take1   = spawn Take(3, number1)
