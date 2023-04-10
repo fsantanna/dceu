@@ -19,7 +19,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coro", "data", "defer", "do", "else", "enum",
     "err", "evt", "export", "false", "func", "if", "in", "loop", "nil",
     "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
-    "toggle", "true", "until", "val", "var", "yield"
+    "toggle", "true", "until", "val", "var", "while", "yield"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "in?", "is?", "is-not?", "not", "or",
     "par", "par-and", "par-or", "resume-yield-all", "thus", "where", "with"

@@ -507,7 +507,8 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (raw || !this.acceptFix("until")) "" else {
+                val brk = if (raw || !(this.acceptFix("until")||this.acceptFix("while"))) "" else {
+                    val not = if (this.tk0.str == "until") "" else "not"
                     val id_or_cnd = this.expr()
                     val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
                         Pair(id_or_cnd.tk.str, this.expr())
@@ -516,7 +517,7 @@ class Parser (lexer_: Lexer)
                     }
                     """
                     val $id :tmp = ${cnd.tostr(true)}
-                    if $id {
+                    if $not $id {
                         `goto CEU_LOOP_DONE_$nn;`
                     } else { nil }
                     """
@@ -525,7 +526,8 @@ class Parser (lexer_: Lexer)
                 val blk = this.block().es
 
                 fun untils (): String {
-                    return if (!this.acceptFix("until")) "" else {
+                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
+                        val not = if (this.tk0.str == "until") "" else "not"
                         val id_or_cnd = this.expr()
                         val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
                             Pair(id_or_cnd.tk.str, this.expr())
@@ -537,7 +539,7 @@ class Parser (lexer_: Lexer)
                         }
                         """
                         val $id :tmp = ${cnd.tostr(true)}
-                        if $id {
+                        if $not $id {
                             `goto CEU_LOOP_DONE_$nn;`
                         } else { nil }
                         $xblk

@@ -2034,6 +2034,22 @@ class TXExec {
         """, true)
         assert(out == "1\nfalse\n2\nfalse\n3\n99\n") { out }
     }
+    @Test
+    fun until11() {
+        val out = all("""
+            var x = 5
+            val f = func () {
+                set x = x - 1
+                if x>0 { x } else { nil }
+            }
+            loop while v1=f() {
+                println(v1)
+            } while v2=f() {
+                println(v2)
+            }
+        """, true)
+        assert(out == "4\n3\n2\n1\n") { out }
+    }
 
     // LOOP / NUMERIC
 
