@@ -349,8 +349,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val $id :tmp = ${cnd.tostr(true)}
-                            if $id {
+                            val ceu_$N :tmp = ${cnd.tostr(true)}
+                            if ceu_$N {
+                                val $id :tmp = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
