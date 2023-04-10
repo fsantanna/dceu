@@ -317,11 +317,11 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val e1 = this.expr()
-                val (id,cnd) = if (XCEU && e1 is Expr.Acc && this.acceptFix("=")) {
-                    Pair(e1.tk.str, this.expr())
+                val id_or_cnd = this.expr()
+                val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
+                    Pair(id_or_cnd.tk.str, this.expr())
                 } else {
-                    Pair(null, e1)
+                    Pair(null, id_or_cnd)
                 }
                 val arr = XCEU && this.acceptFix("->")
                 val t = if (arr) {
@@ -349,7 +349,7 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val $id = ${cnd.tostr(true)}
+                            val $id :tmp = ${cnd.tostr(true)}
                             if $id {
                                 ${t.es.tostr(true)}
                             } else {
@@ -508,9 +508,15 @@ class Parser (lexer_: Lexer)
                 }
 
                 val brk = if (raw || !this.acceptFix("until")) "" else {
-                    val cnd = this.expr().tostr(true)
+                    val id_or_cnd = this.expr()
+                    val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
+                        Pair(id_or_cnd.tk.str, this.expr())
+                    } else {
+                        Pair("ceu_$N", id_or_cnd)
+                    }
                     """
-                    if $cnd {
+                    val $id :tmp = ${cnd.tostr(true)}
+                    if $id {
                         `goto CEU_LOOP_DONE_$nn;`
                     } else { nil }
                     """
@@ -520,12 +526,18 @@ class Parser (lexer_: Lexer)
 
                 fun untils (): String {
                     return if (!this.acceptFix("until")) "" else {
-                        val cnd = this.expr().tostr(true)
+                        val id_or_cnd = this.expr()
+                        val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
+                            Pair(id_or_cnd.tk.str, this.expr())
+                        } else {
+                            Pair("ceu_$N", id_or_cnd)
+                        }
                         val xblk = if (!this.checkFix("{")) "" else {
                             this.block().es.tostr(true) + untils()
                         }
                         """
-                        if $cnd {
+                        val $id :tmp = ${cnd.tostr(true)}
+                        if $id {
                             `goto CEU_LOOP_DONE_$nn;`
                         } else { nil }
                         $xblk
@@ -869,28 +881,33 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
 
                 val ifs = list0("}",null) {
-                    val cnd = if (this.acceptFix("else")) {
-                        Expr.Bool(Tk.Fix("true",this.tk0.pos))
+                    val (id,cnd) = if (this.acceptFix("else")) {
+                        Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                     } else {
-                        this.expr()
+                        val id_or_cnd = this.expr()
+                        if (id_or_cnd is Expr.Acc && this.acceptFix("=")) {
+                            Pair(id_or_cnd.tk.str, this.expr())
+                        } else {
+                            Pair(null, id_or_cnd)
+                        }
                     }
                     val blk = if (this.acceptFix("->")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
                     }
-                    Pair(cnd,blk)
+                    Triple(id,cnd,blk)
                 }
                 //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { """
-                            val ${x?.str ?: "it"} :tmp = ${v?.tostr(true) ?: "nil"}
+                        ${x.cond { """
+                            val ${x!!.str} :tmp = ${v!!.tostr(true)}
                         """}}
-                        ${ifs.map { """
-                             if ${it.first.tostr(true)} {
-                                ${it.second.es.tostr(true)}
+                        ${ifs.map { (id,cnd,blk) -> """
+                             if ${id.cond{ it + " = "}} ${cnd.tostr(true)} {
+                                ${blk.es.tostr(true)}
                              } else {
                          """}.joinToString("")}
                          ${ifs.map { """

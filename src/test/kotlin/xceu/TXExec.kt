@@ -220,6 +220,16 @@ class TXExec {
         """, true)
         assert(out == "anon : (lin 3, col 25) : access error : variable \"it\" is not declared") { out }
     }
+    @Test
+    fun bb_12_ifs () {
+        val out = all("""
+            val x = ifs {
+                v=10 -> v
+            }
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // OPS: not, and, or
 
@@ -2009,6 +2019,20 @@ class TXExec {
             println(5)
         """)
         assert(out == "0\n1\n2\n5\n") { out }
+    }
+    @Test
+    fun until10() {
+        val out = all("""
+            var x = 0
+            loop {
+                set x = x + 1
+                println(x)
+            } until v = (x == 3) {
+                println(v)
+            }
+            println(99)
+        """, true)
+        assert(out == "1\nfalse\n2\nfalse\n3\n99\n") { out }
     }
 
     // LOOP / NUMERIC

@@ -144,10 +144,10 @@ export [iter] {
             nil
         } else {
             set itr.i = i + 1
-            ifs itr.tp {
-                it == :all -> move([i, itr.s[i]])
-                it == :idx -> i
-                it == :val -> itr.s[i]
+            ifs tp = itr.tp {
+                tp == :all -> move([i, itr.s[i]])
+                tp == :idx -> i
+                tp == :val -> itr.s[i]
                 else       -> itr.s[i]
             }
         }
@@ -159,10 +159,10 @@ export [iter] {
             nil
         } else {
             set itr.i = k
-            ifs itr.tp {
-                it == :all -> move([k, itr.s[k]])
-                it == :key -> k
-                it == :val -> itr.s[k]
+            ifs tp = itr.tp {
+                tp == :all -> move([k, itr.s[k]])
+                tp == :key -> k
+                tp == :val -> itr.s[k]
                 else       -> k
             }
         }
