@@ -119,7 +119,7 @@ class TXExec {
     @Test
     fun bb_ifs3() {
         val out = all("""
-            val x = ifs 20 {
+            val x = ifs it=20 {
                 it == 10 -> false
                 it == 20 -> true
                 else  -> false
@@ -131,7 +131,7 @@ class TXExec {
     @Test
     fun bb_ifs4() {
         val out = all("""
-            var x = ifs 20 {
+            var x = ifs it=20 {
                 it == 10 -> false
                 true  -> true
                 it == 20 -> false
@@ -144,7 +144,7 @@ class TXExec {
     @Test
     fun bb_ifs5() {
         val out = all("""
-            val x = ifs 20 {
+            val x = ifs it=20 {
                 it == 10 -> false
                 else -> true
             }
@@ -167,7 +167,7 @@ class TXExec {
     @Test
     fun bb_ifs7() {
         val out = all("""
-            var x = ifs 20 {
+            var x = ifs it=20 {
                 it is? 10 -> false
                 true  -> true
                 it is? 20 -> false
@@ -192,7 +192,7 @@ class TXExec {
     @Test
     fun bb_ifs9() {
         val out = all("""
-            var x = ifs 20 {
+            var x = ifs it=20 {
                 it in? [1,20,1] -> true
                 else  -> false
             }
@@ -203,7 +203,7 @@ class TXExec {
     @Test
     fun bb_ifs10() {
         val out = all("""
-            val x = ifs [] {
+            val x = ifs it=[] {
                 true -> it
             }
             println(x)
@@ -3030,8 +3030,8 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                it is? :pointer -> c-to-string(v)
-                it is? :number -> 1
+                v is? :pointer -> c-to-string(v)
+                v is? :number -> 1
             }
         """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
