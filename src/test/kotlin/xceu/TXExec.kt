@@ -2805,6 +2805,17 @@ class TXExec {
         """, true)
         assert(out == "20\t30\t50\ntrue\tfalse\ttrue\n") { out }
     }
+    @Test
+    fun tplate08_ifs() {
+        val out = all("""
+            data :T = [v]
+            val v = ifs {
+                t :T = [10] -> t.v
+            }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // AWAIT / EVT / TEMPLATE / DATA
 
@@ -3046,8 +3057,8 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                v is? :pointer -> c-to-string(v)
-                v is? :number -> 1
+                v == :pointer -> c-to-string(v)
+                v == :number -> 1
             }
         """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }

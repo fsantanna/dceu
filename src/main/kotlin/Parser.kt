@@ -259,6 +259,21 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun id_tag_cnd (): Triple<String?,String?,Expr> {
+        val id_or_cnd = this.expr()
+        return when {
+            !XCEU -> Triple(null, null, id_or_cnd)
+            (id_or_cnd !is Expr.Acc) -> Triple(null, null, id_or_cnd)
+            this.acceptFix("=") -> Triple(id_or_cnd.tk.str, null, this.expr())
+            this.acceptEnu("Tag") -> {
+                val tag = this.tk0.str
+                this.acceptFix_err("=")
+                Triple(id_or_cnd.tk.str, tag, this.expr())
+            }
+            else -> Triple(null, null, id_or_cnd)
+        }
+    }
+
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -317,12 +332,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val id_or_cnd = this.expr()
-                val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
-                    Pair(id_or_cnd.tk.str, this.expr())
-                } else {
-                    Pair(null, id_or_cnd)
-                }
+                val (id,tag,cnd) = id_tag_cnd()
                 val arr = XCEU && this.acceptFix("->")
                 val t = if (arr) {
                     Expr.Do(this.tk0, listOf(this.expr()))
@@ -349,9 +359,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val ceu_$N :tmp = ${cnd.tostr(true)}
+                            val ceu_$N :tmp ${tag ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val $id :tmp = ceu_$N
+                                val $id :tmp ${tag ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -510,15 +520,11 @@ class Parser (lexer_: Lexer)
 
                 val brk = if (raw || !(this.acceptFix("until")||this.acceptFix("while"))) "" else {
                     val not = if (this.tk0.str == "until") "" else "not"
-                    val id_or_cnd = this.expr()
-                    val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
-                        Pair(id_or_cnd.tk.str, this.expr())
-                    } else {
-                        Pair("ceu_$N", id_or_cnd)
-                    }
+                    val (id,tag,cnd) = id_tag_cnd()
+                    N++
                     """
-                    val $id :tmp = ${cnd.tostr(true)}
-                    if $not $id {
+                    val ${id ?: "ceu_$N"} :tmp ${tag ?: ""} = ${cnd.tostr(true)}
+                    if $not ${id ?: "ceu_$N"} {
                         `goto CEU_LOOP_DONE_$nn;`
                     } else { nil }
                     """
@@ -529,18 +535,14 @@ class Parser (lexer_: Lexer)
                 fun untils (): String {
                     return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
                         val not = if (this.tk0.str == "until") "" else "not"
-                        val id_or_cnd = this.expr()
-                        val (id,cnd) = if (XCEU && id_or_cnd is Expr.Acc && this.acceptFix("=")) {
-                            Pair(id_or_cnd.tk.str, this.expr())
-                        } else {
-                            Pair("ceu_$N", id_or_cnd)
-                        }
+                        val (id,tag,cnd) = id_tag_cnd()
                         val xblk = if (!this.checkFix("{")) "" else {
                             this.block().es.tostr(true) + untils()
                         }
+                        N++
                         """
-                        val $id :tmp = ${cnd.tostr(true)}
-                        if $not $id {
+                        val ${id ?: "ceu_$N"} :tmp ${tag ?: ""} = ${cnd.tostr(true)}
+                        if $not ${id ?: "ceu_$N"} {
                             `goto CEU_LOOP_DONE_$nn;`
                         } else { nil }
                         $xblk
@@ -884,22 +886,17 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("{")
 
                 val ifs = list0("}",null) {
-                    val (id,cnd) = if (this.acceptFix("else")) {
-                        Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                    val (id,tag,cnd) = if (this.acceptFix("else")) {
+                        Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                     } else {
-                        val id_or_cnd = this.expr()
-                        if (id_or_cnd is Expr.Acc && this.acceptFix("=")) {
-                            Pair(id_or_cnd.tk.str, this.expr())
-                        } else {
-                            Pair(null, id_or_cnd)
-                        }
+                        id_tag_cnd()
                     }
                     val blk = if (this.acceptFix("->")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
                     }
-                    Triple(id,cnd,blk)
+                    Pair(Triple(id,tag,cnd),blk)
                 }
                 //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
@@ -908,11 +905,13 @@ class Parser (lexer_: Lexer)
                         ${x.cond { """
                             val ${x!!.str} :tmp = ${v!!.tostr(true)}
                         """}}
-                        ${ifs.map { (id,cnd,blk) -> """
-                             if ${id.cond{ it + " = "}} ${cnd.tostr(true)} {
+                        ${ifs.map { (xxx,blk) ->
+                            val (id,tag,cnd) = xxx
+                            """
+                             if ${id.cond{ "$it ${tag ?: ""} = "}} ${cnd.tostr(true)} {
                                 ${blk.es.tostr(true)}
                              } else {
-                         """}.joinToString("")}
+                            """}.joinToString("")}
                          ${ifs.map { """
                              }
                          """}.joinToString("")}
