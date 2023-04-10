@@ -3057,10 +3057,10 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                v == :pointer -> c-to-string(v)
-                v == :number -> 1
+                v is? :pointer -> c-to-string(v)
+                v is? :number -> 1
             }
-        """)
+        """, true)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
     }
     @Test

@@ -690,9 +690,9 @@ class TXJS {
             nil
         }
         """, true)
-        assert(out == "1: ;; is', is-not'\n" +
+        assert(out == "1: ;; LOGICAL\n" +
                 "2: \n" +
-                "3: func to-bool (v) {\n" +
+                "3: export [{&&}, {||}]\n" +
                 "1: ;; is', is-not'\n" +
                 "2: \n" +
                 "3: func to-bool (v) {\n") { out }
