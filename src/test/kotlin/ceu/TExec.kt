@@ -1674,8 +1674,24 @@ class TExec {
         """, true)
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
+    @Test
+    fun loop3() {
+        val out = all("""
+            val v = loop until 10 {}
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun loop4() {
+        val out = all("""
+            val v = loop while false {}
+            println(v)
+        """)
+        assert(out == "true\n") { out }
+    }
 
-    // ceu.getTHROW / CATCH
+    // THROW / CATCH
 
     @Test
     fun catch1() {

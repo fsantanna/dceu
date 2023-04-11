@@ -2050,6 +2050,15 @@ class TXExec {
         """, true)
         assert(out == "4\n3\n2\n1\n") { out }
     }
+    @Test
+    fun until12() {
+        val out = all("""
+            val v = loop in [1->10] {
+            }
+            println(v)
+        """, true)
+        assert(out == "nil\n") { out }
+    }
 
     // LOOP / NUMERIC
 

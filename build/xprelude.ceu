@@ -205,26 +205,18 @@ func {===} (v1,v2) {
         t1 == :dict -> contains-dict(v1,v2) and contains-dict(v2,v1)
         else -> false
     } where {
-         func equals-tuple-vector (v1, v2) {
-             (#v1 == #v2) and catch {
-                 loop in iter(v1,:all), x {
-                     if not (v2[x.0] === x.1) {
-                         throw(false)
-                     }
-                 }
-                 true
-             }
-         }
-         func contains-dict (v1, v2) {
-             catch {
-                 loop in iter(v1), x {
-                     if not (v2[x.0] === x.2) {
-                         throw(false)
-                     }
-                 }
-                 true
-             }
-         }
+        func equals-tuple-vector (v1, v2) {
+            (#v1 == #v2) and not (
+                loop in iter(v1,:all), x {
+                } until not (v2[x.0] === x.1)
+            )
+        }
+        func contains-dict (v1, v2) {
+            not (
+                loop in iter(v1), x {
+                } until not (v2[x.0] === x.2)
+            )
+        }
      }
 }
 
