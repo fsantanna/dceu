@@ -208,13 +208,13 @@ func {===} (v1,v2) {
         func equals-tuple-vector (v1, v2) {
             (#v1 == #v2) and not (
                 loop in iter(v1,:all), x {
-                } until not (v2[x.0] === x.1)
+                } while (v2[x.0] === x.1)
             )
         }
         func contains-dict (v1, v2) {
             not (
                 loop in iter(v1), x {
-                } until not (v2[x.0] === x.2)
+                } while (v2[x.0] === x.1)
             )
         }
      }

@@ -348,12 +348,39 @@ class TXExec {
     fun ii_05_op_eqs_vec_dic_tup() {
         val out = ceu.all(
             """
+            println(@[(:y,false)] === @[(:x,true)])
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun ii_06_op_eqs_vec_dic_tup() {
+        val out = ceu.all(
+            """
             println([#[],@[]] ==  [#[],@[]])
             println([#[],@[]] /=  [#[],@[]])
             println([#[1],@[(:y,false),(:x,true)]] === [#[1],@[(:x,true),(:y,false)]])
             println([#[],@[]] =/= [#[],@[]])
         """, true)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun ii_07_valgrind() {
+        val out = ceu.all(
+            """
+            func f (v1,v2) {
+                func g (v1, v2) {
+                    not (
+                        loop in iter(v1), x {
+                        } while (v2[x.0] == x.1)
+                    )
+                }
+                g(v1,v2) and g(v2,v1)
+            }
+            val v1 = @[(:y,false)]
+            val v2 = @[(:x,true)]
+            println(f(v1,v2) and f(v2,v1))
+        """, true)
+        assert(out == "false\n") { out }
     }
 
     // assert
