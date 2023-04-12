@@ -367,19 +367,28 @@ class TXExec {
     fun ii_07_valgrind() {
         val out = ceu.all(
             """
-            func f (v1,v2) {
-                func g (v1, v2) {
-                    not (
-                        loop in iter(v1), x {
-                        } while (v2[x.0] == x.1)
-                    )
+            data :Iterator = [f,s,tp,i]
+            func iter-dict (itr :Iterator) {
+                val k = next(itr.s,itr.i)
+                if k == nil {
+                    nil
+                } else {
+                    set itr.i = k
+                    k
                 }
-                g(v1,v2) and g(v2,v1)
             }
-            val v1 = @[(:y,false)]
-            val v2 = @[(:x,true)]
-            println(f(v1,v2) and f(v2,v1))
-        """, true)
+            func f (v) {
+                func g (v) {
+                    val it = :Iterator [iter-dict,v,nil,nil]
+                    loop in it, x {
+                        ;;println(x)
+                    } while (v[x.0] == x.1)
+                }
+                g(v)
+            }
+            val v = @[(:y,false)]
+            println(f(v) and f(v))
+        """)
         assert(out == "false\n") { out }
     }
 
