@@ -413,6 +413,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
                 """
                 { // DCL ${this.tk.dump()}
+                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                     ${(this.init && this.src!=null).cond {
                         this.src!!.code() + """
                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
@@ -430,7 +431,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             """
                             */
                             !this.init -> ""
-                            (this.src == null) -> "ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };"
+                            (this.src == null) -> ""
                             else -> "ceu_mem->$idc = ceu_acc;"
                         }}
                         ceu_mem->_${idc}_ = $bupc;   // can't be static b/c recursion

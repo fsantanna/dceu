@@ -213,7 +213,7 @@ func {===} (v1,v2) {
         }
         func contains-dict (v1, v2) {
             not (
-                loop in iter(v1), x {
+                loop in iter(v1,:all), x {
                 } while (v2[x.0] === x.1)
             )
         }

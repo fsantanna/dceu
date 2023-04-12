@@ -367,29 +367,28 @@ class TXExec {
     fun ii_07_valgrind() {
         val out = ceu.all(
             """
-            data :Iterator = [f,s,tp,i]
-            func iter-dict (itr :Iterator) {
-                val k = next(itr.s,itr.i)
-                if k == nil {
-                    nil
-                } else {
-                    set itr.i = k
-                    k
+            val f = func (v) {
+                do {
+                    do {
+                        do {
+                            val x
+                            println(x)
+                            do {
+                                nil
+                            }
+                            val y = x[0]
+                        }
+                    }
                 }
             }
-            func f (v) {
-                func g (v) {
-                    val it = :Iterator [iter-dict,v,nil,nil]
-                    loop in it, x {
-                        ;;println(x)
-                    } while (v[x.0] == x.1)
-                }
-                g(v)
+            do {
+                f(@[(:y,false)])
             }
-            val v = @[(:y,false)]
-            println(f(v) and f(v))
         """)
-        assert(out == "false\n") { out }
+        assert(out == "anon : (lin 17, col 17) : f(@[(:y,false)])\n" +
+                "anon : (lin 11, col 37) : index error : expected collection\n" +
+                "nil\n" +
+                ":error\n") { out }
     }
 
     // assert
@@ -2094,6 +2093,14 @@ class TXExec {
             println(v)
         """, true)
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun while13() {
+        val out = all("""
+            val v = loop while false {nil}
+            println(v)
+        """)
+        assert(out == "true\n") { out }
     }
 
     // LOOP / NUMERIC
