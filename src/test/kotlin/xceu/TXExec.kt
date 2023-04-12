@@ -119,9 +119,9 @@ class TXExec {
     @Test
     fun bb_ifs3() {
         val out = all("""
-            val x = ifs it=20 {
-                it == 10 -> false
-                it == 20 -> true
+            val x = ifs 20 {
+                == 10 -> false
+                == 20 -> true
                 else  -> false
             }
             println(x)
@@ -157,7 +157,7 @@ class TXExec {
         val out = all("""
             val x = ifs 20 {
                 true -> ifs {
-                    it == 20 -> true   ;; err: no ifs expr
+                    == 20 -> true   ;; err: no ifs expr
                 }
             }
             println(x)
@@ -183,7 +183,7 @@ class TXExec {
             data :T = []
             val x = ifs 10 {
                 true -> :T []
-                it is? 0 -> nil
+                is? 0 -> nil
             }
             println(x)
         """)
@@ -3120,10 +3120,10 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                v is? :pointer -> c-to-string(v)
-                v is? :number -> 1
+                is? :pointer -> c-to-string(v)
+                is? :number -> 1
             }
-        """, true)
+        """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
     }
     @Test

@@ -24,7 +24,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun checkSep (): Boolean {
-        return (this.tk1 is Tk.Fix && this.tk1.str in listOf("{","}",",","]",")","->") || this.tk1 is Tk.Op)
+        return (this.tk1 is Tk.Fix && this.tk1.str in listOf("{","}",",","]",")","->") || this.tk1 is Tk.Eof || this.tk1 is Tk.Op)
     }
 
     fun checkFix (str: String): Boolean {
@@ -874,22 +874,30 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val (x,v) = if (this.checkFix("{")) {
-                    Pair(null, null)
+                    Pair("ceu_$N", null)
                 } else {
                     val e = this.expr()
                     if (e is Expr.Acc && this.acceptFix("=")) {
-                        Pair(e.tk as Tk.Id, this.expr())
+                        Pair(e.tk.str, this.expr())
                     } else {
-                        Pair(null, e)
+                        Pair("ceu_$N", e)
                     }
                 }
                 this.acceptFix_err("{")
 
                 val ifs = list0("}",null) {
-                    val (id,tag,cnd) = if (this.acceptFix("else")) {
-                        Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
-                    } else {
-                        id_tag_cnd()
+                    val (id,tag,cnd) = when {
+                        this.acceptFix("else") -> {
+                            Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                        }
+                        XCEU && this.acceptEnu("Op") -> {
+                            val op = this.tk0.str
+                            val e = this.expr()
+                            Triple(null, null, this.nest("$x $op ${e.tostr(true)}"))
+                        }
+                        else -> {
+                            id_tag_cnd()
+                        }
                     }
                     val blk = if (this.acceptFix("->")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
@@ -902,9 +910,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${x.cond { """
-                            val ${x!!.str} :tmp = ${v!!.tostr(true)}
-                        """}}
+                        ${v.cond { "val $x :tmp = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
