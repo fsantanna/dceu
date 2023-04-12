@@ -1677,18 +1677,10 @@ class TExec {
     @Test
     fun loop3() {
         val out = all("""
-            val v = loop until 10 {}
+            val v = loop until 10 {nil}
             println(v)
         """)
         assert(out == "10\n") { out }
-    }
-    @Test
-    fun loop4() {
-        val out = all("""
-            val v = loop while false {}
-            println(v)
-        """)
-        assert(out == "true\n") { out }
     }
 
     // THROW / CATCH

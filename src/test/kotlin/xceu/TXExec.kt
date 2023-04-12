@@ -2094,6 +2094,14 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun while13() {
+        val out = all("""
+            val v = loop while false {nil}
+            println(v)
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // LOOP / NUMERIC
 

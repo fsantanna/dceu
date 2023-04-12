@@ -518,7 +518,7 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (raw || !(this.acceptFix("until")||this.acceptFix("while"))) "" else {
+                val brk = if (raw || !(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
                     val not = if (this.tk0.str == "until") "" else "not"
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
