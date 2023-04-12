@@ -1870,6 +1870,17 @@ class TXExec {
         """,true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun qq_02_thus() {
+        val out = ceu.all(
+            """
+            val x = 1 thus x {
+                x
+            }
+            println(x)
+        """,true)
+        assert(out == "1\n") { out }
+    }
 
     // TOGGLE
 
