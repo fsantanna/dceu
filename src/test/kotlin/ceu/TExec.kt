@@ -2481,7 +2481,15 @@ class TExec {
         """)
         assert(out == ":y\n") { out }
     }
-
+    @Test
+    fun tags15() {
+        val out = all("""
+            val t = tags([], :x, true)
+            val s = copy(t)
+            println(s)
+        """)
+        assert(out == ":x []\n") { out }
+    }
 
     // ENUM
 

@@ -1787,6 +1787,18 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = *src;
                     break;
             }
+            if (src->type > CEU_VALUE_DYNAMIC) {
+                CEU_Tags_List* cur = src->Dyn->tags;
+                CEU_Value new = ceu_acc;
+                while (cur != NULL) {
+                    CEU_Value tag = (CEU_Value) { CEU_VALUE_TAG,  {.Tag=cur->tag} };
+                    CEU_Value tru = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+                    CEU_Value* args[] = { &new, &tag, &tru };
+                    assert(CEU_RET_RETURN == ceu_tags_f(_1, _2, 3, args));
+                    cur = cur->next;
+                }
+                ceu_acc = new;
+            }
             return CEU_RET_RETURN;
         }
 
