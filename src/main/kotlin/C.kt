@@ -36,10 +36,11 @@ fun Coder.main (tags: Tags): String {
         } CEU_RET;
 
         typedef enum {
-            CEU_PERM_TMP = 0,   // not assigned, dst assigns
-            CEU_PERM_SET,       // set and assignable to narrow 
-            CEU_PERM_ERR        // set but not assignable across unsafe (even if same/narrow)
-        } CEU_PERM;
+            CEU_HOLD_NON = 0,   // not assigned, dst assigns
+            CEU_HOLD_VAR,       // set and assignable to narrow 
+            CEU_HOLD_FIX,       // set but not assignable across unsafe (even if same/narrow)
+            CEU_HOLD_EVT
+        } CEU_HOLD;
 
         typedef enum {
             CEU_ARG_ERR = -2,
@@ -85,7 +86,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn);
         void ceu_hold_rem (struct CEU_Dyn* dyn);
-        CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int isperm, int issafe);
+        CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int tphold, int issafe);
         
         CEU_RET ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create     (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -215,7 +216,7 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE type;                 // required to switch over free/bcast
             CEU_Dyns_I up_dyns;
             struct CEU_Tags_List* tags;     // linked list of tags
-            int isperm;                     // if up_hold is permanent and may not be reset to outer block (0=temp / 1=perm / 2=evt/coros)
+            int tphold;                     // if up_hold is permanent and may not be reset to outer block (0=temp / 1=perm / 2=evt/coros)
             union {
                 struct {
                     int refs;                       // number of refs to it (free when 0)
@@ -283,7 +284,7 @@ fun Coder.main (tags: Tags): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dyn* ceu_proto_create (struct CEU_Dyns* hld, int isperm, int type, struct CEU_Proto proto);        
+        struct CEU_Dyn* ceu_proto_create (struct CEU_Dyns* hld, int tphold, int type, struct CEU_Proto proto);        
         struct CEU_Dyn* ceu_dict_create  (struct CEU_Dyns* hld);
 
         int ceu_gc_count = 0;
@@ -665,8 +666,11 @@ fun Coder.main (tags: Tags): String {
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
             CEU_Dyns_I* up = &dyn->up_dyns;
-            assert(up->dyns->buf != NULL);
-            up->dyns->buf[up->i] = NULL;
+            if (up->dyns != NULL) {
+                assert(up->dyns->buf != NULL);
+                up->dyns->buf[up->i] = NULL;
+            }
+            up->dyns = NULL;
         }
 
         void ceu_dyn_free (CEU_Dyn* dyn) {
@@ -728,64 +732,14 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        CEU_RET ceu_evt_set (CEU_Dyn* src, int isperm) {
-            src->isperm = isperm;
+        CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int tphold, int issafe) {
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_evt_set(src->Ncast.Proto.upvs.buf[i].Dyn, isperm);
-                        }
-                    }
-                    break;
-                case CEU_VALUE_TUPLE:
-                    for (int i=0; i<src->Ncast.Tuple.its; i++) {
-                        if (src->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_evt_set(src->Ncast.Tuple.buf[i].Dyn, isperm);
-                        }
-                    }
-                    break;
-                case CEU_VALUE_VECTOR:
-                    if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
-                        int sz = ceu_tag_to_size(src->Ncast.Vector.type);
-                        for (int i=0; i<src->Ncast.Vector.its; i++) {
-                            ceu_evt_set(*(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), isperm);
-                        }
-                    }
-                    break;
-                case CEU_VALUE_DICT:
-                    for (int i=0; i<src->Ncast.Dict.max; i++) {
-                        if ((*src->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            ceu_evt_set((*src->Ncast.Dict.buf)[i][0].Dyn, isperm);
-                        }
-                        if ((*src->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            ceu_evt_set((*src->Ncast.Dict.buf)[i][1].Dyn, isperm);
-                        }
-                    }
-                    break;
-                case CEU_VALUE_X_CORO:
-                case CEU_VALUE_X_TASK:
-                case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_X_TRACK:
-                    break;
-                default:
-                    // others never move
-                    //assert(isperm!=2 && src->isperm!=2);
-                    assert((isperm!=CEU_PERM_TMP || src->isperm!=CEU_PERM_TMP) && "TODO");
-                    break;
-            }
-        }
-        
-        CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int isperm, int issafe) {
-            switch (src->type) {
-                case CEU_VALUE_P_FUNC:
-                case CEU_VALUE_P_CORO:
-                case CEU_VALUE_P_TASK:
-                    for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
-                        if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Proto.upvs.buf[i].Dyn, isperm, issafe)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Proto.upvs.buf[i].Dyn, tphold, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -794,7 +748,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Ncast.Tuple.its; i++) {
                         if (src->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Tuple.buf[i].Dyn, isperm, issafe)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, src->Ncast.Tuple.buf[i].Dyn, tphold, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -804,7 +758,7 @@ fun Coder.main (tags: Tags): String {
                     if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Ncast.Vector.type);
                         for (int i=0; i<src->Ncast.Vector.its; i++) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), isperm, issafe)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), tphold, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -813,12 +767,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Ncast.Dict.max; i++) {
                         if ((*src->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, isperm, issafe)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, tphold, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
                         if ((*src->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, isperm, issafe)) {
+                            if (CEU_RET_THROW == ceu_block_set(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, tphold, issafe)) {
                                 return CEU_RET_THROW;
                             }
                         }
@@ -831,41 +785,48 @@ fun Coder.main (tags: Tags): String {
                     break;
                 default:
                     // others never move
-                    //assert(isperm!=2 && src->isperm!=2);
-                    assert((isperm!=CEU_PERM_TMP || src->isperm!=CEU_PERM_TMP) && "TODO");
+                    //assert(tphold!=2 && src->tphold!=2);
+                    //printf(">>> %d %d\n", tphold, src->tphold);
+                    //assert((tphold!=CEU_HOLD_NON || src->tphold!=CEU_HOLD_NON) && "TODO");
                     break;
             }
-            //int one = (src->isperm == CEU_PERM_ERR) ? 1 : 0;
-            int src_is_less = 0;
-            if (dst == src->up_dyns.dyns) {
-                // ok
-            } else if (src->up_dyns.dyns==NULL || (src->isperm==CEU_PERM_TMP && dst->up_block->depth<src->up_dyns.dyns->up_block->depth)) {
-                if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
-                    // do not enqueue: global functions use up=NULL and are not malloc'ed
+            //int one = (src->tphold == CEU_HOLD_FIX) ? 1 : 0;
+            int tohold = 0;
+            if (tphold == CEU_HOLD_EVT) {            // event, ensure not held, adjust tphold
+                if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
+                    src->tphold = CEU_HOLD_EVT;
                 } else {
-                    if (src->up_dyns.dyns != NULL) {
-                        ceu_hold_rem(src);
-                    }
-                    ceu_hold_add(dst, src);
+                    CEU_THROW_MSG("\0 : set error : incompatible scopes");
+                    CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-            //} else if (src->isperm==CEU_PERM_ERR && issafe) {
-                // ok
-            } else if (!issafe && isperm!=CEU_PERM_TMP && src->isperm==CEU_PERM_ERR) {
+            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+                // ok: global functions use up=NULL and are not malloc'ed
+            } else if (dst == src->up_dyns.dyns) {          // same block, just adjust to tphold
+                src->tphold = MAX(src->tphold, tphold);
+            } else if (src->tphold == CEU_HOLD_NON) {       // src is still tmp, hold and adjust to tphold
+                tohold = (tphold == CEU_HOLD_VAR) || (tphold == CEU_HOLD_FIX);
+                src->tphold = tphold;
+            } else if (dst->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
+                assert((tphold == CEU_HOLD_VAR) || (tphold == CEU_HOLD_FIX));
+                tohold = 1;
+                src->tphold = MAX(src->tphold, tphold);
+#if 0
+            } else if (!issafe && tphold!=CEU_HOLD_NON && src->tphold>=CEU_HOLD_FIX) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             } else if (src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
-            } else if (src->up_dyns.dyns->up_block->depth < dst->up_block->depth) {
-                // ok
-                src_is_less = 1;
+#endif
             } else {
-                // ok
+                CEU_THROW_MSG("\0 : set error : incompatible scopes");
+                CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            if (src_is_less && src->isperm==CEU_PERM_SET) {
-                // ok
-            } else {
-                src->isperm = MAX(src->isperm, isperm);
+            if (tohold) {
+                if (src->up_dyns.dyns != NULL) {
+                    ceu_hold_rem(src);
+                }
+                ceu_hold_add(dst, src);
             }
             return CEU_RET_RETURN;
         }
@@ -1205,7 +1166,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // CREATES
-        CEU_Dyn* ceu_proto_create (CEU_Dyns* hld, int isperm, int type, CEU_Proto proto) {
+        CEU_Dyn* ceu_proto_create (CEU_Dyns* hld, int tphold, int type, CEU_Proto proto) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             proto.upvs.buf = malloc(proto.upvs.its * sizeof(CEU_Value));
@@ -1218,7 +1179,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, isperm, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, tphold, 0));
             return ret;
         }
         
@@ -1361,7 +1322,7 @@ fun Coder.main (tags: Tags): String {
             } };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
-            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, CEU_PERM_ERR, 0));  // 2=cannot be reassigned
+            assert(CEU_RET_RETURN == ceu_block_set(&tasks->Bcast.Tasks.dyns, x, CEU_HOLD_FIX, 0));  // 2=cannot be reassigned
             return CEU_RET_RETURN;
         }
         
@@ -1656,7 +1617,7 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
-            if (src->type>CEU_VALUE_DYNAMIC && dyn->isperm==CEU_PERM_ERR) {
+            if (src->type>CEU_VALUE_DYNAMIC && dyn->tphold==CEU_HOLD_FIX) {
                 CEU_THROW_MSG("move error : value is not movable");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1665,7 +1626,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
-                    dyn->isperm = CEU_PERM_TMP;
+                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
@@ -1674,7 +1635,7 @@ fun Coder.main (tags: Tags): String {
                     break;
 #endif
                 case CEU_VALUE_TUPLE: {
-                    dyn->isperm = CEU_PERM_TMP;
+                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
@@ -1683,7 +1644,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    dyn->isperm = CEU_PERM_TMP;
+                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Vector.its; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
@@ -1694,7 +1655,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    dyn->isperm = CEU_PERM_TMP;
+                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args0));
@@ -1729,7 +1690,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE: {
                     CEU_Dyn* new = ceu_tuple_create(NULL, old->Ncast.Tuple.its);
                     assert(new != NULL);
-                    new->isperm = CEU_PERM_TMP;
+                    new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &old->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
@@ -1741,7 +1702,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_VECTOR: {
                     CEU_Dyn* new = ceu_vector_create(NULL);
                     assert(new != NULL);
-                    new->isperm = CEU_PERM_TMP;
+                    new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Vector.its; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(old, i));
                         CEU_Value ceu_accx = ceu_acc;
@@ -1755,7 +1716,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_DICT: {
                     CEU_Dyn* new = ceu_dict_create(NULL);
                     assert(new != NULL);
-                    new->isperm = CEU_PERM_TMP;
+                    new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Dict.max; i++) {
                         {
                             CEU_Value* args[1] = { &(*old->Ncast.Dict.buf)[i][0] };

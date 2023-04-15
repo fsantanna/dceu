@@ -113,7 +113,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 assert(0 && "bug found");
                                 break;
                             case 0: {
-                                //ceu_x->isperm = 1;   // do not allow started coro to change scope
+                                //ceu_x->tphold = 1;   // do not allow started coro to change scope
                                 CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
                         """}}
                             // BODY
@@ -174,7 +174,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                    ${if (clos.protos_noclos.contains(this)) "CEU_PERM_ERR" else "CEU_PERM_TMP"},
+                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"},
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
@@ -539,9 +539,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_mem->evt_$n = ceu_acc;
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
-                    int ceu_evt_err = (ceu_mem->evt_$n.type>CEU_VALUE_DYNAMIC); //TUPLE && ceu_mem->evt_$n.type<=CEU_VALUE_DICT);
-                    if (ceu_evt_err) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_ERR);
+                    if (ceu_mem->evt_$n.type>CEU_VALUE_DYNAMIC) {
+                        ceu_ret = ceu_block_set(NULL, ceu_mem->evt_$n.Dyn, CEU_HOLD_EVT, 0);
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     }
                     
                     ${this.xin.code()}
@@ -571,13 +571,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         return ceu_ret;
                     }
                     
-                    // it is safe to modify after check above:
-                    //  - if it was set to 2, it implies a "broadcast []", in which "[]" is held in bstack block, thus clenaned
-                    //  - if it was set to 1, we dont need to reset anyways
-                    if (ceu_evt_err) {
-                        ceu_evt_set(ceu_mem->evt_$n.Dyn, CEU_PERM_SET);
-                    }
-
                     ceu_gc_dec(&ceu_mem->evt_$n, 1);
                     
                     if (ceu_err_$n) {
@@ -640,8 +633,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(&ceu_mem->block_$task.dn_dyns, $src.Dyn, CEU_PERM_ERR, 0);
-                            //ceu_ret = ceu_block_set(ceu_x->up_dyns.dyns, $src.Dyn, CEU_PERM_ERR, 0);
+                            ceu_ret = ceu_block_set(&ceu_mem->block_$task.dn_dyns, $src.Dyn, CEU_HOLD_FIX, 0);
+                            //ceu_ret = ceu_block_set(ceu_x->up_dyns.dyns, $src.Dyn, CEU_HOLD_FIX, 0);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         ceu_gc_inc(&$src);
