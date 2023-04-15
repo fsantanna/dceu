@@ -1033,13 +1033,32 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val awt = await()
-                val body = this.block()
+                val brk = if ((this.acceptFix("until") || this.acceptFix("while"))) this.tk0 else null
+                fun untils (): String {
+                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
+                        val brk = this.tk0
+                        val (id,tag,cnd) = id_tag_cnd()
+                        val xblk = if (!this.checkFix("{")) "" else {
+                            "{" + this.block().es.tostr(true) + untils()
+                        }
+                        """
+                        } ${brk.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)}
+                        $xblk
+                        """
+                    }
+                }
+
                 this.nest("""
                     ${pre0}loop {
                         ${awt.tostr()}
-                        ${body.es.tostr(true)}
+                        ${brk.cond {
+                            val (id,tag,cnd) = id_tag_cnd()
+                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)} {" }
+                        }
+                        ${this.block().es.tostr(true)}
+                        ${untils()}
                     }
-                """)//.let { println(it.tostr()); it }
+                """)//.let { println(it); it })
             }
             (XCEU && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()

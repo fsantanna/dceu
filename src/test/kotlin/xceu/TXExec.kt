@@ -1016,6 +1016,41 @@ class TXExec {
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
 
+    // EVERY
+
+    @Test
+    fun every_01() {
+        val out = ceu.all(
+            """
+            task T () {
+                println(:1)
+                every true until true {
+                    throw(999)
+                }
+                println(:2)
+            }
+            spawn T()
+            broadcast nil
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun every_02() {
+        val out = ceu.all(
+            """
+            task T () {
+                println(:1)
+                every true until false {
+                    println(:xxx)
+                } while false
+                println(:2)
+            }
+            spawn T()
+            broadcast nil
+        """)
+        assert(out == ":1\n:xxx\n:2\n") { out }
+    }
+
     // TUPLE / VECTOR / DICT / STRING
 
     @Test
