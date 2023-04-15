@@ -3,7 +3,7 @@
 - detrack, scope 999
     - ll_track16_hold_err
 - block defer should be after block clean up
-- mudei coro,coros,track para isperm=0, preciso avaliar e testar
+- mudei coro,coros,track para tphold=0, preciso avaliar e testar
 - como vou fazer com os holes?
     - o certo seria
         - ao terminar o loop
@@ -17,8 +17,8 @@
 
 # NEXT
 
-- copy tags
-- export [...] { }
+- where { x=10 } // no val x=10
+- export :all [...] { }
 - var x :T = y
 - set x = y
     - assert(y is :T)

@@ -37,7 +37,7 @@ val TAGS = listOf (
     ":tuple", ":vector", ":dict",
     ":bcast",
     ":x-coro", ":x-task", ":x-tasks", ":x-track",
-    ":fake", ":check-now",
+    ":fake", ":check-now", ":rec",
     ":ceu", ":clear", ":error",           // bcast-clear
     ":tmp", ":global", ":local", //":task"   // bcast scope
     ":yielded", ":toggled", ":resumed", ":terminated"

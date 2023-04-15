@@ -568,6 +568,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val isnote = (tk0.str=="func" || this.checkFix("(") || this.checkEnu("Tag") || (XCEU && this.checkEnu("Id")))
                 if (!isnote) Expr.Self(tk0) else {
+                    val isrec = XCEU && this.acceptTag(":rec")
                     val id = if (XCEU && this.acceptEnu("Id")) this.tk0 as Tk.Id else null
                     val args = if (XCEU && !this.checkFix("(")) {
                         listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
@@ -585,8 +586,12 @@ class Parser (lexer_: Lexer)
                     }
                     val blk = this.block(this.tk1)
                     val proto = Expr.Proto(tk0, task, args, blk)
-                    if (id == null) proto else {
-                        this.nest("""
+                    when {
+                        (id == null) -> proto
+                        !isrec -> this.nest("""
+                            ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)}
+                        """)
+                        else -> this.nest("""
                             export [${id.str}] {
                                 ${tk0.pos.pre()}var ${id.str}
                                 set ${id.str} = ${proto.tostr(true)}

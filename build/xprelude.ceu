@@ -195,7 +195,7 @@ func in' (v, xs) {
     }
 }
 
-func {===} (v1,v2) {
+func :rec {===} (v1,v2) {
     val t1 = type(v1)
     val t2 = type(v2)
     ifs {
@@ -220,7 +220,7 @@ func {===} (v1,v2) {
      }
 }
 
-func {=/=} (v1,v2) {
+func :rec {=/=} (v1,v2) {
     not (v1 === v2)
 }
 
@@ -237,7 +237,7 @@ func c-to-string (v) {
     move(str)
 }
 
-func to-string (v) {
+func :rec to-string (v) {
     ifs {
         v is? :pointer -> c-to-string(v)
         v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
