@@ -425,6 +425,19 @@ class TXExec {
         """, true)
         assert(out == "1\n1\n2\n2\n") { out }
     }
+    @Test
+    fun bcast2() {
+        val out = all("""
+            task T () {
+                await evt is? :x
+                println(1)
+            }
+            spawn T()
+            broadcast tags([],:x,true)
+            println(2)
+        """, true)
+        assert(out == "1\n1\n2\n2\n") { out }
+    }
 
     // YIELD ALL
 

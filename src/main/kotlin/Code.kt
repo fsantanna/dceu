@@ -233,7 +233,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_Dyn* tup = ceu_tuple_create(ceu_argc);
                         for (int i=0; i<ceu_argc; i++) {
                             CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
-                            ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} });
+                            assert(CEU_RET_RETURN == ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} }));
                         }
                         ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
                     }
@@ -276,7 +276,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 int ceu_tup_n = MAX(0,ceu_n-$args_n);
                                 CEU_Dyn* ceu_tup = ceu_tuple_create(ceu_tup_n);
                                 for (int i=0; i<ceu_tup_n; i++) {
-                                    ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]);
+                                    assert(CEU_RET_RETURN == ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]));
                                 }
                                 ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
                                 ceu_gc_inc(&ceu_mem->$idc);
@@ -339,11 +339,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                             }
                                         }
                                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(&$up1->dn_dyns, ceu_acc.Dyn, CEU_HOLD_NON, ${this.do_issafe()});
-                                            if (ceu_ret == CEU_RET_THROW) {
-                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                                // prioritize scope error over whatever there is now
+                                            ceu_ret = CEU_RET_RETURN;
+                                            if (!ceu_block_chk(&$up1->dn_dyns, ceu_acc.Dyn)) {
+                                                ceu_acc = CEU_ERR_ERROR;
                                                 ceu_acc_$n = ceu_acc;
+                                                ceu_ret = CEU_RET_THROW;
+                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                                             }
                                             ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                         }
@@ -774,7 +775,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc);
+                        assert(CEU_RET_RETURN == ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc));
                         """
                     }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_mem->tup_$n} }")}
@@ -841,7 +842,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_ret = ceu_col_check(&ceu_accx, &ceu_mem->idx_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     ${if (!this.isdst()) {
-                        val x = this.has_pub_evt()
                         """
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
@@ -873,7 +873,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
+                                assert(CEU_RET_RETURN == ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src));
                                 break;
                             case CEU_VALUE_VECTOR:
                                 ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);

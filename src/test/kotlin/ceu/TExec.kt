@@ -98,7 +98,14 @@ class TExec {
         assert(out == "1020\n") { out }
     }
     @Test
-    fun aa_print3() {
+    fun aa_print3a() {
+        val out = all("""
+            println(func () { nil })
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
+    @Test
+    fun aa_print3b() {
         val out = all("""
             println([[],[1,2,3]])
             println(func () { nil })
@@ -334,6 +341,21 @@ class TExec {
         assert(out == "[1]\n") { out }
     }
     @Test
+    fun cc_tuple6a_free() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                if v > 0 {
+                    [f(v - 1)]
+                } else {
+                    0
+                }
+            }
+            println(f(2))
+        """, true)
+        assert(out == "[[0]]\n") { out }
+    }
+    @Test
     fun cc_tuple6_free() {
         val out = all("""
             var f
@@ -356,8 +378,8 @@ class TExec {
             set f = func (v) {
                 var x
                 if v > 0 {
-                    set x = f(v - 1)  ;; invalid set
-                    [x]
+                    set x = f(v - 1)
+                    [x]                   ;; invalid set: cannot return "var x" from this scope
                 } else {
                     0
                 }
@@ -1171,7 +1193,7 @@ class TExec {
             do {
                 var a
                 set a = [1,2,3]
-                set x = a
+                set x = a           ;; err: x<a
             }
         """)
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
@@ -1299,6 +1321,17 @@ class TExec {
             println(1)
         """)
         assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun scope13_tuple() {
+        val out = all("""
+            val v = do {
+                val x = []
+                [x]         ;; invalid return
+            }
+            println(v)
+        """, true)
+        assert(out == "ERROR\n") { out }
     }
 
     // IF

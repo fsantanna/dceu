@@ -1346,7 +1346,30 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
+        assert(out == "anon : (lin 10, col 13) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
+        //        "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun ee_11_bcast_move() {
+        val out = ceu.all(
+            """
+            var T = task () {
+                yield(nil)
+                var v = evt
+                println(v)
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            var e = []
+            broadcast in :global, move(e)
+            ;;println(:2222)
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
                 "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
@@ -1369,8 +1392,10 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 11, col 17) : broadcast in :global, e\n" +
-                "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
+        //assert(out == "anon : (lin 11, col 17) : broadcast in :global, e\n" +
+        //        "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "anon : (lin 11, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -1453,6 +1478,31 @@ class TTask {
             broadcast in :global, [[1]]
         """)
         assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ee_17_bcast_tuple_func_ok() {
+        val out = all("""
+            val f = func (v) {
+                println(v)
+            }
+            val T = task () {
+                yield(nil)
+                f(evt)
+            }
+            spawn T()
+            do {
+                do {
+                    do {
+                        do {
+                            do {
+                                broadcast in :global, []
+                            }
+                        }
+                    }
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
     }
 
     // POOL
@@ -2271,7 +2321,9 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun gg_evt_hld8_err() {
