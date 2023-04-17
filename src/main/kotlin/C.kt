@@ -39,7 +39,8 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_NON = 0,   // not assigned, dst assigns
             CEU_HOLD_VAR,       // set and assignable to narrow 
             CEU_HOLD_FIX,       // set but not assignable across unsafe (even if same/narrow)
-            CEU_HOLD_EVT
+            CEU_HOLD_EVT,
+            CEU_HOLD_MAX
         } CEU_HOLD;
 
         typedef enum {
@@ -747,15 +748,14 @@ fun Coder.main (tags: Tags): String {
         }
         
         int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
-            if (src == CEU_HOLD_NON) {
-                return 1;
-            } else if (src == CEU_HOLD_FIX) {
-                return 0;
-            } else if (dst == CEU_HOLD_EVT) {
-                return (src==CEU_HOLD_NON || src==CEU_HOLD_EVT);
-            } else {
-                assert(0 && "TODO");
-            }
+            static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
+                { 1, 1, 1, 1 },     // src = NON
+                { 9, 1, 9, 0 },     // src = VAR
+                { 0, 0, 0, 0 },     // src = FIX
+                { 9, 9, 9, 1 }      // src = EVT
+            };
+            assert(x[src][dst] != 9);
+            return x[src][dst] == 1;
         }
 
         void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src) {
