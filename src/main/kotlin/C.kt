@@ -87,7 +87,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn);
         void ceu_hold_rem (struct CEU_Dyn* dyn);
-        CEU_RET ceu_block_set (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn, int tphold, int issafe);
+        CEU_RET ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, int dst_tphold, int issafe);
         
         CEU_RET ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create     (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -749,11 +749,12 @@ fun Coder.main (tags: Tags): String {
         
         int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
-                { 1, 1, 1, 1 },     // src = NON
-                { 9, 1, 9, 0 },     // src = VAR
+                { 0, 1, 1, 1 },     // src = NON
+                { 0, 1, 9, 0 },     // src = VAR
                 { 0, 0, 0, 0 },     // src = FIX
-                { 9, 9, 9, 1 }      // src = EVT
+                { 0, 9, 9, 1 }      // src = EVT
             };
+            //printf(">>> %d %d = %d\n", src, dst, x[src][dst]);
             assert(x[src][dst] != 9);
             return x[src][dst] == 1;
         }
@@ -805,14 +806,16 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set (CEU_Dyns* dst, CEU_Dyn* src, int tphold, int issafe) {
-            if (ceu_block_chk(dst,src) && ceu_block_hld(tphold,src->tphold)) {
-                src->tphold = MAX(src->tphold,tphold);
+        CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, int dst_tphold, int issafe) {
+            assert(dst_dyns != NULL);
+            // dst might be NULL when assigning to orphan tuple
+            if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
+                src->tphold = MAX(src->tphold,dst_tphold);
                 if (src->up_dyns.dyns != NULL) {
                     ceu_hold_rem(src);
                 }
-                ceu_hold_add(dst, src);
-                ceu_block_rec(dst,src);
+                ceu_hold_add(dst_dyns, src);
+                ceu_block_rec(dst_dyns,src);
             } else {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -822,7 +825,7 @@ fun Coder.main (tags: Tags): String {
 #if 0
             //int one = (src->tphold == CEU_HOLD_FIX) ? 1 : 0;
             int tohold = 0;
-            if (tphold == CEU_HOLD_EVT) {            // event, ensure not held, adjust tphold
+            if (dst_tphold == CEU_HOLD_EVT) {            // event, ensure not held, adjust tphold
                 if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                     src->tphold = CEU_HOLD_EVT;
                 } else {
@@ -831,20 +834,20 @@ fun Coder.main (tags: Tags): String {
                 }
             } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                 // ok: global functions use up=NULL and are not malloc'ed
-            } else if (dst == src->up_dyns.dyns) {          // same block, just adjust to tphold
-                src->tphold = MAX(src->tphold, tphold);
+            } else if (dst_dyns == src->up_dyns.dyns) {          // same block, just adjust to tphold
+                src->tphold = MAX(src->tphold, dst_tphold);
             } else if (src->tphold == CEU_HOLD_NON) {       // src is still tmp, hold and adjust to tphold
-                tohold = (tphold == CEU_HOLD_VAR) || (tphold == CEU_HOLD_FIX);
-                src->tphold = tphold;
-            } else if (dst->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
-                assert((tphold == CEU_HOLD_VAR) || (tphold == CEU_HOLD_FIX));
+                tohold = (dst_tphold == CEU_HOLD_VAR) || (dst_tphold == CEU_HOLD_FIX);
+                src->tphold = dst_tphold;
+            } else if (dst_dyns->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
+                assert((dst_tphold == CEU_HOLD_VAR) || (dst_tphold == CEU_HOLD_FIX));
                 tohold = 1;
-                src->tphold = MAX(src->tphold, tphold);
+                src->tphold = MAX(src->tphold, dst_tphold);
 #if 0
-            } else if (!issafe && tphold!=CEU_HOLD_NON && src->tphold>=CEU_HOLD_FIX) {
+            } else if (!issafe && dst_tphold!=CEU_HOLD_NON && src->tphold>=CEU_HOLD_FIX) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
-            } else if (src->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
+            } else if (src->up_dyns.dyns->up_block->depth > dst_dyns->up_block->depth) {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
 #endif
@@ -856,7 +859,7 @@ fun Coder.main (tags: Tags): String {
                 if (src->up_dyns.dyns != NULL) {
                     ceu_hold_rem(src);
                 }
-                ceu_hold_add(dst, src);
+                ceu_hold_add(dst_dyns, src);
             }
             return CEU_RET_RETURN;
 #endif
@@ -1042,8 +1045,17 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            //return ceu_block_set();
-            return CEU_RET_RETURN;
+            if (v.type < CEU_VALUE_DYNAMIC) {
+                return CEU_RET_RETURN;
+            } else if (tup->tphold == CEU_HOLD_NON) {
+                if (v.Dyn->tphold == CEU_HOLD_NON) {
+                    return CEU_RET_RETURN;
+                } else {
+                    return ceu_block_set(tup, v.Dyn->up_dyns.dyns, v.Dyn->tphold, 0);
+                }
+            } else {
+                return ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold, 0);
+            }
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1213,7 +1225,7 @@ fun Coder.main (tags: Tags): String {
                 }
             };
             //ceu_hold_add(hld, ret);
-            assert(CEU_RET_RETURN == ceu_block_set(hld, ret, tphold, 0));
+            assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold, 0));
             return ret;
         }
         

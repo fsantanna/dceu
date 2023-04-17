@@ -1290,7 +1290,7 @@ class TExec {
             do {
                 var x
                 set x = []
-                set out = [x]
+                set out = [x]   ;; err
             }
             println(1)
         """)
