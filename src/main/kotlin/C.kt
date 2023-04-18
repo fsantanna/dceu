@@ -89,11 +89,11 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_rem (struct CEU_Dyn* dyn);
         CEU_RET ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, int dst_tphold, int issafe);
         
-        CEU_RET ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
-        CEU_RET ceu_x_create     (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
-        CEU_RET ceu_x_create_in  (struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
+        void ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
+        CEU_RET ceu_x_create (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
+        CEU_RET ceu_x_create_in (struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
         struct CEU_Dyn* ceu_vector_create (void);
-        struct CEU_Dyn* ceu_tuple_create  (int n);
+        struct CEU_Dyn* ceu_tuple_create (int n);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -103,7 +103,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_tag_to_size (int type);
         void ceu_max_depth (struct CEU_Dyn* dyn, int n, struct CEU_Value* childs);
         CEU_RET ceu_vector_get (struct CEU_Dyn* vec, int i);
-        void ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
+        CEU_RET ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
         struct CEU_Dyn* ceu_vector_from_c_string (struct CEU_Dyns* hld, const char* str);
         
         int ceu_dict_key_to_index (struct CEU_Dyn* col, struct CEU_Value* key, int* idx);
@@ -285,7 +285,7 @@ fun Coder.main (tags: Tags): String {
         } CEU_Error_List;
     """ +
     """ // GLOBALS
-        struct CEU_Dyn* ceu_proto_create (struct CEU_Dyns* hld, int tphold, int type, struct CEU_Proto proto);        
+        struct CEU_Dyn* ceu_proto_create (int type, struct CEU_Proto proto);        
         struct CEU_Dyn* ceu_dict_create  (void);
 
         int ceu_gc_count = 0;
@@ -809,13 +809,16 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, int dst_tphold, int issafe) {
             assert(dst_dyns != NULL);
             // dst might be NULL when assigning to orphan tuple
-            if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
-                src->tphold = MAX(src->tphold,dst_tphold);
-                if (src->up_dyns.dyns != NULL) {
-                    ceu_hold_rem(src);
+            if (issafe || (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold))) {
+                if (!issafe || src->up_dyns.dyns==NULL) {
+                    src->tphold = MAX(src->tphold,dst_tphold);
+                    if (src->up_dyns.dyns != NULL) {
+                        // do not hold
+                    } else {
+                        ceu_hold_add(dst_dyns, src);
+                        ceu_block_rec(dst_dyns, src);
+                    }
                 }
-                ceu_hold_add(dst_dyns, src);
-                ceu_block_rec(dst_dyns,src);
             } else {
                 CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1041,21 +1044,23 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
+        CEU_RET ceu_col_chk (CEU_Dyn* col, CEU_Dyn* v) {
+            if (col->tphold == CEU_HOLD_NON) {
+                if (v->tphold == CEU_HOLD_NON) {
+                    return CEU_RET_RETURN;
+                } else {
+                    return ceu_block_set(col, v->up_dyns.dyns, v->tphold, 0);
+                }
+            } else {
+                return ceu_block_set(v, col->up_dyns.dyns, col->tphold, 0);
+            }
+        }
+
         CEU_RET ceu_tuple_set (CEU_Dyn* tup, int i, CEU_Value v) {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            if (v.type < CEU_VALUE_DYNAMIC) {
-                return CEU_RET_RETURN;
-            } else if (tup->tphold == CEU_HOLD_NON) {
-                if (v.Dyn->tphold == CEU_HOLD_NON) {
-                    return CEU_RET_RETURN;
-                } else {
-                    return ceu_block_set(tup, v.Dyn->up_dyns.dyns, v.Dyn->tphold, 0);
-                }
-            } else {
-                return ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold, 0);
-            }
+            return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(tup, v.Dyn);
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1069,7 +1074,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        void ceu_vector_set (CEU_Dyn* vec, int i, CEU_Value v) {
+        CEU_RET ceu_vector_set (CEU_Dyn* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Ncast.Vector.its-1);
                 assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
@@ -1098,6 +1103,7 @@ fun Coder.main (tags: Tags): String {
                     assert(i < vec->Ncast.Vector.its);
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
+                return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(vec, v.Dyn);
             }
         }
         
@@ -1105,7 +1111,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* vec = ceu_vector_create();
             int N = strlen(str);
             for (int i=0; i<N; i++) {
-                ceu_vector_set(vec, vec->Ncast.Vector.its, (CEU_Value) { CEU_VALUE_CHAR, str[i] });
+                assert(CEU_RET_RETURN == ceu_vector_set(vec, vec->Ncast.Vector.its, (CEU_Value) { CEU_VALUE_CHAR, str[i] }));
             }
             return vec;
         }
@@ -1166,6 +1172,9 @@ fun Coder.main (tags: Tags): String {
                 col->Ncast.Dict.buf = realloc(col->Ncast.Dict.buf, new*2*sizeof(CEU_Value));
                 assert(col->Ncast.Dict.buf != NULL);
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
+                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, key->Dyn);
+                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, val->Dyn);
+                return MIN(ret1,ret2);
             }
             assert(old != -1);
             
@@ -1211,7 +1220,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // CREATES
-        CEU_Dyn* ceu_proto_create (CEU_Dyns* hld, int tphold, int type, CEU_Proto proto) {
+        CEU_Dyn* ceu_proto_create (int type, CEU_Proto proto) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             proto.upvs.buf = malloc(proto.upvs.its * sizeof(CEU_Value));
@@ -1224,8 +1233,6 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            //ceu_hold_add(hld, ret);
-            assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold, 0));
             return ret;
         }
         
@@ -1266,7 +1273,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        CEU_RET ceu_tasks_create (CEU_Dyns* hld, int max, CEU_Value* ret) {
+        void ceu_tasks_create (CEU_Dyns* hld, int max, CEU_Value* ret) {
             CEU_Dyn* tasks = malloc(sizeof(CEU_Dyn));
             assert(tasks != NULL);
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
@@ -1283,8 +1290,6 @@ fun Coder.main (tags: Tags): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             ceu_hold_add(hld, tasks);
-
-            return CEU_RET_RETURN;
         }
         
         CEU_RET ceu_x_create (CEU_Dyns* hld, CEU_Value* X, CEU_Value* ret) {
@@ -1321,7 +1326,6 @@ fun Coder.main (tags: Tags): String {
             // T would be the outermost possible scope, but we use hld b/c
             // we cannot express otherwise
             ceu_hold_add(hld, x);
-            
             return CEU_RET_RETURN;
         }
         
@@ -1633,7 +1637,8 @@ fun Coder.main (tags: Tags): String {
                 }
                 max = xmax->Number;
             }
-            return ceu_tasks_create(&frame->up_block->dn_dyns, max, &ceu_acc);
+            ceu_tasks_create(&frame->up_block->dn_dyns, max, &ceu_acc);
+            return CEU_RET_RETURN;
         }
         
         CEU_RET ceu_detrack_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
@@ -1746,7 +1751,7 @@ fun Coder.main (tags: Tags): String {
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
                         assert(CEU_RET_RETURN == ceu_copy_f(_1, _2, 1, args));
-                        ceu_vector_set(new, i, ceu_acc);
+                        assert(CEU_RET_RETURN == ceu_vector_set(new, i, ceu_acc));
                     }
                     ceu_acc = (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=new} };
                     break;
@@ -1819,7 +1824,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            assert(NULL == ceu_track_create(task->Dyn, &ceu_acc));
+            ceu_track_create(task->Dyn, &ceu_acc);
             return CEU_RET_RETURN;
         }
     """ +

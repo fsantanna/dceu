@@ -173,8 +173,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 tops.third.add(func)
                 """
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
-                    &${ups.first_block(this)!!.toc(true)}->dn_dyns,
-                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"},
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
                         ceu_frame,
@@ -787,7 +785,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc);
+                        assert(CEU_RET_RETURN == ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc));
                         """
                     }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=ceu_mem->vec_$n} }")}
@@ -876,7 +874,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 assert(CEU_RET_RETURN == ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src));
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
+                                assert(CEU_RET_RETURN == ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src));
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_acc;
