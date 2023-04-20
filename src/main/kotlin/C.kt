@@ -749,7 +749,7 @@ fun Coder.main (tags: Tags): String {
         
         int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
-                { 0, 1, 1, 1 },     // src = NON
+                { 1, 1, 1, 1 },     // src = NON
                 { 0, 1, 9, 0 },     // src = VAR
                 { 0, 0, 0, 0 },     // src = FIX
                 { 0, 9, 9, 1 }      // src = EVT
@@ -809,8 +809,9 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, int dst_tphold, int issafe) {
             assert(dst_dyns != NULL);
             // dst might be NULL when assigning to orphan tuple
-            if (issafe || (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold))) {
-                if (!issafe || src->up_dyns.dyns==NULL) {
+            if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
+                if (issafe) {
+                } else if (src->up_dyns.dyns == NULL) {
                     src->tphold = MAX(src->tphold,dst_tphold);
                     if (src->up_dyns.dyns != NULL) {
                         // do not hold

@@ -493,8 +493,9 @@ class TExec {
             val f = func (v) {
                 v
             }
+            f([10])
             val x = f([10])
-            println(x)
+            println(f([10]))
         """)
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
         assert(out == "[10]\n") { out }
@@ -581,13 +582,14 @@ class TExec {
                     val y = copy(x)
                     do {
                         set x = copy(y)
+                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->tphold);`
                         set v = x       ;; err
                     }
                 }
             }
             println(v)
         """, true)
-        assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 

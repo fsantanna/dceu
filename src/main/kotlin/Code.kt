@@ -416,7 +416,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${(this.init && this.src!=null).cond {
                         this.src!!.code() + """
                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_ret = ceu_block_set(ceu_acc.Dyn, &$bupc->dn_dyns, ${if (this.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, ${this.do_issafe()});
+                                ceu_ret = ceu_block_set(ceu_acc.Dyn, &$bupc->dn_dyns, ${if (this.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, 0); //${this.do_issafe()});
                                 CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             }
                         """
@@ -740,7 +740,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             true -> """
                                 { // ACC - SET
                                     if ($src.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_ret = ceu_block_set($src.Dyn, &${_idc_}->dn_dyns, ${if (xvar.dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, ${this.do_issafe()});
+                                        ceu_ret = ceu_block_set($src.Dyn, &${_idc_}->dn_dyns, ${if (xvar.dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, 0); //${this.do_issafe()});
                                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                     }
                                     ceu_gc_inc(&$src);
@@ -862,11 +862,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         val src = this.asdst_src()
                         """
                         if (ceu_mem->idx_$n.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set(ceu_mem->idx_$n.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, ${this.do_issafe()});
+                            ceu_ret = ceu_block_set(ceu_mem->idx_$n.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, 0); //${this.do_issafe()});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set($src.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, ${this.do_issafe()});
+                            ceu_ret = ceu_block_set($src.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, 0); //${this.do_issafe()});
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         }
                         switch (ceu_acc.type) {
