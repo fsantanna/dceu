@@ -1264,13 +1264,39 @@ class TExec {
         val out = all("""
             var x
             do {
-                var a :tmp
-                set a = [1,2,3]
+                val a :tmp = [1,2,3]
                 set x = a
             }
             println(x)
         """)
         assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope8b_underscore() {
+        val out = all("""
+            var x
+            do {
+                var a :tmp = [1,2,3]
+                set x = a
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 4, col 23) : invalid declaration : expected \"val\" for \":tmp\"") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope8c_underscore() {
+        val out = all("""
+            var x
+            do {
+                val a :tmp
+                set a = [1,2,3]
+                set x = a
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1333,7 +1359,8 @@ class TExec {
             }
             println(v)
         """, true)
-        assert(out == "ERROR\n") { out }
+        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // IF
@@ -1710,6 +1737,18 @@ class TExec {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
+    fun loop2a() {
+        val out = all("""
+            val f = func (t) {
+                nil
+            }
+            val v = []
+            f(v)
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun loop3() {
         val out = all("""
             val v = loop until 10 {nil}
@@ -1845,8 +1884,11 @@ class TExec {
             println(x)
         """
         )
-        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "[:x]\n") { out }
+        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 7, col 17) : throw([:x])\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
+        //assert(out == "[:x]\n") { out }
     }
     @Test
     fun catch89_err() {
@@ -1856,16 +1898,21 @@ class TExec {
                 catch do {  ;; err is binded to x and is being moved up
                     var x
                     set x = err
+                    println(err) `/* XXXX */`
                     false
                 } {
                     throw([:x])
                     println(9)
                 }
             }
-        """
+            """
         )
-        assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
-                "anon : (lin 8, col 21) : throw([:x])\n" +
+        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
+        //        "anon : (lin 8, col 21) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+                "anon : (lin 9, col 21) : throw([:x])\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
@@ -1954,8 +2001,11 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw(xxx)\n" +
+        //assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
+        //        "anon : (lin 5, col 17) : throw(xxx)\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "anon : (lin 5, col 17) : throw(xxx) : set error : incompatible scopes\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }

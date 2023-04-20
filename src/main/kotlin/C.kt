@@ -39,7 +39,7 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_NON = 0,   // not assigned, dst assigns
             CEU_HOLD_VAR,       // set and assignable to narrow 
             CEU_HOLD_FIX,       // set but not assignable across unsafe (even if same/narrow)
-            CEU_HOLD_EVT,
+            CEU_HOLD_EVT_ERR,
             CEU_HOLD_MAX
         } CEU_HOLD;
 
@@ -734,7 +734,7 @@ fun Coder.main (tags: Tags): String {
         }
 
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
-            if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
+            if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT_ERR) {
                 return 1;
             } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                 return 1;
@@ -750,9 +750,9 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1 },     // src = NON
-                { 0, 1, 9, 0 },     // src = VAR
-                { 0, 0, 0, 0 },     // src = FIX
-                { 0, 9, 9, 1 }      // src = EVT
+                { 1, 1, 9, 0 },     // src = VAR
+                { 1, 0, 0, 0 },     // src = FIX
+                { 1, 0, 9, 1 }      // src = EVT
             };
             //printf(">>> %d %d = %d\n", src, dst, x[src][dst]);
             assert(x[src][dst] != 9);
@@ -811,6 +811,9 @@ fun Coder.main (tags: Tags): String {
             // dst might be NULL when assigning to orphan tuple
             if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
+                    // no hold
+                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+                    // no hold
                 } else if (src->up_dyns.dyns == NULL) {
                     src->tphold = MAX(src->tphold,dst_tphold);
                     if (src->up_dyns.dyns != NULL) {
@@ -829,9 +832,9 @@ fun Coder.main (tags: Tags): String {
 #if 0
             //int one = (src->tphold == CEU_HOLD_FIX) ? 1 : 0;
             int tohold = 0;
-            if (dst_tphold == CEU_HOLD_EVT) {            // event, ensure not held, adjust tphold
-                if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
-                    src->tphold = CEU_HOLD_EVT;
+            if (dst_tphold == CEU_HOLD_EVT_ERR) {            // event, ensure not held, adjust tphold
+                if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT_ERR) {
+                    src->tphold = CEU_HOLD_EVT_ERR;
                 } else {
                     CEU_THROW_MSG("\0 : set error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
@@ -1812,6 +1815,13 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_THROW_MSG("throw error : uncaught exception");
             ceu_acc = *args[0];
+            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                if (!ceu_block_hld(ceu_acc.Dyn->tphold,CEU_HOLD_EVT_ERR)) {
+                    CEU_THROW_MSG("\0 : set error : incompatible scopes");
+                    CEU_THROW_RET(CEU_ERR_ERROR);
+                }
+                ceu_acc.Dyn->tphold = CEU_HOLD_EVT_ERR;
+            }
             ceu_gc_inc(&ceu_acc);
             return CEU_RET_THROW;
         }
