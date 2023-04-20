@@ -1081,6 +1081,7 @@ fun Coder.main (tags: Tags): String {
                 assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
                 ceu_gc_dec(&ceu_acc, 1);
                 vec->Ncast.Vector.its--;
+                return CEU_RET_RETURN;
             } else {
                 if (vec->Ncast.Vector.its == 0) {
                     vec->Ncast.Vector.type = v.type;
@@ -1175,7 +1176,7 @@ fun Coder.main (tags: Tags): String {
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
                 int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, key->Dyn);
                 int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, val->Dyn);
-                return MIN(ret1,ret2);
+                assert(MIN(ret1,ret2) != CEU_RET_THROW);
             }
             assert(old != -1);
             
@@ -1661,16 +1662,19 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
-            if (src->type>CEU_VALUE_DYNAMIC && dyn->tphold==CEU_HOLD_FIX) {
-                CEU_THROW_MSG("move error : value is not movable");
-                CEU_THROW_RET(CEU_ERR_ERROR);
+            if (src->type > CEU_VALUE_DYNAMIC) {
+                if (dyn->tphold == CEU_HOLD_FIX) {
+                    CEU_THROW_MSG("move error : value is not movable");
+                    CEU_THROW_RET(CEU_ERR_ERROR);
+                }
+                dyn->tphold = CEU_HOLD_NON;
+                ceu_hold_rem(dyn);
             }
             switch (src->type) {
 #if 1
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
-                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
@@ -1679,7 +1683,6 @@ fun Coder.main (tags: Tags): String {
                     break;
 #endif
                 case CEU_VALUE_TUPLE: {
-                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args));
@@ -1688,7 +1691,6 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Vector.its; i++) {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
@@ -1699,7 +1701,6 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    dyn->tphold = CEU_HOLD_NON;
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
                         assert(CEU_RET_RETURN == ceu_move_f(_1, _2, 1, args0));
