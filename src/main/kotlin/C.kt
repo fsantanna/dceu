@@ -751,10 +751,10 @@ fun Coder.main (tags: Tags): String {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1 },     // src = NON
                 { 1, 1, 9, 0 },     // src = VAR
-                { 1, 0, 0, 0 },     // src = FIX
+                { 1, 1, 0, 0 },     // src = FIX
                 { 1, 0, 9, 1 }      // src = EVT
             };
-            //printf(">>> %d %d = %d\n", src, dst, x[src][dst]);
+            //printf(">>> src=%d dst=%d = %d\n", src, dst, x[src][dst]);
             assert(x[src][dst] != 9);
             return x[src][dst] == 1;
         }
@@ -809,6 +809,7 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, int dst_tphold, int issafe) {
             assert(dst_dyns != NULL);
             // dst might be NULL when assigning to orphan tuple
+            //printf("> %d %d\n", ceu_block_chk(dst_dyns,src), ceu_block_hld(dst_tphold,src->tphold));
             if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold

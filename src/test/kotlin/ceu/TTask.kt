@@ -19,6 +19,18 @@ class TTask {
     // TASK / COROUTINE / RESUME / YIELD
 
     @Test
+    fun aa_coro0() {
+        val out = all("""
+            val t = coro (v) {
+                v
+            }
+            val a = coroutine(t)
+            var v = resume a(1)
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun aa_coro1() {
         val out = all("""
             var t
