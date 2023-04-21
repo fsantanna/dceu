@@ -388,7 +388,7 @@ class TExec {
         """, true)
         assert(out == "anon : (lin 12, col 21) : f(3)\n" +
                 "anon : (lin 6, col 29) : f({-}(v,1))\n" +
-                "anon : (lin 3, col 30) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 3, col 30) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -406,7 +406,7 @@ class TExec {
         """, true)
         assert(out == "anon : (lin 11, col 21) : f(3)\n" +
                 "anon : (lin 5, col 29) : f({-}(v,1))\n" +
-                "anon : (lin 4, col 26) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 4, col 26) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -419,7 +419,7 @@ class TExec {
             println(1)
         """)
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple10_hold_err() {
@@ -433,7 +433,7 @@ class TExec {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun cc_tuple11_copy() {
@@ -1359,7 +1359,7 @@ class TExec {
             }
             println(v)
         """, true)
-        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 
@@ -2005,7 +2005,7 @@ class TExec {
         //        "anon : (lin 5, col 17) : throw(xxx)\n" +
         //        "throw error : uncaught exception\n" +
         //        ":error\n") { out }
-        assert(out == "anon : (lin 5, col 17) : throw(xxx) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 5, col 17) : throw(xxx) : throw error : incompatible scopes\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
@@ -2813,7 +2813,7 @@ class TExec {
             }
             println(f(10))
         """)
-        assert(out == "anon : (lin 3, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2980,7 +2980,7 @@ class TExec {
             }
             println(g)
         """)
-        assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test

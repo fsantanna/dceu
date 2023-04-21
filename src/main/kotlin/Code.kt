@@ -181,7 +181,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
-                    }
+                    },
+                    ${if (clos.protos_noclos.contains(this)) "&${ups.first_block(this)!!.toc(true)}->dn_dyns" else "NULL"},
+                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
                     val dcl = vars.assertIsDeclared(this, Pair(it,1), this.tk)
@@ -342,7 +344,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                                 ceu_acc = CEU_ERR_ERROR;
                                                 ceu_acc_$n = ceu_acc;
                                                 ceu_ret = CEU_RET_THROW;
-                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
+                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                                             }
                                             ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                         }
@@ -539,8 +541,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
                     if (ceu_mem->evt_$n.type>CEU_VALUE_DYNAMIC) {
-                        ceu_ret = ceu_block_set(ceu_mem->evt_$n.Dyn, NULL, CEU_HOLD_EVT_ERR, 0);
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        if (!ceu_block_hld(ceu_mem->evt_$n.Dyn->tphold,CEU_HOLD_EVT_ERR)) {
+                            CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.evt.tk.pos.file} : (lin ${this.evt.tk.pos.lin}, col ${this.evt.tk.pos.col}) : broadcast error : incompatible scopes");
+                        }
                     }
                     
                     ${this.xin.code()}
