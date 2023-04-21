@@ -1049,15 +1049,15 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_col_chk (CEU_Dyn* col, CEU_Dyn* v) {
-            if (col->tphold == CEU_HOLD_NON) {
-                if (v->tphold == CEU_HOLD_NON) {
+        CEU_RET ceu_block_set_mutual (CEU_Dyn* v1, CEU_Dyn* v2) {
+            if (v1->tphold == CEU_HOLD_NON) {
+                if (v2->tphold == CEU_HOLD_NON) {
                     return CEU_RET_RETURN;
                 } else {
-                    return ceu_block_set(col, v->up_dyns.dyns, v->tphold, 0);
+                    return ceu_block_set(v1, v2->up_dyns.dyns, v2->tphold, 0);
                 }
             } else {
-                return ceu_block_set(v, col->up_dyns.dyns, col->tphold, 0);
+                return ceu_block_set(v2, v1->up_dyns.dyns, v1->tphold, 0);
             }
         }
 
@@ -1065,7 +1065,7 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(tup, v.Dyn);
+            return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(tup, v.Dyn);
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1109,7 +1109,7 @@ fun Coder.main (tags: Tags): String {
                     assert(i < vec->Ncast.Vector.its);
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
-                return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(vec, v.Dyn);
+                return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(vec, v.Dyn);
             }
         }
         
@@ -1178,8 +1178,8 @@ fun Coder.main (tags: Tags): String {
                 col->Ncast.Dict.buf = realloc(col->Ncast.Dict.buf, new*2*sizeof(CEU_Value));
                 assert(col->Ncast.Dict.buf != NULL);
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
-                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, key->Dyn);
-                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_col_chk(col, val->Dyn);
+                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
+                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
                 assert(MIN(ret1,ret2) != CEU_RET_THROW);
             }
             assert(old != -1);

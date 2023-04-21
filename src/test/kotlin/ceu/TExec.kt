@@ -2828,7 +2828,7 @@ class TExec {
             println(f(10)())
         """)
         assert(out == "anon : (lin 8, col 21) : f(10)\n" +
-                "anon : (lin 3, col 30) : set error : incompatible scopes\n" +
+                "anon : (lin 3, col 30) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2963,12 +2963,12 @@ class TExec {
                 }
             }
             var g = do {
-                var t = [1]
+                val t = [1]
                 f(t)
             }
             println(g())
         """)
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3164,7 +3164,7 @@ class TExec {
                 println(`:number ceu_gc_count`)
             }
             println(`:number ceu_gc_count`)
-        """, true)
+        """)
         assert(out == "0\n1\n") { out }
     }
     @Test
@@ -3178,7 +3178,7 @@ class TExec {
             }
             println(out)
         """, true)
-        assert(out == "anon : (lin 3, col 23) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 3, col 23) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test

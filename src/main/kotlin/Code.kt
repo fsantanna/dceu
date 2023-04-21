@@ -194,8 +194,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
                     """
-                    ceu_gc_inc(&${ups.pub[this]!!.id2c(dcl,upv).first});
-                    ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = ${ups.pub[this]!!.id2c(dcl,upv).first};
+                    {
+                        CEU_Value* ceu_up = &${ups.pub[this]!!.id2c(dcl,upv).first};
+                        if (ceu_up->type > CEU_VALUE_DYNAMIC) {
+                            assert(CEU_RET_RETURN == ceu_block_set_mutual(ceu_proto_$n,ceu_up->Dyn));
+                        }
+                        ceu_gc_inc(ceu_up);
+                        ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
+                    }
                     """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                 }.joinToString("\n")}
                 assert(ceu_proto_$n != NULL);
@@ -369,9 +375,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             { // decrement refs
                                 ${xvars.map { if (it in listOf("evt","_")) "" else
                                     """
-                                    if (ceu_mem->$it.type>CEU_VALUE_DYNAMIC && ceu_mem->$it.Dyn->up_dyns.dyns!=NULL) {
-                                        // skip globals
-                                        ceu_gc_dec(&ceu_mem->$it, (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n));
+                                    if (ceu_mem->$it.type > CEU_VALUE_DYNAMIC) {
+                                        ceu_gc_dec(&ceu_mem->$it,
+                                                   (ceu_mem->$it.Dyn->up_dyns.dyns != NULL) &&
+                                                   (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n)
+                                        );
                                     }
                                     """
                                 }.joinToString("")}
