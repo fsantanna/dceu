@@ -511,9 +511,9 @@ class TTask {
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
         //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
         assert(out == "anon : (lin 9, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : set error : incompatible scopes\n" +
+                "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
                 "1\n" +
-                ":error\n")
+                ":error\n") { out }
     }
     @Test
     fun bb_spawn9() {

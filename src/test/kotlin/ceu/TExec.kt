@@ -3234,7 +3234,7 @@ class TExec {
             var tk = task () {
                 yield(nil)
                 do {
-                    var v = evt
+                    val xxx = evt
                 }
                 nil
                 ;;println(:out)
@@ -3244,7 +3244,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun gc14_bcast_err() {

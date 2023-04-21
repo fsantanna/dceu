@@ -1822,7 +1822,7 @@ fun Coder.main (tags: Tags): String {
             CEU_THROW_MSG("throw error : uncaught exception");
             ceu_acc = *args[0];
             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                if (!ceu_block_hld(ceu_acc.Dyn->tphold,CEU_HOLD_EVT_ERR)) {
+                if (!ceu_block_hld(CEU_HOLD_EVT_ERR,ceu_acc.Dyn->tphold)) {
                     CEU_THROW_MSG("\0 : throw error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
