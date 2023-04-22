@@ -113,7 +113,7 @@ fun Coder.main (tags: Tags): String {
         
         CEU_RET ceu_tuple_set (struct CEU_Dyn* tup, int i, struct CEU_Value v);
 
-        struct CEU_Dyn* ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
+        void ceu_track_create (struct CEU_Dyn* x, struct CEU_Value* ret);
         
         void ceu_print1 (struct CEU_Frame* _1, struct CEU_Value* v);
         CEU_RET ceu_op_equals_equals_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
@@ -1382,7 +1382,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_Dyn* ceu_track_create (CEU_Dyn* x, CEU_Value* ret) {
+        void ceu_track_create (CEU_Dyn* x, CEU_Value* ret) {
             CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
@@ -1393,7 +1393,6 @@ fun Coder.main (tags: Tags): String {
                 }
             };
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
-            return NULL;
         }
     """ +
     """ // PRINT
@@ -1680,7 +1679,6 @@ fun Coder.main (tags: Tags): String {
                 ceu_hold_rem(dyn);
             }
             switch (src->type) {
-#if 1
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
@@ -1690,7 +1688,6 @@ fun Coder.main (tags: Tags): String {
                     }
                     ceu_acc = *src;
                     break;
-#endif
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
@@ -1719,16 +1716,6 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = *src;
                     break;
                 }
-#if 0
-                case CEU_VALUE_P_FUNC:
-                case CEU_VALUE_P_CORO:
-                case CEU_VALUE_P_TASK:
-                case CEU_VALUE_X_CORO:
-                case CEU_VALUE_X_TASK:
-                case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_X_TRACK:
-                    assert(0 && "TODO: not supported");
-#endif
                 default:
                     ceu_acc = *src;
                     break;
@@ -1790,13 +1777,15 @@ fun Coder.main (tags: Tags): String {
                     ceu_acc = (CEU_Value) { CEU_VALUE_DICT, {.Dyn=new} };
                     break;
                 }
+                case CEU_VALUE_X_TRACK:
+                    ceu_track_create(old->Bcast.Track, &ceu_acc);
+                    break;
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
                 case CEU_VALUE_X_CORO:
                 case CEU_VALUE_X_TASK:
                 case CEU_VALUE_X_TASKS:
-                case CEU_VALUE_X_TRACK:
                     assert(0 && "TODO: not supported");
                 default:
                     ceu_acc = *src;

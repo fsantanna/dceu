@@ -1746,7 +1746,7 @@ class TTask {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun ff_pool11_err_scope() {
+    fun ff_pool11_plain() {
         val out = all("""
             var T = task () { yield(nil) }
             var ts = tasks()
@@ -1754,6 +1754,38 @@ class TTask {
             var yyy
             loop in :tasks ts, xxx {
                 set yyy = xxx
+            }
+            println(status(detrack(yyy)))
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun ff_pool11_move() {
+        val out = all("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn in ts, T()
+            var yyy
+            loop in :tasks ts, xxx {
+                set yyy = move(xxx)
+            }
+            println(status(detrack(yyy)))
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun ff_pool11_copy() {
+        val out = all("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn in ts, T()
+            var yyy
+            loop in :tasks ts, xxx {
+                set yyy = copy(xxx)
             }
             println(status(detrack(yyy)))
         """)
@@ -1771,7 +1803,7 @@ class TTask {
             spawn in ts, T()
             var yyy
             loop in :tasks ts, xxx {
-                set yyy = xxx
+                set yyy = copy(xxx)
             }
             broadcast in :global, nil
             println(detrack(yyy))
