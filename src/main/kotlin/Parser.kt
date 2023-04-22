@@ -425,7 +425,7 @@ class Parser (lexer_: Lexer)
                                         ;;;
 
                                         ```
-                                            CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
+                                        CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
                                         val $i = track(`:ceu ceu_x_$N`)
                                         $body

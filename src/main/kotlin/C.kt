@@ -808,10 +808,10 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold, int issafe) {
-            assert(dst_dyns != NULL);
+            //assert(dst_dyns != NULL);     // x :tmp [0] = []
             // dst might be NULL when assigning to orphan tuple
             //printf("> %d %d\n", ceu_block_chk(dst_dyns,src), ceu_block_hld(dst_tphold,src->tphold));
-            if (ceu_block_chk(dst_dyns,src) && ceu_block_hld(dst_tphold,src->tphold)) {
+            if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold
                 } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {

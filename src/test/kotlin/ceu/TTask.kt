@@ -1469,10 +1469,29 @@ class TTask {
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun ee_15_bcast_tuple_func_ok() {
+    fun ee_15_bcast_tuple_func_no() {
         val out = all("""
             var f = func (v) {
                 var x = v[0]
+                println(x)
+            }
+            var T = task () {
+                yield(nil)
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
+                "anon : (lin 8, col 17) : f(evt)\n" +
+                "anon : (lin 3, col 17) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun ee_15_bcast_tuple_func_ok() {
+        val out = all("""
+            var f = func (v) {
+                val x :tmp = v[0]
                 println(x)
             }
             var T = task () {
@@ -1488,7 +1507,7 @@ class TTask {
     fun ee_16_bcast_tuple_func_ok() {
         val out = all("""
             var f = func (v) {
-                var x = [0]
+                val x :tmp = [0]
                 set x[0] = v[0]
                 println(x[0])
             }

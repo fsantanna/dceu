@@ -1362,6 +1362,15 @@ class TExec {
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun scope14_tmp_tuple() {
+        val out = all("""
+            val x :tmp = [0]
+            set x[0] = []
+            println(x)
+        """)
+        assert(out == "[[]]\n") { out }
+    }
 
     // IF
 
