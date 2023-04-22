@@ -759,29 +759,30 @@ fun Coder.main (tags: Tags): String {
             return x[src][dst] == 1;
         }
 
-        void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src) {
-            assert(src->up_dyns.dyns != NULL);
-            if (dst->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
-                return;
+        void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src, CEU_HOLD tphold) {
+            src->tphold = MAX(src->tphold,tphold);
+            if (dst != NULL) {  // caller: do not set block
+                if (src->up_dyns.dyns==NULL || dst->up_block->depth < src->up_dyns.dyns->up_block->depth) {
+                    if (src->up_dyns.dyns != NULL) {
+                        ceu_hold_rem(src);
+                    }
+                    ceu_hold_add(dst, src);
+                }
             }
-            if (src->up_dyns.dyns != NULL) {
-                ceu_hold_rem(src);
-            }
-            ceu_hold_add(dst, src);
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, src->Ncast.Proto.upvs.buf[i].Dyn);
+                            ceu_block_rec(dst, src->Ncast.Proto.upvs.buf[i].Dyn, tphold);
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Ncast.Tuple.its; i++) {
                         if (src->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, src->Ncast.Tuple.buf[i].Dyn);
+                            ceu_block_rec(dst, src->Ncast.Tuple.buf[i].Dyn, tphold);
                         }
                     }
                     break;
@@ -789,17 +790,17 @@ fun Coder.main (tags: Tags): String {
                     if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Ncast.Vector.type);
                         for (int i=0; i<src->Ncast.Vector.its; i++) {
-                            ceu_block_rec(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz));
+                            ceu_block_rec(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), tphold);
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Ncast.Dict.max; i++) {
                         if ((*src->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][0].Dyn);
+                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, tphold);
                         }
                         if ((*src->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][1].Dyn);
+                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, tphold);
                         }
                     }
                     break;
@@ -816,12 +817,11 @@ fun Coder.main (tags: Tags): String {
                 } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                     // no hold
                 } else if (src->up_dyns.dyns == NULL) {
-                    src->tphold = MAX(src->tphold,dst_tphold);
                     if (src->up_dyns.dyns != NULL) {
                         // do not hold
+                        ceu_block_rec(NULL, src, dst_tphold);
                     } else {
-                        ceu_hold_add(dst_dyns, src);
-                        ceu_block_rec(dst_dyns, src);
+                        ceu_block_rec(dst_dyns, src, dst_tphold);
                     }
                 }
             } else {
@@ -1826,7 +1826,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_THROW_MSG("\0 : throw error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                ceu_acc.Dyn->tphold = CEU_HOLD_EVT_ERR;
+                ceu_block_rec(NULL, ceu_acc.Dyn, CEU_HOLD_EVT_ERR);
             }
             ceu_gc_inc(&ceu_acc);
             return CEU_RET_THROW;
