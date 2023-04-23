@@ -436,7 +436,7 @@ class TXExec {
             broadcast tags([],:x,true)
             println(2)
         """, true)
-        assert(out == "1\n1\n2\n2\n") { out }
+        assert(out == "1\n2\n") { out }
     }
 
     // YIELD ALL
@@ -1577,7 +1577,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out.contains("anon : (lin 3, col 52) : set error : incompatible scopes")) { out }
+        assert(out.contains("anon : (lin 3, col 52) : block escape error : incompatible scopes")) { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
@@ -2263,7 +2263,7 @@ class TXExec {
                 println(v)
             }
         """, true)
-        assert(out.contains("assertion error : expecter :Iterator")) { out }
+        assert(out.contains("assertion error : expected :Iterator")) { out }
     }
 
     // LOOP / TASK ITERATOR
@@ -2482,7 +2482,7 @@ class TXExec {
             println(1)
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
                 "anon : (lin 5, col 17) : throw(x)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2527,7 +2527,7 @@ class TXExec {
             println(x)
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 18) : block escape error : incompatible scopes\n" +
                 "anon : (lin 5, col 9) : throw([10])\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2574,7 +2574,7 @@ class TXExec {
             }})
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 1, col 33) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2783,7 +2783,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[43,1000,1001,1002,10,11,12,44,36,101,45]\n") { out }
+        assert(out == "[44,1000,1001,1002,10,11,12,45,37,101,46]\n") { out }
     }
 
     // TAGS / PRE
@@ -3033,7 +3033,7 @@ class TXExec {
             spawn T (spawn U())
         """, true)
         assert(out == "anon : (lin 10, col 28) : U()\n" +
-                "anon : (lin 2, col 23) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun all5() {
