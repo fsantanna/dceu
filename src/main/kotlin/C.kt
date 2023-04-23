@@ -39,6 +39,7 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_NON = 0,   // not assigned, dst assigns
             CEU_HOLD_VAR,       // set and assignable to narrow 
             CEU_HOLD_FIX,       // set but not assignable across unsafe (even if same/narrow)
+            CEU_HOLD_PUB,
             CEU_HOLD_EVT,
             CEU_HOLD_MAX
         } CEU_HOLD;
@@ -750,10 +751,11 @@ fun Coder.main (tags: Tags): String {
         
         int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
-                { 1, 1, 1, 1 },     // src = NON
-                { 1, 1, 1, 0 },     // src = VAR
-                { 1, 1, 0, 0 },     // src = FIX
-                { 1, 0, 9, 1 }      // src = EVT
+                { 1, 1, 1, 1, 1 },     // src = NON
+                { 1, 1, 1, 1, 0 },     // src = VAR
+                { 1, 1, 0, 9, 0 },     // src = FIX
+                { 1, 0, 9, 1, 9 },     // src = PUB
+                { 1, 0, 9, 9, 1 }      // src = EVT
             };
             //printf(">>> src=%d dst=%d = %d\n", src, dst, x[src][dst]);
             assert(x[src][dst] != 9);
@@ -1672,7 +1674,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             if (src->type > CEU_VALUE_DYNAMIC) {
-                if (dyn->tphold == CEU_HOLD_FIX) {
+                if (dyn->tphold >= CEU_HOLD_FIX) {
                     CEU_THROW_MSG("move error : value is not movable");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }

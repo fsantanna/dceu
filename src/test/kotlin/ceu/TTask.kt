@@ -2611,10 +2611,14 @@ class TTask {
                 println(x)
             }) ()
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
         //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
         //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
+                "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+                "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun hh_pub9_10_fake_task() {
@@ -3540,9 +3544,12 @@ class TTask {
             nil
         """)
         //assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
+        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+        //        "[]\n" +
+        //        ":error\n") { out }
         assert(out == "anon : (lin 15, col 13) : f(a)\n" +
-                "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
-                "[]\n" +
+                "anon : (lin 3, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3561,8 +3568,11 @@ class TTask {
             var x = f(a)        ;; no
             println(x)
         """)
+        //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
+        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
         assert(out == "anon : (lin 12, col 21) : f(a)\n" +
-                "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+                "anon : (lin 3, col 17) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3602,7 +3612,10 @@ class TTask {
             spawn T (track(t))
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
+                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun nn_06_expose() {
