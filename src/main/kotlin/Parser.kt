@@ -292,12 +292,12 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val tmp = this.acceptTag(":tmp")
                 this.acceptFix("evt") || this.acceptEnu_err("Id")
                 val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
                 if (id.str == "...") {
                     err(this.tk0, "invalid declaration : unexpected ...")
                 }
-                val tmp = this.acceptTag(":tmp")
                 if (tmp && tk0.str!="val") {
                     err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
                 }
@@ -362,9 +362,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val ceu_$N :tmp ${tag ?: ""} = ${cnd.tostr(true)}
+                            val :tmp ceu_$N ${tag ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val $id :tmp ${tag ?: ""} = ceu_$N
+                                val :tmp $id ${tag ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -526,7 +526,7 @@ class Parser (lexer_: Lexer)
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
                     """
-                    val ${id ?: "ceu_$N"} :tmp ${tag ?: ""} = ${cnd.tostr(true)}
+                    val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                     if $not ${id ?: "ceu_$N"} {
                         `goto CEU_LOOP_DONE_$nn;`
                     } else { nil }
@@ -544,7 +544,7 @@ class Parser (lexer_: Lexer)
                         }
                         N++
                         """
-                        val ${id ?: "ceu_$N"} :tmp ${tag ?: ""} = ${cnd.tostr(true)}
+                        val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                         if $not ${id ?: "ceu_$N"} {
                             `goto CEU_LOOP_DONE_$nn;`
                         } else { nil }
@@ -918,7 +918,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { "val $x :tmp = ${v!!.tostr(true)}" }}
+                        ${v.cond { "val :tmp $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
@@ -1206,19 +1206,19 @@ class Parser (lexer_: Lexer)
                             when (op.str) {
                                 "=" -> this.nest("""
                                     export [] { 
-                                        val ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val :tmp ceu_col_$N = ${e.tostr(true)}
                                         ceu_col_$N[(#ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
                                     export [] { 
-                                        val ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val :tmp ceu_col_$N = ${e.tostr(true)}
                                         ceu_col_$N[#ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
                                     export [] { 
-                                        val ceu_col_$N :tmp = ${e.tostr(true)}
+                                        val :tmp ceu_col_$N = ${e.tostr(true)}
                                         val ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
                                         set ceu_col_$N[(#ceu_col_$N)-1] = nil
                                         ceu_i_$N
@@ -1296,7 +1296,7 @@ class Parser (lexer_: Lexer)
                     val body = this.block()
                     e = this.nest("""
                         ${tk0.pos.pre()}do {
-                            val ${x?.str ?: "it"} :tmp = ${e.tostr(true)}
+                            val :tmp ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
                     """)
@@ -1321,13 +1321,13 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val ceu_${e.n} :tmp = ${e.tostr(true)} 
+                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val ceu_${e.n} :tmp = ${e.tostr(true)} 
+                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)

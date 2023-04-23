@@ -203,7 +203,7 @@ class TXBook {
     @Test
     fun pg_19_fact() {
         val out = ceu.all("""
-            func fact (x) {
+            func :rec fact (x) {
                 if x == 0 {
                     1
                 } else {

@@ -1491,7 +1491,7 @@ class TTask {
     fun ee_15_bcast_tuple_func_ok() {
         val out = all("""
             var f = func (v) {
-                val x :tmp = v[0]
+                val :tmp x = v[0]
                 println(x)
             }
             var T = task () {
@@ -1507,7 +1507,7 @@ class TTask {
     fun ee_16_bcast_tuple_func_ok() {
         val out = all("""
             var f = func (v) {
-                val x :tmp = [0]
+                val :tmp x = [0]
                 set x[0] = v[0]
                 println(x[0])
             }

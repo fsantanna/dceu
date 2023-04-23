@@ -1264,7 +1264,7 @@ class TExec {
         val out = all("""
             var x
             do {
-                val a :tmp = [1,2,3]
+                val :tmp a = [1,2,3]
                 set x = a
             }
             println(x)
@@ -1277,12 +1277,12 @@ class TExec {
         val out = all("""
             var x
             do {
-                var a :tmp = [1,2,3]
+                var :tmp a = [1,2,3]
                 set x = a
             }
             println(x)
         """)
-        assert(out == "anon : (lin 4, col 23) : invalid declaration : expected \"val\" for \":tmp\"") { out }
+        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -1290,7 +1290,7 @@ class TExec {
         val out = all("""
             var x
             do {
-                val a :tmp
+                val :tmp a
                 set a = [1,2,3]
                 set x = a
             }
@@ -1365,7 +1365,7 @@ class TExec {
     @Test
     fun scope14_tmp_tuple() {
         val out = all("""
-            val x :tmp = [0]
+            val :tmp x = [0]
             set x[0] = []
             println(x)
         """)
