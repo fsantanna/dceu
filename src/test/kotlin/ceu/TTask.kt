@@ -1824,7 +1824,7 @@ class TTask {
             loop in :tasks ts, xxx {
                 var yyy
                 loop in :tasks ts, zzz {
-                    set yyy = zzz
+                    set yyy = copy(zzz)
                     println(status(detrack(yyy)))
                 }
                 println(status(detrack(yyy)))
@@ -3209,7 +3209,7 @@ class TTask {
             spawn in ts, T(1)
             spawn in ts, T(2)
             loop in :tasks ts, t {
-                set x = t
+                set x = copy(t)
             }
             println(detrack(x).pub[0])   ;; 2
             broadcast in :global, nil
@@ -3232,7 +3232,7 @@ class TTask {
                 spawn in ts, T(1)
                 spawn in ts, T(2)
                 loop in :tasks ts, t {
-                    set x = t    ;; track(t) up_hold in
+                    set x = copy(t)    ;; track(t) up_hold in
                 }
                 println(detrack(x).pub[0])   ;; 2
                 broadcast in :global, nil
@@ -3276,7 +3276,7 @@ class TTask {
             var x
             set x = catch true {
                 loop in :tasks ts, t {
-                    throw(t)
+                    throw(copy(t))
                 }
             }
             broadcast in :global, nil
@@ -3299,7 +3299,7 @@ class TTask {
             var x
             set x = catch true {
                 loop in :tasks ts, t {
-                    throw(t)
+                    throw(copy(t))
                 }
             }
             println(detrack(x).pub[0])   ;; 1
@@ -3348,7 +3348,7 @@ class TTask {
             spawn in ts, T(2)
             var x
             loop in :tasks ts, t {
-                set x = (t)
+                set x = copy(t)
             }
             broadcast in :global, nil
             println(detrack(x))   ;; nil

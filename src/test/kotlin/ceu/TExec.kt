@@ -1893,11 +1893,11 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
-                "anon : (lin 7, col 17) : throw([:x])\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
-        //assert(out == "[:x]\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+        //        "anon : (lin 7, col 17) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "[:x]\n") { out }
     }
     @Test
     fun catch89_err() {
@@ -1914,15 +1914,21 @@ class TExec {
                     println(9)
                 }
             }
+            println(:ok)
             """
         )
         //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
         //        "anon : (lin 8, col 21) : throw([:x])\n" +
         //        "throw error : uncaught exception\n" +
         //        ":error\n") { out }
-        assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+        //assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+        //        "anon : (lin 9, col 21) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
                 "anon : (lin 9, col 21) : throw([:x])\n" +
                 "throw error : uncaught exception\n" +
+                "[:x]\n" +
                 ":error\n") { out }
     }
     @Test
@@ -2010,13 +2016,13 @@ class TExec {
             }
             println(1)
         """)
-        //assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
-        //        "anon : (lin 5, col 17) : throw(xxx)\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "anon : (lin 5, col 17) : throw(xxx) : throw error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : throw(xxx)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
+        //assert(out == "anon : (lin 5, col 17) : throw(xxx) : throw error : incompatible scopes\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
     }
 
     // NATIVE
