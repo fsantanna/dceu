@@ -504,7 +504,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val $i = ceu_it_$N.f(ceu_it_$N)
+                                    val :tmp $i = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`

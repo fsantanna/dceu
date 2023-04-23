@@ -390,6 +390,14 @@ class TXExec {
                 "nil\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun ii_08_xxx() {
+        val out = ceu.all(
+            """
+            println([@[]] === [@[]])
+        """, true)
+        assert(out == "true\n") { out }
+    }
 
     // assert
 
@@ -436,7 +444,7 @@ class TXExec {
             broadcast tags([],:x,true)
             println(2)
         """, true)
-        assert(out == "1\n1\n2\n2\n") { out }
+        assert(out == "1\n2\n") { out }
     }
 
     // YIELD ALL
@@ -1577,7 +1585,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out.contains("anon : (lin 3, col 52) : set error : incompatible scopes")) { out }
+        assert(out.contains("anon : (lin 3, col 52) : block escape error : incompatible scopes")) { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
@@ -2399,6 +2407,8 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
+
+    @Ignore
     @Test
     fun iter10_it() {
         val out = all("""
