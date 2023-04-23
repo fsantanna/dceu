@@ -198,6 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_Value* ceu_up = &${ups.pub[this]!!.id2c(dcl,upv).first};
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                             assert(CEU_RET_RETURN == ceu_block_set_mutual(ceu_proto_$n,ceu_up->Dyn));
+                            //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold, 0));
                         }
                         ceu_gc_inc(ceu_up);
                         ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
@@ -656,7 +657,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_dyn_$n->Bcast.X.frame->X.pub = $src;
                         """
                     }}
-                    CEU_PUB_$n:;
                 }
                 """
             is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->X.x} }")
@@ -788,7 +788,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        assert(CEU_RET_RETURN == ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc));
+                        ceu_ret = ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc);
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_mem->tup_$n} }")}
@@ -885,19 +886,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
-                                assert(CEU_RET_RETURN == ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src));
+                                ceu_ret = ceu_tuple_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
                                 break;
                             case CEU_VALUE_VECTOR:
-                                assert(CEU_RET_RETURN == ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src));
+                                ceu_ret = ceu_vector_set(ceu_acc.Dyn, ceu_mem->idx_$n.Number, $src);
                                 break;
                             case CEU_VALUE_DICT: {
                                 CEU_Value ceu_dict = ceu_acc;
-                                assert(CEU_RET_RETURN == ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$src));
+                                ceu_ret = ceu_dict_set(ceu_dict.Dyn, &ceu_mem->idx_$n, &$src);
                                 break;
                             }
                             default:
                                 assert(0 && "bug found");
                         }
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }}
                 }

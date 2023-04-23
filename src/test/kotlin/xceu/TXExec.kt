@@ -390,6 +390,55 @@ class TXExec {
                 "nil\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun ii_08_scope() {
+        val out = ceu.all(
+            """
+            data :Iterator = [f,s,tp,i]
+
+            func iter-tuple (itr :Iterator) {
+                val i = itr.i
+                if i == #itr.s {
+                    nil
+                } else {
+                    set itr.i = `:number ${D}i.Number + 1`
+                    move([i, itr.s[i]])
+                }
+            }
+        
+            func iter-dict (itr :Iterator) {
+                val k = next(itr.s,itr.i)
+                if k == nil {
+                    nil
+                } else {
+                    set itr.i = k
+                    move([k, itr.s[k]])
+                }
+            }
+
+            func fff (v, tp) {
+                ifs {
+                    type(v) == :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+                    type(v) == :dict   -> :Iterator [iter-dict,  v, tp, nil]
+                }
+            }
+            func :rec {===} (v1,v2) {
+                val t1 = type(v1)
+                val t2 = type(v2)
+                ifs {
+                    v1 == v2 -> true
+                    t1 /= t2 -> false
+                    (t1 == :tuple) -> 
+                            loop in :Iterator [iter-tuple,v1,:all,0], x {
+                            } while (v2[x.0] === x.1)
+                    t1 == :dict -> [iter-dict,v2,:all]
+                    else -> false
+                 }
+            }
+            println([@[]] === [@[]])
+        """)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
 
     // assert
 
