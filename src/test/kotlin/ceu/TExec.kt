@@ -1371,6 +1371,21 @@ class TExec {
         """)
         assert(out == "[[]]\n") { out }
     }
+    @Test
+    fun scope15_global_func() {
+        val out = all("""
+            func f () {}
+            func g (v) {
+                [f, v]
+            }
+            val tup = do {
+                val v = []
+                val x = g(v)
+                println(x)
+            }
+        """)
+        assert(out.contains("[func: 0x")) { out }
+    }
 
     // IF
 

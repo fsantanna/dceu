@@ -737,7 +737,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
             if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                 return 1;
-            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame->proto==NULL) {
                 return 1;
             } else if (dst == src->up_dyns.dyns) {          // same block
                 return 1;
@@ -817,7 +817,7 @@ fun Coder.main (tags: Tags): String {
             if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold
-                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame->proto==NULL) {
                     // no hold
                 } else if (src->up_dyns.dyns == NULL) {
                     if (src->up_dyns.dyns != NULL) {
