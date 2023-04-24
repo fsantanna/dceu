@@ -250,7 +250,7 @@ class TXBook {
     @Test
     fun todo_ifs_pg_30_bool() {
         val out = ceu.all("""
-            func fact (x) {
+            func :rec fact (x) {
                 ifs {
                     x < 0  -> throw(:error)
                     x == 0 -> 1
