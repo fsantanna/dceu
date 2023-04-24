@@ -398,6 +398,55 @@ class TXExec {
         """, true)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun ii_09_scope() {
+        val out = ceu.all(
+            """
+            data :Iterator = [f,s,tp,i]
+
+            func iter-tuple (itr :Iterator) {
+                val i = itr.i
+                if i == #itr.s {
+                    nil
+                } else {
+                    set itr.i = `:number ${D}i.Number + 1`
+                    move([i, itr.s[i]])
+                }
+            }
+        
+            func iter-dict (itr :Iterator) {
+                val k = next(itr.s,itr.i)
+                if k == nil {
+                    nil
+                } else {
+                    set itr.i = k
+                    move([k, itr.s[k]])
+                }
+            }
+
+            func fff (v, tp) {
+                ifs {
+                    type(v) == :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+                    type(v) == :dict   -> :Iterator [iter-dict,  v, tp, nil]
+                }
+            }
+            func :rec {===} (v1,v2) {
+                val t1 = type(v1)
+                val t2 = type(v2)
+                ifs {
+                    v1 == v2 -> true
+                    t1 /= t2 -> false
+                    (t1 == :tuple) -> 
+                            loop in :Iterator [iter-tuple,v1,:all,0], x {
+                            } while (v2[x.0] === x.1)
+                    t1 == :dict -> [iter-dict,v2,:all]
+                    else -> false
+                 }
+            }
+            println([@[]] === [@[]])
+        """)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
 
     // assert
 
@@ -2271,7 +2320,7 @@ class TXExec {
                 println(v)
             }
         """, true)
-        assert(out.contains("assertion error : expecter :Iterator")) { out }
+        assert(out.contains("assertion error : expected :Iterator")) { out }
     }
 
     // LOOP / TASK ITERATOR
@@ -2407,8 +2456,6 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
-
-    @Ignore
     @Test
     fun iter10_it() {
         val out = all("""
@@ -2492,7 +2539,7 @@ class TXExec {
             println(1)
         """, true)
         //assert(out == "anon : (lin 5, col 28) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 27) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
                 "anon : (lin 5, col 17) : throw(x)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2537,7 +2584,7 @@ class TXExec {
             println(x)
         """.trimIndent(), true)
         //assert(out == "anon : (lin 9, col 5) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 18) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 18) : block escape error : incompatible scopes\n" +
                 "anon : (lin 5, col 9) : throw([10])\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2584,7 +2631,7 @@ class TXExec {
             }})
         """.trimIndent(), true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 1, col 33) : set error : incompatible scopes\n" +
+        assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -2793,7 +2840,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[43,1000,1001,1002,10,11,12,44,36,101,45]\n") { out }
+        assert(out == "[44,1000,1001,1002,10,11,12,45,37,101,46]\n") { out }
     }
 
     // TAGS / PRE
@@ -3043,7 +3090,7 @@ class TXExec {
             spawn T (spawn U())
         """, true)
         assert(out == "anon : (lin 10, col 28) : U()\n" +
-                "anon : (lin 2, col 23) : set error : incompatible scopes\n:error\n") { out }
+                "anon : (lin 2, col 23) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun all5() {

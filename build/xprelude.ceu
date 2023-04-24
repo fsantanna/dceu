@@ -175,12 +175,12 @@ export [iter] {
     }
 
     func iter (v, tp) {
-        ifs {
-            v is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
-            v is? :vector -> :Iterator [iter-tuple, v, tp, 0]
-            v is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
-            v is? :func   -> :Iterator [v]
-            v is? :x-coro -> :Iterator [iter-coro,  v]
+        ifs v {
+            is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
+            is? :vector -> :Iterator [iter-tuple, v, tp, 0]
+            is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
+            is? :func   -> :Iterator [v]
+            is? :x-coro -> :Iterator [iter-coro,  v]
         }
     }
 }
@@ -202,7 +202,7 @@ func :rec {===} (v1,v2) {
         v1 == v2 -> true
         t1 /= t2 -> false
         (t1 == :tuple) or (t1==:vector) -> equals-tuple-vector(v1,v2)
-        t1 == :dict -> contains-dict(v1,v2) and contains-dict(v2,v1)
+        t1 == :dict -> contains-dict?(v1,v2) and contains-dict?(v2,v1)
         else -> false
     } where {
         func equals-tuple-vector (v1, v2) {
@@ -211,7 +211,7 @@ func :rec {===} (v1,v2) {
                 } while (v2[x.0] === x.1)
             )
         }
-        func contains-dict (v1, v2) {
+        func contains-dict? (v1, v2) {
             not (
                 loop in iter(v1,:all), x {
                 } while (v2[x.0] === x.1)

@@ -298,6 +298,7 @@ class Parser (lexer_: Lexer)
                 if (id.str == "...") {
                     err(this.tk0, "invalid declaration : unexpected ...")
                 }
+                val tmp = this.acceptTag(":tmp")
                 if (tmp && tk0.str!="val") {
                     err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
                 }

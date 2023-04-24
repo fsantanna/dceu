@@ -1052,15 +1052,15 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set_mutual (CEU_Dyn* v1, CEU_Dyn* v2) {
-            if (v1->tphold == CEU_HOLD_NON) {
-                if (v2->tphold == CEU_HOLD_NON) {
+        CEU_RET ceu_block_set_mutual (CEU_Dyn* dst, CEU_Dyn* src) {
+            if (dst->tphold == CEU_HOLD_NON) {
+                if (src->tphold == CEU_HOLD_NON) {
                     return CEU_RET_RETURN;
                 } else {
-                    return ceu_block_set(v1, v2->up_dyns.dyns, v2->tphold, 0);
+                    return ceu_block_set(dst, src->up_dyns.dyns, src->tphold, 0);
                 }
             } else {
-                return ceu_block_set(v2, v1->up_dyns.dyns, v1->tphold, 0);
+                return ceu_block_set(src, dst->up_dyns.dyns, dst->tphold, 0);
             }
         }
 
@@ -1069,6 +1069,7 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
             return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(tup, v.Dyn);
+                //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold, 0);
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1113,6 +1114,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
                 return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(vec, v.Dyn);
+                    //ceu_block_set(v.Dyn, vec->up_dyns.dyns, vec->tphold, 0);
             }
         }
         
@@ -1182,7 +1184,9 @@ fun Coder.main (tags: Tags): String {
                 assert(col->Ncast.Dict.buf != NULL);
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
                 int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
+                    //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold, 0);
                 int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
+                    //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold, 0);
                 assert(MIN(ret1,ret2) != CEU_RET_THROW);
             }
             assert(old != -1);
