@@ -314,6 +314,30 @@ class TExec {
         assert(out == "1\n") { out }
     }
     @Test
+    fun cc_tuple46_free() {
+        val out = all("""
+            pass [[]]
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun cc_vec_free() {
+        val out = all("""
+            pass #[]
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun cc_dic_free() {
+        val out = all("""
+            pass @[]
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun cc_tuple45_free() {
         val out = all("""
             pass [1,2,3][1]
@@ -1374,8 +1398,8 @@ class TExec {
     @Test
     fun scope15_global_func() {
         val out = all("""
-            func f () {}
-            func g (v) {
+            val f = func () { nil }
+            val g = func (v) {
                 [f, v]
             }
             val tup = do {

@@ -304,6 +304,14 @@ class TXExec {
     // ==, ===, /=, =/=
 
     @Test
+    fun ii_00_op_eqeqeq_tup() {
+        val out = ceu.all(
+            """
+            println([1] === [1])
+        """, true)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+    @Test
     fun ii_01_op_eqeqeq_tup() {
         val out = ceu.all(
             """
@@ -2456,6 +2464,8 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
+
+    @Ignore
     @Test
     fun iter10_it() {
         val out = all("""

@@ -93,8 +93,8 @@ fun Coder.main (tags: Tags): String {
         void ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
         CEU_RET ceu_x_create_in (struct CEU_Dyn* tasks, struct CEU_Value* task, struct CEU_Value* ret, int* ok);
-        struct CEU_Dyn* ceu_vector_create (void);
-        struct CEU_Dyn* ceu_tuple_create (int n);
+        struct CEU_Dyn* ceu_vector_create (struct CEU_Dyns* hld);
+        struct CEU_Dyn* ceu_tuple_create (struct CEU_Dyns* hld, int n);
         
         void ceu_bstack_clear (struct CEU_BStack* bstack, struct CEU_Block* block);
         CEU_RET ceu_bcast_dyns   (struct CEU_BStack* bstack, struct CEU_Dyns* dyns, struct CEU_Value* evt);
@@ -287,7 +287,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         struct CEU_Dyn* ceu_proto_create (int type, struct CEU_Proto proto, struct CEU_Dyns* hld, CEU_HOLD tphold);
-        struct CEU_Dyn* ceu_dict_create  (void);
+        struct CEU_Dyn* ceu_dict_create  (struct CEU_Dyns* hld);
 
         int ceu_gc_count = 0;
         
@@ -469,7 +469,7 @@ fun Coder.main (tags: Tags): String {
                             cur = cur->next;
                         }
                     }
-                    CEU_Dyn* tup = ceu_tuple_create(len);
+                    CEU_Dyn* tup = ceu_tuple_create(&frame->up_block->dn_dyns, len);
                     {
                         CEU_Tags_List* cur = dyn->Dyn->tags;
                         int i = 0;
@@ -737,7 +737,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
             if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                 return 1;
-            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame->proto==NULL) {
+            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                 return 1;
             } else if (dst == src->up_dyns.dyns) {          // same block
                 return 1;
@@ -817,7 +817,7 @@ fun Coder.main (tags: Tags): String {
             if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold
-                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame->proto==NULL) {
+                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                     // no hold
                 } else if (src->up_dyns.dyns == NULL) {
                     if (src->up_dyns.dyns != NULL) {
@@ -1119,7 +1119,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_Dyn* ceu_vector_from_c_string (CEU_Dyns* hld, const char* str) {
-            CEU_Dyn* vec = ceu_vector_create();
+            CEU_Dyn* vec = ceu_vector_create(hld);
             int N = strlen(str);
             for (int i=0; i<N; i++) {
                 assert(CEU_RET_RETURN == ceu_vector_set(vec, vec->Ncast.Vector.its, (CEU_Value) { CEU_VALUE_CHAR, str[i] }));
@@ -1254,7 +1254,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        CEU_Dyn* ceu_tuple_create (int n) {
+        CEU_Dyn* ceu_tuple_create (CEU_Dyns* hld, int n) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
@@ -1263,10 +1263,11 @@ fun Coder.main (tags: Tags): String {
                 }
             };
             memset(ret->Ncast.Tuple.buf, 0, n*sizeof(CEU_Value));
+            ceu_hold_add(hld, ret);
             return ret;
         }
         
-        CEU_Dyn* ceu_vector_create (void) {
+        CEU_Dyn* ceu_vector_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* buf = malloc(1);  // because of '\0' in empty strings
@@ -1277,10 +1278,11 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,buf}} }
                 }
             };
+            ceu_hold_add(hld, ret);
             return ret;
         }
         
-        CEU_Dyn* ceu_dict_create (void) {
+        CEU_Dyn* ceu_dict_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
@@ -1288,6 +1290,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Dict={0,NULL}} }
                 }
             };
+            ceu_hold_add(hld, ret);
             return ret;
         }
         
@@ -1736,7 +1739,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* old = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_TUPLE: {
-                    CEU_Dyn* new = ceu_tuple_create(old->Ncast.Tuple.its);
+                    CEU_Dyn* new = ceu_tuple_create(NULL, old->Ncast.Tuple.its);
                     assert(new != NULL);
                     new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Tuple.its; i++) {
@@ -1748,7 +1751,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
-                    CEU_Dyn* new = ceu_vector_create();
+                    CEU_Dyn* new = ceu_vector_create(NULL);
                     assert(new != NULL);
                     new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Vector.its; i++) {
@@ -1762,7 +1765,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
                 case CEU_VALUE_DICT: {
-                    CEU_Dyn* new = ceu_dict_create();
+                    CEU_Dyn* new = ceu_dict_create(NULL);
                     assert(new != NULL);
                     new->tphold = CEU_HOLD_NON;
                     for (int i=0; i<old->Ncast.Dict.max; i++) {

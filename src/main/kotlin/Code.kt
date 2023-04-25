@@ -56,6 +56,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Proto -> {
                 val isfunc = (this.tk.str == "func")
                 val isx = (this.tk.str != "func")
+                val blk = ups.first_block(this)!!
 
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
@@ -175,14 +176,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
-                        ceu_frame,
+                        ${if (blk == outer) "NULL" else "ceu_frame"},
                         ceu_proto_f_$n,
                         { ${clos.protos_refs[this]?.size ?: 0}, NULL },
                         { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     },
-                    ${if (clos.protos_noclos.contains(this)) "&${ups.first_block(this)!!.toc(true)}->dn_dyns" else "NULL"},
+                    ${if (clos.protos_noclos.contains(this)) "&${blk.toc(true)}->dn_dyns" else "NULL"},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
@@ -237,7 +238,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     #endif
                     ${(f_b == null).cond { """
                     {   // ... for main block
-                        CEU_Dyn* tup = ceu_tuple_create(ceu_argc);
+                        CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
                         for (int i=0; i<ceu_argc; i++) {
                             CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
                             assert(CEU_RET_RETURN == ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} }));
@@ -281,7 +282,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 val idc = f_b.args.last()!!.first.str.id2c(null)
                                 """
                                 int ceu_tup_n = MAX(0,ceu_n-$args_n);
-                                CEU_Dyn* ceu_tup = ceu_tuple_create(ceu_tup_n);
+                                CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
                                 for (int i=0; i<ceu_tup_n; i++) {
                                     assert(CEU_RET_RETURN == ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]));
                                 }
@@ -346,12 +347,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                             }
                                         }
                                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = CEU_RET_RETURN;
-                                            if (!ceu_block_chk(&$up1->dn_dyns, ceu_acc.Dyn)) {
-                                                ceu_acc = CEU_ERR_ERROR;
+                                            ceu_ret = ceu_block_set(ceu_acc.Dyn, &$up1->dn_dyns, CEU_HOLD_NON, ${this.do_issafe()});
+                                            if (ceu_ret == CEU_RET_THROW) {
+                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                                // prioritize scope error over whatever there is now
                                                 ceu_acc_$n = ceu_acc;
-                                                ceu_ret = CEU_RET_THROW;
-                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                                             }
                                             ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                         }
@@ -784,7 +784,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
             is Expr.Tuple -> """
                 { // TUPLE ${this.tk.dump()}
-                    ceu_mem->tup_$n = ceu_tuple_create(${this.args.size});
+                    ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, ${this.args.size});
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -797,7 +797,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             """
             is Expr.Vector -> """
                 { // VECTOR ${this.tk.dump()}
-                    ceu_mem->vec_$n = ceu_vector_create();
+                    ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -810,7 +810,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Dict -> {
                 """
                 { // DICT ${this.tk.dump()}
-                    ceu_mem->dict_$n = ceu_dict_create();
+                    ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->dict_$n != NULL);
                     ${this.args.map { """
                         {
