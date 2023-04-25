@@ -668,10 +668,9 @@ fun Coder.main (tags: Tags): String {
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
             CEU_Dyns_I* up = &dyn->up_dyns;
-            if (up->dyns != NULL) {
-                assert(up->dyns->buf != NULL);
-                up->dyns->buf[up->i] = NULL;
-            }
+            assert(up->dyns != NULL);
+            assert(up->dyns->buf != NULL);
+            up->dyns->buf[up->i] = NULL;
             up->dyns = NULL;
         }
 
@@ -1246,11 +1245,8 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            if (hld == NULL) {
-                assert(tphold == CEU_HOLD_NON);
-            } else {
-                assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold, 0));
-            }
+            //assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold, 0));
+            ceu_hold_add(hld, ret);
             return ret;
         }
         
@@ -1392,7 +1388,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        void ceu_track_create (CEU_Dyn* x, CEU_Value* ret) {
+        void ceu_track_create (CEU_Dyns* hld, CEU_Dyn* x, CEU_Value* ret) {
             CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
@@ -1402,6 +1398,7 @@ fun Coder.main (tags: Tags): String {
                     } }
                 }
             };
+            ceu_hold_add(hld, trk);
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
         }
     """ +
@@ -1686,7 +1683,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 dyn->tphold = CEU_HOLD_NON;
-                ceu_hold_rem(dyn);
+                //ceu_hold_rem(dyn);
             }
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
