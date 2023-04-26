@@ -183,7 +183,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     },
-                    ${if (clos.protos_noclos.contains(this)) "&${blk.toc(true)}->dn_dyns" else "NULL"},
+                    &${blk.toc(true)}->dn_dyns,
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
@@ -268,7 +268,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 if (ceu_i < ceu_n) {
                                     if (ceu_args[ceu_i]->type > CEU_VALUE_DYNAMIC) {
                                         ceu_ret = ceu_block_set(ceu_args[ceu_i]->Dyn, &ceu_mem->_${idc}_->dn_dyns, CEU_HOLD_NON, ${this.do_issafe()});
-                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                                     }
                                     ceu_mem->$idc = *ceu_args[ceu_i];
                                     ceu_gc_inc(&ceu_mem->$idc);
@@ -347,9 +347,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                             }
                                         }
                                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                            ceu_ret = ceu_block_set(ceu_acc.Dyn, &$up1->dn_dyns, CEU_HOLD_NON, ${this.do_issafe()});
+                                            ceu_ret = ceu_block_set(ceu_acc.Dyn, &$up1->dn_dyns, CEU_HOLD_NON, 0);
                                             if (ceu_ret == CEU_RET_THROW) {
-                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                                CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                                                 // prioritize scope error over whatever there is now
                                                 ceu_acc_$n = ceu_acc;
                                             }
@@ -428,7 +428,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         this.src!!.code() + """
                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                 ceu_ret = ceu_block_set(ceu_acc.Dyn, &$bupc->dn_dyns, ${if (this.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, ${if (this.tmp) "1" else "0"}); //${this.do_issafe()});
-                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                             }
                         """
                     }}
@@ -603,7 +603,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_x->Bcast.status = CEU_X_STATUS_YIELDED;
                     if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                         ceu_ret = ceu_block_set(ceu_acc.Dyn, &ceu_frame->up_block->dn_dyns, CEU_HOLD_NON, 0);
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : yield error : incompatible scopes");
                     }
                     return CEU_RET_YIELD;
                 case $n:                    // resume here
@@ -650,7 +650,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         if ($src.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set($src.Dyn, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB, 0);
                             //ceu_ret = ceu_block_set($src.Dyn, ceu_x->up_dyns.dyns, CEU_HOLD_FIX, 0);
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         ceu_gc_inc(&$src);
                         ceu_gc_dec(&ceu_dyn_$n->Bcast.X.frame->X.pub, 1);
@@ -756,7 +756,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 { // ACC - SET
                                     if ($src.type > CEU_VALUE_DYNAMIC) {
                                         ceu_ret = ceu_block_set($src.Dyn, &${_idc_}->dn_dyns, ${if (xvar.dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"}, 0); //${this.do_issafe()});
-                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                                     }
                                     ceu_gc_inc(&$src);
                                     ceu_gc_dec(&$idc, 1);
@@ -878,11 +878,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         """
                         if (ceu_mem->idx_$n.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set(ceu_mem->idx_$n.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, 0); //${this.do_issafe()});
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         if ($src.type > CEU_VALUE_DYNAMIC) {
                             ceu_ret = ceu_block_set($src.Dyn, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON, 0); //${this.do_issafe()});
-                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:

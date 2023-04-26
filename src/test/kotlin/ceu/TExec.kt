@@ -2860,7 +2860,7 @@ class TExec {
         val out = all("""
             var f
             set f = do {
-                var x
+                var x = []
                 func () {   ;; block_set(1)
                     x       ;; because of x
                 }           ;; err: scope on return
@@ -3300,7 +3300,7 @@ class TExec {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3322,7 +3322,7 @@ class TExec {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test
@@ -3358,7 +3358,7 @@ class TExec {
         )
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 6, col 21) : set error : incompatible scopes\n" +
+                "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
                 ":error\n") { out }
     }
 
