@@ -752,7 +752,7 @@ fun Coder.main (tags: Tags): String {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1, 1 },     // src = NON
                 { 1, 1, 1, 1, 0 },     // src = VAR
-                { 1, 1, 0, 9, 0 },     // src = FIX
+                { 1, 1, 0, 1, 0 },     // src = FIX
                 { 1, 0, 9, 1, 9 },     // src = PUB
                 { 1, 0, 9, 9, 1 }      // src = EVT
             };
@@ -818,16 +818,10 @@ fun Coder.main (tags: Tags): String {
                     // no hold
                 } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
                     // no hold
-                } else if (src->up_dyns.dyns == NULL) {
-                    if (src->up_dyns.dyns != NULL) {
-                        // do not hold
-                        ceu_block_rec(NULL, src, dst_tphold);
-                    } else {
-                        ceu_block_rec(dst_dyns, src, dst_tphold);
-                    }
+                } else {
+                    ceu_block_rec(dst_dyns, src, dst_tphold);
                 }
             } else {
-                CEU_THROW_MSG("\0 : set error : incompatible scopes");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
             return CEU_RET_RETURN;

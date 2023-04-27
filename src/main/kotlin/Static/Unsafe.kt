@@ -21,8 +21,11 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     }
 
     fun Expr.set_up_unsafe() {
-        val blk = ups.first(this) { it is Expr.Do } as Expr.Do
-        dos.add(blk)
+        val up = ups.pub[this]
+        if (up != null) {
+            val blk = ups.first(up) { it is Expr.Do } as Expr.Do
+            dos.add(blk)
+        }
     }
 
     fun Expr.traverse () {
