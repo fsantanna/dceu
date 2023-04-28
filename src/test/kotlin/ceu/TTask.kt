@@ -1337,9 +1337,9 @@ class TTask {
             ;;println(:2222)
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 4, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun ee_11_bcast_err() {
@@ -1355,6 +1355,29 @@ class TTask {
             var e = []
             broadcast in :global, e
             ;;println(:2222)
+            """
+        )
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
+        //        "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun ee_12_bcast_err() {
+        val out = ceu.all(
+            """
+            var T = task () {
+                yield(nil)
+                var v = evt
+                println(v)
+            }
+            var t = spawn T()
+            do {
+            var e = []
+            broadcast in :global, e
+            }
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
@@ -1390,10 +1413,10 @@ class TTask {
             ;;println(:2222)
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
-                "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
+        //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun ee_bcast12_err() {
@@ -1437,20 +1460,20 @@ class TTask {
             var T2 = task () {
                 yield(nil)
                 yield(nil)
-                println(:2)
+                ;;println(:2)
                 var v = evt
-                println(:evt, v, evt)
+                ;;println(:evt, v, evt)
             }
             var t2 = spawn T2()
             broadcast in :global, []
             println(`:number ceu_gc_count`)
             """
         )
-        //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
-                ":2\n" +
-                ":error\n") { out }
+        assert(out == "0\n") { out }
+        //assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
+        //        ":2\n" +
+        //        ":error\n") { out }
     }
 
     @Test
@@ -1482,10 +1505,11 @@ class TTask {
             spawn T()
             broadcast in :global, [[1]]
         """)
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
-                "anon : (lin 8, col 17) : f(evt)\n" +
-                "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
+        //        "anon : (lin 8, col 17) : f(evt)\n" +
+        //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun ee_15_bcast_tuple_func_ok() {
@@ -2218,12 +2242,12 @@ class TTask {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "1\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
         //        "anon : (lin 4, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld1_1_err() {
@@ -2241,10 +2265,10 @@ class TTask {
         )
         //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n:error\n") { out }
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
-                "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld2_err() {
@@ -2261,12 +2285,12 @@ class TTask {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "1\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld2a() {
@@ -2283,12 +2307,12 @@ class TTask {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "0\n") { out }
+        assert(out == "0\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld3() {
@@ -2394,9 +2418,9 @@ class TTask {
         """
         )
         //assert(out == "anon : (lin 4, col 13) : set error : incompatible scopes\n") { out }
-        //assert(out == "[]\n") { out }
-        assert(out == "anon : (lin 4, col 35) : broadcast error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 4, col 35) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld8_err() {
@@ -2413,12 +2437,12 @@ class TTask {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "2\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 8, col 13) : broadcast in :global, [[]]\n" +
         //        "anon : (lin 4, col 31) : invalid index : cannot expose dynamic \"evt\" field\n") { out }
-        assert(out == "anon : (lin 9, col 13) : broadcast in :global, #[[]]\n" +
-                "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, #[[]]\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gg_evt_hld9_err() {
@@ -3372,9 +3396,9 @@ class TTask {
                 println(x)
             }
         """)
-        //assert(out == "anon : (lin 8, col 17) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out.contains("x-task: 0x")) { out }
+        assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
+        //assert(out.contains("x-task: 0x")) { out }
     }
     @Test
     fun ll_17_detrack_err() {

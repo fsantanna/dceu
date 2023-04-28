@@ -52,6 +52,8 @@ fun Coder.main (tags: Tags): String {
 
         CEU_RET ceu_type_f (struct CEU_Frame* _1, struct CEU_BStack* _2, int n, struct CEU_Value* args[]);
         int ceu_as_bool (struct CEU_Value* v);
+        
+        #define CEU_ISGLBDYN(dyn) (dyn->up_dyns.dyns==NULL || dyn->up_dyns.dyns->up_block==ceu_block_global)
 
         #define CEU_TYPE_NCAST(v) (v>CEU_VALUE_DYNAMIC && v<CEU_VALUE_BCAST)
         #define CEU_THROW_MSG(msg) {                       \
@@ -203,7 +205,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Dyn** buf;
             struct CEU_Block* up_block;
         } CEU_Dyns;
-
+        
         typedef struct CEU_Dyns_I {
             struct CEU_Dyns* dyns;  // (block or tasks) w/ up_block to block
             int i;                  // position in block/tasks vector
@@ -290,6 +292,7 @@ fun Coder.main (tags: Tags): String {
         struct CEU_Dyn* ceu_dict_create  (struct CEU_Dyns* hld);
 
         int ceu_gc_count = 0;
+        void* ceu_block_global = NULL;
         
         ${ tags.pub.values.let {
             fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
@@ -736,7 +739,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
             if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                 return 1;
-            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+            } else if (CEU_ISGLBDYN(src)) {
                 return 1;
             } else if (dst == src->up_dyns.dyns) {          // same block
                 return 1;
@@ -763,7 +766,9 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src, CEU_HOLD tphold) {
             src->tphold = MAX(src->tphold,tphold);
-            if (dst != NULL) {  // caller: do not set block
+            if (dst == NULL) {
+                // caller: do not set block (only tphold)
+            } else {
                 if (src->up_dyns.dyns==NULL || dst->up_block->depth < src->up_dyns.dyns->up_block->depth) {
                     if (src->up_dyns.dyns != NULL) {
                         ceu_hold_rem(src);
@@ -816,7 +821,7 @@ fun Coder.main (tags: Tags): String {
             if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold
-                } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
+                } else if (CEU_ISGLBDYN(src)) {
                     // no hold
                 } else {
                     ceu_block_rec(dst_dyns, src, dst_tphold);
@@ -824,49 +829,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            return CEU_RET_RETURN;
-            
-#if 0
-            //int one = (src->tphold == CEU_HOLD_FIX) ? 1 : 0;
-            int tohold = 0;
-            if (dst_tphold == CEU_HOLD_EVT) {            // event, ensure not held, adjust tphold
-                if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
-                    src->tphold = CEU_HOLD_EVT;
-                } else {
-                    CEU_THROW_MSG("\0 : set error : incompatible scopes");
-                    CEU_THROW_RET(CEU_ERR_ERROR);
-                }
-            } else if (src->type==CEU_VALUE_P_FUNC && src->Ncast.Proto.up_frame==NULL) {
-                // ok: global functions use up=NULL and are not malloc'ed
-            } else if (dst_dyns == src->up_dyns.dyns) {          // same block, just adjust to tphold
-                src->tphold = MAX(src->tphold, dst_tphold);
-            } else if (src->tphold == CEU_HOLD_NON) {       // src is still tmp, hold and adjust to tphold
-                tohold = (dst_tphold == CEU_HOLD_VAR) || (dst_tphold == CEU_HOLD_FIX);
-                src->tphold = dst_tphold;
-            } else if (dst_dyns->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
-                assert((dst_tphold == CEU_HOLD_VAR) || (dst_tphold == CEU_HOLD_FIX));
-                tohold = 1;
-                src->tphold = MAX(src->tphold, dst_tphold);
-#if 0
-            } else if (!issafe && dst_tphold!=CEU_HOLD_NON && src->tphold>=CEU_HOLD_FIX) {
-                CEU_THROW_MSG("\0 : set error : incompatible scopes");
-                CEU_THROW_RET(CEU_ERR_ERROR);
-            } else if (src->up_dyns.dyns->up_block->depth > dst_dyns->up_block->depth) {
-                CEU_THROW_MSG("\0 : set error : incompatible scopes");
-                CEU_THROW_RET(CEU_ERR_ERROR);
-#endif
-            } else {
-                CEU_THROW_MSG("\0 : set error : incompatible scopes");
-                CEU_THROW_RET(CEU_ERR_ERROR);
-            }
-            if (tohold) {
-                if (src->up_dyns.dyns != NULL) {
-                    ceu_hold_rem(src);
-                }
-                ceu_hold_add(dst_dyns, src);
-            }
-            return CEU_RET_RETURN;
-#endif
+            return CEU_RET_RETURN;            
         }
     """ +
     """ // BCAST - TRAVERSE
@@ -1367,7 +1330,7 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
         
             *x = (CEU_Dyn) {
-                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_FIX, {
+                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_EVT, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { tasks, NULL, frame }
                     } }

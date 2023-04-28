@@ -160,7 +160,7 @@ export [iter] {
         } else {
             set itr.i = k
             ifs tp = itr.tp {
-                tp == :all -> move([k, itr.s[k]])
+                tp == :all -> [k, itr.s[k]]
                 tp == :key -> k
                 tp == :val -> itr.s[k]
                 else       -> k

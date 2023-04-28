@@ -2415,8 +2415,6 @@ class TXExec {
         """, true)
         assert(out == "nil\n") { out }
     }
-
-    @Ignore
     @Test
     fun iter10_it() {
         val out = all("""
@@ -2431,11 +2429,12 @@ class TXExec {
                 }
             }
             loop in iter(f) {   ;; assigns f to local which confronts cur
-            }
+            } until true
             println(:ok)
         """)
-        assert(out == "anon : (lin 13, col 33) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 13, col 33) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
 
     // THROW / CATCH
@@ -3243,4 +3242,5 @@ class TXExec {
              broadcast in :global, 2
         """)
         assert(out == ":x-tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
-    }}
+    }
+}

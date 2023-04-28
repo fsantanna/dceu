@@ -233,6 +233,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 { // BLOCK ${this.tk.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                     void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
+                    ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
                     #ifdef CEU_DEBUG
                     printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
                     #endif
@@ -556,7 +557,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         if (!ceu_block_hld(CEU_HOLD_EVT,ceu_mem->evt_$n.Dyn->tphold)) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.evt.tk.pos.file} : (lin ${this.evt.tk.pos.lin}, col ${this.evt.tk.pos.col}) : broadcast error : incompatible scopes");
                         }
-                        ceu_block_rec(NULL, ceu_mem->evt_$n.Dyn, CEU_HOLD_EVT);
+                        if (!CEU_ISGLBDYN(ceu_mem->evt_$n.Dyn)) {
+                            ceu_block_rec(NULL, ceu_mem->evt_$n.Dyn, CEU_HOLD_EVT);
+                        }
                     }
                     
                     ${this.xin.code()}
@@ -789,7 +792,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
                         ceu_ret = ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc);
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : tuple error : incompatible scopes");
                         """
                     }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_mem->tup_$n} }")}
@@ -801,7 +804,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        assert(CEU_RET_RETURN == ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc));
+                        ceu_ret = ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc);
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : incompatible scopes");
                         """
                     }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=ceu_mem->vec_$n} }")}
@@ -818,7 +822,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ceu_mem->key_$n = ceu_acc;
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = ceu_acc;
-                            ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);
+                            ceu_ret = ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : dict error : incompatible scopes");
                         }
                     """ }.joinToString("")}
                     ${assrc("(CEU_Value) { CEU_VALUE_DICT, {.Dyn=ceu_mem->dict_$n} }")}
@@ -899,7 +904,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             default:
                                 assert(0 && "bug found");
                         }
-                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                        CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         """
                     }}
                 }

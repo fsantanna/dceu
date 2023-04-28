@@ -1410,6 +1410,22 @@ class TExec {
         """)
         assert(out.contains("[func: 0x")) { out }
     }
+    @Test
+    fun scop16_glb_vs_tup() {
+        val out = all("""
+            val g = func () { nil }
+            val f = func (v) {
+                [g, v]
+            }
+            do {
+                val t = []
+                f(t)
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // IF
 
@@ -3298,10 +3314,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gc14_bcast_err() {
@@ -3320,10 +3336,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun gc15_arg() {
@@ -3356,10 +3372,10 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
 
     // MISC
