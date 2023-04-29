@@ -454,6 +454,21 @@ class TXExec {
         """, true)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun bcast3() {
+        val out = all("""
+            do {
+                val :tmp e = []
+                broadcast e
+            }
+            do {
+                val e = []
+                broadcast e
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // YIELD ALL
 

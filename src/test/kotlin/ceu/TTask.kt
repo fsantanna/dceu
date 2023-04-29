@@ -1381,11 +1381,11 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
-                ":error\n") { out }
-        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
-        //        "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
+        //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == "anon : (lin 10, col 13) : broadcast in :global, e\n" +
+                "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun ee_11_bcast_err_a() {
@@ -1437,11 +1437,11 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        //assert(out == "anon : (lin 11, col 17) : broadcast in :global, e\n" +
-        //        "anon : (lin 4, col 17) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
+        assert(out == "anon : (lin 11, col 17) : broadcast in :global, e\n" +
+                "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
                 ":error\n") { out }
+        //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun ee_bcast13_err() {
