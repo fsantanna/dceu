@@ -1569,6 +1569,27 @@ class TTask {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun ee_18_bcast_tuple_func_ok() {
+        val out = all("""
+            val f = func (v) {
+                println(v)
+            }
+            val T = task () {
+                yield(nil)
+                f(evt)
+            }
+            spawn T()
+            do {
+                do {
+                    do {
+                        broadcast in :global, []
+                    }
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // POOL
     // COROS ITERATOR

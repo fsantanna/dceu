@@ -765,7 +765,7 @@ fun Coder.main (tags: Tags): String {
         }
 
         void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src, CEU_HOLD tphold) {
-            if (CEU_ISGLBDYN(src)) {
+            if (CEU_ISGLBDYN(src) || src->tphold==CEU_HOLD_EVT) {
                 return;
             }
             src->tphold = MAX(src->tphold,tphold);
