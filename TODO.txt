@@ -17,6 +17,12 @@
 
 # NEXT
 
+- bcast in block
+- val [x,y] = ...
+    - pattern matching em geral
+- val _ = ... (no decl, no acc)
+- f(x) \{ ... } -> f(x,\{...})
+- {and}(...), {or}(...)
 - where { x=10 } // no val x=10
 - export :all [...] { }
 - var x :T = y

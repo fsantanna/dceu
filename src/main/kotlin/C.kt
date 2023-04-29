@@ -90,7 +90,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn);
         void ceu_hold_rem (struct CEU_Dyn* dyn);
-        CEU_RET ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold, int issafe);
+        CEU_RET ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold);
         
         void ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -817,18 +817,12 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold, int issafe) {
+        CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             //assert(dst_dyns != NULL);     // x :tmp [0] = []
             // dst might be NULL when assigning to orphan tuple
             //printf("> %d %d\n", ceu_block_chk(dst_dyns,src), ceu_block_hld(dst_tphold,src->tphold));
             if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
-                if (issafe) {
-                    // no hold
-                //} else if (CEU_ISGLBDYN(src)) {   // (already tested inside rec below)
-                    // no hold
-                } else {
-                    ceu_block_rec(dst_dyns, src, dst_tphold);
-                }
+                ceu_block_rec(dst_dyns, src, dst_tphold);
             } else {
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
@@ -1016,10 +1010,10 @@ fun Coder.main (tags: Tags): String {
                 if (src->tphold == CEU_HOLD_NON) {
                     return CEU_RET_RETURN;
                 } else {
-                    return ceu_block_set(dst, src->up_dyns.dyns, src->tphold, 0);
+                    return ceu_block_set(dst, src->up_dyns.dyns, src->tphold);
                 }
             } else {
-                return ceu_block_set(src, dst->up_dyns.dyns, dst->tphold, 0);
+                return ceu_block_set(src, dst->up_dyns.dyns, dst->tphold);
             }
         }
 
@@ -1028,7 +1022,7 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
             return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(tup, v.Dyn);
-                //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold, 0);
+                //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold);
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1073,7 +1067,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
                 return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(vec, v.Dyn);
-                    //ceu_block_set(v.Dyn, vec->up_dyns.dyns, vec->tphold, 0);
+                    //ceu_block_set(v.Dyn, vec->up_dyns.dyns, vec->tphold);
             }
         }
         
@@ -1143,9 +1137,9 @@ fun Coder.main (tags: Tags): String {
                 assert(col->Ncast.Dict.buf != NULL);
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
                 int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
-                    //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold, 0);
+                    //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
                 int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
-                    //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold, 0);
+                    //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
                 assert(MIN(ret1,ret2) != CEU_RET_THROW);
             }
             assert(old != -1);
@@ -1205,7 +1199,7 @@ fun Coder.main (tags: Tags): String {
                     .Ncast = { 0, {.Proto=proto} }
                 }
             };
-            //assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold, 0));
+            //assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold));
             ceu_hold_add(hld, ret);
             return ret;
         }

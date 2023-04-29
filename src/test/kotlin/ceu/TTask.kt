@@ -2224,6 +2224,38 @@ class TTask {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun ff_pool28_val() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, trk {
+                val :tmp tsk = detrack(trk)
+                broadcast nil
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun ff_pool29_val() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+            }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, trk {
+                val :tmp tsk = detrack(trk)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // EVT
 
