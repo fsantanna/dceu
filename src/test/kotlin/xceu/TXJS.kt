@@ -314,7 +314,7 @@ class TXJS {
                 ],
                 r = @[v = 'e']
             ]
-            coro T (tree) {
+            coro :rec T (tree) {
                 yield()
                 yield(tree.v)
                 if tree.l {

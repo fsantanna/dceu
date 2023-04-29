@@ -1411,7 +1411,7 @@ class TExec {
         assert(out.contains("[func: 0x")) { out }
     }
     @Test
-    fun scop16_glb_vs_tup() {
+    fun scope16_glb_vs_tup() {
         val out = all("""
             val g = func () { nil }
             val f = func (v) {
@@ -1420,6 +1420,26 @@ class TExec {
             do {
                 val t = []
                 f(t)
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope17_glb_vs_tup() {
+        val out = all("""
+            val f = func () {
+                nil
+            }
+            do {
+                val t = []
+                pass [f, t]
+                nil
+            }
+            do {
+                val t = []
+                pass [f, t]
                 nil
             }
             println(:ok)

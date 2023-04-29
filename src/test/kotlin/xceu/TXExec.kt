@@ -2990,6 +2990,62 @@ class TXExec {
         assert(out == "10\n20\n") { out }
     }
 
+    // TESTS
+
+    @Test
+    fun yy_01() {
+        val out = all("""
+            func g () {
+            }
+            coro bar () {
+                pass [g, coroutine(coro () {})]
+                nil
+            }
+            val it = [g, coroutine(bar)]
+            resume it[1]()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun yy_02() {
+        val out = all("""
+            data :Iterator = [f,s,tp,i]
+            func iter-coro (itr :Iterator) {
+                val co = itr.s
+                val v = resume co()
+                ((status(co) /= :terminated) and v) or nil
+            }
+            func iter (v) {
+                [iter-coro,  v]
+            }
+            
+            func bar (v) {
+                [iter-coro, v]
+            }
+            bar(coroutine(coro () {}))
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun yy_03() {
+        val out = all("""
+            func g () {}
+            func f (v) {
+                [g, v]
+            }
+            func x () {
+                val t = coro () {}
+                f(t)
+                nil
+            }
+            x()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
     // ALL
 
     @Test

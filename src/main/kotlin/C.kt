@@ -765,6 +765,9 @@ fun Coder.main (tags: Tags): String {
         }
 
         void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src, CEU_HOLD tphold) {
+            if (CEU_ISGLBDYN(src)) {
+                return;
+            }
             src->tphold = MAX(src->tphold,tphold);
             if (dst == NULL) {
                 // caller: do not set block (only tphold)
@@ -821,7 +824,7 @@ fun Coder.main (tags: Tags): String {
             if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
                 if (issafe) {
                     // no hold
-                } else if (CEU_ISGLBDYN(src)) {
+                //} else if (CEU_ISGLBDYN(src)) {   // (already tested inside rec below)
                     // no hold
                 } else {
                     ceu_block_rec(dst_dyns, src, dst_tphold);
