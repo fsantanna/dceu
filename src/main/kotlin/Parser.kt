@@ -362,9 +362,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val :tmp ceu_$N ${tag ?: ""} = ${cnd.tostr(true)}
+                            val ceu_$N ${tag ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val :tmp $id ${tag ?: ""} = ceu_$N
+                                val $id ${tag ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -505,7 +505,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val :tmp $i = ceu_it_$N.f(ceu_it_$N)
+                                    val $i = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
@@ -527,7 +527,7 @@ class Parser (lexer_: Lexer)
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
                     """
-                    val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                    val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                     if $not ${id ?: "ceu_$N"} {
                         `goto CEU_LOOP_DONE_$nn;`
                     } else { nil }
@@ -545,7 +545,7 @@ class Parser (lexer_: Lexer)
                         }
                         N++
                         """
-                        val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                        val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                         if $not ${id ?: "ceu_$N"} {
                             `goto CEU_LOOP_DONE_$nn;`
                         } else { nil }
@@ -794,8 +794,8 @@ class Parser (lexer_: Lexer)
                     } else {
                         val e1 = this.exprSufsX(Expr.Acc(Tk.Id("ceu_$nn",tag.pos,0)))
                         val e2 = this.nest("""
-                            ${tag.pos.pre()}export {
-                                val ceu_$nn ${tag.str} = ${e.tostr(true)}
+                            ${tag.pos.pre()}do {
+                                val :tmp ceu_$nn ${tag.str} = ${e.tostr(true)}
                                 ${e1.tostr(true)}
                             }
                         """)
@@ -919,7 +919,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { "val :tmp $x = ${v!!.tostr(true)}" }}
+                        ${v.cond { "val $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
@@ -1297,7 +1297,7 @@ class Parser (lexer_: Lexer)
                     val body = this.block()
                     e = this.nest("""
                         ${tk0.pos.pre()}do {
-                            val :tmp ${x?.str ?: "it"} = ${e.tostr(true)}
+                            val ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
                     """)

@@ -208,6 +208,17 @@ class TXExec {
             }
             println(x)
         """, true)
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun bb_ifs10a() {
+        val out = all("""
+            val x = ifs it=[] {
+                true -> move(it)
+            }
+            println(x)
+        """, true)
         assert(out == "[]\n") { out }
     }
     @Test
