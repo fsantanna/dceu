@@ -3222,8 +3222,9 @@ class TTask {
             println(status(detrack(x)))
             println(x)
         """)
-        assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 8, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun ll_track7() {
@@ -3258,8 +3259,9 @@ class TTask {
             println(status(detrack(x)))
             println(x)
         """)
-        assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 12, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
+        assert(out == "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun ll_track09_err() {
@@ -3468,6 +3470,53 @@ class TTask {
             println(status(t1))
         """)
         assert(out == ":terminated\n") { out }
+    }
+    @Test
+    fun ll_18_track_scope() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+            }
+            val t = spawn T()
+            val y = do {
+                val x = track(t)
+                x
+            }
+            println(y)
+        """)
+        assert(out == "anon : (lin 6, col 21) : block escape error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun ll_19_track_scope() {
+        val out = all("""
+            val T = task () {
+                set task.pub = 1
+                yield(nil)
+            }
+            val t = spawn T()
+            val y = do {
+                track(t)
+            }
+            println(detrack(y).pub)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ll_20_track_scope() {
+        val out = all("""
+            val T = task () {
+                set task.pub = 1
+                yield(nil)
+            }
+            val y = do {
+                val t = spawn T()
+                track(t)
+            }
+            println(detrack(y).pub)
+        """)
+        assert(out == "anon : (lin 6, col 21) : block escape error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // EVT / DATA
@@ -3718,6 +3767,64 @@ class TTask {
             }
             println(:ok)
         """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun nn_09_throw_track() {
+        val out = all("""
+            val T = task () {
+                set task.pub = 10
+                yield(nil)
+            }
+            val ts = tasks()
+            val t = catch true {
+                spawn in ts, T()
+                loop in :tasks ts, t {
+                    throw(move(t))
+                }
+            }
+            println(detrack(t).pub)
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun nn_10_throw_track() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+            }
+            val t = do {
+                val ts = tasks()
+                spawn in ts, T()
+                loop in :tasks ts, t {
+                    throw(move(t))
+                    nil
+                }
+            }
+            println(t)
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n" +
+                "anon : (lin 9, col 21) : throw(move(t))\n" +
+                "throw error : uncaught exception\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun nn_11_throw_track() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+            }
+            val ts = tasks()
+            catch true {
+                spawn in ts, T()
+                loop in :tasks ts, t {
+                    throw(move(t))
+                }
+            }
+            println(:ok)
+        """)
         assert(out == ":ok\n") { out }
     }
 

@@ -417,6 +417,7 @@ class Parser (lexer_: Lexer)
                                     if ceu_dyn_$N == `:pointer NULL` {
                                         ;; empty slot
                                         set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
+                                    ${pre0}
                                     } else {
                                         ;;;
                                         val ceu_x_$N

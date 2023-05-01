@@ -737,7 +737,10 @@ fun Coder.main (tags: Tags): String {
         }
 
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
-            if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
+            if (src->type==CEU_VALUE_X_TRACK && src->Bcast.Track!=NULL &&
+                src->Bcast.Track->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
+                return 0;
+            } else if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                 return 1;
             } else if (CEU_ISGLBDYN(src)) {
                 return 1;
@@ -1795,7 +1798,9 @@ fun Coder.main (tags: Tags): String {
                 CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            ceu_track_create(&frame->up_block->dn_dyns, task->Dyn, &ceu_acc);
+            CEU_Block* blk = (task->Dyn->up_dyns.dyns->up_block->depth > frame->up_block->depth) ?
+                task->Dyn->up_dyns.dyns->up_block : frame->up_block;
+            ceu_track_create(&blk->dn_dyns, task->Dyn, &ceu_acc);
             return CEU_RET_RETURN;
         }
     """ +
