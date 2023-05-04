@@ -620,6 +620,13 @@ class TExec {
     // DICT
 
     @Test
+    fun dd_dict0() {
+        val out = all("""
+            println(@[(:key,:val)])
+        """)
+        assert(out == "@[(:key,:val)]\n") { out }
+    }
+    @Test
     fun dd_dict1() {
         val out = all("""
             println(type(@[(1,2)]))

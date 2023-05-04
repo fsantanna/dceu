@@ -1138,14 +1138,6 @@ fun Coder.main (tags: Tags): String {
                 col->Ncast.Dict.buf = realloc(col->Ncast.Dict.buf, new*2*sizeof(CEU_Value));
                 assert(col->Ncast.Dict.buf != NULL);
                 memset(&(*col->Ncast.Dict.buf)[old], 0, (new-old)*2*sizeof(CEU_Value));  // x[i]=nil
-                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
-                    //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
-                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
-                    //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
-                int ret = MIN(ret1,ret2);
-                if (ret == CEU_RET_THROW) {
-                    return ret;
-                }
             }
             assert(old != -1);
             
@@ -1160,6 +1152,14 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(&vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
+                }
+                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
+                    //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
+                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
+                    //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
+                int ret = MIN(ret1,ret2);
+                if (ret == CEU_RET_THROW) {
+                    return ret;
                 }
                 (*col->Ncast.Dict.buf)[old][0] = *key;
                 (*col->Ncast.Dict.buf)[old][1] = *val;
