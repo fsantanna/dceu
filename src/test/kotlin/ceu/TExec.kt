@@ -1531,6 +1531,16 @@ class TExec {
         assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun scope23_tasks() {
+        val out = all("""
+            do {
+                val t = [tasks(), tasks()]
+                println(#t)
+            }
+        """)
+        assert(out == "2\n") { out }
+    }
 
     // IF
 

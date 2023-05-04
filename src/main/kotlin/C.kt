@@ -758,7 +758,7 @@ fun Coder.main (tags: Tags): String {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1, 1 },     // src = NON
                 { 1, 1, 1, 1, 1 },     // src = VAR
-                { 1, 1, 0, 1, 0 },     // src = FIX
+                { 1, 1, 1, 1, 0 },     // src = FIX
                 { 1, 0, 9, 1, 9 },     // src = PUB
                 { 1, 0, 9, 9, 1 }      // src = EVT
             };
