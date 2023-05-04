@@ -1446,6 +1446,84 @@ class TExec {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun scope18_tup() {
+        val out = all("""
+            val T = task (t1) {
+                val t2 = []
+                pass [t1,[],t2]
+                yield(nil)
+            }
+            do {
+                spawn T([])
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope19_tup() {
+        val out = all("""
+            do {
+                val t1 = []
+                do {
+                    val t2 = []
+                    pass [t1,[],t2]
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope20_vec() {
+        val out = all("""
+            do {
+                val t1 = []
+                do {
+                    val t2 = []
+                    pass #[t1,[],t2]
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope21_dict() {
+        val out = all("""
+            do {
+                val t1 = []
+                do {
+                    val t2 = []
+                    pass @[(t1,t2)]
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope22_dict() {
+        val out = all("""
+            do {
+                val t1 = []
+                val d = @[(t1,t1)]
+                do {
+                    val t2 = []
+                    set d[t2] = t2
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
 
     // IF
 

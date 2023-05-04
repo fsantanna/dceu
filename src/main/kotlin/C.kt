@@ -775,10 +775,9 @@ fun Coder.main (tags: Tags): String {
             if (dst == NULL) {
                 // caller: do not set block (only tphold)
             } else {
-                if (src->up_dyns.dyns==NULL || dst->up_block->depth < src->up_dyns.dyns->up_block->depth) {
-                    if (src->up_dyns.dyns != NULL) {
-                        ceu_hold_rem(src);
-                    }
+                assert(src->up_dyns.dyns != NULL);
+                if (dst->up_block->depth < src->up_dyns.dyns->up_block->depth) {
+                    ceu_hold_rem(src);
                     ceu_hold_add(dst, src);
                 }
             }
@@ -1143,7 +1142,10 @@ fun Coder.main (tags: Tags): String {
                     //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
                 int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
                     //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
-                assert(MIN(ret1,ret2) != CEU_RET_THROW);
+                int ret = MIN(ret1,ret2);
+                if (ret == CEU_RET_THROW) {
+                    return ret;
+                }
             }
             assert(old != -1);
             
@@ -1163,7 +1165,7 @@ fun Coder.main (tags: Tags): String {
                 (*col->Ncast.Dict.buf)[old][1] = *val;
             }
             
-            return CEU_RET_RETURN;                  // TODO
+            return CEU_RET_RETURN;
         }        
         
         CEU_RET ceu_col_check (CEU_Value* col, CEU_Value* idx) {
