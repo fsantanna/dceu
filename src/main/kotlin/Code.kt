@@ -640,19 +640,28 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
                     ${this.x.code()}
+                    int ceu_ref = 0;
+                    if (ceu_acc.type == CEU_VALUE_REF) {
+                        ceu_ref = 1;
+                        ceu_acc = ceu_deref(ceu_acc);
+                    }
                     if (ceu_acc.type != CEU_VALUE_X_TASK) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected task");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
-                        assrc("ceu_dyn_$n->Bcast.X.frame->X.pub")
+                        assrc("ceu_dyn_$n->Bcast.X.frame->X.pub") + """
+                            if (ceu_ref) {
+                                ceu_acc = ceu_toref(ceu_acc);
+                            }
+                        """
                     } else {
                         val src = this.asdst_src()
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
                         if ($src.type > CEU_VALUE_DYNAMIC) {
-                            ceu_ret = ceu_block_set($src.Dyn, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB);
-                            //ceu_ret = ceu_block_set($src.Dyn, ceu_x->up_dyns.dyns, CEU_HOLD_FIX);
+                            //ceu_ret = ceu_block_set($src.Dyn, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB);
+                            ceu_ret = ceu_block_set($src.Dyn, ceu_x->up_dyns.dyns, CEU_HOLD_FIX);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         ceu_gc_inc(&$src);

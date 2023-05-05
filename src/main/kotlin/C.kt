@@ -129,6 +129,7 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CHAR,
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
+            CEU_VALUE_REF,
             CEU_VALUE_DYNAMIC,  // all below are dynamic
             CEU_VALUE_P_FUNC,     // prototypes func, coro, task
             CEU_VALUE_P_CORO,
@@ -159,6 +160,7 @@ fun Coder.main (tags: Tags): String {
                 char Char;
                 double Number;
                 void* Pointer;
+                struct CEU_Dyn* Ref;
                 struct CEU_Dyn* Dyn;    // Func/Task/Tuple/Dict/Coro/Tasks: allocates memory
             };
         } CEU_Value;
@@ -739,6 +741,8 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
             if (src->type==CEU_VALUE_X_TRACK && src->Bcast.Track!=NULL &&
                 src->Bcast.Track->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
+                return 0;
+            } else if (src->type == CEU_VALUE_REF) {
                 return 0;
             } else if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
                 return 1;
@@ -1332,7 +1336,7 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
         
             *x = (CEU_Dyn) {
-                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_EVT, {
+                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_FIX, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { tasks, NULL, frame }
                     } }
@@ -1591,14 +1595,29 @@ fun Coder.main (tags: Tags): String {
             return ceu_x_create(&frame->up_block->dn_dyns, coro, &ceu_acc);
         }
         
+        CEU_Value ceu_deref (CEU_Value ref) {
+            assert(ref.type == CEU_VALUE_REF);
+            return (CEU_Value) { ref.Ref->type, .Dyn=ref.Ref };
+        }
+        CEU_Value ceu_toref (CEU_Value v) {
+            if (v.type < CEU_VALUE_DYNAMIC) {
+                return v;
+            } else {
+                return (CEU_Value) { CEU_VALUE_REF, .Dyn=v.Dyn };
+            }
+        }
+        
         CEU_RET ceu_status_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
-            CEU_Value* coro = args[0];
-            if (coro->type!=CEU_VALUE_X_CORO && coro->type!=CEU_VALUE_X_TASK) {
+            CEU_Value coro = *args[0];
+            if (coro.type == CEU_VALUE_REF) {
+                coro = ceu_deref(coro);
+            }
+            if (coro.type!=CEU_VALUE_X_CORO && coro.type!=CEU_VALUE_X_TASK) {
                 CEU_THROW_MSG("\0 : status error : expected coroutine");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro->Dyn->Bcast.status + CEU_TAG_yielded - 1} };
+            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Bcast.status + CEU_TAG_yielded - 1} };
             return CEU_RET_RETURN;
         }
 
@@ -1627,7 +1646,7 @@ fun Coder.main (tags: Tags): String {
             if (track->Dyn->Bcast.Track == NULL) {
                 ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
             } else {
-                ceu_acc = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=track->Dyn->Bcast.Track} };
+                ceu_acc = (CEU_Value) { CEU_VALUE_REF, {.Ref=track->Dyn->Bcast.Track} };
             }
             return CEU_RET_RETURN;
         }
