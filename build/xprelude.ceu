@@ -281,7 +281,7 @@ func to-tracks (...) {
             }
             v is? :x-tasks {
                 loop in :tasks v, i {
-                    set ret[+] = i
+                    set ret[+] = move(i)
                 }
             }
         }
