@@ -2903,6 +2903,22 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun hh_20_pub_pass() {
+        val out = all("""
+            val S = task (t) {
+                println(t)
+                yield(nil)
+            }
+            val T = task () {
+                set task.pub = [1,2,3]
+                spawn S(task.pub)
+                nil
+            }
+            spawn T()
+        """)
+        assert(out == "[1,2,3]\n") { out }
+    }
 
     // STATUS
 

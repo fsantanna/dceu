@@ -1541,6 +1541,42 @@ class TExec {
         """)
         assert(out == "2\n") { out }
     }
+    @Test
+    fun scope24_tracks() {
+        val out = all("""
+            val T = task () { yield(nil) }
+            do {
+                val ts = tasks()
+                spawn in ts, T()
+                do {
+                    val vec = #[]
+                    loop in :tasks ts, t {
+                        set vec[#vec] = t
+                    }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun scope25_tracks() {
+        val out = all("""
+            val T = task () { yield(nil) }
+            do {
+                val ts = tasks()
+                spawn in ts, T()
+                do {
+                    val vec = #[]
+                    loop in :tasks ts, t {
+                        set vec[#vec] = move(t)
+                    }
+                    println(#vec)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // IF
 

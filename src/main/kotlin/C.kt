@@ -90,7 +90,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (struct CEU_Dyns* dyns, struct CEU_Dyn* dyn);
         void ceu_hold_rem (struct CEU_Dyn* dyn);
-        CEU_RET ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold);
+        void ceu_block_set (struct CEU_Dyn* src, struct CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold);
         
         void ceu_tasks_create (struct CEU_Dyns* hld, int max, struct CEU_Value* ret); 
         CEU_RET ceu_x_create (struct CEU_Dyns* hld, struct CEU_Value* task, struct CEU_Value* ret);
@@ -106,15 +106,15 @@ fun Coder.main (tags: Tags): String {
         int ceu_tag_to_size (int type);
         void ceu_max_depth (struct CEU_Dyn* dyn, int n, struct CEU_Value* childs);
         CEU_RET ceu_vector_get (struct CEU_Dyn* vec, int i);
-        CEU_RET ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
+        int ceu_vector_set (struct CEU_Dyn* vec, int i, struct CEU_Value v);
         struct CEU_Dyn* ceu_vector_from_c_string (struct CEU_Dyns* hld, const char* str);
         
         int ceu_dict_key_to_index (struct CEU_Dyn* col, struct CEU_Value* key, int* idx);
         struct CEU_Value ceu_dict_get (struct CEU_Dyn* col, struct CEU_Value* key);
-        CEU_RET ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
+        int ceu_dict_set (struct CEU_Dyn* col, struct CEU_Value* key, struct CEU_Value* val);
         CEU_RET ceu_col_check (struct CEU_Value* col, struct CEU_Value* idx);
         
-        CEU_RET ceu_tuple_set (struct CEU_Dyn* tup, int i, struct CEU_Value v);
+        int ceu_tuple_set (struct CEU_Dyn* tup, int i, struct CEU_Value v);
 
         void ceu_track_create (struct CEU_Dyns* hld, struct CEU_Dyn* x, struct CEU_Value* ret);
         
@@ -477,7 +477,7 @@ fun Coder.main (tags: Tags): String {
                         CEU_Tags_List* cur = dyn->Dyn->tags;
                         int i = 0;
                         while (cur != NULL) {
-                            assert(CEU_RET_RETURN == ceu_tuple_set(tup, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
+                            assert(ceu_tuple_set(tup, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
                             cur = cur->next;
                         }
                     }                    
@@ -736,7 +736,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        int ceu_block_chk (CEU_Dyns* dst, CEU_Dyn* src) {
+        int ceu_block_chk_depth (CEU_Dyns* dst, CEU_Dyn* src) {
             if (src->type==CEU_VALUE_X_TRACK && src->Bcast.Track!=NULL &&
                 src->Bcast.Track->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 return 0;
@@ -754,7 +754,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_block_hld (CEU_HOLD dst, CEU_HOLD src) {
+        int ceu_block_chk_hold (CEU_HOLD dst, CEU_HOLD src) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1, 1 },     // src = NON
                 { 1, 1, 1, 1, 1 },     // src = VAR
@@ -819,16 +819,19 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
-            //assert(dst_dyns != NULL);     // x :tmp [0] = []
-            // dst might be NULL when assigning to orphan tuple
-            //printf("> %d %d\n", ceu_block_chk(dst_dyns,src), ceu_block_hld(dst_tphold,src->tphold));
-            if ((dst_dyns==NULL || ceu_block_chk(dst_dyns,src)) && ceu_block_hld(dst_tphold,src->tphold)) {
-                ceu_block_rec(dst_dyns, src, dst_tphold);
-            } else {
-                CEU_THROW_RET(CEU_ERR_ERROR);
+        int ceu_block_chk (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
+            //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(dst_tphold,src->tphold), ceu_block_chk_depth(dst_dyns,src));
+            return (dst_dyns==NULL || (ceu_block_chk_hold(dst_tphold,src->tphold) && ceu_block_chk_depth(dst_dyns,src)));
+        }
+        void ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
+            ceu_block_rec(dst_dyns, src, dst_tphold);
+        }
+        int ceu_block_chk_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
+            if (!ceu_block_chk(src, dst_dyns, dst_tphold)) {
+                return 0;
             }
-            return CEU_RET_RETURN;            
+            ceu_block_set(src, dst_dyns, dst_tphold);
+            return 1;
         }
     """ +
     """ // BCAST - TRAVERSE
@@ -1007,23 +1010,23 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_RET ceu_block_set_mutual (CEU_Dyn* dst, CEU_Dyn* src) {
+        int ceu_block_chk_set_mutual (CEU_Dyn* dst, CEU_Dyn* src) {
             if (dst->tphold == CEU_HOLD_NON) {
                 if (src->tphold == CEU_HOLD_NON) {
-                    return CEU_RET_RETURN;
+                    return 1;
                 } else {
-                    return ceu_block_set(dst, src->up_dyns.dyns, src->tphold);
+                    return ceu_block_chk_set(dst, src->up_dyns.dyns, src->tphold);
                 }
             } else {
-                return ceu_block_set(src, dst->up_dyns.dyns, dst->tphold);
+                return ceu_block_chk_set(src, dst->up_dyns.dyns, dst->tphold);
             }
         }
 
-        CEU_RET ceu_tuple_set (CEU_Dyn* tup, int i, CEU_Value v) {
+        int ceu_tuple_set (CEU_Dyn* tup, int i, CEU_Value v) {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(tup, v.Dyn);
+            return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(tup, v.Dyn);
                 //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold);
         }
         
@@ -1038,13 +1041,13 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_vector_set (CEU_Dyn* vec, int i, CEU_Value v) {
+        int ceu_vector_set (CEU_Dyn* vec, int i, CEU_Value v) {
             if (v.type == CEU_VALUE_NIL) {           // pop
                 assert(i == vec->Ncast.Vector.its-1);
                 assert(CEU_RET_RETURN == ceu_vector_get(vec, i));
                 ceu_gc_dec(&ceu_acc, 1);
                 vec->Ncast.Vector.its--;
-                return CEU_RET_RETURN;
+                return 1;
             } else {
                 if (vec->Ncast.Vector.its == 0) {
                     vec->Ncast.Vector.type = v.type;
@@ -1068,7 +1071,7 @@ fun Coder.main (tags: Tags): String {
                     assert(i < vec->Ncast.Vector.its);
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
-                return (v.type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(vec, v.Dyn);
+                return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(vec, v.Dyn);
                     //ceu_block_set(v.Dyn, vec->up_dyns.dyns, vec->tphold);
             }
         }
@@ -1127,7 +1130,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
         }        
-        CEU_RET ceu_dict_set (CEU_Dyn* col, CEU_Value* key, CEU_Value* val) {
+        int ceu_dict_set (CEU_Dyn* col, CEU_Value* key, CEU_Value* val) {
             //assert(key->type != CEU_VALUE_NIL);     // TODO
             int old;
             ceu_dict_key_to_index(col, key, &old);
@@ -1153,19 +1156,18 @@ fun Coder.main (tags: Tags): String {
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }
-                int ret1 = (key->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, key->Dyn);
+                int ret1 = (key->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(col, key->Dyn);
                     //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
-                int ret2 = (val->type < CEU_VALUE_DYNAMIC) ? CEU_RET_RETURN : ceu_block_set_mutual(col, val->Dyn);
+                int ret2 = (val->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(col, val->Dyn);
                     //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
-                int ret = MIN(ret1,ret2);
-                if (ret == CEU_RET_THROW) {
-                    return ret;
+                if (!(ret1 && ret2)) {
+                    return 0;
                 }
                 (*col->Ncast.Dict.buf)[old][0] = *key;
                 (*col->Ncast.Dict.buf)[old][1] = *val;
             }
             
-            return CEU_RET_RETURN;
+            return 1;
         }        
         
         CEU_RET ceu_col_check (CEU_Value* col, CEU_Value* idx) {
@@ -1702,7 +1704,7 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<old->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &old->Ncast.Tuple.buf[i] };
                         assert(CEU_RET_RETURN == ceu_copy_f(frame, _2, 1, args));
-                        assert(CEU_RET_RETURN == ceu_tuple_set(new, i, ceu_acc));
+                        assert(ceu_tuple_set(new, i, ceu_acc));
                     }
                     ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=new} };
                     break;
@@ -1779,7 +1781,7 @@ fun Coder.main (tags: Tags): String {
             ceu_acc = *args[0];
             #if 0
             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                if (!ceu_block_hld(CEU_HOLD_EVT,ceu_acc.Dyn->tphold)) {
+                if (!ceu_block_chk_hold(CEU_HOLD_EVT,ceu_acc.Dyn->tphold)) {
                     CEU_THROW_MSG("\0 : throw error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
