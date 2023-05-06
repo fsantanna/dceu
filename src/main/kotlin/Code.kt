@@ -559,7 +559,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.evt.tk.pos.file} : (lin ${this.evt.tk.pos.lin}, col ${this.evt.tk.pos.col}) : broadcast error : incompatible scopes");
                         }
                         //if (!CEU_ISGLBDYN(ceu_mem->evt_$n.Dyn)) { // (already tested inside rec below)
-                            ceu_block_rec(NULL, ceu_mem->evt_$n.Dyn, CEU_HOLD_EVT);
+                            ceu_block_set(ceu_mem->evt_$n.Dyn, NULL, CEU_HOLD_EVT);
                         //}
                     }
                     

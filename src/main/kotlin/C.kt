@@ -767,7 +767,7 @@ fun Coder.main (tags: Tags): String {
             return x[src][dst] == 1;
         }
 
-        void ceu_block_rec (CEU_Dyns* dst, CEU_Dyn* src, CEU_HOLD tphold) {
+        void ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst, CEU_HOLD tphold) {
             if (CEU_ISGLBDYN(src) || src->tphold==CEU_HOLD_EVT) {
                 return;
             }
@@ -787,14 +787,14 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<src->Ncast.Proto.upvs.its; i++) {
                         if (src->Ncast.Proto.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, src->Ncast.Proto.upvs.buf[i].Dyn, tphold);
+                            ceu_block_set(src->Ncast.Proto.upvs.buf[i].Dyn, dst, tphold);
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Ncast.Tuple.its; i++) {
                         if (src->Ncast.Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, src->Ncast.Tuple.buf[i].Dyn, tphold);
+                            ceu_block_set(src->Ncast.Tuple.buf[i].Dyn, dst, tphold);
                         }
                     }
                     break;
@@ -802,17 +802,17 @@ fun Coder.main (tags: Tags): String {
                     if (src->Ncast.Vector.type > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Ncast.Vector.type);
                         for (int i=0; i<src->Ncast.Vector.its; i++) {
-                            ceu_block_rec(dst, *(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), tphold);
+                            ceu_block_set(*(CEU_Dyn**)(src->Ncast.Vector.buf + i*sz), dst, tphold);
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Ncast.Dict.max; i++) {
                         if ((*src->Ncast.Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][0].Dyn, tphold);
+                            ceu_block_set((*src->Ncast.Dict.buf)[i][0].Dyn, dst, tphold);
                         }
                         if ((*src->Ncast.Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            ceu_block_rec(dst, (*src->Ncast.Dict.buf)[i][1].Dyn, tphold);
+                            ceu_block_set((*src->Ncast.Dict.buf)[i][1].Dyn, dst, tphold);
                         }
                     }
                     break;
@@ -822,9 +822,6 @@ fun Coder.main (tags: Tags): String {
         int ceu_block_chk (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(dst_tphold,src->tphold), ceu_block_chk_depth(dst_dyns,src));
             return (dst_dyns==NULL || (ceu_block_chk_hold(dst_tphold,src->tphold) && ceu_block_chk_depth(dst_dyns,src)));
-        }
-        void ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
-            ceu_block_rec(dst_dyns, src, dst_tphold);
         }
         int ceu_block_chk_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             if (!ceu_block_chk(src, dst_dyns, dst_tphold)) {
@@ -1785,7 +1782,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_THROW_MSG("\0 : throw error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
-                ceu_block_rec(NULL, ceu_acc.Dyn, CEU_HOLD_EVT);
+                ceu_block_set(ceu_acc.Dyn, NULL, CEU_HOLD_EVT);
             }
             #endif
             ceu_gc_inc(&ceu_acc);
