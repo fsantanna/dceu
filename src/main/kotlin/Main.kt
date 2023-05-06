@@ -9,7 +9,7 @@ val D = "\$"
 
 // VERSION
 const val MAJOR    = 0
-const val MINOR    = 1
+const val MINOR    = 2
 const val REVISION = 0
 const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 
@@ -31,7 +31,7 @@ val XOPERATORS = if (!XCEU) setOf() else {
 }
 
 val TAGS = listOf (
-    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer", ":ref",
     ":dynamic",
     ":func", ":coro", ":task",
     ":tuple", ":vector", ":dict",
