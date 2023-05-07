@@ -418,6 +418,12 @@ fun Coder.main (tags: Tags): String {
             puts("");
         }
         
+        CEU_Value* ceu_dyn_to_val (CEU_Dyn* dyn) {
+            static CEU_Value val;
+            val = (CEU_Value) { dyn->type, .Dyn=dyn };
+            return &val;
+        }
+        
         int ceu_as_bool (CEU_Value* v) {
             return !(v->type==CEU_VALUE_NIL || (v->type==CEU_VALUE_BOOL && !v->Bool));
         }
