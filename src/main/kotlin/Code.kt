@@ -198,7 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     {
                         CEU_Value* ceu_up = &${ups.pub[this]!!.id2c(dcl,upv).first};
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
-                            assert(ceu_block_chk_set_mutual(ceu_proto_$n,ceu_up->Dyn));
+                            assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                             //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
                         }
                         ceu_gc_inc(ceu_up);
@@ -555,7 +555,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_gc_inc(&ceu_mem->evt_$n);
 
                     if (ceu_mem->evt_$n.type>CEU_VALUE_DYNAMIC) {
-                        if (!ceu_block_chk_hold(CEU_HOLD_EVT,ceu_mem->evt_$n.Dyn->tphold)) {
+                        if (!ceu_block_chk(ceu_mem->evt_$n.Dyn->tphold,NULL,CEU_HOLD_EVT)) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.evt.tk.pos.file} : (lin ${this.evt.tk.pos.lin}, col ${this.evt.tk.pos.col}) : broadcast error : incompatible scopes");
                         }
                         //if (!CEU_ISGLBDYN(ceu_mem->evt_$n.Dyn)) { // (already tested inside rec below)
@@ -844,7 +844,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     ceu_hold_rem(ceu_mem->dict_$n);
                                     ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
                                 }
-                                assert(ceu_block_chk_set_mutual(ceu_mem->dict_$n, ceu_acc.Dyn));
+                                assert(ceu_block_chk_set_mutual(ceu_acc.Dyn, ceu_mem->dict_$n));
                             }
                             ceu_mem->key_$n = ceu_acc;
                             ${it.second.code()}

@@ -736,7 +736,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        int ceu_block_chk_depth (CEU_Dyns* dst, CEU_Dyn* src) {
+        int ceu_block_chk_depth (CEU_Dyn* src, CEU_Dyns* dst) {
             if (src->type==CEU_VALUE_X_TRACK && src->Bcast.Track!=NULL &&
                 src->Bcast.Track->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
                 return 0;
@@ -754,7 +754,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_block_chk_hold (CEU_HOLD dst, CEU_HOLD src) {
+        int ceu_block_chk_hold (CEU_HOLD src, CEU_HOLD dst) {
             static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
                 { 1, 1, 1, 1, 1 },     // src = NON
                 { 1, 1, 1, 1, 1 },     // src = VAR
@@ -820,8 +820,8 @@ fun Coder.main (tags: Tags): String {
         }
         
         int ceu_block_chk (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
-            //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(dst_tphold,src->tphold), ceu_block_chk_depth(dst_dyns,src));
-            return (dst_dyns==NULL || (ceu_block_chk_hold(dst_tphold,src->tphold) && ceu_block_chk_depth(dst_dyns,src)));
+            //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(src->tphold,dst_tphold), ceu_block_chk_depth(src,dst_dyns));
+            return ceu_block_chk_hold(src->tphold,dst_tphold) && (dst_dyns==NULL || ceu_block_chk_depth(src,dst_dyns));
         }
         int ceu_block_chk_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             if (!ceu_block_chk(src, dst_dyns, dst_tphold)) {
@@ -1007,7 +1007,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_block_chk_set_mutual (CEU_Dyn* dst, CEU_Dyn* src) {
+        int ceu_block_chk_set_mutual (CEU_Dyn* src, CEU_Dyn* dst) {
             if (dst->tphold == CEU_HOLD_NON) {
                 if (src->tphold == CEU_HOLD_NON) {
                     return 1;
@@ -1023,7 +1023,7 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(tup, v.Dyn);
+            return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(v.Dyn,tup);
                 //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold);
         }
         
@@ -1068,7 +1068,7 @@ fun Coder.main (tags: Tags): String {
                     assert(i < vec->Ncast.Vector.its);
                 }
                 memcpy(vec->Ncast.Vector.buf + i*sz, (char*)&v.Number, sz);
-                return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(vec, v.Dyn);
+                return (v.type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(v.Dyn,vec);
                     //ceu_block_set(v.Dyn, vec->up_dyns.dyns, vec->tphold);
             }
         }
@@ -1153,9 +1153,9 @@ fun Coder.main (tags: Tags): String {
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }
-                int ret1 = (key->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(col, key->Dyn);
+                int ret1 = (key->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(key->Dyn,col);
                     //ceu_block_set(key->Dyn, col->up_dyns.dyns, col->tphold);
-                int ret2 = (val->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(col, val->Dyn);
+                int ret2 = (val->type < CEU_VALUE_DYNAMIC) || ceu_block_chk_set_mutual(val->Dyn,col);
                     //ceu_block_set(val->Dyn, col->up_dyns.dyns, col->tphold);
                 if (!(ret1 && ret2)) {
                     return 0;
@@ -1778,7 +1778,7 @@ fun Coder.main (tags: Tags): String {
             ceu_acc = *args[0];
             #if 0
             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                if (!ceu_block_chk_hold(CEU_HOLD_EVT,ceu_acc.Dyn->tphold)) {
+                if (!ceu_block_chk_hold(ceu_acc.Dyn->tphold,CEU_HOLD_EVT)) {
                     CEU_THROW_MSG("\0 : throw error : incompatible scopes");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
