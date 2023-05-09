@@ -825,15 +825,23 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_block_chk (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
+        int ceu_block_chk (CEU_Value* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(src->tphold,dst_tphold), ceu_block_chk_depth(src,dst_dyns));
-            return ceu_block_chk_hold(src->tphold,dst_tphold) && (dst_dyns==NULL || ceu_block_chk_depth(src,dst_dyns));
+            /*if (src->type == CEU_VALUE_REF) {
+                return 0;
+            } else*/ if (src->type < CEU_VALUE_DYNAMIC) {
+                return 1;
+            } else {
+                return ceu_block_chk_hold(src->Dyn->tphold,dst_tphold) && (dst_dyns==NULL || ceu_block_chk_depth(src->Dyn,dst_dyns));
+            }
         }
-        int ceu_block_chk_set (CEU_Dyn* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
+        int ceu_block_chk_set (CEU_Value* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             if (!ceu_block_chk(src, dst_dyns, dst_tphold)) {
                 return 0;
             }
-            ceu_block_set(src, dst_dyns, dst_tphold);
+            if (src->type > CEU_VALUE_DYNAMIC) {
+                ceu_block_set(src->Dyn, dst_dyns, dst_tphold);
+            }
             return 1;
         }
     """ +
@@ -1018,10 +1026,10 @@ fun Coder.main (tags: Tags): String {
                 if (src->tphold == CEU_HOLD_NON) {
                     return 1;
                 } else {
-                    return ceu_block_chk_set(dst, src->up_dyns.dyns, src->tphold);
+                    return ceu_block_chk_set(ceu_dyn_to_val(dst), src->up_dyns.dyns, src->tphold);
                 }
             } else {
-                return ceu_block_chk_set(src, dst->up_dyns.dyns, dst->tphold);
+                return ceu_block_chk_set(ceu_dyn_to_val(src), dst->up_dyns.dyns, dst->tphold);
             }
         }
 
