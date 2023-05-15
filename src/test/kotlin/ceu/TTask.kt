@@ -2271,11 +2271,14 @@ class TTask {
             var ts = tasks()
             spawn in ts, T()
             loop in :tasks ts, trk {
-                val :tmp tsk = detrack(trk)
+                val      tsk1 = detrack(trk)
+                val :tmp tsk2 = detrack(trk)
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
     }
 
     // EVT
@@ -2688,14 +2691,14 @@ class TTask {
                 println(x)
             }) ()
         """)
-        //assert(out == "[]\n") { out }
+        assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spa...)\n" +
         //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
         //        "anon : (lin 6, col 34) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
-        assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
-                "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
-                "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 2, col 20) : task () { set task.pub = [] var x spawn task ...)\n" +
+        //        "anon : (lin 5, col 24) : task () :fake { set x = task.pub }()\n" +
+        //        "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun hh_pub9_10_fake_task() {
@@ -3485,7 +3488,9 @@ class TTask {
             ;;println(t1, r1, x1, status(t1))
             println(status(t1))
         """)
-        assert(out == ":terminated\n") { out }
+        //assert(out == ":terminated\n") { out }
+        assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
     }
     @Test
     fun ll_18_track_scope() {
@@ -3686,13 +3691,13 @@ class TTask {
             nil
         """)
         //assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
-        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
-        //        "[]\n" +
-        //        ":error\n") { out }
         assert(out == "anon : (lin 15, col 13) : f(a)\n" +
-                "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+                "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+                "[]\n" +
                 ":error\n") { out }
+        //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
+        //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun nn_03_expose_err() {
@@ -3710,12 +3715,12 @@ class TTask {
             var x = f(a)        ;; no
             println(x)
         """)
-        //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
-        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
-        //        ":error\n") { out }
         assert(out == "anon : (lin 12, col 21) : f(a)\n" +
-                "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+                "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
+        //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun nn_04_expose_err() {

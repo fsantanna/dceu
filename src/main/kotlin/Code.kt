@@ -200,6 +200,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                             //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
+                        } else {
+                            assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->up_dyns.dyns, ceu_proto_$n->tphold));
                         }
                         ceu_gc_inc(ceu_up);
                         ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
@@ -267,6 +269,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                 }
                                 if (ceu_i < ceu_n) {
+                                    ${this.do_issafe().cond { """
+                                        ceu_deref(ceu_args[ceu_i]);
+                                    """ }}
                                     if (!ceu_block_chk_set(ceu_args[ceu_i], &ceu_mem->_${idc}_->dn_dyns, ${if (this.do_issafe()) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                                     }
@@ -421,6 +426,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 { // DCL ${this.tk.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
+                    ${this.do_issafe().cond { """
+                        ceu_deref(&ceu_acc);
+                    """ }}
                     ${(this.init && this.src!=null).cond {
                         this.src!!.code() + """
                             if (!ceu_block_chk_set(&ceu_acc, &$bupc->dn_dyns, ${if (this.tmp && this.do_issafe()) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
@@ -502,7 +510,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_CONTINUE_ON_THROW();
                         CEU_Value ceu_accx = ceu_acc;
                         if (!ceu_as_bool(&ceu_accx)) {
-                            if (ceu_err.type>CEU_VALUE_DYNAMIC && ceu_err.Dyn->tphold!=CEU_HOLD_NON) {
+                            if (ceu_err.type==CEU_VALUE_REF || (ceu_err.type>CEU_VALUE_DYNAMIC && ceu_err.Dyn->tphold!=CEU_HOLD_NON)) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : rethrow error : incompatible scopes");
                             }
                             CEU_THROW_DO(ceu_err, continue); // uncaught, rethrow
@@ -634,18 +642,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 { // PUB
                     CEU_Dyn* ceu_dyn_$n;
                     ${this.x.code()}
+                    int ceu_isref = ceu_deref(&ceu_acc);
                     if (ceu_acc.type != CEU_VALUE_X_TASK) {                
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected task");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
-                        assrc("ceu_dyn_$n->Bcast.X.frame->X.pub")
+                        assrc("ceu_dyn_$n->Bcast.X.frame->X.pub") + """
+                            if (ceu_isref) {
+                                ceu_toref(&ceu_acc);
+                            }
+                        """
                     } else {
                         val src = this.asdst_src()
                         val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
                         """ // PUB - SET
-                        //ceu_ret = ceu_block_set($src.Dyn, ceu_x->up_dyns.dyns, CEU_HOLD_FIX);
-                        if (!ceu_block_chk_set(&$src, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB)) {
+                        if (!ceu_block_chk_set(&$src, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_FIX))
+                        //if (!ceu_block_chk_set(&$src, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB))
+                        {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         ceu_gc_inc(&$src);
@@ -833,6 +847,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
                                 }
                                 assert(ceu_block_chk_set_mutual(ceu_acc.Dyn, ceu_mem->dict_$n));
+                            } else {
+                                assert(ceu_block_chk_set(&ceu_acc, ceu_mem->dict_$n->up_dyns.dyns, ceu_mem->dict_$n->tphold));
                             }
                             ceu_mem->key_$n = ceu_acc;
                             ${it.second.code()}
@@ -879,6 +895,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }}
                     // COL
                     ${this.col.code()}
+                    int ceu_isref = ceu_deref(&ceu_acc);
                     ceu_ret = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                     ${if (!this.isdst()) {
@@ -898,6 +915,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             }
                             default:
                                 assert(0 && "bug found");
+                        }
+                        if (ceu_isref) {
+                            ceu_toref(&ceu_acc);
                         }
                         """                        
                     } else {

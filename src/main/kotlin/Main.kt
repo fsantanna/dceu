@@ -31,7 +31,7 @@ val XOPERATORS = if (!XCEU) setOf() else {
 }
 
 val TAGS = listOf (
-    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer", ":ref",
     ":dynamic",
     ":func", ":coro", ":task",
     ":tuple", ":vector", ":dict",
