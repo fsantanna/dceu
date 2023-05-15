@@ -426,11 +426,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 { // DCL ${this.tk.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
-                    ${this.do_issafe().cond { """
-                        ceu_deref(&ceu_acc);
-                    """ }}
                     ${(this.init && this.src!=null).cond {
                         this.src!!.code() + """
+                            ${this.do_issafe().cond { """
+                                ceu_deref(&ceu_acc);
+                            """ }}
                             if (!ceu_block_chk_set(&ceu_acc, &$bupc->dn_dyns, ${if (this.tmp && this.do_issafe()) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                             }
@@ -566,6 +566,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                     
                     ${this.xin.code()}
+                    ceu_deref(&ceu_acc);
                     int ceu_err_$n = 0;
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
                     if (ceu_acc.type == CEU_VALUE_X_TASK) {

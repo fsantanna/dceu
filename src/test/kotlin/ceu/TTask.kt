@@ -1823,6 +1823,18 @@ class TTask {
         assert(out == ":yielded\n") { out }
     }
     @Test
+    fun ff_pool11_check() {
+        val out = all("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, xxx {
+                println(detrack(xxx) == detrack(xxx))
+            }
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
     fun ff_pool11_copy() {
         val out = all("""
             var T = task () { yield(nil) }
@@ -1856,6 +1868,18 @@ class TTask {
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun ff_pool12_bcast() {
+        val out = all("""
+            var T = task () { yield(nil); println(:ok) }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, xxx {
+                broadcast in detrack(xxx), nil
+            }
+        """)
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun ff_pool12_err_scope() {
@@ -2276,9 +2300,25 @@ class TTask {
             }
             println(:ok)
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun ff_pool30_scope() {
+        val out = all("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn in ts, T()
+            loop in :tasks ts, xxx {
+                do {
+                    val zzz = detrack(xxx)
+                    nil
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // EVT
@@ -3470,9 +3510,9 @@ class TTask {
                 println(x)
             }
         """)
-        assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
-        //assert(out.contains("x-task: 0x")) { out }
+        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("x-task: 0x")) { out }
     }
     @Test
     fun ll_17_detrack_err() {
@@ -3759,10 +3799,10 @@ class TTask {
             spawn T (track(t))
             println(:ok)
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
-                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun nn_06_expose() {

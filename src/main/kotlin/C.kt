@@ -1521,6 +1521,8 @@ fun Coder.main (tags: Tags): String {
         // EQ / NEQ / LEN / COROS / MOVE / COPY / THROW / TRACK
         CEU_RET ceu_op_equals_equals_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 2);
+            ceu_deref(args[0]);
+            ceu_deref(args[1]);
             CEU_Value* e1 = args[0];
             CEU_Value* e2 = args[1];
             int v = (e1->type == e2->type);
@@ -1590,6 +1592,7 @@ fun Coder.main (tags: Tags): String {
         
         CEU_RET ceu_op_hash_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
+            ceu_deref(args[0]);
             if (args[0]->type == CEU_VALUE_VECTOR) {
                 ceu_acc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0]->Dyn->Ncast.Vector.its} };
             } else if (args[0]->type == CEU_VALUE_TUPLE) {
