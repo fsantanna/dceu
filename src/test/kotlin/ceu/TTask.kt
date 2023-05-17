@@ -1328,8 +1328,10 @@ class TTask {
             """
             var T = task () {
                 yield(nil)
-                var v = evt
-                println(v)
+                do {
+                    var v = evt
+                    println(v)
+                }
             }
             var t = spawn T()
             ;;println(:1111)
@@ -1347,8 +1349,10 @@ class TTask {
             """
             var T = task () {
                 yield(nil)
-                var v = evt
-                println(v)
+                do {
+                    var v = evt
+                    println(v)
+                }
             }
             var t = spawn T()
             ;;println(:1111)
@@ -1403,8 +1407,10 @@ class TTask {
             """
             var T = task () {
                 yield(nil)
-                var v = evt
-                println(v)
+                do {
+                    var v = evt
+                    println(v)
+                }
             }
             var t = spawn T()
             ;;println(:1111)
@@ -1461,8 +1467,10 @@ class TTask {
                 yield(nil)
                 yield(nil)
                 ;;println(:2)
-                var v = evt
-                ;;println(:evt, v, evt)
+                do {
+                    var v = evt
+                    ;;println(:evt, v, evt)
+                }
             }
             var t2 = spawn T2()
             broadcast in :global, []
@@ -1577,7 +1585,9 @@ class TTask {
             }
             val T = task () {
                 yield(nil)
-                f(evt)
+                do {
+                    f(evt)
+                }
             }
             spawn T()
             do {
@@ -1589,6 +1599,19 @@ class TTask {
             }
         """)
         assert(out == "[]\n") { out }
+    }
+    @Test
+    fun ee_19_bcast_copy() {
+        val out = all("""
+            val T = task () {
+                yield(nil)
+                val v = copy(evt)
+                println(v)
+            }
+            spawn T()
+            broadcast in :global, [1,2,3]
+        """)
+        assert(out == "[1,2,3]\n") { out }
     }
 
     // POOL
@@ -2330,8 +2353,10 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                val xxx' = evt
-                nil
+                do {
+                    val xxx' = evt
+                    nil
+                }
             }
             var co = spawn(tk)()
             broadcast in :global, []
@@ -2352,7 +2377,9 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                val xxx' = evt[0]
+                do {
+                    val xxx' = evt[0]
+                }
             }
             spawn (tk) ()
             broadcast in :global, [[]]
@@ -2373,8 +2400,10 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                val xxx' = evt
-                nil
+                do {
+                    val xxx' = evt
+                    nil
+                }
             }
             var co = spawn (tk) (1)
             broadcast in :global, []
@@ -2395,15 +2424,17 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                val xxx' = evt
-                yield(nil)
+                do {
+                    val xxx' = evt
+                }
+                    yield(nil)
             }
             var co = spawn (tk)(1)
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 10, col 14) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 27) : invalid evt : cannot expose dynamic \"evt\"\n:error\n") { out }
         //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
@@ -2525,8 +2556,10 @@ class TTask {
             var tk
             set tk = task (xxx) {
                 yield(nil)
-                val xxx' = evt[0]
-                nil
+                do {
+                    val xxx' = evt[0]
+                    nil
+                }
             }
             var co = spawn (tk) ()
             broadcast in :global, #[[]]

@@ -3487,6 +3487,29 @@ class TExec {
             println(`:number ceu_gc_count`)
         """
         )
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
+    }   @Test
+    fun gc14_2_bcast_err() {
+        val out = ceu.all(
+            """
+            var tk = task () {
+                do {
+                    yield(nil)
+                    do {
+                        var v = evt
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
@@ -3513,7 +3536,9 @@ class TExec {
                 do {
                     yield(nil)
                     ;;println(evt)
-                    val v' = evt
+                    do {
+                        val v' = evt
+                    }
                 }
                 nil
                 ;;println(:out)

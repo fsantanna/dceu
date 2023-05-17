@@ -39,7 +39,7 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_NON = 0,   // not assigned, dst assigns
             CEU_HOLD_VAR,       // set and assignable to narrow 
             CEU_HOLD_FIX,       // set but not assignable across unsafe (even if same/narrow)
-            CEU_HOLD_EVT,
+            CEU_HOLD_EVT,       // no check block b/c enclosed by ref and only assignable in safe dcl/arg
             CEU_HOLD_MAX
         } CEU_HOLD;
 
@@ -745,38 +745,11 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        int ceu_block_chk_depth (CEU_Dyn* src, CEU_Dyns* dst) {
-            if (src->type==CEU_VALUE_X_TRACK && src->Bcast.Track!=NULL &&
-                src->Bcast.Track->up_dyns.dyns->up_block->depth > dst->up_block->depth) {
-                return 0;
-            } else if (src->tphold==CEU_HOLD_NON || src->tphold==CEU_HOLD_EVT) {
-                return 1;
-            } else if (CEU_ISGLBDYN(src)) {
-                return 1;
-            } else if (dst == src->up_dyns.dyns) {          // same block
-                return 1;
-            } else if (src->up_dyns.dyns==NULL || dst->up_block->depth >= src->up_dyns.dyns->up_block->depth) {
-                return 1;
-            } else {
-                //printf(">>> dst=%d >= src=%d\n", dst->up_block->depth, src->up_dyns.dyns->up_block->depth);
-                return 0;
-            }
-        }
-        
-        int ceu_block_chk_hold (CEU_HOLD src, CEU_HOLD dst) {
-            static const int x[CEU_HOLD_MAX][CEU_HOLD_MAX] = {
-                { 1, 1, 1, 1 },     // src = NON
-                { 1, 1, 1, 1 },     // src = VAR
-                { 1, 1, 1, 0 },     // src = FIX
-                { 1, 0, 9, 1 }      // src = EVT
-            };
-            //printf(">>> src=%d dst=%d = %d\n", src, dst, x[src][dst]);
-            assert(x[src][dst] != 9);
-            return x[src][dst] == 1;
-        }
-
         void ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst, CEU_HOLD tphold) {
-            if (CEU_ISGLBDYN(src) || src->tphold==CEU_HOLD_EVT) {
+            if (CEU_ISGLBDYN(src)) {
+                return;
+            }
+            if (src->tphold == CEU_HOLD_EVT) {
                 return;
             }
             src->tphold = MAX(src->tphold,tphold);
@@ -829,14 +802,33 @@ fun Coder.main (tags: Tags): String {
         
         int ceu_block_chk (CEU_Value* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             if (src->type > CEU_VALUE_DYNAMIC) {
-                //printf("> hold=%d depth=%d\n", ceu_block_chk_hold(src->Dyn->tphold,dst_tphold), ceu_block_chk_depth(src->Dyn,dst_dyns));
+                //printf("> depth=%d\n", ceu_block_chk_depth(src->Dyn,dst_dyns));
             }
             if (src->type == CEU_VALUE_REF) {
                 return 0;
             } else if (src->type < CEU_VALUE_DYNAMIC) {
                 return 1;
+            } else if (dst_dyns == NULL) {
+                return 1;
             } else {
-                return ceu_block_chk_hold(src->Dyn->tphold,dst_tphold) && (dst_dyns==NULL || ceu_block_chk_depth(src->Dyn,dst_dyns));
+                // ceu_block_chk_depth
+                if (src->Dyn->type==CEU_VALUE_X_TRACK && src->Dyn->Bcast.Track!=NULL &&
+                    src->Dyn->Bcast.Track->up_dyns.dyns->up_block->depth > dst_dyns->up_block->depth) {
+                    return 0;
+                } else if (src->Dyn->tphold == CEU_HOLD_NON) {
+                    return 1;
+                } else if (src->Dyn->tphold == CEU_HOLD_EVT) {
+                    return 1;
+                } else if (CEU_ISGLBDYN(src->Dyn)) {
+                    return 1;
+                } else if (dst_dyns == src->Dyn->up_dyns.dyns) {          // same block
+                    return 1;
+                } else if (src->Dyn->up_dyns.dyns==NULL || dst_dyns->up_block->depth >= src->Dyn->up_dyns.dyns->up_block->depth) {
+                    return 1;
+                } else {
+                    //printf(">>> dst=%d >= src=%d\n", dst_dyns->up_block->depth, src->Dyn->up_dyns.dyns->up_block->depth);
+                    return 0;
+                }
             }
         }
         int ceu_block_chk_set (CEU_Value* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
@@ -1732,6 +1724,7 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_copy_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
+            ceu_deref(src);
             CEU_Dyn* old = src->Dyn;
             switch (src->type) {
                 case CEU_VALUE_TUPLE: {
@@ -1816,15 +1809,6 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_THROW_MSG("throw error : uncaught exception");
             ceu_acc = *args[0];
-            #if 0
-            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                if (!ceu_block_chk_hold(ceu_acc.Dyn->tphold,CEU_HOLD_EVT)) {
-                    CEU_THROW_MSG("\0 : throw error : incompatible scopes");
-                    CEU_THROW_RET(CEU_ERR_ERROR);
-                }
-                ceu_block_set(ceu_acc.Dyn, NULL, CEU_HOLD_EVT);
-            }
-            #endif
             ceu_gc_inc(&ceu_acc);
             return CEU_RET_THROW;
         }

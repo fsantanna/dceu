@@ -273,7 +273,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                         ceu_deref(ceu_args[ceu_i]);
                                     """ }}
                                     if (!ceu_block_chk_set(ceu_args[ceu_i], &ceu_mem->_${idc}_->dn_dyns, ${if (this.do_issafe()) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
-                                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
+                                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
                                     ceu_mem->$idc = *ceu_args[ceu_i];
                                     ceu_gc_inc(&ceu_mem->$idc);
@@ -554,17 +554,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
                     ${this.evt.code()}
                     ceu_mem->evt_$n = ceu_acc;
+                    if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
+                        ceu_block_set(ceu_mem->evt_$n.Dyn, NULL, CEU_HOLD_EVT);
+                    }
                     ceu_gc_inc(&ceu_mem->evt_$n);
+                    ceu_toref(&ceu_mem->evt_$n);
 
-                    if (!ceu_block_chk(&ceu_mem->evt_$n,NULL,CEU_HOLD_EVT)) {
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.evt.tk.pos.file} : (lin ${this.evt.tk.pos.lin}, col ${this.evt.tk.pos.col}) : broadcast error : incompatible scopes");
-                    }
-                    if (ceu_mem->evt_$n.type > CEU_VALUE_DYNAMIC) {
-                        //if (!CEU_ISGLBDYN(ceu_mem->evt_$n.Dyn)) { // (already tested inside rec below)
-                            ceu_block_set(ceu_mem->evt_$n.Dyn, NULL, CEU_HOLD_EVT);
-                        //}
-                    }
-                    
                     ${this.xin.code()}
                     ceu_deref(&ceu_acc);
                     int ceu_err_$n = 0;
@@ -593,6 +588,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         return ceu_ret;
                     }
                     
+                    ceu_deref(&ceu_mem->evt_$n);
                     ceu_gc_dec(&ceu_mem->evt_$n, 1);
                     
                     if (ceu_err_$n) {
