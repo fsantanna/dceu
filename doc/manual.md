@@ -273,13 +273,13 @@ handle references in long-lasting blocks.
 
 A [tag](#basic-type) is a basic type of Ceu that represents unique values in a
 human-readable form.
+Tags are also known as *symbols* or *atoms* in other programming languages.
 Any identifier prefixed with a colon (`:`) is a valid tag that is guaranteed to
 be unique in comparison to others (i.e., `:x == :x` and `:x /= :y`).
 Just like the number `10`, the tag `:x` is a value in itself and needs not to
 be declared.
 Tags are typically used as keys in dictionaries (e.g., `:x`, `:y`), or as
 enumerations representing states (e.g., `:pending`, `:done`).
-Tags are also known as *symbols* or *atoms* in other programming languages.
 
 The next example uses tags as keys in a dictionary:
 
@@ -316,7 +316,7 @@ tags(x, :T.A, true)         ;; x is of user type :T.A
 println(tags(x,:T))         ;; --> true
 println(tags(x,:T.A))       ;; --> true
 println(tags(x,:T.B))       ;; --> false
-println(x is :T)            ;; --> true  (equivalent to tags(x,:T))
+println(x is? :T)           ;; --> true  (equivalent to tags(x,:T))
 ```
 
 In the example, `x` is set to user type `:T.A`, which is compatible with types
@@ -335,17 +335,16 @@ the dictionary of the first example:
 
 ```
 data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
-val p1 :Pos = [10,20]   ;; declares that `p1` satisfies template `:Pos`
-println(p1.x, p1.y)     ;; <-- 10, 20
+val pos :Pos = [10,20]  ;; declares that `pos` satisfies template `:Pos`
+println(pos.x, pos.y)   ;; <-- 10, 20
 ```
 
-Each field identifier in the template is associated
-
-In the example, `p1.x` is equivalent to `p1[0]`.
+In the example, `pos.x` is equivalent to `pos[0]`, and `pos.y` is equivalent to
+`pos[1]`.
 
 The template mechanism of Ceu can also describe a tag hierarchy to support
-data inheritance, akin to class hierarchy in Object-Oriented Programming.
-A `data` description can be sufixed with a block to nest templates, in which
+data inheritance, akin to class hierarchies in Object-Oriented Programming.
+A `data` description can be suffixed with a block to nest templates, in which
 inner tags reuse fields from outer tags.
 The next example illustrates an `:Event` super-type, in which each sub-type
 appends additional data to the tuple template:
@@ -407,36 +406,41 @@ The following keywords are reserved in Ceu:
     err                 ;; exception variable
     every               ;; every block
     evt                 ;; event variable
+    export              ;; export block
     false               ;; false value
     func                ;; function prototype
     if                  ;; if block
+    it                  ;; implicit argument
     ifs                 ;; ifs block
-    in                  ;; in keyword
-    is                  ;; is operator
-    is-not              ;; is-not operator                  (20)
+    in                  ;; in keyword                       (20)
+    in?                 ;; in? operator
+    is?                 ;; is? operator
+    is-not?             ;; is-not? operator
     loop                ;; loop block
     nil                 ;; nil value
     not                 ;; not operator
     or                  ;; or operator
     par                 ;; par block
     par-and             ;; par-and block
-    par-or              ;; par-or block
+    par-or              ;; par-or block                     (30)
     pass                ;; innocuous expression
     poly                ;; TODO
-    pub                 ;; public variable                  (30)
+    pub                 ;; public variable
     resume              ;; resume coroutine
     resume-yield-all    ;; resume coroutine
     set                 ;; assign expression
     spawn               ;; spawn coroutine
     task                ;; task prototype/self identifier
-    toggle              ;; toggle coroutine/block
+    thus                ;; thus pipe block
+    toggle              ;; toggle coroutine/block           (40)
     true                ;; true value
-    until               ;; until loop modifier
+    until               ;; until loop condition
     val                 ;; constant declaration
-    var                 ;; variable declaration             (40)
+    var                 ;; variable declaration
     where               ;; where block
+    while               ;; while loop condition
     with                ;; with block
-    yield               ;; yield coroutine                  (43)
+    yield               ;; yield coroutine                  (48)
 ```
 
 ## Symbols
@@ -447,17 +451,18 @@ The following symbols are reserved in Ceu:
     {   }           ;; block/operators delimeters
     (   )           ;; expression delimeters
     [   ]           ;; index/constructor delimeters
+    \               ;; lambda declaration
     =               ;; assignment separator
     ->              ;; iterator/ifs/toggle clause
     ;               ;; sequence separator
     ,               ;; argument/constructor separator
     .               ;; index/field discriminator
-    ...             ;; variable arguments
+    ...             ;; variable function/program arguments
     #[              ;; vector constructor
     @[              ;; dictionary constructor
     '   "   `       ;; character/string/native delimiters
     $               ;; native interpolation
-    ^               ;; lexer annotation
+    ^               ;; lexer annotation/upvalue modifier
 ```
 
 ## Operators
@@ -522,7 +527,7 @@ map'            ;; var with prime
 
 ## Literals
 
-Ceu provides literals for *nils*, *booleans*, *numbers*, *characters*,
+Ceu provides literals for *nil*, *booleans*, *tags*, *numbers*, *characters*,
 *strings*, and *native expressions*:
 
 ```
@@ -571,6 +576,31 @@ false               ;; bool literal
 'a'                 ;; char literal
 "Hello!"            ;; string literal
 `puts("hello");`    ;; native literal
+```
+
+### Tags
+
+The following tags are pre-defined in Ceu:
+
+```
+    ;; type enumeration
+
+    :nil :tag :bool :char :number :pointer  ;; basic types
+    :func :coro :task                       ;; prototypes
+    :tuple :vector :dict                    ;; collections
+    :x-coro :x-task :x-tasks :x-track       ;; active types
+
+    :yielded :toggled :resumed :terminated  ;; coro status
+    :h :min :s :ms                          ;; time unit
+    :all :idx :key :val                     ;; iterator modifier
+    :global :local                          ;; broadcast target
+    :tmp                                    ;; temporary variable
+    :rec                                    ;; recursive prototype
+    :fake                                   ;; fake task
+    :check-now                              ;; await immediate check
+    :ceu                                    ;; ceu value
+    :error                                  ;; runtime error
+    :ref :dynamic :bcast :clear             ;; internal use
 ```
 
 ### Native Literals
@@ -645,7 +675,7 @@ type('x') --> :char
 Ceu has 6 basic types:
 
 ```
-nil    bool    char    number    pointer    tag
+nil    bool    char    number    tag    pointer
 ```
 
 The `nil` type represents the absence of values with its single value
@@ -661,17 +691,16 @@ The `char` type represents [character literals](#literals).
 The `number` type represents real numbers (i.e., *C floats*) with
 [number literals](#literals).
 
-The `pointer` type represents opaque native pointer values from [native
-literals](#literals).
-
 The `tag` type represents [tag identifiers](#literals).
 Each tag is internally associated with a natural number that represents a
 unique value in a global enumeration.
-Tags are also known as *symbols* or *atoms* in other programming languages.
 Tags can be explicitly [enumerated](#tag-enumerations-and-tuple-templates) to
 interface with [native expressions](#literals).
 Tags can form [hierarchies](#tag-enumerations-and-tuple-templates) to represent
 user types and describe [tuple templates](#tag-enumerations-and-tuple-templates).
+
+The `pointer` type represents opaque native pointer values from [native
+literals](#literals).
 
 ## Collections
 
@@ -702,7 +731,7 @@ Examples:
 
 ## Execution Units
 
-Ceu provide 3 types of execution units, functions, coroutines, and tasks:
+Ceu provide 3 types of execution units: functions, coroutines, and tasks:
 
 ```
 func    coro    task
@@ -748,13 +777,13 @@ println(sup?(:T.A, :T)    ;; --> false
 println(sup?(:T.A, :T.B)  ;; --> false
 ```
 
-The function [`is`](#operator-is) checks if values match types or tags:
+The function [`is?`](#operator-is) checks if values match types or tags:
 
 ```
 val x = []              ;; an empty tuple
 tags(x, :T.A, true)     ;; x is now of user type :T.A
-println(x is :tuple)    ;; --> true
-println(x is :T)        ;; --> true
+println(x is? :tuple)   ;; --> true
+println(x is? :T)       ;; --> true
 ```
 
 User types do not require to be predeclared, but can appear in [tuple
@@ -841,7 +870,7 @@ Examples:
 ```
 [1,2,3]             ;; a tuple
 :Pos [10,10]        ;; a tagged tuple
-#[;; a vector
+#[1,2,3]            ;; a vector
 [(:x,10), x=10]     ;; a dictionary with equivalent key mappings
 ```
 
@@ -850,13 +879,15 @@ Examples:
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ `(´ [List(ID)] [`...´] `)´ Block
-Coro : `coro´ `(´ [List(ID)] [`...´] `)´ Block
-Task : `task´ `(´ [List(ID)] [`...´] `)´ Block
+Func : `func´ [`(´ [List(ID)] [`...´] `)´] Block
+Coro : `coro´ [`(´ [List(ID)] [`...´] `)´] Block
+Task : `task´ [`(´ [List(ID)] [`...´] `)´] Block
 ```
 
 Each keyword is followed by an optional list of identifiers as parameters
 enclosed by parenthesis.
+If the parenthesis are also omitted, it assumes the single implicit parameter
+`it`.
 
 The last parameter can be the symbol
 [`...`](#variables-declarations-and-assignments), which captures as a tuple all
@@ -886,6 +917,32 @@ func (^v1) {            ;; v1 survives func
         ^^v1 + ^^v2     ;; (inside closure: double caret)
     }
 }
+```
+
+#### Lambdas
+
+For simple `func` prototypes, Ceu supports a lambda notation:
+
+```
+Lambda : `\´ [List(ID)] Block
+```
+
+The expression `\<ids> { <es> }` expands to
+
+```
+func (<ids>) {
+    <es>
+}
+```
+
+If the list of identifiers is omitted, it assumes the single implicit parameter
+`it`.
+
+Examples:
+
+```
+val f = \x { 2*x }      ;; f doubles its argument
+println(\{it}(10))      ;; prints 10
 ```
 
 ## Active Values
@@ -952,6 +1009,10 @@ Block : `{´ { Expr [`;´] } `}´
 Each expression in a sequence may be separated by an optional semicolon (`;´).
 A sequence of expressions evaluate to its last expression.
 
+The symbol
+[`...`](#variables-declarations-and-assignments) stores the program arguments
+as a tuple.
+
 ### Blocks
 
 A block delimits a lexical scope for variables and dynamic values:
@@ -969,10 +1030,8 @@ A block is not an expression by itself, but it can be turned into one by
 prefixing it with an explicit `do`:
 
 ```
-Do : `do´ [:unnest[-hide]] Block   ;; an explicit block statement
+Do : `do´ Block         ;; an explicit block statement
 ```
-
-`TODO: unnest, hide`
 
 Examples:
 
@@ -1000,6 +1059,31 @@ do {
 
 Blocks also appear in compound statements, such as
 [conditionals](#conditionals), [loops](#loops-and-iterators), and many others.
+
+### Export
+
+An `export` hides all nested declarations, except those indicated in a list:
+
+```
+Export : `export´ `[´ List(ID | `evt´) `]´ Block
+```
+
+Nevertheless, all nested declarations remain active as if they were declared on
+the enclosing block.
+
+Examples:
+
+```
+export [x] {
+    val y = []      ;; y is not exported but remains active
+    val x = y       ;; exported x holds tuple that remains in memory
+}
+println(x)          ;; --> []
+println(y)          ;; ERR: y is active but not visible
+```
+
+Exports can be used to group related expressions but expose only public
+identifiers, as expected from libraries and modules.
 
 ### Defer
 
@@ -1061,7 +1145,7 @@ The difference between `val` and `var` is that a `val` is immutable, while a
 `var` declaration can be modified by further `set` statements:
 
 ```
-`set´ Expr `=´ Expr
+Set : `set´ Expr `=´ Expr
 ```
 
 The optional initialization expression assigns an initial value to the
@@ -1077,11 +1161,15 @@ Note that the variable is not guaranteed to hold a value matching the template,
 not even a tuple is guaranteed.
 The template association is static but with no runtime guarantees.
 
+If the declaration omits the template tag, but the initialization expression is
+a [tag constructor](#constructor), then the variable assumes this tag template,
+i.e., `val x = :X []` expands to `val x :X = :X []`.
+
 The symbol `...` represents the variable arguments (*varargs*) a function
 receives in a call.
 In the context of a [function](#prototypes) that expects varargs, it evaluates
 to a tuple holding the varargs.
-In other scenarios, accessing `...` raises an error.
+In other scenarios, it evaluates to a tuple holding the program arguments.
 When `...` is the last argument of a call, its tuple is expanded as the last
 arguments.
 
@@ -1101,14 +1189,17 @@ val y = [10]
 set y = 0               ;; ERR: cannot reassign `y`
 set y[0] = 20           ;; OK
 
-val pos :Pos = [10,20]  ;; assumes :Pos has fields [x,y]
-println(pos.x)          ;; <-- 10
+val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
+println(pos1.x)         ;; <-- 10
+
+val pos2 = :Pos [10,20] ;; (assumes :Pos has fields [x,y])
+println(pos2.y)         ;; <-- 20
 ```
 
 ## Tag Enumerations and Tuple Templates
 
 Tags are global identifiers that need not to be predeclared.
-However, they may be explicitly delcared when used as enumerations or tuple
+However, they may be explicitly declared when used as enumerations or tuple
 templates.
 
 ### Tag Enumerations
@@ -1132,7 +1223,7 @@ Examples:
 enum {
     :Key-Left = `:number KEY_LEFT`  ;; explicitly associates with C enumeration
     :Key-Right                      ;; implicitly associates with remaining
-    :Key-Up                         ;; keys in sequence
+    :Key-Up                         ;;  keys in sequence
     :Key-Down
 }
 if lib-key-pressed() == :Key-Up {
@@ -1152,14 +1243,14 @@ Temp : `data´ Data
                     [`{´ { Data } `}´]
 ```
 
-Then, a [variable declaration](#variables-declarations-and-assignments) can
-specify a tuple template and hold a tuple that can be accessed by field.
-
 After the keyword `data`, a declaration expects a tag followed by `=` and a
 template.
 A template is surrounded by brackets (`[´ and `]´) to represent the tuple, and
 includes a list of identifiers, each mapping an index into a field.
 Each field can be followed by a tag to represent nested templates.
+
+Then, a [variable declaration](#variables-declarations-and-assignments) can
+specify a tuple template and hold a tuple that can be accessed by field.
 
 Examples:
 
@@ -1173,8 +1264,8 @@ data :Rect = [pos :Pos, dim :Dim]       ;; a nested template
 val r1 :Rect = [pos, [100,100]]         ;; r uses :Rect as template
 println(r1.dim, r1.pos.x)               ;; <-- [100,100], 10
 
-val r2 :Rect = :Rect [[0,0],[10,10]]    ;; combining tag template/constructor
-println(r2 is :Rect, r2.dim.h)          ;; <-- true, 0
+val r2 = :Rect [[0,0],[10,10]]          ;; combining tag template/constructor
+println(r2 is? :Rect, r2.dim.h)         ;; <-- true, 0
 ```
 
 Based on [tags and sub-tags](#user-types), tuple templates can define
@@ -1197,7 +1288,7 @@ data :Event = [ts] {            ;; All events carry a timestamp
     }
 }
 
-val but :Event.Mouse.Button = [0, [10,20], 1]
+val but = :Event.Mouse.Button [0, [10,20], 1]
 val evt :Event = but
 println(evt.ts, but.pos.y)      ;; <-- 0, 20
 ```
@@ -1383,12 +1474,12 @@ if <cnd1> {
 
 The second variation of `ifs` also receives a matching expression to switch
 over and apply multiple tests.
-Each test can start with `==` or `is`, which implies that the matching
+Each test can start with `==` or `is?`, which implies that the matching
 expression is hidden on the left, i.e.:
 
 ```
 ifs f(x) {
-    is :T -> <exp1>
+    is? :T -> <exp1>
     == 10 -> <exp2>
     g()   -> <exp3>
     else  -> <exp4>
@@ -1400,7 +1491,7 @@ expands to
 ```
 do {
     val x' = f(x)   ;; f(x) is only evaluated once
-    if x' is :T {
+    if x' is? :T {
         <exp1>
     } else {
         if x' == 10 {
@@ -1427,9 +1518,9 @@ val x-or-y =        ;; max between x and y
     }
 
 ifs :T.Y [] {
-    is :T.X -> println(:T.X)
-    is :T.Y -> println(:T.Y)    ;; <-- :T.Y
-    is :T.Z -> println(:T.Z)
+    is? :T.X -> println(:T.X)
+    is? :T.Y -> println(:T.Y)    ;; <-- :T.Y
+    is? :T.Z -> println(:T.Z)
 }
 ```
 
@@ -1591,7 +1682,7 @@ to `err`, also aborting its associated block, and properly triggering nested
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
 If the matching expression `x` is of type [tag](#basic-types), it expands to
-match `err is x`, allowing to check [tuple
+match `err is? x`, allowing to check [tuple
 templates](#tag-enumerations-and-tuple-templates).
 
 Examples:
@@ -1904,7 +1995,7 @@ An `await <tag>, <e>` expands as follows:
 
 ```
 yield() ;; (unless :check-now)
-loop if not ((evt is <tag>) [and <e>]) {
+loop if not ((evt is? <tag>) [and <e>]) {
     yield ()
 }
 ```
@@ -2239,8 +2330,10 @@ To be considered equal, the values must be of the same type and hold the same
 value.
 All values of the [basic types](#basic-types) are compared by value, while all
 [dynamic values](#dynamic-values) are compared by reference.
+<!--
 The exception are tuples, which are compared by value, i.e., they must be of
 the same size, with all positions having the same value (using `==`).
+-->
 
 Examples:
 
@@ -2249,7 +2342,7 @@ Examples:
 1 /= 1          ;; --> false
 1 == '1'        ;; --> false
 #[1] == #[1]    ;; --> false
-[1] == [1]      ;; --> true
+[1] == [1]      ;; --> false
 ```
 
 ### Types and Tags
@@ -2351,8 +2444,8 @@ throw type
 ## Auxiliary Library
 
 - `and`:        [Logical Operators](#boolean-operators)
-- `is`:         [Operator Is](#operator-is)
-- `is-not`:     [Operator Is](#operator-is)
+- `is?`:        [Operator Is](#operator-is)
+- `is-not?`:    [Operator Is](#operator-is)
 - `not`:        [Logical Operators](#boolean-operators)
 - `or`:         [Logical Operators](#boolean-operators)
 
@@ -2410,14 +2503,14 @@ nil or 10       ;; --> 10
 ### Operator Is
 
 ```
-func is (v1, v2)
-func is-not (v1, v2)
+func is? (v1, v2)
+func is-not? (v1, v2)
 ```
 
-The operators `is` and `is-not` are functions with a special syntax to be used
+The operators `is?` and `is-not?` are functions with a special syntax to be used
 as infix operators.
 
-The operator `is` checks if `v1` matches `v2` as follows:
+The operator `is?` checks if `v1` matches `v2` as follows:
 
 ```
 ifs {
@@ -2428,14 +2521,14 @@ ifs {
 }
 ```
 
-The operator `is-not` is the negation of `is`.
+The operator `is-not?` is the negation of `is?`.
 
 Examples:
 
 ```
-10 is :number           -> true
-10 is nil               -> false
-tags([],:x,true) is :x  -> true
+10 is? :number           -> true
+10 is? nil               -> false
+tags([],:x,true) is? :x  -> true
 ```
 
 # SYNTAX
@@ -2519,14 +2612,14 @@ Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
-      | Expr (`or´|`and´|`is´|`is-not´) Expr            ;; op bin
+      | Expr (`or´|`and´|`is?´|`is-not?´) Expr            ;; op bin
       | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
 
       | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
             Case : Expr `->´ (Expr | Block)
             Else : `else´ `->´ (Expr | Block)
       | `ifs´ Expr `{´ {Case} [Else] `}´                ;; switch + conditionals
-            Case : [`==´ | `is´] Expr `->´ (Expr | Block)
+            Case : [`==´ | `is?´] Expr `->´ (Expr | Block)
             Else : `else´ `->´ (Expr | Block)
 
       | `loop´ Block                                    ;; loop infinite
@@ -2539,9 +2632,9 @@ Expr' : STR
             [`,´ :step (`-´|`+´) Expr]
             `,´ ID Block
 
-      | `func´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration func
-      | `coro´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration coro
-      | `task´ ID `(´ [List(ID)] [`...´] `)´ Block      ;; declaration task
+      | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
+      | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
+      | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
       | `spawn´ Block                                   ;; spawn anonymous task
