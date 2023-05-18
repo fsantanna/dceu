@@ -2859,6 +2859,15 @@ class TXExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun tt_03_tags() {
+        val out = all("""
+            data :T = [x]
+            val x = :T [1]
+            println(x.x, tags(x))
+        """)
+        assert(out == "1\t[:T]\n") { out }
+    }
 
     // TEMPLATE
 

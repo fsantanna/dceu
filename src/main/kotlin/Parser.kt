@@ -304,10 +304,15 @@ class Parser (lexer_: Lexer)
                 val tag = if (!this.acceptEnu("Tag")) null else {
                     this.tk0 as Tk.Tag
                 }
-                val src = if (!this.acceptFix("=")) null else {
-                    this.expr()
+                val (tag2,src) = if (!this.acceptFix("=")) Pair(null,null) else {
+                    val tag = if (XCEU && this.checkEnu("Tag")) this.tk1 as Tk.Tag else null
+                    Pair(tag,this.expr())
                 }
-                Expr.Dcl(tk0, id, /*false,*/ tmp, tag, true, src)
+                if (tag==null && tag2!=null && src is Expr.Call) {
+                    Expr.Dcl(tk0, id, tmp, tag2, true, src)
+                } else {
+                    Expr.Dcl(tk0, id, tmp, tag, true, src)
+                }
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
