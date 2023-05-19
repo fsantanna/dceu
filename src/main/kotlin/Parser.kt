@@ -464,11 +464,13 @@ class Parser (lexer_: Lexer)
                             Pair("+", null)
                         }
 
-                        // , i
+                        // , i :T
                         x = (step==null && x) || this.acceptFix(",")
-                        val i = if (!x) "it" else {
+                        val (i,tag) = if (!x) Pair("it",null) else {
                             this.acceptEnu_err("Id")
-                            this.tk0.str
+                            val id = this.tk0 as Tk.Id
+                            val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+                            Pair(id.str,tag)
                         }
 
                         val cmp = when {
@@ -482,7 +484,7 @@ class Parser (lexer_: Lexer)
                         { body: String ->"""
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
-                                var $i = ${eA.tostr(true)} $op (
+                                var $i ${tag?.str ?: ""} = ${eA.tostr(true)} $op (
                                     ${if (tkA.str=="[") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
@@ -500,17 +502,19 @@ class Parser (lexer_: Lexer)
                     }
                     XCEU -> {
                         val iter = this.expr()
-                        val i = if (!this.checkFix(",")) "it" else {
+                        val (i,tag) = if (!this.checkFix(",")) Pair("it",null) else {
                             this.acceptFix_err(",")
                             this.acceptEnu_err("Id")
-                            this.tk0.str
+                            val id = this.tk0 as Tk.Id
+                            val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
+                            Pair(id.str,tag)
                         }
                         { body: String -> """
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val $i = ceu_it_$N.f(ceu_it_$N)
+                                    val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
@@ -904,7 +908,7 @@ class Parser (lexer_: Lexer)
                         this.acceptFix("else") -> {
                             Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
-                        XCEU && this.acceptEnu("Op") -> {
+                        XCEU && (v!=null) && this.acceptEnu("Op") -> {
                             val op = this.tk0.str
                             val e = this.expr()
                             Triple(null, null, this.nest("$x $op ${e.tostr(true)}"))
@@ -920,7 +924,7 @@ class Parser (lexer_: Lexer)
                     }
                     Pair(Triple(id,tag,cnd),blk)
                 }
-                //ifs.forEach { println(it.first.tostr()) ; println(it.second.tostr()) }
+                //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
