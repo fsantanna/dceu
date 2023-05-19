@@ -241,6 +241,16 @@ class TXExec {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun bb_13_ifs () {
+        val out = all("""
+            val x = ifs {
+                is? nil -> true
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+    }
 
     // OPS: not, and, or
 
@@ -1394,6 +1404,17 @@ class TXExec {
             }
         """, true)
         assert(out == ":x\n:y\n:z\n") { out }
+    }
+    @Test
+    fun tuple23_iter_tag() {
+        val out = all("""
+            data :T = [v]
+            val t = [[1], [2], [3]]
+            loop in iter(t,:val), v :T {
+                println(v.v)
+            }
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
     }
 
     // AWAIT / EVERY

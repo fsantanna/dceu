@@ -486,6 +486,16 @@ Examples:
 +++
 ```
 
+The following identifiers are also reserved as special operators:
+
+```
+    not     and     or
+    in?     is?     is-not?
+```
+
+Operators can be used in prefix or infix notations in
+[operations](#calls-and-operations).
+
 ## Identifiers
 
 Ceu uses identifiers to refer to variables and operators:
@@ -1304,6 +1314,7 @@ uses an [operator](#operatos) with prefix or infix notation:
 Call : OP Expr                      ;; unary operation
      | Expr OP Expr                 ;; binary operation
      | Expr `(´ [List(Expr)] `)´    ;; function call
+     | Expr Lambda                  ;; function call
 ```
 
 Operations are interpreted as function calls, i.e., `x + y` is equivalent to
@@ -1311,6 +1322,8 @@ Operations are interpreted as function calls, i.e., `x + y` is equivalent to
 
 A call expects an expression of type [`func`](#prototypes) and an optional list
 of expressions as arguments enclosed by parenthesis.
+If the argument is a [lambda expression](#lambdas), then the parenthesis can be
+omitted.
 Each argument is expected to match a parameter of the function declaration.
 A call transfers control to the function, which runs to completion and returns
 control with a value, which substitutes the call.
@@ -1435,92 +1448,66 @@ x + 10 - 1      ;; ERR: requires parenthesis
 Ceu supports conditionals as follows:
 
 ```
-If  : `if´ Expr Block [`else´ Block]
-Ifs : `ifs´ `{´ {Case} [Else] `}´
-        Case : Expr `->´ (Expr | Block)
-        Else : `else´ `->´ (Expr | Block)
-    | `ifs´ Expr `{´ {Case} [Else] `}´
-        Case : [`==´ | `is´] Expr `->´ (Expr | Block)
-        Else : `else´ `->´ (Expr | Block)
+If  : `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)
+        [`else´  (Block | `->´ Expr)]
 ```
 
-An `if` tests a boolean expression and, if true, executes the associated block.
-Otherwise, it executes the optional `else` block.
+An `if` tests a condition expression and executes one of the two possible
+branches.
+If the condition is [true](#basic-types), the `if` executes the first branch.
+Otherwise, it executes the optional `else` branch.
 
-Ceu also supports `ifs` to test multiple conditions.
-The first variation is a simple expansion to nested ifs, i.e.:
+The condition expression can be can be assigned to an optional
+[variable declaration](#variables-declarations-and-assignments) and can be
+accessed in the branches.
 
-```
-ifs {
-    <cnd1> -> <exp1>
-    <cnd2> -> <exp2>
-    else   -> <exp3>
-}
-```
-
-expands to
-
-```
-if <cnd1> {
-    <exp1>
-} else {
-    if <cnd2> {
-        <exp2>
-    } else {
-        <exp3>
-    }
-}
-```
-
-The second variation of `ifs` also receives a matching expression to switch
-over and apply multiple tests.
-Each test can start with `==` or `is?`, which implies that the matching
-expression is hidden on the left, i.e.:
-
-```
-ifs f(x) {
-    is? :T -> <exp1>
-    == 10 -> <exp2>
-    g()   -> <exp3>
-    else  -> <exp4>
-}
-```
-
-expands to
-
-```
-do {
-    val x' = f(x)   ;; f(x) is only evaluated once
-    if x' is? :T {
-        <exp1>
-    } else {
-        if x' == 10 {
-            <exp2>
-        } else {
-            if f() {
-                <exp3>
-            } else {
-                <exp4>
-            }
-        }
-    }
-}                   ;; evaluates to whatever the if evaluates
-```
+The branches can be either a block or a simple expression prefixed by the
+symbol `->`.
 
 Examples:
 
 ```
-val x-or-y =        ;; max between x and y
-    if x > y {
-        x
-    } else {
-        y
-    }
+val max = if x>y -> x -> y
+if x = f() {
+    print(x)
+}
+```
 
-ifs :T.Y [] {
-    is? :T.X -> println(:T.X)
-    is? :T.Y -> println(:T.Y)    ;; <-- :T.Y
-    is? :T.Z -> println(:T.Z)
+Ceu also supports `ifs` to test multiple conditions:
+
+```
+Ifs : `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´
+        Case : OP Expr (Block | `->´ Expr)
+             | [ID [TAG] `=´] Expr (Block | `->´ Expr)
+        Else : `else´ (`->´ Expr | Block)
+```
+
+The `ifs` statement supports multiple cases with a test condition and an
+associated branch.
+The conditions are tested in sequence, until one is true and its associated
+branch executes.
+The optional `else` branch executes if no conditions are true.
+
+Like in an `if`, branches can be blocks or simple expressions prefixed by `->`.
+
+If a head condition expression is provided, test cases can assume its value
+appears before a binary operator and the right operand.
+
+The head condition and each case condition can be assigned to an optional
+[variable declaration](#variables-declarations-and-assignments) and can be
+accessed in the branches.
+
+Examples:
+
+```
+ifs x = f() {
+    == 10      -> println("x == 10")
+    is? :tuple -> println("x is a tuple")
+    g(x) > 10  -> println("g(x) > 10")
+    y=h(x)     -> println(y)
+    else {
+        throw(:error)
+    }
 }
 ```
 
@@ -1529,43 +1516,45 @@ ifs :T.Y [] {
 Ceu supports loops and iterators as follows:
 
 ```
-Loop : `loop´ `if´ Expr Block       ;; loop if (while loop)
-     | `loop´ Block                 ;; infinite loop
-     | `loop´ Block `until´ Expr    ;; loop until
-     | `loop´ `in´ <...>            ;; iterators
+Loop : `loop´
+            [`in´ Iter [`,´ ID [TAG]]]  ;; optional iterator (see further)
+            [Test]                      ;; optional head test
+            Block                       ;; mandatory block
+            [{Test Block}]              ;; optional test/block
+            [Test]                      ;; optional tail test
+
+Test : (`until´ | `while´) [ID [TAG] `=´] Expr
 ```
 
-A `loop if` tests a boolean expression and, if true, executes an iteration of
-the associated block, before testing the condition again.
-When the condition is false, the loop terminates.
+A `loop` executes a block of code continuously until a condition is met.
 
-There is no `break` statement in Ceu, which can be substituted by a proper
-test condition or [`throw-catch`](#exceptions) pair.
+A `loop` has an optional iterator pattern that changes the value of a variable
+on each iteration.
+If the variable becomes `nil`, then the loop terminates.
+If the variable identifier is omitted, it assumes the default identifier `it`.
 
-All other loops and iterators may be expressed in terms of `loop if`.
-For instance, an infinite loop uses `true` as its condition.
+A `loop` has optional head and tail tests which, if satisfied, terminate the
+loop.
 
-A `loop-until` executes at least one loop iteration, and terminates when the
-given condition is true.
-The condition expression may use variables defined inside the loop.
-A `loop { <es> } until <e>` expands to
+The mandatory block can be extended with a list of test-block clauses that
+can terminate the loop when a test succeeds.
+The blocks are all considered to be in the same scope such that variables
+declared in a block are visible in further blocks.
 
-```
-do {
-    var cnd = false
-    loop if not cnd {
-        <es>
-        set cnd = <e>   ;; <e> may use variables defined in <es>
-    }
-    cnd                 ;; evaluates to the final condition
-}
-```
+A test checks an expression and succeeds, terminating the loop, `until` the
+expression is `true` or `while` the expression `false`.
+The condition expression can assigned to an optional
+[variable declaration](#variables-declarations-and-assignments) and can be
+accessed in further blocks.
+
+Note that there is no `break` statement in Ceu, which must be substituted by
+proper top-level test conditions.
 
 Examples:
 
 ```
 var i = 0
-loop if i<5 {       ;; --> 0,1,2,3,4
+loop while i<5 {       ;; --> 0,1,2,3,4
     println(i)
     set i = i + 1
 }
@@ -1573,63 +1562,45 @@ loop if i<5 {       ;; --> 0,1,2,3,4
 loop {
     val x = random-next() % 100
     println(x)
-} until x > 80
+} until x > 80 {
+    val y = random-next() % 100
+    println(x+y)
+} until x+y > 80
 ```
 
 #### Iterators
 
-Ceu supports generic iterator loops and numeric iterator loops as follows:
+Loops in Ceu supports generic iterators, numeric iterators, and tasks
+iterators:
 
 ```
-Iter : `loop´ `in´ Expr `,´ ID Block            ;; generic iterator
-     | `loop´ `in´                              ;; numeric iterator
-            (`[´ | `(´)
-            Expr `->´ Expr
-            (`]´ | `)´)
-            [`,´ :step (`-´|`+´) Expr]
-            `,´ ID Block
+Iter : Expr                             ;; generic iterator
+     | (`[´ | `(´)                      ;; numeric iterator
+       Expr `->´ Expr
+       (`]´ | `)´)
+       [`,´ :step (`-´|`+´) Expr]
+     | `:tasks´ Expr                    ;; tasks iterator
 ```
 
-A generic loop expects an iterator `<it>`, a variable identifier `<i>`, and a
-block `<b>`.
-It expands as follows:
-
-```
-do {
-    loop {
-        val <i> = <it>[0](<it>)
-        if <i> /= nil {
-            <b>
-        }
-    } until (<i> == nil)
-}
-```
-
-The iterator `<it>` is expected to be a tuple holding a function at index `0`
-and any other state required to operate at the other indexes.
-The function `<it>[0]` expects the iterator itself as argument, and returns its
+A generic iterator is expected to evaluate to a tuple `(f,...)` holding a
+function `f` at index `0`, and any other state required to operate at the other
+indexes.
+The function `f` expects the iterator tuple itself as argument, and returns its
 next value or `nil` to signal termination.
-The loop calls the function repeatedly, assigning each result to variable
-`<i>`, which can be accessed in block `<b>`.
+The loop calls the function repeatedly, assigning each result to the loop
+variable, which can be accessed in the loop block.
 
-The function [`iter`](#TODO) converts many values, such as vectors and
-coroutines into iterators, so that they can be used in iterator loops.
+The function [`iter`](#TODO) in the [standard library](#standard-library)
+converts many values, such as vectors and coroutines, into iterators, so that
+they can be traversed in loops.
 
-A numeric loop expects an interval from `<ini>` to `<end>`, with open (`(` and
-`)`) or closed (`[` and `]`) delimiters, an optional `:step` expression `<s>`
-(defaults to `+1`), a variable identifier `<i>`, and a block `<b>`.
-It expands as follows:
+A numeric loop expects an interval `x -> y`, with open (`(` and `)`) or closed
+(`[` and `]`) delimiters, an optional signed `:step` expression (which defaults
+to `+1`).
+The loop terminates when `x` reaches `y` in the direction of the step sign.
+After each loop iteration, the step is added to `x`.
 
-```
-do {
-    var <i> = <ini>             ;; +<s>, if open interval
-    val lim = <end>
-    loop if <i> <cmp> lim {     ;; <cmp>: <=, if <s> is positive (<, if open interval)
-        <b>                     ;;        >=, if <s> is negative (>, if open interval)
-        set <i> = <i> +<s>
-    }
-}
-```
+Tasks iterators are discussed in [Pools of Tasks](#pools-of-tasks).
 
 Examples:
 
@@ -1643,17 +1614,14 @@ loop in [f, 5], v {
     println(v)                  ;; -> 5, 4, 3, 2, 1
 }
 
-loop in iter([1,2,3]), v {
-    println(v)                  ;; --> [0,1], [1,2], [2,3]
+loop in iter([10,20,30]) {
+    println(it)                 ;; --> 10, 20, 30
 }
 
-loop in [10 -> 0), :step -2, v {
-    println(v)                  ;; --> 10, 8, 6, 4, 2
+loop in [10 -> 0), :step -2 {
+    println(it)                 ;; --> 10, 8, 6, 4, 2
 }
 ```
-
-Ceu also supports [tasks iterators](#pools-of-tasks), which are primitives and
-not simple `loop` expansions.
 
 ## Exceptions
 
@@ -2444,6 +2412,7 @@ throw type
 ## Auxiliary Library
 
 - `and`:        [Logical Operators](#boolean-operators)
+- `in?`:        [Operator In](#operator-in)
 - `is?`:        [Operator Is](#operator-is)
 - `is-not?`:    [Operator Is](#operator-is)
 - `not`:        [Logical Operators](#boolean-operators)
