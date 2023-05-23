@@ -1043,6 +1043,9 @@ prefixing it with an explicit `do`:
 Do : `do´ Block         ;; an explicit block statement
 ```
 
+Blocks also appear in compound statements, such as
+[conditionals](#conditionals), [loops](#loops-and-iterators), and many others.
+
 Examples:
 
 ```
@@ -1067,8 +1070,44 @@ do {
 }
 ```
 
-Blocks also appear in compound statements, such as
-[conditionals](#conditionals), [loops](#loops-and-iterators), and many others.
+#### Yieldable Blocks
+
+Ceu distinguishes between *tight* and *yieldable* blocks at compile time.
+A tight block executes from start to end without any scheduling interruption,
+except from calls to tight functions.
+An yieldadble block may be preempted when it contains one of the following
+expressions:
+    `yield`, `resume`, `spawn`, `broadcast`, `toggle`.
+In addition, a block is considered yieldable when it calls an yieldable (or
+unknown) function, or when it sets variables from enclosing yieldable blocks.
+
+`TODO: restrictions of yieldable blocks`
+
+<!--
+Values assigned to variables declared in yieldable blocks
+are unsafe in some situations that may generate a compile-time
+error:the following situations: `TODO`
+-->
+
+Examples:
+
+```
+do {                    ;; tight block
+    val x = 10
+    println(x)
+}
+
+do {                    ;; yieldable block
+    var x = 10
+    println(:before)
+    yield()
+    println(:after)
+    do {                ;; yieldable block
+        set x = 20
+        println(x)
+    }
+}
+```
 
 ### Export
 
@@ -1186,6 +1225,8 @@ arguments.
 The variables `err` and `evt` have special scopes and are automatically setup
 in the context of [`throw`](#exceptions) and [`broadcast`](#broadcast)
 statements, respectively.
+Because `evt` is broadcast from arbitrary scopes, it cannot be assigned to
+other variables.
 
 `TODO: :tmp`
 
@@ -1650,7 +1691,7 @@ to `err`, also aborting its associated block, and properly triggering nested
 To match an exception, the `catch` expression can access `err` and needs to
 evaluate to `true`.
 If the matching expression `x` is of type [tag](#basic-types), it expands to
-match `err is? x`, allowing to check [tuple
+match `err is? x`, allowing to check for [tuple
 templates](#tag-enumerations-and-tuple-templates).
 
 Examples:
@@ -2055,7 +2096,7 @@ A reference cannot manipulate a task directly, requiring a `detrack`.
 A `detrack` expects a [track reference](#active-values) and returns the
 referred task or `nil` if it was cleared.
 
-- across yield
+`TODO: across yield`
 
 
 <!--
