@@ -1,7 +1,8 @@
 install:
-	cp out/artifacts/dceu_jar/dceu.jar /x/ceu/ceu.jar
-	cp build/ceu.sh /x/ceu/ceu
-	cp build/xprelude.ceu /x/ceu/prelude.ceu
-	ls -l /x/ceu/
-	ceu --version
-	ceu build/hello-world.ceu
+	mkdir -p $(DIR)
+	cp out/artifacts/dceu_jar/dceu.jar $(DIR)/ceu.jar
+	cp build/ceu.sh $(DIR)/ceu
+	cp build/xprelude.ceu $(DIR)/prelude.ceu
+	ls -l $(DIR)/
+	$(DIR)/ceu --version
+	$(DIR)/ceu build/hello-world.ceu
