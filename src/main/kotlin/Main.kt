@@ -27,7 +27,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
 val XOPERATORS = if (!XCEU) setOf() else {
-    setOf("and", "in?", "is?", "is-not?", "not", "or")
+    setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
 }
 
 val TAGS = listOf (

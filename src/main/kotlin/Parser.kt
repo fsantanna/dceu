@@ -1344,6 +1344,7 @@ class Parser (lexer_: Lexer)
                 "is?" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "in-not?" -> this.nest("in-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 else -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
             }
             pre = this.tk0

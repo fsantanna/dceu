@@ -201,6 +201,17 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
+    fun bb_ifs9x() {
+        val out = all("""
+            var x = ifs it=20 {
+                it in-not? [1,1] -> true
+                else  -> false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
     fun bb_ifs10() {
         val out = all("""
             val x = ifs it=[] {
@@ -320,6 +331,15 @@ class TXExec {
             println(4 in? t)
         """, true)
         assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun in4() {
+        val out = all("""
+            val t = [1,2,3]
+            println(2 in-not? t)
+            println(4 in-not? t)
+        """, true)
+        assert(out == "false\ntrue\n") { out }
     }
 
     // ==, ===, /=, =/=

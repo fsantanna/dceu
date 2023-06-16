@@ -185,7 +185,7 @@ export [iter] {
     }
 }
 
-;; IN, EQUALS: === =/=
+;; IN, IN-NOT, DEEP-EQUALS === =/=
 
 func in' (v, xs) {
     loop in iter(xs), x {
@@ -193,6 +193,10 @@ func in' (v, xs) {
     } thus {
         to-bool(it)
     }
+}
+
+func in-not' (v, xs) {
+    not in'(v,xs)
 }
 
 func :rec {===} (v1,v2) {
