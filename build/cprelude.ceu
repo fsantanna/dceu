@@ -129,7 +129,7 @@ export [{>}, {<}, {>=}, {<=}]
 
 ;; TO-*
 
-export [to-string, to-number]
+export [to-string, to-number, to-tag]
 {
     var to-string
     set to-string = func (v) {
@@ -172,6 +172,14 @@ export [to-string, to-number]
             } else {
                 v           ;; TODO
             }
+        }
+    }
+
+    val to-tag = func (v) {
+        if type(v) == :string {
+            string-to-tag(v)
+        } else {
+            v   ;; TODO
         }
     }
 }
