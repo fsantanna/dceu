@@ -2751,7 +2751,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
 
       | `(´ Expr `)´                                    ;; parenthesis
       | Expr `(´ [List(Expr)] `)´                       ;; pos call
-      | Expr `\´ [List(ID)] Block                       ;; call lambda
+      | Expr Lambda                                     ;; call lambda
 
       | OP Expr                                         ;; pre op
       | Expr OP Expr                                    ;; bin op
@@ -2788,7 +2788,7 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
-      | `\´ [List(ID)] Block                            ;; lambda function
+      | Lambda                                          ;; lambda function
 
       | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
       | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
@@ -2818,12 +2818,14 @@ Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `par-or´ Block { `with´ Block }                 ;; spawn tasks, rejoin on any
       | `toggle´ Await `->´ Await Block                 ;; toggle task on/off on events
 
-Await : [`:check-now`] (                                ;; check before yield
+Lambda : `\´ [List(ID)] Block                           ;; lambda function
+
+Await  : [`:check-now`] (                               ;; check before yield
             | Expr                                      ;; await condition
             | TAG `,´ Expr                              ;; await tag
             | [Expr `:h´] [Expr `:min´] [Expr `:s´] [Expr `:ms´] ;; await time
             | `spawn´ Expr `(´ Expr `)´                 ;; await task
-        )
+       )
 
 List(x) : x { `,´ x }                                   ;; comma-separated list
 
