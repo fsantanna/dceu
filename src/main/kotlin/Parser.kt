@@ -601,12 +601,13 @@ class Parser (lexer_: Lexer)
                             // val $id = $proto
                             Expr.Dcl(Tk.Fix("val",tk0.pos), id, false, null, true, proto)
                         }
-                        else -> this.nest("""
-                            export [${id.str}] {
-                                ${tk0.pos.pre()}var ${id.str}
-                                set ${id.str} = ${proto.tostr(true)}
-                            }
-                        """)
+                        else -> {
+                            // export [$id] { var $id ;  set $id = $proto }
+                            Expr.Export(tk0, listOf(id.str), Expr.Do(tk0, listOf(
+                                Expr.Dcl(tk0, id, false, null, false, null),
+                                Expr.Set(tk0, Expr.Acc(id), proto)
+                            )))
+                        }
                     }
                 }
             }
@@ -710,8 +711,7 @@ class Parser (lexer_: Lexer)
                     (XCEU && this.checkFix("{")) -> {
                         // spawn (task () :fake { blk }) ()
                         val blk = this.block()
-                        val tk1 = Tk.Fix("task", tk0.pos)
-                        val task = Expr.Proto(tk1, Pair(null,true), emptyList(), blk)
+                        val task = Expr.Proto(Tk.Fix("task", tk0.pos), Pair(null,true), emptyList(), blk)
                         Expr.Spawn(tk0, null, Expr.Call(tk0, task, emptyList()))
                     }
                     else -> {
@@ -1076,25 +1076,22 @@ class Parser (lexer_: Lexer)
                 """)//.let { println(it); it })
             }
             (XCEU && this.acceptFix("par")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val pars = mutableListOf(this.block())
                 this.acceptFix_err("with")
                 pars.add(this.block())
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
-                val spws = pars.map { """
-                    ${it.tk.pos.pre()}spawn {
-                        ${it.es.tostr(true)}
-                    }
-                """}.joinToString("")
-                //println(spws)
-                this.nest("""
-                    ${pre0}do {
-                        $spws
-                        await false
-                    }
-                """)
+                val spws = pars.map {
+                    // spawn { $it }
+                    val tk1 = Tk.Fix("task", it.tk.pos)
+                    val task = Expr.Proto(tk1, Pair(null,true), emptyList(), it)
+                    Expr.Spawn(Tk.Fix("spawn",it.tk.pos), null, Expr.Call(tk0, task, emptyList()))
+                }
+                //do { $spws ; await false }
+                val awt = Expr.Loop(tk0, 0, Expr.Do(tk0, listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
+                Expr.Do(tk0, spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
                 val pre0 = this.tk0.pos.pre()
