@@ -1,3 +1,5 @@
+-- lua manual.lua manual.md > manual-out.md
+
 local S1 = {
     -- [1] = {
     --    n   = 1

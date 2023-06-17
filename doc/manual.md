@@ -30,6 +30,8 @@
 * STATEMENTS
     * Program, Sequences and Blocks
         - `;` `do` `defer` `pass`
+    * Where and Thus Clauses
+        - `where` `thus`
     * Variables, Declarations and Assignments
         - `val` `var` `set` `...` `err` `evt`
     * Tag Enumerations and Tuple Templates
@@ -49,8 +51,6 @@
     * Primary Library
     * Auxiliary Library
 * SYNTAX
-    * Basic Syntax
-    * Extended Syntax
 
 <!-- CONTENTS -->
 
@@ -2722,12 +2722,11 @@ data :Iterator = [f,s,tp,i]
 
 # SYNTAX
 
-## Basic Syntax
-
 ```
 Prog  : { Expr [`;´] }
 Block : `{´ { Expr [`;´] } `}´
-Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
+Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
+Expr' : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `defer´ Block                                   ;; defer statements
       | `pass´ Expr                                     ;; innocuous expression
 
@@ -2741,32 +2740,46 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
                     [`{´ { Data } `}´]
 
       | `nil´ | `false´ | `true´                        ;; literals &
-      | NAT | TAG | CHR | NUM                           ;; identifiers
+      | NAT | TAG | CHR | NUM | STR                     ;; identifiers
       | ID | `err´ | `evt´ | `...´
 
-      |  `[´ [List(Expr)] `]´                           ;; tuple
+      | [TAG] `[´ [List(Expr)] `]´                      ;; tuple
       | `#[´ [List(Expr)] `]´                           ;; vector
       | `@[´ [List(Key-Val)] `]´                        ;; dictionary
             Key-Val : ID `=´ Expr
                     | `(´ Expr `,´ Expr `)´
 
       | `(´ Expr `)´                                    ;; parenthesis
+      | Expr `(´ [List(Expr)] `)´                       ;; pos call
+      | Expr `\´ [List(ID)] Block                       ;; call lambda
+
       | OP Expr                                         ;; pre op
       | Expr OP Expr                                    ;; bin op
-      | Expr `(´ [List(Expr)] `)´                       ;; pos call
+      | `not´ Expr                                      ;; op not
+      | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
 
       | Expr `[´ Expr `]´                               ;; pos index
+      | Expr `.´ NUM                                    ;; op tuple index
       | Expr `.´ ID                                     ;; pos dict field
       | Expr `.´ `pub´                                  ;; pos task pub
 
+      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
+      | TAG Expr                                        ;; template cast
+
       | `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)    ;; conditional
         [`else´  (Block | `->´ Expr)]
+
+      | `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´ ;; conditionals
+            Case : OP Expr (Block | `->´ Expr)
+                 | [ID [TAG] `=´] Expr (Block | `->´ Expr)
+            Else : `else´ (`->´ Expr | Block)
+
       | `loop´ [`in´ Iter [`,´ ID [TAG]]]  [Test] Block ;; loops
             [{Test Block}] [Test]
             Test : (`until´ | `while´) [ID [TAG] `=´] Expr
-            Iter : Expr
-                 | `:tasks´ Expr
-                 | (`[´ | `(´) Expr `->´ Expr (`]´ | `)´)
+            Iter : Expr                                     ;; generic
+                 | `:tasks´ Expr                            ;; tasks
+                 | (`[´ | `(´) Expr `->´ Expr (`]´ | `)´)   ;; numeric
                     [`,´ :step (`-´|`+´) Expr]
 
       | `catch´ Expr Block                              ;; catch exception
@@ -2775,6 +2788,11 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `func´ `(´ [List(ID)] `)´ Block                 ;; function
       | `coro´ `(´ [List(ID)] `)´ Block                 ;; coroutine
       | `task´ `(´ [List(ID)] `)´ Block                 ;; task
+      | `\´ [List(ID)] Block                            ;; lambda function
+
+      | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
+      | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
+      | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
 
       | `coroutine´ `(´ Expr `)´                        ;; create coro
       | `status´ `(´ Expr `)´                           ;; coro status
@@ -2787,41 +2805,6 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `detrack´ `(´ Expr `)´                          ;; detrack task
       | `tasks´ `(´ Expr `)´                            ;; pool of tasks
       | `spawn´ `in´ Expr `,´ Expr `(´ Expr `)´         ;; spawn task in pool
-      | `loop´ `in´ :tasks Expr `,´ ID Block            ;; loop iterator tasks
-
-List(x) : x { `,´ x }                                   ;; comma-separated list
-
-ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable (`^´ upval)
-      | `{´ OP `}´                                      ;; identifier operation
-TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
-OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
-CHR   : '.' | '\\.'                                     ;; literal character
-NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
-NAT   : `.*`                                            ;; native expression
-```
-
-## Extended Syntax
-
-```
-Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
-Expr' : STR
-      | `\´ [List(ID)] Block                            ;; lambda
-      | `not´ Expr                                      ;; op not
-      | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
-      | Expr `.´ NUM                                    ;; op tuple index
-      | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
-      | Expr `\´ [List(ID)] Block                       ;; call lambda
-      | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
-      | TAG Expr                                        ;; template cast
-
-      | `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´ ;; conditionals
-            Case : OP Expr (Block | `->´ Expr)
-                 | [ID [TAG] `=´] Expr (Block | `->´ Expr)
-            Else : `else´ (`->´ Expr | Block)
-
-      | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
-      | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
-      | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
       | `spawn´ [`coro´] Block                          ;; spawn anonymous task/coro
@@ -2842,5 +2825,14 @@ Await : [`:check-now`] (                                ;; check before yield
             | `spawn´ Expr `(´ Expr `)´                 ;; await task
         )
 
+List(x) : x { `,´ x }                                   ;; comma-separated list
+
+ID    : [`^´|`^^´] [A-Za-z_][A-Za-z0-9_\'\?\!\-]*       ;; identifier variable (`^´ upval)
+      | `{´ OP `}´                                      ;; identifier operation
+TAG   : :[A-Za-z0-9\.\-]+                               ;; identifier tag
+OP    : [+-*/><=!|&~%#@]+                               ;; identifier operation
+CHR   : '.' | '\\.'                                     ;; literal character
+NUM   : [0-9][0-9A-Za-z\.]*                             ;; literal number
+NAT   : `.*`                                            ;; native expression
 STR   : ".*"                                            ;; string expression
 ```
