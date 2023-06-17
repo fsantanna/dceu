@@ -706,8 +706,9 @@ Each tag is internally associated with a natural number that represents a
 unique value in a global enumeration.
 Tags can be explicitly [enumerated](#tag-enumerations-and-tuple-templates) to
 interface with [native expressions](#literals).
-Tags can form [hierarchies](#tag-enumerations-and-tuple-templates) to represent
-user types and describe [tuple templates](#tag-enumerations-and-tuple-templates).
+Tags can form [hierarchies](#hierarchical-tags) to represent
+[user types](#user-types) and describe
+[tuple templates](#tag-enumerations-and-tuple-templates).
 
 The `pointer` type represents opaque native pointer values from [native
 literals](#literals).
@@ -774,8 +775,8 @@ tags(x, :T, true)       ;; x is now of user type :T
 println(tags(x,:T))     ;; --> true
 ```
 
-Tags form type hierarchies based on the dots in their identifiers, i.e., `:T.A`
-and `:T.B` are sub-types of `:T`.
+Tags form [type hierarchies](hierarchical-tags) based on the dots in their
+identifiers, i.e., `:T.A` and `:T.B` are sub-types of `:T`.
 Tag hierarchies can nest up to 4 levels.
 
 The function [`sup?`](#types-and-tags) checks super-type relations between
@@ -889,15 +890,17 @@ Examples:
 Ceu supports functions, coroutines, and tasks as prototype values:
 
 ```
-Func : `func´ [`(´ [List(ID)] [`...´] `)´] Block
-Coro : `coro´ [`(´ [List(ID)] [`...´] `)´] Block
-Task : `task´ [`(´ [List(ID)] [`...´] `)´] Block
+Func : `func´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
+Coro : `coro´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
+Task : `task´ [:rec] [`(´ [List(ID)] [`...´] `)´] Block
 ```
 
-Each keyword is followed by an optional list of identifiers as parameters
-enclosed by parenthesis.
+Each keyword is followed by an optional `:rec` modifier and a list of
+identifiers as parameters enclosed by parenthesis.
 If the parenthesis are also omitted, it assumes the single implicit parameter
 `it`.
+If the prototype is recursive (i.e., refers to itself), the declaration must
+use the `:rec` modifier.
 
 The last parameter can be the symbol
 [`...`](#variables-declarations-and-assignments), which captures as a tuple all
@@ -1181,7 +1184,7 @@ do {
 
 ## Where and Thus Clauses
 
-Any expression can be sufixed by `where` and `thus` clauses:
+Any expression can be suffixed by `where` and `thus` clauses:
 
 ```
 Expr : Expr [`where´ Block | `thus´ [ID] Block]
@@ -1364,6 +1367,23 @@ data :Event = [ts] {            ;; All events carry a timestamp
 val but = :Event.Mouse.Button [0, [10,20], 1]
 val evt :Event = but
 println(evt.ts, but.pos.y)      ;; --> 0, 20
+```
+
+#### Template Casting
+
+An expression can be prefixed with a tag such that the expression base is
+casted into the tag template:
+
+```
+Cast : TAG Expr
+```
+
+Examples:
+
+```
+data :Pos = [x,y]
+val p = ...
+println(:Pos p.x)       ;; `p` is casted to `:Pos`
 ```
 
 ## Calls, Operations and Indexing
@@ -1645,15 +1665,15 @@ Iter : Expr                             ;; generic iterator
      | `:tasks´ Expr                    ;; tasks iterator
 ```
 
-A generic iterator is expected to evaluate to a tuple `(f,...)` holding a
-function `f` at index `0`, and any other state required to operate at the other
-indexes.
+A generic [iterator](#iterator) is expected to evaluate to a tuple `(f,...)`
+holding a function `f` at index `0`, and any other state required to operate at
+the other indexes.
 The function `f` expects the iterator tuple itself as argument, and returns its
 next value or `nil` to signal termination.
 The loop calls the function repeatedly, assigning each result to the loop
 variable, which can be accessed in the loop block.
 
-The function [`iter`](#TODO) in the [standard library](#standard-library)
+The function [`iter`](#iterator) in the [auxiliary library](#auxiliary-library)
 converts many values, such as vectors and coroutines, into iterators, so that
 they can be traversed in loops.
 
@@ -2122,6 +2142,8 @@ A reference cannot manipulate a task directly, requiring a `detrack`.
 
 A `detrack` expects a [track reference](#active-values) and returns the
 referred task or `nil` if it was cleared.
+Because it is a reference that terminate, the result of `detrack` cannot be
+cannot be assigned to other variables.
 
 `TODO: across yield`
 
@@ -2508,6 +2530,7 @@ throw type
 
 ## Auxiliary Library
 
+- `:Iterator`:  [Iterator](#iterator)
 - `=/=`:        [Deep Equality Operators](#deep-equality-operators)
 - `===`:        [Deep Equality Operators](#deep-equality-operators)
 - `and`:        [Logical Operators](#boolean-operators)
@@ -2515,14 +2538,11 @@ throw type
 - `in-not?`:    [Operator In](#operator-in)
 - `is?`:        [Operator Is](#operator-is)
 - `is-not?`:    [Operator Is](#operator-is)
+- `iter`:       [Iterator](#iterator)
 - `not`:        [Logical Operators](#boolean-operators)
 - `or`:         [Logical Operators](#boolean-operators)
 
 `TODO: many others`
-
-<!--
-- :Iterator
--->
 
 ### Deep Equality Operators
 
@@ -2651,6 +2671,55 @@ Examples:
 tags([],:x,true) is? :x  -> true
 ```
 
+### Iterator
+
+[Iterator loops](#iterators) in Ceu rely on the `:Iterator` template and `iter`
+constructor function as follows:
+
+```
+data :Iterator = [f]
+func iter (v, tp)       ;; --> :Iterator [f]
+```
+
+The function `iter` receives an iterable `v`, an optional modifier `tp`, and
+returns an iterator.
+The returned iterator is a tuple template in which the first field is a
+function that, when called, returns the next element of the original iterable
+`v`.
+The iterator function must return `nil` to signal that there are no more
+elements to traverse in the iterable.
+
+The function `iter` accepts the following iterables and modifiers:
+
+- Tuples:
+    - On each call, the iterator returns the next tuple element.
+    - Modifiers:
+        - `:all`: returns each index and value as a pair `[i,v]`
+        - `:idx`: returns each numeric index
+        - `:val`: returns the value on each index **(default)**
+- Vectors:
+    - On each call, the iterator returns the next vector element.
+    - Modifiers:
+        - `:all`: returns each index and value as a pair `[i,v]`
+        - `:idx`: returns each numeric index
+        - `:val`: returns the value on each index **(default)**
+- Dictionaries:
+    - On each call, the iterator returns the next dictionary element.
+    - Modifiers:
+        - `:all`: returns each key and value as a pair `[k,v]`
+        - `:key`: returns each key **(default)**
+        - `:val`: returns the value on each key
+- Functions:
+    - On each call, the iterator simply calls the original function.
+- Active Coroutine
+    - On each call, the iterator resumes the coroutine and returns its yielded
+      value. If the coroutine is terminated, it returns `nil`.
+
+<!--
+- :Iterator
+data :Iterator = [f,s,tp,i]
+-->
+
 # SYNTAX
 
 ## Basic Syntax
@@ -2662,8 +2731,8 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | `defer´ Block                                   ;; defer statements
       | `pass´ Expr                                     ;; innocuous expression
 
-      | `val´ ID [TAG] [`=´ Expr]                       ;; declaration constant
-      | `var´ ID [TAG] [`=´ Expr]                       ;; declaration variable
+      | `val´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration constant
+      | `var´ ID [TAG] [`=´ [TAG] Expr]                 ;; declaration variable
       | `set´ Expr `=´ Expr                             ;; assignment
 
       | `enum´ `{´ List(TAG [`=´ Expr]) `}´             ;; tags enum
@@ -2732,8 +2801,9 @@ Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
-      | Expr (`or´|`and´|`is?´|`is-not?´) Expr            ;; op bin
+      | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
       | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
+      | TAG Expr                                        ;; template cast
 
       | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
             Case : Expr `->´ (Expr | Block)
