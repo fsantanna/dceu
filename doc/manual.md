@@ -410,7 +410,7 @@ The following keywords are reserved in Ceu:
     false               ;; false value
     func                ;; function prototype
     if                  ;; if block
-    it                  ;; implicit argument
+    it                  ;; implicit parameter
     ifs                 ;; ifs block
     in                  ;; in keyword                       (20)
     in?                 ;; in? operator
@@ -1594,7 +1594,7 @@ A `loop` executes a block of code continuously until a condition is met.
 A `loop` has an optional iterator pattern that changes the value of a variable
 on each iteration.
 If the variable becomes `nil`, then the loop terminates.
-If the variable identifier is omitted, it assumes the default identifier `it`.
+If the variable identifier is omitted, it assumes the implicit identifier `it`.
 
 A `loop` has optional head and tail tests which, if satisfied, terminate the
 loop.
