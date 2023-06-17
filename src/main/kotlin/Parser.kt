@@ -214,19 +214,15 @@ class Parser (lexer_: Lexer)
 
     fun lambda (): Expr.Proto {
         this.acceptFix_err("\\")
+        val tk0 = this.tk0
         val args = if (!this.checkEnu("Id")) {
             listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
         } else {
             this.args("{")
-        }.let {
-            it.map { it.first.str + (it.second?.str?:"") }.joinToString(",")
         }
         val blk = this.block()
-        return this.nest("""
-            (func ($args) {
-                ${blk.es.tostr(true)}
-            })
-        """) as Expr.Proto
+        // func ($args) $blk
+        return Expr.Proto(Tk.Fix("func",tk0.pos), null, args, blk)
     }
 
     data class Await (val now: Boolean, val spw: Boolean, val clk: List<Pair<Expr, Tk.Tag>>?, val cnd: Expr?, val xcnd: Pair<Boolean?,Expr?>?)
@@ -601,9 +597,10 @@ class Parser (lexer_: Lexer)
                     val proto = Expr.Proto(tk0, task, args, blk)
                     when {
                         (id == null) -> proto
-                        !isrec -> this.nest("""
-                            ${tk0.pos.pre()}val ${id.str} = ${proto.tostr(true)}
-                        """)
+                        !isrec -> {
+                            // val $id = $proto
+                            Expr.Dcl(Tk.Fix("val",tk0.pos), id, false, null, true, proto)
+                        }
                         else -> this.nest("""
                             export [${id.str}] {
                                 ${tk0.pos.pre()}var ${id.str}
@@ -614,10 +611,15 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("catch") -> {
+                val tk0 = this.tk0 as Tk.Fix
                 val cnd = if (XCEU && this.checkFix("{")) Expr.Bool(Tk.Fix("true",this.tk0.pos)) else this.expr()
                 val blk = this.block()
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
-                    this.nest("catch (err is? ${cnd.tostr(true)}) ${blk.tostr(true)}")
+                    // catch (err is? $cnd) $blk
+                    val isx = Expr.Acc(Tk.Id("is'",cnd.tk.pos,0))
+                    val err = Expr.EvtErr(Tk.Fix("err", cnd.tk.pos))
+                    val cndx = Expr.Call(tk0, isx, listOf(err, cnd))
+                    Expr.Catch(tk0, cndx, blk)
                 } else {
                     Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
                 }
@@ -698,12 +700,12 @@ class Parser (lexer_: Lexer)
                         Expr.Spawn(tk0, tasks, call)
                     }
                     (XCEU && this.acceptFix("coro")) -> {
+                        val tk1 = this.tk0 as Tk.Fix
                         this.checkFix_err("{")
-                        this.nest("""
-                            ${tk0.pos.pre()}spawn (coro () {
-                                ${this.block().es.tostr(true)}
-                            }) ()
-                        """)
+                        // spawn (coro () $block) ()
+                        val blk = this.block()
+                        val coro = Expr.Proto(tk1, null, emptyList(), blk)
+                        Expr.Spawn(tk0, null, Expr.Call(tk1, coro, emptyList()))
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
