@@ -1066,8 +1066,7 @@ class Parser (lexer_: Lexer)
                         ${awt.tostr()}
                         ${brk.cond {
                             val (id,tag,cnd) = id_tag_cnd()
-                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)} {" }
-                        }
+                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)} {" }}
                         ${this.block().es.tostr(true)}
                         ${untils()}
                     }

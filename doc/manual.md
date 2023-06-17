@@ -198,10 +198,10 @@ spawn {
     }
     println(":done")
 }
-broadcast :tick                         ;; <-- :tick-1, :tick-2
-broadcast :tick                         ;; <-- :tick-1, :tick-2
-broadcast :done                         ;; <-- :done
-println("the end")                      ;; <-- the end
+broadcast :tick                         ;; --> :tick-1, :tick-2
+broadcast :tick                         ;; --> :tick-1, :tick-2
+broadcast :done                         ;; --> :done
+println("the end")                      ;; --> the end
 ```
 
 The main block has an outermost `spawn` task, which awaits `:done`, and has two
@@ -287,7 +287,7 @@ The next example uses tags as keys in a dictionary:
 val pos = @[]               ;; a new dictionary
 set pos[:x] = 10
 set pos.y   = 20            ;; equivalent to pos[:y]=20
-println(pos.x, pos[:y])     ;; <-- 10, 20
+println(pos.x, pos[:y])     ;; --> 10, 20
 ```
 
 Tags can also be used to "tag" dynamic objects, such as dictionaries and
@@ -336,7 +336,7 @@ the dictionary of the first example:
 ```
 data :Pos = [x,y]       ;; a template `:Pos` with fields `x` and `y`
 val pos :Pos = [10,20]  ;; declares that `pos` satisfies template `:Pos`
-println(pos.x, pos.y)   ;; <-- 10, 20
+println(pos.x, pos.y)   ;; --> 10, 20
 ```
 
 In the example, `pos.x` is equivalent to `pos[0]`, and `pos.y` is equivalent to
@@ -359,7 +359,7 @@ data :Event = [ts] {            ;; All events carry a timestamp
 }
 
 val but = :Event.Mouse.Button [0, [10,20], 1]   ;; [ts,[x,y],but]
-println(but.ts, but.pos.y, but is :Event.Mouse) ;; <-- 0, 20, true
+println(but.ts, but.pos.y, but is :Event.Mouse) ;; --> 0, 20, true
 ```
 
 Considering the last two lines, a declaration such as
@@ -1145,7 +1145,7 @@ Defer : `defer´ Block
 Deferred statements execute in reverse order in which they appear in the
 source code.
 
-Example:
+Examples:
 
 ```
 do {
@@ -1169,7 +1169,7 @@ middle of a block:
 Pass : `pass´ Expr
 ```
 
-Example:
+Examples:
 
 ```
 do {
@@ -1177,6 +1177,28 @@ do {
     pass 1      ;; OK:  innocuous but explicit
     ...
 }
+```
+
+## Where and Thus Clauses
+
+Any expression can be sufixed by `where` and `thus` clauses:
+
+```
+Expr : Expr [`where´ Block | `thus´ [ID] Block]
+```
+
+A `where` clause executes its block before the prefix expression and is allowed
+to declare variables that can be used by the expression.
+
+A `thus` clause captures the result of the prefix expression into the given
+identifier, and then executes its block.
+If the identifier is omitted, it assumes the implicit identifier `it`.
+
+Examples:
+
+```
+var x = (2 * y) where { var y=10 }      ;; x=20
+(x * x) thus x2 { println(x2) }         ;; --> 400
 ```
 
 ## Variables, Declarations and Assignments
@@ -1241,10 +1263,10 @@ set y = 0               ;; ERR: cannot reassign `y`
 set y[0] = 20           ;; OK
 
 val pos1 :Pos = [10,20] ;; (assumes :Pos has fields [x,y])
-println(pos1.x)         ;; <-- 10
+println(pos1.x)         ;; --> 10
 
 val pos2 = :Pos [10,20] ;; (assumes :Pos has fields [x,y])
-println(pos2.y)         ;; <-- 20
+println(pos2.y)         ;; --> 20
 ```
 
 ## Tag Enumerations and Tuple Templates
@@ -1308,15 +1330,15 @@ Examples:
 ```
 data :Pos = [x,y]                       ;; a flat template
 val pos :Pos = [10,20]                  ;; pos uses :Pos as template
-println(pos.x, pos.y)                   ;; <-- 10, 20
+println(pos.x, pos.y)                   ;; --> 10, 20
 
 data :Dim = [w,h]
 data :Rect = [pos :Pos, dim :Dim]       ;; a nested template
 val r1 :Rect = [pos, [100,100]]         ;; r uses :Rect as template
-println(r1.dim, r1.pos.x)               ;; <-- [100,100], 10
+println(r1.dim, r1.pos.x)               ;; --> [100,100], 10
 
 val r2 = :Rect [[0,0],[10,10]]          ;; combining tag template/constructor
-println(r2 is? :Rect, r2.dim.h)         ;; <-- true, 0
+println(r2 is? :Rect, r2.dim.h)         ;; --> true, 0
 ```
 
 Based on [tags and sub-tags](#user-types), tuple templates can define
@@ -1341,7 +1363,7 @@ data :Event = [ts] {            ;; All events carry a timestamp
 
 val but = :Event.Mouse.Button [0, [10,20], 1]
 val evt :Event = but
-println(evt.ts, but.pos.y)      ;; <-- 0, 20
+println(evt.ts, but.pos.y)      ;; --> 0, 20
 ```
 
 ## Calls, Operations and Indexing
@@ -1652,7 +1674,7 @@ val f = func (t) {              ;; t = [f, V]
     ((ret > 0) and ret) or nil  ;; V or nil
 }
 loop in [f, 5], v {
-    println(v)                  ;; -> 5, 4, 3, 2, 1
+    println(v)                  ;; --> 5, 4, 3, 2, 1
 }
 
 loop in iter([10,20,30]) {
@@ -1794,19 +1816,24 @@ The operation `spawn` creates and resumes a coroutine:
 Create : `coroutine´ `(´ Expr `)´
 Resume : `resume´ Expr `(´ Expr `)´
 Spawn  : `spawn´ Expr `(´ Expr `)´
+       | `spawn´ `coro´ Block
 ```
 
 The operation `coroutine` expects a coroutine prototype (type
-[`coro`](#execution-units) or [`task`](#execution-units)) and returns an active
-coroutine (type [`x-coro`](#execution-units) or [`x-task`](#executions-units)).
+[`coro`](#execution-units) or [`task`](#execution-units)) and returns its
+active reference (type [`x-coro`](#execution-units) or
+[`x-task`](#executions-units)).
 
 The operation `resume` expects an active coroutine, and resumes it.
 The coroutine executes until it yields or terminates.
 The `resume` evaluates to the argument of `yield` or to the coroutine return
 value.
 
-The operation `spawn T(...)` expands to operations `coroutine` and `resume` as
-follows: `resume (coroutine(T))(e)`.
+The operation `spawn T(...)` creates the coroutine `T`, resumes it passing
+`(...)`, and returns its active reference.
+
+A `spawn coro` spawns its block as an anonymous coroutine, returning its
+active reference.
 
 ### Status
 
@@ -1898,7 +1925,7 @@ val a2 = resume g(a1+1)                 ;; g(3), a2=5
 val a3 = resume g(a2+1)                 ;; g(6), a3=7
 val a4 = resume g(a3+1)                 ;; g(8), a4=8
 val a5 = resume g(a4+1)                 ;; g(9), a5=10
-println(a1, a2, a3, a4, a5)             ;; <-- 2, 5, 7, 8, 10
+println(a1, a2, a3, a4, a5)             ;; --> 2, 5, 7, 8, 10
 ```
 
 ### Toggle
@@ -2104,27 +2131,31 @@ They are both functions in the [primary library](#primary-library) of Ceu.
 -->
 
 ### Pools of Tasks
-### Sintax Extensions Blocks
+### Syntax Extensions Blocks
 #### Every Block
 
 An `every` block is a loop that makes an iteration whenever an await condition
 is satisfied:
 
 ```
-Every : `every´ <awt> Block
+Every : `every´ <awt>
+            [Test]              ;; optional head test
+            Block               ;; mandatory block
+            [{Test Block}]      ;; optional test/block
+            [Test]              ;; optional tail test
 ```
 
-An `every <awt> { <es> }` expands to a loop as follows:
+An `every` expands to a [loop](#loops-and-iterators) as follows:
 
 ```
 loop {
     await <awt>
-    <es>
+    <...>       ;; tests and blocks
 }
 ```
 
 Any [`await`](#await) variation can be used as `<awt>`.
-It is assumed that `<es>` does not `await` to satisfy the meaning of "every".
+It is assumed that `<...>` does not `await` to satisfy the meaning of "every".
 
 Examples:
 
@@ -2308,22 +2339,25 @@ terminates.
 The primary library provides functions and operations that are primitive in
 the sense that they cannot be written in Ceu itself:
 
-- `/=`:         [Equality Operators](#equality-operators)
-- `==`:         [Equality Operators](#equality-operators)
-- `copy`:       [Copy and Move](#copy-and-move)
-- `coroutine`:  [Create, Resume, Spawn](#create-resume-spawn)
-- `detrack`:    [Track and Detrack](#track-and-detrack)
-- `move`:       [Copy and Move](#copy-and-move)
-- `next`:       [Dictionary Next](#dictionary-next)
-- `print`:      [Print](#print)
-- `println`:    [Print](#print)
-- `status`:     [Status](#status)
-- `sup?`:       [Types and Tags](#types-and-tags)
-- `tags`:       [Types and Tags](#types-and-tags)
-- `tasks`:      [Pool of Tasks](#pool-of-tasks)
-- `throw`:      [Exceptions](#exceptions)
-- `track`:      [Track and Detrack](#track-and-detrack)
-- `type`:       [Types and Tags](#types-and-tags)
+- `/=`:             [Equality Operators](#equality-operators)
+- `==`:             [Equality Operators](#equality-operators)
+- `copy`:           [Copy and Move](#copy-and-move)
+- `coroutine`:      [Create, Resume, Spawn](#create-resume-spawn)
+- `detrack`:        [Track and Detrack](#track-and-detrack)
+- `move`:           [Copy and Move](#copy-and-move)
+- `next`:           [Dictionary Next](#dictionary-next)
+- `print`:          [Print](#print)
+- `println`:        [Print](#print)
+- `status`:         [Status](#status)
+- `sup?`:           [Types and Tags](#types-and-tags)
+- `tags`:           [Types and Tags](#types-and-tags)
+- `tasks`:          [Pool of Tasks](#pool-of-tasks)
+- `throw`:          [Exceptions](#exceptions)
+- `to-number`:      [Conversions](#conversions)
+- `to-string`:      [Conversions](#conversions)
+- `to-tag`:         [Conversions](#conversions)
+- `track`:          [Track and Detrack](#track-and-detrack)
+- `type`:           [Types and Tags](#types-and-tags)
 
 ### Equality Operators
 
@@ -2335,10 +2369,10 @@ func {/=} (v1, v2)  ;; --> yes/no
 The operator `==` compares two values `v1` and `v2` and returns a boolean.
 The operator `/=` is the negation of `==`.
 
-To be considered equal, the values must be of the same type and hold the same
-value.
-All values of the [basic types](#basic-types) are compared by value, while all
-[dynamic values](#dynamic-values) are compared by reference.
+To be considered equal, first the values must be of the same type.
+In addition, [literal values](#literal-values) are compared *by value*, while
+[Dynamic Values](#dynamic-values) and [Active Values](#active-values) are
+compared *by reference*.
 <!--
 The exception are tuples, which are compared by value, i.e., they must be of
 the same size, with all positions having the same value (using `==`).
@@ -2358,9 +2392,10 @@ Examples:
 
 ```
 func type (v)           ;; --> :type
-func up? (sup, sub)     ;; --> yes/no
+func sup? (sup, sub)    ;; --> yes/no
+func string-to-tag (s)  ;; --> :tag
 func tags (v, t, set)   ;; --> v
-func tags (v, t))       ;; --> yes/no
+func tags (v, t)        ;; --> yes/no
 ```
 
 The function `type` receives a value `v` and returns its [type](#types) as one
@@ -2387,6 +2422,27 @@ Examples:
 type(10)                        ;; --> :number
 val x = tags([], :x, true)      ;; value x=[] is associated with tag :x
 tags(x, :x)                     ;; --> true
+```
+
+### Conversions
+
+```
+func to-number (v)  ;; --> number
+func to-string (v)  ;; --> "string"
+func to-tag (v)     ;; --> :tag
+```
+
+The conversion functions receive any value `v` and try to convert it to a value
+of the specified type.
+If the conversion is not possible, they return `nil`.
+
+Examples:
+
+```
+to-number("10")     ;; --> 10
+to-number([10])     ;; --> nil
+to-string(10)       ;; --> "10"
+to-tag(":number")   ;; --> :number
 ```
 
 ### Copy and Move
@@ -2452,8 +2508,11 @@ throw type
 
 ## Auxiliary Library
 
+- `=/=`:        [Deep Equality Operators](#deep-equality-operators)
+- `===`:        [Deep Equality Operators](#deep-equality-operators)
 - `and`:        [Logical Operators](#boolean-operators)
 - `in?`:        [Operator In](#operator-in)
+- `in-not?`:    [Operator In](#operator-in)
 - `is?`:        [Operator Is](#operator-is)
 - `is-not?`:    [Operator Is](#operator-is)
 - `not`:        [Logical Operators](#boolean-operators)
@@ -2464,6 +2523,33 @@ throw type
 <!--
 - :Iterator
 -->
+
+### Deep Equality Operators
+
+```
+func {===} (v1, v2)  ;; --> yes/no
+func {=/=} (v1, v2)  ;; --> yes/no
+```
+
+The operator `===` *deeply* compares two values `v1` and `v2` and returns a
+boolean.
+The operator `=/=` is the negation of `===`.
+
+Except for [collections](#collections), deep equality behaves the same as
+[equality](#equality-operators).
+To be considered deeply equal, collections must be of the same type, have the
+same [user tags](#user-types), and all indexes and values must be deeply equal.
+
+Examples:
+
+```
+1 === 1                 ;; --> true
+1 =/= 1                 ;; --> false
+1 === '1'               ;; --> false
+#[1] === #[1]           ;; --> true
+@[(:x,1),(:y,2)] =/=
+@[(:y,2),(:x,1)]        ;; --> false
+```
 
 ### Logical Operators
 
@@ -2510,6 +2596,30 @@ nil or 10       ;; --> 10
 10 and nil      ;; --> nil
 ```
 
+### Operator In
+
+```
+func in? (v, vs)
+func in-not? (v, vs)
+```
+
+The operators `in?` and `in-not?` are functions with a special syntax to be
+used as infix operators.
+
+The operator `in?` checks if `v` is part of [collection](#collections) `vs`.
+For tuples and vectors, the values are checked.
+For dictionaries, the indexes are checked.
+
+The operator `in-not?` is the negation of `in?`.
+
+Examples:
+
+```
+10 in? [1,10]            ;; true
+20 in? #[1,10]           ;; false
+10 in? @[(1,10)]         ;; false
+```
+
 ### Operator Is
 
 ```
@@ -2517,8 +2627,8 @@ func is? (v1, v2)
 func is-not? (v1, v2)
 ```
 
-The operators `is?` and `is-not?` are functions with a special syntax to be used
-as infix operators.
+The operators `is?` and `is-not?` are functions with a special syntax to be
+used as infix operators.
 
 The operator `is?` checks if `v1` matches `v2` as follows:
 
@@ -2617,7 +2727,7 @@ NAT   : `.*`                                            ;; native expression
 ## Extended Syntax
 
 ```
-Expr  : Expr' [`where´ Block]                           ;; where clause
+Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
 Expr' : STR
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
