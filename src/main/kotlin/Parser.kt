@@ -700,19 +700,19 @@ class Parser (lexer_: Lexer)
                         Expr.Spawn(tk0, tasks, call)
                     }
                     (XCEU && this.acceptFix("coro")) -> {
+                        // spawn (coro () $blk) ()
                         val tk1 = this.tk0 as Tk.Fix
                         this.checkFix_err("{")
-                        // spawn (coro () $block) ()
                         val blk = this.block()
                         val coro = Expr.Proto(tk1, null, emptyList(), blk)
                         Expr.Spawn(tk0, null, Expr.Call(tk1, coro, emptyList()))
                     }
                     (XCEU && this.checkFix("{")) -> {
-                        this.nest("""
-                            ${tk0.pos.pre()}spawn (task () :fake {
-                                ${this.block().es.tostr(true)}
-                            }) ()
-                        """)
+                        // spawn (task () :fake { blk }) ()
+                        val blk = this.block()
+                        val tk1 = Tk.Fix("task", tk0.pos)
+                        val task = Expr.Proto(tk1, Pair(null,true), emptyList(), blk)
+                        Expr.Spawn(tk0, null, Expr.Call(tk0, task, emptyList()))
                     }
                     else -> {
                         val call = this.expr()
@@ -799,9 +799,10 @@ class Parser (lexer_: Lexer)
                     val nn = N
                     val e = this.exprPrim()
                     if (e is Expr.Tuple) {
-                        this.nest("""
-                            ${tag.pos.pre()}tags(${e.tostr(true)}, ${tag.str}, true)
-                        """)
+                        // :X [...]
+                        // tags($e, $tag, true)
+                        val tags = Expr.Acc(Tk.Id("tags",tag.pos,0))
+                        Expr.Call(tk0, tags, listOf(e, Expr.Tag(tag), Expr.Bool(Tk.Fix("true",tag.pos))))
                     } else {
                         val e1 = this.exprSufsX(Expr.Acc(Tk.Id("ceu_$nn",tag.pos,0)))
                         val e2 = this.nest("""

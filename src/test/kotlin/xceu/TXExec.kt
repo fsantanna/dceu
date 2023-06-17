@@ -1660,7 +1660,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out.contains("anon : (lin 3, col 52) : block escape error : incompatible scopes")) { out }
+        assert(out.contains("anon : (lin 3, col 37) : block escape error : incompatible scopes")) { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
