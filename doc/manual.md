@@ -728,8 +728,8 @@ The `vector` type represents a variable collection of homogeneous values, in
 which each numeric index, starting at `0`,  holds a value of the same type.
 
 The `dict` type (dictionary) represents a variable collection of heterogeneous
-values, in which each index of any type maps to a value of a (possibly)
-different type.
+values, in which each index (or key) of any type maps to a value of a
+(possibly) different type.
 
 Examples:
 
