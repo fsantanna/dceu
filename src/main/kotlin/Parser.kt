@@ -804,14 +804,11 @@ class Parser (lexer_: Lexer)
                         val tags = Expr.Acc(Tk.Id("tags",tag.pos,0))
                         Expr.Call(tk0, tags, listOf(e, Expr.Tag(tag), Expr.Bool(Tk.Fix("true",tag.pos))))
                     } else {
-                        val e1 = this.exprSufsX(Expr.Acc(Tk.Id("ceu_$nn",tag.pos,0)))
-                        val e2 = this.nest("""
-                            ${tag.pos.pre()}do {
-                                val :tmp ceu_$nn ${tag.str} = ${e.tostr(true)}
-                                ${e1.tostr(true)}
-                            }
-                        """)
-                        e2
+                        // do { val :tmp ceu_$nn $tag = $e ; e1 }
+                        val id = Tk.Id("ceu_$nn",tag.pos,0)
+                        val e1 = this.exprSufsX(Expr.Acc(id))
+                        val dcl = Expr.Dcl(Tk.Fix("val",e1.tk.pos), id, true, tag, true, e)
+                        Expr.Do(e1.tk, listOf(dcl, e1))
                     }
                 }
             }
