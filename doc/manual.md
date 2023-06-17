@@ -2759,8 +2759,15 @@ Expr  : `do´ [:unnest[-hide]] Block                     ;; explicit block
       | Expr `.´ ID                                     ;; pos dict field
       | Expr `.´ `pub´                                  ;; pos task pub
 
-      | `if´ Expr Block [`else´ Block]                  ;; conditional
-      | `loop´ `if´ Expr Block                          ;; loop while
+      | `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)    ;; conditional
+        [`else´  (Block | `->´ Expr)]
+      | `loop´ [`in´ Iter [`,´ ID [TAG]]]  [Test] Block ;; loops
+            [{Test Block}] [Test]
+            Test : (`until´ | `while´) [ID [TAG] `=´] Expr
+            Iter : Expr
+                 | `:tasks´ Expr
+                 | (`[´ | `(´) Expr `->´ Expr (`]´ | `)´)
+                    [`,´ :step (`-´|`+´) Expr]
 
       | `catch´ Expr Block                              ;; catch exception
       | `throw´ `(´ Expr `)´                            ;; throw exception
@@ -2798,39 +2805,30 @@ NAT   : `.*`                                            ;; native expression
 ```
 Expr  : Expr' [`where´ Block | `thus´ [ID] Block]       ;; where/thus clauses
 Expr' : STR
+      | `\´ [List(ID)] Block                            ;; lambda
       | `not´ Expr                                      ;; op not
       | Expr `[´ (`=´|`+´|`-´) `]´                      ;; ops peek,push,pop
       | Expr `.´ NUM                                    ;; op tuple index
       | Expr (`or´|`and´|`is?´|`is-not?´) Expr          ;; op bin
+      | Expr `\´ [List(ID)] Block                       ;; call lambda
       | TAG `[´ [List(Expr)] `]´                        ;; tagged tuple
       | TAG Expr                                        ;; template cast
 
-      | `ifs´ `{´ {Case} [Else] `}´                     ;; conditionals
-            Case : Expr `->´ (Expr | Block)
-            Else : `else´ `->´ (Expr | Block)
-      | `ifs´ Expr `{´ {Case} [Else] `}´                ;; switch + conditionals
-            Case : [`==´ | `is?´] Expr `->´ (Expr | Block)
-            Else : `else´ `->´ (Expr | Block)
-
-      | `loop´ Block                                    ;; loop infinite
-      | `loop´ Block `until´ Expr                       ;; loop until
-      | `loop´ `in´ Expr `,´ ID Block                   ;; loop iterator
-      | `loop´ `in´                                     ;; loop iterator numeric
-            (`[´ | `(´)
-            Expr `->´ Expr
-            (`]´ | `)´)
-            [`,´ :step (`-´|`+´) Expr]
-            `,´ ID Block
+      | `ifs´ [[ID [TAG] `=´] Expr] `{´ {Case} [Else] `}´ ;; conditionals
+            Case : OP Expr (Block | `->´ Expr)
+                 | [ID [TAG] `=´] Expr (Block | `->´ Expr)
+            Else : `else´ (`->´ Expr | Block)
 
       | `func´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration func
       | `coro´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration coro
       | `task´ [`:pre´] ID `(´ [List(ID)] [`...´] `)´ Block ;; declaration task
 
       | `spawn´ Expr `(´ Expr `)´                       ;; spawn coro
-      | `spawn´ Block                                   ;; spawn anonymous task
+      | `spawn´ [`coro´] Block                          ;; spawn anonymous task/coro
       | `await´ Await                                   ;; await event
       | `resume-yield-all´ Expr `(´ Expr `)´            ;; resume-yield nested coro
-      | `every´ Await Block                             ;; await event in loop
+      | `every´ Await [Test] Block                      ;; await event in loop
+            [{Test Block}] [Test]
       | `awaiting´ Await Block                          ;; abort on event
       | `par´ Block { `with´ Block }                    ;; spawn tasks
       | `par-and´ Block { `with´ Block }                ;; spawn tasks, rejoin on all
