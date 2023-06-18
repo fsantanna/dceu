@@ -1344,12 +1344,20 @@ class Parser (lexer_: Lexer)
             }
             val e2 = this.exprPres()
             e = when (op.str) {
-                "or" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
+                "or" -> {
+                    // do { val :tmp x=$e ; if x -> x -> $e2 }
+                    fun xid (): Tk.Id {
+                        return Tk.Id("ceu_${e.n}", e.tk.pos, 0)
                     }
-                """)
+                    Expr.Do(e.tk, listOf(
+                        Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
+                        Expr.If(Tk.Fix("if",e.tk.pos),
+                            Expr.Acc(xid()),
+                            Expr.Do(e.tk, listOf(Expr.Acc(xid()))),
+                            Expr.Do(e.tk, listOf(e2))
+                        )
+                    ))
+                }
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
                         val :tmp ceu_${e.n} = ${e.tostr(true)} 
