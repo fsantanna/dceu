@@ -2710,7 +2710,7 @@ class TXExec {
             val v = #[]
             v[+]
         """, true)
-        assert(out == "anon : (lin 4, col 41) : index error : out of bounds\n" +
+        assert(out == "anon : (lin 3, col 15) : index error : out of bounds\n" +
                 ":error\n") { out }
     }
     @Test

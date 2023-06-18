@@ -1216,7 +1216,7 @@ class Parser (lexer_: Lexer)
                         if (isclose) {
                             when (op.str) {
                                 "=" -> {
-                                    // export [] { val :tmp ceu_col_$N = $e ;  ceu_col_$N[(#ceu_col_$N)-1] }
+                                    // export [] { val :tmp x=$e ; x[#x-1] }
                                     val id = Tk.Id("ceu_col_$N", op.pos, 0)
                                     Expr.Export(op, emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
@@ -1227,20 +1227,34 @@ class Parser (lexer_: Lexer)
                                             ))
                                     ))))
                                 }
-                                "+" -> this.nest("""
-                                    export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
-                                        ceu_col_$N[#ceu_col_$N]
+                                "+" -> {
+                                    // export [] { val :tmp x=$e ; x[#x] }
+                                    val id = Tk.Id("ceu_col_$N", op.pos, 0)
+                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                        Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
+                                        Expr.Index(op, Expr.Acc(id),
+                                            Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id))),
+                                        )
+                                    )))
+                                } //.let { println(it.tostr());it }
+                                "-" -> {
+                                    // export [] { val :tmp x=$e ; val y=x[#x-1] ; set x[#x-1]=nil ; y }
+                                    val id_col = Tk.Id("ceu_col_$N", op.pos, 0)
+                                    val id_val = Tk.Id("ceu_val_$N", op.pos, 0)
+                                    fun idx (): Expr.Index {
+                                        return Expr.Index(op, Expr.Acc(id_col),
+                                            Expr.Call(op, Expr.Acc(Tk.Id("{-}",op.pos,0)), listOf(
+                                                Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id_col))),
+                                                Expr.Num(Tk.Num("1",op.pos))
+                                            )))
                                     }
-                                """) //.let { println(it.tostr());it }
-                                "-" -> this.nest("""
-                                    export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
-                                        val ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
-                                        set ceu_col_$N[(#ceu_col_$N)-1] = nil
-                                        ceu_i_$N
-                                    }
-                                """)
+                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                        Expr.Dcl(Tk.Fix("val",op.pos), id_col, true, null, true, e),
+                                        Expr.Dcl(Tk.Fix("val",op.pos), id_val, false, null, true, idx()),
+                                        Expr.Set(Tk.Fix("set",op.pos), idx(), Expr.Nil(Tk.Fix("nil",op.pos))),
+                                        Expr.Acc(id_val)
+                                    )))
+                                }
                                 else -> error("impossible case")
                             }
                         } else {
