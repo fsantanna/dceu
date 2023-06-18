@@ -1353,8 +1353,8 @@ class Parser (lexer_: Lexer)
                         Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
                         Expr.If(Tk.Fix("if",e.tk.pos),
                             Expr.Acc(xid()),
-                            Expr.Do(e.tk, listOf(Expr.Acc(xid()))),
-                            Expr.Do(e.tk, listOf(e2))
+                            Expr.Do(op, listOf(Expr.Acc(xid()))),
+                            Expr.Do(op, listOf(e2))
                         )
                     ))
                 }
@@ -1367,8 +1367,8 @@ class Parser (lexer_: Lexer)
                         Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
                         Expr.If(Tk.Fix("if",e.tk.pos),
                             Expr.Acc(xid()),
-                            Expr.Do(e.tk, listOf(e2)),
-                            Expr.Do(e.tk, listOf(Expr.Acc(xid())))
+                            Expr.Do(op, listOf(e2)),
+                            Expr.Do(op, listOf(Expr.Acc(xid())))
                         )
                     ))
                 }
