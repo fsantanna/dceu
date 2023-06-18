@@ -1304,21 +1304,15 @@ class Parser (lexer_: Lexer)
                 }
                 // LAMBDA
                 XCEU && this.checkFix("\\") -> {
-                    val f = this.lambda()
-                    e = this.nest("""
-                        ${e.tostr(true)}(${f.tostr(true)})
-                    """)
+                    // e = e($lambda)
+                    e = Expr.Call(e.tk, e, listOf(this.lambda()))
                 }
                 // WHERE
                 XCEU && this.acceptFix("where") -> {
+                    // e = export [] { blk, e }
                     val tk0 = this.tk0
-                    val body = this.block()
-                    e = this.nest("""
-                        ${tk0.pos.pre()}export [] {
-                            ${body.es.tostr(true)}
-                            ${e.tostr(true)}
-                        }
-                    """)
+                    val blk = this.block()
+                    e = Expr.Export(tk0, emptyList(), Expr.Do(tk0, blk.es+e))
                 }
                 // THUS
                 XCEU && this.acceptFix("thus") -> {
