@@ -809,7 +809,7 @@ class Parser (lexer_: Lexer)
                         val id = Tk.Id("ceu_$nn",tag.pos,0)
                         val e1 = this.exprSufsX(Expr.Acc(id))
                         val dcl = Expr.Dcl(Tk.Fix("val",e1.tk.pos), id, true, tag, true, e)
-                        Expr.Do(e1.tk, listOf(dcl, e1))
+                        Expr.Do(Tk.Fix("do", e.tk.pos), listOf(dcl, e1))
                     }
                 }
             }
@@ -1088,8 +1088,8 @@ class Parser (lexer_: Lexer)
                     Expr.Spawn(Tk.Fix("spawn",it.tk.pos), null, Expr.Call(tk0, task, emptyList()))
                 }
                 //do { $spws ; await false }
-                val awt = Expr.Loop(tk0, 0, Expr.Do(tk0, listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
-                Expr.Do(tk0, spws + awt)
+                val awt = Expr.Loop(tk0, 0, Expr.Do(Tk.Fix("do",tk0.pos), listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
+                Expr.Do(Tk.Fix("do",tk0.pos), spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
                 val pre0 = this.tk0.pos.pre()
@@ -1320,7 +1320,7 @@ class Parser (lexer_: Lexer)
                     val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
                     val body = this.block()
                     // do { val $x = $e }
-                    e = Expr.Do(tk0,
+                    e = Expr.Do(Tk.Fix("do", tk0.pos),
                     listOf(
                             Expr.Dcl(Tk.Fix("val",tk0.pos), x ?: Tk.Id("it",tk0.pos,0), false, null, true, e)
                         ) + body.es
@@ -1349,7 +1349,7 @@ class Parser (lexer_: Lexer)
                     fun xid (): Tk.Id {
                         return Tk.Id("ceu_${e.n}", e.tk.pos, 0)
                     }
-                    Expr.Do(e.tk, listOf(
+                    Expr.Do(Tk.Fix("do", e.tk.pos), listOf(
                         Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
                         Expr.If(Tk.Fix("if",e.tk.pos),
                             Expr.Acc(xid()),
@@ -1358,12 +1358,20 @@ class Parser (lexer_: Lexer)
                         )
                     ))
                 }
-                "and" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
+                "and" -> {
+                    // do { val :tmp x=$e ; if x -> $e2 -> x }
+                    fun xid (): Tk.Id {
+                        return Tk.Id("ceu_${e.n}", e.tk.pos, 0)
                     }
-                """)
+                    Expr.Do(Tk.Fix("do", e.tk.pos), listOf(
+                        Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
+                        Expr.If(Tk.Fix("if",e.tk.pos),
+                            Expr.Acc(xid()),
+                            Expr.Do(e.tk, listOf(e2)),
+                            Expr.Do(e.tk, listOf(Expr.Acc(xid())))
+                        )
+                    ))
+                }
                 "is?" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
