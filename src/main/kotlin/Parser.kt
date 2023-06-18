@@ -1319,12 +1319,12 @@ class Parser (lexer_: Lexer)
                     val tk0 = this.tk0
                     val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
                     val body = this.block()
-                    e = this.nest("""
-                        ${tk0.pos.pre()}do {
-                            val ${x?.str ?: "it"} = ${e.tostr(true)}
-                            ${body.es.tostr(true)}
-                        }
-                    """)
+                    // do { val $x = $e }
+                    e = Expr.Do(tk0,
+                    listOf(
+                            Expr.Dcl(Tk.Fix("val",tk0.pos), x ?: Tk.Id("it",tk0.pos,0), false, null, true, e)
+                        ) + body.es
+                    )
                 }
                 else -> break
             }
