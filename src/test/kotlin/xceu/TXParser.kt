@@ -178,20 +178,20 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val :tmp ceu_73 = do {
-            val :tmp ceu_26 = if true {
+            val :tmp ceu_63 = do {
+            val :tmp ceu_16 = if true {
             false
             } else {
             true
             }
-            if ceu_26 {
+            if ceu_16 {
             false
             } else {
-            ceu_26
+            ceu_16
             }
             }
-            if ceu_73 {
-            ceu_73
+            if ceu_63 {
+            ceu_63
             } else {
             true
             }

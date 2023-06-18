@@ -16,6 +16,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun nest (inp: String): Expr {
+        //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
         val lexer = Lexer(inps)
@@ -1181,7 +1182,11 @@ class Parser (lexer_: Lexer)
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
                 op as Tk.Op
-                e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
+                // if $e { false } else { true }
+                e = Expr.If(Tk.Fix("if",op.pos), e,
+                    Expr.Do(op, listOf(Expr.Bool(Tk.Fix("false",op.pos)))),
+                    Expr.Do(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
+                )
             } else {
                 e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e))
             }
@@ -1210,12 +1215,18 @@ class Parser (lexer_: Lexer)
                         val isclose = if (op.str=="-") this.acceptFix_err("]") else this.acceptFix("]")
                         if (isclose) {
                             when (op.str) {
-                                "=" -> this.nest("""
-                                    export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
-                                        ceu_col_$N[(#ceu_col_$N)-1]
-                                    }
-                                """)
+                                "=" -> {
+                                    // export [] { val :tmp ceu_col_$N = $e ;  ceu_col_$N[(#ceu_col_$N)-1] }
+                                    val id = Tk.Id("ceu_col_$N", op.pos, 0)
+                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                        Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
+                                        Expr.Index(op, Expr.Acc(id),
+                                            Expr.Call(op, Expr.Acc(Tk.Id("{-}",op.pos,0)), listOf(
+                                                Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id))),
+                                                Expr.Num(Tk.Num("1",op.pos))
+                                            ))
+                                    ))))
+                                }
                                 "+" -> this.nest("""
                                     export [] { 
                                         val :tmp ceu_col_$N = ${e.tostr(true)}
