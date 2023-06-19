@@ -401,12 +401,17 @@ class Parser (lexer_: Lexer)
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
-                val raw = this.acceptEnu("Num")
-                val xin = !raw && this.acceptFix("in")
-                val nn = if (raw) this.tk0.str.toInt() else N++
+
+                if (this.acceptEnu("Num")) {
+                    val nn = this.tk0.str.toInt()
+                    val blk = this.block()
+                    return Expr.Loop(tk0, nn, Expr.Do(tk0, blk.es))
+                }
+
+                val xin = this.acceptFix("in")
+                val nn = N++
 
                 val f = when {
-                    raw -> { { blk -> error("never called") } }
                     !xin -> {
                         { body -> """
                             do {
@@ -551,7 +556,7 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (raw || !(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
+                val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
                     val not = if (this.tk0.str == "until") "" else "not"
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
@@ -583,19 +588,15 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                if (raw) {
-                    Expr.Loop(tk0, nn, Expr.Do(tk0, blk))
-                } else {
-                    val body = """
-                        ;; brk
-                        $brk
-                        ;; blk
-                        ${blk.tostr(true)}
-                        ;; untils
-                        ${untils()}
-                    """
-                    this.nest(f(body))
-                }
+                val body = """
+                    ;; brk
+                    $brk
+                    ;; blk
+                    ${blk.tostr(true)}
+                    ;; untils
+                    ${untils()}
+                """
+                this.nest(f(body))
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
