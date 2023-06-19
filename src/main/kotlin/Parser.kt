@@ -362,17 +362,35 @@ class Parser (lexer_: Lexer)
                 if (id == null) {
                     Expr.If(tk0, cnd, t, f)
                 } else {
-                    this.nest("""
-                        ${tk0.pos.pre()}export {
-                            val ceu_$N ${tag ?: ""} = ${cnd.tostr(true)}
-                            if ceu_$N {
-                                val $id ${tag ?: ""} = ceu_$N
-                                ${t.es.tostr(true)}
-                            } else {
-                                ${f.es.tostr(true)}
-                            }
-                        }
-                    """)
+                    val nn = N
+                    fun xid (): Tk.Id {
+                        return Tk.Id("ceu_$nn", tk0.pos, 0)
+                    }
+                    // export { val x $tag=$cnd ; if x { val $id $tag=x ; $t } else { $f } }
+                    Expr.Export(tk0, emptyList(), Expr.Do(tk0, listOf(
+                        Expr.Dcl(
+                            Tk.Fix("val", tk0.pos),
+                            xid(),
+                            false,
+                            if (tag==null) null else Tk.Tag(tag,tk0.pos),
+                            true,
+                            cnd
+                        ),
+                        Expr.If(tk0, Expr.Acc(xid()),
+                            Expr.Do(tk0, listOf(
+                                Expr.Dcl(
+                                    Tk.Fix("val",tk0.pos),
+                                    Tk.Id(id,tk0.pos,0),
+                                    false,
+                                    if (tag==null) null else Tk.Tag(tag,tk0.pos),
+                                    true,
+                                    Expr.Acc(xid())
+                                ),
+                                t
+                            )),
+                            Expr.Do(tk0, f.es)
+                        )
+                    )))
                 }
             }
             this.acceptFix("loop") -> {
@@ -618,9 +636,12 @@ class Parser (lexer_: Lexer)
                 val blk = this.block()
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
                     // catch (err is? $cnd) $blk
-                    val isx = Expr.Acc(Tk.Id("is'",cnd.tk.pos,0))
-                    val err = Expr.EvtErr(Tk.Fix("err", cnd.tk.pos))
-                    val cndx = Expr.Call(tk0, isx, listOf(err, cnd))
+                    val cndx = Expr.Call(tk0,
+                        Expr.Acc(Tk.Id("is'",cnd.tk.pos,0)),
+                        listOf(
+                            Expr.EvtErr(Tk.Fix("err", cnd.tk.pos)),
+                            cnd
+                        ))
                     Expr.Catch(tk0, cndx, blk)
                 } else {
                     Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
@@ -1088,7 +1109,7 @@ class Parser (lexer_: Lexer)
                     Expr.Spawn(Tk.Fix("spawn",it.tk.pos), null, Expr.Call(tk0, task, emptyList()))
                 }
                 //do { $spws ; await false }
-                val awt = Expr.Loop(tk0, 0, Expr.Do(Tk.Fix("do",tk0.pos), listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
+                val awt = Expr.Loop(tk0, 0, Expr.Do(tk0, listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
                 Expr.Do(Tk.Fix("do",tk0.pos), spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
@@ -1372,10 +1393,10 @@ class Parser (lexer_: Lexer)
                         )
                     ))
                 }
-                "is?" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "in-not?" -> this.nest("in-not'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "is?" -> Expr.Call(op, Expr.Acc(Tk.Id("is'",op.pos,0)), listOf(e, e2))
+                "is-not?" -> Expr.Call(op, Expr.Acc(Tk.Id("is-not'",op.pos,0)), listOf(e, e2))
+                "in?" -> Expr.Call(op, Expr.Acc(Tk.Id("in'",op.pos,0)), listOf(e, e2))
+                "in-not?" -> Expr.Call(op, Expr.Acc(Tk.Id("in-not'",op.pos,0)), listOf(e, e2))
                 else -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
             }
             pre = this.tk0

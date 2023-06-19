@@ -1114,14 +1114,16 @@ do {                    ;; yieldable block
 
 ### Export
 
-An `export` hides all nested declarations, except those indicated in a list:
+An `export` hides all nested declarations, except those indicated in an
+optional list:
 
 ```
-Export : `export´ `[´ List(ID | `evt´) `]´ Block
+Export : `export´ [`[´ List(ID | `evt´) `]´] Block
 ```
 
 Nevertheless, all nested declarations remain active as if they were declared on
 the enclosing block.
+If the list is omitted, all declarations are hidden.
 
 Examples:
 
