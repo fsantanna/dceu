@@ -556,21 +556,29 @@ class Parser (lexer_: Lexer)
 
                 val blk = this.block().es
 
-                fun untils (): String {
-                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
-                        val not = if (this.tk0.str == "until") "" else "not"
+                fun untils (): List<Expr> {
+                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) {
+                        emptyList()
+                    } else {
                         val (id,tag,cnd) = id_tag_cnd()
-                        val xblk = if (!this.checkFix("{")) "" else {
-                            this.block().es.tostr(true) + untils()
+                        val xblk = if (!this.checkFix("{")) emptyList() else {
+                            this.block().es + untils()
                         }
-                        N++
-                        """
-                        val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-                        if $not ${id ?: "ceu_$N"} {
-                            `goto CEU_LOOP_DONE_$nn;`
-                        } else { nil }
-                        $xblk
-                        """
+                        val nnn = N++
+                        val tk0 = this.tk0
+                        fun xid (): Tk.Id {
+                            return Tk.Id(id ?: "ceu_$nnn", tk0.pos, 0)
+                        }
+                        // val $id $tag=$cnd ; if [$not] $id { xbreak $id } ; $xblk
+                        val t = Expr.XBreak(Tk.Fix("xbreak",tk0.pos), nn)
+                        val f = Expr.Nil(Tk.Fix("nil",tk0.pos))
+                        listOf(
+                            Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, tag, true, cnd),
+                            Expr.If(Tk.Fix("if",tk0.pos), Expr.Acc(xid()),
+                                Expr.Do(tk0, listOf(if (this.tk0.str=="until") f else t)),
+                                Expr.Do(tk0, listOf(if (this.tk0.str=="until") t else f))
+                            )
+                        ) + xblk
                     }
                 }
 
@@ -580,7 +588,7 @@ class Parser (lexer_: Lexer)
                     ;; blk
                     ${blk.tostr(true)}
                     ;; untils
-                    ${untils()}
+                    ${untils().tostr(true)}
                 """
                 this.nest(f(body))
             }
