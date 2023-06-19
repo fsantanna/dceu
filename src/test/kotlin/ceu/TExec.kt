@@ -1918,6 +1918,19 @@ class TExec {
     // LOOP
 
     @Test
+    fun loop0() {
+        val out = all("""
+            do {
+                loop 1 {
+                    println(:in)
+                    xbreak 1
+                }
+            }
+            println(:out)
+        """)
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
     fun loop1() {
         val out = all("""
             var x

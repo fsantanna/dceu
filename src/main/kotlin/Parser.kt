@@ -393,6 +393,11 @@ class Parser (lexer_: Lexer)
                     )))
                 }
             }
+            this.acceptFix("xbreak") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptEnu_err("Num")
+                Expr.XBreak(tk0, this.tk0.str.toInt())
+            }
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
@@ -553,7 +558,7 @@ class Parser (lexer_: Lexer)
                     """
                     val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                     if $not ${id ?: "ceu_$N"} {
-                        `goto CEU_LOOP_DONE_$nn;`
+                        xbreak $nn
                     } else { nil }
                     """
                 }
