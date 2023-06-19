@@ -397,15 +397,14 @@ class Parser (lexer_: Lexer)
                 val xin = this.acceptFix("in")
                 val nn = N++
 
-                val f = when {
+                val f: (List<Expr>) -> Expr = when {
                     !xin -> {
-                        { body -> """
-                            do {
-                                loop $nn {
-                                    $body
-                                }
-                            }
-                        """ }
+                        // do { loop $nn { body } }
+                        { body: List<Expr> ->
+                            Expr.Do(Tk.Fix("do", tk0.pos), listOf(
+                                Expr.Loop(tk0, nn, Expr.Do(tk0,body))
+                            ))
+                        }
                     }
                     this.acceptTag(":tasks") -> {
                         val tasks = this.expr()
@@ -414,7 +413,7 @@ class Parser (lexer_: Lexer)
                             this.acceptEnu_err("Id")
                             this.tk0.str
                         }
-                        { body: String -> """
+                        { body -> this.nest("""
                             ${pre0}do {
                                 val ceu_tasks_$N = ${tasks.tostr(true)}
                                 ```
@@ -445,7 +444,7 @@ class Parser (lexer_: Lexer)
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
                                         val $i = track(`:ceu ceu_x_$N`)
-                                        $body
+                                        ${body.tostr()}
                                         if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         } else {
@@ -454,7 +453,7 @@ class Parser (lexer_: Lexer)
                                     }
                                 }
                             }
-                            """
+                            """)
                         }
                     }
                     XCEU && (this.acceptFix("[") || this.acceptFix("(")) -> {
@@ -492,7 +491,7 @@ class Parser (lexer_: Lexer)
                             else -> error("impossible case")
                         }
 
-                        { body: String ->"""
+                        { body -> this.nest("""
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
                                 var $i ${tag?.str ?: ""} = ${eA.tostr(true)} $op (
@@ -504,11 +503,11 @@ class Parser (lexer_: Lexer)
                                         pass nil     ;; return value
                                         `goto CEU_LOOP_DONE_$nn;`
                                     } else { nil }
-                                    $body
+                                    ${body.tostr()}
                                     set $i = $i $op ceu_step_$N
                                 }                                
                             }
-                            """
+                            """)
                         }
                     }
                     XCEU -> {
@@ -520,7 +519,7 @@ class Parser (lexer_: Lexer)
                             val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
                             Pair(id.str,tag)
                         }
-                        { body: String -> """
+                        { body -> this.nest("""
                             ${pre0}do {
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
@@ -528,12 +527,12 @@ class Parser (lexer_: Lexer)
                                     val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
-                                        `goto CEU_LOOP_DONE_$nn;`
+                                        xbreak $nn
                                     } else { nil }
-                                    $body
+                                    ${body.tostr()}
                                 }
                             }
-                            """
+                            """)
                         }
                     }
                     else -> {
@@ -542,56 +541,55 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
-                    val not = if (this.tk0.str == "until") "" else "not"
+                val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) emptyList() else {
+                    val tk1 = this.tk0
+                    val brk = (tk1.str == "until")
                     val (id,tag,cnd) = id_tag_cnd()
-                    N++
-                    """
-                    val ${id ?: "ceu_$N"} ${tag?.str ?: ""} = ${cnd.tostr(true)}
-                    if $not ${id ?: "ceu_$N"} {
-                        xbreak $nn
-                    } else { nil }
-                    """
+                    val nnn = N++
+                    fun xid (): Tk.Id {
+                        return Tk.Id(id ?: "ceu_$nnn", tk1.pos, 0)
+                    }
+                    // val $id $tag=cnd ; if not $id { xbreak $nn } else { nil }
+                    val t = Expr.XBreak(Tk.Fix("xbreak", this.tk1.pos), nn)
+                    val f = Expr.Nil(Tk.Fix("nil", this.tk1.pos))
+                    listOf(
+                        Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
+                        Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
+                            Expr.Do(tk1, listOf(if (brk) t else f)),
+                            Expr.Do(tk1, listOf(if (brk) f else t))
+                        )
+                    )
                 }
 
                 val blk = this.block().es
 
                 fun untils (): List<Expr> {
-                    return if (! (this.acceptFix("until") || XCEU&&this.acceptFix("while"))) {
-                        emptyList()
-                    } else {
-                        val ok = (this.tk0.str == "until")
-                        val (id,tag,cnd) = id_tag_cnd()
-                        val xblk = if (!this.checkFix("{")) emptyList() else {
-                            this.block().es + untils()
-                        }
-                        val nnn = N++
-                        val tk1 = this.tk0
-                        fun xid (): Tk.Id {
-                            return Tk.Id(id ?: "ceu_$nnn", tk1.pos, 0)
-                        }
-                        // val $id $tag=$cnd ; if [$not] $id { xbreak $id } ; $xblk
-                        val t = Expr.XBreak(Tk.Fix("xbreak",tk1.pos), nn)
-                        val f = Expr.Nil(Tk.Fix("nil",tk1.pos))
-                        listOf(
-                            Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
-                            Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
-                                Expr.Do(tk1, listOf(if (ok) t else f)),
-                                Expr.Do(tk1, listOf(if (ok) f else t))
-                            )
-                        ) + xblk
+                    if (! (this.acceptFix("until") || XCEU&&this.acceptFix("while"))) {
+                        return emptyList()
                     }
+                    val brk = (this.tk0.str == "until")
+                    val (id,tag,cnd) = id_tag_cnd()
+                    val xblk = if (!this.checkFix("{")) emptyList() else {
+                        this.block().es + untils()
+                    }
+                    val nnn = N++
+                    val tk1 = this.tk0
+                    fun xid (): Tk.Id {
+                        return Tk.Id(id ?: "ceu_$nnn", tk1.pos, 0)
+                    }
+                    // val $id $tag=$cnd ; if [$not] $id { xbreak $id } ; $xblk
+                    val t = Expr.XBreak(Tk.Fix("xbreak",tk1.pos), nn)
+                    val f = Expr.Nil(Tk.Fix("nil",tk1.pos))
+                    return listOf(
+                        Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
+                        Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
+                            Expr.Do(tk1, listOf(if (brk) t else f)),
+                            Expr.Do(tk1, listOf(if (brk) f else t))
+                        )
+                    ) + xblk
                 }
 
-                val body = """
-                    ;; brk
-                    $brk
-                    ;; blk
-                    ${blk.tostr()}
-                    ;; untils
-                    ${untils().tostr()}
-                """
-                this.nest(f(body))
+                f(brk + blk + untils())
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
