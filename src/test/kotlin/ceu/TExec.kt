@@ -687,7 +687,7 @@ class TExec {
     @Test
     fun todo_dd_dict7_err() {
         val out = all("""
-            val x
+            var x
             set x = @[(nil,10)]
             println(x[nil])
         """)

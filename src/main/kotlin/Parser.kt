@@ -256,14 +256,14 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun id_tag_cnd (): Triple<String?,String?,Expr> {
+    fun id_tag_cnd (): Triple<String?,Tk.Tag?,Expr> {
         val id_or_cnd = this.expr()
         return when {
             !XCEU -> Triple(null, null, id_or_cnd)
             (id_or_cnd !is Expr.Acc) -> Triple(null, null, id_or_cnd)
             this.acceptFix("=") -> Triple(id_or_cnd.tk.str, null, this.expr())
             this.acceptEnu("Tag") -> {
-                val tag = this.tk0.str
+                val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=")
                 Triple(id_or_cnd.tk.str, tag, this.expr())
             }
@@ -368,24 +368,10 @@ class Parser (lexer_: Lexer)
                     }
                     // export { val x $tag=$cnd ; if x { val $id $tag=x ; $t } else { $f } }
                     Expr.Export(tk0, emptyList(), Expr.Do(tk0, listOf(
-                        Expr.Dcl(
-                            Tk.Fix("val", tk0.pos),
-                            xid(),
-                            false,
-                            if (tag==null) null else Tk.Tag(tag,tk0.pos),
-                            true,
-                            cnd
-                        ),
+                        Expr.Dcl(Tk.Fix("val", tk0.pos), xid(), false, tag, true, cnd),
                         Expr.If(tk0, Expr.Acc(xid()),
                             Expr.Do(tk0, listOf(
-                                Expr.Dcl(
-                                    Tk.Fix("val",tk0.pos),
-                                    Tk.Id(id,tk0.pos,0),
-                                    false,
-                                    if (tag==null) null else Tk.Tag(tag,tk0.pos),
-                                    true,
-                                    Expr.Acc(xid())
-                                ),
+                                Expr.Dcl(Tk.Fix("val",tk0.pos), Tk.Id(id,tk0.pos,0), false, tag, true, Expr.Acc(xid())),
                                 t
                             )),
                             Expr.Do(tk0, f.es)
@@ -561,7 +547,7 @@ class Parser (lexer_: Lexer)
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
                     """
-                    val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                    val ${id ?: "ceu_$N"} ${tag?.str ?: ""} = ${cnd.tostr(true)}
                     if $not ${id ?: "ceu_$N"} {
                         xbreak $nn
                     } else { nil }
@@ -960,7 +946,7 @@ class Parser (lexer_: Lexer)
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
-                             if ${id.cond{ "$it ${tag ?: ""} = "}} ${cnd.tostr(true)} {
+                             if ${id.cond{ "$it ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
                                 ${blk.es.tostr(true)}
                              } else {
                             """}.joinToString("")}
@@ -1083,7 +1069,7 @@ class Parser (lexer_: Lexer)
                             "{" + this.block().es.tostr(true) + untils()
                         }
                         """
-                        } ${brk.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)}
+                        } ${brk.str} ${id.cond { "${id!!} ${tag?.str?:""} = " }} ${cnd.tostr(true)}
                         $xblk
                         """
                     }
@@ -1094,7 +1080,7 @@ class Parser (lexer_: Lexer)
                         ${awt.tostr()}
                         ${brk.cond {
                             val (id,tag,cnd) = id_tag_cnd()
-                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)} {" }}
+                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?.str?:""} = " }} ${cnd.tostr(true)} {" }}
                         ${this.block().es.tostr(true)}
                         ${untils()}
                     }
