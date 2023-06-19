@@ -491,23 +491,64 @@ class Parser (lexer_: Lexer)
                             else -> error("impossible case")
                         }
 
-                        { body -> this.nest("""
-                            ${pre0}do {
-                                val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
-                                var $i ${tag?.str ?: ""} = ${eA.tostr(true)} $op (
-                                    ${if (tkA.str=="[") 0 else "ceu_step_$N"}
-                                )
-                                val ceu_limit_$N = ${eB.tostr(true)}
+                        fun xstep (): Tk.Id {
+                            return Tk.Id("ceu_step_$nn", tk0.pos, 0)
+                        }
+                        fun xi (): Tk.Id {
+                            return Tk.Id(i, tk0.pos, 0)
+                        }
+                        fun xlimit (): Tk.Id {
+                            return Tk.Id("ceu_limit_$nn", tk0.pos, 0)
+                        }
+
+                        { body ->
+                            /*
+                            do {
+                                val $step = $step or 1
+                                var $i $tag = $e $op (0 or $step)
+                                val $limit = $eB
                                 loop $nn {
-                                    if $i $cmp ceu_limit_$N {
+                                    if $i $cmp $limit {
                                         pass nil     ;; return value
-                                        `goto CEU_LOOP_DONE_$nn;`
+                                        xbreak $nn
                                     } else { nil }
-                                    ${body.tostr()}
-                                    set $i = $i $op ceu_step_$N
+                                    $body
+                                    set $i = $i $op $step
                                 }                                
                             }
-                            """)
+                            */
+                            Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                                Expr.Dcl(Tk.Fix("val",tk0.pos), xstep(), false, null, true,
+                                    if (step==null) Expr.Num(Tk.Num("1",tk0.pos)) else step
+                                ),
+                                Expr.Dcl(Tk.Fix("var",tk0.pos), xi(), false, tag, true,
+                                    Expr.Call(tk0, Expr.Acc(Tk.Id("{$op}",tk0.pos,0)), listOf(
+                                        eA,
+                                        if (tkA.str=="[") Expr.Num(Tk.Num("0",tk0.pos)) else Expr.Acc(xstep())
+                                    ))
+                                ),
+                                Expr.Dcl(Tk.Fix("val",tk0.pos), xlimit(), false, null, true, eB),
+                                Expr.Loop(tk0, nn, Expr.Do(tk0,
+                                    listOf(Expr.If(tk0,
+                                        Expr.Call(tk0,
+                                            Expr.Acc(Tk.Id("{$cmp}",tk0.pos,0)),
+                                            listOf(
+                                                Expr.Acc(xi()),
+                                                Expr.Acc(xlimit())
+                                            )
+                                        ),
+                                        Expr.Do(tk0, listOf(
+                                            Expr.Pass(tk0, Expr.Nil(Tk.Fix("nil",tk0.pos))),
+                                            Expr.XBreak(tk0, nn)
+                                        )),
+                                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil",tk0.pos))))
+                                    )) +
+                                    body +
+                                    listOf(Expr.Set(tk0, Expr.Acc(xi()), Expr.Call(
+                                        tk0, Expr.Acc(Tk.Id("{$op}",tk0.pos,0)), listOf(Expr.Acc(xi()), Expr.Acc(xstep()))
+                                    )))
+                                ))
+                            ))
                         }
                     }
                     XCEU -> {
@@ -519,20 +560,35 @@ class Parser (lexer_: Lexer)
                             val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
                             Pair(id.str,tag)
                         }
-                        { body -> this.nest("""
-                            ${pre0}do {
-                                val ceu_it_$N :Iterator = ${iter.tostr(true)}
-                                ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
-                                loop $nn {
-                                    val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
-                                    if $i == nil {
-                                        pass nil     ;; return value
-                                        xbreak $nn
-                                    } else { nil }
-                                    ${body.tostr()}
-                                }
-                            }
-                            """)
+                        val nnn = N
+                        fun xid (): Tk.Id {
+                            return Tk.Id("ceu_it_$nnn", tk0.pos, 0)
+                        }
+                        fun xi (): Tk.Id {
+                            return Tk.Id(i, tk0.pos, 0)
+                        }
+                        // do { val x :Iterator=iter ; loop $nn { val $i $tag=$xid.f($xid) ; if $i==nil { pass nil ; xbreak $nn } ; $body
+                        { body -> Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                            Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, Tk.Tag(":Iterator",tk0.pos), true, iter),
+                            Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
+                                Expr.Dcl(Tk.Fix("val",tk0.pos), xi(), false, tag, true,
+                                    Expr.Call(tk0,
+                                        Expr.Index(tk0, Expr.Acc(xid()), Expr.Num(Tk.Num("0",tk0.pos))),
+                                        listOf(Expr.Acc(xid()))
+                                    )
+                                ),
+                                Expr.If(tk0,
+                                    Expr.Call(tk0, Expr.Acc(Tk.Id("{==}",tk0.pos,0)), listOf(
+                                        Expr.Acc(xi()),
+                                        Expr.Nil(Tk.Fix("nil",tk0.pos)))
+                                    ),
+                                    Expr.Do(tk0, listOf(
+                                        Expr.Pass(tk0, Expr.Nil(Tk.Fix("nil",tk0.pos))),
+                                        Expr.XBreak(tk0, nn)
+                                    )),
+                                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil",tk0.pos))))
+                                )) + body
+                            ))))
                         }
                     }
                     else -> {
