@@ -566,6 +566,7 @@ class Parser (lexer_: Lexer)
                         }
                         val nnn = N++
                         val tk0 = this.tk0
+                        val ok = (tk0.str == "until")
                         fun xid (): Tk.Id {
                             return Tk.Id(id ?: "ceu_$nnn", tk0.pos, 0)
                         }
@@ -575,8 +576,8 @@ class Parser (lexer_: Lexer)
                         listOf(
                             Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, tag, true, cnd),
                             Expr.If(Tk.Fix("if",tk0.pos), Expr.Acc(xid()),
-                                Expr.Do(tk0, listOf(if (this.tk0.str=="until") f else t)),
-                                Expr.Do(tk0, listOf(if (this.tk0.str=="until") t else f))
+                                Expr.Do(tk0, listOf(if (ok) t else f)),
+                                Expr.Do(tk0, listOf(if (ok) f else t))
                             )
                         ) + xblk
                     }
