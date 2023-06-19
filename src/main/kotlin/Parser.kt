@@ -557,27 +557,27 @@ class Parser (lexer_: Lexer)
                 val blk = this.block().es
 
                 fun untils (): List<Expr> {
-                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) {
+                    return if (! (this.acceptFix("until") || XCEU&&this.acceptFix("while"))) {
                         emptyList()
                     } else {
+                        val ok = (this.tk0.str == "until")
                         val (id,tag,cnd) = id_tag_cnd()
                         val xblk = if (!this.checkFix("{")) emptyList() else {
                             this.block().es + untils()
                         }
                         val nnn = N++
-                        val tk0 = this.tk0
-                        val ok = (tk0.str == "until")
+                        val tk1 = this.tk0
                         fun xid (): Tk.Id {
-                            return Tk.Id(id ?: "ceu_$nnn", tk0.pos, 0)
+                            return Tk.Id(id ?: "ceu_$nnn", tk1.pos, 0)
                         }
                         // val $id $tag=$cnd ; if [$not] $id { xbreak $id } ; $xblk
-                        val t = Expr.XBreak(Tk.Fix("xbreak",tk0.pos), nn)
-                        val f = Expr.Nil(Tk.Fix("nil",tk0.pos))
+                        val t = Expr.XBreak(Tk.Fix("xbreak",tk1.pos), nn)
+                        val f = Expr.Nil(Tk.Fix("nil",tk1.pos))
                         listOf(
-                            Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, tag, true, cnd),
-                            Expr.If(Tk.Fix("if",tk0.pos), Expr.Acc(xid()),
-                                Expr.Do(tk0, listOf(if (ok) t else f)),
-                                Expr.Do(tk0, listOf(if (ok) f else t))
+                            Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
+                            Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
+                                Expr.Do(tk1, listOf(if (ok) t else f)),
+                                Expr.Do(tk1, listOf(if (ok) f else t))
                             )
                         ) + xblk
                     }
@@ -587,9 +587,9 @@ class Parser (lexer_: Lexer)
                     ;; brk
                     $brk
                     ;; blk
-                    ${blk.tostr(true)}
+                    ${blk.tostr()}
                     ;; untils
-                    ${untils().tostr(true)}
+                    ${untils().tostr()}
                 """
                 this.nest(f(body))
             }
