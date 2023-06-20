@@ -285,9 +285,14 @@ class Parser (lexer_: Lexer)
             )
         ))
     }
-
     fun xnil (pos: Pos): Expr.Nil {
         return Expr.Nil(Tk.Fix("nil", pos))
+    }
+    fun xacc (pos: Pos, id: String): Expr.Acc {
+        return Expr.Acc(Tk.Id(id, pos, 0))
+    }
+    fun xnum (pos: Pos, n: Int): Expr.Num {
+        return Expr.Num(Tk.Num(n.toString(), pos))
     }
 
     fun exprPrim (): Expr {
@@ -538,19 +543,19 @@ class Parser (lexer_: Lexer)
                             */
                             Expr.Do(Tk.Fix("do",tk0.pos), listOf(
                                 Expr.Dcl(Tk.Fix("val",tk0.pos), xstep(), false, null, true,
-                                    if (step==null) Expr.Num(Tk.Num("1",tk0.pos)) else step
+                                    if (step==null) xnum(tk0.pos,1) else step
                                 ),
                                 Expr.Dcl(Tk.Fix("var",tk0.pos), xi(), false, tag, true,
-                                    Expr.Call(tk0, Expr.Acc(Tk.Id("{$op}",tk0.pos,0)), listOf(
+                                    Expr.Call(tk0, xacc(tk0.pos,"{$op}"), listOf(
                                         eA,
-                                        if (tkA.str=="[") Expr.Num(Tk.Num("0",tk0.pos)) else Expr.Acc(xstep())
+                                        if (tkA.str=="[") xnum(tk0.pos,0) else Expr.Acc(xstep())
                                     ))
                                 ),
                                 Expr.Dcl(Tk.Fix("val",tk0.pos), xlimit(), false, null, true, eB),
                                 Expr.Loop(tk0, nn, Expr.Do(tk0,
                                     listOf(Expr.If(tk0,
                                         Expr.Call(tk0,
-                                            Expr.Acc(Tk.Id("{$cmp}",tk0.pos,0)),
+                                            xacc(tk0.pos, "{$cmp}"),
                                             listOf(
                                                 Expr.Acc(xi()),
                                                 Expr.Acc(xlimit())
@@ -564,7 +569,7 @@ class Parser (lexer_: Lexer)
                                     )) +
                                     body +
                                     listOf(Expr.Set(tk0, Expr.Acc(xi()), Expr.Call(
-                                        tk0, Expr.Acc(Tk.Id("{$op}",tk0.pos,0)), listOf(Expr.Acc(xi()), Expr.Acc(xstep()))
+                                        tk0, xacc(tk0.pos, "{$op}"), listOf(Expr.Acc(xi()), Expr.Acc(xstep()))
                                     )))
                                 ))
                             ))
@@ -592,12 +597,12 @@ class Parser (lexer_: Lexer)
                             Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
                                 Expr.Dcl(Tk.Fix("val",tk0.pos), xi(), false, tag, true,
                                     Expr.Call(tk0,
-                                        Expr.Index(tk0, Expr.Acc(xid()), Expr.Num(Tk.Num("0",tk0.pos))),
+                                        Expr.Index(tk0, Expr.Acc(xid()), xnum(tk0.pos,0)),
                                         listOf(Expr.Acc(xid()))
                                     )
                                 ),
                                 Expr.If(tk0,
-                                    Expr.Call(tk0, Expr.Acc(Tk.Id("{==}",tk0.pos,0)), listOf(
+                                    Expr.Call(tk0, xacc(tk0.pos, "{==}"), listOf(
                                         Expr.Acc(xi()),
                                         xnil(tk0.pos)
                                     )),
@@ -711,7 +716,7 @@ class Parser (lexer_: Lexer)
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
                     // catch (err is? $cnd) $blk
                     val cndx = Expr.Call(tk0,
-                        Expr.Acc(Tk.Id("is'",cnd.tk.pos,0)),
+                        xacc(cnd.tk.pos,"is'"),
                         listOf(
                             Expr.EvtErr(Tk.Fix("err", cnd.tk.pos)),
                             cnd
@@ -897,7 +902,7 @@ class Parser (lexer_: Lexer)
                     if (e is Expr.Tuple) {
                         // :X [...]
                         // tags($e, $tag, true)
-                        val tags = Expr.Acc(Tk.Id("tags",tag.pos,0))
+                        val tags = xacc(tag.pos, "tags",)
                         Expr.Call(tk0, tags, listOf(e, Expr.Tag(tag), Expr.Bool(Tk.Fix("true",tag.pos))))
                     } else {
                         // do { val :tmp ceu_$nn $tag = $e ; e1 }
@@ -1039,6 +1044,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
+                val tk0 = this.tk0
                 val call = this.expr()
                 if (call !is Expr.Call) {
                     err(call.tk, "resume-yield-call error : expected call")
@@ -1049,17 +1055,54 @@ class Parser (lexer_: Lexer)
                 } else {
                     call.args[0]
                 }
+                /*
+                    val nn = N
+                    fun xco (): Tk.Id {
+                        return Tk.Id("ceu_co_$nn", tk0.pos, 0)
+                    }
+                    fun xarg (): Tk.Id {
+                        return Tk.Id("ceu_arg_$nn", tk0.pos, 0)
+                    }
+                    fun xv (): Tk.Id {
+                        return Tk.Id("ceu_v_$nn", tk0.pos, 0)
+                    }
+                    Expr.Do(tk0, listOf(
+                        Expr.Dcl(Tk.Fix("val",tk0.pos), xco(), false, null, true, call.proto),
+                        Expr.Dcl(Tk.Fix("var",tk0.pos), xarg(), false, null, true, arg),
+                        Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
+                            Expr.Dcl(Tk.Fix("val",tk0.pos), xv(), false, null, true,
+                                Expr.Resume(tk0, Expr.Call(tk0, Expr.Acc(xco()), listOf(Expr.Acc(xarg()))))
+                            ),
+                            Expr.If(tk0,
+                                Expr.Call(tk0, or(tk0,TODO,TODO), listOf(
+                                    Expr.Call(tk0, xacc(tk0.pos, "{/=}"), listOf(
+                                        Expr.Call(tk0, ),
+                                        Expr.Tag(Tk.Tag(":terminated", tk0.pos))
+                                    )),
+                                    Expr.Call(tk0, xacc(tk0.pos,"{/=}"), listOf(
+                                        Expr.Acc(),
+                                        xnil()
+                                    ))
+                                )),
+                                Expr.Do(tk0, listOf(Expr.Set(tk0,Expr.Acc(xarg()),Expr.Yield(tk0,Expr.Acc(xv())))),
+                                Expr.Do(tk0, listOf(xnil(tk0.pos)))
+                            ),
+                            Expr.If(tk0, cnd,
+                                Expr.Do(tk0, listOf(Expr.XBreak(tk0, nn))),
+                                Expr.Do(tk0, listOf(xnil(tk0.pos)))
+                            )
+                        )),
+                        Expr.Acc(xarg())
+                    ))
+                 */
                 this.nest("""
                     do {
                         val ceu_co_$N  = ${call.proto.tostr(true)}
                         var ceu_arg_$N = ${arg.tostr(true)}
                         loop {
-                            ;;println(:resume, ceu_arg_$N)
                             val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
-                            ;;println(:yield, ceu_v_$N)
                             if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
                                 set ceu_arg_$N = yield(ceu_v_$N)
-                                ;;println(:loop, ceu_arg_$N)
                             }
                         } until (status(ceu_co_$N) == :terminated) ;; or (ceu_v_$N == nil)
                         ceu_arg_$N
@@ -1283,7 +1326,7 @@ class Parser (lexer_: Lexer)
                     Expr.Do(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
                 )
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e))
+                e = Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e))
             }
         }
         return e
@@ -1316,9 +1359,9 @@ class Parser (lexer_: Lexer)
                                     Expr.Export(op, emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
                                         Expr.Index(op, Expr.Acc(id),
-                                            Expr.Call(op, Expr.Acc(Tk.Id("{-}",op.pos,0)), listOf(
-                                                Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id))),
-                                                Expr.Num(Tk.Num("1",op.pos))
+                                            Expr.Call(op, xacc(op.pos,"{-}"), listOf(
+                                                Expr.Call(op, xacc(op.pos,"{#}"), listOf(Expr.Acc(id))),
+                                                xnum(op.pos,1)
                                             ))
                                     ))))
                                 }
@@ -1328,7 +1371,7 @@ class Parser (lexer_: Lexer)
                                     Expr.Export(op, emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
                                         Expr.Index(op, Expr.Acc(id),
-                                            Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id))),
+                                            Expr.Call(op, xacc(op.pos,"{#}"), listOf(Expr.Acc(id))),
                                         )
                                     )))
                                 } //.let { println(it.tostr());it }
@@ -1338,9 +1381,9 @@ class Parser (lexer_: Lexer)
                                     val id_val = Tk.Id("ceu_val_$N", op.pos, 0)
                                     fun idx (): Expr.Index {
                                         return Expr.Index(op, Expr.Acc(id_col),
-                                            Expr.Call(op, Expr.Acc(Tk.Id("{-}",op.pos,0)), listOf(
-                                                Expr.Call(op, Expr.Acc(Tk.Id("{#}",op.pos,0)), listOf(Expr.Acc(id_col))),
-                                                Expr.Num(Tk.Num("1",op.pos))
+                                            Expr.Call(op, xacc(op.pos,"{-}"), listOf(
+                                                Expr.Call(op, xacc(op.pos,"{#}"), listOf(Expr.Acc(id_col))),
+                                                xnum(op.pos, 1)
                                             )))
                                     }
                                     Expr.Export(op, emptyList(), Expr.Do(op, listOf(
@@ -1356,7 +1399,7 @@ class Parser (lexer_: Lexer)
                             val idx = this.expr()
                             this.acceptFix_err("]")
                             Expr.Index(e.tk, e,
-                                Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(idx))
+                                Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(idx))
                             ) //.let { println(it.tostr());it }
                         }
                     } else {
@@ -1454,11 +1497,11 @@ class Parser (lexer_: Lexer)
                         )
                     ))
                 }
-                "is?" -> Expr.Call(op, Expr.Acc(Tk.Id("is'",op.pos,0)), listOf(e, e2))
-                "is-not?" -> Expr.Call(op, Expr.Acc(Tk.Id("is-not'",op.pos,0)), listOf(e, e2))
-                "in?" -> Expr.Call(op, Expr.Acc(Tk.Id("in'",op.pos,0)), listOf(e, e2))
-                "in-not?" -> Expr.Call(op, Expr.Acc(Tk.Id("in-not'",op.pos,0)), listOf(e, e2))
-                else -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
+                "is?" -> Expr.Call(op, xacc(op.pos,"is'"), listOf(e, e2))
+                "is-not?" -> Expr.Call(op, xacc(op.pos,"is-not'"), listOf(e, e2))
+                "in?" -> Expr.Call(op, xacc(op.pos,"in'"), listOf(e, e2))
+                "in-not?" -> Expr.Call(op, xacc(op.pos,"in-not'"), listOf(e, e2))
+                else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e,e2))
             }
             pre = this.tk0
         }
