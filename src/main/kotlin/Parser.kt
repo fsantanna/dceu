@@ -150,7 +150,7 @@ class Parser (lexer_: Lexer)
             }
             nil -> {    // can be empty
                 this.acceptFix_err(")")
-                Expr.Nil(Tk.Fix("nil", this.tk0.pos))
+                xnil(this.tk0.pos)
             }
             else -> {
                 this.acceptFix_err(")")
@@ -271,6 +271,25 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun xor (tk: Tk, e1: Expr, e2: Expr): Expr.Do {
+        // do { val :tmp x=$e1 ; if x -> x -> $e2 }
+        fun xid (): Tk.Id {
+            return Tk.Id("ceu_${e1.n}", tk.pos, 0)
+        }
+        return Expr.Do(Tk.Fix("do", tk.pos), listOf(
+            Expr.Dcl(Tk.Fix("val",tk.pos), xid(), true, null, true, e1),
+            Expr.If(Tk.Fix("if",tk.pos),
+                Expr.Acc(xid()),
+                Expr.Do(tk, listOf(Expr.Acc(xid()))),
+                Expr.Do(tk, listOf(e2))
+            )
+        ))
+    }
+
+    fun xnil (pos: Pos): Expr.Nil {
+        return Expr.Nil(Tk.Fix("nil", pos))
+    }
+
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -356,7 +375,7 @@ class Parser (lexer_: Lexer)
                         Expr.Do(this.tk0, listOf(this.expr()))
                     }
                     else -> {
-                        Expr.Do(tk0, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
+                        Expr.Do(tk0, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), xnil(tk0.pos))))
                     }
                 }
                 if (id == null) {
@@ -538,10 +557,10 @@ class Parser (lexer_: Lexer)
                                             )
                                         ),
                                         Expr.Do(tk0, listOf(
-                                            Expr.Pass(tk0, Expr.Nil(Tk.Fix("nil",tk0.pos))),
+                                            Expr.Pass(tk0, xnil(tk0.pos)),
                                             Expr.XBreak(tk0, nn)
                                         )),
-                                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil",tk0.pos))))
+                                        Expr.Do(tk0, listOf(xnil(tk0.pos)))
                                     )) +
                                     body +
                                     listOf(Expr.Set(tk0, Expr.Acc(xi()), Expr.Call(
@@ -580,13 +599,13 @@ class Parser (lexer_: Lexer)
                                 Expr.If(tk0,
                                     Expr.Call(tk0, Expr.Acc(Tk.Id("{==}",tk0.pos,0)), listOf(
                                         Expr.Acc(xi()),
-                                        Expr.Nil(Tk.Fix("nil",tk0.pos)))
-                                    ),
+                                        xnil(tk0.pos)
+                                    )),
                                     Expr.Do(tk0, listOf(
-                                        Expr.Pass(tk0, Expr.Nil(Tk.Fix("nil",tk0.pos))),
+                                        Expr.Pass(tk0, xnil(tk0.pos)),
                                         Expr.XBreak(tk0, nn)
                                     )),
-                                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil",tk0.pos))))
+                                    Expr.Do(tk0, listOf(xnil(tk0.pos)))
                                 )) + body
                             ))))
                         }
@@ -607,7 +626,7 @@ class Parser (lexer_: Lexer)
                     }
                     // val $id $tag=cnd ; if not $id { xbreak $nn } else { nil }
                     val t = Expr.XBreak(Tk.Fix("xbreak", this.tk1.pos), nn)
-                    val f = Expr.Nil(Tk.Fix("nil", this.tk1.pos))
+                    val f = xnil(this.tk1.pos)
                     listOf(
                         Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
                         Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
@@ -635,7 +654,7 @@ class Parser (lexer_: Lexer)
                     }
                     // val $id $tag=$cnd ; if [$not] $id { xbreak $id } ; $xblk
                     val t = Expr.XBreak(Tk.Fix("xbreak",tk1.pos), nn)
-                    val f = Expr.Nil(Tk.Fix("nil",tk1.pos))
+                    val f = xnil(tk1.pos)
                     return listOf(
                         Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
                         Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
@@ -1026,7 +1045,7 @@ class Parser (lexer_: Lexer)
                 }
                 call as Expr.Call
                 val arg = if (call.args.size == 0) {
-                    Expr.Nil(Tk.Fix("nil", call.tk.pos.copy()))
+                    xnil(call.tk.pos)
                 } else {
                     call.args[0]
                 }
@@ -1164,7 +1183,7 @@ class Parser (lexer_: Lexer)
                     Expr.Spawn(Tk.Fix("spawn",it.tk.pos), null, Expr.Call(tk0, task, emptyList()))
                 }
                 //do { $spws ; await false }
-                val awt = Expr.Loop(tk0, 0, Expr.Do(tk0, listOf(Expr.Yield(tk0, Expr.Nil(tk0)))))
+                val awt = Expr.Loop(tk0, 0, Expr.Do(tk0, listOf(Expr.Yield(tk0, xnil(tk0.pos)))))
                 Expr.Do(Tk.Fix("do",tk0.pos), spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
@@ -1327,7 +1346,7 @@ class Parser (lexer_: Lexer)
                                     Expr.Export(op, emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id_col, true, null, true, e),
                                         Expr.Dcl(Tk.Fix("val",op.pos), id_val, false, null, true, idx()),
-                                        Expr.Set(Tk.Fix("set",op.pos), idx(), Expr.Nil(Tk.Fix("nil",op.pos))),
+                                        Expr.Set(Tk.Fix("set",op.pos), idx(), xnil(op.pos)),
                                         Expr.Acc(id_val)
                                     )))
                                 }
@@ -1420,20 +1439,7 @@ class Parser (lexer_: Lexer)
             }
             val e2 = this.exprPres()
             e = when (op.str) {
-                "or" -> {
-                    // do { val :tmp x=$e ; if x -> x -> $e2 }
-                    fun xid (): Tk.Id {
-                        return Tk.Id("ceu_${e.n}", e.tk.pos, 0)
-                    }
-                    Expr.Do(Tk.Fix("do", e.tk.pos), listOf(
-                        Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
-                        Expr.If(Tk.Fix("if",e.tk.pos),
-                            Expr.Acc(xid()),
-                            Expr.Do(op, listOf(Expr.Acc(xid()))),
-                            Expr.Do(op, listOf(e2))
-                        )
-                    ))
-                }
+                "or" -> xor(op, e, e2)
                 "and" -> {
                     // do { val :tmp x=$e ; if x -> $e2 -> x }
                     fun xid (): Tk.Id {
@@ -1469,7 +1475,7 @@ class Parser (lexer_: Lexer)
         }
         if (ret.size == 0) {
             if (XCEU) {
-                ret.add(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))))
+                ret.add(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), xnil(this.tk0.pos)))
             } else {
                 err_expected(this.tk1, "expression")
             }
