@@ -299,7 +299,7 @@ class Parser (lexer_: Lexer)
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("export") -> {
-                val tk0 = this.tk0
+                val tk0 = this.tk0 as Tk.Fix
                 val ids = if (XCEU && this.checkFix("{")) emptyList() else {
                     this.acceptFix_err("[")
                     val l = list0("]",",") {
@@ -349,14 +349,9 @@ class Parser (lexer_: Lexer)
                     }
                     Expr.Set(tk0, dst, /*null,*/ src)
                 } else {
-                    val hack = dst.tostr(false).let {
-                        val s3 = it.substringAfterLast("\n}")
-                        val aa = it.substringBeforeLast("\n}")
-                        val s2 = aa.substringAfterLast("\n")
-                        val s1 = aa.substringBeforeLast("\n")
-                        s1 + "\n" + "set " + s2 + " = " + src.tostr(false) + "\n}\n"+ s3
-                    }
-                    this.nest(hack)
+                    Expr.Export(dst.tk_, dst.ids, Expr.Do(dst.body.tk, dst.body.es.dropLast(1) +
+                        Expr.Set(dst.tk_, dst.body.es.last(), src)
+                    ))
                 }
             }
             this.acceptFix("if") -> {
@@ -1360,7 +1355,7 @@ class Parser (lexer_: Lexer)
                                 "=" -> {
                                     // export [] { val :tmp x=$e ; x[#x-1] }
                                     val id = Tk.Id("ceu_col_$N", op.pos, 0)
-                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                    Expr.Export(Tk.Fix("export",op.pos), emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
                                         Expr.Index(op, Expr.Acc(id),
                                             Expr.Call(op, xacc(op.pos,"{-}"), listOf(
@@ -1372,7 +1367,7 @@ class Parser (lexer_: Lexer)
                                 "+" -> {
                                     // export [] { val :tmp x=$e ; x[#x] }
                                     val id = Tk.Id("ceu_col_$N", op.pos, 0)
-                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                    Expr.Export(Tk.Fix("export",op.pos), emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id, true, null, true, e),
                                         Expr.Index(op, Expr.Acc(id),
                                             Expr.Call(op, xacc(op.pos,"{#}"), listOf(Expr.Acc(id))),
@@ -1390,7 +1385,7 @@ class Parser (lexer_: Lexer)
                                                 xnum(op.pos, 1)
                                             )))
                                     }
-                                    Expr.Export(op, emptyList(), Expr.Do(op, listOf(
+                                    Expr.Export(Tk.Fix("export",op.pos), emptyList(), Expr.Do(op, listOf(
                                         Expr.Dcl(Tk.Fix("val",op.pos), id_col, true, null, true, e),
                                         Expr.Dcl(Tk.Fix("val",op.pos), id_val, false, null, true, idx()),
                                         Expr.Set(Tk.Fix("set",op.pos), idx(), xnil(op.pos)),
@@ -1452,7 +1447,7 @@ class Parser (lexer_: Lexer)
                 // WHERE
                 XCEU && this.acceptFix("where") -> {
                     // e = export [] { blk, e }
-                    val tk0 = this.tk0
+                    val tk0 = this.tk0 as Tk.Fix
                     val blk = this.block()
                     e = Expr.Export(tk0, emptyList(), Expr.Do(tk0, blk.es+e))
                 }
