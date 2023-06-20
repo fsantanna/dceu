@@ -3375,4 +3375,25 @@ class TXExec {
         """)
         assert(out == ":x-tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }
+    @Test
+    fun all15_defer() {
+        val out = all("""
+            coro F () {
+                defer {
+                    println(:x)
+                }
+                yield()
+                defer {
+                    println(:y)
+                }
+                yield()
+            }
+            do {
+                val f = coroutine(F)
+                resume f()
+                resume f()
+            }
+        """)
+        assert(out == ":y\n:x\n") { out }
+    }
 }
