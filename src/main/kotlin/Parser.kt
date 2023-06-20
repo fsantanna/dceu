@@ -1044,7 +1044,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
-                val tk0 = this.tk0
+                val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr()
                 if (call !is Expr.Call) {
                     err(call.tk, "resume-yield-call error : expected call")
@@ -1055,59 +1055,63 @@ class Parser (lexer_: Lexer)
                 } else {
                     call.args[0]
                 }
+                val nn = N
+                fun xco (): Tk.Id {
+                    return Tk.Id("ceu_co_$nn", tk0.pos, 0)
+                }
+                fun xarg (): Tk.Id {
+                    return Tk.Id("ceu_arg_$nn", tk0.pos, 0)
+                }
+                fun xv (): Tk.Id {
+                    return Tk.Id("ceu_v_$nn", tk0.pos, 0)
+                }
                 /*
-                    val nn = N
-                    fun xco (): Tk.Id {
-                        return Tk.Id("ceu_co_$nn", tk0.pos, 0)
+                    do {
+                        val xco = $call.proto
+                        var xarg = $arg
+                        loop {
+                            val xv = resume xco(xarg)
+                            if (status(xco) /= :terminated) or (xv /= nil) {
+                                set xarg = yield(xv)
+                            }
+                        } until (status(xco) == :terminated)
+                        xarg
                     }
-                    fun xarg (): Tk.Id {
-                        return Tk.Id("ceu_arg_$nn", tk0.pos, 0)
-                    }
-                    fun xv (): Tk.Id {
-                        return Tk.Id("ceu_v_$nn", tk0.pos, 0)
-                    }
+                */
+                return Expr.Do(tk0, listOf(
+                    Expr.Dcl(Tk.Fix("val",tk0.pos), xco(), false, null, true, call.proto),
+                    Expr.Dcl(Tk.Fix("var",tk0.pos), xarg(), false, null, true, arg),
                     Expr.Do(tk0, listOf(
-                        Expr.Dcl(Tk.Fix("val",tk0.pos), xco(), false, null, true, call.proto),
-                        Expr.Dcl(Tk.Fix("var",tk0.pos), xarg(), false, null, true, arg),
                         Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
                             Expr.Dcl(Tk.Fix("val",tk0.pos), xv(), false, null, true,
                                 Expr.Resume(tk0, Expr.Call(tk0, Expr.Acc(xco()), listOf(Expr.Acc(xarg()))))
                             ),
                             Expr.If(tk0,
-                                Expr.Call(tk0, or(tk0,TODO,TODO), listOf(
+                                xor(tk0,
                                     Expr.Call(tk0, xacc(tk0.pos, "{/=}"), listOf(
-                                        Expr.Call(tk0, ),
+                                        Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
                                         Expr.Tag(Tk.Tag(":terminated", tk0.pos))
                                     )),
                                     Expr.Call(tk0, xacc(tk0.pos,"{/=}"), listOf(
-                                        Expr.Acc(),
-                                        xnil()
+                                        Expr.Acc(xv()),
+                                        xnil(tk0.pos)
                                     ))
-                                )),
-                                Expr.Do(tk0, listOf(Expr.Set(tk0,Expr.Acc(xarg()),Expr.Yield(tk0,Expr.Acc(xv())))),
+                                ),
+                                Expr.Do(tk0, listOf(Expr.Set(tk0,Expr.Acc(xarg()),Expr.Yield(tk0,Expr.Acc(xv()))))),
                                 Expr.Do(tk0, listOf(xnil(tk0.pos)))
                             ),
-                            Expr.If(tk0, cnd,
+                            Expr.If(tk0,
+                                Expr.Call(tk0, xacc(tk0.pos, "{==}"), listOf(
+                                    Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
+                                    Expr.Tag(Tk.Tag(":terminated", tk0.pos))
+                                )),
                                 Expr.Do(tk0, listOf(Expr.XBreak(tk0, nn))),
                                 Expr.Do(tk0, listOf(xnil(tk0.pos)))
                             )
-                        )),
-                        Expr.Acc(xarg())
-                    ))
-                 */
-                this.nest("""
-                    do {
-                        val ceu_co_$N  = ${call.proto.tostr(true)}
-                        var ceu_arg_$N = ${arg.tostr(true)}
-                        loop {
-                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
-                            if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
-                                set ceu_arg_$N = yield(ceu_v_$N)
-                            }
-                        } until (status(ceu_co_$N) == :terminated) ;; or (ceu_v_$N == nil)
-                        ceu_arg_$N
-                    }
-                """)
+                        )))
+                    )),
+                    Expr.Acc(xarg())
+                ))
             }
             (XCEU && this.acceptFix("await")) -> {
                 val pre0 = this.tk0.pos.pre()
