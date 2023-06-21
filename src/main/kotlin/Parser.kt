@@ -658,7 +658,6 @@ class Parser (lexer_: Lexer)
 
                 val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) emptyList() else {
                     val tk1 = this.tk0
-                    val unt = (tk1.str == "until")
                     val (id,tag,cnd) = id_tag_cnd()
                     val nnn = N++
                     fun xid (): Tk.Id {
@@ -669,7 +668,8 @@ class Parser (lexer_: Lexer)
                     val f = xnil(this.tk1.pos)
                     listOf(
                         Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
-                        Expr.If(Tk.Fix("if",tk1.pos), if (unt) Expr.Acc(xid()) else xnot(tk0,Expr.Acc(xid())),
+                        Expr.If(Tk.Fix("if",tk1.pos),
+                            if (tk1.str == "until") Expr.Acc(xid()) else xnot(tk0,Expr.Acc(xid())),
                             Expr.Do(tk1, listOf(t)),
                             Expr.Do(tk1, listOf(f))
                         )
@@ -682,7 +682,6 @@ class Parser (lexer_: Lexer)
                     if (! (this.acceptFix("until") || XCEU&&this.acceptFix("while"))) {
                         return emptyList()
                     }
-                    val brk = (this.tk0.str == "until")
                     val (id,tag,cnd) = id_tag_cnd()
                     val xblk = if (!this.checkFix("{")) emptyList() else {
                         this.block().es + untils()
@@ -697,9 +696,10 @@ class Parser (lexer_: Lexer)
                     val f = xnil(tk1.pos)
                     return listOf(
                         Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
-                        Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
-                            Expr.Do(tk1, listOf(if (brk) t else f)),
-                            Expr.Do(tk1, listOf(if (brk) f else t))
+                        Expr.If(Tk.Fix("if",tk1.pos),
+                            if (tk1.str == "until") Expr.Acc(xid()) else xnot(tk0,Expr.Acc(xid())),
+                            Expr.Do(tk1, listOf(t)),
+                            Expr.Do(tk1, listOf(f))
                         )
                     ) + xblk
                 }
