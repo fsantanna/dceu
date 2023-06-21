@@ -335,94 +335,213 @@ class Parser (lexer_: Lexer)
             else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e1,e2))
         }
     }
-    fun xawait (tk: Tk.Fix, now: Boolean, cnd: Expr): Expr.Do {
-        val nn = N
-        fun xid(): Tk.Id {
-            return Tk.Id("ceu_cnd_$nn", tk.pos, 0)
-        }
-
-        fun xtype(): Expr.Call {
-            return Expr.Call(tk, xacc(tk.pos, "type"), listOf(Expr.Acc(xid())))
-        }
-        /*
-            if !awt.now { yield () }
-            loop {
-                var $cnd = $awt.cnd
-                ifs {
-                    type($cnd) == :x-task {
-                        set $cnd = (status($cnd) == :terminated)
-                    }
-                    type($cnd) == :x-track {
-                        set $cnd = (detrack($cnd) == nil)
-                    }
-                }
-            } until (not (not $cnd)) {
-                yield ()
+    fun xawait (tk: Tk.Fix, awt: Await): Expr {
+        fun aux (now: Boolean, cnd: Expr): Expr.Do {
+            val nn = N
+            fun xid(): Tk.Id {
+                return Tk.Id("ceu_cnd_$nn", tk.pos, 0)
             }
-        */
-        return Expr.Do(
-            Tk.Fix("do", tk.pos),
-            (if (now) emptyList() else listOf(
-                Expr.Yield(tk, xnil(tk.pos))
-            )) + listOf(
-                Expr.Loop(
-                    tk, nn, Expr.Do(
-                        tk, listOf(
-                            //xprintln(tk,xtag(tk.pos,":1")),
-                            Expr.Dcl(Tk.Fix("var", tk.pos), xid(), false, null, true, cnd),
-                            Expr.If(
-                                tk, xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
-                                Expr.Do(tk, listOf(
-                                    Expr.Set(tk, Expr.Acc(xid()), xeq(tk,
-                                        Expr.Call(
-                                            tk,
-                                            xacc(tk.pos, "status"),
-                                            listOf(Expr.Acc(xid()))
-                                        ),
-                                        xtag(tk.pos, ":terminated")
-                                    ))
-                                )),
-                                Expr.Do(tk, listOf(
-                                        Expr.If(tk,
-                                            xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
-                                            Expr.Do(tk, listOf(
-                                                    Expr.Set(
-                                                        tk, Expr.Acc(xid()),
-                                                        xeq(
-                                                            tk,
-                                                            Expr.Call(
+            fun xtype(): Expr.Call {
+                return Expr.Call(tk, xacc(tk.pos, "type"), listOf(Expr.Acc(xid())))
+            }
+            /*
+                if !awt.now { yield () }
+                loop {
+                    var $cnd = $awt.cnd
+                    ifs {
+                        type($cnd) == :x-task {
+                            set $cnd = (status($cnd) == :terminated)
+                        }
+                        type($cnd) == :x-track {
+                            set $cnd = (detrack($cnd) == nil)
+                        }
+                    }
+                } until (not (not $cnd)) {
+                    yield ()
+                }
+            */
+            return Expr.Do(
+                Tk.Fix("do", tk.pos),
+                (if (now) emptyList() else listOf(
+                    Expr.Yield(tk, xnil(tk.pos))
+                )) + listOf(
+                    Expr.Loop(
+                        tk, nn, Expr.Do(
+                            tk, listOf(
+                                //xprintln(tk,xtag(tk.pos,":1")),
+                                Expr.Dcl(Tk.Fix("var", tk.pos), xid(), false, null, true, cnd),
+                                Expr.If(
+                                    tk, xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
+                                    Expr.Do(
+                                        tk, listOf(
+                                            Expr.Set(
+                                                tk, Expr.Acc(xid()), xeq(
+                                                    tk,
+                                                    Expr.Call(
+                                                        tk,
+                                                        xacc(tk.pos, "status"),
+                                                        listOf(Expr.Acc(xid()))
+                                                    ),
+                                                    xtag(tk.pos, ":terminated")
+                                                )
+                                            )
+                                        )
+                                    ),
+                                    Expr.Do(
+                                        tk, listOf(
+                                            Expr.If(
+                                                tk,
+                                                xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
+                                                Expr.Do(
+                                                    tk, listOf(
+                                                        Expr.Set(
+                                                            tk, Expr.Acc(xid()),
+                                                            xeq(
                                                                 tk,
-                                                                xacc(tk.pos, "detrack"),
-                                                                listOf(Expr.Acc(xid()))
-                                                            ),
-                                                            xnil(tk.pos)
+                                                                Expr.Call(
+                                                                    tk,
+                                                                    xacc(tk.pos, "detrack"),
+                                                                    listOf(Expr.Acc(xid()))
+                                                                ),
+                                                                xnil(tk.pos)
+                                                            )
                                                         )
+                                                    )
+                                                ),
+                                                Expr.Do(
+                                                    tk, listOf(
+                                                        xnil(tk.pos)
                                                     )
                                                 )
                                             ),
-                                            Expr.Do(
-                                                tk, listOf(
-                                                    xnil(tk.pos)
-                                                )
-                                            )
-                                        ),
+                                        )
                                     )
-                                )
-                            ),
-                            //xprintln(tk,xtag(tk.pos,":2")),
-                            Expr.If(
-                                tk, xnot(tk, xnot(tk, Expr.Acc(xid()))),
-                                Expr.Do(tk, listOf(Expr.XBreak(tk, nn))),
-                                Expr.Do(tk, listOf(xnil(tk.pos)))
-                            ),
-                            //xprintln(tk,xtag(tk.pos,":3")),
-                            Expr.Yield(tk, xnil(tk.pos)),
-                            //xprintln(tk,xtag(tk.pos,":9"))
+                                ),
+                                //xprintln(tk,xtag(tk.pos,":2")),
+                                Expr.If(
+                                    tk, xnot(tk, xnot(tk, Expr.Acc(xid()))),
+                                    Expr.Do(tk, listOf(Expr.XBreak(tk, nn))),
+                                    Expr.Do(tk, listOf(xnil(tk.pos)))
+                                ),
+                                //xprintln(tk,xtag(tk.pos,":3")),
+                                Expr.Yield(tk, xnil(tk.pos)),
+                                //xprintln(tk,xtag(tk.pos,":9"))
+                            )
                         )
                     )
                 )
             )
-        )
+        }
+
+        return when {
+            (awt.xcnd != null) -> {   // await :key
+                awt.cnd!!
+                /*
+                    export [evt] {
+                        val evt ${awt.cnd.tk.str}
+                        await (evt is? ${awt.cnd.tk.str}) and $xcnd
+                    }
+                */
+                Expr.Export(tk, listOf("evt"),
+                    Expr.Do(tk, listOf(
+                        Expr.Dcl(Tk.Fix("val",tk.pos), Tk.Id("evt",tk.pos,0), false, Tk.Tag(awt.cnd.tk.str,tk.pos), true, xnil(tk.pos)),
+                        aux(awt.now, xand(tk,
+                            xop(Tk.Op("is?",tk.pos), Expr.EvtErr(Tk.Fix("evt",tk.pos)), awt.cnd),
+                            if (awt.xcnd.first == true) Expr.Bool(Tk.Fix("true",tk.pos)) else awt.xcnd.second!!
+                        ))
+                    ))
+                )
+            }
+            awt.spw -> { // await spawn T()
+                val e = this.expr()
+                if (!(e is Expr.Spawn && e.tasks==null)) {
+                    err_expected(e.tk, "non-pool spawn")
+                }
+                /*
+                    do {
+                        val x = $e
+                        await :check-now (status(x) == :terminated)
+                        `ceu_acc = ceu_mem->$x.Dyn->Bcast.X.frame->X.pub;`
+                    }
+                */
+                val nn = N
+                fun xid (): Tk.Id {
+                    return Tk.Id("ceu_spw_$nn", tk.pos, 0)
+                }
+                Expr.Do(Tk.Fix("do",tk.pos), listOf(
+                    Expr.Dcl(Tk.Fix("val",tk.pos), xid(), false, null, true, e),
+                    aux(true, xeq(tk,
+                        Expr.Call(tk, xacc(tk.pos,"status"), listOf(Expr.Acc(xid()))),
+                        xtag(tk.pos,":terminated")
+                    )),
+                    xnat(tk.pos, "ceu_acc = ceu_mem->ceu_spw_$nn.Dyn->Bcast.X.frame->X.pub;")
+                ))
+            }
+            (awt.clk != null) -> { // await 5s
+                val nn = N
+                fun xid (): Tk.Id {
+                    return Tk.Id("ceu_ms_$nn", tk.pos, 0)
+                }
+                /*
+                    do {
+                        var ms = $awt.clk.fold(0) { acc,(e,tag) ->
+                            acc + when (tag.) {
+                                ":h"   -> 1000*60*60
+                                ":min" -> 1000*60
+                                ":s"   -> 1000
+                                ":ms"  -> 1
+                                else   -> error("impossible case")
+                            }
+                        }
+                        loop until ms <= 0 {
+                            await (evt is? :frame)
+                            set ms = ms - evt.0
+                        }
+                    }
+                */
+                Expr.Do(Tk.Fix("do",tk.pos), listOf(
+                    Expr.Dcl(Tk.Fix("var",tk.pos), xid(), false, null, true,
+                        awt.clk.fold(xnum(tk.pos,0) as Expr) { acc,nxt ->
+                            val (e,tag) = nxt
+                            Expr.Call(tk, xacc(tk.pos,"{+}"), listOf(acc,
+                                Expr.Call(tk, xacc(tk.pos,"{*}"), listOf(e,
+                                    when (tag.str) {
+                                        ":h"   -> xnum(tk.pos,1000*60*60)
+                                        ":min" -> xnum(tk.pos,1000*60)
+                                        ":s"   -> xnum(tk.pos,1000)
+                                        ":ms"  -> xnum(tk.pos,1)
+                                        else   -> error("impossible case")
+                                    }
+                                ))
+                            ))
+                        },
+                    ),
+                    Expr.Loop(tk, nn, Expr.Do(tk, listOf(
+                        Expr.If(tk,
+                            Expr.Call(tk, xacc(tk.pos,"{<=}"), listOf(Expr.Acc(xid()), xnum(tk.pos,0))),
+                            Expr.Do(tk, listOf(Expr.XBreak(tk, nn))),
+                            Expr.Do(tk, listOf(xnil(tk.pos)))
+                        ),
+                        aux(false,
+                            Expr.Call(tk, xacc(tk.pos,"is'"), listOf(
+                                Expr.EvtErr(Tk.Fix("evt", tk.pos)),
+                                xtag(tk.pos, ":frame")
+                            ))
+                        ),
+                        Expr.Set(tk, Expr.Acc(xid()),
+                            Expr.Call(tk, xacc(tk.pos,"{-}"), listOf(
+                                Expr.Acc(xid()),
+                                Expr.Index(tk, Expr.EvtErr(Tk.Fix("evt",tk.pos)), xnum(tk.pos,0))
+                            ))
+                        )
+                    )))
+                ))
+            }
+            (awt.cnd != null) -> {  // await evt==x | await trk | await coro
+                aux(awt.now, awt.cnd)
+            }
+            else -> error("bug found")
+        }
         //println(ret.tostr())
     }
     fun xprintln (tk: Tk, e: Expr): Expr.Call {
@@ -1261,81 +1380,9 @@ class Parser (lexer_: Lexer)
                     Expr.Acc(xarg())
                 ))
             }
-            (XCEU && this.acceptFix("await")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val awt = await()
-                when {
-                    (awt.xcnd != null) -> {   // await :key
-                        awt.cnd!!
-                        /*
-                            export [evt] {
-                                val evt ${awt.cnd.tk.str}
-                                await (evt is? ${awt.cnd.tk.str}) and $xcnd
-                            }
-                        */
-                        Expr.Export(tk0, listOf("evt"),
-                            Expr.Do(tk0, listOf(
-                                Expr.Dcl(Tk.Fix("val",tk0.pos), Tk.Id("evt",tk0.pos,0), false, Tk.Tag(awt.cnd.tk.str,tk0.pos), true, xnil(tk0.pos)),
-                                xawait(tk0, awt.now, xand(tk0,
-                                    xop(Tk.Op("is?",tk0.pos), Expr.EvtErr(Tk.Fix("evt",tk0.pos)), awt.cnd),
-                                    if (awt.xcnd.first == true) Expr.Bool(Tk.Fix("true",tk0.pos)) else awt.xcnd.second!!
-                                ))
-                            ))
-                        )
-                    }
-                    awt.spw -> { // await spawn T()
-                        val e = this.expr()
-                        if (!(e is Expr.Spawn && e.tasks==null)) {
-                            err_expected(e.tk, "non-pool spawn")
-                        }
-                        /*
-                            do {
-                                val x = $e
-                                await :check-now (status(x) == :terminated)
-                                `ceu_acc = ceu_mem->$x.Dyn->Bcast.X.frame->X.pub;`
-                            }
-                        */
-                        val nn = N
-                        fun xid (): Tk.Id {
-                            return Tk.Id("ceu_spw_$nn", tk0.pos, 0)
-                        }
-                        Expr.Do(Tk.Fix("do",tk0.pos), listOf(
-                            Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, null, true, e),
-                            xawait(tk0, true, xeq(tk0,
-                                Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xid()))),
-                                xtag(tk0.pos,":terminated")
-                            )),
-                            xnat(tk0.pos, "ceu_acc = ceu_mem->ceu_spw_$nn.Dyn->Bcast.X.frame->X.pub;")
-                        ))
-                    }
-                    (awt.clk != null) -> { // await 5s
-                        this.nest("""
-                            ${tk0.pos.pre()}do {
-                                var ceu_ms_$N = ${awt.clk.map { (e,tag) ->
-                                    val s = e.tostr(true)
-                                    "(" + when (tag.str) {
-                                        ":h"   -> "($s * ${1000*60*60})"
-                                        ":min" -> "($s * ${1000*60})"
-                                        ":s"   -> "($s * ${1000})"
-                                        ":ms"  -> "($s * ${1})"
-                                        else   -> error("impossible case")
-                                    }
-                                }.joinToString("+") + (")").repeat(awt.clk.size)}
-                                loop until ceu_ms_$N <= 0 {
-                                    await (evt is? :frame)
-                                    set ceu_ms_$N = ceu_ms_$N - evt.0
-                                }
-                            }
-                        """)//.let { println(it.tostr()); it }
-                    }
-                    (awt.cnd != null) -> {  // await evt==x | await trk | await coro
-                        xawait(tk0, awt.now, awt.cnd)
-                    }
-                    else -> error("bug found")
-                }
-            }
+            (XCEU && this.acceptFix("await")) -> xawait(this.tk0 as Tk.Fix, await())
             (XCEU && this.acceptFix("every")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val awt = await()
                 val brk = if ((this.acceptFix("until") || this.acceptFix("while"))) this.tk0 else null
                 fun untils (): String {
@@ -1352,8 +1399,20 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
+                /*
+                val nn = N
+                Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                    Expr.Loop(tk0, nn, Expr.Do(tk0,listOf(
+                        xawait(tk0, awt.now, awt.cnd),
+                        XXX
+                    ) + this.block().es + listOf(
+                        XXX
+                    )))
+                ))
+                 */
+
                 this.nest("""
-                    ${pre0}loop {
+                    loop {
                         ${awt.tostr()}
                         ${brk.cond {
                             val (id,tag,cnd) = id_tag_cnd()
