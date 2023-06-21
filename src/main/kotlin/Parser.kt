@@ -295,6 +295,31 @@ class Parser (lexer_: Lexer)
         return Expr.Num(Tk.Num(n.toString(), pos))
     }
 
+    fun xop (op: Tk.Op, e1: Expr, e2: Expr): Expr {
+        return when (op.str) {
+            "or" -> xor(op, e1, e2)
+            "and" -> {
+                // do { val :tmp x=$e ; if x -> $e2 -> x }
+                fun xid (): Tk.Id {
+                    return Tk.Id("ceu_${e1.n}", e1.tk.pos, 0)
+                }
+                Expr.Do(Tk.Fix("do", e1.tk.pos), listOf(
+                    Expr.Dcl(Tk.Fix("val",e1.tk.pos), xid(), true, null, true, e1),
+                    Expr.If(Tk.Fix("if",e1.tk.pos),
+                        Expr.Acc(xid()),
+                        Expr.Do(op, listOf(e2)),
+                        Expr.Do(op, listOf(Expr.Acc(xid())))
+                    )
+                ))
+            }
+            "is?" -> Expr.Call(op, xacc(op.pos,"is'"), listOf(e1, e2))
+            "is-not?" -> Expr.Call(op, xacc(op.pos,"is-not'"), listOf(e1, e2))
+            "in?" -> Expr.Call(op, xacc(op.pos,"in'"), listOf(e1, e2))
+            "in-not?" -> Expr.Call(op, xacc(op.pos,"in-not'"), listOf(e1, e2))
+            else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e1,e2))
+        }
+    }
+
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -1005,9 +1030,9 @@ class Parser (lexer_: Lexer)
                             Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
                         XCEU && (v!=null) && this.acceptEnu("Op") -> {
-                            val op = this.tk0.str
+                            val op = this.tk0 as Tk.Op
                             val e = this.expr()
-                            Triple(null, null, this.nest("$x $op ${e.tostr(true)}"))
+                            Triple(null, null, xop(op, xacc(op.pos,x), e))
                         }
                         else -> {
                             id_tag_cnd()
@@ -1475,33 +1500,12 @@ class Parser (lexer_: Lexer)
             this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
             this.acceptEnu("Op")
         ) {
-            val op = this.tk0
+            val op = this.tk0 as Tk.Op
             if (pre==null || pre.str==")" || this.tk1.str==")") {} else {
                 err(op, "binary operation error : expected surrounding parentheses")
             }
             val e2 = this.exprPres()
-            e = when (op.str) {
-                "or" -> xor(op, e, e2)
-                "and" -> {
-                    // do { val :tmp x=$e ; if x -> $e2 -> x }
-                    fun xid (): Tk.Id {
-                        return Tk.Id("ceu_${e.n}", e.tk.pos, 0)
-                    }
-                    Expr.Do(Tk.Fix("do", e.tk.pos), listOf(
-                        Expr.Dcl(Tk.Fix("val",e.tk.pos), xid(), true, null, true, e),
-                        Expr.If(Tk.Fix("if",e.tk.pos),
-                            Expr.Acc(xid()),
-                            Expr.Do(op, listOf(e2)),
-                            Expr.Do(op, listOf(Expr.Acc(xid())))
-                        )
-                    ))
-                }
-                "is?" -> Expr.Call(op, xacc(op.pos,"is'"), listOf(e, e2))
-                "is-not?" -> Expr.Call(op, xacc(op.pos,"is-not'"), listOf(e, e2))
-                "in?" -> Expr.Call(op, xacc(op.pos,"in'"), listOf(e, e2))
-                "in-not?" -> Expr.Call(op, xacc(op.pos,"in-not'"), listOf(e, e2))
-                else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e,e2))
-            }
+            e = xop(op, e, e2)
             pre = this.tk0
         }
         return e
