@@ -331,6 +331,104 @@ class Parser (lexer_: Lexer)
             else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e1,e2))
         }
     }
+    fun xawait (tk: Tk.Fix, awt: Await): Expr.Do {
+        val nn = N
+        fun xid(): Tk.Id {
+            return Tk.Id("ceu_cnd_$nn", tk.pos, 0)
+        }
+
+        fun xtype(): Expr.Call {
+            return Expr.Call(tk, xacc(tk.pos, "type"), listOf(Expr.Acc(xid())))
+        }
+        /*
+            if !awt.now { yield () }
+            loop {
+                var $cnd = $awt.cnd
+                ifs {
+                    type($cnd) == :x-task {
+                        set $cnd = (status($cnd) == :terminated)
+                    }
+                    type($cnd) == :x-track {
+                        set $cnd = (detrack($cnd) == nil)
+                    }
+                }
+            } until (not (not $cnd)) {
+                yield ()
+            }
+        */
+        return Expr.Do(
+            Tk.Fix("do", tk.pos),
+            (if (awt.now) emptyList() else listOf(
+                Expr.Yield(tk, xnil(tk.pos))
+            )) + listOf(
+                Expr.Loop(
+                    tk, nn, Expr.Do(
+                        tk, listOf(
+                            //xprintln(tk,xtag(tk.pos,":1")),
+                            Expr.Dcl(Tk.Fix("var", tk.pos), xid(), false, null, true, awt.cnd),
+                            Expr.If(
+                                tk, xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
+                                Expr.Do(
+                                    tk, listOf(
+                                        Expr.Set(
+                                            tk, Expr.Acc(xid()),
+                                            xeq(
+                                                tk,
+                                                Expr.Call(
+                                                    tk,
+                                                    xacc(tk.pos, "status"),
+                                                    listOf(Expr.Acc(xid()))
+                                                ),
+                                                xtag(tk.pos, ":terminated")
+                                            )
+                                        )
+                                    )
+                                ),
+                                Expr.Do(
+                                    tk, listOf(
+                                        Expr.If(
+                                            tk, xeq(tk, xtype(), xtag(tk.pos, ":x-task")),
+                                            Expr.Do(
+                                                tk, listOf(
+                                                    Expr.Set(
+                                                        tk, Expr.Acc(xid()),
+                                                        xeq(
+                                                            tk,
+                                                            Expr.Call(
+                                                                tk,
+                                                                xacc(tk.pos, "detrack"),
+                                                                listOf(Expr.Acc(xid()))
+                                                            ),
+                                                            xnil(tk.pos)
+                                                        )
+                                                    )
+                                                )
+                                            ),
+                                            Expr.Do(
+                                                tk, listOf(
+                                                    xnil(tk.pos)
+                                                )
+                                            )
+                                        ),
+                                    )
+                                )
+                            ),
+                            //xprintln(tk,xtag(tk.pos,":2")),
+                            Expr.If(
+                                tk, xnot(tk, xnot(tk, Expr.Acc(xid()))),
+                                Expr.Do(tk, listOf(Expr.XBreak(tk, nn))),
+                                Expr.Do(tk, listOf(xnil(tk.pos)))
+                            ),
+                            //xprintln(tk,xtag(tk.pos,":3")),
+                            Expr.Yield(tk, xnil(tk.pos)),
+                            //xprintln(tk,xtag(tk.pos,":9"))
+                        )
+                    )
+                )
+            )
+        )
+        //println(ret.tostr())
+    }
     fun xprintln (tk: Tk, e: Expr): Expr.Call {
         return Expr.Call(tk, xacc(tk.pos,"println"), listOf(e))
     }
@@ -682,12 +780,12 @@ class Parser (lexer_: Lexer)
                     if (! (this.acceptFix("until") || XCEU&&this.acceptFix("while"))) {
                         return emptyList()
                     }
+                    val tk1 = this.tk0
                     val (id,tag,cnd) = id_tag_cnd()
                     val xblk = if (!this.checkFix("{")) emptyList() else {
                         this.block().es + untils()
                     }
                     val nnn = N++
-                    val tk1 = this.tk0
                     fun xid (): Tk.Id {
                         return Tk.Id(id ?: "ceu_$nnn", tk1.pos, 0)
                     }
@@ -1215,73 +1313,7 @@ class Parser (lexer_: Lexer)
                         """)//.let { println(it.tostr()); it }
                     }
                     (awt.cnd != null) -> {  // await evt==x | await trk | await coro
-                        val nn = N
-                        fun xid (): Tk.Id {
-                            return Tk.Id("ceu_cnd_$nn", tk0.pos, 0)
-                        }
-                        fun xtype (): Expr.Call {
-                            return Expr.Call(tk0, xacc(tk0.pos,"type"), listOf(Expr.Acc(xid())))
-                        }
-                        this.nest("""
-                            ${tk0.pos.pre()}export {
-                                ${tk0.pos.pre()}${(!awt.now).cond { "yield ()" }}
-                                loop {
-                                    var ceu_cnd_$N = ${awt.cnd.tostr(true)}
-                                    ifs {
-                                        type(ceu_cnd_$N) == :x-task {
-                                            set ceu_cnd_$N = (status(ceu_cnd_$N) == :terminated)
-                                        }
-                                        type(ceu_cnd_$N) == :x-track {
-                                            set ceu_cnd_$N = (detrack(ceu_cnd_$N) == nil)
-                                        }
-                                        else {
-                                            ;;set ceu_cnd_$N = ceu_cnd_$N
-                                        }
-                                    }
-                                } until (not (not ceu_cnd_$N)) {
-                                    yield ()
-                                }
-                            }
-                        """)//.let { println(it.tostr()); it }
-                        val ret = Expr.Do(Tk.Fix("do",tk0.pos),
-                            (if (awt.now) emptyList() else listOf(
-                                Expr.Yield(tk0, xnil(tk0.pos))
-                            )) + listOf(
-                                Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
-                                    //xprintln(tk0,xtag(tk0.pos,":1")),
-                                    Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, awt.cnd),
-                                    Expr.If(tk0, xeq(tk0, xtype(), xtag(tk0.pos,":x-task")),
-                                        Expr.Do(tk0, listOf(
-                                            Expr.Set(tk0, Expr.Acc(xid()),
-                                                xeq(tk0, Expr.Call(tk0,xacc(tk0.pos,"status"),listOf(Expr.Acc(xid()))), xtag(tk0.pos,":terminated"))
-                                            )
-                                        )),
-                                        Expr.Do(tk0, listOf(
-                                            Expr.If(tk0, xeq(tk0, xtype(), xtag(tk0.pos,":x-task")),
-                                                Expr.Do(tk0, listOf(
-                                                    Expr.Set(tk0, Expr.Acc(xid()),
-                                                        xeq(tk0, Expr.Call(tk0,xacc(tk0.pos,"detrack"),listOf(Expr.Acc(xid()))), xnil(tk0.pos))
-                                                    )
-                                                )),
-                                                Expr.Do(tk0, listOf(
-                                                    xnil(tk0.pos)
-                                                ))
-                                            ),
-                                        ))
-                                    ),
-                                    //xprintln(tk0,xtag(tk0.pos,":2")),
-                                    Expr.If(tk0, xnot(tk0, xnot(tk0, Expr.Acc(xid()))),
-                                        Expr.Do(tk0,listOf(Expr.XBreak(tk0,nn))),
-                                        Expr.Do(tk0,listOf(xnil(tk0.pos)))
-                                    ),
-                                    //xprintln(tk0,xtag(tk0.pos,":3")),
-                                    Expr.Yield(tk0, xnil(tk0.pos)),
-                                    //xprintln(tk0,xtag(tk0.pos,":9"))
-                                )))
-                            )
-                        )
-                        //println(ret.tostr())
-                        ret
+                        xawait(tk0, awt)
                     }
                     else -> error("bug found")
                 }
