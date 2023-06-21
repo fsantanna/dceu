@@ -1011,7 +1011,7 @@ class Parser (lexer_: Lexer)
 
             (XCEU && this.checkFix("\\")) -> this.lambda()
             (XCEU && this.acceptFix("ifs")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val (x,v) = if (this.checkFix("{")) {
                     Pair("ceu_$N", null)
                 } else {
@@ -1047,8 +1047,30 @@ class Parser (lexer_: Lexer)
                 }
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
+                val ret = Expr.Do(Tk.Fix("do",tk0.pos),
+                    (if (v == null) emptyList() else listOf(
+                        Expr.Dcl(Tk.Fix("val",tk0.pos), Tk.Id(x,tk0.pos,0), false, null, true, v)
+                    )) +
+                    (ifs.foldRight(Expr.Do(tk0,listOf(Expr.Pass(tk0,xnil(tk0.pos))))) { nxt,acc ->
+                        val (xxx,e) = nxt
+                        val (id,tag,cnd) = xxx
+                        if (id == null) {
+                            Expr.Do(tk0, listOf(
+                                Expr.If(tk0, cnd, e, acc)
+                            ))
+                        } else {
+                            Expr.Do(tk0, listOf(
+                                Expr.Dcl(Tk.Fix("val", tk0.pos), Tk.Id(id, tk0.pos, 0), false, tag, true, cnd),
+                                Expr.If(tk0, xacc(tk0.pos,id), e, acc)
+                            ))
+                        }
+                    }).es
+                )
+                //println(ret.tostr())
+                ret
+                /*
                 this.nest("""
-                    ${pre0}do {
+                    ${tk0.pos.pre()}do {
                         ${v.cond { "val $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
@@ -1062,6 +1084,7 @@ class Parser (lexer_: Lexer)
                          """}.joinToString("")}
                     }
                 """)
+                 */
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
                 val tk0 = this.tk0 as Tk.Fix
