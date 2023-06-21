@@ -56,6 +56,8 @@ val GLOBALS = setOf (
     "{==}", "{#}", "{/=}", "..."
 )
 
+data class Await (val now: Boolean, val spw: Expr.Spawn?, val clk: List<Pair<Expr, Tk.Tag>>?, val cnd: Expr?, val xcnd: Pair<Boolean?,Expr?>?)
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
@@ -66,6 +68,7 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
 }
+
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Tk.Tag?,Boolean>?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
     data class Export (val tk_: Tk.Fix, val ids: List<String>, val body: Expr.Do) : Expr(N++, tk_)
