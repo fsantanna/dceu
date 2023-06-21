@@ -271,6 +271,9 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun xeq (tk: Tk, e1: Expr, e2: Expr): Expr.Call {
+        return Expr.Call(tk, xacc(tk.pos,"{==}"), listOf(e1, e2))
+    }
     fun xor (tk: Tk, e1: Expr, e2: Expr): Expr.Do {
         // do { val :tmp x=$e1 ; if x -> x -> $e2 }
         fun xid (): Tk.Id {
@@ -285,6 +288,13 @@ class Parser (lexer_: Lexer)
             )
         ))
     }
+    fun xnot (tk: Tk, e: Expr): Expr.If {
+        // if $e { false } else { true }
+        return Expr.If(Tk.Fix("if",tk.pos), e,
+            Expr.Do(tk, listOf(Expr.Bool(Tk.Fix("false",tk.pos)))),
+            Expr.Do(tk, listOf(Expr.Bool(Tk.Fix("true",tk.pos))))
+        )
+    }
     fun xnil (pos: Pos): Expr.Nil {
         return Expr.Nil(Tk.Fix("nil", pos))
     }
@@ -294,7 +304,9 @@ class Parser (lexer_: Lexer)
     fun xnum (pos: Pos, n: Int): Expr.Num {
         return Expr.Num(Tk.Num(n.toString(), pos))
     }
-
+    fun xtag (pos: Pos, tag: String): Expr.Tag {
+        return Expr.Tag(Tk.Tag(tag, pos))
+    }
     fun xop (op: Tk.Op, e1: Expr, e2: Expr): Expr {
         return when (op.str) {
             "or" -> xor(op, e1, e2)
@@ -318,6 +330,9 @@ class Parser (lexer_: Lexer)
             "in-not?" -> Expr.Call(op, xacc(op.pos,"in-not'"), listOf(e1, e2))
             else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e1,e2))
         }
+    }
+    fun xprintln (tk: Tk, e: Expr): Expr.Call {
+        return Expr.Call(tk, xacc(tk.pos,"println"), listOf(e))
     }
 
     fun exprPrim (): Expr {
@@ -847,7 +862,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("broadcast") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val xin = if (!this.acceptFix("in")) {
-                    Expr.Tag(Tk.Tag(":global", tk0.pos))
+                    xtag(tk0.pos, ":global")
                 } else {
                     val e = this.expr()
                     this.acceptFix_err(",")
@@ -949,7 +964,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("@[")    -> Expr.Dict(this.tk0 as Tk.Fix, list0("]",",") {
                 val tk1 = this.tk1
                 val k = if (XCEU && this.acceptEnu("Id")) {
-                    val e = Expr.Tag(Tk.Tag(':'+tk1.str, tk1.pos))
+                    val e = xtag(tk1.pos, ':'+tk1.str)
                     this.acceptFix_err("=")
                     e
                 } else {
@@ -1047,7 +1062,7 @@ class Parser (lexer_: Lexer)
                 }
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
-                val ret = Expr.Do(Tk.Fix("do",tk0.pos),
+                Expr.Do(Tk.Fix("do",tk0.pos),
                     (if (v == null) emptyList() else listOf(
                         Expr.Dcl(Tk.Fix("val",tk0.pos), Tk.Id(x,tk0.pos,0), false, null, true, v)
                     )) +
@@ -1066,22 +1081,18 @@ class Parser (lexer_: Lexer)
                         }
                     }).es
                 )
-                //println(ret.tostr())
-                ret
                 /*
-                this.nest("""
-                    ${tk0.pos.pre()}do {
-                        ${v.cond { "val $x = ${v!!.tostr(true)}" }}
-                        ${ifs.map { (xxx,blk) ->
+                    do {
+                        val $x = $v
+                        ifs.fold { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
-                             if ${id.cond{ "$it ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
-                                ${blk.es.tostr(true)}
+                             if $id $tag = $cnd
+                                $blk
                              } else {
-                            """}.joinToString("")}
-                         ${ifs.map { """
+                                <ACC>
                              }
-                         """}.joinToString("")}
+                         }
                     }
                 """)
                  */
@@ -1133,7 +1144,7 @@ class Parser (lexer_: Lexer)
                                 xor(tk0,
                                     Expr.Call(tk0, xacc(tk0.pos, "{/=}"), listOf(
                                         Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
-                                        Expr.Tag(Tk.Tag(":terminated", tk0.pos))
+                                        xtag(tk0.pos, ":terminated")
                                     )),
                                     Expr.Call(tk0, xacc(tk0.pos,"{/=}"), listOf(
                                         Expr.Acc(xv()),
@@ -1146,7 +1157,7 @@ class Parser (lexer_: Lexer)
                             Expr.If(tk0,
                                 Expr.Call(tk0, xacc(tk0.pos, "{==}"), listOf(
                                     Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
-                                    Expr.Tag(Tk.Tag(":terminated", tk0.pos))
+                                    xtag(tk0.pos, ":terminated")
                                 )),
                                 Expr.Do(tk0, listOf(Expr.XBreak(tk0, nn))),
                                 Expr.Do(tk0, listOf(xnil(tk0.pos)))
@@ -1157,14 +1168,14 @@ class Parser (lexer_: Lexer)
                 ))
             }
             (XCEU && this.acceptFix("await")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val awt = await()
                 when {
                     (awt.xcnd != null) -> {   // await :key
                         awt.cnd!!
                         val xcnd = awt.xcnd.first ?: awt.xcnd.second!!.tostr(true)
                         this.nest("""
-                            ${pre0}export [evt] {
+                            ${tk0.pos.pre()}export [evt] {
                                 val evt ${awt.cnd.tk.str}
                                 await (evt is? ${awt.cnd.tk.str}) and $xcnd
                             }
@@ -1176,16 +1187,16 @@ class Parser (lexer_: Lexer)
                             err_expected(e.tk, "non-pool spawn")
                         }
                         this.nest("""
-                            ${pre0}do {
+                            ${tk0.pos.pre()}do {
                                 val ceu_spw_$N = ${e.tostr(true)}
-                                ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
+                                ${tk0.pos.pre()}await :check-now (status(ceu_spw_$N) == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
                             }
                         """) //.let { println(it.tostr());it }
                     }
                     (awt.clk != null) -> { // await 5s
                         this.nest("""
-                            ${pre0}do {
+                            ${tk0.pos.pre()}do {
                                 var ceu_ms_$N = ${awt.clk.map { (e,tag) ->
                                     val s = e.tostr(true)
                                     "(" + when (tag.str) {
@@ -1204,9 +1215,16 @@ class Parser (lexer_: Lexer)
                         """)//.let { println(it.tostr()); it }
                     }
                     (awt.cnd != null) -> {  // await evt==x | await trk | await coro
+                        val nn = N
+                        fun xid (): Tk.Id {
+                            return Tk.Id("ceu_cnd_$nn", tk0.pos, 0)
+                        }
+                        fun xtype (): Expr.Call {
+                            return Expr.Call(tk0, xacc(tk0.pos,"type"), listOf(Expr.Acc(xid())))
+                        }
                         this.nest("""
-                            ${pre0}export [] {
-                                ${pre0}${(!awt.now).cond { "yield ()" }}
+                            ${tk0.pos.pre()}export {
+                                ${tk0.pos.pre()}${(!awt.now).cond { "yield ()" }}
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
                                     ifs _ = ceu_cnd_$N {
@@ -1225,6 +1243,45 @@ class Parser (lexer_: Lexer)
                                 }
                             }
                         """)//.let { println(it.tostr()); it }
+                        val ret = Expr.Do(Tk.Fix("do",tk0.pos),
+                            (if (!awt.now) emptyList() else listOf(
+                                Expr.Yield(tk0, xnil(tk0.pos))
+                            )) + listOf(
+                                Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
+                                    //xprintln(tk0,xtag(tk0.pos,":1")),
+                                    Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, awt.cnd),
+                                    Expr.If(tk0, xeq(tk0, xtype(), xtag(tk0.pos,":x-task")),
+                                        Expr.Do(tk0, listOf(
+                                            Expr.Set(tk0, Expr.Acc(xid()),
+                                                xeq(tk0, Expr.Call(tk0,xacc(tk0.pos,"status"),listOf(Expr.Acc(xid()))), xtag(tk0.pos,":terminated"))
+                                            )
+                                        )),
+                                        Expr.Do(tk0, listOf(
+                                            Expr.If(tk0, xeq(tk0, xtype(), xtag(tk0.pos,":x-task")),
+                                                Expr.Do(tk0, listOf(
+                                                    Expr.Set(tk0, Expr.Acc(xid()),
+                                                        xeq(tk0, Expr.Call(tk0,xacc(tk0.pos,"detrack"),listOf(Expr.Acc(xid()))), xnil(tk0.pos))
+                                                    )
+                                                )),
+                                                Expr.Do(tk0, listOf(
+                                                    xnil(tk0.pos)
+                                                ))
+                                            ),
+                                        ))
+                                    ),
+                                    //xprintln(tk0,xtag(tk0.pos,":2")),
+                                    Expr.If(tk0, xnot(tk0, xnot(tk0, Expr.Acc(xid()))),
+                                        Expr.Do(tk0,listOf(Expr.XBreak(tk0,nn))),
+                                        Expr.Do(tk0,listOf(xnil(tk0.pos)))
+                                    ),
+                                    //xprintln(tk0,xtag(tk0.pos,":3")),
+                                    Expr.Yield(tk0, xnil(tk0.pos)),
+                                    //xprintln(tk0,xtag(tk0.pos,":9"))
+                                )))
+                            )
+                        )
+                        //println(ret.tostr())
+                        ret
                     }
                     else -> error("bug found")
                 }
@@ -1366,12 +1423,7 @@ class Parser (lexer_: Lexer)
         while (ops.size > 0) {
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
-                op as Tk.Op
-                // if $e { false } else { true }
-                e = Expr.If(Tk.Fix("if",op.pos), e,
-                    Expr.Do(op, listOf(Expr.Bool(Tk.Fix("false",op.pos)))),
-                    Expr.Do(op, listOf(Expr.Bool(Tk.Fix("true",op.pos))))
-                )
+                xnot(op, e)
             } else {
                 e = Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e))
             }
@@ -1458,7 +1510,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix(".") -> {
                     e = when {
                         this.acceptFix("pub") -> Expr.Pub(this.tk0 as Tk.Fix, e)
-                        this.acceptEnu("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
+                        this.acceptEnu("Id") -> Expr.Index(e.tk, e, xtag(this.tk0.pos, ':'+this.tk0.str))
                         (XCEU && this.acceptEnu("Num")) -> {
                             val num = this.tk0 as Tk.Num
                             if (num.str.contains('.')) {
