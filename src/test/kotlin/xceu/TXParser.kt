@@ -79,7 +79,7 @@ class TXParser {
                 "if true {\n" +
                 "0\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -90,7 +90,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
@@ -104,7 +104,7 @@ class TXParser {
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -125,7 +125,7 @@ class TXParser {
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -145,7 +145,7 @@ class TXParser {
                 "if true {\n" +
                 "0\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}\n" +
                 "}\n" +
@@ -178,7 +178,7 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val :tmp ceu_63 = do {
+            val :tmp ceu_33 = do {
             val :tmp ceu_16 = if true {
             false
             } else {
@@ -190,8 +190,8 @@ class TXParser {
             ceu_16
             }
             }
-            if ceu_63 {
-            ceu_63
+            if ceu_33 {
+            ceu_33
             } else {
             true
             }

@@ -658,7 +658,7 @@ class Parser (lexer_: Lexer)
 
                 val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) emptyList() else {
                     val tk1 = this.tk0
-                    val brk = (tk1.str == "until")
+                    val unt = (tk1.str == "until")
                     val (id,tag,cnd) = id_tag_cnd()
                     val nnn = N++
                     fun xid (): Tk.Id {
@@ -669,9 +669,9 @@ class Parser (lexer_: Lexer)
                     val f = xnil(this.tk1.pos)
                     listOf(
                         Expr.Dcl(Tk.Fix("val",tk1.pos), xid(), false, tag, true, cnd),
-                        Expr.If(Tk.Fix("if",tk1.pos), Expr.Acc(xid()),
-                            Expr.Do(tk1, listOf(if (brk) t else f)),
-                            Expr.Do(tk1, listOf(if (brk) f else t))
+                        Expr.If(Tk.Fix("if",tk1.pos), if (unt) Expr.Acc(xid()) else xnot(tk0,Expr.Acc(xid())),
+                            Expr.Do(tk1, listOf(t)),
+                            Expr.Do(tk1, listOf(f))
                         )
                     )
                 }
@@ -1066,7 +1066,7 @@ class Parser (lexer_: Lexer)
                     (if (v == null) emptyList() else listOf(
                         Expr.Dcl(Tk.Fix("val",tk0.pos), Tk.Id(x,tk0.pos,0), false, null, true, v)
                     )) +
-                    (ifs.foldRight(Expr.Do(tk0,listOf(Expr.Pass(tk0,xnil(tk0.pos))))) { nxt,acc ->
+                    (ifs.foldRight(Expr.Do(tk0,listOf(xnil(tk0.pos)))) { nxt,acc ->
                         val (xxx,e) = nxt
                         val (id,tag,cnd) = xxx
                         if (id == null) {
@@ -1227,7 +1227,7 @@ class Parser (lexer_: Lexer)
                                 ${tk0.pos.pre()}${(!awt.now).cond { "yield ()" }}
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
-                                    ifs _ = ceu_cnd_$N {
+                                    ifs {
                                         type(ceu_cnd_$N) == :x-task {
                                             set ceu_cnd_$N = (status(ceu_cnd_$N) == :terminated)
                                         }
@@ -1244,7 +1244,7 @@ class Parser (lexer_: Lexer)
                             }
                         """)//.let { println(it.tostr()); it }
                         val ret = Expr.Do(Tk.Fix("do",tk0.pos),
-                            (if (!awt.now) emptyList() else listOf(
+                            (if (awt.now) emptyList() else listOf(
                                 Expr.Yield(tk0, xnil(tk0.pos))
                             )) + listOf(
                                 Expr.Loop(tk0, nn, Expr.Do(tk0, listOf(
@@ -1423,7 +1423,7 @@ class Parser (lexer_: Lexer)
         while (ops.size > 0) {
             val op = ops.removeLast()
             if (XCEU && op.str == "not") {
-                xnot(op, e)
+                e = xnot(op, e)
             } else {
                 e = Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e))
             }

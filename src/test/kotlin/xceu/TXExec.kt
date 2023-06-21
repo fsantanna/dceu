@@ -260,7 +260,8 @@ class TXExec {
             }
             println(x)
         """)
-        assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"{is?}\" is not declared") { out }
     }
 
     // OPS: not, and, or
@@ -1511,7 +1512,7 @@ class TXExec {
                     println(evt)
                 }
             }()
-             broadcast in :global, @[]
+            broadcast in :global, @[]
         """, true)
         assert(out == "@[]\n") { out }
     }
@@ -2656,10 +2657,10 @@ class TXExec {
                 set x = [1]
                 throw(tags(x,:x,true))
             }})
-        """.trimIndent(), true)
+        """, true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
-                "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
+        assert(out == "anon : (lin 2, col 32) : block escape error : incompatible scopes\n" +
+                "anon : (lin 5, col 17) : throw(tags(x,:x,true))\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
@@ -2867,7 +2868,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[46,1000,1001,1002,10,11,12,47,43,101,48]\n") { out }
+        assert(out == "[45,1000,1001,1002,10,11,12,46,43,101,47]\n") { out }
     }
 
     // TAGS / PRE
