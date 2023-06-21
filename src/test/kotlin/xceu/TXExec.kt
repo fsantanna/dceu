@@ -1517,6 +1517,21 @@ class TXExec {
         assert(out == "@[]\n") { out }
     }
     @Test
+    fun await5a() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                await true                    
+                println(evt)
+                await true                    
+                println(evt)
+            }()
+            broadcast in :global, :1
+            broadcast in :global, :2
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
     fun every6() {
         val out = all("""
             spawn {
