@@ -783,12 +783,7 @@ class Parser (lexer_: Lexer)
                         val coro = Expr.Proto(tk1, null, emptyList(), blk)
                         Expr.Spawn(tk0, null, Expr.Call(tk1, coro, emptyList()))
                     }
-                    (XCEU && this.checkFix("{")) -> {
-                        // spawn (task () :fake { blk }) ()
-                        val blk = this.block()
-                        val task = Expr.Proto(Tk.Fix("task", tk0.pos), Pair(null,true), emptyList(), blk)
-                        Expr.Spawn(tk0, null, Expr.Call(tk0, task, emptyList()))
-                    }
+                    (XCEU && this.checkFix("{")) -> xspawn(tk0, this.block())
                     else -> {
                         val call = this.expr()
                         if (call !is Expr.Call && !(call is Expr.Export && call.body.es.last() is Expr.Call)) {
@@ -1137,32 +1132,50 @@ class Parser (lexer_: Lexer)
                 Expr.Do(Tk.Fix("do",tk0.pos), spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0
                 val pars = mutableListOf(this.block())
-                val n = pars[0].n
+                val nn = N
                 this.acceptFix_err("with")
                 pars.add(this.block())
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
                 //println(spws)
+                fun xid (): Tk.Id {
+                    return Tk.Id("ceu_$nn", tk0.pos, 0)
+                }
+                fun xxid (i: Int): Tk.Id {
+                    return Tk.Id("ceu_${i}_$nn", tk0.pos, 0)
+                }
                 this.nest("""
-                    ${pre0}do {
-                        var _ceu_$n
+                    do {
+                        var _ceu_$nn
                         ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn {
-                                set _ceu_$n = do {
+                            val ceu_${i}_$nn = spawn {
+                                set _ceu_$nn = do {
                                     ${body.es.tostr(true)}
                                 }
                             }
                         """}.joinToString("")}
                         await :check-now (
                             ${pars.mapIndexed { i,_ -> """
-                                ((status(ceu_${i}_$n) == :terminated) and
+                                ((status(ceu_${i}_$nn) == :terminated) and
                             """}.joinToString("")} true ${")".repeat(pars.size)}
                         )
-                        _ceu_$n
+                        _ceu_$nn
                     }
+                    Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                        Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
+                    ) + pars.mapIndexed { i,body ->
+                        Expr.Dcl(Tk.Fix("val",tk0.pos), xxid(i), false, null, true,
+                            xspawn(tk0, Expr.Do(tk0, listOf(
+                                Expr.Set(tk0, Expr.Acc(xid()), Expr.Do(Tk.Fix("do",tk0.pos), body.es))
+                            )))
+                        )
+                    } + listOf(
+                        xawait(tk0, Await(true, null, null, x, null)),
+                        Expr.Acc(xid())
+                    ))
                 """)
             }
             (XCEU && this.acceptFix("par-or")) -> {

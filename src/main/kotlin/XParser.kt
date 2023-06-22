@@ -278,6 +278,11 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
     //println(ret.tostr())
 }
 
+fun xspawn (tk: Tk.Fix, blk: Expr.Do): Expr.Spawn {
+    val task = Expr.Proto(Tk.Fix("task", tk.pos), Pair(null,true), emptyList(), blk)
+    // spawn (task () :fake { blk }) ()
+    return Expr.Spawn(tk, null, Expr.Call(tk, task, emptyList()))
+}
 fun xprintln (tk: Tk, e: Expr): Expr.Call {
     return Expr.Call(tk, xacc(tk.pos,"println"), listOf(e))
 }
