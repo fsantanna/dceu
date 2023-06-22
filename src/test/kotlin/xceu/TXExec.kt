@@ -1848,6 +1848,19 @@ class TXExec {
         )
         assert(out == "10\n") { out }
     }
+    @Test
+    fun awaiting9() {
+        val out = ceu.all("""
+            spawn {
+                awaiting :x {
+                    awaiting :y {
+                    }
+                }
+                println(:ok)
+            }
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
 
     // LAMBDA
 

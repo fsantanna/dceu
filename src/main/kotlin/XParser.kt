@@ -286,6 +286,51 @@ fun xspawn (tk: Tk.Fix, blk: Expr.Do): Expr.Spawn {
     // spawn (task () :fake { blk }) ()
     return Expr.Spawn(tk, null, Expr.Call(tk, task, emptyList()))
 }
+
+fun xparor (tk: Tk.Fix, pars: List<Expr.Do>): Expr.Do {
+    val nn = N
+
+    fun xid (): Tk.Id {
+        return Tk.Id("ceu_$nn", tk.pos, 0)
+    }
+    fun xxid (i: Int): Tk.Id {
+        return Tk.Id("ceu_${i}_$nn", tk.pos, 0)
+    }
+    fun _xxid (i: Int): Tk.Id {
+        return Tk.Id("_ceu_${i}_$nn", tk.pos, 0)
+    }
+    /*
+        do {
+            var ret
+            $pars.mapIndexed { i,body ->
+                val $i = spawn {
+                    val _$i = $body
+                    set ret = ret or _$i
+                }
+            }
+            await :check-now ($pars.mapIndexed { i,_ -> ((status($i) == :terminated) })
+            ret
+        }
+    */
+    return Expr.Do(Tk.Fix("do",tk.pos), listOf(
+        Expr.Dcl(Tk.Fix("var",tk.pos), xid(), false, null, true, null)
+    ) + pars.mapIndexed { i,body ->
+        Expr.Dcl(Tk.Fix("val",tk.pos), xxid(i), false, null, true,
+            xspawn(tk, Expr.Do(tk, listOf(
+                Expr.Dcl(tk, _xxid(i), false, null, true, Expr.Do(Tk.Fix("do",tk.pos), body.es)),
+                Expr.Set(tk, Expr.Acc(xid()), xor(tk, Expr.Acc(xid()), Expr.Acc(_xxid(i))))
+            )))
+        )
+    } + listOf(
+        pars.foldIndexed(xbool(tk.pos,false) as Expr) { i,acc,_ ->
+            xor(tk, acc, xeq(tk, xstatus(tk,Expr.Acc(xxid(i))), xtag(tk.pos,":terminated")))
+        }.let {
+            xawait(tk, Await(true, it, null, null, null))
+        },
+        Expr.Acc(xid())
+    ))
+}
+
 fun xprintln (tk: Tk, e: Expr): Expr.Call {
     return Expr.Call(tk, xacc(tk.pos,"println"), listOf(e))
 }

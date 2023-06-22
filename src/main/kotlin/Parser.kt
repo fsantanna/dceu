@@ -1157,63 +1157,19 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("par-or")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val pars = mutableListOf(this.block())
-                val nn = N
                 this.acceptFix_err("with")
                 pars.add(this.block())
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
-                fun xid (): Tk.Id {
-                    return Tk.Id("ceu_$nn", tk0.pos, 0)
-                }
-                fun xxid (i: Int): Tk.Id {
-                    return Tk.Id("ceu_${i}_$nn", tk0.pos, 0)
-                }
-                fun _xxid (i: Int): Tk.Id {
-                    return Tk.Id("_ceu_${i}_$nn", tk0.pos, 0)
-                }
-                /*
-                    do {
-                        var ret
-                        $pars.mapIndexed { i,body ->
-                            val $i = spawn {
-                                val _$i = $body
-                                set ret = ret or _$i
-                            }
-                        }
-                        await :check-now ($pars.mapIndexed { i,_ -> ((status($i) == :terminated) })
-                        ret
-                    }
-                */
-                Expr.Do(Tk.Fix("do",tk0.pos), listOf(
-                    Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
-                ) + pars.mapIndexed { i,body ->
-                    Expr.Dcl(Tk.Fix("val",tk0.pos), xxid(i), false, null, true,
-                        xspawn(tk0, Expr.Do(tk0, listOf(
-                            Expr.Dcl(tk0, _xxid(i), false, null, true, Expr.Do(Tk.Fix("do",tk0.pos), body.es)),
-                            Expr.Set(tk0, Expr.Acc(xid()), xor(tk0, Expr.Acc(xid()), Expr.Acc(_xxid(i))))
-                        )))
-                    )
-                } + listOf(
-                    pars.foldIndexed(xbool(tk0.pos,false) as Expr) { i,acc,_ ->
-                        xor(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
-                    }.let {
-                        xawait(tk0, Await(true, it, null, null, null))
-                    },
-                    Expr.Acc(xid())
-                ))
+                xparor(tk0, pars)
             }
             (XCEU && this.acceptFix("awaiting")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val awt = await()
                 val body = this.block()
-                this.nest("""
-                    ${pre0}par-or {
-                        ${awt.tostr()}
-                    } with {
-                        ${body.es.tostr(true)}
-                    }
-                """)//.let { println(it.tostr()); it }
+                // par-or { $awt } with { $body }
+                xparor(tk0, listOf(Expr.Do(tk0,listOf(xawait(tk0,awt))), body))
             }
             else -> {
                 err_expected(this.tk1, "expression")
