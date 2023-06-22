@@ -805,7 +805,6 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("toggle") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pre0 = tk0.pos.pre()
                 val awt = await()
                 val task = awt.cnd
                 if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
@@ -822,22 +821,41 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("->")
                     val (off,on) = Pair(awt, await())
                     val blk = this.block()
-                    this.nest("""
-                        ${pre0}do {
-                            val task_$N = spawn ;;{
-                                ${blk.tostr(true)}
+                    val nn = N
+                    fun xid (): Tk.Id {
+                        return Tk.Id("task_$nn", tk0.pos, 0)
+                    }
+                    /*
+                        do {
+                            val tsk = spawn ;;{
+                                $blk
                             ;;}
-                            awaiting :check-now task_$N {
+                            awaiting :check-now tsk {
                                 loop {
-                                    ${off.tostr()}
-                                    toggle task_$N(false)
-                                    ${on.tostr()}
-                                    toggle task_$N(true)
+                                    $off
+                                    toggle tsk(false)
+                                    $on
+                                    toggle tsk(true)
                                 }
                             }
-                            task_$N.pub
+                            tsk.pub
                         }
-                    """)//.let { println(it.tostr()); it }
+                    */
+                    Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                        Expr.Dcl(Tk.Fix("val",tk0.pos), xid(), false, null, true, xspawn(tk0,blk)),
+                        xparor(tk0, listOf(
+                            Expr.Do(tk0, listOf(xawait(tk0, Await(true, Expr.Acc(xid()), null, null, null)))),
+                            Expr.Do(tk0, listOf(
+                                Expr.Loop(tk0, nn, Expr.Do(tk0,listOf(
+                                    xawait(tk0, off),
+                                    Expr.Toggle(tk0, Expr.Acc(xid()), xbool(tk0.pos,false)),
+                                    xawait(tk0, on),
+                                    Expr.Toggle(tk0, Expr.Acc(xid()), xbool(tk0.pos,true))
+                                )))
+                            ))
+                        )),
+                        Expr.Pub(tk0, Expr.Acc(xid()))
+                    ))
                 }
             }
 
