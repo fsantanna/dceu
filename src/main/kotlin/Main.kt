@@ -19,7 +19,7 @@ val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coro", "data", "defer", "do", "else", "enum",
     "err", "evt", "export", "false", "func", "if", "in", "loop", "nil",
     "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
-    "toggle", "true", "until", "val", "var", "while", "yield"
+    "toggle", "true", "until", "val", "var", "while", "yield", "xbreak"
 ) + if (!XCEU) setOf() else setOf (
     "and", "await", "awaiting", "every", "ifs", "in?", "is?", "is-not?", "not", "or",
     "par", "par-and", "par-or", "resume-yield-all", "thus", "where", "with"
@@ -66,14 +66,16 @@ sealed class Tk (val str: String, val pos: Pos) {
     data class Chr (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
     data class Nat (val str_: String, val pos_: Pos, val tag: String?, val n_: Int=N++): Tk(str_, pos_)
 }
+
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val task: Pair<Tk.Tag?,Boolean>?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
-    data class Export (val tk_: Tk, val ids: List<String>, val body: Expr.Do) : Expr(N++, tk_)
+    data class Export (val tk_: Tk.Fix, val ids: List<String>, val body: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val nn: Int, val body: Expr.Do): Expr(N++, tk_)
+    data class XBreak (val tk_: Tk.Fix, val nn: Int): Expr(N++, tk_)
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)

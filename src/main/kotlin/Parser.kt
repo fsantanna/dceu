@@ -278,7 +278,7 @@ class Parser (lexer_: Lexer)
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("export") -> {
-                val tk0 = this.tk0
+                val tk0 = this.tk0 as Tk.Fix
                 val ids = if (XCEU && this.checkFix("{")) emptyList() else {
                     this.acceptFix_err("[")
                     val l = list0("]",",") {
@@ -359,7 +359,7 @@ class Parser (lexer_: Lexer)
                         Expr.Do(this.tk0, listOf(this.expr()))
                     }
                     else -> {
-                        Expr.Do(tk0, listOf(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", tk0.pos.copy())))))
+                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }
                 if (id == null) {
@@ -1361,7 +1361,7 @@ class Parser (lexer_: Lexer)
         }
         if (ret.size == 0) {
             if (XCEU) {
-                ret.add(Expr.Pass(Tk.Fix("pass", tk0.pos.copy()), Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))))
+                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
             } else {
                 err_expected(this.tk1, "expression")
             }

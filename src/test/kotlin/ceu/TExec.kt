@@ -687,7 +687,7 @@ class TExec {
     @Test
     fun todo_dd_dict7_err() {
         val out = all("""
-            val x
+            var x
             set x = @[(nil,10)]
             println(x[nil])
         """)
@@ -1917,6 +1917,19 @@ class TExec {
 
     // LOOP
 
+    @Test
+    fun loop0() {
+        val out = all("""
+            do {
+                loop 1 {
+                    println(:in)
+                    xbreak 1
+                }
+            }
+            println(:out)
+        """)
+        assert(out == ":in\n:out\n") { out }
+    }
     @Test
     fun loop1() {
         val out = all("""

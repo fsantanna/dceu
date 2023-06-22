@@ -30,6 +30,7 @@ class Tags (outer: Expr.Do) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.body.traverse()
+            is Expr.XBreak -> {}
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
             is Expr.Enum   -> this.tags.forEach {

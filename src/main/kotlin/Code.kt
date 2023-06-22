@@ -494,6 +494,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     //ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
+            is Expr.XBreak -> """
+                goto CEU_LOOP_DONE_${this.nn};
+            """.trimIndent()
             is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}
                     do { // catch

@@ -37,7 +37,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1\n} else {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty2_do() {  // set whole tuple?
@@ -45,7 +45,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Do && e.es.size==1)
-        assert(e.tostr() == "do {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty3_func() {
@@ -53,7 +53,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==0)
-        assert(e.tostr() == "func () {\npass nil\n}") { e.tostr() }
+        assert(e.tostr() == "func () {\nnil\n}") { e.tostr() }
     }
     @Test
     fun empty4_loop() {
@@ -61,7 +61,7 @@ class TXParser {
         val parser = Parser(l)
         val x = parser.exprPrim() as Expr.Do
         val e = x.es.last() as Expr.Loop
-        assert(e.body.es.last() is Expr.Pass)
+        assert(e.body.es.last() is Expr.Nil)
         //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
     }
 
@@ -79,7 +79,7 @@ class TXParser {
                 "if true {\n" +
                 "0\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -90,7 +90,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
@@ -104,7 +104,7 @@ class TXParser {
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -125,7 +125,7 @@ class TXParser {
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -145,7 +145,7 @@ class TXParser {
                 "if true {\n" +
                 "0\n" +
                 "} else {\n" +
-                "pass nil\n" +
+                "nil\n" +
                 "}\n" +
                 "}\n" +
                 "}\n" +

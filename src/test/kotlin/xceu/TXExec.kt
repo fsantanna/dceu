@@ -1516,6 +1516,21 @@ class TXExec {
         assert(out == "@[]\n") { out }
     }
     @Test
+    fun await5a() {
+        val out = ceu.all(
+            """
+            spawn task () {
+                await true                    
+                println(evt)
+                await true                    
+                println(evt)
+            }()
+            broadcast in :global, :1
+            broadcast in :global, :2
+        """, true)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
     fun every6() {
         val out = all("""
             spawn {
@@ -1831,6 +1846,19 @@ class TXExec {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun awaiting9() {
+        val out = ceu.all("""
+            spawn {
+                awaiting :x {
+                    awaiting :y {
+                    }
+                }
+                println(:ok)
+            }
+        """, true)
+        assert(out == ":ok\n") { out }
     }
 
     // LAMBDA
@@ -2656,7 +2684,7 @@ class TXExec {
                 set x = [1]
                 throw(tags(x,:x,true))
             }})
-        """.trimIndent(), true)
+        """, true)
         //assert(out == "anon : (lin 4, col 14) : set error : incompatible scopes\n") { out }
         assert(out == "anon : (lin 1, col 33) : block escape error : incompatible scopes\n" +
                 "anon : (lin 4, col 5) : throw(tags(x,:x,true))\n" +
