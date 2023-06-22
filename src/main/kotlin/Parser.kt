@@ -213,49 +213,38 @@ class Parser (lexer_: Lexer)
     fun await (): Await {
         val now = this.acceptTag(":check-now")
         val isspw = this.checkFix("spawn")
+        val e = this.expr()
         fun isclk (): Boolean {
             return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
         }
-        val e = this.expr()
-        val (spw,clk,cnd) = when {
+        return when {
             isspw -> {
                 if (!(e is Expr.Spawn && e.tasks == null)) {
                     err_expected(e.tk, "non-pool spawn")
                 }
-                Triple(e as Expr.Spawn, null, null)
+                Await(now, null, null, null, e as Expr.Spawn)
+            }
+            (e is Expr.Tag) -> {
+                val cnd = if (this.acceptFix(",")) this.expr() else null
+                Await(now, null, Pair(Expr.Tag(e.tk as Tk.Tag), cnd), null, null)
             }
             isclk() -> {
                 val es = mutableListOf(Pair(e, this.tk0 as Tk.Tag))
                 while (isclk()) {
                     es.add(Pair(this.expr(), this.tk0 as Tk.Tag))
                 }
-                Triple(null, es, null)
+                Await(now, null, null, es, null)
             }
-            else -> {
-                Triple(null, null, e)
-            }
+            else -> Await(now, e, null, null, null)
         }
-        val xcnd = when {
-            (cnd !is Expr.Tag) -> null   // await :key
-            !this.acceptFix(",") -> Pair(true,null)
-            else -> Pair(null, this.expr())
-        }
-        return Await(now, spw, clk, cnd, xcnd)
     }
     fun Await.tostr (): String {
-        val clk_expr = clk_or_exp_tostr(Pair(this.clk,this.cnd))
-        val xcnd = when {
-            (this.xcnd == null) -> ""
-            (this.xcnd.first == true) -> ""
-            else -> ", " + this.xcnd.second!!.tostr(true)
-        }
-        return "await ${this.now.cond { ":check-now" }} $clk_expr $xcnd"
-    }
-
-    fun clk_or_exp_tostr (clk_exp: Pair<List<Pair<Expr,Tk.Tag>>?,Expr?>): String {
+        val now = this.now.cond { ":check-now" }
         return when {
-            (clk_exp.second != null) -> clk_exp.second!!.tostr(true)
-            (clk_exp.first  != null) -> clk_exp.first!!.map { (e,t) -> e.tostr(true)+t.str }.joinToString(" ")
+            (this.cnd != null) -> "await $now ${this.cnd.tostr()}"
+            (this.tag != null) -> "await $now ${this.tag.first.tk.str} ${this.tag.second.cond { ", ${it.tostr()}" }}"
+            (this.clk != null) -> "await $now ${this.clk.map { (e,t) -> e.tostr(true)+t.str }.joinToString(" ")}"
+            (this.spw != null) -> "await $now ${this.spw.tostr()}"
             else -> error("impossible case")
         }
     }
@@ -818,9 +807,6 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
                 val awt = await()
-                if (!XCEU && (awt.now || awt.spw!=null || awt.clk!=null || awt.xcnd!=null)) {
-                    err(tk0, "invalid toggle")
-                }
                 val task = awt.cnd
                 if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
                     task!!
@@ -1160,11 +1146,11 @@ class Parser (lexer_: Lexer)
                         )))
                     )
                 } + listOf(
-                    xawait(tk0, Await(true, null, null,
-                        pars.foldIndexed(xbool(tk0.pos,true) as Expr) { i,acc,_ ->
-                            xand(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
-                        },
-                    null)),
+                    pars.foldIndexed(xbool(tk0.pos,true) as Expr) { i,acc,_ ->
+                        xand(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
+                    }.let {
+                        xawait(tk0, Await(true, it, null, null, null))
+                    },
                     Expr.Acc(xid())
                 ))
             }
@@ -1209,11 +1195,11 @@ class Parser (lexer_: Lexer)
                         )))
                     )
                 } + listOf(
-                    xawait(tk0, Await(true, null, null,
-                        pars.foldIndexed(xbool(tk0.pos,false) as Expr) { i,acc,_ ->
-                            xor(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
-                        },
-                        null)),
+                    pars.foldIndexed(xbool(tk0.pos,false) as Expr) { i,acc,_ ->
+                        xor(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
+                    }.let {
+                        xawait(tk0, Await(true, it, null, null, null))
+                    },
                     Expr.Acc(xid())
                 ))
             }

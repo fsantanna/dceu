@@ -175,20 +175,22 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
     }
 
     return when {
-        (awt.xcnd != null) -> {   // await :key
-            awt.cnd!!
+        (awt.cnd != null) -> {  // await evt==x | await trk | await coro
+            aux(awt.now, awt.cnd)
+        }
+        (awt.tag != null) -> {   // await :key
             /*
                 export [evt] {
-                    val evt ${awt.cnd.tk.str}
-                    await (evt is? ${awt.cnd.tk.str}) and $xcnd
+                    val evt ${awt.tag}
+                    await (evt is? ${awt.tag}) and $xcnd
                 }
             */
             Expr.Export(tk, listOf("evt"),
                 Expr.Do(tk, listOf(
-                    Expr.Dcl(Tk.Fix("val",tk.pos), Tk.Id("evt",tk.pos,0), false, Tk.Tag(awt.cnd.tk.str,tk.pos), true, xnil(tk.pos)),
+                    Expr.Dcl(Tk.Fix("val",tk.pos), Tk.Id("evt",tk.pos,0), false, Tk.Tag(awt.tag.first.tk.str,tk.pos), true, xnil(tk.pos)),
                     aux(awt.now, xand(tk,
-                        xop(Tk.Op("is?",tk.pos), Expr.EvtErr(Tk.Fix("evt",tk.pos)), awt.cnd),
-                        if (awt.xcnd.first == true) xbool(tk.pos,true) else awt.xcnd.second!!
+                        xop(Tk.Op("is?",tk.pos), Expr.EvtErr(Tk.Fix("evt",tk.pos)), awt.tag.first),
+                        if (awt.tag.second == null) xbool(tk.pos,true) else awt.tag.second!!
                     ))
                 ))
             )
@@ -273,9 +275,6 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
                     )
                 )))
             ))
-        }
-        (awt.cnd != null) -> {  // await evt==x | await trk | await coro
-            aux(awt.now, awt.cnd)
         }
         else -> error("bug found")
     }
