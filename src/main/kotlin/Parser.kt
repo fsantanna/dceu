@@ -1141,24 +1141,16 @@ class Parser (lexer_: Lexer)
                 fun xxid (i: Int): Tk.Id {
                     return Tk.Id("ceu_${i}_$nn", tk0.pos, 0)
                 }
-                this.nest("""
+                /*
                     do {
-                        var _ceu_$nn
-                        ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$nn = spawn {
-                                set _ceu_$nn = do {
-                                    ${body.es.tostr(true)}
-                                }
-                            }
-                        """}.joinToString("")}
-                        await :check-now (
-                            ${pars.mapIndexed { i,_ -> """
-                                ((status(ceu_${i}_$nn) == :terminated) and
-                            """}.joinToString("")} true ${")".repeat(pars.size)}
-                        )
-                        _ceu_$nn
+                        var ret
+                        $pars.mapIndexed { i,body ->
+                            val $i = spawn { set ret = $body }
+                        }
+                        await :check-now ($pars.mapIndexed { i,_ -> ((status($i) == :terminated) })
+                        ret
                     }
-                """)
+                */
                 Expr.Do(Tk.Fix("do",tk0.pos), listOf(
                     Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
                 ) + pars.mapIndexed { i,body ->
@@ -1177,33 +1169,53 @@ class Parser (lexer_: Lexer)
                 ))
             }
             (XCEU && this.acceptFix("par-or")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0 as Tk.Fix
                 val pars = mutableListOf(this.block())
-                val n = pars[0].n
+                val nn = N
                 this.acceptFix_err("with")
                 pars.add(this.block())
                 while (this.acceptFix("with")) {
                     pars.add(this.block())
                 }
-                this.nest("""
-                    ${pre0}do {
-                        var _ceu_$n
-                        ${pars.mapIndexed { i,body -> """
-                            val ceu_${i}_$n = spawn {
-                                val _ceu_${i}_$n = do {
-                                    ${body.es.tostr(true)}
-                                }
-                                set _ceu_$n = _ceu_$n or _ceu_${i}_$n 
+                fun xid (): Tk.Id {
+                    return Tk.Id("ceu_$nn", tk0.pos, 0)
+                }
+                fun xxid (i: Int): Tk.Id {
+                    return Tk.Id("ceu_${i}_$nn", tk0.pos, 0)
+                }
+                fun _xxid (i: Int): Tk.Id {
+                    return Tk.Id("_ceu_${i}_$nn", tk0.pos, 0)
+                }
+                /*
+                    do {
+                        var ret
+                        $pars.mapIndexed { i,body ->
+                            val $i = spawn {
+                                val _$i = $body
+                                set ret = ret or _$i
                             }
-                        """}.joinToString("")}
-                        await :check-now (
-                            ${pars.mapIndexed { i,_ -> """
-                                ((status(ceu_${i}_$n) == :terminated) or
-                            """}.joinToString("")} false ${")".repeat(pars.size)}
-                        )
-                        _ceu_$n
+                        }
+                        await :check-now ($pars.mapIndexed { i,_ -> ((status($i) == :terminated) })
+                        ret
                     }
-                """)
+                */
+                Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                    Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
+                ) + pars.mapIndexed { i,body ->
+                    Expr.Dcl(Tk.Fix("val",tk0.pos), xxid(i), false, null, true,
+                        xspawn(tk0, Expr.Do(tk0, listOf(
+                            Expr.Dcl(tk0, _xxid(i), false, null, true, Expr.Do(Tk.Fix("do",tk0.pos), body.es)),
+                            Expr.Set(tk0, Expr.Acc(xid()), xor(tk0, Expr.Acc(xid()), Expr.Acc(_xxid(i))))
+                        )))
+                    )
+                } + listOf(
+                    xawait(tk0, Await(true, null, null,
+                        pars.foldIndexed(xbool(tk0.pos,false) as Expr) { i,acc,_ ->
+                            xor(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
+                        },
+                        null)),
+                    Expr.Acc(xid())
+                ))
             }
             (XCEU && this.acceptFix("awaiting")) -> {
                 val pre0 = this.tk0.pos.pre()
