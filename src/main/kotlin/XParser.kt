@@ -35,8 +35,8 @@ fun xand (tk: Tk, e1: Expr, e2: Expr): Expr.Do {
 fun xnot (tk: Tk, e: Expr): Expr.If {
     // if $e { false } else { true }
     return Expr.If(Tk.Fix("if",tk.pos), e,
-        Expr.Do(tk, listOf(Expr.Bool(Tk.Fix("false",tk.pos)))),
-        Expr.Do(tk, listOf(Expr.Bool(Tk.Fix("true",tk.pos))))
+        Expr.Do(tk, listOf(xbool(tk.pos,false))),
+        Expr.Do(tk, listOf(xbool(tk.pos,true)))
     )
 }
 
@@ -46,6 +46,10 @@ fun xnil (pos: Pos): Expr.Nil {
 
 fun xacc (pos: Pos, id: String): Expr.Acc {
     return Expr.Acc(Tk.Id(id, pos, 0))
+}
+
+fun xbool (pos: Pos, v: Boolean): Expr.Bool {
+    return Expr.Bool(Tk.Fix(if (v) "true" else "false",pos))
 }
 
 fun xnum (pos: Pos, n: Int): Expr.Num {
@@ -70,6 +74,10 @@ fun xop (op: Tk.Op, e1: Expr, e2: Expr): Expr {
         "in-not?" -> Expr.Call(op, xacc(op.pos,"in-not'"), listOf(e1, e2))
         else -> Expr.Call(op, xacc(op.pos,"{${op.str}}"), listOf(e1,e2))
     }
+}
+
+fun xstatus (tk: Tk.Fix, e: Expr): Expr.Call {
+    return Expr.Call(tk, xacc(tk.pos,"status"), listOf(e))
 }
 
 fun xawait (tk: Tk.Fix, awt: Await): Expr {
@@ -114,11 +122,7 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
                                         Expr.Set(
                                             tk, Expr.Acc(xid()), xeq(
                                                 tk,
-                                                Expr.Call(
-                                                    tk,
-                                                    xacc(tk.pos, "status"),
-                                                    listOf(Expr.Acc(xid()))
-                                                ),
+                                                xstatus(tk, Expr.Acc(xid())),
                                                 xtag(tk.pos, ":terminated")
                                             )
                                         )
@@ -184,7 +188,7 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
                     Expr.Dcl(Tk.Fix("val",tk.pos), Tk.Id("evt",tk.pos,0), false, Tk.Tag(awt.cnd.tk.str,tk.pos), true, xnil(tk.pos)),
                     aux(awt.now, xand(tk,
                         xop(Tk.Op("is?",tk.pos), Expr.EvtErr(Tk.Fix("evt",tk.pos)), awt.cnd),
-                        if (awt.xcnd.first == true) Expr.Bool(Tk.Fix("true",tk.pos)) else awt.xcnd.second!!
+                        if (awt.xcnd.first == true) xbool(tk.pos,true) else awt.xcnd.second!!
                     ))
                 ))
             )
@@ -204,7 +208,7 @@ fun xawait (tk: Tk.Fix, awt: Await): Expr {
             Expr.Do(Tk.Fix("do",tk.pos), listOf(
                 Expr.Dcl(Tk.Fix("val",tk.pos), xid(), false, null, true, awt.spw),
                 aux(true, xeq(tk,
-                    Expr.Call(tk, xacc(tk.pos,"status"), listOf(Expr.Acc(xid()))),
+                    xstatus(tk, Expr.Acc(xid())),
                     xtag(tk.pos,":terminated")
                 )),
                 xnat(tk.pos, "ceu_acc = ceu_mem->ceu_spw_$nn.Dyn->Bcast.X.frame->X.pub;")

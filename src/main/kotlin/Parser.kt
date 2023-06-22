@@ -685,7 +685,7 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("catch") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val cnd = if (XCEU && this.checkFix("{")) Expr.Bool(Tk.Fix("true",this.tk0.pos)) else this.expr()
+                val cnd = if (XCEU && this.checkFix("{")) xbool(this.tk0.pos,true) else this.expr()
                 val blk = this.block()
                 if (XCEU && (cnd is Expr.Tag)) {   // catch :err
                     // catch (err is? $cnd) $blk
@@ -872,7 +872,7 @@ class Parser (lexer_: Lexer)
                         // :X [...]
                         // tags($e, $tag, true)
                         val tags = xacc(tag.pos, "tags",)
-                        Expr.Call(tk0, tags, listOf(e, Expr.Tag(tag), Expr.Bool(Tk.Fix("true",tag.pos))))
+                        Expr.Call(tk0, tags, listOf(e, Expr.Tag(tag), xbool(tag.pos,true)))
                     } else {
                         // do { val :tmp ceu_$nn $tag = $e ; e1 }
                         val id = Tk.Id("ceu_$nn",tag.pos,0)
@@ -976,7 +976,7 @@ class Parser (lexer_: Lexer)
                 val ifs = list0("}",null) {
                     val (id,tag,cnd) = when {
                         this.acceptFix("else") -> {
-                            Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                            Triple(null, null, xbool(this.tk0.pos,true))
                         }
                         XCEU && (v!=null) && this.acceptEnu("Op") -> {
                             val op = this.tk0 as Tk.Op
@@ -1076,21 +1076,15 @@ class Parser (lexer_: Lexer)
                             ),
                             Expr.If(tk0,
                                 xor(tk0,
-                                    Expr.Call(tk0, xacc(tk0.pos, "{/=}"), listOf(
-                                        Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
-                                        xtag(tk0.pos, ":terminated")
-                                    )),
-                                    Expr.Call(tk0, xacc(tk0.pos,"{/=}"), listOf(
-                                        Expr.Acc(xv()),
-                                        xnil(tk0.pos)
-                                    ))
+                                    xnot(tk0, xeq(tk0, xstatus(tk0, Expr.Acc(xco())), xtag(tk0.pos, ":terminated"))),
+                                    xnot(tk0, xeq(tk0, Expr.Acc(xv()), xnil(tk0.pos)))
                                 ),
                                 Expr.Do(tk0, listOf(Expr.Set(tk0,Expr.Acc(xarg()),Expr.Yield(tk0,Expr.Acc(xv()))))),
                                 Expr.Do(tk0, listOf(xnil(tk0.pos)))
                             ),
                             Expr.If(tk0,
                                 Expr.Call(tk0, xacc(tk0.pos, "{==}"), listOf(
-                                    Expr.Call(tk0, xacc(tk0.pos,"status"), listOf(Expr.Acc(xco()))),
+                                    xstatus(tk0, Expr.Acc(xco())),
                                     xtag(tk0.pos, ":terminated")
                                 )),
                                 Expr.Do(tk0, listOf(Expr.XBreak(tk0, nn))),
@@ -1132,7 +1126,7 @@ class Parser (lexer_: Lexer)
                 Expr.Do(Tk.Fix("do",tk0.pos), spws + awt)
             }
             (XCEU && this.acceptFix("par-and")) -> {
-                val tk0 = this.tk0
+                val tk0 = this.tk0 as Tk.Fix
                 val pars = mutableListOf(this.block())
                 val nn = N
                 this.acceptFix_err("with")
@@ -1164,19 +1158,23 @@ class Parser (lexer_: Lexer)
                         )
                         _ceu_$nn
                     }
-                    Expr.Do(Tk.Fix("do",tk0.pos), listOf(
-                        Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
-                    ) + pars.mapIndexed { i,body ->
-                        Expr.Dcl(Tk.Fix("val",tk0.pos), xxid(i), false, null, true,
-                            xspawn(tk0, Expr.Do(tk0, listOf(
-                                Expr.Set(tk0, Expr.Acc(xid()), Expr.Do(Tk.Fix("do",tk0.pos), body.es))
-                            )))
-                        )
-                    } + listOf(
-                        xawait(tk0, Await(true, null, null, x, null)),
-                        Expr.Acc(xid())
-                    ))
                 """)
+                Expr.Do(Tk.Fix("do",tk0.pos), listOf(
+                    Expr.Dcl(Tk.Fix("var",tk0.pos), xid(), false, null, true, null)
+                ) + pars.mapIndexed { i,body ->
+                    Expr.Dcl(Tk.Fix("val",tk0.pos), xxid(i), false, null, true,
+                        xspawn(tk0, Expr.Do(tk0, listOf(
+                            Expr.Set(tk0, Expr.Acc(xid()), Expr.Do(Tk.Fix("do",tk0.pos), body.es))
+                        )))
+                    )
+                } + listOf(
+                    xawait(tk0, Await(true, null, null,
+                        pars.foldIndexed(xbool(tk0.pos,true) as Expr) { i,acc,_ ->
+                            xand(tk0, acc, xeq(tk0, xstatus(tk0,Expr.Acc(xxid(i))), xtag(tk0.pos,":terminated")))
+                        },
+                    null)),
+                    Expr.Acc(xid())
+                ))
             }
             (XCEU && this.acceptFix("par-or")) -> {
                 val pre0 = this.tk0.pos.pre()
