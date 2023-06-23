@@ -1017,13 +1017,9 @@ class Parser (lexer_: Lexer)
                         """)//.let { println(it.tostr()); it }
                     }
                     (awt.spw != null) -> { // await spawn T()
-                        val e = this.expr()
-                        if (!(e is Expr.Spawn && e.tasks==null)) {
-                            err_expected(e.tk, "non-pool spawn")
-                        }
                         this.nest("""
                             ${pre0}do {
-                                val ceu_spw_$N = ${e.tostr(true)}
+                                val ceu_spw_$N = ${awt.spw.tostr(true)}
                                 ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
                             }
