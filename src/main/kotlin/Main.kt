@@ -125,7 +125,10 @@ fun exec (cmds: List<String>): Pair<Boolean,String> {
 fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
-fun all (name: String, reader: Reader, out: String, args: List<String>): String {
+fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List<String>): String {
+    if (verbose) {
+        System.err.println("... parsing ...")
+    }
     val inps = listOf(
         Pair(Triple(name,1,1), reader),
         Pair(Triple("prelude.ceu",1,1), FileX("@/prelude.ceu").reader())
@@ -143,6 +146,7 @@ fun all (name: String, reader: Reader, out: String, args: List<String>): String 
         if (verbose) {
             System.err.println("... analysing ...")
         }
+        //readLine()
         val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups    = Ups(outer)
         val defers = Defers(outer, ups)

@@ -2558,9 +2558,9 @@ class TExec {
     fun ff_01_string_to_tag() {
         val out = all("""
             pass :xyz
-            println(string-to-tag(#[':','x']))
+            println(to-tag(#[':','x']))
             println(to-tag(#[':','x','y','z']))
-            println(string-to-tag(#['x','y','z']))
+            println(to-tag(#['x','y','z']))
             println(to-tag(:abc))
         """)
         assert(out == "nil\n:xyz\nnil\n:abc\n") { out }
@@ -2571,7 +2571,7 @@ class TExec {
             data :A = []
             data :A.B = []
             data :A.B.C = []
-            println(string-to-tag(#[':','A']), to-tag(#[':','A','.','B']), string-to-tag(#[':','A','.','B','.','C']))
+            println(to-tag(#[':','A']), to-tag(#[':','A','.','B']), string-to-tag(#[':','A','.','B','.','C']))
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
@@ -2727,7 +2727,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "33\t289\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "34\t290\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2819,7 +2819,7 @@ class TExec {
                 to-number(:depois)
             )
         """, true)
-        assert(out == "33\t1000\t1001\t1002\t10\t11\t12\t34\t100\t101\t35\n") { out }
+        assert(out == "34\t1000\t1001\t1002\t10\t11\t12\t35\t100\t101\t36\n") { out }
     }
     @Test
     fun enum02() {
