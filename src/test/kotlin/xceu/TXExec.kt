@@ -1511,7 +1511,7 @@ class TXExec {
                     println(evt)
                 }
             }()
-             broadcast in :global, @[]
+            broadcast in :global, @[]
         """, true)
         assert(out == "@[]\n") { out }
     }

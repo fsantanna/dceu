@@ -182,22 +182,6 @@ class Parser (lexer_: Lexer)
         return Expr.Do(tk, es)
     }
 
-    fun clk_or_exp (): Pair<List<Pair<Expr,Tk.Tag>>?,Expr?> {
-        fun isclk (): Boolean {
-            return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
-        }
-        val e = this.expr()
-        if (!isclk()) {
-            return Pair(null, e)
-        } else {
-            val es = mutableListOf(Pair(e, this.tk0 as Tk.Tag))
-            while (isclk()) {
-                es.add(Pair(this.expr(), this.tk0 as Tk.Tag))
-            }
-            return Pair(es, null)
-        }
-    }
-
     fun args (close: String): List<Pair<Tk.Id,Tk.Tag?>> {
         return this.list0(close,",") {
             this.acceptEnu_err("Id")
@@ -229,44 +213,53 @@ class Parser (lexer_: Lexer)
         """) as Expr.Proto
     }
 
-    data class Await (val now: Boolean, val spw: Boolean, val clk: List<Pair<Expr, Tk.Tag>>?, val cnd: Expr?, val xcnd: Pair<Boolean?,Expr?>?)
     fun await (): Await {
         val now = this.acceptTag(":check-now")
-        val spw = this.checkFix("spawn")
-        val (clk,cnd) = if (spw) Pair(null,null) else this.clk_or_exp()
-        val xcnd = when {
-            (cnd !is Expr.Tag) -> null   // await :key
-            !this.acceptFix(",") -> Pair(true,null)
-            else -> Pair(null, this.expr())
+        val isspw = this.checkFix("spawn")
+        val e = this.expr()
+        fun isclk (): Boolean {
+            return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
         }
-        return Await(now, spw, clk, cnd, xcnd)
+        return when {
+            isspw -> {
+                if (!(e is Expr.Spawn && e.tasks == null)) {
+                    err_expected(e.tk, "non-pool spawn")
+                }
+                Await(now, null, null, null, e as Expr.Spawn)
+            }
+            (e is Expr.Tag) -> {
+                val cnd = if (this.acceptFix(",")) this.expr() else null
+                Await(now, null, Pair(Expr.Tag(e.tk as Tk.Tag), cnd), null, null)
+            }
+            isclk() -> {
+                val es = mutableListOf(Pair(e, this.tk0 as Tk.Tag))
+                while (isclk()) {
+                    es.add(Pair(this.expr(), this.tk0 as Tk.Tag))
+                }
+                Await(now, null, null, es, null)
+            }
+            else -> Await(now, e, null, null, null)
+        }
     }
     fun Await.tostr (): String {
-        val clk_expr = clk_or_exp_tostr(Pair(this.clk,this.cnd))
-        val xcnd = when {
-            (this.xcnd == null) -> ""
-            (this.xcnd.first == true) -> ""
-            else -> ", " + this.xcnd.second!!.tostr(true)
-        }
-        return "await ${this.now.cond { ":check-now" }} $clk_expr $xcnd"
-    }
-
-    fun clk_or_exp_tostr (clk_exp: Pair<List<Pair<Expr,Tk.Tag>>?,Expr?>): String {
+        val now = this.now.cond { ":check-now" }
         return when {
-            (clk_exp.second != null) -> clk_exp.second!!.tostr(true)
-            (clk_exp.first  != null) -> clk_exp.first!!.map { (e,t) -> e.tostr(true)+t.str }.joinToString(" ")
+            (this.cnd != null) -> "await $now ${this.cnd.tostr()}"
+            (this.tag != null) -> "await $now ${this.tag.first.tk.str} ${this.tag.second.cond { ", ${it.tostr()}" }}"
+            (this.clk != null) -> "await $now ${this.clk.map { (e,t) -> e.tostr(true)+t.str }.joinToString(" ")}"
+            (this.spw != null) -> "await $now ${this.spw.tostr()}"
             else -> error("impossible case")
         }
     }
 
-    fun id_tag_cnd (): Triple<String?,String?,Expr> {
+    fun id_tag_cnd (): Triple<String?,Tk.Tag?,Expr> {
         val id_or_cnd = this.expr()
         return when {
             !XCEU -> Triple(null, null, id_or_cnd)
             (id_or_cnd !is Expr.Acc) -> Triple(null, null, id_or_cnd)
             this.acceptFix("=") -> Triple(id_or_cnd.tk.str, null, this.expr())
             this.acceptEnu("Tag") -> {
-                val tag = this.tk0.str
+                val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=")
                 Triple(id_or_cnd.tk.str, tag, this.expr())
             }
@@ -328,14 +321,9 @@ class Parser (lexer_: Lexer)
                     }
                     Expr.Set(tk0, dst, /*null,*/ src)
                 } else {
-                    val hack = dst.tostr(false).let {
-                        val s3 = it.substringAfterLast("\n}")
-                        val aa = it.substringBeforeLast("\n}")
-                        val s2 = aa.substringAfterLast("\n")
-                        val s1 = aa.substringBeforeLast("\n")
-                        s1 + "\n" + "set " + s2 + " = " + src.tostr(false) + "\n}\n"+ s3
-                    }
-                    this.nest(hack)
+                    Expr.Export(dst.tk_, dst.ids, Expr.Do(dst.body.tk, dst.body.es.dropLast(1) +
+                        Expr.Set(dst.tk_, dst.body.es.last(), src)
+                    ))
                 }
             }
             this.acceptFix("if") -> {
@@ -378,15 +366,24 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
+            this.acceptFix("xbreak") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptEnu_err("Num")
+                Expr.XBreak(tk0, this.tk0.str.toInt())
+            }
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val pre0 = tk0.pos.pre()
-                val raw = this.acceptEnu("Num")
-                val xin = !raw && this.acceptFix("in")
-                val nn = if (raw) this.tk0.str.toInt() else N++
 
+                if (this.acceptEnu("Num")) {
+                    val nn = this.tk0.str.toInt()
+                    val blk = this.block()
+                    return Expr.Loop(tk0, nn, Expr.Do(tk0, blk.es))
+                }
+
+                val pre0 = tk0.pos.pre()
+                val xin = this.acceptFix("in")
+                val nn = N++
                 val f = when {
-                    raw -> { { blk -> error("never called") } }
                     !xin -> {
                         { body -> """
                             do {
@@ -416,7 +413,7 @@ class Parser (lexer_: Lexer)
                                 ${pre0}loop $nn {
                                     if ceu_i_$N == ceu_n_$N {
                                         pass nil     ;; return value
-                                        `goto CEU_LOOP_DONE_$nn;`
+                                        xbreak $nn
                                     } else { nil }
                                     val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                     if ceu_dyn_$N == `:pointer NULL` {
@@ -491,7 +488,7 @@ class Parser (lexer_: Lexer)
                                 loop $nn {
                                     if $i $cmp ceu_limit_$N {
                                         pass nil     ;; return value
-                                        `goto CEU_LOOP_DONE_$nn;`
+                                        xbreak $nn
                                     } else { nil }
                                     $body
                                     set $i = $i $op ceu_step_$N
@@ -517,7 +514,7 @@ class Parser (lexer_: Lexer)
                                     val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
-                                        `goto CEU_LOOP_DONE_$nn;`
+                                        xbreak $nn
                                     } else { nil }
                                     $body
                                 }
@@ -531,14 +528,14 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (raw || !(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
+                val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
                     val not = if (this.tk0.str == "until") "" else "not"
                     val (id,tag,cnd) = id_tag_cnd()
                     N++
                     """
                     val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                     if $not ${id ?: "ceu_$N"} {
-                        `goto CEU_LOOP_DONE_$nn;`
+                        xbreak $nn
                     } else { nil }
                     """
                 }
@@ -556,26 +553,22 @@ class Parser (lexer_: Lexer)
                         """
                         val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                         if $not ${id ?: "ceu_$N"} {
-                            `goto CEU_LOOP_DONE_$nn;`
+                            xbreak $nn
                         } else { nil }
                         $xblk
                         """
                     }
                 }
 
-                if (raw) {
-                    Expr.Loop(tk0, nn, Expr.Do(tk0, blk))
-                } else {
-                    val body = """
-                        ;; brk
-                        $brk
-                        ;; blk
-                        ${blk.tostr(true)}
-                        ;; untils
-                        ${untils()}
-                    """
-                    this.nest(f(body))
-                }
+                val body = """
+                    ;; brk
+                    $brk
+                    ;; blk
+                    ${blk.tostr(true)}
+                    ;; untils
+                    ${untils()}
+                """
+                this.nest(f(body))
             }
             this.acceptFix("func") || this.acceptFix("coro") || this.acceptFix("task") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -746,9 +739,6 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val pre0 = tk0.pos.pre()
                 val awt = await()
-                if (!XCEU && (awt.now || awt.spw || awt.clk!=null || awt.xcnd!=null)) {
-                    err(tk0, "invalid toggle")
-                }
                 val task = awt.cnd
                 if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
                     task!!
@@ -974,49 +964,6 @@ class Parser (lexer_: Lexer)
                 val pre0 = this.tk0.pos.pre()
                 val awt = await()
                 when {
-                    (awt.xcnd != null) -> {   // await :key
-                        awt.cnd!!
-                        val xcnd = awt.xcnd.first ?: awt.xcnd.second!!.tostr(true)
-                        this.nest("""
-                            ${pre0}export [evt] {
-                                val evt ${awt.cnd.tk.str}
-                                await (evt is? ${awt.cnd.tk.str}) and $xcnd
-                            }
-                        """)
-                    }
-                    awt.spw -> { // await spawn T()
-                        val e = this.expr()
-                        if (!(e is Expr.Spawn && e.tasks==null)) {
-                            err_expected(e.tk, "non-pool spawn")
-                        }
-                        this.nest("""
-                            ${pre0}do {
-                                val ceu_spw_$N = ${e.tostr(true)}
-                                ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
-                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
-                            }
-                        """) //.let { println(it.tostr());it }
-                    }
-                    (awt.clk != null) -> { // await 5s
-                        this.nest("""
-                            ${pre0}do {
-                                var ceu_ms_$N = ${awt.clk.map { (e,tag) ->
-                                    val s = e.tostr(true)
-                                    "(" + when (tag.str) {
-                                        ":h"   -> "($s * ${1000*60*60})"
-                                        ":min" -> "($s * ${1000*60})"
-                                        ":s"   -> "($s * ${1000})"
-                                        ":ms"  -> "($s * ${1})"
-                                        else   -> error("impossible case")
-                                    }
-                                }.joinToString("+") + (")").repeat(awt.clk.size)}
-                                loop until ceu_ms_$N <= 0 {
-                                    await (evt is? :frame)
-                                    set ceu_ms_$N = ceu_ms_$N - evt.0
-                                }
-                            }
-                        """)//.let { println(it.tostr()); it }
-                    }
                     (awt.cnd != null) -> {  // await evt==x | await trk | await coro
                         this.nest("""
                             ${pre0}export [] {
@@ -1039,6 +986,47 @@ class Parser (lexer_: Lexer)
                                 }
                             }
                         """)//.let { println(it.tostr()); it }
+                    }
+                    (awt.tag != null) -> {   // await :key
+                        this.nest("""
+                            ${pre0}export [evt] {
+                                val evt ${awt.tag.first.tk.str}
+                                await (evt is? ${awt.tag.first.tk.str}) and ${awt.tag.second?.tostr(true) ?: "true"}
+                            }
+                        """)
+                    }
+                    (awt.clk != null) -> { // await 5s
+                        this.nest("""
+                            ${pre0}do {
+                                var ceu_ms_$N = ${awt.clk.map { (e,tag) ->
+                                    val s = e.tostr(true)
+                                    "(" + when (tag.str) {
+                                        ":h"   -> "($s * ${1000*60*60})"
+                                        ":min" -> "($s * ${1000*60})"
+                                        ":s"   -> "($s * ${1000})"
+                                        ":ms"  -> "($s * ${1})"
+                                        else   -> error("impossible case")
+                                    }
+                                }.joinToString("+") + (")").repeat(awt.clk.size)}
+                                loop until ceu_ms_$N <= 0 {
+                                    await (evt is? :frame)
+                                    set ceu_ms_$N = ceu_ms_$N - evt.0
+                                }
+                            }
+                        """)//.let { println(it.tostr()); it }
+                    }
+                    (awt.spw != null) -> { // await spawn T()
+                        val e = this.expr()
+                        if (!(e is Expr.Spawn && e.tasks==null)) {
+                            err_expected(e.tk, "non-pool spawn")
+                        }
+                        this.nest("""
+                            ${pre0}do {
+                                val ceu_spw_$N = ${e.tostr(true)}
+                                ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.frame->X.pub;`
+                            }
+                        """) //.let { println(it.tostr());it }
                     }
                     else -> error("bug found")
                 }
@@ -1125,7 +1113,7 @@ class Parser (lexer_: Lexer)
             (XCEU && this.acceptFix("par-or")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
-                val n = pars[0].n
+                val n = N
                 this.acceptFix_err("with")
                 pars.add(this.block())
                 while (this.acceptFix("with")) {

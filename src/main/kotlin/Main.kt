@@ -56,6 +56,8 @@ val GLOBALS = setOf (
     "{==}", "{#}", "{/=}", "..."
 )
 
+data class Await (val now: Boolean, val cnd: Expr?, val tag: Pair<Expr.Tag,Expr?>?, val clk: List<Pair<Expr, Tk.Tag>>?, val spw: Expr.Spawn?)
+
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
     data class Fix (val str_: String, val pos_: Pos, val n_: Int=N++): Tk(str_, pos_)
