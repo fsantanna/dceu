@@ -118,14 +118,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (cache[e] == null) {
                     cache[e] = mutableMapOf()
                 }
-                cache[e]!![id] = ret
+                //cache[e]!![id] = ret      // TODO
             }
         }
         return ret
     }
 
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
-        if (this.get(e,id)!=null && id!="evt") {
+        if (this.get(e,id)!=null && id!="evt") {    // TODO
             err(tk, "declaration error : variable \"$id\" is already declared")
         }
     }
