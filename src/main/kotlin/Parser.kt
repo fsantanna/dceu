@@ -16,6 +16,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun nest (inp: String): Expr {
+        //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
         val lexer = Lexer(inps)
@@ -391,9 +392,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val ceu_$N ${tag ?: ""} = ${cnd.tostr(true)}
+                            val ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val $id ${tag ?: ""} = ceu_$N
+                                val $id ${tag?.str ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -925,7 +926,7 @@ class Parser (lexer_: Lexer)
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
-                             if ${id.cond{ "$it ${tag ?: ""} = "}} ${cnd.tostr(true)} {
+                             if ${id.cond{ "$it ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
                                 ${blk.es.tostr(true)}
                              } else {
                             """}.joinToString("")}
