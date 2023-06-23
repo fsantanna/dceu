@@ -3424,4 +3424,16 @@ class TXExec {
         """)
         assert(out == ":y\n:x\n") { out }
     }
+    @Test
+    fun all16_every () {
+        val out = all("""
+            spawn {
+                every :e {
+                    loop in :tasks nil {
+                    }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 5, col 48) : access error : variable \"is'\" is not declared") { out }
+    }
 }

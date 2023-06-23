@@ -783,8 +783,10 @@ class Parser (lexer_: Lexer)
                 val tag = this.tk0 as Tk.Tag
                 val same = this.tk0.pos.isSameLine(this.tk1.pos)
                 if (!XCEU || !same || this.checkSep()) {
+                    // :e \n <exp>
                     Expr.Tag(tag)
                 } else {
+                    // :e <exp>
                     val nn = N
                     val e = this.exprPrim()
                     if (e is Expr.Tuple) {
@@ -967,7 +969,7 @@ class Parser (lexer_: Lexer)
                 when {
                     (awt.cnd != null) -> {  // await evt==x | await trk | await coro
                         this.nest("""
-                            ${pre0}export [] {
+                            ${pre0}do {
                                 ${pre0}${(!awt.now).cond { "yield ()" }}
                                 loop {
                                     var ceu_cnd_$N = ${awt.cnd.tostr(true)}
@@ -1033,8 +1035,8 @@ class Parser (lexer_: Lexer)
                 val pre0 = this.tk0.pos.pre()
                 this.nest("""
                     ${pre0}do {
-                        loop $nn {
-                            ${await().tostr()}
+                        ${pre0}loop $nn {
+                            ${pre0}${await().tostr()}
                             ${until(nn)}
                             ${this.block().es.tostr(true)}
                             ${untils(nn)}
