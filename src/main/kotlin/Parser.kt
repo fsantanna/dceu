@@ -1032,11 +1032,13 @@ class Parser (lexer_: Lexer)
                 val nn = N
                 val pre0 = this.tk0.pos.pre()
                 this.nest("""
-                    ${pre0}loop $nn {
-                        ${await().tostr()}
-                        ${until(nn)}
-                        ${this.block().es.tostr(true)}
-                        ${untils(nn)}
+                    ${pre0}do {
+                        loop $nn {
+                            ${await().tostr()}
+                            ${until(nn)}
+                            ${this.block().es.tostr(true)}
+                            ${untils(nn)}
+                        }
                     }
                 """)//.let { println(it); it })
             }
