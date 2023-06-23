@@ -22,6 +22,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }.toMap().toMutableMap()
         )
     )
+    val cache = mutableMapOf<Expr,MutableMap<String,Var>>()
 
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
@@ -99,14 +100,28 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun get (e: Expr, id: String): Var? {
-        val up = ups.pub[e]
-        val dcl = this.pub[e]?.get(id)
-        return when {
-            (dcl != null) -> dcl
-            (up == null) -> null
-            else -> this.get(up, id)
+        fun aux (e: Expr, id: String): Var? {
+            val up = ups.pub[e]
+            val dcl = this.pub[e]?.get(id)
+            return when {
+                (dcl != null) -> dcl
+                (up == null) -> null
+                else -> this.get(up, id)
+            }
         }
+        var ret = cache.get(e)?.get(id)
+        if (ret == null) {
+            ret = aux(e, id)
+            if (ret != null) {
+                if (cache[e] == null) {
+                    cache[e] = mutableMapOf()
+                }
+                cache[e]!![id] = ret
+            }
+        }
+        return ret
     }
+
     fun assertIsNotDeclared (e: Expr, id: String, tk: Tk) {
         if (this.get(e,id)!=null && id!="evt") {
             err(tk, "declaration error : variable \"$id\" is already declared")
