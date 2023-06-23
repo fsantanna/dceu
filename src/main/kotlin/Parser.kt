@@ -267,6 +267,42 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun until (nn: Int): String {
+        if (!(this.acceptFix("until") || XCEU && this.acceptFix("while"))) {
+            return ""
+        }
+
+        val not = if (this.tk0.str == "until") "" else "not"
+        val (id, tag, cnd) = id_tag_cnd()
+        N++
+        return """
+            val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            if $not ${id ?: "ceu_$N"} {
+                xbreak $nn
+            } else { nil }
+        """
+    }
+
+    fun untils (nn: Int): String {
+        if (!(this.acceptFix("until")||this.acceptFix("while"))) {
+            return ""
+        }
+
+        val not = if (this.tk0.str == "until") "" else "not"
+        val (id,tag,cnd) = id_tag_cnd()
+        val xblk = if (!this.checkFix("{")) "" else {
+            this.block().es.tostr(true) + untils(nn)
+        }
+        N++
+        return """
+            val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            if $not ${id ?: "ceu_$N"} {
+                xbreak $nn
+            } else { nil }
+            $xblk
+        """
+    }
+
     fun exprPrim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -528,45 +564,10 @@ class Parser (lexer_: Lexer)
                     }
                 }
 
-                val brk = if (!(this.acceptFix("until")||XCEU && this.acceptFix("while"))) "" else {
-                    val not = if (this.tk0.str == "until") "" else "not"
-                    val (id,tag,cnd) = id_tag_cnd()
-                    N++
-                    """
-                    val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-                    if $not ${id ?: "ceu_$N"} {
-                        xbreak $nn
-                    } else { nil }
-                    """
-                }
-
-                val blk = this.block().es
-
-                fun untils (): String {
-                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
-                        val not = if (this.tk0.str == "until") "" else "not"
-                        val (id,tag,cnd) = id_tag_cnd()
-                        val xblk = if (!this.checkFix("{")) "" else {
-                            this.block().es.tostr(true) + untils()
-                        }
-                        N++
-                        """
-                        val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-                        if $not ${id ?: "ceu_$N"} {
-                            xbreak $nn
-                        } else { nil }
-                        $xblk
-                        """
-                    }
-                }
-
                 val body = """
-                    ;; brk
-                    $brk
-                    ;; blk
-                    ${blk.tostr(true)}
-                    ;; untils
-                    ${untils()}
+                    ${until(nn)}
+                    ${this.block().es.tostr(true)}
+                    ${untils(nn)}
                 """
                 this.nest(f(body))
             }
@@ -1032,31 +1033,14 @@ class Parser (lexer_: Lexer)
                 }
             }
             (XCEU && this.acceptFix("every")) -> {
+                val nn = N
                 val pre0 = this.tk0.pos.pre()
-                val awt = await()
-                val brk = if ((this.acceptFix("until") || this.acceptFix("while"))) this.tk0 else null
-                fun untils (): String {
-                    return if (!(this.acceptFix("until")||this.acceptFix("while"))) "" else {
-                        val brk = this.tk0
-                        val (id,tag,cnd) = id_tag_cnd()
-                        val xblk = if (!this.checkFix("{")) "" else {
-                            "{" + this.block().es.tostr(true) + untils()
-                        }
-                        """
-                        } ${brk.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)}
-                        $xblk
-                        """
-                    }
-                }
-
                 this.nest("""
-                    ${pre0}loop {
-                        ${awt.tostr()}
-                        ${brk.cond {
-                            val (id,tag,cnd) = id_tag_cnd()
-                            "} ${brk!!.str} ${id.cond { "${id!!} ${tag?:""} = " }} ${cnd.tostr(true)} {" }}
+                    ${pre0}loop $nn {
+                        ${await().tostr()}
+                        ${until(nn)}
                         ${this.block().es.tostr(true)}
-                        ${untils()}
+                        ${untils(nn)}
                     }
                 """)//.let { println(it); it })
             }
