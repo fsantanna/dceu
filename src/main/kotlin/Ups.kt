@@ -1,3 +1,5 @@
+package dceu
+
 class Ups (outer: Expr.Do) {
     val pub = outer.traverse()
 

@@ -1,3 +1,5 @@
+package dceu
+
 class Parser (lexer_: Lexer)
 {
     val lexer = lexer_

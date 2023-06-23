@@ -1,3 +1,5 @@
+package dceu
+
 class Tags (outer: Expr.Do) {
     val pub: MutableMap<String,Triple<String,String,String?>> = TAGS.map { Pair(it,Triple(it, it.tag2c(), null)) }.toMap().toMutableMap()
 

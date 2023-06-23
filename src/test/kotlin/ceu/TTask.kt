@@ -1,6 +1,6 @@
 package ceu
 
-import D
+import dceu.*
 import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.Test

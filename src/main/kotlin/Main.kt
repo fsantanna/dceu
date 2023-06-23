@@ -1,3 +1,5 @@
+package dceu
+
 import java.io.File
 import java.io.Reader
 import java.util.*
@@ -138,6 +140,9 @@ fun all (name: String, reader: Reader, out: String, args: List<String>): String 
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
     val c = try {
+        if (verbose) {
+            System.err.println("... analysing ...")
+        }
         val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups    = Ups(outer)
         val defers = Defers(outer, ups)
@@ -146,16 +151,25 @@ fun all (name: String, reader: Reader, out: String, args: List<String>): String 
         val clos   = Clos(outer, ups, vars)
         val unsf   = Unsafe(outer, ups, vars)
         val sta    = Static(outer, ups, vars)
+        if (verbose) {
+            System.err.println("... coding ...")
+        }
         val coder  = Coder(outer, ups, defers, vars, clos, unsf, sta)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;
         return e.message!! + "\n"
     }
+    if (verbose) {
+        System.err.println("... gcc'ing ...")
+    }
     File("$out.c").writeText(c)
     val (ok2, out2) = exec(listOf("gcc", "$out.c", "-l", "m", "-o", "$out.exe") + args)
     if (!ok2) {
         return out2
+    }
+    if (verbose) {
+        System.err.println("... executing ...")
     }
     val (_, out3) = exec("./$out.exe")
     //println(out3)
@@ -192,7 +206,7 @@ fun main (args: Array<String>) {
             (xinp == null) -> println("expected filename")
             else -> {
                     val f = File(xinp)
-                    val out = all(xinp, f.reader(), f.nameWithoutExtension, xccs)
+                    val out = all(ys.containsKey("--verbose"), xinp, f.reader(), f.nameWithoutExtension, xccs)
                     print(out)
             }
         }

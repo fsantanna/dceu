@@ -1,3 +1,5 @@
+package dceu
+
 fun Pos.pre (): String {
     assert(this.lin>=0 && this.col>=0)
     return "^[${this.lin},${this.col}]"

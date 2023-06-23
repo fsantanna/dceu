@@ -1,3 +1,5 @@
+package dceu
+
 class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // Dangerous function:
     //  - set vars in enclosing tasks

@@ -1,3 +1,5 @@
+package dceu
+
 // func (args) or block (locals)
 data class Var (val blk: Expr.Do, val dcl: Expr.Dcl)    // blk = [Block,Group,Proto]
 

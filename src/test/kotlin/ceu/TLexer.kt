@@ -1,10 +1,7 @@
 package ceu
 
-import D
-import Lexer
-import Tk
+import dceu.*
 import org.junit.Test
-import java.io.File
 
 fun trap (f: ()->Unit): String {
     try {

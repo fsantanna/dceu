@@ -1,13 +1,10 @@
 package xceu
 
-import Expr
-import N
-import Parser
+import dceu.*
 import ceu.lexer
 import ceu.trap
 import org.junit.Ignore
 import org.junit.Test
-import tostr
 
 class TXParser {
     // DCL + SET

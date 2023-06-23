@@ -1,3 +1,5 @@
+package dceu
+
 class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // Protos that cannot be closures:
     //  - they access at least 1 free var w/o upval modifiers

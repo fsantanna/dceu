@@ -1,5 +1,6 @@
 package xceu
 
+import dceu.*
 import ceu.lexer
 import ceu.trap
 import org.junit.Test

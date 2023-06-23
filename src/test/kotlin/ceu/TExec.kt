@@ -1,26 +1,10 @@
 package ceu
 
-import Clos
-import D
-import Lexer
-import Parser
-import Expr
-import Coder
-import Defers
-import Pos
-import Static
-import Tags
-import Unsafe
-import Ups
-import Vars
-import XCEU
-import exec
-import main
+import dceu.*
 import org.junit.FixMethodOrder
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import tostr
 import java.io.File
 
 // search in tests output for

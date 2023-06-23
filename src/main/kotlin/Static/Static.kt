@@ -1,3 +1,5 @@
+package dceu
+
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     init {

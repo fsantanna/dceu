@@ -1,10 +1,8 @@
 package ceu
 
-import Expr
-import Parser
+import dceu.*
 import org.junit.Ignore
 import org.junit.Test
-import tostr
 
 class TParser {
 

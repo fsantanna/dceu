@@ -1,8 +1,6 @@
 package xceu
 
 import ceu.all
-import ceu.await
-import ceu.lexer
 import ceu.yield
 import org.junit.Ignore
 import org.junit.Test

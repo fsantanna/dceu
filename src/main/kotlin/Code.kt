@@ -1,3 +1,5 @@
+package dceu
+
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe, val sta: Static) {
