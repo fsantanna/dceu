@@ -1132,7 +1132,7 @@ class Parser (lexer_: Lexer)
                 val body = this.block()
                 this.nest("""
                     ${pre0}par-or {
-                        ${awt.tostr()}
+                        ${pre0}${awt.tostr()}
                     } with {
                         ${body.es.tostr(true)}
                     }

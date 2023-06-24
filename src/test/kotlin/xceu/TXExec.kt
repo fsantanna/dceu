@@ -873,7 +873,7 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "anon : (lin 8, col 13) : broadcast in :global, nil\n" +
-                "anon : (lin 3, col 27) : throw(:error)\n" +
+                "anon : (lin 3, col 24) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
