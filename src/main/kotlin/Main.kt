@@ -4,8 +4,8 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-//val XCEU = false
-val XCEU = true
+val XCEU = false
+//val XCEU = true
 var N = 1
 val D = "\$"
 

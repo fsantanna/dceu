@@ -6,6 +6,7 @@ data class Var (val blk: Expr.Do, val dcl: Expr.Dcl)    // blk = [Block,Group,Pr
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
+    //val pub2: Pair<MutableMap<Expr.Dcl,Expr.Do>,MutableMap<Expr.Acc,Expr.Dcl>> = Pair(mutableMapOf(), mutableMapOf())
     val pub = mutableMapOf<Expr,MutableMap<String,Var>> (
         Pair (
             outer,
@@ -28,6 +29,16 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
     val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
+
+    private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
+        Expr.Dcl (
+            Tk.Fix("val", outer.tk.pos),
+            Tk.Id(it,outer.tk.pos,0),
+            false, null, true, null
+        )
+    }.toMutableList()
+
+    val blks: MutableMap<Expr.Dcl,Expr.Do> = mutableMapOf()
 
     init {
         this.outer.traverse()
@@ -158,6 +169,24 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun assertIsDeclaredX (e: Expr, id: String, upv: Int): Expr.Dcl {
+        val dcl = dcls.find { id == it.id.str }
+        when {
+            (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
+            (upv == 0 && dcl.id.upv == 1) -> err(e.tk, "access error : incompatible upval modifier")
+            (upv > 0 && dcl.id.upv == 0) -> err(e.tk, "access error : incompatible upval modifier")
+            (upv == 2) -> {
+                val nocross = blks[dcl].let { blk ->
+                    (blk == null) || ups.all_until(e) { it == blk }.none { it is Expr.Proto }
+                }
+                if (nocross) {
+                    err(e.tk, "access error : unnecessary upref modifier")
+                }
+            }
+        }
+        return dcl!!
+    }
+
     fun id2c (me: Expr, id: String): String {
         val xvar = this.get(me, id)!!
         return id.id2c(xvar.dcl.n)
@@ -181,11 +210,29 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Export -> this.body.traverse()
             is Expr.Do     -> {
+                val size = dcls.size    // restore this size after nested block
                 val up = ups.pub[this]
-                if (this != outer) {
+                if (this!=outer) {
                     pub[this] = if (up !is Expr.Proto) {
                         mutableMapOf()
                     } else {
+                        // func (a,b) { ... }
+                        up.args.forEach { (id,tag) ->
+                            val dcl1 = Expr.Dcl (
+                                Tk.Fix("val", this.tk.pos),
+                                id, /*false,*/ false, tag, true, null
+                            )
+                            val dcl2 = Expr.Dcl (
+                                Tk.Fix("val", this.tk.pos),
+                                Tk.Id("_${id.str}_",id.pos,id.upv),
+                                /*false,*/
+                                false, null, false, null
+                            )
+                            dcls.add(dcl1)
+                            dcls.add(dcl2)
+                            blks[dcl1] = this
+                            blks[dcl2] = this
+                        }
                         up.args.let {
                             (it.map { (id,tag) ->
                                 val dcl = Expr.Dcl (
@@ -206,9 +253,12 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
                 this.es.forEach { it.traverse() }
+                dcls.dropLast(dcls.size-size)
             }
             is Expr.Dcl    -> {
                 this.src?.traverse()
+                dcls.add(this)
+                blks[this] = ups.first_block(this)!!
 
                 val id = this.id.str
                 val bup = ups.first(this) { it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == id } } }!! as Expr.Do
@@ -272,15 +322,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Self   -> {}
 
             is Expr.Nat    -> {}
-            is Expr.Acc    -> {
-                val id = this.tk.str
-                assertIsDeclared(this, Pair(id,this.tk_.upv), this.tk)
-                if (GLOBALS.contains(id)) {
-                    // TODO: create _id_ for globals
-                } else {
-                    assertIsDeclared(this, Pair("_${id}_",this.tk_.upv), this.tk)
-                }
-            }
+            is Expr.Acc    -> assertIsDeclaredX(this, this.tk.str, this.tk_.upv)
             is Expr.EvtErr -> {
                 val xvar = get(this, "evt")
                 if (xvar != null) {

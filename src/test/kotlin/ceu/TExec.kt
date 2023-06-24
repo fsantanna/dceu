@@ -176,7 +176,8 @@ class TExec {
             var y = 5
             println(x-y)
         """)
-        assert(out == "anon : (lin 4, col 21) : access error : \"x-y\" is ambiguous with \"x\"") { out }
+        //assert(out == "anon : (lin 4, col 21) : access error : \"x-y\" is ambiguous with \"x\"") { out }
+        assert(out == "anon : (lin 4, col 21) : access error : variable \"x-y\" is not declared") { out }
     }
     @Test
     fun bb_var5_kebab_amb() {
@@ -185,7 +186,8 @@ class TExec {
             val y-z = 5
             println(h-y-z)
         """)
-        assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
+        //assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
+        assert(out == "anon : (lin 4, col 21) : access error : variable \"h-y-z\" is not declared") { out }
     }
     @Test
     fun bb_06_val() {
