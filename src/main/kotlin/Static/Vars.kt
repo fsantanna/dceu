@@ -169,12 +169,19 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
     }
 
+    fun assertIsNotDeclaredX (e: Expr, id: String) {
+        val dcl = dcls.find { id == it.id.str }
+        if (dcl!=null && id!="evt") {    // TODO
+            err(e.tk, "declaration error : variable \"$id\" is already declared")
+        }
+    }
+
     fun assertIsDeclaredX (e: Expr, id: String, upv: Int): Expr.Dcl {
         val dcl = dcls.find { id == it.id.str }
         when {
             (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
-            (upv == 0 && dcl.id.upv == 1) -> err(e.tk, "access error : incompatible upval modifier")
-            (upv > 0 && dcl.id.upv == 0) -> err(e.tk, "access error : incompatible upval modifier")
+            (upv==0 && dcl.id.upv==1) -> err(e.tk, "access error : incompatible upval modifier")
+            (upv >0 && dcl.id.upv==0) -> err(e.tk, "access error : incompatible upval modifier")
             (upv == 2) -> {
                 val nocross = blks[dcl].let { blk ->
                     (blk == null) || ups.all_until(e) { it == blk }.none { it is Expr.Proto }
@@ -208,7 +215,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 this.body.traverse()
             }
-            is Expr.Export -> this.body.traverse()
+            is Expr.Export -> {
+                val size = dcls.size
+                this.body.traverse()
+                for (i in dcls.size-1 downTo size) {
+                    if (!this.ids.contains(dcls[i].id.str)) {
+                        dcls.removeAt(i)
+                    }
+                }
+            }
             is Expr.Do     -> {
                 val size = dcls.size    // restore this size after nested block
                 val up = ups.pub[this]
@@ -253,17 +268,21 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
                 this.es.forEach { it.traverse() }
-                dcls.dropLast(dcls.size-size)
+                if (ups.pub[this] !is Expr.Export) {
+                    repeat(dcls.size - size) {
+                        dcls.removeLast()
+                    }
+                }
             }
             is Expr.Dcl    -> {
                 this.src?.traverse()
+                assertIsNotDeclaredX(this, this.id.str)
                 dcls.add(this)
                 blks[this] = ups.first_block(this)!!
 
                 val id = this.id.str
                 val bup = ups.first(this) { it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == id } } }!! as Expr.Do
                 val xup = pub[bup]!!
-                assertIsNotDeclared(this, id, this.tk)
                 xup[id] = Var(bup, this)
                 val dcl = Expr.Dcl (
                     Tk.Fix("val", this.id.pos),
