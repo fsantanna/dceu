@@ -13,24 +13,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
         }
     }
 
-    fun Expr.id2c (xvar: Var, upv: Int): Pair<String,String> {
-        val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
-        val start = if (upv==2) this else xvar.blk
-        val fup = ups.first(start) { it is Expr.Proto }
-        val N = if (upv==2) 0 else {
-            ups
-                .all_until(this) { it==xvar.blk }  // go up until find dcl blk
-                .count { it is Expr.Proto }          // count protos in between acc-dcl
-        }
-        val idc = xvar.dcl.id.str.id2c(xvar.dcl.n)
-        return when {
-            (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
-            (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
-            else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->$idc)",
-                         "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->up_frame".repeat(N)}->${mem})->_${idc}_)")
-        }
-    }
-
     fun Expr.isdst (): Boolean {
         return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
@@ -63,12 +45,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     ${(clos.protos_refs[this] ?: emptySet()).map {
-                        "CEU_Value ${vars.id2c(this.body, it)};"
+                        val dcl = vars.get(this.body,it)
+                        "CEU_Value ${it.id2c(dcl.n)};"
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
                 typedef struct {
                     ${this.args.map { (id,_) ->
-                        val idc = vars.id2c(this.body, id.str)
+                        val dcl = vars.get(this.body, id.str)
+                        val idc = id.str.id2c(dcl.n)
                         """
                         CEU_Value $idc;
                         CEU_Block* _${idc}_;
@@ -189,16 +173,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
-                    val dcl = vars.assertIsDeclared(this, Pair(it,1), this.tk)
-                    val idc = vars.id2c(this.body, it)
+                    val dcl = vars.get(this.body,it) ; assert(dcl.id.upv == 1)
+                    val idc = it.id2c(dcl.n)
                     val btw = ups
-                        .all_until(this) { dcl.blk==it }
+                        .all_until(this) { this.body==it }
                         .filter { it is Expr.Proto }
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
                     """
                     {
-                        CEU_Value* ceu_up = &${ups.pub[this]!!.id2c(dcl,upv).first};
+                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,blk,dcl,upv).first};
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                             //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
@@ -226,13 +210,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val x = if (ups.intask(this)) "ceu_x" else "NULL"
-                val xvars = vars.pub[this]!!.values.let { dcls ->
-                    val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                    dcls.filter { it.dcl.init }
-                        .filter { !GLOBALS.contains(it.dcl.id.str) }
-                        .filter { !(f_b is Expr.Proto && args.contains(it.dcl.id.str)) }
-                        .map    { it.dcl.id.str.id2c(it.dcl.n) }
-                }
+                val dcls = vars.blk_to_dcls[this]!!
+                val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
+                val ids = dcls.filter { it.init }
+                    .filter { !GLOBALS.contains(it.id.str) }
+                    .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
+                    .map    { it.id.str.id2c(it.n) }
                 """
                 { // BLOCK ${this.tk.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
@@ -260,7 +243,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         {
                             int ceu_i = 0;
                             ${f_b.args.filter { it.first.str!="..." }.map {
-                                val idc = vars.id2c(this, it.first.str)
+                                val dcl = vars.get(this, it.first.str)
+                                val idc = it.first.str.id2c(dcl.n)
                                 """
                                 ${istask.cond { """
                                     if (ceu_x->Bcast.X.up_tasks != NULL) {
@@ -310,7 +294,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                     }
                     { // because of "decrement refs" below
-                        ${xvars.map {
+                        ${ids.map {
                             if (it in listOf("evt","_")) "" else """
                                 ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
                         """ }.joinToString("")
@@ -378,7 +362,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                             }
                             { // decrement refs
-                                ${xvars.map { if (it in listOf("evt","_")) "" else
+                                ${ids.map { if (it in listOf("evt","_")) "" else
                                     """
                                     if (ceu_mem->$it.type > CEU_VALUE_DYNAMIC) {
                                         ceu_gc_dec(&ceu_mem->$it,
@@ -390,7 +374,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 }.joinToString("")}
                                 ${(f_b is Expr.Proto).cond {
                                     (f_b as Expr.Proto).args.map {
-                                        val idc = vars.id2c(this, it.first.str)
+                                        val dcl = vars.get(this, it.first.str)
+                                        val idc = it.first.str.id2c(dcl.n)
                                         "ceu_gc_dec(&ceu_mem->$idc, 1);"
                                     }.joinToString("")
                                 }}
@@ -421,10 +406,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val id = this.id.str
                 val idc = id.id2c(this.n)
                 val bupc = ups.first_block(this)!!.toc(true)
+                /*
                 val xvar = vars.get(this, id)
                 if (xvar!=null && xvar.dcl.id.upv==1 && !clos.vars_refs.contains(xvar)) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
+                 */
                 """
                 { // DCL ${this.tk.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
@@ -674,51 +661,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->X.x} }")
 
             is Expr.Nat -> {
-                val body = this.tk.str.let {
-                    var ret = ""
-                    var i = 0
-
-                    var lin = 1
-                    var col = 1
-                    fun read (): Char {
-                        //assert(i < it.length) { "bug found" }
-                        if (i >= it.length) {
-                            err(tk, "native error : (lin $lin, col $col) : unterminated token")
-                        }
-                        val x = it[i++]
-                        if (x == '\n') {
-                            lin++; col=0
-                        } else {
-                            col++
-                        }
-                        return x
-                    }
-
-                    while (i < it.length) {
-                        val x1 = read()
-                        ret += if (x1 != '$') x1 else {
-                            val (l,c) = Pair(lin,col)
-                            var id = ""
-                            var no = ""
-                            while (i < it.length) {
-                                val x2 = read()
-                                if (x2.isLetterOrDigit() || x2=='_' || x2=='-') {
-                                    id += x2
-                                } else {
-                                    no += x2
-                                    break
-                                }
-                            }
-                            if (id.length == 0) {
-                                err(tk, "native error : (lin $l, col $c) : invalid identifier")
-                            }
-                            val dcl = vars.assertIsDeclared(this, Pair(id,0), this.tk)
-                            id = this.id2c(dcl,0).first
-                            "($id)$no"
-                        }
-                    }
-                    ret
-                }
+                val body = vars.nat_to_str[this]!!
                 val (pre,pos) = when (this.tk_.tag) {
                     null -> Pair(null, body)
                     ":pre" -> Pair(body, "")
@@ -736,9 +679,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 pos
             }
             is Expr.Acc -> {
-                val id = this.tk.str
-                val xvar = vars.get(this, id)!!
-                val (idc,_idc_) = this.id2c(xvar,this.tk_.upv)
+                val (blk,dcl) = vars.get(this)
+                val (idc,_idc_) = vars.id2c(this,blk,dcl,this.tk_.upv)
                 when {
                     !this.isdst() -> when {
                         //!xvar.dcl.poly ->
@@ -753,7 +695,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                     this.isdst() -> {
                         val src = this.asdst_src()
-                        if (xvar.dcl.id.upv > 0) {
+                        if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
                         //val poly = (ups.pub[this] as Expr.Set).poly
@@ -766,7 +708,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             //(poly == null) -> """
                             true -> """
                                 { // ACC - SET
-                                    if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${if (xvar.dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
+                                    if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${if (dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                                     }
                                     ceu_gc_inc(&$src);
@@ -990,7 +932,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && (this.proto.task.let { it!=null && it.second } && (this.args.size == 0))
 
                 val has_dots = (this.args.lastOrNull().let { it!=null && it is Expr.Acc && it.tk.str == "..." } && !this.proto.let { it is Expr.Acc && it.tk.str=="{#}" })
-                val id_dots = vars.get(this, "...")?.let { this.id2c(it,0).first }
+                val id_dots = "TODO" //vars.getX("...").let { (blk,dcl) -> this.id2c(blk,dcl,0).first }
 
                 val (args_sets,args_vs) = this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e ->
                     Pair (

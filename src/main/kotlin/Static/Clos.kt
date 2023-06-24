@@ -13,7 +13,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - for each var access ACC, we get its declaration DCL and set here
     //  - in another round (Code), we assert that the DCL appears here
     //  - TODO: can also be used to warn for unused normal vars
-    val vars_refs = mutableSetOf<Var>()
+    val vars_refs = mutableSetOf<Pair<Expr.Do,Expr.Dcl>>()
 
     // Set of uprefs within protos:
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
@@ -52,13 +52,13 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val xvar = vars.get(this, this.tk.str)!!
+                val (blk,dcl) = vars.get(this)
                 when {
-                    (xvar.dcl.id.upv==1 && this.tk_.upv==2) -> {
-                        vars_refs.add(xvar) // UPVS_VARS_REFS
+                    (dcl.id.upv==1 && this.tk_.upv==2) -> {
+                        vars_refs.add(Pair(blk,dcl)) // UPVS_VARS_REFS
 
                         // UPVS_PROTOS_REFS
-                        ups.all_until(this) { xvar.blk ==it }
+                        ups.all_until(this) { blk==it }
                             .filter { it is Expr.Proto }
                             .let { it as List<Expr.Proto> }
                             .forEach { proto ->
@@ -70,9 +70,9 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             }
                     }
                     // UPVS_PROTOS_NOCLOS
-                    (xvar.blk !=outer && xvar.dcl.id.upv==0 && this.tk_.upv==0) -> {
+                    (blk !=outer && dcl.id.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
-                        ups.all_until(this) { it == xvar.blk }       // stop at enclosing declaration block
+                        ups.all_until(this) { it == blk }       // stop at enclosing declaration block
                             .filter { it is Expr.Proto }            // all crossing protos
                             .forEach { protos_noclos.add(it) }        // mark them as noclos
                     }

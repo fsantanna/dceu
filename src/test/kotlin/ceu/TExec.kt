@@ -511,6 +511,16 @@ class TExec {
         assert(out == "[10]\n") { out }
     }
     @Test
+    fun cc_tuple15x_call_scope() {
+        val out = all("""
+            val f = func (v) {
+                v
+            }
+            println(f(10))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
     fun cc_tuple16_move() {
         val out = all("""
             val v = do {

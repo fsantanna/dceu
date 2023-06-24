@@ -58,8 +58,8 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         // safe
                     }
                     is Expr.Acc -> {
-                        val dcl = vars.get(this, acc.tk.str)!!
-                        if (dos.contains(dcl.blk)) {
+                        val (blk,_) = vars.get(acc)
+                        if (dos.contains(blk)) {
                             this.set_up_unsafe()
                         }
                     }
@@ -131,13 +131,12 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         }
                     }
                     is Expr.Acc -> {
-                        val xvar = vars.get(this, this.proto.tk.str)!!
-
+                        val (_,dcl) = vars.get(this.proto)
                         when {
-                            (xvar.dcl.tk.str == "var") -> this.set_up_unsafe()
-                            GLOBALS.contains(xvar.dcl.id.str) -> {} // SAFE
-                            (xvar.dcl.src is Expr.Proto) -> {
-                                if (funcs.contains(xvar.dcl.src)) {
+                            (dcl.tk.str == "var") -> this.set_up_unsafe()
+                            GLOBALS.contains(dcl.id.str) -> {} // SAFE
+                            (dcl.src is Expr.Proto) -> {
+                                if (funcs.contains(dcl.src)) {
                                     this.set_up_unsafe()
                                 } else {
                                     // SAFE
