@@ -17,7 +17,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     // Set of uprefs within protos:
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
-    val protos_refs = mutableMapOf<Expr.Proto,MutableSet<String>>()
+    val protos_refs = mutableMapOf<Expr.Proto,MutableSet<Expr.Dcl>>()
 
     init {
         this.outer.traverse()
@@ -63,7 +63,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             .let { it as List<Expr.Proto> }
                             .forEach { proto ->
                                 val set = protos_refs[proto] ?: mutableSetOf()
-                                set.add(this.tk.str)
+                                set.add(dcl)
                                 if (protos_refs[proto] == null) {
                                     protos_refs[proto] = set
                                 }

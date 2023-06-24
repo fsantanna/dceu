@@ -45,8 +45,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
                     ${(clos.protos_refs[this] ?: emptySet()).map {
-                        val dcl = vars.get(this.body,it)
-                        "CEU_Value ${it.id2c(dcl.n)};"
+                        "CEU_Value ${it.id.str.id2c(it.n)};"
                     }.joinToString("")}
                 } CEU_Proto_Upvs_$n;
                 typedef struct {
@@ -173,8 +172,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
                 ${(clos.protos_refs[this] ?: emptySet()).map {
-                    val dcl = vars.get(this.body,it) ; assert(dcl.id.upv == 1)
-                    val idc = it.id2c(dcl.n)
+                    val idc = it.id.str.id2c(it.n)
                     val btw = ups
                         .all_until(this) { this.body==it }
                         .filter { it is Expr.Proto }
@@ -182,7 +180,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     val upv = min(2, btw)
                     """
                     {
-                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,blk,dcl,upv).first};
+                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,blk,it,upv).first};
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                             //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
