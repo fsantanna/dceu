@@ -354,10 +354,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             }
                             { // DEFERS ${this.tk.dump()}
                                 ceu_ret = CEU_RET_RETURN;
+                                CEU_Value* ceu_evt_$N = ceu_evt;
+                                ceu_evt = &CEU_EVT_NIL;
                                 ${defers.pub[this]!!.map{it.value}.reversed().joinToString("")}
                                 if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                     ceu_acc_$n = ceu_acc;
                                 }
+                                ceu_evt = ceu_evt_$N;
                                 ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                             }
                             { // decrement refs

@@ -382,6 +382,27 @@ class TTask {
         """)
         assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
+    @Test
+    fun aa_coro24_defer() {
+        val out = all("""
+            val F = coro () {
+                defer {
+                    println(:xxx)
+                }
+                yield(nil)
+                defer {
+                    println(:yyy)
+                }
+                yield(nil)
+            }
+            do {
+                val f = coroutine(F)
+                resume f()
+                resume f()
+            }
+        """)
+        assert(out == ":yyy\n:xxx\n") { out }
+    }
 
     // SPAWN
 

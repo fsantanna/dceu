@@ -118,7 +118,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {
-        return blk_to_dcls[blk]!!.find { it.id.str == id }!!
+        return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
     fun id2c (e: Expr, blk: Expr.Do, dcl: Expr.Dcl, upv: Int): Pair<String,String> {
@@ -204,7 +204,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (this.id.str!="evt" && dcls.find { this.id.str == it.id.str } != null) {    // TODO
+                if (this.id.str!="evt" && dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
@@ -316,7 +316,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Acc    -> acc_to_dcl[this] = find(this, this.tk.str, this.tk_.upv)
             is Expr.EvtErr -> {
-                val dcl = dcls.find { "evt" == it.id.str }
+                val dcl = dcls.findLast { "evt" == it.id.str }
                 if (dcl != null) {
                     evts[this] = dcl.tag!!.str
                 }
