@@ -548,7 +548,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==2)
-        assert(e.tostr() == "func (a,b) {\n10\n}") { e.tostr() }
+        assert(e.tostr() == "(func (a,b) {\n10\n})") { e.tostr() }
     }
     @Test
     fun expr_func3_err() {
@@ -568,7 +568,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==2)
-        assert(e.tostr() == "task (a,b) {\n10\n}") { e.tostr() }
+        assert(e.tostr() == "(task (a,b) {\n10\n})") { e.tostr() }
     }
     @Test
     fun pp_06_func_dots() {
@@ -576,7 +576,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Proto && e.args.size==1)
-        assert(e.tostr() == "func (...) {\nprintln(...)\n}") { e.tostr() }
+        assert(e.tostr() == "(func (...) {\nprintln(...)\n})") { e.tostr() }
     }
     @Test
     fun pp_07_func_args_err() {
@@ -748,10 +748,10 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == """
-            set t = task (v) {
+            set t = (task (v) {
             set v = yield(1)
             yield(2)
-            }
+            })
             coroutine(t)
             set v = resume a(1)
             resume a(2)

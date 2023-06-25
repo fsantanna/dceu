@@ -58,7 +58,7 @@ class TTask {
         val out = all("""
             coroutine(func () {nil})
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : coroutine(func () { nil }) : coroutine error : expected coro\n" +
+        assert(out == "anon : (lin 1, col 1) : coroutine((func () { nil })) : coroutine error : expected coro\n" +
                 ":error\n") { out }
     }
     @Test
@@ -793,7 +793,7 @@ class TTask {
                 broadcast in :task, nil
             }) ()
         """)
-        assert(out == "anon : (lin 2, col 20) : task () :fake { broadcast in :task, nil }()\n" +
+        assert(out == "anon : (lin 2, col 20) : (task () :fake { broadcast in :task, nil })()\n" +
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
@@ -2923,7 +2923,7 @@ class TTask {
         }()
         broadcast in :global, nil
         """)
-        assert(out == "anon : (lin 2, col 15) : task () :fake { var y set y = do { var ceu_sp...)\n" +
+        assert(out == "anon : (lin 2, col 15) : (task () :fake { var y set y = do { var ceu_s...)\n" +
                 "anon : (lin 4, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
         //assert(out == "anon : (lin 16, col 9) : broadcast in :global, nil\n" +
@@ -3743,7 +3743,7 @@ class TTask {
                 nil
             } ()
         """)
-        assert(out == "anon : (lin 2, col 19) : task () { set task.pub[:x] = 10 nil }()\n" +
+        assert(out == "anon : (lin 2, col 19) : (task () { set task.pub[:x] = 10 nil })()\n" +
                 "anon : (lin 3, col 26) : index error : expected collection\n" +
                 ":error\n") { out }
     }
