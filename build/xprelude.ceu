@@ -343,3 +343,15 @@ func random-seed (n) {
 func random-next () {
     `:number rand()`
 }
+
+func math-sin (v) {
+    `:number sin($v.Number)`
+}
+
+func math-cos (v) {
+    `:number cos($v.Number)`
+}
+
+func math-floor (v) {
+    `:number floor($v.Number)`
+}

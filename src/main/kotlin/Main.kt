@@ -12,7 +12,7 @@ val D = "\$"
 // VERSION
 const val MAJOR    = 0
 const val MINOR    = 2
-const val REVISION = 0
+const val REVISION = 1
 const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent

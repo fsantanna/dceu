@@ -11,6 +11,7 @@ v0.2 (may'23)
         - `in?` / `in-not?` functions
         - `to-tag`
         - `===`, `=/=` for deep equality
+        - `math-` `sin` `cos` `floor`
     - statements
         - `if ... -> ... -> ...
         - `loop-while` clause
