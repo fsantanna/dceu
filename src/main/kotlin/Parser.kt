@@ -697,16 +697,16 @@ class Parser (lexer_: Lexer)
                     (XCEU && this.acceptFix("coro")) -> {
                         this.checkFix_err("{")
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (coro () {
+                            ${tk0.pos.pre()}(spawn (coro () {
                                 ${this.block().es.tostr(true)}
-                            }) ()
+                            }) ())
                         """)
                     }
                     (XCEU && this.checkFix("{")) -> {
                         this.nest("""
-                            ${tk0.pos.pre()}spawn (task () :fake {
+                            ${tk0.pos.pre()}(spawn (task () :fake {
                                 ${this.block().es.tostr(true)}
-                            }) ()
+                            }) ())
                         """)
                     }
                     else -> {
@@ -1283,7 +1283,7 @@ class Parser (lexer_: Lexer)
                             val ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
-                    """)
+                    """) //.let { println(it); it })
                 }
                 else -> break
             }

@@ -2038,6 +2038,20 @@ class TXExec {
         """,true)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun qq_03_thus() {
+        val out = ceu.all(
+            """
+            val co = spawn coro {
+                yield()
+                println(:ok)
+            } thus { move(it) }
+            resume co()
+        """)
+        assert(out == "anon : (lin 5, col 22) : move(it)\n" +
+                "move error : value is not movable\n" +
+                ":error\n") { out }
+    }
 
     // TOGGLE
 

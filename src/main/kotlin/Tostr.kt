@@ -22,7 +22,7 @@ fun Expr.tostr (pre: Boolean = false): String {
                     else -> ""
                 }
             }
-            this.tk.str + " (" + args + ") " + task + this.body.tostr(pre)
+            "(" + this.tk.str + " (" + args + ") " + task + this.body.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.body.es.tostr(pre) + "}"
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
