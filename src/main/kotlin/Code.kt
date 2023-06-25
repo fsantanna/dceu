@@ -75,9 +75,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_frame->mem = (char*) ceu_mem;
                     """}}
                     ${isx.cond{"""
-                        CEU_Dyn* ceu_x = ceu_frame->X.x;
+                        CEU_Dyn* ceu_x = ceu_frame->x;
                         #ifdef CEU_DEBUG
-                        printf("pc=%2d, status=%d, coro=%p, evt=%d\n", ceu_frame->X.pc, ceu_x->Bcast.status, ceu_x, ceu_n==CEU_ARG_EVT && ceu_args[0]==&CEU_EVT_CLEAR);
+                        printf("pc=%2d, status=%d, coro=%p, evt=%d\n", ceu_x->Bcast.X.pc, ceu_x->Bcast.status, ceu_x, ceu_n==CEU_ARG_EVT && ceu_args[0]==&CEU_EVT_CLEAR);
                         #endif
                         CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
                         CEU_Value* ceu_evt = &CEU_EVT_NIL;
@@ -98,7 +98,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ // WHILE
                     do { // func
                         ${isx.cond{"""
-                        switch (ceu_frame->X.pc) {
+                        switch (ceu_x->Bcast.X.pc) {
                             case -1:
                                 assert(0 && "bug found");
                                 break;
@@ -113,8 +113,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ + isx.cond{ """  // TERMINATE
                     assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
                     ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
-                    ceu_x->Bcast.X.frame->X.pub = ceu_acc;
-                    ceu_frame->X.pc = -1;
+                    ceu_x->Bcast.X.pub = ceu_acc;
+                    ceu_x->Bcast.X.pc = -1;
                     int intasks = (ceu_x->Bcast.X.up_tasks != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
@@ -552,7 +552,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 { // BCAST ${this.tk.dump()}
                     ${intask.cond {"""
-                    ceu_frame->X.pc = $n;   // because of clear
+                    ceu_x->Bcast.X.pc = $n;   // because of clear
                 case $n:
                     CEU_CONTINUE_ON_CLEAR_THROW();
                     """}}
@@ -578,7 +578,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ceu_ret = ceu_bcast_blocks(&ceu_bstack_$n, $bupc, &ceu_mem->evt_$n, NULL);
                         } else if (ceu_acc.Tag == CEU_TAG_task) {
                             ${if (intask && oktask!=null) {
-                                "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->X.x, &ceu_mem->evt_$n);"
+                                "ceu_ret = ceu_bcast_dyn(&ceu_bstack_$n, ${oktask}->x, &ceu_mem->evt_$n);"
                             } else {
                                 "ceu_err_$n = 1;"
                             }}
@@ -607,7 +607,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Yield -> """
                 { // YIELD ${this.tk.dump()}
                     ${this.arg.code()}
-                    ceu_frame->X.pc = $n;      // next resume
+                    ceu_x->Bcast.X.pc = $n;      // next resume
                     ceu_x->Bcast.status = CEU_X_STATUS_YIELDED;
                     if (!ceu_block_chk_set(&ceu_acc, &ceu_frame->up_block->dn_dyns, CEU_HOLD_NON)) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : yield error : incompatible scopes");
@@ -650,7 +650,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
-                        assrc("ceu_dyn_$n->Bcast.X.frame->X.pub") + """
+                        assrc("ceu_dyn_$n->Bcast.X.pub") + """
                             if (ceu_isref) {
                                 ceu_toref(&ceu_acc);
                             }
@@ -665,13 +665,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&ceu_dyn_$n->Bcast.X.frame->X.pub, 1);
-                        ceu_dyn_$n->Bcast.X.frame->X.pub = $src;
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.X.pub, 1);
+                        ceu_dyn_$n->Bcast.X.pub = $src;
                         """
                     }}
                 }
                 """
-            is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->X.x} }")
+            is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->x} }")
 
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
@@ -975,7 +975,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     if (ceu_proto_$n.type != CEU_VALUE_P_FUNC) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error : expected function");
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Ncast.Proto, $bupc, NULL, {} };
+                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Ncast.Proto, $bupc, NULL, NULL };
                 """} +
 
                 spawn.cond{"""
