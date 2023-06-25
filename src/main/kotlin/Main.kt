@@ -156,7 +156,7 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         val unsf   = Unsafe(outer, ups, vars)
         val sta    = Static(outer, ups, vars)
         if (verbose) {
-            System.err.println("... coding ...")
+            System.err.println("... ceu -> c ...")
         }
         val coder  = Coder(outer, ups, defers, vars, clos, unsf, sta)
         coder.main(tags)
@@ -165,7 +165,7 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         return e.message!! + "\n"
     }
     if (verbose) {
-        System.err.println("... gcc'ing ...")
+        System.err.println("... c -> exe ...")
     }
     File("$out.c").writeText(c)
     val (ok2, out2) = exec(listOf("gcc", "$out.c", "-l", "m", "-o", "$out.exe") + args)

@@ -2,13 +2,14 @@ v0.2 (may'23)
 -------------
 
 - Additions
+    - `--verbose` (compile option)
     - `...` as main program arguments
     - dynamic cast `:X v.x`
     - implicit tag declaration `val x = :X ...`
     - assignments in conditions: `if`, `ifs`, `until`
     - functions
-        - `in?` function
-        - `string-to-tag`
+        - `in?` / `in-not?` functions
+        - `to-tag`
         - `===`, `=/=` for deep equality
     - statements
         - `if ... -> ... -> ...
@@ -31,6 +32,7 @@ v0.2 (may'23)
     - `print` shows tags
     - `func :rec` modifier
     - `evt` and `detrack(...)` values cannot be assigned
+    - better compilation time
 - Removals
     - ` { :x ... }` block tags
 
