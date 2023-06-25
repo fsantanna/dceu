@@ -75,8 +75,8 @@ $ sudo apt install gcc default-jre
 2. Install `ceu`:
 
 ```
-$ wget https://github.com/fsantanna/dceu/releases/download/v0.2.0/install-v0.2.0.sh
-$ sh install-v0.2.0.sh ./ceu/
+$ wget https://github.com/fsantanna/dceu/releases/download/v0.2.1/install-v0.2.1.sh
+$ sh install-v0.2.1.sh ./ceu/
 ```
 
 - You may want to
