@@ -43,11 +43,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val up_blk = ups.first_block(this)!!
 
                 val type = """ // TYPE ${this.tk.dump()}
-                typedef struct {
-                    ${(clos.protos_refs[this] ?: emptySet()).map {
+                ${clos.protos_refs[this].cond { """
+                    typedef struct {
+                        ${clos.protos_refs[this]!!.map {
                         "CEU_Value ${it.id.str.id2c(it.n)};"
                     }.joinToString("")}
-                } CEU_Proto_Upvs_$n;
+                    } CEU_Proto_Upvs_$n;                    
+                """ }}
                 typedef struct {
                     ${this.args.map { (id,_) ->
                         val dcl = vars.get(this.body, id.str)
@@ -89,7 +91,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """}}
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
-                    CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->upvs.buf;
+                    ${clos.protos_refs[this].cond { """
+                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->upvs.buf;                    
+                    """ }}
                     """ +
                     """ // WHILE
                     do { // func
@@ -171,28 +175,30 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     &${up_blk.toc(true)}->dn_dyns,
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
-                ${(clos.protos_refs[this] ?: emptySet()).map { dcl ->
-                    val dcl_blk = vars.dcl_to_blk[dcl]!!
-                    val idc = dcl.id.str.id2c(dcl.n)
-                    val btw = ups
-                        .all_until(this) { dcl_blk==it }
-                        .filter { it is Expr.Proto }
-                        .count() // other protos in between myself and dcl, so it its an upref (upv=2)
-                    val upv = min(2, btw)
-                    """
-                    {
-                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,dcl_blk,dcl,upv).first};
-                        if (ceu_up->type > CEU_VALUE_DYNAMIC) {
-                            assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
-                            //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
-                        } else {
-                            assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->up_dyns.dyns, ceu_proto_$n->tphold));
+                ${clos.protos_refs[this].cond {
+                    it.map { dcl ->
+                        val dcl_blk = vars.dcl_to_blk[dcl]!!
+                        val idc = dcl.id.str.id2c(dcl.n)
+                        val btw = ups
+                            .all_until(this) { dcl_blk==it }
+                            .filter { it is Expr.Proto }
+                            .count() // other protos in between myself and dcl, so it its an upref (upv=2)
+                        val upv = min(2, btw)
+                        """
+                        {
+                            CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
+                            if (ceu_up->type > CEU_VALUE_DYNAMIC) {
+                                assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
+                                //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
+                            } else {
+                                assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->up_dyns.dyns, ceu_proto_$n->tphold));
+                            }
+                            ceu_gc_inc(ceu_up);
+                            ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
                         }
-                        ceu_gc_inc(ceu_up);
-                        ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
-                    }
-                    """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
-                }.joinToString("\n")}
+                        """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
+                    }.joinToString("\n")                    
+                }}
                 assert(ceu_proto_$n != NULL);
                 ${assrc("(CEU_Value) { CEU_VALUE_P_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
@@ -239,7 +245,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                         val args_n = f_b.args.size - 1
                         """
-                        {
+                        { // func args
                             int ceu_i = 0;
                             ${f_b.args.filter { it.first.str!="..." }.map {
                                 val dcl = vars.get(this, it.first.str)
@@ -325,7 +331,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             """
                         }}
                         {
-                            ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);
+                            ${unsf.dos.contains(this).cond { "ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);" }}
                             { // move up dynamic ceu_acc (return or error)
                                 ${
                                     (f_b != null).cond {
@@ -346,23 +352,28 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                         }
                                 }
                             }
-                            int dead; {
-                                // cleanup active nested spawns in this block
-                                CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
-                                dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
-                            }
-                            { // DEFERS ${this.tk.dump()}
-                                ceu_ret = CEU_RET_RETURN;
-                                CEU_Value* ceu_evt_$N = ceu_evt;
-                                ceu_evt = &CEU_EVT_NIL;
-                                ${defers.pub[this]!!.map{it.value}.reversed().joinToString("")}
-                                if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
-                                    ceu_acc_$n = ceu_acc;
+                            ${unsf.dos.contains(this).cond { """
+                                int dead = 0;
+                                {
+                                    // cleanup active nested spawns in this block
+                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
+                                    dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
                                 }
-                                ceu_evt = ceu_evt_$N;
-                                ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
-                            }
+                            """}}
+                            ${(defers.pub[this]!!.size > 0).cond { """
+                                { // DEFERS ${this.tk.dump()}
+                                    ceu_ret = CEU_RET_RETURN;
+                                    CEU_Value* ceu_evt_$N = ceu_evt;
+                                    ceu_evt = &CEU_EVT_NIL;
+                                    ${defers.pub[this]!!.map{it.value}.reversed().joinToString("")}
+                                    if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
+                                        ceu_acc_$n = ceu_acc;
+                                    }
+                                    ceu_evt = ceu_evt_$N;
+                                    ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
+                                }
+                            """}}
                             { // decrement refs
                                 ${ids.map { if (it in listOf("evt","_")) "" else
                                     """
@@ -382,7 +393,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     }.joinToString("")
                                 }}
                             }
-                            if (!dead) {
+                            ${unsf.dos.contains(this).cond { "if (!dead)" }}
+                            {
                                 // blocks: relink up, free down
                                 ${
                                     (f_b is Expr.Do).cond {
