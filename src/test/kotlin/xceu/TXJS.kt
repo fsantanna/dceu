@@ -670,7 +670,7 @@ class TXJS {
             }
         }
         do { ;; PUSH
-            val read2   = spawn FS-Read("build/prelude.ceu")
+            val read2   = spawn FS-Read("build/xprelude.ceu")
             val split2  = spawn Split(read2)
             val number2 = spawn Number(split2)
             val take2   = spawn Take(3, number2)
