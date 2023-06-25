@@ -13,7 +13,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             false, null, true, null
         )
     }.toMutableList()
-    private val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
+    public  val dcl_to_blk: MutableMap<Expr.Dcl,Expr.Do> = dcls.map {
         Pair(it, outer)
     }.toMap().toMutableMap()
     private val acc_to_dcl: MutableMap<Expr.Acc,Expr.Dcl> = mutableMapOf()
@@ -95,7 +95,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun find (e: Expr, id: String, upv: Int): Expr.Dcl {
-        val dcl = dcls.find { id == it.id.str }
+        val dcl = dcls.findLast { id == it.id.str }
         when {
             (dcl == null) -> err(e.tk, "access error : variable \"${id}\" is not declared")
             (upv==0 && dcl.id.upv==1) -> err(e.tk, "access error : incompatible upval modifier")
@@ -168,7 +168,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 blk_to_dcls[this] = mutableListOf()
                 val size = dcls.size    // restore this size after nested block
 
-                // func (a,b) { ... }
+                // func (a,b,...) { ... }
                 val up = ups.pub[this]
                 if (up is Expr.Proto) {
                     up.args.forEach { (id,tag) ->
@@ -204,8 +204,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (this.id.str!="evt" && dcls.find { this.tk.str == it.id.str } != null) {    // TODO
-                    err(this.tk, "declaration error : variable \"$id\" is already declared")
+                if (this.id.str!="evt" && dcls.find { this.id.str == it.id.str } != null) {    // TODO
+                    err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
                 val blk = ups.first_block(this)!!

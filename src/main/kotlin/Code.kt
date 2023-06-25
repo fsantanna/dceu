@@ -40,7 +40,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Proto -> {
                 val isfunc = (this.tk.str == "func")
                 val isx = (this.tk.str != "func")
-                val blk = ups.first_block(this)!!
+                val up_blk = ups.first_block(this)!!
 
                 val type = """ // TYPE ${this.tk.dump()}
                 typedef struct {
@@ -161,26 +161,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                     CEU_VALUE_P_${this.tk.str.uppercase()},
                     (CEU_Proto) {
-                        ${if (blk == outer) "NULL" else "ceu_frame"},
+                        ${if (up_blk == outer) "NULL" else "ceu_frame"},
                         ceu_proto_f_$n,
                         { ${clos.protos_refs[this]?.size ?: 0}, NULL },
                         { .X = {
                             sizeof(CEU_Proto_Mem_$n)
                         } }
                     },
-                    &${blk.toc(true)}->dn_dyns,
+                    &${up_blk.toc(true)}->dn_dyns,
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_FIX" else "CEU_HOLD_NON"}
                 );
-                ${(clos.protos_refs[this] ?: emptySet()).map {
-                    val idc = it.id.str.id2c(it.n)
+                ${(clos.protos_refs[this] ?: emptySet()).map { dcl ->
+                    val dcl_blk = vars.dcl_to_blk[dcl]!!
+                    val idc = dcl.id.str.id2c(dcl.n)
                     val btw = ups
-                        .all_until(this) { this.body==it }
+                        .all_until(this) { dcl_blk==it }
                         .filter { it is Expr.Proto }
                         .count() // other protos in between myself and dcl, so it its an upref (upv=2)
                     val upv = min(2, btw)
                     """
                     {
-                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,blk,it,upv).first};
+                        CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!,dcl_blk,dcl,upv).first};
                         if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                             //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
@@ -404,12 +405,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val id = this.id.str
                 val idc = id.id2c(this.n)
                 val bupc = ups.first_block(this)!!.toc(true)
-                /*
-                val xvar = vars.get(this, id)
-                if (xvar!=null && xvar.dcl.id.upv==1 && !clos.vars_refs.contains(xvar)) {
+
+                if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
                 }
-                 */
+
                 """
                 { // DCL ${this.tk.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
@@ -929,8 +929,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val frame = if (iscall) "(&ceu_frame_$n)" else "(ceu_x_$n.Dyn->Bcast.X.frame)"
                 val pass_evt = ups.intask(this) && (this.proto is Expr.Proto) && (this.proto.task.let { it!=null && it.second } && (this.args.size == 0))
 
-                val has_dots = (this.args.lastOrNull().let { it!=null && it is Expr.Acc && it.tk.str == "..." } && !this.proto.let { it is Expr.Acc && it.tk.str=="{#}" })
-                val id_dots = "TODO" //vars.getX("...").let { (blk,dcl) -> this.id2c(blk,dcl,0).first }
+                val dots = this.args.lastOrNull()
+                val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.proto.let { it is Expr.Acc && it.tk.str=="{#}" }
+                val id_dots = if (!has_dots) "" else {
+                    val (blk,dcl) = vars.get(dots as Expr.Acc)
+                    vars.id2c(this, blk, dcl, 0).first
+                }
+                //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 
                 val (args_sets,args_vs) = this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e ->
                     Pair (
