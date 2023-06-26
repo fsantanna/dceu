@@ -50,7 +50,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.exprPrim()
         assert(e is Expr.Proto && e.args.size==0)
-        assert(e.tostr() == "func () {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "(func () {\nnil\n})") { e.tostr() }
     }
     @Test
     fun empty4_loop() {
@@ -246,7 +246,7 @@ class TXParser {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "spawn task () :fake {\n1\n}()") { e.tostr() }
+        assert(e.tostr() == "spawn (task () :fake {\n1\n})()") { e.tostr() }
     }
     @Test
     fun kk_03_resume_yield() {

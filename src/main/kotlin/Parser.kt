@@ -1026,7 +1026,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 val ceu_spw_$N = ${awt.spw.tostr(true)}
                                 ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
-                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.pub;`
+                                `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.Task.pub;`
                             }
                         """) //.let { println(it.tostr());it }
                     }

@@ -113,9 +113,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ + isx.cond{ """  // TERMINATE
                     assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
                     ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
-                    ceu_x->Bcast.X.pub = ceu_acc;
+                    ceu_x->Bcast.X.Task.pub = ceu_acc;
                     ceu_x->Bcast.X.pc = -1;
-                    int intasks = (ceu_x->Bcast.X.up_tasks != NULL);
+                    int intasks = (ceu_x->Bcast.X.Task.up_tasks != NULL);
 
                     if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
                         // do not signal termination: clear comes from clearing enclosing block,
@@ -132,12 +132,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
                         CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
                         CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
-                        if (ceu_x->up_dyns.dyns->up_block->up_x != NULL) {
-                            // enclosing coro of enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block->up_x, &ceu_evt_$n));
-                        } else {
-                            // enclosing block
-                            ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                        // enclosing frame
+                        {
+                            CEU_Frame* ceu_frame_$n = ceu_x->up_dyns.dyns->up_block->up_frame;
+                            if (ceu_frame_$n->x == NULL) {
+                                // enclosing block
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                            } else {
+                                // enclosing coro of enclosing block
+                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_frame_$n->x, &ceu_evt_$n));
+                            }
                         }
                         if (ceu_bstack_$n.block == NULL) {
                             return ceu_ret;
@@ -214,7 +218,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val x = if (ups.intask(this)) "ceu_x" else "NULL"
                 val dcls = vars.blk_to_dcls[this]!!
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val ids = dcls.filter { it.init }
@@ -223,11 +226,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     .map    { it.id.str.id2c(it.n) }
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, $x, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                     void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                     ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
                     #ifdef CEU_DEBUG
-                    printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, $x);
+                    printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, ceu_frame);
                     #endif
                     ${(f_b == null).cond { """
                     {   // ... for main block
@@ -252,7 +255,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 val idc = it.first.str.id2c(dcl.n)
                                 """
                                 ${istask.cond { """
-                                    if (ceu_x->Bcast.X.up_tasks != NULL) {
+                                    if (ceu_x->Bcast.X.Task.up_tasks != NULL) {
                                         ceu_mem->_${idc}_ = ceu_x->up_dyns.dyns->up_block;
                                     } else
                                 """}}
@@ -314,7 +317,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         $body
                     } while (0); // block
                     #ifdef CEU_DEBUG
-                    printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, $x);
+                    printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_mem->block_$n, ceu_frame);
                     #endif
                     if (ceu_ret == CEU_RET_THROW) {
                         // must be before frees
@@ -650,7 +653,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
                     ${if (!this.isdst()) {
-                        assrc("ceu_dyn_$n->Bcast.X.pub") + """
+                        assrc("ceu_dyn_$n->Bcast.X.Task.pub") + """
                             if (ceu_isref) {
                                 ceu_toref(&ceu_acc);
                             }
@@ -665,8 +668,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         ceu_gc_inc(&$src);
-                        ceu_gc_dec(&ceu_dyn_$n->Bcast.X.pub, 1);
-                        ceu_dyn_$n->Bcast.X.pub = $src;
+                        ceu_gc_dec(&ceu_dyn_$n->Bcast.X.Task.pub, 1);
+                        ceu_dyn_$n->Bcast.X.Task.pub = $src;
                         """
                     }}
                 }

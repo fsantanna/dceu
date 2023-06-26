@@ -194,7 +194,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Proto* proto;
             struct CEU_Block* up_block;     // block enclosing this call/coroutine
             char* mem;
-            struct CEU_Dyn* x;              // coro,task/frame point to each other
+            struct CEU_Dyn* x;              // coro/task<->frame point to each other
         } CEU_Frame;
     """ +
     """ // CEU_Dyn
@@ -245,11 +245,15 @@ fun Coder.main (tags: Tags): String {
                     enum CEU_X_STATUS status;
                     union {
                         struct {
-                            struct CEU_Dyn* up_tasks;   // auto terminate / remove from tasks
-                            struct CEU_Block* dn_block; // first block to bcast
-                            int pc;                     // next line to execute
-                            CEU_Value pub;              // public value
                             CEU_Frame* frame;
+                            struct CEU_Block* dn_block;     // first block to bcast
+                            int pc;                         // next line to execute
+                            union {
+                                struct {
+                                    struct CEU_Dyn* up_tasks;   // auto terminate / remove from tasks
+                                    CEU_Value pub;              // public value
+                                } Task;
+                            };
                         } X;
                         struct {
                             int max;
@@ -265,7 +269,7 @@ fun Coder.main (tags: Tags): String {
         typedef struct CEU_Block {
             int depth;                  // compare on set
             int ispub;                  // is top block inside task?
-            struct CEU_Dyn* up_x;       // enclosing active coro
+            struct CEU_Frame* up_frame; // enclosing active frame
             struct CEU_Dyns dn_dyns;    // list of allocated data to bcast/free
             struct CEU_Block* dn_block; // nested block active
         } CEU_Block;
@@ -1295,7 +1299,7 @@ fun Coder.main (tags: Tags): String {
             *x = (CEU_Dyn) {
                 tag, {NULL,-1}, NULL, CEU_HOLD_FIX, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
-                        .X = { NULL, NULL, 0, { CEU_VALUE_NIL }, frame }
+                        .X = { frame, NULL, 0, .Task = { NULL, { CEU_VALUE_NIL } } }
                     } }
                 }
             };
@@ -1339,7 +1343,7 @@ fun Coder.main (tags: Tags): String {
             *x = (CEU_Dyn) {
                 CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_FIX, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
-                        .X = { tasks, NULL, 0, { CEU_VALUE_NIL }, frame }
+                        .X = { frame, NULL, 0, .Task = { tasks, { CEU_VALUE_NIL } }  }
                     } }
                 }
             };

@@ -1249,10 +1249,11 @@ class TTask {
                     }
                 }) ()
                 yield(nil)
+                println(:err)
             }
             spawn (task () {
                 yield(nil)
-                println(999)
+                println(:err)
             }) ()
             spawn T (1)
             spawn T (2)
@@ -4399,4 +4400,27 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_12_kill() {
+        val out = all("""
+            spawn task () {
+                do {
+                    val t1 = spawn task () {
+                        ${yield()}
+                        println(1)
+                    } ()
+                    spawn task () {
+                        defer { println(3) }
+                        ${yield()}
+                        println(2)
+                    } ()
+                    ${await ("t1")}
+                }
+                println(999)
+            } ()
+            broadcast in :global, nil
+        """, true)
+        assert(out == "1\n3\n999\n") { out }
+    }
+
 }

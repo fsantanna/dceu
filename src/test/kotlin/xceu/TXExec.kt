@@ -668,6 +668,28 @@ class TXExec {
         assert(out == "1\n3\n999\n") { out }
     }
     @Test
+    fun paror1a_01() {
+        val out = all("""
+            spawn task () {
+                do {
+                    val t1 = spawn {
+                        ${yield()}
+                        println(1)
+                    }
+                    spawn {
+                        defer { println(3) }
+                        ${yield()}
+                        println(2)
+                    }
+                    await t1
+                }
+                println(999)
+            } ()
+            broadcast in :global, nil
+        """)
+        assert(out == "1\n3\n999\n") { out }
+    }
+    @Test
     fun paror1b() {
         val out = all("""
             spawn task () {
@@ -1673,7 +1695,7 @@ class TXExec {
                 println(x)
             }
         """, true)
-        assert(out.contains("anon : (lin 3, col 52) : block escape error : incompatible scopes")) { out }
+        assert(out.contains("anon : (lin 3, col 53) : block escape error : incompatible scopes")) { out }
         //assert(out == "anon : (lin 2, col 20) : task :fake () { group { var x set x = do { gr...)\n" +
         //        "anon : (lin 3, col 25) : set error : incompatible scopes\n") { out }
     }
