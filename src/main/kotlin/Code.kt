@@ -92,7 +92,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
                     CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
                     ${clos.protos_refs[this].cond { """
-                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->upvs.buf;                    
+                        CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->Ncast.Proto.upvs.buf;                    
                     """ }}
                     """ +
                     """ // WHILE
@@ -214,8 +214,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val bup = up?.let { ups.first_block(it) }
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val depth = when {
-                    (f_b == null) -> "(0 + 1)"
-                    (f_b is Expr.Proto) -> "(ceu_frame->up_block->depth + 1)"
+                    (f_b == null) -> "1"
+                    (f_b is Expr.Proto) -> "1"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val dcls = vars.blk_to_dcls[this]!!
@@ -759,7 +759,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         it.code() + """
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_mem->tup_$n->up_dyns.dyns != NULL);
-                            if (ceu_acc.Dyn->up_dyns.dyns->up_block->depth > ceu_mem->tup_$n->up_dyns.dyns->up_block->depth) {
+                            if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->tup_$n->up_dyns.dyns->up_block)) {
                                 ceu_hold_rem(ceu_mem->tup_$n);
                                 ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->tup_$n);
                             }
@@ -780,7 +780,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         it.code() + """
                         if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                             assert(ceu_mem->vec_$n->up_dyns.dyns != NULL);
-                            if (ceu_acc.Dyn->up_dyns.dyns->up_block->depth > ceu_mem->vec_$n->up_dyns.dyns->up_block->depth) {
+                            if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->vec_$n->up_dyns.dyns->up_block)) {
                                 ceu_hold_rem(ceu_mem->vec_$n);
                                 ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->vec_$n);
                             }
@@ -802,7 +802,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ${it.first.code()}
                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                 assert(ceu_mem->dict_$n->up_dyns.dyns != NULL);
-                                if (ceu_acc.Dyn->up_dyns.dyns->up_block->depth > ceu_mem->dict_$n->up_dyns.dyns->up_block->depth) {
+                                if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->dict_$n->up_dyns.dyns->up_block)) {
                                     ceu_hold_rem(ceu_mem->dict_$n);
                                     ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
                                 }
@@ -814,7 +814,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ${it.second.code()}
                             if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
                                 assert(ceu_mem->dict_$n->up_dyns.dyns != NULL);
-                                if (ceu_acc.Dyn->up_dyns.dyns->up_block->depth > ceu_mem->dict_$n->up_dyns.dyns->up_block->depth) {
+                                if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->dict_$n->up_dyns.dyns->up_block)) {
                                     ceu_hold_rem(ceu_mem->dict_$n);
                                     ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
                                 }
@@ -978,7 +978,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     if (ceu_proto_$n.type != CEU_VALUE_P_FUNC) {
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error : expected function");
                     }
-                    CEU_Frame ceu_frame_$n = { &ceu_proto_$n.Dyn->Ncast.Proto, $bupc, NULL, NULL };
+                    CEU_Frame ceu_frame_$n = { ceu_proto_$n.Dyn, $bupc, NULL, NULL };
                 """} +
 
                 spawn.cond{"""
@@ -1043,7 +1043,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }}
 
                     CEU_BStack ceu_bstack_$n = { $bupc, ceu_bstack };
-                    ceu_ret = $frame->proto->f (
+                    ceu_ret = $frame->proto->Ncast.Proto.f (
                         $frame,
                         &ceu_bstack_$n,
                         ${if (pass_evt) -1 else this.args.let {

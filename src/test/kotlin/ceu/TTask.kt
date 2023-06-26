@@ -216,8 +216,7 @@ class TTask {
     }
     @Test
     fun aa_17_coro_nest_err() {
-        val out = ceu.all(
-            """
+        val out = ceu.all("""
             var T = coro () {
                 spawn coro () {
                     yield(nil)
@@ -228,9 +227,7 @@ class TTask {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == "anon : (lin 8, col 28) : t()\n" +
-                "anon : (lin 2, col 29) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out.contains("x-coro: 0x")) { out }
     }
     @Test
     fun aa_task17_nest_err() {
@@ -483,8 +480,8 @@ class TTask {
             }
             println(2)
         """)
-        assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out == "2\n") { out }
+        //assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "2\n") { out }
     }
     @Test
     fun bb_spawn67_err() {
@@ -497,8 +494,8 @@ class TTask {
             set co = if true { spawn t() } else { nil }
             println(:ok)
         """)
-        assert(out == "anon : (lin 7, col 30) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 7, col 30) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn7_err() {
@@ -512,9 +509,9 @@ class TTask {
             f()
             println(:ok)
         """)
-        assert(out == "anon : (lin 8, col 13) : f()\n" +
-                "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 8, col 13) : f()\n" +
+        //        "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun bb_spawn8_err() {
@@ -528,13 +525,13 @@ class TTask {
             }
             spawn T()
         """)
-        //assert(out == "1\n")
+        assert(out == "1\n")
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
         //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == "anon : (lin 9, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
-                "1\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
+        //        "1\n" +
+        //        ":error\n") { out }
     }
     @Test
     fun bb_spawn9() {
@@ -604,9 +601,9 @@ class TTask {
             spawn T()
             println(1)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 8, col 19) : T()\n" +
-                "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun bb_spawn13_err() {
@@ -623,8 +620,8 @@ class TTask {
             }
             println(:ok)
         """)
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun bb_14_err() {
@@ -635,6 +632,43 @@ class TTask {
             var t
         """)
         assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared") { out }
+    }
+
+    // MOVE
+
+    @Test
+    fun cc_01_move_err () {
+        val out = ceu.all("""
+            val co = do {
+                val v
+                val x = spawn (coro () {
+                    yield(nil)
+                    println(v)
+                    println(:ok)
+                }) ()
+                move(x)
+            }
+            resume co()
+        """)
+        assert(out == "anon : (lin 9, col 17) : move(x)\n" +
+                "move error : value is not movable\n" +
+                ":error\n") { out }
+    }
+
+    @Test
+    fun cc_02_move_ok () {
+        val out = ceu.all("""
+            val tup = [nil]
+            val co = do {
+                val x = spawn (coro () {
+                    yield(nil)
+                    println(:ok)
+                }) ()
+                move(x)
+            }
+            resume co()
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // SPAWN / GROUP
@@ -3216,9 +3250,9 @@ class TTask {
             }
             println(f())
         """, true)
-        assert(out == "anon : (lin 6, col 21) : f()\n" +
-                "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out.contains("coro: 0x"))
+        //assert(out == "anon : (lin 6, col 21) : f()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out.contains("coro: 0x"))
     }
     @Test
     fun kk_esc2() {

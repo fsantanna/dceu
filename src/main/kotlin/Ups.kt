@@ -34,7 +34,7 @@ class Ups (outer: Expr.Do) {
             .all_until(e) { it == x }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
-        return if (n == 0) null else "(ceu_frame${"->proto->up_frame".repeat(n-1)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->Ncast.Proto.up_frame".repeat(n-1)})"
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {

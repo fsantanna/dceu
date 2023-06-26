@@ -191,7 +191,7 @@ fun Coder.main (tags: Tags): String {
         } CEU_Proto;
         
         typedef struct CEU_Frame {          // call func / create task
-            CEU_Proto* proto;
+            struct CEU_Dyn* proto;
             struct CEU_Block* up_block;     // block enclosing this call/coroutine
             char* mem;
             struct CEU_Dyn* x;              // coro/task<->frame point to each other
@@ -747,6 +747,11 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
+        int ceu_depth (CEU_Block* blk) {
+            int base = (blk->up_frame->up_block == NULL) ? 0 : ceu_depth(blk->up_frame->up_block);
+            return base + blk->depth;
+        }
+        
         void ceu_block_set (CEU_Dyn* src, CEU_Dyns* dst, CEU_HOLD tphold) {
             if (CEU_ISGLBDYN(src)) {
                 return;
@@ -759,7 +764,7 @@ fun Coder.main (tags: Tags): String {
                 // caller: do not set block (only tphold)
             } else {
                 assert(src->up_dyns.dyns != NULL);
-                if (dst->up_block->depth < src->up_dyns.dyns->up_block->depth) {
+                if (ceu_depth(dst->up_block) < ceu_depth(src->up_dyns.dyns->up_block)) {
                     ceu_hold_rem(src);
                     ceu_hold_add(dst, src);
                 }
@@ -799,6 +804,12 @@ fun Coder.main (tags: Tags): String {
                         }
                     }
                     break;
+                case CEU_VALUE_X_CORO:
+                case CEU_VALUE_X_TASK: {
+                    ceu_block_set(src->Bcast.X.frame->proto, dst, tphold);
+                    src->Bcast.X.frame->up_block = dst->up_block;
+                    break;
+                }
             }
         }
         
@@ -815,7 +826,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 // ceu_block_chk_depth
                 if (src->Dyn->type==CEU_VALUE_X_TRACK && src->Dyn->Bcast.Track!=NULL &&
-                    src->Dyn->Bcast.Track->up_dyns.dyns->up_block->depth > dst_dyns->up_block->depth) {
+                    ceu_depth(src->Dyn->Bcast.Track->up_dyns.dyns->up_block) > ceu_depth(dst_dyns->up_block)) {
                     return 0;
                 } else if (src->Dyn->tphold == CEU_HOLD_NON) {
                     return 1;
@@ -825,10 +836,10 @@ fun Coder.main (tags: Tags): String {
                     return 1;
                 } else if (dst_dyns == src->Dyn->up_dyns.dyns) {          // same block
                     return 1;
-                } else if (src->Dyn->up_dyns.dyns==NULL || dst_dyns->up_block->depth >= src->Dyn->up_dyns.dyns->up_block->depth) {
+                } else if (src->Dyn->up_dyns.dyns==NULL || ceu_depth(dst_dyns->up_block) >= ceu_depth(src->Dyn->up_dyns.dyns->up_block)) {
                     return 1;
                 } else {
-                    //printf(">>> dst=%d >= src=%d\n", dst_dyns->up_block->depth, src->Dyn->up_dyns.dyns->up_block->depth);
+                    //printf(">>> dst=%d >= src=%d\n", ceu_depth(dst_dyns->up_block), ceu_depth(src->Dyn->up_dyns.dyns->up_block));
                     return 0;
                 }
             }
@@ -921,7 +932,7 @@ fun Coder.main (tags: Tags): String {
                             int arg = (ret == CEU_RET_THROW) ? CEU_ARG_ERR : CEU_ARG_EVT;
                             CEU_Value* args[] = { evt };
 //SPC_EQU(printf(">>> awake %p\n", cur));
-                            ret = cur->Bcast.X.frame->proto->f(cur->Bcast.X.frame, bstack, arg, args);
+                            ret = cur->Bcast.X.frame->proto->Ncast.Proto.f(cur->Bcast.X.frame, bstack, arg, args);
 //SPC_EQU(printf("<<< awake %p\n", cur));
                         }
 //SPC_DEC(printf("<e< ceu_bcast_dyn = %p\n", cur));
@@ -1008,8 +1019,8 @@ fun Coder.main (tags: Tags): String {
             for (int i=0; i<n; i++) {
                 CEU_Value* cur = &childs[i];
                 if (cur->type>CEU_VALUE_DYNAMIC && cur->Dyn->up_dyns.dyns->up_block!=NULL) {
-                    if (max < cur->Dyn->up_dyns.dyns->up_block->depth) {
-                        max = cur->Dyn->up_dyns.dyns->up_block->depth;
+                    if (max < ceu_depth(cur->Dyn->up_dyns.dyns->up_block)) {
+                        max = ceu_depth(cur->Dyn->up_dyns.dyns->up_block);
                         hld = cur->Dyn->up_dyns.dyns;
                     }
                 }
@@ -1297,14 +1308,14 @@ fun Coder.main (tags: Tags): String {
             
             int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
             *x = (CEU_Dyn) {
-                tag, {NULL,-1}, NULL, CEU_HOLD_FIX, {
+                tag, {NULL,-1}, NULL, X->Dyn->tphold, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { frame, NULL, 0, .Task = { NULL, { CEU_VALUE_NIL } } }
                     } }
                 }
             };
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
-            *frame = (CEU_Frame) { &X->Dyn->Ncast.Proto, blk, mem, x };
+            *frame = (CEU_Frame) { X->Dyn, blk, mem, x };
             *ret = (CEU_Value) { tag, {.Dyn=x} };
             
             // hld is the enclosing block of "coroutine T", not of T
@@ -1347,7 +1358,7 @@ fun Coder.main (tags: Tags): String {
                     } }
                 }
             };
-            *frame = (CEU_Frame) { &task->Dyn->Ncast.Proto, tasks->Bcast.Tasks.dyns.up_block, mem, x };
+            *frame = (CEU_Frame) { task->Dyn, tasks->Bcast.Tasks.dyns.up_block, mem, x };
             *ret = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=x} };
             
             ceu_hold_add(&tasks->Bcast.Tasks.dyns, x);
@@ -1821,7 +1832,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_THROW_MSG("track error : expected unterminated task");
                 CEU_THROW_RET(CEU_ERR_ERROR);
             }
-            CEU_Block* blk = (task->Dyn->up_dyns.dyns->up_block->depth > frame->up_block->depth) ?
+            CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?
                 task->Dyn->up_dyns.dyns->up_block : frame->up_block;
             ceu_track_create(&blk->dn_dyns, task->Dyn, &ceu_acc);
             return CEU_RET_RETURN;
