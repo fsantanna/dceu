@@ -50,7 +50,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.evt.traverse()
             }
             is Expr.Yield  -> {
-                if (!ups.intask(this)) {
+                if (!ups.inx(this)) {
                     err(this.tk, "yield error : expected enclosing coro or task")
                 }
                 this.arg.traverse()

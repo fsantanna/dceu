@@ -20,7 +20,7 @@ class Ups (outer: Expr.Do) {
     fun first_proto_or_block (e: Expr): Expr? {
         return this.first(e) { it is Expr.Proto || (it is Expr.Do && this.pub[it] !is Expr.Export) }
     }
-    fun intask (e: Expr): Boolean {
+    fun inx (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
     fun first_true_x (e: Expr, x: String): Expr.Proto? {
