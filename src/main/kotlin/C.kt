@@ -58,7 +58,6 @@ fun Coder.main (tags: Tags): String {
         
         #define CEU_ISGLBDYN(dyn) (dyn->up_dyns.dyns==NULL || dyn->up_dyns.dyns->up_block==ceu_block_global)
 
-        #define CEU_TYPE_NCAST(v) (v>CEU_VALUE_DYNAMIC && v<CEU_VALUE_BCAST)
         #define CEU_THROW_MSG(msg) {                       \
             static CEU_Error_List err = { msg, 0, NULL };  \
             err.shown = 0;                                 \
@@ -141,10 +140,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_VECTOR,
             CEU_VALUE_DICT,
             CEU_VALUE_BCAST,      // all below are bcast
+            CEU_VALUE_X_TRACK,
             CEU_VALUE_X_CORO,     // spawned coro, task, tasks
             CEU_VALUE_X_TASK,
-            CEU_VALUE_X_TASKS,
-            CEU_VALUE_X_TRACK
+            CEU_VALUE_X_TASKS
         } CEU_VALUE;
         
         typedef enum CEU_X_STATUS {
@@ -220,26 +219,24 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyns_I up_dyns;
             struct CEU_Tags_List* tags;     // linked list of tags
             CEU_HOLD tphold;                // if up_hold is permanent and may not be reset to outer block
+            int refs;                       // number of refs to it (free when 0)
             union {
-                struct {
-                    int refs;                       // number of refs to it (free when 0)
-                    union {
-                        CEU_Proto Proto;            // func, coro, task
-                        struct {
-                            int its;                // number of items
-                            CEU_Value buf[0];       // beginning of CEU_Value[n]
-                        } Tuple;
-                        struct {
-                            int max;                // size of buf
-                            int its;                // number of items
-                            CEU_VALUE type;
-                            char* buf;              // resizable Unknown[n]
-                        } Vector;
-                        struct {
-                            int max;                // size of buf
-                            CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
-                        } Dict;
-                    };
+                union {
+                    CEU_Proto Proto;            // func, coro, task
+                    struct {
+                        int its;                // number of items
+                        CEU_Value buf[0];       // beginning of CEU_Value[n]
+                    } Tuple;
+                    struct {
+                        int max;                // size of buf
+                        int its;                // number of items
+                        CEU_VALUE type;
+                        char* buf;              // resizable Unknown[n]
+                    } Vector;
+                    struct {
+                        int max;                // size of buf
+                        CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
+                    } Dict;
                 } Ncast;
                 struct {
                     enum CEU_X_STATUS status;
@@ -603,10 +600,19 @@ fun Coder.main (tags: Tags): String {
                         ceu_gc_dec(&(*dyn->Ncast.Dict.buf)[i][1], 1);
                     }
                     break;
-                case CEU_VALUE_X_CORO:
-                case CEU_VALUE_X_TASKS:
                 case CEU_VALUE_X_TRACK:
+                    if (dyn->type == CEU_VALUE_X_TASK) {
+                        CEU_Value t = { CEU_VALUE_X_TASK, {.Dyn=dyn->Bcast.Track} };
+                        ceu_gc_dec(&t, 1);
+                    }
+                    break;
+                case CEU_VALUE_X_CORO:
+                    assert(0 && "TODO");
+                    break;
+                case CEU_VALUE_X_TASK:
+                case CEU_VALUE_X_TASKS:
                     // TODO: currently not gc'ed
+                    assert(0);
                     break;
                 default:
                     assert(0);
@@ -618,7 +624,8 @@ fun Coder.main (tags: Tags): String {
         }
         
         void ceu_gc_chk (CEU_Dyn* dyn) {
-            if (dyn->Ncast.refs == 0) {
+            assert(dyn->type > CEU_VALUE_DYNAMIC);
+            if (dyn->refs == 0) {
                 ceu_gc_free(dyn);
             }
         }
@@ -633,19 +640,17 @@ fun Coder.main (tags: Tags): String {
         // closure
         
         void ceu_gc_inc (struct CEU_Value* new) {
-            if (!CEU_TYPE_NCAST(new->type)) {
-                return;
+            if (new->type > CEU_VALUE_DYNAMIC) {
+                new->Dyn->refs++;
             }
-            new->Dyn->Ncast.refs++;
         }
         
         void ceu_gc_dec (struct CEU_Value* old, int chk) {
-            if (!CEU_TYPE_NCAST(old->type)) {
-                return;
-            }
-            old->Dyn->Ncast.refs--;
-            if (chk) {
-                ceu_gc_chk(old->Dyn);
+            if (old->type > CEU_VALUE_DYNAMIC) {
+                old->Dyn->refs--;
+                if (chk) {
+                    ceu_gc_chk(old->Dyn);
+                }
             }
         }
     """ +
@@ -1222,8 +1227,8 @@ fun Coder.main (tags: Tags): String {
                 proto.upvs.buf[i] = (CEU_Value) { CEU_VALUE_NIL };
             }
             *ret = (CEU_Dyn) {
-                type, {NULL,-1}, NULL, tphold, {
-                    .Ncast = { 0, {.Proto=proto} }
+                type, {NULL,-1}, NULL, tphold, 0, {
+                    .Ncast = { .Proto=proto }
                 }
             };
             //assert(CEU_RET_RETURN == ceu_block_set(ret, hld, tphold));
@@ -1235,8 +1240,8 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
-                CEU_VALUE_TUPLE, {NULL,-1}, NULL, CEU_HOLD_NON, {
-                    .Ncast = { 0, {.Tuple={n,{}} } }
+                CEU_VALUE_TUPLE, {NULL,-1}, NULL, CEU_HOLD_NON, 0, {
+                    .Ncast = { .Tuple={n,{}} }
                 }
             };
             memset(ret->Ncast.Tuple.buf, 0, n*sizeof(CEU_Value));
@@ -1251,8 +1256,8 @@ fun Coder.main (tags: Tags): String {
             assert(buf != NULL);
             buf[0] = '\0';
             *ret = (CEU_Dyn) {
-                CEU_VALUE_VECTOR, {NULL,-1}, NULL, CEU_HOLD_NON, {
-                    .Ncast = { 0, {.Vector={0,0,CEU_VALUE_NIL,buf}} }
+                CEU_VALUE_VECTOR, {NULL,-1}, NULL, CEU_HOLD_NON, 0, {
+                    .Ncast = { .Vector={0,0,CEU_VALUE_NIL,buf} }
                 }
             };
             ceu_hold_add(hld, ret);
@@ -1263,8 +1268,8 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             *ret = (CEU_Dyn) {
-                CEU_VALUE_DICT, {NULL,-1}, NULL, CEU_HOLD_NON, {
-                    .Ncast = { 0, {.Dict={0,NULL}} }
+                CEU_VALUE_DICT, {NULL,-1}, NULL, CEU_HOLD_NON, 0, {
+                    .Ncast = { .Dict={0,NULL} }
                 }
             };
             ceu_hold_add(hld, ret);
@@ -1276,7 +1281,7 @@ fun Coder.main (tags: Tags): String {
             assert(tasks != NULL);
             CEU_Block* blk = (hld == NULL) ? NULL : hld->up_block;
             *tasks = (CEU_Dyn) {
-                CEU_VALUE_X_TASKS, {NULL,-1}, NULL, CEU_HOLD_FIX, {
+                CEU_VALUE_X_TASKS, {NULL,-1}, NULL, CEU_HOLD_FIX, 1, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Tasks = { max, {0,0,NULL,blk} }
                     } }
@@ -1308,7 +1313,7 @@ fun Coder.main (tags: Tags): String {
             
             int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
             *x = (CEU_Dyn) {
-                tag, {NULL,-1}, NULL, X->Dyn->tphold, {
+                tag, {NULL,-1}, NULL, X->Dyn->tphold, 1, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { frame, NULL, 0, .Task = { NULL, { CEU_VALUE_NIL } } }
                     } }
@@ -1352,7 +1357,7 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
         
             *x = (CEU_Dyn) {
-                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_FIX, {
+                CEU_VALUE_X_TASK, {NULL,-1}, NULL, CEU_HOLD_FIX, 1, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { frame, NULL, 0, .Task = { tasks, { CEU_VALUE_NIL } }  }
                     } }
@@ -1369,12 +1374,14 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* trk = malloc(sizeof(CEU_Dyn));
             assert(trk != NULL);
             *trk = (CEU_Dyn) {
-                CEU_VALUE_X_TRACK, {NULL,-1}, NULL, CEU_HOLD_NON, {
+                CEU_VALUE_X_TRACK, {NULL,-1}, NULL, CEU_HOLD_NON, 0, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .Track = x
                     } }
                 }
             };
+            CEU_Value X = { CEU_VALUE_X_TRACK, {.Dyn=x} };
+            ceu_gc_inc(&X);
             ceu_hold_add(hld, trk);
             *ret = (CEU_Value) { CEU_VALUE_X_TRACK, {.Dyn=trk} };
         }
@@ -1677,9 +1684,14 @@ fun Coder.main (tags: Tags): String {
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             if (src->type > CEU_VALUE_DYNAMIC) {
-                assert(dyn->Ncast.refs == 1);
+                //printf(">>> %d\n", dyn->refs);
                 if (dyn->tphold >= CEU_HOLD_FIX) {
                     CEU_THROW_MSG("move error : value is not movable");
+                    CEU_THROW_RET(CEU_ERR_ERROR);
+                }
+                int N = (src->type >= CEU_VALUE_X_CORO) ? 2 : 1;
+                if (dyn->refs > N) {
+                    CEU_THROW_MSG("move error : multiple references");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 dyn->tphold = CEU_HOLD_NON;
@@ -1860,93 +1872,93 @@ fun Coder.main (tags: Tags): String {
             do {
                 {
                     static CEU_Dyn ceu_copy = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_tasks = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_tasks_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_tasks_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_coroutine = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_detrack = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_move = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_next = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_print = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_println = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_status = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_sup_question_ = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_sup_question__f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_sup_question__f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_tags = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_throw = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_track = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_type = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_op_equals_equals = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_op_hash = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_op_slash_equals = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_string_dash_to_dash_tag = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, 1, 1, {
-                            .Proto = { NULL, ceu_string_dash_to_dash_tag_f, {0,NULL}, {{0}} }
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_string_dash_to_dash_tag_f, {0,NULL}, {{0}} } }
                         }
                     };
 
