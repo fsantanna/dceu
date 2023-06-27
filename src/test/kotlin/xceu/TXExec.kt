@@ -3470,4 +3470,24 @@ class TXExec {
         """)
         assert(out == "anon : (lin 5, col 48) : access error : variable \"is'\" is not declared") { out }
     }
+    @Test
+    fun all_17_line() {
+        val out = all("""
+        func f (co) {
+            resume co()
+        }
+        coro C () {
+            yield()
+            val t = []
+            yield(move(t))
+        }
+        do {
+            val co = spawn C()
+            loop {
+                val v = f(co)
+            }
+        }
+        """)
+        assert(out == "1\n") { out }
+    }
 }
