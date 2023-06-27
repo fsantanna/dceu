@@ -650,7 +650,7 @@ class TTask {
             }
             resume co()
         """)
-        assert(out == "anon : (lin 9, col 17) : move(x)\n" +
+        assert(out == "anon : (lin 9, col 22) : move(x)\n" +
                 "move error : value is not movable\n" +
                 ":error\n") { out }
     }
@@ -3027,7 +3027,7 @@ class TTask {
         """, true)
         //assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
         assert(out == "anon : (lin 17, col 13) : broadcast in a, [3]\n" +
-                "anon : (lin 11, col 17) : move(task.pub)\n" +
+                "anon : (lin 11, col 27) : xmove(task.pub)\n" +
                 "move error : value is not movable\n" +
                 ":error\n") { out }
     }
@@ -3996,7 +3996,7 @@ class TTask {
         """)
         //assert(out == ":ok\n") { out }
         assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n" +
-                "anon : (lin 9, col 21) : throw(move(t))\n" +
+                "anon : (lin 9, col 21) : throw(export [] { val :tmp ceu_189292 = xmove...)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }

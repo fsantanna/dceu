@@ -528,7 +528,8 @@ class TExec {
             }
             println(v)
         """)
-        assert(out == "anon : (lin 4, col 13) : invalid move : expected assignable expression") { out }
+        assert(out == "[[1,2]]\n") { out }
+        //assert(out == "anon : (lin 4, col 13) : invalid move : expected assignable expression") { out }
     }
     @Test
     fun cc_vector17_move() {
@@ -3255,6 +3256,22 @@ class TExec {
         """)
         assert(out == "[1]\n") { out }
     }
+    @Test
+    fun clo23x() {
+        val out = all("""
+            var f = func (^a) {
+                func () {
+                    ^^a
+                }
+            }
+            var g = do {
+                var t = [1]
+                move(f(move(t)))
+            }
+            println(g())
+        """)
+        assert(out == "[1]\n") { out }
+    }
     @Ignore
     @Test
     fun todo_clo24_copy() {
@@ -3325,7 +3342,7 @@ class TExec {
             """,
         )
         assert(out == "anon : (lin 9, col 21) : f(1)\n" +
-                "anon : (lin 7, col 17) : move(g)\n" +
+                "anon : (lin 7, col 22) : xmove(g)\n" +
                 "move error : value is not movable\n" +
                 ":error\n") { out }
     }
