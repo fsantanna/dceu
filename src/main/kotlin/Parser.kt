@@ -1280,7 +1280,7 @@ class Parser (lexer_: Lexer)
                     val body = this.block()
                     e = this.nest("""
                         ${tk0.pos.pre()}do {
-                            val ${x?.str ?: "it"} = ${e.tostr(true)}
+                            val :tmp ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
                     """) //.let { println(it); it })

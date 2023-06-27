@@ -612,6 +612,18 @@ class TExec {
         assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun cc_24_move() {
+        val out = all("""
+        val t = []
+        do {
+            val x = move(t)
+            println(:x, x)
+        }
+        println(:t, t)
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // DICT
 

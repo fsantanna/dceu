@@ -1677,6 +1677,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             if (src->type > CEU_VALUE_DYNAMIC) {
+                assert(dyn->Ncast.refs == 1);
                 if (dyn->tphold >= CEU_HOLD_FIX) {
                     CEU_THROW_MSG("move error : value is not movable");
                     CEU_THROW_RET(CEU_ERR_ERROR);

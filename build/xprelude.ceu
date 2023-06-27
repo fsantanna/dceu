@@ -260,9 +260,17 @@ func :rec to-string (v) {
 func to-number (v) {
     ifs {
         v is? :tag -> `:number $v.Tag`
+        v is? :char -> `:number $v.Char`
         ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> do {
             `:number atoi($v.Dyn->Ncast.Vector.buf)`
         }
+        else -> v   ;; TODO
+    }
+}
+
+func to-char (v) {
+    ifs {
+        v is? :number -> `:char $v.Number`
         else -> v   ;; TODO
     }
 }

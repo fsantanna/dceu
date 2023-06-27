@@ -688,6 +688,28 @@ class TTask {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun cc_04_move() {
+        val out = all("""
+        val f = func (co) {
+            resume co()
+        }
+        val C = coro () {
+            val t = []
+            yield(move(t))
+            println(:in, t)
+        }
+        do {
+            val co = coroutine(C)
+            do {
+                val v = f(co)
+                println(:out, v)
+            }
+            f(co)
+        }
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // SPAWN / GROUP
 
