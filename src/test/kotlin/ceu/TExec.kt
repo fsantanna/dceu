@@ -3254,7 +3254,9 @@ class TExec {
             }
             println(g())
         """)
-        assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 9, col 26) : xmove(f(t))\n" +
+                "move error : multiple references\n" +
+                ":error\n") { out }
     }
     @Test
     fun clo23x() {

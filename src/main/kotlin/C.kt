@@ -1704,7 +1704,10 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
-                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args));
+                        int ret = ceu_xmove_f(frame, _2, 1, args);
+                        if (ret != CEU_RET_RETURN) {
+                            return ret;
+                        }
                     }
                     ceu_acc = *src;
                     break;

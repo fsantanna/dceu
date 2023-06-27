@@ -471,11 +471,11 @@ class Parser (lexer_: Lexer)
                                         ```
                                         var $i = track(`:ceu ceu_x_$N`)
                                         $body
-                                        if detrack($i) {
+                                        ;;if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
-                                        } else {
-                                            set ceu_i_$N = ceu_n_$N
-                                        }
+                                        ;;} else {
+                                        ;;    set ceu_i_$N = ceu_n_$N
+                                        ;;}
                                     }
                                 }
                             }
@@ -685,7 +685,7 @@ class Parser (lexer_: Lexer)
                 val e = this.expr_in_parens(true, false)!!
                 if (e.is_lval()) {
                     this.nest("""
-                        export [] {
+                        do {
                             val :tmp ceu_$N = ${e.tk.pos.pre()}xmove(${e.tostr(true)})
                             ${e.tk.pos.pre()}set ${e.tostr()} = nil
                             ceu_$N

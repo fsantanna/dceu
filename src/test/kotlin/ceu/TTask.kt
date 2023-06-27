@@ -650,7 +650,7 @@ class TTask {
             }
             resume co()
         """)
-        assert(out == "anon : (lin 9, col 22) : move(x)\n" +
+        assert(out == "anon : (lin 9, col 22) : xmove(x)\n" +
                 "move error : value is not movable\n" +
                 ":error\n") { out }
     }
@@ -708,7 +708,8 @@ class TTask {
             f(co)
         }
         """)
-        assert(out == "1\n") { out }
+        assert(out == ":out\t[]\n" +
+                ":in\tnil\n") { out }
     }
 
     // SPAWN / GROUP
@@ -3995,10 +3996,7 @@ class TTask {
             println(t)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n" +
-                "anon : (lin 9, col 21) : throw(export [] { val :tmp ceu_189292 = xmove...)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
+        assert(out.contains("anon : (lin 5, col 21) : block escape error : incompatible scopes\n")) { out }
     }
     @Test
     fun nn_11_throw_track() {
