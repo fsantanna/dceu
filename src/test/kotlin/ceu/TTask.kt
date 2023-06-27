@@ -670,6 +670,24 @@ class TTask {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun cc_03_move() {
+        val out = all("""
+        val f = func (x) {
+            val :tmp v = x()
+            v
+        }
+        val F = func () {
+            []
+        }
+        do {
+            val l = f(F)
+            println(l)
+            nil
+        }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // SPAWN / GROUP
 

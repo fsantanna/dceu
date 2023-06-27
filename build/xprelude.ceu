@@ -170,7 +170,7 @@ export [iter] {
 
     func iter-coro (itr :Iterator) {
         val co = itr.s
-        val v = resume co()
+        val :tmp v = resume co()
         ((status(co) /= :terminated) and v) or nil
     }
 
