@@ -490,7 +490,7 @@ class TExec {
     fun cc_tuple14_move_out() {
         val out = all("""
             val out = do {
-                val ins = [1,2,3]
+                var ins = [1,2,3]
                 move(ins)
             }
             println(out)
@@ -528,7 +528,7 @@ class TExec {
             }
             println(v)
         """)
-        assert(out == "[[1,2]]\n") { out }
+        assert(out == "anon : (lin 4, col 13) : invalid move : expected assignable expression") { out }
     }
     @Test
     fun cc_vector17_move() {
@@ -622,7 +622,20 @@ class TExec {
         }
         println(:t, t)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 4, col 26) : invalid set : destination is immutable") { out }
+    }
+    @Test
+    fun cc_25_move() {
+        val out = all("""
+        var t = []
+        do {
+            val x = move(t)
+            println(:x, x)
+        }
+        println(:t, t)
+        """)
+        assert(out == ":x\t[]\n" +
+                ":t\tnil\n") { out }
     }
 
     // DICT
@@ -859,7 +872,7 @@ class TExec {
         val out = all("""
             set #v = 0
         """)
-        assert(out == "anon : (lin 2, col 13) : invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
     }
     @Test
     fun vector10_pop_acc() {
@@ -1018,14 +1031,14 @@ class TExec {
         val out = all("""
             set 1 = 1
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
     }
     @Test
     fun set_err2() {
         val out = all("""
             set [1] = 1
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
     }
     @Test
     fun set_index() {
@@ -3303,7 +3316,7 @@ class TExec {
         """
             val x = 10
             val f = func (y) {
-                val g = func () {
+                var g = func () {
                     y
                 }
                 move(g)

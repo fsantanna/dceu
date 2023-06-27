@@ -399,7 +399,7 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set 1 = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun expr_err2() {  // set whole tuple?
@@ -407,31 +407,31 @@ class TParser {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun set_nil_err() {
         val l = lexer("set nil = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun set_if_err() {
         val l = lexer("set (if true {nil} else {nil}) = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun set_evt_err() {
         val l = lexer("set evt = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun set_err_err() {
         val l = lexer("set err = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : invalid destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
 
     // IF

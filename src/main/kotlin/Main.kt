@@ -19,7 +19,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (setOf (
     "broadcast", "catch", "coro", "data", "defer", "do", "else", "enum",
-    "err", "evt", "export", "false", "func", "if", "in", "loop", "nil",
+    "err", "evt", "export", "false", "func", "if", "in", "loop", "move", "nil",
     "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
     "toggle", "true", "until", "val", "var", "while", "yield", "xbreak"
 ) + if (!XCEU) setOf() else setOf (
@@ -53,7 +53,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "coroutine", "detrack", "move", "next", "print", "println",
+    "copy", "coroutine", "detrack", "xmove", "next", "print", "println",
     "status", "string-to-tag", "sup?", "tags", "tasks", "throw", "track", "type",
     "{==}", "{#}", "{/=}", "..."
 )

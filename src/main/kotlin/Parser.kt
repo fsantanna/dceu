@@ -354,10 +354,10 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
+                if (!dst.is_lval()) {
+                    err(tk0, "invalid set : expected assignable destination")
+                }
                 if (!XCEU || !(dst is Expr.Export)) {
-                    if (!(dst is Expr.Acc || dst is Expr.Index || (dst is Expr.Pub && dst.tk.str=="pub"))) {
-                        err(tk0, "invalid set : invalid destination")
-                    }
                     Expr.Set(tk0, dst, /*null,*/ src)
                 } else {
                     Expr.Export(dst.tk_, dst.ids, Expr.Do(dst.body.tk, dst.body.es.dropLast(1) +
@@ -469,7 +469,7 @@ class Parser (lexer_: Lexer)
                                         ```
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        val $i = track(`:ceu ceu_x_$N`)
+                                        var $i = track(`:ceu ceu_x_$N`)
                                         $body
                                         if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -550,7 +550,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
+                                    var $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
@@ -681,6 +681,20 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
+            this.acceptFix("move") -> {
+                val e = this.expr_in_parens(true, false)!!
+                if (e.is_lval()) {
+                    this.nest("""
+                        export [] {
+                            val :tmp ceu_$N = ${e.tk.pos.pre()}xmove(${e.tostr(true)})
+                            ${e.tk.pos.pre()}set ${e.tostr()} = nil
+                            ceu_$N
+                        }
+                    """)
+                } else {
+                    this.nest("xmove(${e.tostr(true)})")
+                }
+            }
 
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix

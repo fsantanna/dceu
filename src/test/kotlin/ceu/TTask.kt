@@ -641,7 +641,7 @@ class TTask {
         val out = ceu.all("""
             val co = do {
                 val v
-                val x = spawn (coro () {
+                var x = spawn (coro () {
                     yield(nil)
                     println(v)
                     println(:ok)
@@ -660,7 +660,7 @@ class TTask {
         val out = ceu.all("""
             val tup = [nil]
             val co = do {
-                val x = spawn (coro () {
+                var x = spawn (coro () {
                     yield(nil)
                     println(:ok)
                 }) ()
@@ -695,7 +695,7 @@ class TTask {
             resume co()
         }
         val C = coro () {
-            val t = []
+            var t = []
             yield(move(t))
             println(:in, t)
         }
@@ -3118,7 +3118,7 @@ class TTask {
                 set status(task) = nil     ;; error: cannot assign to status
             }
         """, true)
-        assert(out == "anon : (lin 4, col 17) : invalid set : invalid destination") { out }
+        assert(out == "anon : (lin 4, col 17) : invalid set : expected assignable destination") { out }
     }
     @Test
     fun ii_status4() {

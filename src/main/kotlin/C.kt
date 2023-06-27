@@ -1679,7 +1679,7 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_move_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+        CEU_RET ceu_xmove_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
@@ -1704,14 +1704,14 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
@@ -1721,7 +1721,7 @@ fun Coder.main (tags: Tags): String {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args));
                     }
                     ceu_acc = *src;
                     break;
@@ -1729,9 +1729,9 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args0));
+                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args0));
                         CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.buf)[i][1] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args1));
+                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args1));
                     }
                     ceu_acc = *src;
                     break;
@@ -1891,9 +1891,9 @@ fun Coder.main (tags: Tags): String {
                             .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
                         }
                     };
-                    static CEU_Dyn ceu_move = { 
+                    static CEU_Dyn ceu_xmove = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_move_f, {0,NULL}, {{0}} } }
+                            .Ncast = { .Proto = { NULL, ceu_xmove_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_next = { 
@@ -1965,7 +1965,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
                     ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
-                    ceu_mem->move       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_move}         };
+                    ceu_mem->xmove      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_xmove}        };
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            

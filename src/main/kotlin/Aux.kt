@@ -24,6 +24,16 @@ fun Expr.is_innocuous (): Boolean {
     }
 }
 
+fun Expr.is_lval (): Boolean {
+    return when (this) {
+        is Expr.Pub -> true
+        is Expr.Acc -> true
+        is Expr.Index -> true
+        is Expr.Export -> this.body.es.last().is_lval()
+        else -> false
+    }
+}
+
 fun Expr.base (): Expr {
     return when (this) {
         is Expr.Acc   -> this
