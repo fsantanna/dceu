@@ -2053,12 +2053,12 @@ class TXExec {
     fun qq_02_thus() {
         val out = ceu.all(
             """
-            val x = 1 thus x {
+            val x = [] thus x {
                 x
             }
             println(x)
         """,true)
-        assert(out == "1\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun qq_03_thus() {
@@ -2070,9 +2070,7 @@ class TXExec {
             } thus { move(it) }
             resume co()
         """)
-        assert(out == "anon : (lin 5, col 22) : move(it)\n" +
-                "move error : value is not movable\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
     }
 
     // TOGGLE
@@ -3478,16 +3476,17 @@ class TXExec {
         }
         coro C () {
             yield()
-            val t = []
+            var t = []
             yield(move(t))
         }
         do {
             val co = spawn C()
             loop {
                 val v = f(co)
-            }
+                println(v)
+            } until true
         }
         """)
-        assert(out == "1\n") { out }
+        assert(out == "[]\n") { out }
     }
 }

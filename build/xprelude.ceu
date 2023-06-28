@@ -135,7 +135,7 @@ func between (min_max, v) {
 ;; ITERATORS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-data :Iterator = [f,s,tp,i]
+data :Iterator = [f,s,ps,i]
 
 export [iter] {
     func iter-tuple (itr :Iterator) {
@@ -144,11 +144,14 @@ export [iter] {
             nil
         } else {
             set itr.i = i + 1
-            ifs tp = itr.tp {
-                tp == :all -> ([i, itr.s[i]])
-                tp == :idx -> i
-                tp == :val -> itr.s[i]
-                else       -> itr.s[i]
+            val ps = itr.ps
+            val mv = :move in ps
+            val :tmp v = if mv move(itr.s[i]) -> itr.s[i]
+            ifs {
+                (:all in? ps) -> ([i, v])
+                (:idx in? ps) -> i
+                (:val in? ps) -> v
+                else          -> v
             }
         }
     }
@@ -159,10 +162,13 @@ export [iter] {
             nil
         } else {
             set itr.i = k
-            ifs tp = itr.tp {
-                tp == :all -> [k, itr.s[k]]
-                tp == :key -> k
-                tp == :val -> itr.s[k]
+            val ps = itr.ps
+            val mv = :move in ps
+            val :tmp v = if mv move(itr.s[k]) -> itr.s[k]
+            ifs ps = itr.ps {
+                ps == :all -> [k, v]
+                ps == :key -> k
+                ps == :val -> v
                 else       -> k
             }
         }
@@ -174,13 +180,14 @@ export [iter] {
         ((status(co) /= :terminated) and v) or nil
     }
 
-    func iter (v, tp) {
+    func iter (v, ...) {
         ifs v {
-            is? :tuple  -> :Iterator [iter-tuple, v, tp, 0]
-            is? :vector -> :Iterator [iter-tuple, v, tp, 0]
-            is? :dict   -> :Iterator [iter-dict,  v, tp, nil]
-            is? :func   -> :Iterator [v]
-            is? :x-coro -> :Iterator [iter-coro,  v]
+            is? :Iterator -> v
+            is? :tuple    -> :Iterator [iter-tuple, v, ..., 0]
+            is? :vector   -> :Iterator [iter-tuple, v, ..., 0]
+            is? :dict     -> :Iterator [iter-dict,  v, ..., nil]
+            is? :func     -> :Iterator [v]
+            is? :x-coro   -> :Iterator [iter-coro,  v]
         }
     }
 }
@@ -234,7 +241,7 @@ func :rec {=/=} (v1,v2) {
 
 func c-to-string (v) {
     assert(type(v) == :pointer)
-    val str = #[]
+    var str = #[]
     loop in [0 -> `:number strlen($v.Pointer)`), i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
@@ -276,15 +283,15 @@ func to-char (v) {
 }
 
 func to-vector (v) {
-    val ret = #[]
+    var ret = #[]
     loop in iter(v), i {
-        set ret[+] = i
+        set ret[+] = copy(i)
     }
     move(ret)
 }
 
 func to-tracks (...) {
-    val ret = #[]
+    var ret = #[]
     val args = ...
     loop in iter(args), v {
         ifs {
@@ -302,7 +309,7 @@ func to-tracks (...) {
 }
 
 func iterable-to-dict (itb) {
-    val dict = @[]
+    var dict = @[]
     loop in iter(itb) {
         set dict[it] = true
     }
