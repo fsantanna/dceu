@@ -1476,7 +1476,8 @@ class TXExec {
             }
             println(t3)
         """, true)
-        assert(out == "1\n2\n3\n") { out }
+        assert(out == "#[[1],[2],[3]]\n" +
+                "#[[1],[2],[3]]\n") { out }
     }
     @Test
     fun f03() {
@@ -2906,11 +2907,10 @@ class TXExec {
             val v = do {
                 val t = [[1],[2],[3]]
                 to-vector(t)
-                println(t)
             }
             println(v)
         """, true)
-        assert(out == "[[1],[2],[3]]\n") { out }
+        assert(out == "#[[1],[2],[3]]\n") { out }
     }
 
     // string-to-tag

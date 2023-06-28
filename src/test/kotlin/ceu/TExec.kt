@@ -655,6 +655,28 @@ class TExec {
         assert(out == ":x\t[]\n" +
                 ":t\tnil\n") { out }
     }
+    @Test
+    fun cm_04_dots() {
+        val out = all("""
+            var f = func (...) {
+                var x = [...]
+                move(x)
+            }
+            println(f(1,2,3))
+        """)
+        assert(out == "[[1,2,3]]\n") { out }
+    }
+    @Test
+    fun cm_04_err() {
+        val out = all("""
+            var f = func (t) {
+                var x = [t]
+                move(x)
+            }
+            println(f([1,2,3]))
+        """)
+        assert(out == "[[1,2,3]]\n") { out }
+    }
 
     // DICT
 
@@ -1964,28 +1986,6 @@ class TExec {
         """)
         //assert(out == "1\n") { out }
         assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...") { out }
-    }
-    @Test
-    fun nn_09_dots_move() {
-        val out = all("""
-            var f = func (...) {
-                var x = [...]
-                move(x)
-            }
-            println(f(1,2,3))
-        """)
-        assert(out == "[[1,2,3]]\n") { out }
-    }
-    @Test
-    fun nn_10_dots_move() {
-        val out = all("""
-            var f = func (t) {
-                var x = [t]
-                move(x)
-            }
-            println(f([1,2,3]))
-        """)
-        assert(out == "[[1,2,3]]\n") { out }
     }
 
     // LOOP
