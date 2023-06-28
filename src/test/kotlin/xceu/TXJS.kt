@@ -677,7 +677,6 @@ class TXJS {
             coro Show () {
                 var line = yield()
                 loop until not line {
-                    println(line)
                     set line = yield()
                 }
             }

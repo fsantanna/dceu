@@ -2,6 +2,8 @@ package xceu
 
 import ceu.all
 import ceu.yield
+import dceu.N
+import dceu.tostr
 import org.junit.Ignore
 import org.junit.Test
 
@@ -1457,6 +1459,41 @@ class TXExec {
         assert(out == "1\n2\n3\n") { out }
     }
 
+    // ITER / MOVE
+
+    @Test
+    fun ff_01_iter() {
+        val out = all("""
+            val t1 = [[1],[2],[3]]
+            val t2 = #[]
+            loop in [0 -> #t1), i {
+                set t2[+] = move(t1[i])
+            }
+            println(t2)
+            val t3 = #[]
+            loop in iter(t2,:val), v {
+                set t3[+] = v
+            }
+            println(t3)
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun f03() {
+        val out = all("""
+            coro genFunc () {
+                var v1 = [0,'a']
+                yield(move(v1))
+                var v2 = [1,'b']
+                yield(move(v2))
+            }
+            loop in iter(coroutine(genFunc)), v {
+                println(v)
+            }
+        """, true)
+        assert(out == "[0,a]\n[1,b]\n") { out }
+    }
+
     // AWAIT / EVERY
 
     @Test
@@ -2862,6 +2899,18 @@ class TXExec {
             println(v)
         """, true)
         assert(out == "#[[1]]\n") { out }
+    }
+    @Test
+    fun tovector5() {
+        val out = all("""
+            val v = do {
+                val t = [[1],[2],[3]]
+                to-vector(t)
+                println(t)
+            }
+            println(v)
+        """, true)
+        assert(out == "[[1],[2],[3]]\n") { out }
     }
 
     // string-to-tag

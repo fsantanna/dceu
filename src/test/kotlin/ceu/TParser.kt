@@ -606,6 +606,8 @@ class TParser {
     fun pp_11_func_args_err() {
         val l = lexer("set ... = 10")
         val parser = Parser(l)
+        //val e = parser.expr()
+        //assert(e.tostr() == "set ... = 10") { e.tostr() }
         assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid set : unexpected ...")
     }
 

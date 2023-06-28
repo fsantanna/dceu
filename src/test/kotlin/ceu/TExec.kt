@@ -13,8 +13,8 @@ import java.io.File
 //  - Invalid read of size
 //  - uninitialised value
 val VALGRIND = ""
-val THROW = false
 //val VALGRIND = "valgrind "
+val THROW = false
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
@@ -613,8 +613,25 @@ class TExec {
         assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+
+    // MOVE
+
     @Test
-    fun cc_24_move() {
+    fun cm_01_move () {
+        val out = all("""
+            val f = func () {
+                [0,'a']
+            }
+            val g = func () {
+                var v = f()
+                move(v)
+            }
+            println(g())
+        """)
+        assert(out == "#[[0,a],[1,b]]\n") { out }
+    }
+    @Test
+    fun cm_02_move() {
         val out = all("""
         val t = []
         do {
@@ -626,7 +643,7 @@ class TExec {
         assert(out == "anon : (lin 4, col 26) : invalid set : destination is immutable") { out }
     }
     @Test
-    fun cc_25_move() {
+    fun cm_03_move() {
         val out = all("""
         var t = []
         do {
@@ -1935,6 +1952,40 @@ class TExec {
             println(...)
         """)
         assert(out == "./out.exe\n") { out }
+    }
+    @Test
+    fun nn_08_dots_set() {
+        val out = all("""
+            var f = func (...) {
+                set ... = 1
+                ...
+            }
+            println(f(1,2,3))
+        """)
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...") { out }
+    }
+    @Test
+    fun nn_09_dots_move() {
+        val out = all("""
+            var f = func (...) {
+                var x = [...]
+                move(x)
+            }
+            println(f(1,2,3))
+        """)
+        assert(out == "[[1,2,3]]\n") { out }
+    }
+    @Test
+    fun nn_10_dots_move() {
+        val out = all("""
+            var f = func (t) {
+                var x = [t]
+                move(x)
+            }
+            println(f([1,2,3]))
+        """)
+        assert(out == "[[1,2,3]]\n") { out }
     }
 
     // LOOP
