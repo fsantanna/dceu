@@ -415,6 +415,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_acc = ceu_acc_$n;
                         ceu_ret = ceu_ret_$n;
                         CEU_CONTINUE_ON_CLEAR_THROW();
+                        ${(f_b is Expr.Proto).cond { "ceu_gc_dec(&ceu_acc, 0);" }}
                     } // ceu_ret/ceu_acc: save/restore
                 }
                 """

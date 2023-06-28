@@ -617,6 +617,16 @@ class TExec {
     // MOVE
 
     @Test
+    fun cm_00_move () {
+        val out = all("""
+            val f = func () {
+                [0,'a']
+            }
+            println(f())
+        """)
+        assert(out == "[0,a]\n") { out }
+    }
+    @Test
     fun cm_01_move () {
         val out = all("""
             val f = func () {
@@ -628,7 +638,7 @@ class TExec {
             }
             println(g())
         """)
-        assert(out == "#[[0,a],[1,b]]\n") { out }
+        assert(out == "[0,a]\n") { out }
     }
     @Test
     fun cm_02_move() {
