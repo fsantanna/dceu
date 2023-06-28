@@ -55,6 +55,7 @@ class Tags (outer: Expr.Do) {
             }
             is Expr.Data -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Pass   -> this.e.traverse()
+            is Expr.Move   -> this.e.traverse()
 
             is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }

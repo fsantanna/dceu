@@ -89,6 +89,7 @@ fun Expr.mem (defers: Defers): String {
             """
         is Expr.Defer -> this.body.mem(defers)
         is Expr.Pass -> this.e.mem(defers)
+        is Expr.Move -> this.e.mem(defers)
 
         is Expr.Spawn -> """
             struct { // SPAWN

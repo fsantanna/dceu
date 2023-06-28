@@ -1679,19 +1679,19 @@ fun Coder.main (tags: Tags): String {
             return CEU_RET_RETURN;
         }
         
-        CEU_RET ceu_xmove_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+        CEU_RET ceu_move_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
             if (src->type > CEU_VALUE_DYNAMIC) {
                 //printf(">>> %d\n", dyn->refs);
                 if (dyn->tphold >= CEU_HOLD_FIX) {
-                    CEU_THROW_MSG("move error : value is not movable");
+                    CEU_THROW_MSG("\0 : move error : value is not movable");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 int N = (src->type >= CEU_VALUE_X_CORO) ? 2 : 1;
                 if (dyn->refs > N) {
-                    CEU_THROW_MSG("move error : multiple references");
+                    CEU_THROW_MSG("\0 : move error : multiple references");
                     CEU_THROW_RET(CEU_ERR_ERROR);
                 }
                 dyn->tphold = CEU_HOLD_NON;
@@ -1704,12 +1704,11 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_P_TASK:
                     for (int i=0; i<dyn->Ncast.Proto.upvs.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Proto.upvs.buf[i] };
-                        int ret = ceu_xmove_f(frame, _2, 1, args);
+                        int ret = ceu_move_f(frame, _2, 1, args);
                         if (ret != CEU_RET_RETURN) {
                             return ret;
                         }
                     }
-                    ceu_acc = *src;
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
@@ -1719,7 +1718,6 @@ fun Coder.main (tags: Tags): String {
                             return ret;
                         }
                     }
-                    ceu_acc = *src;
                     break;
                 }
                 case CEU_VALUE_VECTOR: {
@@ -1727,23 +1725,20 @@ fun Coder.main (tags: Tags): String {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
-                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args));
+                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
                     }
-                    ceu_acc = *src;
                     break;
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
-                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args0));
+                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args0));
                         CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.buf)[i][1] };
-                        assert(CEU_RET_RETURN == ceu_xmove_f(frame, _2, 1, args1));
+                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args1));
                     }
-                    ceu_acc = *src;
                     break;
                 }
                 default:
-                    ceu_acc = *src;
                     break;
             }
             return CEU_RET_RETURN;
@@ -1897,11 +1892,6 @@ fun Coder.main (tags: Tags): String {
                             .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
                         }
                     };
-                    static CEU_Dyn ceu_xmove = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_xmove_f, {0,NULL}, {{0}} } }
-                        }
-                    };
                     static CEU_Dyn ceu_next = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
                             .Ncast = { .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} } }
@@ -1971,7 +1961,6 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
                     ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
-                    ceu_mem->xmove      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_xmove}        };
                     ceu_mem->next       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            

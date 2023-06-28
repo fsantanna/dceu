@@ -650,8 +650,7 @@ class TTask {
             }
             resume co()
         """)
-        assert(out == "anon : (lin 9, col 22) : xmove(x)\n" +
-                "move error : value is not movable\n" +
+        assert(out == "anon : (lin 9, col 22) : value is not movable\n" +
                 ":error\n") { out }
     }
 

@@ -237,7 +237,7 @@ func :rec {=/=} (v1,v2) {
 
 func c-to-string (v) {
     assert(type(v) == :pointer)
-    var str = #[]
+    val str = #[]
     loop in [0 -> `:number strlen($v.Pointer)`), i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
@@ -279,7 +279,7 @@ func to-char (v) {
 }
 
 func to-vector (col, tp) {
-    var ret = #[]
+    val ret = #[]
     loop in iter(col,tp), v {
         set ret[+] = copy(v)
     }
@@ -287,7 +287,7 @@ func to-vector (col, tp) {
 }
 
 func to-tracks (...) {
-    var ret = #[]
+    val ret = #[]
     val args = ...
     loop in iter(args), v {
         ifs {
@@ -305,7 +305,7 @@ func to-tracks (...) {
 }
 
 func iterable-to-dict (itb) {
-    var dict = @[]
+    val dict = @[]
     loop in iter(itb) {
         set dict[it] = true
     }

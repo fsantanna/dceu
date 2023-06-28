@@ -257,6 +257,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 datas[this.tk.str] = ids
             }
             is Expr.Pass   -> this.e.traverse()
+            is Expr.Move   -> this.e.traverse()
 
             is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }

@@ -36,8 +36,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
-        is Expr.Data -> "data " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "]"
+        is Expr.Data   -> "data " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "]"
         is Expr.Pass   -> "pass " + this.e.tostr(pre)
+        is Expr.Move   -> "move(" + this.e.tostr(pre) + ")"
 
         is Expr.Spawn  -> "spawn " + this.tasks.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)

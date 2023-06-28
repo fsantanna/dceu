@@ -469,7 +469,7 @@ class Parser (lexer_: Lexer)
                                         ```
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        var $i = track(`:ceu ceu_x_$N`)
+                                        val $i = track(`:ceu ceu_x_$N`)
                                         $body
                                         ;;if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -550,7 +550,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    var $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
+                                    val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
@@ -681,20 +681,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
-            this.acceptFix("move") -> {
-                val e = this.expr_in_parens(true, false)!!
-                if (e.is_lval()) {
-                    this.nest("""
-                        do {
-                            val :tmp ceu_$N = ${e.tk.pos.pre()}xmove(${e.tostr(true)})
-                            ${e.tk.pos.pre()}set ${e.tostr()} = nil
-                            ceu_$N
-                        }
-                    """)
-                } else {
-                    this.nest("xmove(${e.tostr(true)})")
-                }
-            }
+            this.acceptFix("move") -> Expr.Move(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
 
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -938,7 +925,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { "var $x = ${v!!.tostr(true)}" }}
+                        ${v.cond { "val $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """

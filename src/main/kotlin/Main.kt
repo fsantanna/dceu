@@ -53,7 +53,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "coroutine", "detrack", "xmove", "next", "print", "println",
+    "copy", "coroutine", "detrack", "next", "print", "println",
     "status", "string-to-tag", "sup?", "tags", "tasks", "throw", "track", "type",
     "{==}", "{#}", "{/=}", "..."
 )
@@ -85,6 +85,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
+    data class Move   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)

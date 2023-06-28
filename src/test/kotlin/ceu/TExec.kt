@@ -490,7 +490,7 @@ class TExec {
     fun cc_tuple14_move_out() {
         val out = all("""
             val out = do {
-                var ins = [1,2,3]
+                val ins = [1,2,3]
                 move(ins)
             }
             println(out)
@@ -639,18 +639,6 @@ class TExec {
             println(g())
         """)
         assert(out == "[0,a]\n") { out }
-    }
-    @Test
-    fun cm_02_move() {
-        val out = all("""
-        val t = []
-        do {
-            val x = move(t)
-            println(:x, x)
-        }
-        println(:t, t)
-        """)
-        assert(out == "anon : (lin 4, col 26) : invalid set : destination is immutable") { out }
     }
     @Test
     fun cm_03_move() {
@@ -3396,7 +3384,7 @@ class TExec {
         """
             val x = 10
             val f = func (y) {
-                var g = func () {
+                val g = func () {
                     y
                 }
                 move(g)
@@ -3405,8 +3393,7 @@ class TExec {
             """,
         )
         assert(out == "anon : (lin 9, col 21) : f(1)\n" +
-                "anon : (lin 7, col 22) : xmove(g)\n" +
-                "move error : value is not movable\n" +
+                "anon : (lin 7, col 22) : move error : value is not movable\n" +
                 ":error\n") { out }
     }
 

@@ -40,6 +40,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
+            is Expr.Move   -> this.e.traverse()
 
             is Expr.Spawn  -> {
                 this.call.traverse()

@@ -16,6 +16,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
     fun Expr.isdst (): Boolean {
         return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
+    fun Expr.ismove (): Boolean {
+        return ups.pub[this].let { it is Expr.Move && it.e==this }
+    }
     fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.pub[this] as Expr.Set).n})"
     }
@@ -547,6 +550,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Enum -> ""
             is Expr.Data -> ""
             is Expr.Pass -> this.e.code()
+            is Expr.Move -> this.e.code()
 
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {
@@ -699,44 +703,61 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val (blk,dcl) = vars.get(this)
                 val (idc,_idc_) = vars.id2c(this,blk,dcl,this.tk_.upv)
                 when {
-                    !this.isdst() -> when {
-                        //!xvar.dcl.poly ->
-                        true -> assrc(idc) // ACC ${this.tk.dump()}
-                        /*xvar.dcl.poly -> """
-                            assert($idc.type==CEU_VALUE_DICT && "TODO");
-                            CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
-                            CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
-                            ${assrc("ceu_fld")}
-                        """*/
-                        else -> error("impossible case")
-                    }
                     this.isdst() -> {
                         val src = this.asdst_src()
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
-                        //val poly = (ups.pub[this] as Expr.Set).poly
+                        """
+                        { // ACC - SET
+                            if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${if (dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
+                                CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
+                            }
+                            ceu_gc_inc(&$src);
+                            ceu_gc_dec(&$idc, 1);
+                            $idc = $src;
+                        }
+                        """
+                        /*
+                        val poly = (ups.pub[this] as Expr.Set).poly
                         when {
-                            /*(poly != null) -> """
+                            (poly == null) -> ...
+                            (poly != null) -> """
                                 assert($idc.type==CEU_VALUE_DICT && "bug found");
                                 CEU_Value ceu_tag_$n = { CEU_VALUE_TAG, {.Tag=CEU_TAG_${poly.str.tag2c()}} };
                                 ceu_dict_set($idc.Dyn, &ceu_tag_$n, &$src);
-                            """*/
-                            //(poly == null) -> """
-                            true -> """
-                                { // ACC - SET
-                                    if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${if (dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
-                                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
-                                    }
-                                    ceu_gc_inc(&$src);
-                                    ceu_gc_dec(&$idc, 1);
-                                    $idc = $src;
-                                }
                             """
                             else -> error("impossible case")
                         }
+                         */
                     }
-                    else -> error("impossible case")
+                    this.ismove() && this.is_lval() -> {
+                        val bupc = ups.first_block(this)!!.toc(true)
+                        """
+                        { // ACC - MOVE
+                            CEU_Value ceu_$n = $idc;
+                            CEU_Value* args[1] = { &ceu_$n };
+                            CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
+                            ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            $idc = (CEU_Value) { CEU_VALUE_NIL };
+                            ceu_acc = ceu_$n;
+                        }
+                        """
+                    }
+                    else -> assrc(idc)
+                    /*
+                    when {
+                        !xvar.dcl.poly -> assrc(idc)    // ACC ${this.tk.dump()}
+                        xvar.dcl.poly -> """
+                            assert($idc.type==CEU_VALUE_DICT && "TODO");
+                            CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
+                            CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
+                            ${assrc("ceu_fld")}
+                        """
+                        else -> error("impossible case")
+                    }
+                     */
                 }
             }
             is Expr.EvtErr -> {
