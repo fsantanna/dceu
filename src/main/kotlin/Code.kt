@@ -921,7 +921,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     this.ismove() -> {
                         val bupc = ups.first_block(this)!!.toc(true)
                         """
-                        {
+                        {   // INDEX - MOVE
                             CEU_Value ceu_col_$n = ceu_acc;
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
@@ -949,16 +949,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             
-                            CEU_Value ceu_nil = (CEU_Value) {CEU_VALUE_NIL};
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
-                                    assert(CEU_RET_RETURN == ceu_tuple_set(ceu_col_$n.Dyn, ceu_mem->idx_$n.Number, ceu_nil));
+                                    ceu_col_$n.Dyn->Ncast.Tuple.buf[(int)ceu_mem->idx_$n.Number] = (CEU_Value) {CEU_VALUE_NIL};
                                     break;
                                 case CEU_VALUE_VECTOR:
-                                    assert(CEU_RET_RETURN == ceu_vector_set(ceu_col_$n.Dyn, ceu_mem->idx_$n.Number, ceu_nil));
+                                    assert(ceu_mem->idx_$n.Number == ceu_col_$n.Dyn->Ncast.Vector.its-1);
+                                    ceu_col_$n.Dyn->Ncast.Vector.its--;
                                     break;
                                 case CEU_VALUE_DICT: {
-                                    assert(CEU_RET_RETURN == ceu_dict_set(ceu_col_$n.Dyn, &ceu_mem->idx_$n, &ceu_nil));
+                                    int ceu_old;
+                                    ceu_dict_key_to_index(ceu_col_$n.Dyn, &ceu_mem->idx_$n, &ceu_old);
+                                    if (ceu_old != -1) {
+                                        (*ceu_col_$n.Dyn->Ncast.Dict.buf)[ceu_old][0] = (CEU_Value) { CEU_VALUE_NIL };
+                                    }
                                     break;
                                 }
                                 default:
