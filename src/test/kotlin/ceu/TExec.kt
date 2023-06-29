@@ -641,6 +641,18 @@ class TExec {
         assert(out == "[0,a]\n") { out }
     }
     @Test
+    fun cm_02_move () {
+        val out = all("""
+            val t = [[1]]
+            val s = move(t[0])
+            ;;val d = @[(1,[1])]
+            ;;val e = move(d[1])
+            ;;println(t,t[0],s)
+            ;;println(d,d[1],e)
+        """)
+        assert(out == "[nil]\tnil\t[1]\n@[(1,nil)]\tnil\t[1]\n") { out }
+    }
+    @Test
     fun cm_03_move() {
         val out = all("""
         var t = []

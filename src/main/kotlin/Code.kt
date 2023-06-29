@@ -657,15 +657,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : pub error : expected task");
                     }
                     ceu_dyn_$n = ceu_acc.Dyn;
-                    ${if (!this.isdst()) {
-                        assrc("ceu_dyn_$n->Bcast.X.Task.pub") + """
-                            if (ceu_isref) {
-                                ceu_toref(&ceu_acc);
-                            }
-                        """
-                    } else {
+                """ + when {
+                    this.isdst() -> {
                         val src = this.asdst_src()
-                        val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n 
+                        val task = (ups.first(this) { it is Expr.Proto && it.tk.str!="func" } as Expr.Proto).body.n
                         """ // PUB - SET
                         if (!ceu_block_chk_set(&$src, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_FIX))
                         //if (!ceu_block_chk_set(&$src, &ceu_mem->block_$task.dn_dyns, CEU_HOLD_PUB))
@@ -676,7 +671,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_gc_dec(&ceu_dyn_$n->Bcast.X.Task.pub, 1);
                         ceu_dyn_$n->Bcast.X.Task.pub = $src;
                         """
-                    }}
+                    }
+                    this.ismove() -> error("TODO")
+                    else -> {
+                        assrc("ceu_dyn_$n->Bcast.X.Task.pub") + """
+                            if (ceu_isref) {
+                                ceu_toref(&ceu_acc);
+                            }
+                        """
+                    }
+                } + """
                 }
                 """
             is Expr.Self -> assrc("(CEU_Value) { CEU_VALUE_X_${this.tk.str.uppercase()}, {.Dyn=${ups.true_x_c(this,this.tk.str)}->x} }")
@@ -731,7 +735,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                          */
                     }
-                    this.ismove() && this.is_lval() -> {
+                    this.ismove() -> {
                         val bupc = ups.first_block(this)!!.toc(true)
                         """
                         { // ACC - MOVE
@@ -880,29 +884,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     int ceu_isref = ceu_deref(&ceu_acc);
                     ceu_ret = ceu_col_check(&ceu_acc, &ceu_mem->idx_$n);
                     CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                    ${if (!this.isdst()) {
-                        """
-                        switch (ceu_acc.type) {
-                            case CEU_VALUE_TUPLE:
-                                ${assrc("ceu_acc.Dyn->Ncast.Tuple.buf[(int) ceu_mem->idx_$n.Number]")}
-                                break;
-                            case CEU_VALUE_VECTOR:
-                                ceu_ret = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
-                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                                break;
-                            case CEU_VALUE_DICT: {
-                                CEU_Value ceu_dict = ceu_acc;
-                                ${assrc("ceu_dict_get(ceu_dict.Dyn, &ceu_mem->idx_$n)")}
-                                break;
-                            }
-                            default:
-                                assert(0 && "bug found");
-                        }
-                        if (ceu_isref) {
-                            ceu_toref(&ceu_acc);
-                        }
-                        """                        
-                    } else {
+                """ + when {
+                    this.isdst() -> {
                         val src = this.asdst_src()
                         """
                         if (!ceu_block_chk_set(&ceu_mem->idx_$n, ceu_acc.Dyn->up_dyns.dyns, CEU_HOLD_NON)) {
@@ -934,7 +917,80 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         """
-                    }}
+                    }
+                    this.ismove() -> {
+                        val bupc = ups.first_block(this)!!.toc(true)
+                        """
+                        {
+                            CEU_Value ceu_col_$n = ceu_acc;
+                            switch (ceu_col_$n.type) {
+                                case CEU_VALUE_TUPLE:
+                                    ${assrc("ceu_col_$n.Dyn->Ncast.Tuple.buf[(int) ceu_mem->idx_$n.Number]")}
+                                    break;
+                                case CEU_VALUE_VECTOR:
+                                    ceu_ret = ceu_vector_get(ceu_col_$n.Dyn, ceu_mem->idx_$n.Number);
+                                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                    break;
+                                case CEU_VALUE_DICT: {
+                                    CEU_Value ceu_dict = ceu_col_$n;
+                                    ${assrc("ceu_dict_get(ceu_dict.Dyn, &ceu_mem->idx_$n)")}
+                                    break;
+                                }
+                                default:
+                                    assert(0 && "bug found");
+                            }
+                            if (ceu_isref) {
+                                ceu_toref(&ceu_acc);
+                            }
+                            
+                            CEU_Value ceu_val_$n = ceu_acc;
+                            CEU_Value* args[1] = { &ceu_val_$n };
+                            CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
+                            ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
+                            CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            
+                            CEU_Value ceu_nil = (CEU_Value) {CEU_VALUE_NIL};
+                            switch (ceu_col_$n.type) {
+                                case CEU_VALUE_TUPLE:
+                                    assert(CEU_RET_RETURN == ceu_tuple_set(ceu_col_$n.Dyn, ceu_mem->idx_$n.Number, ceu_nil));
+                                    break;
+                                case CEU_VALUE_VECTOR:
+                                    assert(CEU_RET_RETURN == ceu_vector_set(ceu_col_$n.Dyn, ceu_mem->idx_$n.Number, ceu_nil));
+                                    break;
+                                case CEU_VALUE_DICT: {
+                                    assert(CEU_RET_RETURN == ceu_dict_set(ceu_col_$n.Dyn, &ceu_mem->idx_$n, &ceu_nil));
+                                    break;
+                                }
+                                default:
+                                    assert(0 && "bug found");
+                            }
+                            
+                            ceu_acc = ceu_val_$n;
+                        }
+                        """
+                    }
+                    else -> """
+                        switch (ceu_acc.type) {
+                            case CEU_VALUE_TUPLE:
+                                ${assrc("ceu_acc.Dyn->Ncast.Tuple.buf[(int) ceu_mem->idx_$n.Number]")}
+                                break;
+                            case CEU_VALUE_VECTOR:
+                                ceu_ret = ceu_vector_get(ceu_acc.Dyn, ceu_mem->idx_$n.Number);
+                                CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                break;
+                            case CEU_VALUE_DICT: {
+                                CEU_Value ceu_dict = ceu_acc;
+                                ${assrc("ceu_dict_get(ceu_dict.Dyn, &ceu_mem->idx_$n)")}
+                                break;
+                            }
+                            default:
+                                assert(0 && "bug found");
+                        }
+                        if (ceu_isref) {
+                            ceu_toref(&ceu_acc);
+                        }
+                    """
+                } + """
                 }
                 """
             }

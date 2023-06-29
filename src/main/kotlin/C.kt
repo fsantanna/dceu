@@ -1713,10 +1713,11 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
-                        int ret = ceu_xmove_f(frame, _2, 1, args);
-                        if (ret != CEU_RET_RETURN) {
-                            return ret;
-                        }
+                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        //int ret = ceu_move_f(frame, _2, 1, args);
+                        //if (ret != CEU_RET_RETURN) {
+                        //    return ret;
+                        //}
                     }
                     break;
                 }

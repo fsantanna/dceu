@@ -2108,7 +2108,8 @@ class TXExec {
             } thus { move(it) }
             resume co()
         """)
-        assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
+        //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // TOGGLE
