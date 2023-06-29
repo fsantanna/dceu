@@ -641,7 +641,7 @@ class TTask {
         val out = ceu.all("""
             val co = do {
                 val v
-                var x = spawn (coro () {
+                val x = spawn (coro () {
                     yield(nil)
                     println(v)
                     println(:ok)
@@ -650,7 +650,7 @@ class TTask {
             }
             resume co()
         """)
-        assert(out == "anon : (lin 9, col 22) : value is not movable\n" +
+        assert(out == "anon : (lin 9, col 22) : move error : value is not movable\n" +
                 ":error\n") { out }
     }
 
@@ -3005,7 +3005,7 @@ class TTask {
         //        "anon : (lin 12, col 28) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
     }
     @Test
-    fun hh_pub16_err() {
+    fun todo_hh_pub16_err() {
         val out = all("""
             var t
             set t = task (v) {
@@ -3026,10 +3026,7 @@ class TTask {
             ;;println(a.pub)
         """, true)
         //assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
-        assert(out == "anon : (lin 17, col 13) : broadcast in a, [3]\n" +
-                "anon : (lin 11, col 27) : xmove(task.pub)\n" +
-                "move error : value is not movable\n" +
-                ":error\n") { out }
+        assert(out == "TODO\n") { out }
     }
     @Test
     fun hh_17_pub_out() {

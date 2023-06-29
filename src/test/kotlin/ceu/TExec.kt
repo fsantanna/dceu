@@ -650,7 +650,7 @@ class TExec {
             println(t,t[0],s)
             println(d,d[1],e)
         """)
-        assert(out == "[nil]\tnil\t[1]\n@[]\tnil\t[1]\n") { out }
+        assert(out == "[nil]\tnil\t[1]\n@[(1,nil)]\tnil\t[1]\n") { out }
     }
     @Test
     fun cm_03_move() {
@@ -674,13 +674,16 @@ class TExec {
             }
             println(f(1,2,3))
         """)
-        assert(out == "[[1,2,3]]\n") { out }
+        //assert(out == "[[1,2,3]]\n") { out }
+        assert(out == "anon : (lin 6, col 21) : f(1,2,3)\n" +
+                "anon : (lin 4, col 22) : move error : multiple references\n" +
+                ":error\n") { out }
     }
     @Test
     fun cm_04_err() {
         val out = all("""
             var f = func (t) {
-                var x = [t]
+                var x = [move(t)]
                 move(x)
             }
             println(f([1,2,3]))
@@ -3315,8 +3318,7 @@ class TExec {
             }
             println(g())
         """)
-        assert(out == "anon : (lin 9, col 26) : xmove(f(t))\n" +
-                "move error : multiple references\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
                 ":error\n") { out }
     }
     @Test

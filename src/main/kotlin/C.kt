@@ -1713,11 +1713,11 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Ncast.Tuple.its; i++) {
                         CEU_Value* args[1] = { &dyn->Ncast.Tuple.buf[i] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
-                        //int ret = ceu_move_f(frame, _2, 1, args);
-                        //if (ret != CEU_RET_RETURN) {
-                        //    return ret;
-                        //}
+                        //assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        int ret = ceu_move_f(frame, _2, 1, args);
+                        if (ret != CEU_RET_RETURN) {
+                            return ret;
+                        }
                     }
                     break;
                 }
@@ -1726,16 +1726,28 @@ fun Coder.main (tags: Tags): String {
                         assert(CEU_RET_RETURN == ceu_vector_get(dyn, i));
                         CEU_Value ceu_accx = ceu_acc;
                         CEU_Value* args[1] = { &ceu_accx };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        //assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args));
+                        int ret = ceu_move_f(frame, _2, 1, args);
+                        if (ret != CEU_RET_RETURN) {
+                            return ret;
+                        }
                     }
                     break;
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Ncast.Dict.max; i++) {
                         CEU_Value* args0[1] = { &(*dyn->Ncast.Dict.buf)[i][0] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args0));
+                        //assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args0));
+                        int ret0 = ceu_move_f(frame, _2, 1, args0);
+                        if (ret0 != CEU_RET_RETURN) {
+                            return ret0;
+                        }
                         CEU_Value* args1[1] = { &(*dyn->Ncast.Dict.buf)[i][1] };
-                        assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args1));
+                        //assert(CEU_RET_RETURN == ceu_move_f(frame, _2, 1, args1));
+                        int ret1 = ceu_move_f(frame, _2, 1, args1);
+                        if (ret1 != CEU_RET_RETURN) {
+                            return ret1;
+                        }
                     }
                     break;
                 }
