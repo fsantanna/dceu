@@ -1,6 +1,7 @@
 package dceu
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
+    val unused: MutableSet<Expr.Dcl> = mutableSetOf()
 
     init {
         outer.traverse()
@@ -11,7 +12,10 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Proto  -> this.body.traverse()
             is Expr.Export -> this.body.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
-            is Expr.Dcl    -> this.src?.traverse()
+            is Expr.Dcl    -> {
+                unused.add(this)
+                this.src?.traverse()
+            }
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
@@ -69,6 +73,8 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
+                val (_,dcl) = vars.get(this)
+                unused.remove(dcl)
                 if (this.tk.str == "_") {
                     err(this.tk, "access error : cannot access \"_\"")
                 }

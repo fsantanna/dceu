@@ -427,6 +427,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val id = this.id.str
                 val idc = id.id2c(this.n)
                 val bupc = ups.first_block(this)!!.toc(true)
+                val unused = true // TODO //sta.unused.contains(this) && (this.src is Expr.Proto)
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -435,7 +436,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 { // DCL ${this.tk.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
-                    ${(this.init && this.src!=null).cond {
+                    ${(this.init && this.src!=null && !unused).cond {
                         this.src!!.code() + """
                             ${this.do_issafe().cond { """
                                 ceu_deref(&ceu_acc);
