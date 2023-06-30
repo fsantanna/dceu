@@ -3539,4 +3539,34 @@ class TXExec {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun all_18() {
+        val out = all("""
+        coro Take () {
+            yield()
+            loop in [1 -> 3], i {
+                yield("line")
+            }
+        }
+        do {
+            val take = spawn Take()
+            coro Show () {
+                var line = yield()
+                loop while line {
+                    set line = yield()
+                    println(line)
+                }
+            }
+            coro Send (co, next) {
+                loop in iter(co), v {
+                    resume next(move(v))
+                }
+            }
+            spawn Send(take, spawn Show())
+            nil
+        }
+        """, true)
+        assert(out == "line\n" +
+                "line\n") { out }
+    }
 }

@@ -677,12 +677,13 @@ class TXJS {
             coro Show () {
                 var line = yield()
                 loop until not line {
+                    println(line)
                     set line = yield()
                 }
             }
             coro Send (co, next) {
                 loop in iter(co), v {
-                    resume next(v)
+                    resume next(move(v))
                 }
             }
             spawn Send(take2, spawn Show())
