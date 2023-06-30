@@ -741,10 +741,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         { // ACC - MOVE
                             CEU_Value ceu_$n = $idc;
                             CEU_Value* args[1] = { &ceu_$n };
-                            //ceu_gc_dec(&ceu_$n, 0);
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
                             ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            ceu_gc_dec(&ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                             ceu_acc = ceu_$n;
                         }
@@ -945,11 +945,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
-                            //ceu_gc_dec(&ceu_val_$n, 0);
                             CEU_Value* args[1] = { &ceu_val_$n };
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
                             ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            ceu_gc_dec(&ceu_val_$n, 0);
                             
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:

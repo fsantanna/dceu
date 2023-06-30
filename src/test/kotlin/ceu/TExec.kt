@@ -680,7 +680,7 @@ class TExec {
                 ":error\n") { out }
     }
     @Test
-    fun cm_04_err() {
+    fun cm_04() {
         val out = all("""
             var f = func (t) {
                 var x = [move(t)]
@@ -689,6 +689,16 @@ class TExec {
             println(f([1,2,3]))
         """)
         assert(out == "[[1,2,3]]\n") { out }
+    }
+    @Test
+    fun cm_05() {
+        val out = all("""
+            val t1 = [1]
+            val t2 = [move(t1)]
+            val t3 = move(t2)
+            println(t1, t2, t3)
+        """)
+        assert(out == "nil\tnil\t[[1]]\n") { out }
     }
 
     // DICT
@@ -3414,6 +3424,17 @@ class TExec {
     //  MEM-GC-REF-COUNT
 
     @Test
+    fun gc0() {
+        val out = all("""
+            do {
+                val xxx = []
+                nil
+            }
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun gc1() {
         val out = all("""
             var xxx = []
@@ -3493,9 +3514,8 @@ class TExec {
     fun gc8() {
         val out = all("""
             do {
-                var out
-                set out = do {
-                    var ins = [1,2,3]
+                val out = do {
+                    val ins = [1,2,3]
                     move(ins)
                 }
                 println(`:number ceu_gc_count`)
