@@ -219,8 +219,9 @@ class TXExec {
             }
             println(x)
         """, true)
-        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun bb_ifs10a() {
@@ -1493,6 +1494,62 @@ class TXExec {
             }
         """, true)
         assert(out == "[0,a]\n[1,b]\n") { out }
+    }
+    @Test
+    fun ff_04() {
+        val out = all("""
+        val e = func () {nil}
+        val f = func (v) {
+            ifs v {
+                true -> [e,v]
+            }
+        }
+        val g = func () {
+            val co = []
+            f(move(co))
+        }
+        val x = g()
+        println(x)
+        """, true)
+        assert(out.contains("[func: 0x")) { out }
+    }
+    @Test
+    fun ff_05_move() {
+        val out = all("""
+            val F = func (^x) {
+                (spawn (coro () {
+                    yield(nil)
+                    ^^x
+                }) ()) thus {
+                    it
+                }
+            }
+            do {
+                val x = []
+                val co = F(x)
+                println(resume co())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun ff_06_move() {
+        val out = all("""
+            val F = func (^x) {
+                coro () {
+                    yield(nil)
+                    ^^x
+                } thus {
+                    iter(it)
+                }
+            }
+            do {
+                val x = []
+                val itr :Iterator = F(x)
+                println(itr.f(itr))
+            }
+        """, true)
+        assert(out == "[]\n") { out }
     }
 
     // AWAIT / EVERY

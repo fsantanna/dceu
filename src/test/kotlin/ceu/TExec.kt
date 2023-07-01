@@ -700,6 +700,35 @@ class TExec {
         """)
         assert(out == "nil\tnil\t[[1]]\n") { out }
     }
+    @Test
+    fun cc_07_global() {
+        val out = all("""
+        val e = func () {nil}
+        val g = func () {
+            val co = [e]
+            move(co)
+        }
+        val x = g()
+        println(x)
+        """, true)
+        assert(out.contains("[func: 0x")) { out }
+    }
+    @Test
+    fun cc_08_move() {
+        val out = all("""
+            val F = func (^x) {
+                func () {
+                    ^^x
+                }
+            }
+            do {
+                val x = []
+                val f = F(x)
+                println(f())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // DICT
 
@@ -1637,11 +1666,13 @@ class TExec {
                     loop in :tasks ts, t {
                         set vec[#vec] = t
                     }
+                    println(vec)
                 }
             }
         """)
-        assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+        //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("#[x-track: 0x")) { out }
     }
     @Test
     fun scope25_tracks() {

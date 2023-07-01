@@ -1683,21 +1683,28 @@ fun Coder.main (tags: Tags): String {
             assert(n == 1);
             CEU_Value* src = args[0];
             CEU_Dyn* dyn = src->Dyn;
-            if (src->type > CEU_VALUE_DYNAMIC) {
-                //printf(">>> %d\n", dyn->refs);
-                if (dyn->tphold >= CEU_HOLD_FIX) {
-                    CEU_THROW_MSG("\0 : move error : value is not movable");
-                    CEU_THROW_RET(CEU_ERR_ERROR);
-                }
-                int N = (src->type >= CEU_VALUE_X_CORO) ? 2 : 1;
-                if (dyn->refs > N) {
-                    CEU_THROW_MSG("\0 : move error : multiple references");
-                    CEU_THROW_RET(CEU_ERR_ERROR);
-                }
-                dyn->tphold = CEU_HOLD_NON;
-                ceu_hold_rem(dyn);
-                ceu_hold_add(&frame->up_block->dn_dyns, dyn);
+            
+            // do not move non-dyn or globals
+            if (src->type < CEU_VALUE_DYNAMIC) {
+                return CEU_RET_RETURN;
+            } else if (ceu_depth(dyn->up_dyns.dyns->up_block) == 1) {
+                return CEU_RET_RETURN;
             }
+            
+            //printf(">>> %d\n", dyn->refs);
+            if (dyn->tphold >= CEU_HOLD_FIX) {
+                CEU_THROW_MSG("\0 : move error : value is not movable");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
+            int N = (src->type >= CEU_VALUE_X_CORO) ? 2 : 1;
+            if (dyn->refs > N) {
+                CEU_THROW_MSG("\0 : move error : multiple references");
+                CEU_THROW_RET(CEU_ERR_ERROR);
+            }
+            dyn->tphold = CEU_HOLD_NON;
+            ceu_hold_rem(dyn);
+            ceu_hold_add(&frame->up_block->dn_dyns, dyn);
+
             switch (src->type) {
                 case CEU_VALUE_P_FUNC:
                 case CEU_VALUE_P_CORO:

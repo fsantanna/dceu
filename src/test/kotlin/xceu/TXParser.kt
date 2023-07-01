@@ -97,7 +97,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = nil\n" +
+                "val :tmp it = nil\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -118,7 +118,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = v\n" +
+                "val :tmp it = v\n" +
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -132,7 +132,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val it = v\n" +
+                "val :tmp it = v\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +

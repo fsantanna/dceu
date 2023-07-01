@@ -710,6 +710,23 @@ class TTask {
         assert(out == ":out\t[]\n" +
                 ":in\tnil\n") { out }
     }
+    @Test
+    fun cc_05_move() {
+        val out = all("""
+            val F = func (^x) {
+                move(spawn (coro () {
+                    yield(nil)
+                    ^^x
+                }) ())
+            }
+            do {
+                val x = []
+                val co = F(x)
+                println(resume co())
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // SPAWN / GROUP
 
@@ -1922,8 +1939,8 @@ class TTask {
             println(status(detrack(yyy)))
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
-        //assert(out == ":yielded\n") { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
     }
     @Test
     fun ff_pool11_move() {

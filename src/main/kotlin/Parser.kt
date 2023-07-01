@@ -279,7 +279,7 @@ class Parser (lexer_: Lexer)
         val (id, tag, cnd) = id_tag_cnd()
         N++
         return """
-            val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
             if $not ${id ?: "ceu_$N"} {
                 xbreak $nn
             } else { nil }
@@ -298,7 +298,7 @@ class Parser (lexer_: Lexer)
         }
         N++
         return """
-            val ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
             if $not ${id ?: "ceu_$N"} {
                 xbreak $nn
             } else { nil }
@@ -394,9 +394,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
+                            val :tmp ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val $id ${tag?.str ?: ""} = ceu_$N
+                                val :tmp $id ${tag?.str ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -441,7 +441,7 @@ class Parser (lexer_: Lexer)
                         }
                         { body: String -> """
                             ${pre0}do {
-                                val ceu_tasks_$N = ${tasks.tostr(true)}
+                                val :tmp ceu_tasks_$N = ${tasks.tostr(true)}
                                 ```
                                 if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
                                     CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${tasks.tk.pos.file} : (lin ${tasks.tk.pos.lin}, col ${tasks.tk.pos.col}) : loop error : expected tasks");
@@ -469,7 +469,7 @@ class Parser (lexer_: Lexer)
                                         ```
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        val $i = track(`:ceu ceu_x_$N`)
+                                        val :tmp $i = track(`:ceu ceu_x_$N`)
                                         $body
                                         ;;if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -547,10 +547,10 @@ class Parser (lexer_: Lexer)
                         }
                         { body: String -> """
                             ${pre0}do {
-                                val ceu_it_$N :Iterator = ${iter.tostr(true)}
+                                val :tmp ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
+                                    val :tmp $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
@@ -925,7 +925,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { "val $x = ${v!!.tostr(true)}" }}
+                        ${v.cond { "val :tmp $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
@@ -952,11 +952,11 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        val ceu_co_$N  = ${call.proto.tostr(true)}
+                        val :tmp ceu_co_$N  = ${call.proto.tostr(true)}
                         var ceu_arg_$N = ${arg.tostr(true)}
                         loop {
                             ;;println(:resume, ceu_arg_$N)
-                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            val :tmp ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
                             ;;println(:yield, ceu_v_$N)
                             if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
                                 set ceu_arg_$N = yield(ceu_v_$N)
@@ -1025,7 +1025,7 @@ class Parser (lexer_: Lexer)
                     (awt.spw != null) -> { // await spawn T()
                         this.nest("""
                             ${pre0}do {
-                                val ceu_spw_$N = ${awt.spw.tostr(true)}
+                                val :tmp ceu_spw_$N = ${awt.spw.tostr(true)}
                                 ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.Task.pub;`
                             }
