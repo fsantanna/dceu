@@ -1312,8 +1312,9 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
             
             int tag = (X->type == CEU_VALUE_P_CORO) ? CEU_VALUE_X_CORO : CEU_VALUE_X_TASK;
+            int tphold = (X->Dyn->tphold <= CEU_HOLD_VAR) ? CEU_HOLD_NON : X->Dyn->tphold;
             *x = (CEU_Dyn) {
-                tag, {NULL,-1}, NULL, X->Dyn->tphold, 1, {
+                tag, {NULL,-1}, NULL, tphold, 1, {
                     .Bcast = { CEU_X_STATUS_YIELDED, {
                         .X = { frame, NULL, 0, .Task = { NULL, { CEU_VALUE_NIL } } }
                     } }

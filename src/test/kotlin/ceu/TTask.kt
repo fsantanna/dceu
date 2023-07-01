@@ -727,6 +727,19 @@ class TTask {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun cc_06_move() {
+        val out = all("""
+            do {
+                val F = (coro () { println(:ok) })
+                val f = do {        ;; dst=2
+                    coroutine(F)    ;; src=3
+                }
+                resume f()
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // SPAWN / GROUP
 

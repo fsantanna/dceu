@@ -361,8 +361,9 @@ class TXExec {
             println([ ] === [1])
             println([1] =/= [1])
             println([1,[],[1,2,3]] === [1,[],[1,2,3]])
+            println([nil,[[1,1],1]] === [nil,[[1,1],1]])
         """, true)
-        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+        assert(out == "true\nfalse\nfalse\ntrue\ntrue\n") { out }
     }
     @Test
     fun ii_02_op_eqeqeq_tup() {

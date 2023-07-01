@@ -1074,19 +1074,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         """
                     }}
                     ${this.proto.code()}
-                    CEU_Value ceu_task_$n = ceu_acc;
+                    CEU_Value ceu_proto_$n = ceu_acc;
                     CEU_Value ceu_x_$n;
                     ${istasks.cond { "CEU_Value ceu_ok_$n = { CEU_VALUE_BOOL, {.Bool=1} };" }}
                     ${if (!istasks) {
                         """
-                        ceu_ret = ceu_x_create(&$bupc->dn_dyns, &ceu_task_$n, &ceu_x_$n);
+                        ceu_ret = ceu_x_create(&$bupc->dn_dyns, &ceu_proto_$n, &ceu_x_$n);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     } else {
                         """
                         ceu_ret = ceu_x_create_in (
                             ceu_mem->tasks_${spawn!!.n}.Dyn,
-                            &ceu_task_$n,
+                            &ceu_proto_$n,
                             &ceu_x_$n,
                             &ceu_ok_$n.Bool
                         );
