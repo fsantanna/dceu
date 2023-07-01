@@ -1537,8 +1537,7 @@ class TXExec {
         val out = all("""
             val F = func (^x) {
                 coro () {
-                    yield(nil)
-                    ^^x
+                    yield(^^x)
                 } thus {
                     iter(it)
                 }

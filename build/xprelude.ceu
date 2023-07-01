@@ -170,10 +170,18 @@ export [iter] {
         }
     }
 
-    func iter-coro (itr :Iterator) {
+    func iter-xcoro (itr :Iterator) {
         val co = itr.s
         val :tmp v = resume co()
-        ((status(co) /= :terminated) and v) or nil
+        if (status(co) == :terminated)
+            -> nil
+            -> v
+    }
+
+    func iter-coro (itr :Iterator) {
+        set itr.s = coroutine(itr.s)
+        set itr.f = iter-xcoro
+        itr.f(itr)
     }
 
     func iter (v, tp) {
@@ -183,7 +191,8 @@ export [iter] {
             is? :vector   -> :Iterator [iter-tuple, v, tp, 0]
             is? :dict     -> :Iterator [iter-dict,  v, tp, nil]
             is? :func     -> :Iterator [v]
-            is? :x-coro   -> :Iterator [iter-coro,  v]
+            is? :coro     -> :Iterator [iter-coro, v]
+            is? :x-coro   -> :Iterator [iter-xcoro, v]
         }
     }
 }
