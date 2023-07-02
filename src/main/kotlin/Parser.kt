@@ -1199,19 +1199,19 @@ class Parser (lexer_: Lexer)
                             when (op.str) {
                                 "=" -> this.nest("""
                                     export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
+                                        val :xtmp ceu_col_$N = ${e.tostr(true)}
                                         ceu_col_$N[(#ceu_col_$N)-1]
                                     }
                                 """)
                                 "+" -> this.nest("""
                                     export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
+                                        val :xtmp ceu_col_$N = ${e.tostr(true)}
                                         ceu_col_$N[#ceu_col_$N]
                                     }
                                 """) //.let { println(it.tostr());it }
                                 "-" -> this.nest("""
                                     export [] { 
-                                        val :tmp ceu_col_$N = ${e.tostr(true)}
+                                        val :xtmp ceu_col_$N = ${e.tostr(true)}
                                         val ceu_i_$N = ceu_col_$N[(#ceu_col_$N)-1]
                                         set ceu_col_$N[(#ceu_col_$N)-1] = nil
                                         ceu_i_$N
