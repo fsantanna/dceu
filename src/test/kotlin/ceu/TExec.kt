@@ -2870,7 +2870,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "34\t290\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "35\t291\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2962,7 +2962,7 @@ class TExec {
                 to-number(:depois)
             )
         """, true)
-        assert(out == "34\t1000\t1001\t1002\t10\t11\t12\t35\t100\t101\t36\n") { out }
+        assert(out == "35\t1000\t1001\t1002\t10\t11\t12\t36\t100\t101\t37\n") { out }
     }
     @Test
     fun enum02() {

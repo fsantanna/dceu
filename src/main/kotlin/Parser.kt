@@ -279,10 +279,12 @@ class Parser (lexer_: Lexer)
         val (id, tag, cnd) = id_tag_cnd()
         N++
         return """
-            val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-            if $not ${id ?: "ceu_$N"} {
-                xbreak $nn
-            } else { nil }
+            do {
+                val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                if $not ${id ?: "ceu_$N"} {
+                    xbreak $nn
+                } else { nil }
+            }
         """
     }
 
@@ -298,10 +300,12 @@ class Parser (lexer_: Lexer)
         }
         N++
         return """
-            val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-            if $not ${id ?: "ceu_$N"} {
-                xbreak $nn
-            } else { nil }
+            do {
+                val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                if $not ${id ?: "ceu_$N"} {
+                    xbreak $nn
+                } else { nil }
+            }
             $xblk
         """
     }
@@ -324,13 +328,17 @@ class Parser (lexer_: Lexer)
             }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tmp = this.acceptTag(":tmp")
+                val tmp = when {
+                    this.acceptTag(":tmp")     -> true
+                    this.acceptTag(":xtmp") -> false
+                    else                           -> null
+                }
                 this.acceptFix("evt") || this.acceptEnu_err("Id")
                 val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
                 if (id.str == "...") {
                     err(this.tk0, "invalid declaration : unexpected ...")
                 }
-                if (tmp && tk0.str!="val") {
+                if (tmp!=null && tk0.str!="val") {
                     err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
                 }
                 val tag = if (!this.acceptEnu("Tag")) null else {
@@ -394,9 +402,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val :tmp ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
+                            val :xtmp ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
                             if ceu_$N {
-                                val :tmp $id ${tag?.str ?: ""} = ceu_$N
+                                val :xtmp $id ${tag?.str ?: ""} = ceu_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
@@ -441,7 +449,7 @@ class Parser (lexer_: Lexer)
                         }
                         { body: String -> """
                             ${pre0}do {
-                                val :tmp ceu_tasks_$N = ${tasks.tostr(true)}
+                                val :xtmp ceu_tasks_$N = ${tasks.tostr(true)}
                                 ```
                                 if (ceu_mem->ceu_tasks_$N.type != CEU_VALUE_X_TASKS) {                
                                     CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${tasks.tk.pos.file} : (lin ${tasks.tk.pos.lin}, col ${tasks.tk.pos.col}) : loop error : expected tasks");
@@ -469,7 +477,7 @@ class Parser (lexer_: Lexer)
                                         ```
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        val :tmp $i = track(`:ceu ceu_x_$N`)
+                                        val :xtmp $i = track(`:ceu ceu_x_$N`)
                                         $body
                                         ;;if detrack($i) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
@@ -547,10 +555,10 @@ class Parser (lexer_: Lexer)
                         }
                         { body: String -> """
                             ${pre0}do {
-                                val :tmp ceu_it_$N :Iterator = ${iter.tostr(true)}
+                                val :xtmp ceu_it_$N :Iterator = ${iter.tostr(true)}
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val :tmp $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
+                                    val :xtmp $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
@@ -925,7 +933,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("}")
                 this.nest("""
                     ${pre0}do {
-                        ${v.cond { "val :tmp $x = ${v!!.tostr(true)}" }}
+                        ${v.cond { "val :xtmp $x = ${v!!.tostr(true)}" }}
                         ${ifs.map { (xxx,blk) ->
                             val (id,tag,cnd) = xxx
                             """
@@ -952,7 +960,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        val :tmp ceu_co_$N  = ${call.proto.tostr(true)}
+                        val :tmp ceu_co_$N = ${call.proto.tostr(true)}
                         var ceu_arg_$N = ${arg.tostr(true)}
                         loop {
                             ;;println(:resume, ceu_arg_$N)
@@ -1281,7 +1289,7 @@ class Parser (lexer_: Lexer)
                     val body = this.block()
                     e = this.nest("""
                         ${tk0.pos.pre()}do {
-                            val :tmp ${x?.str ?: "it"} = ${e.tostr(true)}
+                            val :xtmp ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
                     """) //.let { println(it); it })

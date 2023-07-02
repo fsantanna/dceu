@@ -400,6 +400,16 @@ class TTask {
         """)
         assert(out == ":yyy\n:xxx\n") { out }
     }
+    @Test
+    fun aa_25_yield_tmp() {
+        val out = all("""
+            val F = coro () {
+                val :tmp x
+                yield(nil)
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : invalid declaration : unsafe \":tmp\"") { out }
+    }
 
     // SPAWN
 
@@ -1952,8 +1962,8 @@ class TTask {
             println(status(detrack(yyy)))
         """)
         //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == ":yielded\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == ":yielded\n") { out }
     }
     @Test
     fun ff_pool11_move() {
@@ -2427,7 +2437,7 @@ class TTask {
             var ts = tasks()
             spawn in ts, T()
             loop in :tasks ts, trk {
-                val :tmp tsk = detrack(trk)
+                val tsk = detrack(trk)
                 broadcast nil
             }
             println(:ok)

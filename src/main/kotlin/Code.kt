@@ -30,11 +30,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
         }
     }
 
-    fun Expr.do_issafe (): Boolean {
-        val blk = ups.first_block(this)!!
-        return !unsf.dos.contains(blk)
-    }
+    fun Expr.tmp_hold (tmp: Boolean?): String {
+        return when {
+            (tmp == null) -> "CEU_HOLD_VAR"
+            (tmp == true) -> "CEU_HOLD_NON"
+            (unsf.chk_up_safe(this)) -> "CEU_HOLD_NON"
+            else -> "CEU_HOLD_VAR"
+        }
 
+    }
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -266,7 +270,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                 }
                                 if (ceu_i < ceu_n) {
-                                    ${this.do_issafe().cond { """
+                                    ${unsf.chk_up_safe(this).cond { """
                                         ceu_deref(ceu_args[ceu_i]);
                                     """ }}
                                     if (!ceu_block_chk_set(ceu_args[ceu_i], &ceu_mem->_${idc}_->dn_dyns, CEU_HOLD_NON)) {
@@ -427,7 +431,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val id = this.id.str
                 val idc = id.id2c(this.n)
                 val bupc = ups.first_block(this)!!.toc(true)
-                val unused = true // TODO //sta.unused.contains(this) && (this.src is Expr.Proto)
+                val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Proto)
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -438,10 +442,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                     ${(this.init && this.src!=null && !unused).cond {
                         this.src!!.code() + """
-                            ${this.do_issafe().cond { """
+                            ${unsf.chk_up_safe(this).cond { """
                                 ceu_deref(&ceu_acc);
                             """ }}
-                            if (!ceu_block_chk_set(&ceu_acc, &$bupc->dn_dyns, ${if (this.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
+                            if (!ceu_block_chk_set(&ceu_acc, &$bupc->dn_dyns, ${this.tmp_hold(this.tmp)})) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                             }
                         """
@@ -715,7 +719,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${if (dcl.tmp) "CEU_HOLD_NON" else "CEU_HOLD_VAR"})) {
+                            if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${this.tmp_hold(dcl.tmp)})) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                             }
                             ceu_gc_inc(&$src);

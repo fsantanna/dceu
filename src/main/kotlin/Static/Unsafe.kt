@@ -5,7 +5,7 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - set vars in enclosing tasks
     //  - broadcast events
     //  - yield
-    // They cannot receive "evt" or "pub" or "detrack"
+    // They cannot receive "evt" or "pub" or "detrack" or dcl ":tmp"
     //  - they are marked and cannot receive "evt"
     //  - otherwise, we do not check with ceu_block_set
     val funcs = mutableSetOf<Expr.Proto>()
@@ -20,6 +20,11 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             old = cur
             cur = funcs.size + dos.size
         }
+    }
+
+    fun chk_up_safe (e: Expr): Boolean {
+        val blk = ups.first_block(e)!!
+        return !this.dos.contains(blk)
     }
 
     fun Expr.set_up_unsafe() {
@@ -46,7 +51,12 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     dos.contains(this)  -> this.set_up_unsafe()
                 }
             }
-            is Expr.Dcl    -> this.src?.traverse()
+            is Expr.Dcl    -> {
+                if (this.tmp==true && !chk_up_safe(this)) {
+                    err(this.tk, "invalid declaration : unsafe \":tmp\"")
+                }
+                this.src?.traverse()
+            }
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()

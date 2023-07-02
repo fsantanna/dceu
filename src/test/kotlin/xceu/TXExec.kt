@@ -1551,6 +1551,28 @@ class TXExec {
         """, true)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun ff_07_move() {
+        val out = all("""
+            func F () {
+                coro () {
+                    loop {
+                        val :tmp pos = []
+                        yield(pos)
+                    }
+                } thus {
+                    iter(it)
+                }
+            }
+            do {
+                val x :Iterator = F()
+                x.f(x) thus { }
+                x.f(x)
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
 
     // AWAIT / EVERY
 
