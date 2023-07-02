@@ -501,7 +501,7 @@ class TXExec {
     fun bcast3() {
         val out = all("""
             do {
-                val :tmp e = []
+                val e = []
                 broadcast e
             }
             do {
@@ -511,6 +511,21 @@ class TXExec {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun bcast4() {
+        val out = all("""
+            do {
+                val :tmp e = []
+                broadcast e
+            }
+            do {
+                val e = []
+                broadcast e
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 3, col 17) : invalid declaration : unsafe \":tmp\"") { out }
     }
 
     // YIELD ALL

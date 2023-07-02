@@ -280,7 +280,7 @@ class Parser (lexer_: Lexer)
         N++
         return """
             do {
-                val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                val :xtmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                 if $not ${id ?: "ceu_$N"} {
                     xbreak $nn
                 } else { nil }
@@ -301,7 +301,7 @@ class Parser (lexer_: Lexer)
         N++
         return """
             do {
-                val :tmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+                val :xtmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
                 if $not ${id ?: "ceu_$N"} {
                     xbreak $nn
                 } else { nil }
