@@ -683,8 +683,7 @@ class TTask {
     fun cc_03_move() {
         val out = all("""
         val f = func (x) {
-            val :tmp v = x()
-            v
+            x()
         }
         val F = func () {
             []
