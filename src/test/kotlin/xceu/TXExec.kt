@@ -1572,8 +1572,8 @@ class TXExec {
             func F () {
                 coro () {
                     loop {
-                        val :tmp pos = []
-                        yield(pos)
+                        val pos = []
+                        yield(move(pos))
                     }
                 } thus {
                     iter(it)
@@ -3071,7 +3071,7 @@ class TXExec {
             }
             println(t)
         """, true)
-        assert(out == "[47,1000,1001,1002,10,11,12,46,44,101,49]\n") { out }
+        assert(out == "[47,1000,1001,1002,10,11,12,48,44,101,49]\n") { out }
     }
 
     // TAGS / PRE

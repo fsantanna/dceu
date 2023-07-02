@@ -325,9 +325,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tmp = when {
-                    this.acceptTag(":tmp")     -> true
+                    this.acceptTag(":tmp")  -> true
                     this.acceptTag(":xtmp") -> false
-                    else                           -> null
+                    else                        -> null
                 }
                 this.acceptFix("evt") || this.acceptEnu_err("Id")
                 val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
@@ -956,11 +956,11 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     do {
-                        val :tmp ceu_co_$N = ${call.proto.tostr(true)}
+                        val :xtmp ceu_co_$N = ${call.proto.tostr(true)}
                         var ceu_arg_$N = ${arg.tostr(true)}
                         loop {
                             ;;println(:resume, ceu_arg_$N)
-                            val :tmp ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            val :xtmp ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
                             ;;println(:yield, ceu_v_$N)
                             if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
                                 set ceu_arg_$N = yield(ceu_v_$N)
@@ -1029,7 +1029,7 @@ class Parser (lexer_: Lexer)
                     (awt.spw != null) -> { // await spawn T()
                         this.nest("""
                             ${pre0}do {
-                                val :tmp ceu_spw_$N = ${awt.spw.tostr(true)}
+                                val :xtmp ceu_spw_$N = ${awt.spw.tostr(true)}
                                 ${pre0}await :check-now (status(ceu_spw_$N) == :terminated)
                                 `ceu_acc = ceu_mem->ceu_spw_$N.Dyn->Bcast.X.Task.pub;`
                             }

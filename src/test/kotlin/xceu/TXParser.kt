@@ -97,7 +97,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val :tmp it = nil\n" +
+                "val :xtmp it = nil\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -118,7 +118,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val :tmp it = v\n" +
+                "val :xtmp it = v\n" +
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -132,7 +132,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "val :tmp it = v\n" +
+                "val :xtmp it = v\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -157,7 +157,7 @@ class TXParser {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :tmp ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nval :xtmp ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
     }
     @Test
     fun bin2_and() {
@@ -165,7 +165,7 @@ class TXParser {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :tmp ceu_5 = 1\nif ceu_5 {\n2\n} else {\nceu_5\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nval :xtmp ceu_5 = 1\nif ceu_5 {\n2\n} else {\nceu_5\n}\n}") { e.tostr() }
     }
     @Test
     fun bin3_not_or_and() {
@@ -175,8 +175,8 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val :tmp ceu_73 = do {
-            val :tmp ceu_26 = if true {
+            val :xtmp ceu_73 = do {
+            val :xtmp ceu_26 = if true {
             false
             } else {
             true
