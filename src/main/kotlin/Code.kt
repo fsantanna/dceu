@@ -34,7 +34,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
         return when {
             (tmp == null) -> "CEU_HOLD_VAR"
             (tmp == true) -> "CEU_HOLD_NON"
-            (unsf.chk_up_safe(this)) -> "CEU_HOLD_NON"
+            (unsf.chk_up_safe(this) || (ups.first(this){ it is Expr.Proto }?.tk?.str == "func")) -> "CEU_HOLD_NON"
             else -> "CEU_HOLD_VAR"
         }
 
