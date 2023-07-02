@@ -172,10 +172,11 @@ export [iter] {
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        val :tmp v = resume co()
-        if (status(co) == :terminated)
-            -> nil
-            -> v
+        (resume co()) thus {
+            if (status(co) == :terminated)
+                -> nil
+                -> it
+        }
     }
 
     func iter-coro (itr :Iterator) {

@@ -1314,13 +1314,13 @@ class Parser (lexer_: Lexer)
             e = when (op.str) {
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
+                        val :xtmp ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :tmp ceu_${e.n} = ${e.tostr(true)} 
+                        val :xtmp ceu_${e.n} = ${e.tostr(true)} 
                         if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
                     }
                 """)
