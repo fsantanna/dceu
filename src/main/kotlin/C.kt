@@ -466,7 +466,7 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_tags_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 1);
             CEU_Value* dyn = args[0];
-            assert(dyn->type > CEU_VALUE_DYNAMIC);
+            CEU_Tags_List* tags = (dyn->type < CEU_VALUE_DYNAMIC) ? NULL : dyn->Dyn->tags;
             CEU_Value* tag = NULL;
             if (n >= 2) {
                 tag = args[1];
@@ -475,7 +475,7 @@ fun Coder.main (tags: Tags): String {
             switch (n) {
                 case 1: {
                     int len = 0; {
-                        CEU_Tags_List* cur = dyn->Dyn->tags;
+                        CEU_Tags_List* cur = tags;
                         while (cur != NULL) {
                             len++;
                             cur = cur->next;
@@ -483,7 +483,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     CEU_Dyn* tup = ceu_tuple_create(&frame->up_block->dn_dyns, len);
                     {
-                        CEU_Tags_List* cur = dyn->Dyn->tags;
+                        CEU_Tags_List* cur = tags;
                         int i = 0;
                         while (cur != NULL) {
                             assert(ceu_tuple_set(tup, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
@@ -495,19 +495,15 @@ fun Coder.main (tags: Tags): String {
                 }
                 case 2: {   // check
                     ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
-                    if (dyn->type < CEU_VALUE_DYNAMIC) {
-                        // no tags
-                    } else {
-                        CEU_Tags_List* cur = dyn->Dyn->tags;
-                        while (cur != NULL) {
-                            CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
-                            CEU_Value* args[] = { tag, &x };
-                            assert(CEU_RET_RETURN == ceu_sup_question__f(frame, _2, 2, args));
-                            if (ceu_acc.Bool) {
-                                break;
-                            }
-                            cur = cur->next;
+                    CEU_Tags_List* cur = tags;
+                    while (cur != NULL) {
+                        CEU_Value x = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                        CEU_Value* args[] = { tag, &x };
+                        assert(CEU_RET_RETURN == ceu_sup_question__f(frame, _2, 2, args));
+                        if (ceu_acc.Bool) {
+                            break;
                         }
+                        cur = cur->next;
                     }
                     break;
                 }
