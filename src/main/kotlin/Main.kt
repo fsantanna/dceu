@@ -54,8 +54,8 @@ val TAGS = listOf (
 
 val GLOBALS = setOf (
     "copy", "coroutine", "detrack", "next", "print", "println",
-    "status", "string-to-tag", "sup?", "tags", "tasks", "throw", "track", "type",
-    "{==}", "{#}", "{/=}", "..."
+    "status", "string-to-tag", "sup?", "tags", "tasks", "throw",
+    "track", "tuple", "type", "{==}", "{#}", "{/=}", "..."
 )
 
 data class Await (val now: Boolean, val cnd: Expr?, val tag: Pair<Expr.Tag,Expr?>?, val clk: List<Pair<Expr, Tk.Tag>>?, val spw: Expr.Spawn?)

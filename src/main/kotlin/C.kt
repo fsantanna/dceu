@@ -466,6 +466,7 @@ fun Coder.main (tags: Tags): String {
         CEU_RET ceu_tags_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
             assert(n >= 1);
             CEU_Value* dyn = args[0];
+            assert(dyn->type > CEU_VALUE_DYNAMIC);
             CEU_Value* tag = NULL;
             if (n >= 2) {
                 tag = args[1];
@@ -1284,6 +1285,12 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
+        CEU_RET ceu_tuple_f (CEU_Frame* frame, CEU_BStack* _2, int n, CEU_Value* args[]) {
+            assert(n==1 && args[0]->type==CEU_VALUE_NUMBER);
+            CEU_Dyn* tup = ceu_tuple_create(&frame->up_block->dn_dyns, args[0]->Number);
+            ceu_acc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+        }
+        
         CEU_Dyn* ceu_vector_create (CEU_Dyns* hld) {
             CEU_Dyn* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
@@ -1988,6 +1995,11 @@ fun Coder.main (tags: Tags): String {
                             .Ncast = { .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} } }
                         }
                     };
+                    static CEU_Dyn ceu_tuple = { 
+                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
+                            .Ncast = { .Proto = { NULL, ceu_tuple_f, {0,NULL}, {{0}} } }
+                        }
+                    };
                     static CEU_Dyn ceu_type = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
                             .Ncast = { .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} } }
@@ -2026,6 +2038,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->throw      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_throw}        };
                     ceu_mem->track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
                     ceu_mem->type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
+                    ceu_mem->tuple      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tuple}         };
                     ceu_mem->op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
                     ceu_mem->sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
                     ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };

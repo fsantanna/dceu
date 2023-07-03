@@ -613,6 +613,16 @@ class TExec {
         assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun cc_24_tuple() {
+        val out = all("""
+            val t = tuple(3)
+            println(t)
+            set t[1] = 10
+            println(t)
+        """)
+        assert(out == "[nil,nil,nil]\n[nil,10,nil]\n") { out }
+    }
 
     // MOVE
 
