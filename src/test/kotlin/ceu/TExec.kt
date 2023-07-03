@@ -1692,6 +1692,20 @@ class TExec {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun scope26_args() {
+        val out = all("""
+            val f = func (v) {
+                [v, [2]]
+            }
+            do {
+                val v = [1]
+                val x = f(v)
+                println(x)
+            }
+        """)
+        assert(out == "[[1],[2]]\n") { out }
+    }
 
     // IF
 

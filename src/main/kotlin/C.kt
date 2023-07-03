@@ -1051,8 +1051,16 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(&v);
             ceu_gc_dec(&tup->Ncast.Tuple.buf[i], 1);
             tup->Ncast.Tuple.buf[i] = v;
-            return ((v.type < CEU_VALUE_DYNAMIC) && ceu_block_chk(&v,tup->up_dyns.dyns,tup->tphold)) || ceu_block_chk_set_mutual(v.Dyn,tup);
-                //ceu_block_set(v.Dyn, tup->up_dyns.dyns, tup->tphold);
+
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                assert(tup->up_dyns.dyns != NULL);
+                if (v.Dyn->tphold!=CEU_HOLD_NON && ceu_depth(v.Dyn->up_dyns.dyns->up_block) > ceu_depth(tup->up_dyns.dyns->up_block)) {
+                    ceu_hold_rem(tup);
+                    ceu_hold_add(v.Dyn->up_dyns.dyns, tup);
+                }
+            }
+
+            return ((v.type<CEU_VALUE_DYNAMIC) && ceu_block_chk(&v,tup->up_dyns.dyns,tup->tphold)) || ceu_block_chk_set_mutual(v.Dyn,tup);
         }
         
         CEU_RET ceu_vector_get (CEU_Dyn* vec, int i) {
@@ -1074,6 +1082,14 @@ fun Coder.main (tags: Tags): String {
                 vec->Ncast.Vector.its--;
                 return 1;
             } else {
+                if (v.type > CEU_VALUE_DYNAMIC) {
+                    assert(vec->up_dyns.dyns != NULL);
+                    if (ceu_depth(v.Dyn->up_dyns.dyns->up_block) > ceu_depth(vec->up_dyns.dyns->up_block)) {
+                        ceu_hold_rem(vec);
+                        ceu_hold_add(v.Dyn->up_dyns.dyns, vec);
+                    }
+                }
+                
                 if (vec->Ncast.Vector.its == 0) {
                     vec->Ncast.Vector.type = v.type;
                 } else {
@@ -1156,6 +1172,25 @@ fun Coder.main (tags: Tags): String {
             }
         }        
         int ceu_dict_set (CEU_Dyn* col, CEU_Value* key, CEU_Value* val) {
+
+            if (key->type > CEU_VALUE_DYNAMIC) {
+                assert(col->up_dyns.dyns != NULL);
+                if (ceu_depth(key->Dyn->up_dyns.dyns->up_block) > ceu_depth(col->up_dyns.dyns->up_block)) {
+                    ceu_hold_rem(col);
+                    ceu_hold_add(key->Dyn->up_dyns.dyns, col);
+                }
+                assert(ceu_block_chk_set_mutual(key->Dyn, col));
+            } else {
+                assert(ceu_block_chk_set(&ceu_acc, col->up_dyns.dyns, col->tphold));
+            }
+            if (val->type > CEU_VALUE_DYNAMIC) {
+                assert(col->up_dyns.dyns != NULL);
+                if (ceu_depth(val->Dyn->up_dyns.dyns->up_block) > ceu_depth(col->up_dyns.dyns->up_block)) {
+                    ceu_hold_rem(col);
+                    ceu_hold_add(val->Dyn->up_dyns.dyns, col);
+                }
+            }
+
             //assert(key->type != CEU_VALUE_NIL);     // TODO
             int old;
             ceu_dict_key_to_index(col, key, &old);

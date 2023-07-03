@@ -789,13 +789,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            assert(ceu_mem->tup_$n->up_dyns.dyns != NULL);
-                            if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->tup_$n->up_dyns.dyns->up_block)) {
-                                ceu_hold_rem(ceu_mem->tup_$n);
-                                ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->tup_$n);
-                            }
-                        }
                         if (!ceu_tuple_set(ceu_mem->tup_$n, $i, ceu_acc)) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : tuple error : incompatible scopes");
                         }
@@ -810,13 +803,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
-                        if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                            assert(ceu_mem->vec_$n->up_dyns.dyns != NULL);
-                            if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->vec_$n->up_dyns.dyns->up_block)) {
-                                ceu_hold_rem(ceu_mem->vec_$n);
-                                ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->vec_$n);
-                            }
-                        }
                         ceu_ret = ceu_vector_set(ceu_mem->vec_$n, $i, ceu_acc);
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : incompatible scopes");
                         """
@@ -832,25 +818,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${this.args.map { """
                         {
                             ${it.first.code()}
-                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                assert(ceu_mem->dict_$n->up_dyns.dyns != NULL);
-                                if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->dict_$n->up_dyns.dyns->up_block)) {
-                                    ceu_hold_rem(ceu_mem->dict_$n);
-                                    ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
-                                }
-                                assert(ceu_block_chk_set_mutual(ceu_acc.Dyn, ceu_mem->dict_$n));
-                            } else {
-                                assert(ceu_block_chk_set(&ceu_acc, ceu_mem->dict_$n->up_dyns.dyns, ceu_mem->dict_$n->tphold));
-                            }
                             ceu_mem->key_$n = ceu_acc;
                             ${it.second.code()}
-                            if (ceu_acc.type > CEU_VALUE_DYNAMIC) {
-                                assert(ceu_mem->dict_$n->up_dyns.dyns != NULL);
-                                if (ceu_depth(ceu_acc.Dyn->up_dyns.dyns->up_block) > ceu_depth(ceu_mem->dict_$n->up_dyns.dyns->up_block)) {
-                                    ceu_hold_rem(ceu_mem->dict_$n);
-                                    ceu_hold_add(ceu_acc.Dyn->up_dyns.dyns, ceu_mem->dict_$n);
-                                }
-                            }
                             CEU_Value ceu_val_$n = ceu_acc;
                             ceu_ret = ceu_dict_set(ceu_mem->dict_$n, &ceu_mem->key_$n, &ceu_val_$n);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : dict error : incompatible scopes");
