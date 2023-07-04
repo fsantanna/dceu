@@ -256,6 +256,7 @@ func c-to-string (v) {
 
 func :rec to-string (v) {
     ifs {
+        v is? :nil -> "nil"
         v is? :pointer -> c-to-string(v)
         v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
         v is? :char -> #[v]
