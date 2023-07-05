@@ -245,6 +245,10 @@ func :rec {=/=} (v1,v2) {
 ;; TO-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+func string? (v) {
+    ((v is? :vector) and (#v > 0)) and (v[0] is? :char)
+}
+
 func c-to-string (v) {
     assert(type(v) == :pointer)
     val str = #[]
@@ -272,13 +276,11 @@ func :rec to-string (v) {
 }
 
 func to-number (v) {
-    ifs {
-        v is? :tag -> `:number $v.Tag`
-        v is? :char -> `:number $v.Char`
-        ((v is? :vector) and (#v > 0)) and (v[0] is? :char) -> do {
-            `:number atoi($v.Dyn->Ncast.Vector.buf)`
-        }
-        else -> v   ;; TODO
+    ifs v {
+        is? :tag   -> `:number $v.Tag`
+        is? :char  -> `:number $v.Char`
+        string?(v) -> `:number atoi($v.Dyn->Ncast.Vector.buf)`
+        else       -> v   ;; TODO
     }
 }
 
@@ -286,6 +288,13 @@ func to-char (v) {
     ifs {
         v is? :number -> `:char $v.Number`
         else -> v   ;; TODO
+    }
+}
+
+func to-tag (v) {
+    ifs {
+        string?(v) -> string-to-tag(v)
+        else       -> v   ;; TODO
     }
 }
 

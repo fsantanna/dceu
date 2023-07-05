@@ -2742,6 +2742,16 @@ class TExec {
         """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
+    @Test
+    fun ff_03_string_to_tag() {
+        val out = all("""
+            val x = string-to-tag(#[':','x'])
+            println(x == :x)
+            val y = string-to-tag(#[':','y'])
+            println(y)
+        """)
+        assert(out == "true\nnil\n") { out }
+    }
 
     // TYPE
 
