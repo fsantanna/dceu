@@ -235,10 +235,10 @@ class TParser {
     }
     @Test
     fun vector4() {
-        val l = lexer("v[{#}(v)]")
+        val l = lexer("v[{{#}}(v)]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "v[{#}(v)]") { e.tostr() }
+        assert(e.tostr() == "v[{{#}}(v)]") { e.tostr() }
     }
 
     // EXPR.INDEX / PUB
@@ -295,7 +295,7 @@ class TParser {
         val l = lexer("set task.pub = x.pub + task.pub")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "set task.pub = {+}(x.pub,task.pub)") { e.tostr() }
+        assert(e.tostr() == "set task.pub = {{+}}(x.pub,task.pub)") { e.tostr() }
     }
 
     // EXPRS
@@ -700,7 +700,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{+}(10,1)") { e.tostr() }
+        assert(e.tostr() == "{{+}}(10,1)") { e.tostr() }
     }
     @Test
     fun bin3() {
@@ -708,7 +708,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.exprBins()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{/=}(10,1)") { e.tostr() }
+        assert(e.tostr() == "{{/=}}(10,1)") { e.tostr() }
     }
     @Test
     fun pre1() {
@@ -716,7 +716,7 @@ class TParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{-}({-}(1))") { e.tostr() }
+        assert(e.tostr() == "{{-}}({{-}}(1))") { e.tostr() }
     }
     @Test
     fun bin4() {
@@ -724,14 +724,14 @@ class TParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{+}({+}(1,2),3)") { e.tostr() }
+        assert(e.tostr() == "{{+}}({{+}}(1,2),3)") { e.tostr() }
     }
     @Test
     fun pre_pos1() {
         val l = lexer("-x[0]")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "{-}(x[0])") { e.tostr() }
+        assert(e.tostr() == "{{-}}(x[0])") { e.tostr() }
     }
 
     // TASK / YIELD / RESUME

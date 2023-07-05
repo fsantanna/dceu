@@ -532,7 +532,7 @@ empty?          ;; var with question
 map'            ;; var with prime
 >               ;; simple op id
 ++              ;; op with multi chars
-{-}             ;; op as var id
+{{-}}             ;; op as var id
 ```
 
 ## Literals
@@ -1421,7 +1421,7 @@ Examples:
 ```
 #vec            ;; unary operation
 x - 10          ;; binary operation
-{-}(x,10)       ;; operation as call
+{{-}}(x,10)       ;; operation as call
 f(10,20)        ;; normal call
 ```
 
@@ -2386,8 +2386,8 @@ the sense that they cannot be written in Ceu itself:
 ### Equality Operators
 
 ```
-func {==} (v1, v2)  ;; --> yes/no
-func {/=} (v1, v2)  ;; --> yes/no
+func {{==}} (v1, v2)  ;; --> yes/no
+func {{/=}} (v1, v2)  ;; --> yes/no
 ```
 
 The operator `==` compares two values `v1` and `v2` and returns a boolean.

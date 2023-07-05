@@ -910,9 +910,16 @@ class Parser (lexer_: Lexer)
                             Triple(null, null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
                         XCEU && (v!=null) && this.acceptEnu("Op") -> {
-                            val op = this.tk0.str
-                            val e = this.expr()
-                            Triple(null, null, this.nest("$x $op ${e.tostr(true)}"))
+                            val op = this.tk0.str.let {
+                                if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
+                            }
+                            val e = if (this.checkFix("->")) null else this.expr()
+                            val call = if (e == null) {
+                                "$op($x)"
+                            } else {
+                                "$op($x, ${e.tostr(true)})"
+                            }
+                            Triple(null, null, this.nest(call))
                         }
                         else -> {
                             id_tag_cnd()
@@ -1166,7 +1173,7 @@ class Parser (lexer_: Lexer)
                 op as Tk.Op
                 e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e))
+                e = Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}",op.pos,0)), listOf(e))
             }
         }
         return e
@@ -1251,14 +1258,23 @@ class Parser (lexer_: Lexer)
                 }
                 // ECALL
                 this.acceptFix("(") -> {
-                    e = Expr.Call(e.tk, e, list0(")",",") {
+                    val args = list0(")",",") {
                         val x = this.expr()
                         if (x is Expr.Acc && x.tk.str=="...") {
                             this.checkFix_err(")")
                         }
                         x
-                    })
+                    }
                     this.acceptFix_err(")")
+                    e = if (XCEU && e is Expr.Acc && e.tk.str in XOPERATORS) {
+                        when (args.size) {
+                            1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
+                            2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
+                            else -> err(e.tk, "operation error : invalid number of arguments") as Expr
+                        }
+                    } else {
+                        Expr.Call(e.tk, e, args)
+                    }
                 }
                 // LAMBDA
                 XCEU && this.checkFix("\\") -> {
@@ -1324,7 +1340,10 @@ class Parser (lexer_: Lexer)
                 "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
                 "in-not?" -> this.nest("in-not'(${e.tostr(true)}, ${e2.tostr(true)})")
-                else -> Expr.Call(op, Expr.Acc(Tk.Id("{${op.str}}",op.pos,0)), listOf(e,e2))
+                else -> {
+                    val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
+                    Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e,e2))
+                }
             }
             pre = this.tk0
         }

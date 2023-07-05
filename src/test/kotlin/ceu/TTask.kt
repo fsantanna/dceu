@@ -1026,7 +1026,7 @@ class TTask {
     fun dd_throw11_fake() {
         val out = all("""
             spawn task () { 
-                catch {==}(err,:err) {
+                catch {{==}}(err,:err) {
                     spawn task () :fake {
                         ${yield()}
                         throw(:err)

@@ -20,16 +20,16 @@ func is-not' (v1,v2) {
 
 ;; ARITHMETIC
 
-export [{+}, {-}, {*}, {**}, {/}, {//}, {%}]
+export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
 {
-    func {+} (v1, v2) {
+    func {{+}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
         `:number ($v1.Number + $v2.Number)`
     }
 
-    func {-} (v1, v2) {
+    func {{-}} (v1, v2) {
         ifs {
             (v1 is? :number) and (v2 is? :nil)           -> `:number (- $v1.Number)`
             (v1 is-not? :number) or (v2 is-not? :number) -> throw(:error)
@@ -37,35 +37,35 @@ export [{+}, {-}, {*}, {**}, {/}, {//}, {%}]
         }
     }
 
-    func {*} (v1, v2) {
+    func {{*}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
         `:number ($v1.Number * $v2.Number)`
     }
 
-    func {**} (v1, v2) {
+    func {{**}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
         `:number powf($v1.Number, $v2.Number)`
     }
 
-    func {/} (v1, v2) {
+    func {{/}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
         `:number ($v1.Number / $v2.Number)`
     }
 
-    func {//} (v1, v2) {
+    func {{//}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
         `:number powf($v1.Number, 1/$v2.Number)`
     }
 
-    func {%} (v1, v2) {
+    func {{%}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
         }
@@ -75,8 +75,8 @@ export [{+}, {-}, {*}, {**}, {/}, {//}, {%}]
 
 ;; RELATIONAL:  >=  >  <=  <
 
-export [{>}, {<}, {>=}, {<=}] {
-    func {>} (v1,v2) {
+export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
+    func {{>}} (v1,v2) {
         ifs {
             (v1 is? :tag)    and (v2 is? :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
             (v1 is? :number) and (v2 is? :number) -> `:bool ($v1.Number > $v2.Number)`
@@ -84,15 +84,15 @@ export [{>}, {<}, {>=}, {<=}] {
         }
     }
 
-    func {<} (v1,v2) {
+    func {{<}} (v1,v2) {
         not ((v1 == v2) or (v1 > v2))
     }
 
-    func {>=} (v1,v2) {
+    func {{>=}} (v1,v2) {
         (v1 == v2) or (v1 > v2)
     }
 
-    func {<=} (v1,v2) {
+    func {{<=}} (v1,v2) {
         (v1 == v2) or (v1 < v2)
     }
 }
@@ -212,7 +212,7 @@ func in-not' (v, xs) {
     not in'(v,xs)
 }
 
-func :rec {===} (v1,v2) {
+func :rec {{===}} (v1,v2) {
     val t1 = type(v1)
     val t2 = type(v2)
     ifs {
@@ -237,7 +237,7 @@ func :rec {===} (v1,v2) {
      }
 }
 
-func :rec {=/=} (v1,v2) {
+func :rec {{=/=}} (v1,v2) {
     not (v1 === v2)
 }
 
@@ -277,10 +277,10 @@ func :rec to-string (v) {
 
 func to-number (v) {
     ifs v {
-        is? :tag   -> `:number $v.Tag`
-        is? :char  -> `:number $v.Char`
-        string?(v) -> `:number atoi($v.Dyn->Ncast.Vector.buf)`
-        else       -> v   ;; TODO
+        is? :tag    -> `:number $v.Tag`
+        is? :char   -> `:number $v.Char`
+        {{string?}} -> `:number atoi($v.Dyn->Ncast.Vector.buf)`
+        else        -> v   ;; TODO
     }
 }
 
@@ -336,7 +336,7 @@ func iterable-to-dict (itb) {
 ;; CONCAT:  <++  ++
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-func {<++} (v1, v2) {
+func {{<++}} (v1, v2) {
     assert(type(v1) == :vector)
     assert(type(v2) == :vector)
     do {
@@ -347,13 +347,13 @@ func {<++} (v1, v2) {
     v1
 }
 
-func {++} (v1, v2) {
+func {{++}} (v1, v2) {
     (#[] <++ v1) <++ v2
 }
 
 ;; composition
 
-func {<|<} (^f,^g) {
+func {{<|<}} (^f,^g) {
     func (v) {
         ^^f(^^g(v))
     }

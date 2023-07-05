@@ -246,22 +246,21 @@ class TLexer {
 
     @Test
     fun ops1() {
-        val l = lexer("{-} {+} {x} {*/} -> ( + ({==})")
+        val l = lexer("{{-}} {{+}} {{x}} {{*/}} -> ( + ({{==}})")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id  && it.str == "{-}" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "{+}" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "{" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "}" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "{*/}" })
-        //println(tks.next())
+        assert(tks.next().let { it is Tk.Id  && it.str == "{{-}}" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{{+}}" })
+        //assert(tks.next().let { it is Tk.Fix && it.str == "{" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "x" })
+        //assert(tks.next().let { it is Tk.Fix && it.str == "}" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{{*/}}" })
         assert(tks.next().let { it is Tk.Op  && it.str == "->" })
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
         assert(tks.next().let { it is Tk.Op  && it.str == "+" })
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "{==}" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "{{==}}" })
         assert(tks.next().let { it is Tk.Fix && it.str == ")" })
-        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==31 })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==41 })
     }
     @Test
     fun ops2() {
@@ -277,20 +276,26 @@ class TLexer {
     }
     @Test
     fun ops3() {
-        val l = lexer("=== =/= !! {===} {!!}")
+        val l = lexer("=== =/= !! {{===}} {{!!}}")
         val tks = l.lex().iterator()
         assert(tks.next().str == "===")
         assert(tks.next().str == "=/=")
         assert(tks.next().str == "!!")
-        assert(tks.next().str == "{===}")
-        assert(tks.next().str == "{!!}")
+        assert(tks.next().str == "{{===}}")
+        assert(tks.next().str == "{{!!}}")
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun ops4_err() {
-        val l = lexer("{===")
+    fun ops5_err() {
+        val l = lexer("{{===}")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : expected \"}\"")
+    }
+    @Test
+    fun ops4_err() {
+        val l = lexer("{{x=}}")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : invalid identifier")
     }
 
     @Test

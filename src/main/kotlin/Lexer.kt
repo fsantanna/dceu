@@ -211,21 +211,22 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 }
                 (x == '{') -> {
                     val (n1,x1) = read2()
-                    if (x1 !in OPERATORS) {
+                    if (x1 != '{') {
                         unread2(n1)
                         yield(Tk.Fix("{", pos))
                     } else {
-                        val op = x1 + read2While { it in OPERATORS }
+                        val op = read2While { it != '}' }
                         val (_,x2) = read2()
-                        if (x2 != '}') {
-                            if (op.length == 1) {
-                                yield(Tk.Id("{$op}", pos, 0))
-                                unread2(1)
-                            } else {
-                                err(pos, "operator error : expected \"}\"")
-                            }
+                        val (_,x3) = read2()
+                        if (!(x2=='}' && x3=='}')) {
+                            err(pos, "operator error : expected \"}\"")
                         }
-                        yield(Tk.Id("{$op}", pos, 0))
+                        when {
+                            op in XOPERATORS            -> yield(Tk.Id(op, pos, 0))
+                            op.all  { it in OPERATORS } -> yield(Tk.Id("{{$op}}", pos, 0))
+                            op.none { it in OPERATORS } -> yield(Tk.Op(op, pos, 0))
+                            else -> err(pos, "operator error : invalid identifier")
+                        }
                     }
                 }
                 (x == ':') -> {

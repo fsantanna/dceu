@@ -397,7 +397,7 @@ class TExec {
             println(f(3))
         """, true)
         assert(out == "anon : (lin 12, col 21) : f(3)\n" +
-                "anon : (lin 6, col 29) : f({-}(v,1))\n" +
+                "anon : (lin 6, col 29) : f({{-}}(v,1))\n" +
                 "anon : (lin 3, col 30) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -415,7 +415,7 @@ class TExec {
             println(f(3))
         """, true)
         assert(out == "anon : (lin 11, col 21) : f(3)\n" +
-                "anon : (lin 5, col 29) : f({-}(v,1))\n" +
+                "anon : (lin 5, col 29) : f({{-}}(v,1))\n" +
                 "anon : (lin 4, col 26) : block escape error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -957,7 +957,7 @@ class TExec {
         val out = all("""
             #1
         """)
-        assert(out == "anon : (lin 2, col 13) : {#}(1) : length error : not a vector\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : {{#}}(1) : length error : not a vector\n:error\n") { out }
     }
     @Test
     fun vector8_err() {
@@ -1020,7 +1020,7 @@ class TExec {
                 val ceu_ifs_17 = true    
                 val v = #[]
                 if true {                                                           
-                    set v[{#}(v)] = 10                                              
+                    set v[{{#}}(v)] = 10                                              
                 } else {                                                            
                     nil
                 }
@@ -1044,7 +1044,7 @@ class TExec {
             v[#v-1]
         """, true)
         //assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
-        assert(out == "anon : (lin 3, col 15) : {#}(v) : length error : not a vector\n" +
+        assert(out == "anon : (lin 3, col 15) : {{#}}(v) : length error : not a vector\n" +
                 ":error\n") { out }
     }
 
@@ -2580,7 +2580,7 @@ class TExec {
     @Test
     fun op_id1() {
         val out = all("""
-            println({-}(10,4))
+            println({{-}}(10,4))
         """, true)
         assert(out == "6\n") { out }
     }
@@ -2641,6 +2641,16 @@ class TExec {
             println(8%3)
         """, true)
         assert(out == "8\n2\n2\n") { out }
+    }
+    @Test
+    fun ops_id() {
+        val out = all("""
+            val add = func (x,y) {
+                x + y
+            }
+            println(10 {{add}} 20)
+        """, true)
+        assert(out == "30\n") { out }
     }
 
     // ==, ===, /=, =/=

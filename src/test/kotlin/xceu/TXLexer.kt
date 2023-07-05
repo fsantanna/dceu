@@ -61,4 +61,14 @@ class TXLexer {
         //println(tks.next())
         //assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid time constant")
     }
+
+    @Test
+    fun ops1() {
+        val l = lexer("{{not}} not")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.str == "not" })
+        assert(tks.next().let { it is Tk.Op && it.str == "not" })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
 }

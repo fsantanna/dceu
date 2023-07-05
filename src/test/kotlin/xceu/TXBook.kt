@@ -136,7 +136,7 @@ class TXBook {
                     }
                 }
             }
-            val plusc = curry({+})
+            val plusc = curry({{+}})
             val b = plusc(1)
             val c = b(2)
             println((plusc(1))(-4))
@@ -234,7 +234,7 @@ class TXBook {
             }
             println(fact(-1))
         """, true)
-        assert(out == "anon : (lin 9, col 21) : fact({-}(1))\n" +
+        assert(out == "anon : (lin 9, col 21) : fact({{-}}(1))\n" +
                 "anon : (lin 4, col 31) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -259,7 +259,7 @@ class TXBook {
             }
             println(fact(-1))
         """, true)
-        assert(out == "anon : (lin 9, col 21) : fact({-}(1))\n" +
+        assert(out == "anon : (lin 9, col 21) : fact({{-}}(1))\n" +
                 "anon : (lin 4, col 31) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }

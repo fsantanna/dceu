@@ -201,7 +201,7 @@ class TXParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Call)
-        assert(e.tostr() == "{-}(if {-}(1) {\nfalse\n} else {\ntrue\n})") { e.tostr() }
+        assert(e.tostr() == "{{-}}(if {{-}}(1) {\nfalse\n} else {\ntrue\n})") { e.tostr() }
     }
 
     // TUPLE / INDEX
@@ -269,11 +269,11 @@ class TXParser {
         assert(e.tostr() == """
             do {
             var ceu_step_27 = 1
-            var i = {+}(0,0)
+            var i = {{+}}(0,0)
             var ceu_limit_27 = n
-            loop until {==}(i,ceu_limit_27) {
+            loop until {{==}}(i,ceu_limit_27) {
             nil
-            set i = {+}(i,ceu_step_27)
+            set i = {{+}}(i,ceu_step_27)
             }
             }
             """.trimIndent()) { e.tostr() }

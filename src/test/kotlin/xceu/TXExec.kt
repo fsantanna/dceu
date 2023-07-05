@@ -342,6 +342,22 @@ class TXExec {
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
+    @Test
+    fun ops_05() {
+        val out = all("""
+            println({{is?}}(4, :nil))
+            println({{or}}(false, true))
+            println({{not}}(true))
+        """)
+        assert(out == "false\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun ops_06() {
+        val out = all("""
+            println({{is?}}())
+        """)
+        assert(out == "false\ntrue\nfalse\n") { out }
+    }
 
     // ==, ===, /=, =/=
 
@@ -450,7 +466,22 @@ class TXExec {
         assert(out == "true\n") { out }
     }
 
-    // assert
+    // METHODS
+
+    @Test
+    fun jj_01_method() {
+        val out = ceu.all("""
+            func g () {-x}
+            func f (v) {
+                v + 1
+            }
+            val v = 10->f()
+            println(11)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+
+    // ASSERT
 
     @Test
     fun assert1() {
