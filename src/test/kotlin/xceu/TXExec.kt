@@ -257,11 +257,31 @@ class TXExec {
     fun bb_13_ifs () {
         val out = all("""
             val x = ifs {
-                is? nil -> true
+                and nil -> true
             }
             println(x)
         """)
-        assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"{{and}}\" is not declared") { out }
+    }
+    @Test
+    fun bb_14_ifs () {
+        val out = all("""
+            val x = ifs 4 {
+                is? nil -> false
+                in? [4] -> true
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun bb_15_ifs () {
+        val out = all("""
+            and nil
+        """)
+        //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"{{and}}\" is not declared") { out }
     }
 
     // OPS: not, and, or
@@ -345,18 +365,25 @@ class TXExec {
     @Test
     fun ops_05() {
         val out = all("""
-            println({{is?}}(4, :nil))
             println({{or}}(false, true))
             println({{not}}(true))
         """)
-        assert(out == "false\ntrue\nfalse\n") { out }
+        assert(out == "true\nfalse\n") { out }
     }
     @Test
     fun ops_06() {
         val out = all("""
-            println({{is?}}())
+            println({{not}}())
         """)
-        assert(out == "false\ntrue\nfalse\n") { out }
+        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments") { out }
+    }
+    @Test
+    fun ops_07() {
+        val out = all("""
+            println({{is?}}    (4, :nil))
+            println({{is-not?}}(4, :nil))
+        """, true)
+        assert(out == "false\ntrue\n") { out }
     }
 
     // ==, ===, /=, =/=

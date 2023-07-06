@@ -163,7 +163,7 @@ class TXBook {
     @Test
     fun pg_13_ops() {
         val out = ceu.all("""
-            println({*}(1 + 3, 4))
+            println({{*}}(1 + 3, 4))
         """, true)
         assert(out == "16\n") { out }
     }

@@ -259,12 +259,12 @@ func c-to-string (v) {
 }
 
 func :rec to-string (v) {
-    ifs {
-        v is? :nil -> "nil"
-        v is? :pointer -> c-to-string(v)
-        v is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
-        v is? :char -> #[v]
-        v is? :number -> do {
+    ifs v {
+        is? :nil -> "nil"
+        is? :pointer -> c-to-string(v)
+        is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        is? :char -> #[v]
+        is? :number -> do {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
@@ -285,16 +285,16 @@ func to-number (v) {
 }
 
 func to-char (v) {
-    ifs {
-        v is? :number -> `:char $v.Number`
+    ifs v {
+        is? :number -> `:char $v.Number`
         else -> v   ;; TODO
     }
 }
 
 func to-tag (v) {
-    ifs {
-        string?(v) -> string-to-tag(v)
-        else       -> v   ;; TODO
+    ifs v {
+        {{string?}} -> string-to-tag(v)
+        else        -> v   ;; TODO
     }
 }
 
@@ -310,11 +310,11 @@ func to-tracks (...) {
     val ret = #[]
     val args = ...
     loop in iter(args), v {
-        ifs {
-            v is? :x-task {
+        ifs v {
+            is? :x-task {
                 set ret[+] = track(v)
             }
-            v is? :x-tasks {
+            is? :x-tasks {
                 loop in :tasks v, i {
                     set ret[+] = move(i)
                 }

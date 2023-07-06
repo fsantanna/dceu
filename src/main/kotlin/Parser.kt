@@ -1169,11 +1169,11 @@ class Parser (lexer_: Lexer)
         var e = this.exprSufs()
         while (ops.size > 0) {
             val op = ops.removeLast()
-            if (XCEU && op.str == "not") {
+            e = if (XCEU && op.str == "not") {
                 op as Tk.Op
-                e = this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
+                this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             } else {
-                e = Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}",op.pos,0)), listOf(e))
+                Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}",op.pos,0)), listOf(e))
             }
         }
         return e
