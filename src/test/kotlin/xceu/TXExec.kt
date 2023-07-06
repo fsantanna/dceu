@@ -2121,6 +2121,17 @@ class TXExec {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun cc_07_lambda_call () {
+        val out = ceu.all("""
+            func f (v,g) {
+                g(v)
+            }
+            val v = f(5) \{ it }
+            println(v)
+        """)
+        assert(out == "5\n") { out }
+    }
 
     // WHERE
 

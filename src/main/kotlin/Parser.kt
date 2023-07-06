@@ -1266,14 +1266,22 @@ class Parser (lexer_: Lexer)
                         x
                     }
                     this.acceptFix_err(")")
-                    e = if (XCEU && e is Expr.Acc && e.tk.str in XOPERATORS) {
-                        when (args.size) {
-                            1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
-                            2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
-                            else -> err(e.tk, "operation error : invalid number of arguments") as Expr
+                    e = when {
+                        this.checkFix("\\") -> {
+                            val f = lambda()
+                            val args = args.map { it.tostr(true) }.joinToString(",")
+                            this.nest("""
+                                ${e.tostr(true)}($args, ${f.tostr(true)})
+                        """)
                         }
-                    } else {
-                        Expr.Call(e.tk, e, args)
+                        (XCEU && e is Expr.Acc && e.tk.str in XOPERATORS) -> {
+                            when (args.size) {
+                                1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
+                                2 -> this.nest("${args[0].tostr(true)} ${e.tostr(true)} ${args[1].tostr(true)}")
+                                else -> err(e.tk, "operation error : invalid number of arguments") as Expr
+                            }
+                        }
+                        else -> Expr.Call(e.tk, e, args)
                     }
                 }
                 // LAMBDA
