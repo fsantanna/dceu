@@ -57,6 +57,13 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprPrim() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
     }
+    @Test
+    fun op_prec_err() {
+        val out = all("""
+            println(2 * 3 - 1)
+        """, true)
+        assert(out == "anon : (lin 2, col 27) : binary operation error : expected surrounding parentheses") { out }
+    }
 
     // EXPR.NUM / EXPR.NIL / EXPR.BOOL
 

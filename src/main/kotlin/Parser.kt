@@ -1267,7 +1267,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix_err(")")
                     e = when {
-                        this.checkFix("\\") -> {
+                        (XCEU && this.checkFix("\\")) -> {
                             val f = lambda()
                             val args = args.map { it.tostr(true) }.joinToString(",")
                             this.nest("""
@@ -1322,12 +1322,13 @@ class Parser (lexer_: Lexer)
     fun exprBins (): Expr {
         var e = this.exprPres()
         var pre: Tk? = null
+        val op0 = this.tk1.str
         while (
             this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
             this.acceptEnu("Op")
         ) {
             val op = this.tk0
-            if (pre==null || pre.str==")" || this.tk1.str==")") {} else {
+            if (op.str==op0 || pre==null || pre.str==")" || this.tk1.str==")") {} else {
                 err(op, "binary operation error : expected surrounding parentheses")
             }
             val e2 = this.exprPres()

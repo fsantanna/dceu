@@ -2620,11 +2620,11 @@ class TExec {
         assert(out == "true\nfalse\n") { out }
     }
     @Test
-    fun op_assoc_err() {
+    fun op_prec_ok() {
         val out = all("""
-            println(2 * 3 - 1)
+            println(2 + 3 + 1)
         """, true)
-        assert(out == "anon : (lin 2, col 27) : binary operation error : expected surrounding parentheses") { out }
+        assert(out == "6\n") { out }
     }
     @Test
     fun op_assoc() {
