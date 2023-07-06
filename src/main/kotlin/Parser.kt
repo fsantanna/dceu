@@ -374,7 +374,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val (id,tag,cnd) = id_tag_cnd()
-                val arr = XCEU && this.acceptFix("->")
+                val arr = XCEU && this.acceptFix("=>")
                 val t = if (arr) {
                     Expr.Do(this.tk0, listOf(this.expr()))
                 } else {
@@ -388,7 +388,7 @@ class Parser (lexer_: Lexer)
                     this.acceptFix("else") -> {
                         this.block()
                     }
-                    arr && this.acceptFix_err("->") -> {
+                    arr && this.acceptFix_err("=>") -> {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     }
                     else -> {
@@ -492,7 +492,7 @@ class Parser (lexer_: Lexer)
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
                         val eA = this.expr()
-                        this.acceptFix_err("->")
+                        this.acceptFix_err("=>")
                         val eB = this.expr()
                         (this.acceptFix("}") || this.acceptFix_err("{"))
                         val tkB = this.tk0 as Tk.Fix
@@ -751,7 +751,7 @@ class Parser (lexer_: Lexer)
                 val pre0 = tk0.pos.pre()
                 val awt = await()
                 val task = awt.cnd
-                if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("->")))) {
+                if (!XCEU || (task is Expr.Call && !(XCEU && this.checkFix("=>")))) {
                     task!!
                     if (task !is Expr.Call) {
                         err(task.tk, "invalid toggle : expected argument")
@@ -762,7 +762,7 @@ class Parser (lexer_: Lexer)
                     }
                     Expr.Toggle(tk0, task.proto, task.args[0])
                 } else {
-                    this.acceptFix_err("->")
+                    this.acceptFix_err("=>")
                     val (off,on) = Pair(awt, await())
                     val blk = this.block()
                     this.nest("""
@@ -890,7 +890,7 @@ class Parser (lexer_: Lexer)
                             val op = this.tk0.str.let {
                                 if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                             }
-                            val e = if (this.checkFix("->")) null else this.expr()
+                            val e = if (this.checkFix("=>")) null else this.expr()
                             val call = if (e == null) {
                                 "$op($x)"
                             } else {
@@ -902,7 +902,7 @@ class Parser (lexer_: Lexer)
                             id_tag_cnd()
                         }
                     }
-                    val blk = if (this.acceptFix("->")) {
+                    val blk = if (this.acceptFix("=>")) {
                         Expr.Do(this.tk0, listOf(this.expr()))
                     } else {
                         this.block()
