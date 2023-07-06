@@ -6,11 +6,11 @@ func to-bool (v) {
 
 func is' (v1,v2) {
     ifs {
-        (v1 == v2)         -> true
-        (type(v2) /= :tag) -> false
-        (type(v1) == v2)   -> true
-        tags(v1,v2)        -> true
-        else -> false
+        (v1 == v2)         => true
+        (type(v2) /= :tag) => false
+        (type(v1) == v2)   => true
+        tags(v1,v2)        => true
+        else => false
     }
 }
 
@@ -31,9 +31,9 @@ export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
 
     func {{-}} (v1, v2) {
         ifs {
-            (v1 is? :number) and (v2 is? :nil)           -> `:number (- $v1.Number)`
-            (v1 is-not? :number) or (v2 is-not? :number) -> throw(:error)
-            else                                         -> `:number ($v1.Number - $v2.Number)`
+            (v1 is? :number) and (v2 is? :nil)           => `:number (- $v1.Number)`
+            (v1 is-not? :number) or (v2 is-not? :number) => throw(:error)
+            else                                         => `:number ($v1.Number - $v2.Number)`
         }
     }
 
@@ -78,9 +78,9 @@ export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
 export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
     func {{>}} (v1,v2) {
         ifs {
-            (v1 is? :tag)    and (v2 is? :tag)    -> `:bool ($v1.Tag    > $v2.Tag)`
-            (v1 is? :number) and (v2 is? :number) -> `:bool ($v1.Number > $v2.Number)`
-            else -> throw(:error)
+            (v1 is? :tag)    and (v2 is? :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
+            (v1 is? :number) and (v2 is? :number) => `:bool ($v1.Number > $v2.Number)`
+            else => throw(:error)
         }
     }
 
@@ -146,10 +146,10 @@ export [iter] {
             set itr.i = i + 1
             val v = itr.s[i]
             ifs itr.tp {
-                == :all -> [i, v]
-                == :idx -> i
-                == :val -> v
-                else    -> v
+                == :all => [i, v]
+                == :idx => i
+                == :val => v
+                else    => v
             }
         }
     }
@@ -162,20 +162,20 @@ export [iter] {
             set itr.i = k
             val v = itr.s[k]
             ifs itr.tp {
-                == :all -> [k, v]
-                == :key -> k
-                == :val -> v
-                else    -> k
+                == :all => [k, v]
+                == :key => k
+                == :val => v
+                else    => k
             }
         }
     }
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        (resume co()) thus {
+        resume co() thus {
             if (status(co) == :terminated)
-                -> nil
-                -> it
+                => nil
+                => it
         }
     }
 
@@ -187,13 +187,13 @@ export [iter] {
 
     func iter (v, tp) {
         ifs v {
-            is? :Iterator -> v
-            is? :tuple    -> :Iterator [iter-tuple, v, tp, 0]
-            is? :vector   -> :Iterator [iter-tuple, v, tp, 0]
-            is? :dict     -> :Iterator [iter-dict,  v, tp, nil]
-            is? :func     -> :Iterator [v]
-            is? :coro     -> :Iterator [iter-coro, v]
-            is? :x-coro   -> :Iterator [iter-xcoro, v]
+            is? :Iterator => v
+            is? :tuple    => :Iterator [iter-tuple, v, tp, 0]
+            is? :vector   => :Iterator [iter-tuple, v, tp, 0]
+            is? :dict     => :Iterator [iter-dict,  v, tp, nil]
+            is? :func     => :Iterator [v]
+            is? :coro     => :Iterator [iter-coro, v]
+            is? :x-coro   => :Iterator [iter-xcoro, v]
         }
     }
 }
@@ -216,11 +216,11 @@ func :rec {{===}} (v1,v2) {
     val t1 = type(v1)
     val t2 = type(v2)
     ifs {
-        v1 == v2 -> true
-        t1 /= t2 -> false
-        (t1==:tuple) or (t1==:vector) -> equals-tuple-vector(v1,v2)
-        t1 == :dict -> contains-dict?(v1,v2) and contains-dict?(v2,v1)
-        else -> false
+        v1 == v2 => true
+        t1 /= t2 => false
+        (t1==:tuple) or (t1==:vector) => equals-tuple-vector(v1,v2)
+        t1 == :dict => contains-dict?(v1,v2) and contains-dict?(v2,v1)
+        else => false
     } where {
         func equals-tuple-vector (v1, v2) {
             (#v1 == #v2) and not (
@@ -252,7 +252,7 @@ func string? (v) {
 func c-to-string (v) {
     assert(type(v) == :pointer)
     val str = #[]
-    loop in {0 -> `:number strlen($v.Pointer)`{, i {
+    loop in {0 => `:number strlen($v.Pointer)`{, i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
     move(str)
@@ -260,41 +260,41 @@ func c-to-string (v) {
 
 func :rec to-string (v) {
     ifs v {
-        is? :nil -> "nil"
-        is? :pointer -> c-to-string(v)
-        is? :tag -> c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
-        is? :char -> #[v]
-        is? :number -> do {
+        is? :nil => "nil"
+        is? :pointer => c-to-string(v)
+        is? :tag => c-to-string(`:pointer ceu_tag_to_string($v.Tag)`)
+        is? :char => #[v]
+        is? :number => do {
             ```
             static char str[255];
             snprintf(str, 255, "%g", $v.Number);
             ```
             to-string(`:pointer str`)
         }
-        else -> v   ;; TODO
+        else => v   ;; TODO
     }
 }
 
 func to-number (v) {
     ifs v {
-        is? :tag    -> `:number $v.Tag`
-        is? :char   -> `:number $v.Char`
-        {{string?}} -> `:number atoi($v.Dyn->Ncast.Vector.buf)`
-        else        -> v   ;; TODO
+        is? :tag    => `:number $v.Tag`
+        is? :char   => `:number $v.Char`
+        {{string?}} => `:number atoi($v.Dyn->Ncast.Vector.buf)`
+        else        => v   ;; TODO
     }
 }
 
 func to-char (v) {
     ifs v {
-        is? :number -> `:char $v.Number`
-        else -> v   ;; TODO
+        is? :number => `:char $v.Number`
+        else => v   ;; TODO
     }
 }
 
 func to-tag (v) {
     ifs v {
-        {{string?}} -> string-to-tag(v)
-        else        -> v   ;; TODO
+        {{string?}} => string-to-tag(v)
+        else        => v   ;; TODO
     }
 }
 
@@ -340,7 +340,7 @@ func {{<++}} (v1, v2) {
     assert(type(v1) == :vector)
     assert(type(v2) == :vector)
     do {
-        loop in {0 -> #v2{, i {
+        loop in {0 => #v2{, i {
             set v1[+] = v2[i]
         }
     }

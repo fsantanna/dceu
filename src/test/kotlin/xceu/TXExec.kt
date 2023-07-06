@@ -61,7 +61,7 @@ class TXExec {
     @Test
     fun aa_if6() {
         val out = all("""
-            println(if false -> 1 -> 2)
+            println(if false => 1 => 2)
         """.trimIndent())
         assert(out == "2\n") { out }
     }
@@ -498,14 +498,11 @@ class TXExec {
     @Test
     fun jj_01_method() {
         val out = ceu.all("""
-            func g () {-x}
-            func f (v) {
-                v + 1
-            }
+            func f (v) { v }
             val v = 10->f()
-            println(11)
-        """, true)
-        assert(out == "true\n") { out }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
     }
 
     // ASSERT
