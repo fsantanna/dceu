@@ -12,7 +12,7 @@ class TXParser {
     fun dcl1() {
         val l = lexer("var x = 1")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         //println(e)
         //assert(e is Expr.Group && e.es[1] is Expr.Set)
         assert(e is Expr.Dcl && e.src is Expr.Num)
@@ -32,7 +32,7 @@ class TXParser {
     fun empty1_if() {
         val l = lexer("if true { 1 }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.If)
         assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
     }
@@ -40,7 +40,7 @@ class TXParser {
     fun empty2_do() {  // set whole tuple?
         val l = lexer("do{}")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Do && e.es.size==1)
         assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
     }
@@ -48,7 +48,7 @@ class TXParser {
     fun empty3_func() {
         val l = lexer("func () {}")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Proto && e.args.size==0)
         assert(e.tostr() == "(func () {\nnil\n})") { e.tostr() }
     }
@@ -56,7 +56,7 @@ class TXParser {
     fun empty4_loop() {
         val l = lexer("loop until false { }")
         val parser = Parser(l)
-        val x = parser.exprPrim() as Expr.Do
+        val x = parser.expr_prim() as Expr.Do
         val e = x.es.last() as Expr.Loop
         assert(e.body.es.last() is Expr.Nil)
         //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
@@ -226,7 +226,7 @@ class TXParser {
     fun index3_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected field : have \".\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected field : have \".\"")
     }
 
     // SPAWN, PAR, RESUME-YIELD-ALL

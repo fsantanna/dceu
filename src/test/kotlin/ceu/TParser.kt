@@ -12,33 +12,33 @@ class TParser {
     fun expr_var () {
         val l = lexer(" x ")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Acc && e.tk.str == "x")
     }
     @Test
     fun expr_var_err1 () {
         val l = lexer(" { ")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
     fun expr_var_err2 () {
         val l = lexer("  ")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 3) : expected expression : have end of file")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 3) : expected expression : have end of file")
     }
     @Test
     fun evt3 () {
         val l = lexer(" evt ")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.EvtErr && e.tk.str == "evt")
     }
     @Test
     fun err4 () {
         val l = lexer(" err ")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.EvtErr && e.tk.str == "err")
     }
 
@@ -48,14 +48,14 @@ class TParser {
     fun expr_parens() {
         val l = lexer(" ( a ) ")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Acc && e.tk.str == "a")
     }
     @Test
     fun expr_parens_err() {
         val l = lexer(" ( a  ")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
     }
     @Test
     fun op_prec_err() {
@@ -71,35 +71,35 @@ class TParser {
     fun expr_num() {
         val l = lexer(" 1.5F ")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Num && e.tk.str == "1.5F")
     }
     @Test
     fun expr_nil() {
         val l = lexer("nil")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Nil && e.tk.str == "nil")
     }
     @Test
     fun expr_true() {
         val l = lexer("true")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Bool && e.tk.str == "true")
     }
     @Test
     fun expr_false() {
         val l = lexer("false")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Bool && e.tk.str == "false")
     }
     @Test
     fun expr_char() {
         val l = lexer("'x'")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Char && e.tk.str == "'x'")
     }
 
@@ -109,21 +109,21 @@ class TParser {
     fun expr_call1() {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.tk.str=="f" && e.proto is Expr.Acc && e.args.size==2)
     }
     @Test
     fun expr_call2() {
         val l = lexer(" f() ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.proto.tk.str=="f" && e.proto is Expr.Acc && e.args.size==0)
     }
     @Test
     fun expr_call3() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.proto is Expr.Call && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
@@ -131,13 +131,13 @@ class TParser {
     fun expr_call_err1() {
         val l = lexer("f (999 ")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
     }
     @Test
     fun expr_call_err2() {
         val l = lexer(" f ({ ")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
     }
 
     // TUPLE
@@ -146,27 +146,27 @@ class TParser {
     fun expr_tuple1() {
         val l = lexer(" [ 1.5F, x] ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Tuple && e.args.size==2)
     }
     @Test
     fun expr_tuple2() {
         val l = lexer("[[],[1,2,3]]")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e.tostr() == "[[],[1,2,3]]")
     }
     @Test
     fun expr_tuple_err() {
         val l = lexer("[{")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
     fun tuple4() {
         val l = lexer("[1.5F,] ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Tuple && e.args.size==1)
     }
 
@@ -208,7 +208,7 @@ class TParser {
     fun dict6() {
         val l = lexer("@[(1.5F,1),] ")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Dict && e.args.size==1)
     }
     @Test
@@ -254,14 +254,14 @@ class TParser {
     fun index1() {
         val l = lexer("x[10]")
         val parser = Parser(l)
-        val e = parser.exprSufs()
+        val e = parser.expr_4_suf()
         assert(e is Expr.Index && e.col is Expr.Acc && e.idx is Expr.Num)
     }
     @Test
     fun index2_err() {
         val l = lexer("x[10")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected \"]\" : have end of file")
     }
     @Test
     fun pub3() {
@@ -283,19 +283,19 @@ class TParser {
     fun index5_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \".\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected \"pub\" : have \".\"")
     }
     @Test
     fun index6_err() {
         val l = lexer("x . 2")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"2\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"2\"")
     }
     @Test
     fun pub7_err() {
         val l = lexer("set pub = x.pub + pub")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected expression : have \"pub\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected expression : have \"pub\"")
     }
     @Test
     fun pub8() {
@@ -363,7 +363,7 @@ class TParser {
     fun expr_dcl_var() {
         val l = lexer("var x")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="var" && e.id.str=="x")
         assert(e.tostr() == "var x")
     }
@@ -371,7 +371,7 @@ class TParser {
     fun expr_dcl_val() {
         val l = lexer("val x")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="val" && e.id.str=="x")
         assert(e.tostr() == "val x")
     }
@@ -379,13 +379,13 @@ class TParser {
     fun expr_dcl_err() {
         val l = lexer("var [10]")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 5) : expected identifier : have \"[\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 5) : expected identifier : have \"[\"")
     }
     @Test
     fun expr_dcl3() {
         val l = lexer("var x = 1")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.id.str == "x" && e.src is Expr.Num)
         assert(e.tostr() == "var x = 1")
     }
@@ -447,7 +447,7 @@ class TParser {
     fun expr_if1() {  // set whole tuple?
         val l = lexer("if true { 1 } else { 0 }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.If)
         assert(e.tostr() == "if true {\n1\n} else {\n0\n}") { e.tostr() }
     }
@@ -455,7 +455,7 @@ class TParser {
     fun expr_if2_err() {
         val l = lexer("if true { 1 }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
     }
 
     // DO
@@ -464,13 +464,13 @@ class TParser {
     fun expr_do1_err() {
         val l = lexer("do{}")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 4) : expected expression : have \"}\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 4) : expected expression : have \"}\"")
     }
     @Test
     fun expr_do2() {
         val l = lexer("do { var a; set a=1; print(a) }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Do && e.es.size==3)
         assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}") { e.tostr() }
     }
@@ -481,19 +481,19 @@ class TParser {
     fun expr_export1_err() {
         val l = lexer("export {}")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
     }
     @Test
     fun expr_export2_err() {
         val l = lexer("export [:x] {}")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
     }
     @Test
     fun expr_export3() {
         val l = lexer("export [] { nil }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.isEmpty() && e.body.es.size==1)
         assert(e.tostr() == "export [] {\nnil\n}") { e.tostr() }
     }
@@ -501,7 +501,7 @@ class TParser {
     fun expr_export4() {
         val l = lexer("export [x] { nil }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.first()=="x" && e.body.es.size==1)
         assert(e.tostr() == "export [x] {\nnil\n}") { e.tostr() }
     }
@@ -509,7 +509,7 @@ class TParser {
     fun expr_export5() {
         val l = lexer("export [x,y] { nil }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.last()=="y" && e.body.es.size==1 && e.ids.size==2)
         assert(e.tostr() == "export [x,y] {\nnil\n}") { e.tostr() }
     }
@@ -547,13 +547,13 @@ class TParser {
     fun expr_func1_err() {
         val l = lexer("func () {}")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
     }
     @Test
     fun expr_func2() {
         val l = lexer("func (a,b) { 10 }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "(func (a,b) {\n10\n})") { e.tostr() }
     }
@@ -561,19 +561,19 @@ class TParser {
     fun expr_func3_err() {
         val l = lexer("coro (a,b) :fake { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":fake\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":fake\"")
     }
     @Test
     fun expr_task4_err() {
         val l = lexer("coro (a,b) :xxx { 10 }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":xxx\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":xxx\"")
     }
     @Test
     fun expr_task5() {
         val l = lexer("task (a,b) { 10 }")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Proto && e.args.size==2)
         assert(e.tostr() == "(task (a,b) {\n10\n})") { e.tostr() }
     }
@@ -632,13 +632,13 @@ class TParser {
     fun qq_02_loop_err() {
         val l = lexer("loop until {")
         val parser = Parser(l)
-        assert(trap { parser.exprBins() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
     }
     @Test
     fun qq_03_loop_err() {
         val l = lexer("loop x { }")
         val parser = Parser(l)
-        assert(trap { parser.exprPrim() } == "anon : (lin 1, col 6) : expected \"{\" : have \"x\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 6) : expected \"{\" : have \"x\"")
     }
 
     // NATIVE
@@ -651,7 +651,7 @@ class TParser {
             ```
         """.trimIndent())
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Nat)
         assert(e.tostr() == "``` \n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
     }
@@ -688,7 +688,7 @@ class TParser {
             ```:ola```
         """.trimIndent())
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         assert(e is Expr.Nat)
         assert(e.tostr() == "```:ola ```") { "."+e.tostr()+"." }
     }
@@ -699,13 +699,13 @@ class TParser {
     fun bin1_err() {
         val l = lexer("(10+)")
         val parser = Parser(l)
-        assert(trap { parser.exprBins() } == "anon : (lin 1, col 5) : expected expression : have \")\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 5) : expected expression : have \")\"")
     }
     @Test
     fun bin2() {
         val l = lexer("10+1")
         val parser = Parser(l)
-        val e = parser.exprBins()
+        val e = parser.expr_1_bin()
         assert(e is Expr.Call)
         assert(e.tostr() == "{{+}}(10,1)") { e.tostr() }
     }
@@ -713,7 +713,7 @@ class TParser {
     fun bin3() {
         val l = lexer("10/=1")
         val parser = Parser(l)
-        val e = parser.exprBins()
+        val e = parser.expr_1_bin()
         assert(e is Expr.Call)
         assert(e.tostr() == "{{/=}}(10,1)") { e.tostr() }
     }
