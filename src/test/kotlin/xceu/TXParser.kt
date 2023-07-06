@@ -229,6 +229,16 @@ class TXParser {
         assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected field : have \".\"")
     }
 
+    // METHOD
+
+    @Test
+    fun jj_01_method_err() {
+        val out = ceu.all("""
+            10->10
+        """)
+        assert(out == "anon : (lin 2, col 17) : method call error : expected call") { out }
+    }
+
     // SPAWN, PAR, RESUME-YIELD-ALL
 
     @Test

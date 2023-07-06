@@ -504,6 +504,16 @@ class TXExec {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun jj_02_method() {
+        val out = ceu.all("""
+            func f (v) { 10 }
+            func g (v) { v }
+            val v = 99->f()->g()
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ASSERT
 
