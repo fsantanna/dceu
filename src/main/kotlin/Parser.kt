@@ -486,13 +486,13 @@ class Parser (lexer_: Lexer)
                             """
                         }
                     }
-                    XCEU && (this.acceptFix("[") || this.acceptFix("(")) -> {
+                    XCEU && (this.acceptFix("}") || this.acceptFix("{")) -> {
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
                         val eA = this.expr()
                         this.acceptFix_err("->")
                         val eB = this.expr()
-                        (this.acceptFix("]") || this.acceptFix_err(")"))
+                        (this.acceptFix("}") || this.acceptFix_err("{"))
                         val tkB = this.tk0 as Tk.Fix
 
                         // , :step +z
@@ -514,10 +514,10 @@ class Parser (lexer_: Lexer)
                         }
 
                         val cmp = when {
-                            (tkB.str=="]" && op=="+") -> ">"
-                            (tkB.str==")" && op=="+") -> ">="
-                            (tkB.str=="]" && op=="-") -> "<"
-                            (tkB.str==")" && op=="-") -> "<="
+                            (tkB.str=="}" && op=="+") -> ">"
+                            (tkB.str=="{" && op=="+") -> ">="
+                            (tkB.str=="}" && op=="-") -> "<"
+                            (tkB.str=="{" && op=="-") -> "<="
                             else -> error("impossible case")
                         }
 
@@ -525,7 +525,7 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
                                 var $i ${tag?.str ?: ""} = ${eA.tostr(true)} $op (
-                                    ${if (tkA.str=="[") 0 else "ceu_step_$N"}
+                                    ${if (tkA.str=="{") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
                                 loop $nn {

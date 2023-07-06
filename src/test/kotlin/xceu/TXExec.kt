@@ -1541,7 +1541,7 @@ class TXExec {
         val out = all("""
             val t1 = [[1],[2],[3]]
             val t2 = #[]
-            loop in [0 -> #t1), i {
+            loop in {0 -> #t1{, i {
                 set t2[+] = move(t1[i])
             }
             println(t2)
@@ -2481,7 +2481,7 @@ class TXExec {
     @Test
     fun until12() {
         val out = all("""
-            val v = loop in [1->10] {
+            val v = loop in {1->10} {
             }
             println(v)
         """, true)
@@ -2501,7 +2501,7 @@ class TXExec {
     @Test
     fun loop_01_num() {
         val out = all("""
-            loop in [0 -> 1], i {
+            loop in {0 -> 1}, i {
                 println(i)
             }
         """, true)
@@ -2531,7 +2531,7 @@ class TXExec {
                 println(:x)
             }
             println(:5)
-            loop in [1 -> 2] {
+            loop in {1 -> 2} {
                 println(:y)
             }
             println(:6)
@@ -2541,7 +2541,7 @@ class TXExec {
     @Test
     fun loop_03_num_it() {
         val out = all("""
-            loop in [0 -> 1] {
+            loop in {0 -> 1} {
                 println(it)
             }
         """, true)
@@ -3696,7 +3696,7 @@ class TXExec {
         val out = all("""
         coro Take () {
             yield()
-            loop in [1 -> 3], i {
+            loop in {1 -> 3}, i {
                 yield("line")
             }
         }

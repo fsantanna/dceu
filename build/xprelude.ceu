@@ -252,7 +252,7 @@ func string? (v) {
 func c-to-string (v) {
     assert(type(v) == :pointer)
     val str = #[]
-    loop in [0 -> `:number strlen($v.Pointer)`), i {
+    loop in {0 -> `:number strlen($v.Pointer)`{, i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
     move(str)
@@ -340,7 +340,7 @@ func {{<++}} (v1, v2) {
     assert(type(v1) == :vector)
     assert(type(v2) == :vector)
     do {
-        loop in [0 -> #v2), i {
+        loop in {0 -> #v2{, i {
             set v1[+] = v2[i]
         }
     }
