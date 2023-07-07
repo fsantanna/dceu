@@ -553,10 +553,10 @@ class Parser (lexer_: Lexer)
                         }
                         { body: String -> """
                             ${pre0}do {
-                                val :xtmp ceu_it_$N :Iterator = ${iter.tostr(true)}
+                                val :xtmp ceu_it_$N :Iterator = iter(${iter.tostr(true)})
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val :xtmp $i ${tag?.str ?: ""} = ceu_it_$N.f(ceu_it_$N)
+                                    val :xtmp $i ${tag?.str ?: ""} = ${pre0}ceu_it_$N.f(ceu_it_$N)
                                     if $i == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
@@ -1134,7 +1134,7 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    // expr_0_out : v ==> f     f <== v    v where {...}
+    // expr_0_out : v --> f     f <-- v    v where {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f()
@@ -1354,7 +1354,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()
-        val ok = (XCEU && this.acceptFix("where")) || (XCEU && this.acceptFix("==>"))
+        val ok = (XCEU && this.acceptFix("where")) || (XCEU && this.acceptFix("-->"))
         if (!ok) {
             return e
         }
@@ -1373,7 +1373,7 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 }
-                "==>" -> {
+                "-->" -> {
                     val f = this.expr_1_bin()
                     this.nest("${f.tostr(true)}(${e.tostr(true)})}")
                 }

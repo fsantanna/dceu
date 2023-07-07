@@ -21,8 +21,6 @@
 - val [x,y] = ...
     - pattern matching em geral
 - val _ = ... (no decl, no acc)
-- f(x) \{ ... } -> f(x,\{...})
-- {and}(...), {or}(...)
 - where { x=10 } // no val x=10
 - export :all [...] { }
 - var x :T = y
@@ -30,10 +28,6 @@
     - assert(y is :T)
 - val x = assert(f() as :number, "xxx")
     - as checks but returns e if successful
-- ifs
-    - > 10 ->
-    - {f-bin} 10 -> ...
-    - 3 {add} 4  -->  add(3,4)
 - :error -> tag(:error,"message")
 - [x,y] = tup (destructor)
 - kill task

@@ -499,7 +499,7 @@ class TXExec {
     fun jj_01_method() {
         val out = ceu.all("""
             func f (v) { v }
-            val v = 10=>f()
+            val v = 10->f()
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -509,7 +509,7 @@ class TXExec {
         val out = ceu.all("""
             func f (v) { 10 }
             func g (v) { v }
-            val v = 99=>f()=>g()
+            val v = 99->f()->g()
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -1337,7 +1337,7 @@ class TXExec {
     fun dict10_iter_nil() {
         val out = all("""
             val t = @[x=1, y=2, z=3]
-            loop in iter(t), v {
+            loop in t, v {
                 println(v)
             }
         """, true)
@@ -1387,8 +1387,7 @@ class TXExec {
     @Test
     fun vect11_iter_nil() {
         val out = all("""
-            val t = #[1, 2, 3]
-            loop in iter(t), v {
+            loop in #[1, 2, 3], v {
                 println(v)
             }
         """, true)
@@ -1407,8 +1406,7 @@ class TXExec {
     @Test
     fun vect11_iter_all() {
         val out = all("""
-            val t = #[1, 2, 3]
-            loop in iter(t,:all), v {
+            loop in iter(#[1, 2, 3],:all), v {
                 println(v)
             }
         """, true)
@@ -1522,8 +1520,7 @@ class TXExec {
     @Test
     fun dict22_iter_it() {
         val out = all("""
-            val t = @[x=1, y=2, z=3]
-            loop in iter(t) {
+            loop in @[x=1, y=2, z=3] {
                 println(it)
             }
         """, true)
@@ -1570,7 +1567,7 @@ class TXExec {
                 var v2 = [1,'b']
                 yield(move(v2))
             }
-            loop in iter(coroutine(genFunc)), v {
+            loop in genFunc, v {
                 println(v)
             }
         """, true)
@@ -1601,7 +1598,7 @@ class TXExec {
                 spawn (coro () {
                     yield(nil)
                     ^^x
-                }) () ==> \{
+                }) () --> \{
                     it
                 }
             }
@@ -1619,7 +1616,7 @@ class TXExec {
             val F = func (^x) {
                 coro () {
                     yield(^^x)
-                } ==> \{
+                } --> \{
                     iter(it)
                 }
             }
@@ -1640,13 +1637,13 @@ class TXExec {
                         val pos = []
                         yield(move(pos))
                     }
-                } ==> \{
+                } --> \{
                     iter(it)
                 }
             }
             do {
                 val x :Iterator = F()
-                x.f(x) ==> \{ }
+                x.f(x) --> \{ }
                 x.f(x)
             }
             println(:ok)
@@ -2252,7 +2249,7 @@ class TXExec {
     fun qq_01_thus() {
         val out = ceu.all(
             """
-            val x = 1 ==> \{
+            val x = 1 --> \{
                 it
             }
             println(x)
@@ -2263,7 +2260,7 @@ class TXExec {
     fun qq_02_thus() {
         val out = ceu.all(
             """
-            val x = [] ==> \x {
+            val x = [] --> \x {
                 x
             }
             println(x)
@@ -2277,7 +2274,7 @@ class TXExec {
             val co = spawn coro {
                 yield()
                 println(:ok)
-            } ==> \{ move(it) }
+            } --> \{ move(it) }
             resume co()
         """)
         //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
@@ -2646,7 +2643,7 @@ class TXExec {
                 yield(3)
             }
             catch :x {
-                loop in iter(coroutine(T)), i {
+                loop in coroutine(T), i {
                     println(i)
                     throw(:x)
                 }
@@ -2662,7 +2659,7 @@ class TXExec {
                 yield(2)
                 yield(3)
             }
-            loop in iter(coroutine(T)), i {
+            loop in T, i {
                 println(i)
             }
         """, true)
@@ -2738,7 +2735,7 @@ class TXExec {
     @Test
     fun iter8() {
         val out = all("""
-            val y = loop in iter([1,2,3]), x {
+            val y = loop in [1,2,3], x {
             } until x == 4
             println(y)
         """, true)
@@ -2766,7 +2763,7 @@ class TXExec {
                     cur
                 }
             }
-            loop in iter(f) {   ;; assigns f to local which confronts cur
+            loop in f {   ;; assigns f to local which confronts cur
             } until true
             println(:ok)
         """)
