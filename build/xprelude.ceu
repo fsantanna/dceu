@@ -172,7 +172,7 @@ export [iter] {
 
     func iter-xcoro (itr :Iterator) {
         val co = itr.s
-        resume co() thus {
+        resume co() ==> \{
             if (status(co) == :terminated)
                 => nil
                 => it
@@ -203,7 +203,7 @@ export [iter] {
 func in' (v, xs) {
     loop in iter(xs), x {
     } until x == v {
-    } thus {
+    } ==> \{
         to-bool(it)
     }
 }

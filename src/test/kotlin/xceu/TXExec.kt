@@ -1598,10 +1598,10 @@ class TXExec {
     fun ff_05_move() {
         val out = all("""
             val F = func (^x) {
-                (spawn (coro () {
+                spawn (coro () {
                     yield(nil)
                     ^^x
-                }) ()) thus {
+                }) () ==> \{
                     it
                 }
             }
@@ -1619,7 +1619,7 @@ class TXExec {
             val F = func (^x) {
                 coro () {
                     yield(^^x)
-                } thus {
+                } ==> \{
                     iter(it)
                 }
             }
@@ -1640,13 +1640,13 @@ class TXExec {
                         val pos = []
                         yield(move(pos))
                     }
-                } thus {
+                } ==> \{
                     iter(it)
                 }
             }
             do {
                 val x :Iterator = F()
-                x.f(x) thus { }
+                x.f(x) ==> \{ }
                 x.f(x)
             }
             println(:ok)
@@ -2252,7 +2252,7 @@ class TXExec {
     fun qq_01_thus() {
         val out = ceu.all(
             """
-            val x = 1 thus {
+            val x = 1 ==> \{
                 it
             }
             println(x)
@@ -2263,7 +2263,7 @@ class TXExec {
     fun qq_02_thus() {
         val out = ceu.all(
             """
-            val x = [] thus x {
+            val x = [] ==> \x {
                 x
             }
             println(x)
@@ -2277,7 +2277,7 @@ class TXExec {
             val co = spawn coro {
                 yield()
                 println(:ok)
-            } thus { move(it) }
+            } ==> \{ move(it) }
             resume co()
         """)
         //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }

@@ -1354,7 +1354,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()
-        val ok = (XCEU && this.acceptFix("where")) || (XCEU && this.acceptFix("thus"))
+        val ok = (XCEU && this.acceptFix("where")) || (XCEU && this.acceptFix("==>"))
         if (!ok) {
             return e
         }
@@ -1373,14 +1373,15 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 }
-                "thus" -> {
+                "==>" -> {
                     val tk0 = this.tk0
-                    val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
-                    val body = this.block()
+                    val f = this.lambda()
+                    assert(f.args.size <= 1)
+                    val (id,tag) = if (f.args.size == 0) Pair(null,null) else f.args[0]
                     this.nest("""
                         ${tk0.pos.pre()}do {
-                            val :xtmp ${x?.str ?: "it"} = ${e.tostr(true)}
-                            ${body.es.tostr(true)}
+                            val :xtmp ${id?.str ?: "it"} ${tag?.str ?: ""} = ${e.tostr(true)}
+                            ${f.body.es.tostr(true)}
                         }
                     """) //.let { println(it); it })
                 }
