@@ -2230,8 +2230,10 @@ class TXExec {
             val z = y + 10 where {
                 val y = 20
             }
+            println(z)
         """,true)
-        assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
+        //assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
+        assert(out == "30\n") { out }
     }
     @Test
     fun where8() {

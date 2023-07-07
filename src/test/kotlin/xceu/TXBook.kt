@@ -51,7 +51,7 @@ class TXBook {
                 x * x
             }
             func smaller (x,y) {
-                if (x < y) -> x -> y
+                if (x < y) => x => y
             }
             println(square(smaller(3,5)))
         """, true)
@@ -191,9 +191,9 @@ class TXBook {
         val out = ceu.all("""
             func signum (x) {
                 ifs {
-                    x < 0  -> -1
-                    x > 0  ->  1
-                    else -> 0
+                    x < 0  => -1
+                    x > 0  =>  1
+                    else => 0
                 }
             }
             println(signum(10), signum(-9), signum(0))
@@ -227,9 +227,9 @@ class TXBook {
             println(2 {mult} [1,2])
             func fact (x) {
                 ifs {
-                    x < 0  -> throw(:error)
-                    x == 0 -> 1
-                    else -> x * fact(x - 1)
+                    x < 0  => throw(:error)
+                    x == 0 => 1
+                    else => x * fact(x - 1)
                 }
             }
             println(fact(-1))
@@ -252,9 +252,9 @@ class TXBook {
         val out = ceu.all("""
             func :rec fact (x) {
                 ifs {
-                    x < 0  -> throw(:error)
-                    x == 0 -> 1
-                    else -> x * fact(x - 1)
+                    x < 0  => throw(:error)
+                    x == 0 => 1
+                    else => x * fact(x - 1)
                 }
             }
             println(fact(-1))
@@ -317,11 +317,11 @@ class TXBook {
             }
             func analyse (x,y,z) {
                 ifs {
-                    (x+y) <= z -> :Tri.Err
-                    x == z     -> :Tri.Equ
-                    x == y     -> :Tri.Iso
-                    y == z     -> :Tri.Iso
-                    else       -> :Tri.Sca
+                    (x+y) <= z => :Tri.Err
+                    x == z     => :Tri.Equ
+                    x == y     => :Tri.Iso
+                    y == z     => :Tri.Iso
+                    else       => :Tri.Sca
                 }
              }
             println(analyse(10,20,30))
