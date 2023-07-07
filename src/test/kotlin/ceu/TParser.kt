@@ -336,6 +336,7 @@ class TParser {
     fun exprs_seq2() {
         val l = lexer("; f () \n (1) ; h()\ni() ;\n;")
         val parser = Parser(l)
+        //println(parser.exprs().tostr())
         //assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
         assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : invalid expression : innocuous expression")
     }

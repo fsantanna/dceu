@@ -1138,17 +1138,18 @@ class Parser (lexer_: Lexer)
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f()
-    // expr_4_suf : v[0]    v.x    f()    f \{...}    :T x
+    // expr_4_suf : v[0]    v.x    v.:T    f()    f \{...}
     // expr_prim
 
-    fun expr_4_suf (): Expr {
-        var e = this.expr_prim()
-        while (true) {
-            val same = this.tk0.pos.isSameLine(this.tk1.pos)
-            if (!same) {
-                break       // only accept sufix in the same line
-            }
-            e = when {
+    fun expr_4_suf (xe: Expr? = null): Expr {
+        val e = if (xe != null) xe else this.expr_prim()
+        val ok = this.tk0.pos.isSameLine(this.tk1.pos) &&
+                    (this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(") || XCEU && this.checkFix("\\"))
+        if (!ok) {
+            return e
+        }
+        return this.expr_4_suf(
+            when (this.tk0.str) {
                 /*
                 // TAG:  :T [...]    (:T v).x
                 e is Expr.Tag -> {
@@ -1170,8 +1171,7 @@ class Parser (lexer_: Lexer)
                     }
                 }
                  */
-                // INDEX
-                this.acceptFix("[") -> {
+                "[" -> {
                     if (XCEU && (this.acceptOp("+") || this.acceptOp("-") || this.acceptFix("="))) {
                         val op = this.tk0
                         val isclose = if (op.str=="-") this.acceptFix_err("]") else this.acceptFix("]")
@@ -1212,8 +1212,7 @@ class Parser (lexer_: Lexer)
                         Expr.Index(e.tk, e, idx)
                     }
                 }
-                // PUB / FIELD
-                this.acceptFix(".") -> {
+                "." -> {
                     when {
                         this.acceptFix("pub") -> Expr.Pub(this.tk0 as Tk.Fix, e)
                         this.acceptEnu("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
@@ -1234,8 +1233,7 @@ class Parser (lexer_: Lexer)
                         }
                     }
                 }
-                // ECALL
-                this.acceptFix("(") -> {
+                "(" -> {
                     val args = list0(")",",") {
                         val x = this.expr()
                         if (x is Expr.Acc && x.tk.str=="...") {
@@ -1262,26 +1260,28 @@ class Parser (lexer_: Lexer)
                         else -> Expr.Call(e.tk, e, args)
                     }
                 }
-                // LAMBDA
-                XCEU && this.checkFix("\\") -> {
+                "\\" -> {
                     val f = this.lambda()
                     this.nest("""
                         ${e.tostr(true)}(${f.tostr(true)})
                     """)
                 }
-                else -> break
+                else -> error("impossible case")
             }
-        }
-        return e
+        )
     }
-    fun expr_3_met (): Expr {
-        var e = this.expr_4_suf()
-        val op0 = this.tk1.str
-        while (true) {
-            val op1 = this.tk1.str
-            when {
-                // METHOD
-                (XCEU && this.acceptFix("->")) -> {
+    fun expr_3_met (xop: String? = null, xe: Expr? = null): Expr {
+        val e = if (xe != null) xe else this.expr_prim()
+        val ok = (XCEU && this.acceptFix("->"))
+        if (!ok) {
+            return e
+        }
+        if (xop!=null && xop!=this.tk0.str) {
+            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+        }
+        return this.expr_3_met(this.tk0.str,
+            when (this.tk0.str) {
+                "->" -> {
                     val call = this.expr_4_suf()
                     if (call !is Expr.Call) {
                         err(call.tk, "method call error : expected call")
@@ -1292,100 +1292,94 @@ class Parser (lexer_: Lexer)
                         ${call.proto.tostr(true)}(${e.tostr(true)}, $args)
                     """)
                 }
-                else -> break
+                else -> error("impossible case")
             }
-            assert(op1 == op0)
-        }
-        return e
+        )
     }
     fun expr_2_pre (): Expr {
         if (!this.acceptEnu("Op")) {
             return this.expr_3_met()
         }
         val op = this.tk0 as Tk.Op
-        val e = this.expr_3_met()
-        println(listOf(op,e))
-        when {
+        val e = this.expr_2_pre()
+        //println(listOf(op,e))
+        return when {
             (XCEU && op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
             else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}",op.pos,0)), listOf(e))
         }
-        return e
     }
-    fun expr_1_bin (): Expr {
-        var e = this.expr_2_pre()
-        var pre: Tk? = null
-        val op0 = this.tk1.str
-        while (
-            this.tk1.pos.isSameLine(e.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
-            this.acceptEnu("Op")
-        ) {
-            val op = this.tk0
-            if (op.str==op0 || pre==null || pre.str==")" || this.tk1.str==")") {} else {
-                err(op, "binary operation error : expected surrounding parentheses")
-            }
-            val e2 = this.expr_2_pre()
-            e = when (op.str) {
+    fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
+        val e1 = if (xe1 != null) xe1 else this.expr_2_pre()
+        val ok = this.tk1.pos.isSameLine(e1.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
+                    this.acceptEnu("Op")
+        if (!ok) {
+            return e1
+        }
+        if (xop!=null && xop!=this.tk0.str) {
+            err(this.tk0, "binary operation error : expected surrounding parentheses")
+        }
+        val op = this.tk0
+        val e2 = this.expr_2_pre()
+        return this.expr_1_bin(op.str,
+            when (op.str) {
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :xtmp ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ceu_${e.n} } else { ${e2.tostr(true)} }
+                        val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
+                        if ceu_${e1.n} { ceu_${e1.n} } else { ${e2.tostr(true)} }
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
-                        val :xtmp ceu_${e.n} = ${e.tostr(true)} 
-                        if ceu_${e.n} { ${e2.tostr(true)} } else { ceu_${e.n} }
+                        val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
+                        if ceu_${e1.n} { ${e2.tostr(true)} } else { ceu_${e1.n} }
                     }
                 """)
-                "is?" -> this.nest("is'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "is-not?" -> this.nest("is-not'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "in?" -> this.nest("in'(${e.tostr(true)}, ${e2.tostr(true)})")
-                "in-not?" -> this.nest("in-not'(${e.tostr(true)}, ${e2.tostr(true)})")
+                "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "in?" -> this.nest("in'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 else -> {
                     val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e,e2))
+                    Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))
                 }
             }
-            pre = this.tk0
-        }
-        return e
+        )
     }
-    fun expr_0_out (): Expr {
-        var e = this.expr_1_bin()
-        val op0 = this.tk1.str
-        while (true) {
-            val op1 = this.tk1.str
-            when {
-                // WHERE
-                XCEU && this.acceptFix("where") -> {
+    fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
+        val e = if (xe != null) xe else this.expr_1_bin()
+        val ok = (XCEU && this.acceptFix("where")) || (XCEU && this.acceptFix("thus"))
+        if (!ok) {
+            return e
+        }
+        if (xop!=null && xop!=this.tk0.str) {
+            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+        }
+        return this.expr_0_out(this.tk0.str,
+            when (this.tk0.str) {
+                "where" -> {
                     val tk0 = this.tk0
                     val body = this.block()
-                    e = this.nest("""
+                    this.nest("""
                         ${tk0.pos.pre()}export [] {
                             ${body.es.tostr(true)}
                             ${e.tostr(true)}
                         }
                     """)
                 }
-                // THUS
-                XCEU && this.acceptFix("thus") -> {
+                "thus" -> {
                     val tk0 = this.tk0
                     val x = if (!this.acceptEnu("Id")) null else this.tk0 as Tk.Id
                     val body = this.block()
-                    e = this.nest("""
+                    this.nest("""
                         ${tk0.pos.pre()}do {
                             val :xtmp ${x?.str ?: "it"} = ${e.tostr(true)}
                             ${body.es.tostr(true)}
                         }
                     """) //.let { println(it); it })
                 }
-                else -> break
+                else -> error("impossible case")
             }
-            if (op1 != op0) {
-                err(this.tk1, "sufix operation error : expected surrounding parentheses")
-            }
-        }
-        return e
+        )
     }
 
     fun expr (): Expr {
