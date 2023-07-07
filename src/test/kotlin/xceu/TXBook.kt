@@ -299,7 +299,7 @@ class TXBook {
     fun pg_33_leap2() {
         val out = ceu.all("""
             func leapyear? (y) {
-                ((y % 100) == 0) and ((y % 400) == 0) or ((y % 4) == 0)
+                (((y % 100) == 0) and ((y % 400) == 0)) or ((y % 4) == 0)
             }
             println(leapyear?(1980))
             println(leapyear?(1979))

@@ -59,10 +59,16 @@ class TParser {
     }
     @Test
     fun op_prec_err() {
-        val out = all("""
-            println(2 * 3 - 1)
-        """, true)
-        assert(out == "anon : (lin 2, col 27) : binary operation error : expected surrounding parentheses") { out }
+        val l = lexer("println(2 * 3 - 1)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : binary operation error : expected surrounding parentheses")
+    }
+    @Test
+    fun op_prec_ok() {
+        val l = lexer("println(2 * (3 - 1))")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "println({{*}}(2,{{-}}(3,1)))")
     }
 
     // EXPR.NUM / EXPR.NIL / EXPR.BOOL
