@@ -206,6 +206,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     when {
                         (op == "=") -> yield(Tk.Fix(op, pos))
                         XCEU && (op == "=>") -> yield(Tk.Fix(op, pos))
+                        XCEU && (op == "->") -> yield(Tk.Fix(op, pos))
                         else -> yield(Tk.Op(op, pos))
                     }
                 }

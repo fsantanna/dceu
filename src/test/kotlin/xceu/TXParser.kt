@@ -66,7 +66,7 @@ class TXParser {
 
     @Test
     fun ifs1() {
-        val l = lexer("ifs { a->1 else{0} }")
+        val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -93,7 +93,7 @@ class TXParser {
     }
     @Test
     fun ifs3_err() {
-        val l = lexer("ifs it=nil { else -> it }")
+        val l = lexer("ifs it=nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -114,7 +114,7 @@ class TXParser {
     }
     @Test
     fun ifs5() {
-        val l = lexer("ifs it=v { a -> it }")
+        val l = lexer("ifs it=v { a => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -128,7 +128,7 @@ class TXParser {
     }
     @Test
     fun ifs6() {
-        val l = lexer("ifs it=v { a{1} b->it else{0} }")
+        val l = lexer("ifs it=v { a{1} b=>it else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +

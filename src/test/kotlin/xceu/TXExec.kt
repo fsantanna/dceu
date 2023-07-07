@@ -68,28 +68,28 @@ class TXExec {
     @Test
     fun aa_if7() {
         val out = all("""
-            println(if true -> 1 -> 2)
+            println(if true => 1 => 2)
         """.trimIndent())
         assert(out == "1\n") { out }
     }
     @Test
     fun aa_if8_err() {
         val out = all("""
-            println(if true -> 1)
+            println(if true => 1)
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 21) : expected \"->\" : have \")\"") { out }
+        assert(out == "anon : (lin 1, col 21) : expected \"=>\" : have \")\"") { out }
     }
     @Test
     fun aa_if9() {
         val out = all("""
-            println(if true -> if true -> 1 -> 99 -> 99)
+            println(if true => if true => 1 => 99 => 99)
         """.trimIndent())
         assert(out == "1\n") { out }
     }
     @Test
     fun aa_if10() {
         val out = all("""
-            println(if x=10 -> x -> 99)
+            println(if x=10 => x => 99)
         """.trimIndent())
         assert(out == "10\n") { out }
     }
@@ -100,9 +100,9 @@ class TXExec {
     fun bb_ifs1() {
         val out = all("""
             val x = ifs {
-                10 < 1 -> 99
+                10 < 1 => 99
                 (5+5)==0 { 99 }
-                else -> 10
+                else => 10
             }
             println(x)
         """, true)
@@ -111,7 +111,7 @@ class TXExec {
     @Test
     fun bb_ifs2() {
         val out = all("""
-            val x = ifs { true -> `:number 1` }
+            val x = ifs { true=> `:number 1` }
             println(x)
         """)
         assert(out == "1\n") { out }
@@ -120,9 +120,9 @@ class TXExec {
     fun bb_ifs3() {
         val out = all("""
             val x = ifs 20 {
-                == 10 -> false
-                == 20 -> true
-                else  -> false
+                == 10 => false
+                == 20 => true
+                else  => false
             }
             println(x)
         """)
@@ -132,10 +132,10 @@ class TXExec {
     fun bb_ifs4() {
         val out = all("""
             var x = ifs it=20 {
-                it == 10 -> false
-                true  -> true
-                it == 20 -> false
-                else  -> false
+                it == 10 => false
+                true     => true
+                it == 20 => false
+                else     => false
             }
             println(x)
         """)
@@ -145,8 +145,8 @@ class TXExec {
     fun bb_ifs5() {
         val out = all("""
             val x = ifs it=20 {
-                it == 10 -> false
-                else -> true
+                it == 10 => false
+                else     => true
             }
             println(x)
         """)
@@ -156,8 +156,8 @@ class TXExec {
     fun todo_bb_ifs6_nocnd() {
         val out = all("""
             val x = ifs 20 {
-                true -> ifs {
-                    == 20 -> true   ;; err: no ifs expr
+                true => ifs {
+                    == 20 => true   ;; err: no ifs expr
                 }
             }
             println(x)
@@ -168,10 +168,10 @@ class TXExec {
     fun bb_ifs7() {
         val out = all("""
             var x = ifs it=20 {
-                it is? 10 -> false
-                true  -> true
-                it is? 20 -> false
-                else  -> false
+                it is? 10 => false
+                true  => true
+                it is? 20 => false
+                else  => false
             }
             println(x)
         """, true)
@@ -182,8 +182,8 @@ class TXExec {
         val out = all("""
             data :T = []
             val x = ifs 10 {
-                true -> :T []
-                is? 0 -> nil
+                true => :T []
+                is? 0 => nil
             }
             println(x)
         """)
@@ -193,8 +193,8 @@ class TXExec {
     fun bb_ifs9() {
         val out = all("""
             var x = ifs it=20 {
-                it in? [1,20,1] -> true
-                else  -> false
+                it in? [1,20,1] => true
+                else  => false
             }
             println(x)
         """, true)
@@ -204,8 +204,8 @@ class TXExec {
     fun bb_ifs9x() {
         val out = all("""
             var x = ifs it=20 {
-                it in-not? [1,1] -> true
-                else  -> false
+                it in-not? [1,1] => true
+                else  => false
             }
             println(x)
         """, true)
@@ -215,7 +215,7 @@ class TXExec {
     fun bb_ifs10() {
         val out = all("""
             val x = ifs it=[] {
-                true -> it
+                true => it
             }
             println(x)
         """, true)
@@ -227,7 +227,7 @@ class TXExec {
     fun bb_ifs10a() {
         val out = all("""
             val x = ifs it=[] {
-                true -> move(it)
+                true => move(it)
             }
             println(x)
         """, true)
@@ -237,7 +237,7 @@ class TXExec {
     fun bb_11_ifs () {
         val out = all("""
             val x = ifs {
-                true -> it
+                true => it
             }
             println(x)
         """, true)
@@ -247,7 +247,7 @@ class TXExec {
     fun bb_12_ifs () {
         val out = all("""
             val x = ifs {
-                v=10 -> v
+                v=10 => v
             }
             println(x)
         """)
@@ -257,7 +257,7 @@ class TXExec {
     fun bb_13_ifs () {
         val out = all("""
             val x = ifs {
-                and nil -> true
+                and nil => true
             }
             println(x)
         """)
@@ -268,8 +268,8 @@ class TXExec {
     fun bb_14_ifs () {
         val out = all("""
             val x = ifs 4 {
-                is? nil -> false
-                in? [4] -> true
+                is? nil => false
+                in? [4] => true
             }
             println(x)
         """, true)
@@ -499,7 +499,7 @@ class TXExec {
     fun jj_01_method() {
         val out = ceu.all("""
             func f (v) { v }
-            val v = 10->f()
+            val v = 10=>f()
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -509,7 +509,7 @@ class TXExec {
         val out = ceu.all("""
             func f (v) { 10 }
             func g (v) { v }
-            val v = 99->f()->g()
+            val v = 99=>f()=>g()
             println(v)
         """)
         assert(out == "10\n") { out }
@@ -1548,7 +1548,7 @@ class TXExec {
         val out = all("""
             val t1 = [[1],[2],[3]]
             val t2 = #[]
-            loop in {0 -> #t1{, i {
+            loop in {0 => #t1{, i {
                 set t2[+] = move(t1[i])
             }
             println(t2)
@@ -1582,7 +1582,7 @@ class TXExec {
         val e = func () {nil}
         val f = func (v) {
             ifs v {
-                true -> [e,v]
+                true => [e,v]
             }
         }
         val g = func () {
@@ -2287,7 +2287,7 @@ class TXExec {
     @Test
     fun toggle1_err() {
         val out = all("""
-            toggle f() -> {
+            toggle f() => {
         """)
         assert(out == "anon : (lin 2, col 27) : expected expression : have \"{\"") { out }
     }
@@ -2296,7 +2296,7 @@ class TXExec {
         val out = all("""
             task T (v) {
                 set task.pub = v
-                toggle evt==:hide -> evt==:show {
+                toggle evt==:hide => evt==:show {
                     println(task.pub)
                     every (evt is? :dict) and (evt.sub==:draw) {
                         println(evt.v)
@@ -2317,7 +2317,7 @@ class TXExec {
         val out = all("""
             task T (v) {
                 set task.pub = v
-                toggle :hide -> :show {
+                toggle :hide => :show {
                     println(task.pub)
                     every :draw {
                         println(evt.0)
@@ -2337,7 +2337,7 @@ class TXExec {
     fun toggle4_ret() {
         val out = all("""
             spawn {
-                val x = toggle evt==:hide -> evt==:show {
+                val x = toggle evt==:hide => evt==:show {
                     10
                 }
                 println(x)
@@ -2499,7 +2499,7 @@ class TXExec {
     @Test
     fun until12() {
         val out = all("""
-            val v = loop in {1->10} {
+            val v = loop in {1=>10} {
             }
             println(v)
         """, true)
@@ -2519,7 +2519,7 @@ class TXExec {
     @Test
     fun loop_01_num() {
         val out = all("""
-            loop in {0 -> 1}, i {
+            loop in {0 => 1}, i {
                 println(i)
             }
         """, true)
@@ -2529,27 +2529,27 @@ class TXExec {
     fun loop_02_num() {
         val out = all("""
             println(:0)
-            loop in (0 -> 1], a {
+            loop in (0 => 1], a {
                 println(a)
             }
             println(:1)
-            loop in (0 -> 3), b {
+            loop in (0 => 3), b {
                 println(b)
             }
             println(:2)
-            loop in [0 -> 4], :step +2, c {
+            loop in [0 => 4], :step +2, c {
                 println(c)
             }
             println(:3)
-            loop in (2 -> 0], :step -1, d {
+            loop in (2 => 0], :step -1, d {
                 println(d)
             }
             println(:4)
-            loop in [0 -> -2), :step -1 {
+            loop in [0 => -2), :step -1 {
                 println(:x)
             }
             println(:5)
-            loop in {1 -> 2} {
+            loop in {1 => 2} {
                 println(:y)
             }
             println(:6)
@@ -2559,7 +2559,7 @@ class TXExec {
     @Test
     fun loop_03_num_it() {
         val out = all("""
-            loop in {0 -> 1} {
+            loop in {0 => 1} {
                 println(it)
             }
         """, true)
@@ -3294,7 +3294,7 @@ class TXExec {
         val out = all("""
             data :T = [v]
             val v = ifs {
-                t :T = [10] -> t.v
+                t :T = [10] => t.v
             }
             println(v)
         """)
@@ -3597,8 +3597,8 @@ class TXExec {
     fun all12_tk_pre () {
         val out = all("""
             ifs v {
-                is? :pointer -> c-to-string(v)
-                is? :number -> 1
+                is? :pointer => c-to-string(v)
+                is? :number => 1
             }
         """)
         assert(out == "anon : (lin 2, col 17) : access error : variable \"v\" is not declared") { out }
@@ -3714,7 +3714,7 @@ class TXExec {
         val out = all("""
         coro Take () {
             yield()
-            loop in {1 -> 3}, i {
+            loop in {1 => 3}, i {
                 yield("line")
             }
         }

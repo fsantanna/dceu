@@ -1271,7 +1271,7 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_3_met (xop: String? = null, xe: Expr? = null): Expr {
-        val e = if (xe != null) xe else this.expr_prim()
+        val e = if (xe != null) xe else this.expr_4_suf()
         val ok = (XCEU && this.acceptFix("->"))
         if (!ok) {
             return e
@@ -1297,15 +1297,28 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_2_pre (): Expr {
-        if (!this.acceptEnu("Op")) {
-            return this.expr_3_met()
-        }
-        val op = this.tk0 as Tk.Op
-        val e = this.expr_2_pre()
-        //println(listOf(op,e))
         return when {
-            (XCEU && op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
-            else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}",op.pos,0)), listOf(e))
+            this.acceptEnu("Tag") -> {
+                if (this.checkFix("[")) {
+                    val tk0 = this.tk0
+                    val tup = this.expr_prim()
+                    this.nest("""
+                            ${tk0.pos.pre()}tags(${tup.tostr(true)}, ${tk0.str}, true)
+                        """)
+                } else {
+                    Expr.Tag(this.tk0 as Tk.Tag)
+                }
+            }
+            this.acceptEnu("Op") -> {
+                val op = this.tk0 as Tk.Op
+                val e = this.expr_2_pre()
+                //println(listOf(op,e))
+                when {
+                    (XCEU && op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
+                    else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos, 0)), listOf(e))
+                }
+            }
+            else -> this.expr_3_met()
         }
     }
     fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
