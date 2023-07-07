@@ -645,7 +645,7 @@ class TParser {
     fun qq_03_loop_err() {
         val l = lexer("loop x { }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected \"{\" : have \"x\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
     }
 
     // NATIVE

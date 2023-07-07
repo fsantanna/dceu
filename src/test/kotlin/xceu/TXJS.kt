@@ -533,7 +533,7 @@ class TXJS {
             val co_nums  = spawn numberLines()
             val co_print = spawn printLines()
             spawn {
-                loop chars, in iter(co_read) {
+                loop chars in iter(co_read) {
                     loop {
                         val line = if chars {
                             resume co_split(chars)

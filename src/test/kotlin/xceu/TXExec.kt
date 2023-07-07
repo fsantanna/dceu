@@ -1442,7 +1442,8 @@ class TXExec {
             }
         """, true)
         //assert(out == "anon : (lin 3, col 36) : expected \",\" : have \"{\"") { out }
-        assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
+        //assert(out == "anon : (lin 3, col 30) : expected identifier : have \"(\"") { out }
+        assert(out == "anon : (lin 3, col 18) : expected \"{\" : have \"(\"") { out }
     }
     @Test
     fun dict13_iter() {
