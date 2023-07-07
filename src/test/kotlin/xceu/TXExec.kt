@@ -2245,6 +2245,7 @@ class TXExec {
     }
 
     // THUS
+
     @Test
     fun qq_01_thus() {
         val out = ceu.all(
@@ -2279,6 +2280,60 @@ class TXExec {
         """)
         //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
         assert(out == ":ok\n") { out }
+    }
+
+    @Test
+    fun qq_04_thus() {
+        val out = ceu.all(
+            """
+            val x = \{
+                it
+            } <-- 1
+            println(x)
+        """,true)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun qq_05_thus() {
+        val out = ceu.all(
+            """
+            val x = \x {
+                x
+            } <-- []
+            println(x)
+        """,true)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun qq_06_thus() {
+        val out = ceu.all(
+            """
+            val co = \{ move(it) } <-- spawn coro {
+                yield()
+                println(:ok)
+            }
+            resume co()
+        """)
+        //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun qq_07_thus() {
+        val out = ceu.all(
+            """
+            val x = 2 --> \{ it + 1 } --> \{ it * 2 }
+            println(x)
+        """,true)
+        assert(out == "6\n") { out }
+    }
+    @Test
+    fun qq_08_thus() {
+        val out = ceu.all(
+            """
+            val x = \{ it + 1 } <-- \{ it * 2 } <-- 2
+            println(x)
+        """,true)
+        assert(out == "5\n") { out }
     }
 
     // TOGGLE
