@@ -1673,7 +1673,7 @@ class TExec {
                 spawn in ts, T()
                 do {
                     val vec = #[]
-                    loop in :tasks ts, t {
+                    loop t in :tasks ts {
                         set vec[#vec] = t
                     }
                     println(vec)
@@ -1693,7 +1693,7 @@ class TExec {
                 spawn in ts, T()
                 do {
                     val vec = #[]
-                    loop in :tasks ts, t {
+                    loop t in :tasks ts {
                         set vec[#vec] = move(t)
                     }
                     println(#vec)

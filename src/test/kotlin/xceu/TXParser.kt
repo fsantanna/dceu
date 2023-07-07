@@ -271,7 +271,7 @@ class TXParser {
     @Test
     fun loop01_n() {
         val l = lexer("""
-            loop in [0 -> n), :step +1, i {
+            loop i in [0 -> n), :step +1 {
             }
         """)
         val parser = Parser(l)

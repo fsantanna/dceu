@@ -426,9 +426,27 @@ class Parser (lexer_: Lexer)
                 }
 
                 val pre0 = tk0.pos.pre()
+
+                val xid = this.acceptEnu("Id")
+                val (id,tag) = if (!xid) Pair("it","") else {
+                    Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
+                }
+
                 val xin = this.acceptFix("in")
                 val nn = N++
                 val f = when {
+                    (!xin && xid) -> {
+                        { body -> """
+                            do {
+                                var $id $tag = 0
+                                loop $nn {
+                                    $body
+                                    set $id = $id + 1
+                                }
+                            }
+                        """ }
+
+                    }
                     !xin -> {
                         { body -> """
                             do {
@@ -439,12 +457,7 @@ class Parser (lexer_: Lexer)
                         """ }
                     }
                     this.acceptTag(":tasks") -> {
-                        val tasks = this.expr()
-                        val i = if (XCEU && !this.checkFix(",")) "it" else {
-                            this.acceptFix_err(",")
-                            this.acceptEnu_err("Id")
-                            this.tk0.str
-                        }
+                        val tasks = this.expr() ;
                         { body: String -> """
                             ${pre0}do {
                                 val :xtmp ceu_tasks_$N = ${tasks.tostr(true)}
@@ -469,15 +482,15 @@ class Parser (lexer_: Lexer)
                                         ;;;
                                         val ceu_x_$N
                                         `ceu_mem->ceu_x_$N = (CEU_Value) { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };`
-                                        val $i = track(ceu_x_$N)
+                                        val $id $tag = track(ceu_x_$N)
                                         ;;;
 
                                         ```
                                         CEU_Value ceu_x_$N = { CEU_VALUE_X_TASK, {.Dyn=ceu_mem->ceu_dyn_$N.Pointer} };
                                         ```
-                                        val :xtmp $i = track(`:ceu ceu_x_$N`)
+                                        val :xtmp $id $tag = track(`:ceu ceu_x_$N`)
                                         $body
-                                        ;;if detrack($i) {
+                                        ;;if detrack($id) {
                                             set ceu_i_$N = `:number ceu_mem->ceu_i_$N.Number + 1` ;; just to avoid prelude
                                         ;;} else {
                                         ;;    set ceu_i_$N = ceu_n_$N
@@ -498,21 +511,11 @@ class Parser (lexer_: Lexer)
                         val tkB = this.tk0 as Tk.Fix
 
                         // , :step +z
-                        var x = this.acceptFix(",")
-                        val (op,step) = if (x && this.acceptTag(":step")) {
+                        val (op,step) = if (this.acceptTag(":step")) {
                             (this.acceptOp("-") || acceptOp_err("+"))
                             Pair(this.tk0.str, this.expr())
                         } else {
                             Pair("+", null)
-                        }
-
-                        // , i :T
-                        x = (step==null && x) || this.acceptFix(",")
-                        val (i,tag) = if (!x) Pair("it",null) else {
-                            this.acceptEnu_err("Id")
-                            val id = this.tk0 as Tk.Id
-                            val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                            Pair(id.str,tag)
                         }
 
                         val cmp = when {
@@ -526,38 +529,31 @@ class Parser (lexer_: Lexer)
                         { body: String ->"""
                             ${pre0}do {
                                 val ceu_step_$N = ${if (step==null) 1 else step.tostr(true) }
-                                var $i ${tag?.str ?: ""} = ${eA.tostr(true)} $op (
+                                var $id $tag = ${eA.tostr(true)} $op (
                                     ${if (tkA.str=="{") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
                                 loop $nn {
-                                    if $i $cmp ceu_limit_$N {
+                                    if $id $cmp ceu_limit_$N {
                                         pass nil     ;; return value
                                         xbreak $nn
                                     } else { nil }
                                     $body
-                                    set $i = $i $op ceu_step_$N
+                                    set $id = $id $op ceu_step_$N
                                 }                                
                             }
                             """
                         }
                     }
                     XCEU -> {
-                        val iter = this.expr()
-                        val (i,tag) = if (!this.checkFix(",")) Pair("it",null) else {
-                            this.acceptFix_err(",")
-                            this.acceptEnu_err("Id")
-                            val id = this.tk0 as Tk.Id
-                            val tag = if (this.acceptEnu("Tag")) this.tk0 as Tk.Tag else null
-                            Pair(id.str,tag)
-                        }
+                        val iter = this.expr() ;
                         { body: String -> """
                             ${pre0}do {
                                 val :xtmp ceu_it_$N :Iterator = iter(${iter.tostr(true)})
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
                                 loop $nn {
-                                    val :xtmp $i ${tag?.str ?: ""} = ${pre0}ceu_it_$N.f(ceu_it_$N)
-                                    if $i == nil {
+                                    val :xtmp $id $tag = ${pre0}ceu_it_$N.f(ceu_it_$N)
+                                    if $id == nil {
                                         pass nil     ;; return value
                                         xbreak $nn
                                     } else { nil }
