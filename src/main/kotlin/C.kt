@@ -1123,7 +1123,7 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_RET ceu_next_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
+        CEU_RET ceu_next_dash_dict_f (CEU_Frame* _1, CEU_BStack* _2, int n, CEU_Value* args[]) {
             CEU_Value NIL = (CEU_Value) { CEU_VALUE_NIL };
             assert(n==1 || n==2);
             CEU_Value* col = args[0];
@@ -1951,9 +1951,9 @@ fun Coder.main (tags: Tags): String {
                             .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
                         }
                     };
-                    static CEU_Dyn ceu_next = { 
+                    static CEU_Dyn ceu_next_dash_dict = { 
                         CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_VAR, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_next_f, {0,NULL}, {{0}} } }
+                            .Ncast = { .Proto = { NULL, ceu_next_dash_dict_f, {0,NULL}, {{0}} } }
                         }
                     };
                     static CEU_Dyn ceu_print = { 
@@ -2025,7 +2025,7 @@ fun Coder.main (tags: Tags): String {
                     ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
                     ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
                     ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
-                    ceu_mem->next       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next}         };
+                    ceu_mem->next_dash_dict = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next_dash_dict}         };
                     ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
                     ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
                     ceu_mem->status     = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_status}       };

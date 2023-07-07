@@ -198,6 +198,14 @@ export [iter] {
     }
 }
 
+func next (v, ...) {
+    ifs v {
+        is? :dict     => next-dict(v, ...)
+        is? :Iterator => v.0(v)
+        else          => throw(:error)
+    }
+}
+
 ;; IN, IN-NOT, DEEP-EQUALS === =/=
 
 func in' (v, xs) {

@@ -53,7 +53,7 @@ val TAGS = listOf (
 )
 
 val GLOBALS = setOf (
-    "copy", "coroutine", "detrack", "next", "print", "println",
+    "copy", "coroutine", "detrack", "next-dict", "print", "println",
     "status", "string-to-tag", "sup?", "tags", "tasks", "throw",
     "track", "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
 )

@@ -833,11 +833,11 @@ class TExec {
             set t[:x] = 1
             set t[:y] = 2
             var k
-            set k = next(t)
+            set k = next-dict(t)
             println(k, t[k])
-            set k = next(t,k)
+            set k = next-dict(t,k)
             println(k, t[k])
-            set k = next(t,k)
+            set k = next-dict(t,k)
             println(k, t[k])
         """)
         assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
@@ -854,10 +854,10 @@ class TExec {
             set t[:a] = 10
             set t[:b] = 20
             set t[:c] = 30
-            var k = next(t)
+            var k = next-dict(t)
             loop until k == nil {
                 println(k, t[k])
-                set k = next(t,k)
+                set k = next-dict(t,k)
             }
         """)
         assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
