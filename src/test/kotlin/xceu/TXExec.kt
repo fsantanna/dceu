@@ -2529,23 +2529,23 @@ class TXExec {
     fun loop_02_num() {
         val out = all("""
             println(:0)
-            loop in (0 => 1], a {
+            loop in }0 => 1}, a {
                 println(a)
             }
             println(:1)
-            loop in (0 => 3), b {
+            loop in }0 => 3{, b {
                 println(b)
             }
             println(:2)
-            loop in [0 => 4], :step +2, c {
+            loop in {0 => 4}, :step +2, c {
                 println(c)
             }
             println(:3)
-            loop in (2 => 0], :step -1, d {
+            loop in }2 => 0}, :step -1, d {
                 println(d)
             }
             println(:4)
-            loop in [0 => -2), :step -1 {
+            loop in {0 => -2{, :step -1 {
                 println(:x)
             }
             println(:5)

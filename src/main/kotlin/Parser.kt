@@ -1254,13 +1254,13 @@ class Parser (lexer_: Lexer)
                         else -> Expr.Call(e.tk, e, args)
                     }
                 }
-                "\\" -> {
+                else -> {
+                    assert(this.tk1.str == "\\")
                     val f = this.lambda()
                     this.nest("""
                         ${e.tostr(true)}(${f.tostr(true)})
                     """)
                 }
-                else -> error("impossible case")
             }
         )
     }
