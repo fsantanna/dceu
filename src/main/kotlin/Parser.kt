@@ -1239,9 +1239,9 @@ class Parser (lexer_: Lexer)
                     when {
                         (XCEU && this.checkFix("\\")) -> {
                             val f = lambda()
-                            val args = args.map { it.tostr(true) }.joinToString(",")
+                            val s = if (args.size == 0) "" else args.map { it.tostr(true)+"," }.joinToString("")
                             this.nest("""
-                                ${e.tostr(true)}($args, ${f.tostr(true)})
+                                ${e.tostr(true)}($s ${f.tostr(true)})
                         """)
                         }
                         (XCEU && e is Expr.Acc && e.tk.str in XOPERATORS) -> {
@@ -1376,8 +1376,20 @@ class Parser (lexer_: Lexer)
             }
             "-->" -> {
                 val f = this.expr_1_bin()
+                val s = if (f !is Expr.Proto) {
+                    "${f.tostr(true)}(${e.tostr(true)})}"
+                } else {
+                    assert(f.args.size <= 1)
+                    val a = f.args.getOrNull(0)
+                    """
+                    ${tk0.pos.pre()}do {
+                        val :xtmp ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} = ${e.tostr(true)}
+                        ${f.body.es.tostr(true)}
+                    }                    
+                    """
+                }
                 this.expr_0_out(op.str,
-                    this.nest("${f.tostr(true)}(${e.tostr(true)})}")
+                    this.nest(s)
                 )
             }
             "<--" -> {

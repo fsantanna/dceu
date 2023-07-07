@@ -2136,6 +2136,17 @@ class TXExec {
         """)
         assert(out == "5\n") { out }
     }
+    @Test
+    fun cc_08_lambda_call () {
+        val out = ceu.all("""
+            func f (g) {
+                g()
+            }
+            val v = f() \{ 10 }
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // WHERE
 
@@ -2334,6 +2345,21 @@ class TXExec {
             println(x)
         """,true)
         assert(out == "5\n") { out }
+    }
+    @Test
+    fun qq_09_thus_yield() {
+        val out = ceu.all(
+            """
+            val co = spawn coro {
+                yield()
+                1 --> \{
+                    yield(it)
+                }
+            }
+            val v = resume co()
+            println(v)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // TOGGLE
