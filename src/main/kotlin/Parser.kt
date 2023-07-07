@@ -376,7 +376,7 @@ class Parser (lexer_: Lexer)
                 val (id,tag,cnd) = id_tag_cnd()
                 val arr = XCEU && this.acceptFix("=>")
                 val t = if (arr) {
-                    Expr.Do(this.tk0, listOf(this.expr()))
+                    Expr.Do(this.tk0, listOf(this.expr_1_bin()))
                 } else {
                     this.block()
                 }
@@ -389,7 +389,7 @@ class Parser (lexer_: Lexer)
                         this.block()
                     }
                     arr && this.acceptFix_err("=>") -> {
-                        Expr.Do(this.tk0, listOf(this.expr()))
+                        Expr.Do(this.tk0, listOf(this.expr_1_bin()))
                     }
                     else -> {
                         Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
@@ -695,7 +695,7 @@ class Parser (lexer_: Lexer)
                     this.acceptFix("in") -> {
                         val tasks = this.expr()
                         this.acceptFix_err(",")
-                        val call = this.expr()
+                        val call = this.expr_2_pre()
                         if (call !is Expr.Call && !(call is Expr.Export && call.body.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
@@ -717,7 +717,7 @@ class Parser (lexer_: Lexer)
                         """)
                     }
                     else -> {
-                        val call = this.expr()
+                        val call = this.expr_2_pre()
                         if (call !is Expr.Call && !(call is Expr.Export && call.body.es.last() is Expr.Call)) {
                             err(tk1, "invalid spawn : expected call")
                         }
@@ -740,7 +740,7 @@ class Parser (lexer_: Lexer)
             this.acceptFix("yield") -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(!XCEU, XCEU)!!)
             this.acceptFix("resume") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val call = this.expr_4_suf()
+                val call = this.expr_2_pre()
                 if (call !is Expr.Call) {
                     err(tk1, "invalid resume : expected call")
                 }
@@ -928,7 +928,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (XCEU && this.acceptFix("resume-yield-all")) -> {
-                val call = this.expr()
+                val call = this.expr_2_pre()
                 if (call !is Expr.Call) {
                     err(call.tk, "resume-yield-call error : expected call")
                 }
@@ -1134,7 +1134,7 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    // expr_0_out : v --> {...}     {...} <-- v    v where {...}
+    // expr_0_out : v ==> f     f <== v    v where {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f()
@@ -1374,16 +1374,8 @@ class Parser (lexer_: Lexer)
                     """)
                 }
                 "==>" -> {
-                    val tk0 = this.tk0
-                    val f = this.lambda()
-                    assert(f.args.size <= 1)
-                    val (id,tag) = if (f.args.size == 0) Pair(null,null) else f.args[0]
-                    this.nest("""
-                        ${tk0.pos.pre()}do {
-                            val :xtmp ${id?.str ?: "it"} ${tag?.str ?: ""} = ${e.tostr(true)}
-                            ${f.body.es.tostr(true)}
-                        }
-                    """) //.let { println(it); it })
+                    val f = this.expr_1_bin()
+                    this.nest("${f.tostr(true)}(${e.tostr(true)})}")
                 }
                 else -> error("impossible case")
             }
