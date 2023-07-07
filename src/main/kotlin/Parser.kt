@@ -890,7 +890,7 @@ class Parser (lexer_: Lexer)
                             val op = this.tk0.str.let {
                                 if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                             }
-                            val e = if (this.checkFix("=>")) null else this.expr()
+                            val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                             val call = if (e == null) {
                                 "$op($x)"
                             } else {

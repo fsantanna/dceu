@@ -283,6 +283,17 @@ class TXExec {
         //assert(out == "anon : (lin 3, col 17) : expected expression : have \"{\"") { out }
         assert(out == "anon : (lin 2, col 13) : access error : variable \"{{and}}\" is not declared") { out }
     }
+    @Test
+    fun bb_16_ifs () {
+        val out = all("""
+            val x = ifs "oi" {
+                {{string?}} { true }
+                else => false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
 
     // OPS: not, and, or
 
