@@ -901,7 +901,7 @@ class TParser {
         val l = lexer("""
             var ts
             set ts = tasks()
-            loop in :tasks ts, t {
+            loop t in :tasks ts {
                 nil
             }
         """)
@@ -914,19 +914,19 @@ class TParser {
         val l = lexer("""
             var ts
             set ts = tasks()
-            loop in :tasks ts, 1 {
+            loop [] in :tasks ts {
                 nil
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 32) : expected identifier : have \"1\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 32) : expected identifier : have \"[\"")
     }
     @Test
     fun tasks3_err() {
         val l = lexer("""
             var ts
             set ts = tasks()
-            loop in :tasks x {
+            loop x in {
                 nil
             }
         """)
