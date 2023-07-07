@@ -1909,7 +1909,7 @@ class TTask {
                 pass nil
             }
         """)
-        assert(out == "anon : (lin 2, col 28) : loop error : expected tasks\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 30) : loop error : expected tasks\n:error\n") { out }
     }
     @Test
     fun ff_pool9_term() {
