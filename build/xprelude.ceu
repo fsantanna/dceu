@@ -200,6 +200,7 @@ export [iter] {
 
 func next (v, ...) {
     ifs v {
+        is? :x-coro   => resume v(...)
         is? :dict     => next-dict(v, ...)
         is? :Iterator => v.0(v)
         else          => throw(:error)

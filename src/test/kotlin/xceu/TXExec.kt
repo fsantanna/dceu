@@ -1676,6 +1676,21 @@ class TXExec {
         assert(out == "1\n2\n3\n4\n") { out }
     }
 
+    @Test
+    fun fg_02_coro_next() {
+        val out = all("""
+            val co = coroutine <-- coro (v1) {
+                val v2 = yield(v1)
+                val v3 = yield(v2)
+                v3
+            }
+            println(co->next(1))
+            println(co->next(2))
+            println(co->next(3))
+        """, true)
+        assert(out == "1\n2\n3\n") { out }
+    }
+
     // AWAIT / EVERY
 
     @Test
