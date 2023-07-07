@@ -155,7 +155,7 @@ export [iter] {
     }
 
     func iter-dict (itr :Iterator) {
-        val k = next(itr.s,itr.i)
+        val k = next-dict(itr.s,itr.i)
         if k == nil {
             nil
         } else {

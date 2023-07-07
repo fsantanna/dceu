@@ -1662,6 +1662,20 @@ class TXExec {
         assert(out == ":ok\n") { out }
     }
 
+    // ITER / NEXT
+
+    @Test
+    fun fg_01_iter_next() {
+        val out = all("""
+            val itr :Iterator = iter([1,2,3,4])
+            println(itr.0(itr))
+            println(itr.f(itr))
+            println(next(itr))
+            println(itr->next())
+        """, true)
+        assert(out == "1\n2\n3\n4\n") { out }
+    }
+
     // AWAIT / EVERY
 
     @Test
