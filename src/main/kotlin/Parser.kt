@@ -1138,39 +1138,19 @@ class Parser (lexer_: Lexer)
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f()
-    // expr_4_suf : v[0]    v.x    v.:T    f()    f \{...}
+    // expr_4_suf : v[0]    v.x    v.(:T).x    f()    f \{...}
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
-        val ok = this.tk0.pos.isSameLine(this.tk1.pos) &&
-                    (this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(") || XCEU && this.checkFix("\\"))
+        val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
+                    this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(") || (XCEU && this.checkFix("\\"))
+                 )
         if (!ok) {
             return e
         }
         return this.expr_4_suf(
             when (this.tk0.str) {
-                /*
-                // TAG:  :T [...]    (:T v).x
-                e is Expr.Tag -> {
-                    val v = this.expr_prim()
-                    val nn = N
-                    if (v is Expr.Tuple) {
-                        this.nest("""
-                            ${e.tk.pos.pre()}tags(${e.tostr(true)}, ${e.tk.str}, true)
-                        """)
-                    } else {
-                        val cnt = this.expr_4_suf()
-                        assert(this.checkFix("."))
-                        this.nest("""
-                            ${e.tk.pos.pre()}do {
-                                val :tmp ceu_$nn ${e.tk.str} = ${v.tostr(true)}
-                                ${e1.tostr(true)}
-                            }
-                        """)
-                    }
-                }
-                 */
                 "[" -> {
                     if (XCEU && (this.acceptOp("+") || this.acceptOp("-") || this.acceptFix("="))) {
                         val op = this.tk0
@@ -1222,6 +1202,20 @@ class Parser (lexer_: Lexer)
                                 err(num, "index error : ambiguous dot : use brackets")
                             }
                             Expr.Index(e.tk, e, Expr.Num(num))
+                        }
+                        (XCEU && this.acceptFix("(")) -> {
+                            this.acceptEnu_err("Tag")
+                            val tag = this.tk0
+                            this.acceptFix_err(")")
+                            this.acceptFix_err(".")
+                            this.acceptEnu_err("Id")
+                            val id = this.tk0
+                            this.nest("""
+                                ${e.tk.pos.pre()}do {
+                                    val :tmp ceu_$N ${tag.str} = ${e.tostr(true)}
+                                    ceu_$N.${id.str}
+                                }
+                            """)
                         }
                         XCEU -> {
                             err_expected(this.tk1, "field")

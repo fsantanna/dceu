@@ -3175,7 +3175,7 @@ class TXExec {
         val out = all("""
             data :T = [x]
             val x = :T [1]
-            val y = :T x.x
+            val y = x.(:T).x
             println(y)
         """)
         assert(out == "1\n") { out }
