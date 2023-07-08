@@ -329,6 +329,24 @@ class TXExec {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun op4_and_and() {
+        val out = all("""
+            val v = true and
+                true and 10
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun op5_plus_plus() {
+        val out = all("""
+            val v = 5 +
+                5 + 10
+            println(v)
+        """, true)
+        assert(out == "20\n") { out }
+    }
 
     // is, is-not?, in?
 

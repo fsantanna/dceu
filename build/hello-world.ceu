@@ -1,3 +1,3 @@
-loop in iter(["hello","world"]), v {
+loop v in ["hello","world"] {
     println(v)
 }

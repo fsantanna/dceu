@@ -1304,7 +1304,7 @@ class Parser (lexer_: Lexer)
                 val e = this.expr_2_pre()
                 //println(listOf(op,e))
                 when {
-                    (XCEU && op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
+                    (XCEU && op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} => false => true\n")
                     else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos, 0)), listOf(e))
                 }
             }
@@ -1313,7 +1313,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_1_bin (xop: String? = null, xe1: Expr? = null): Expr {
         val e1 = if (xe1 != null) xe1 else this.expr_2_pre()
-        val ok = this.tk1.pos.isSameLine(e1.tk.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
+        val ok = this.tk1.pos.isSameLine(this.tk0.pos) && // x or \n y (ok) // x \n or y (not allowed) // problem with '==' in 'ifs'
                     this.acceptEnu("Op")
         if (!ok) {
             return e1
@@ -1328,13 +1328,13 @@ class Parser (lexer_: Lexer)
                 "or" -> this.nest("""
                     ${op.pos.pre()}do {
                         val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} { ceu_${e1.n} } else { ${e2.tostr(true)} }
+                        if ceu_${e1.n} => ceu_${e1.n} => ${e2.tostr(true)}
                     }
                 """)
                 "and" -> this.nest("""
                     ${op.pos.pre()}do {
                         val :xtmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} { ${e2.tostr(true)} } else { ceu_${e1.n} }
+                        if ceu_${e1.n} => ${e2.tostr(true)} => ceu_${e1.n}
                     }
                 """)
                 "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")

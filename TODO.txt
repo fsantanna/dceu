@@ -17,6 +17,7 @@
 
 # NEXT
 
+- call: f [...], f()[...], g @[...], g #[...]
 - next => dict-next, iter-next
     - itr->next()
 - bcast in block
