@@ -543,6 +543,35 @@ class TXExec {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun jj_03_method() {
+        val out = ceu.all("""
+            func f (v) { 10 }
+            func g (v) { v }
+            val v = 99->f->g
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun jj_04_method() {
+        val out = ceu.all("""
+            func g (v) { v }
+            func f (v) { g }
+            val v = 10-->f->g
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun jj_05_method() {
+        val out = ceu.all("""
+            func f (v,x) { v+x }
+            val v = 10->f(20)
+            println(v)
+        """, true)
+        assert(out == "30\n") { out }
+    }
 
     // ASSERT
 
@@ -2172,7 +2201,7 @@ class TXExec {
             func f (g) {
                 g(10)
             }
-            println(f \{ it })
+            println(f <- \{ it })
         """)
         assert(out == "10\n") { out }
     }
@@ -2190,7 +2219,7 @@ class TXExec {
             func f (v,g) {
                 g(v)
             }
-            val v = f(5) \{ it }
+            val v = f(5) <- \{ it }
             println(v)
         """)
         assert(out == "5\n") { out }
@@ -2201,7 +2230,7 @@ class TXExec {
             func f (g) {
                 g()
             }
-            val v = f() \{ 10 }
+            val v = f( \{ 10 } )
             println(v)
         """)
         assert(out == "10\n") { out }

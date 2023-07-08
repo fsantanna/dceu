@@ -201,23 +201,6 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun lambda (): Expr.Proto {
-        this.acceptFix_err("\\")
-        val args = if (!this.checkEnu("Id")) {
-            listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
-        } else {
-            this.args("{")
-        }.let {
-            it.map { it.first.str + (it.second?.str?:"") }.joinToString(",")
-        }
-        val blk = this.block()
-        return this.nest("""
-            (func ($args) {
-                ${blk.es.tostr(true)}
-            })
-        """) as Expr.Proto
-    }
-
     fun await (): Await {
         val now = this.acceptTag(":check-now")
         val isspw = this.checkFix("spawn")
@@ -306,6 +289,32 @@ class Parser (lexer_: Lexer)
             } else { nil }
             $xblk
         """
+    }
+
+    fun method (f: Expr, e: Expr, pre: Boolean): Expr {
+        return this.nest(when {
+            (f is Expr.Call)  -> {
+                val args = if (pre) {
+                    e.tostr(true) + f.args.map { "," + it.tostr(true) }.joinToString("")
+                } else {
+                    f.args.map { it.tostr(true) + "," }.joinToString("") + e.tostr(true)
+                }
+                """
+                ${f.proto.tostr(true)}($args)
+                """
+            }
+            (f is Expr.Proto) -> {
+                assert(f.args.size <= 1)
+                val a = f.args.getOrNull(0)
+                """
+                ${tk0.pos.pre()}do {
+                    val :xtmp ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} = ${e.tostr(true)}
+                    ${f.body.es.tostr(true)}
+                }                    
+                """
+            }
+            else -> "${f.tostr(true)}(${e.tostr(true)})}"
+        })
     }
 
     fun expr_prim (): Expr {
@@ -862,7 +871,21 @@ class Parser (lexer_: Lexer)
             }
             */
 
-            (XCEU && this.checkFix("\\")) -> this.lambda()
+            (XCEU && this.acceptFix("\\")) -> {
+                val args = if (!this.checkEnu("Id")) {
+                    listOf(Pair(Tk.Id("it",this.tk0.pos,0),null))
+                } else {
+                    this.args("{")
+                }.let {
+                    it.map { it.first.str + (it.second?.str?:"") }.joinToString(",")
+                }
+                val blk = this.block()
+                return this.nest("""
+                    (func ($args) {
+                        ${blk.es.tostr(true)}
+                    })
+                """)
+            }
             (XCEU && this.acceptFix("ifs")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val (x,v) = if (this.checkFix("{")) {
@@ -1133,14 +1156,14 @@ class Parser (lexer_: Lexer)
     // expr_0_out : v --> f     f <-- v    v where {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
-    // expr_3_met : v->f()
+    // expr_3_met : v->f    f<-v
     // expr_4_suf : v[0]    v.x    v.(:T).x    f()    f \{...}
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
-                    this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(") || (XCEU && this.checkFix("\\"))
+                    this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
         if (!ok) {
             return e
@@ -1233,13 +1256,6 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix_err(")")
                     when {
-                        (XCEU && this.checkFix("\\")) -> {
-                            val f = lambda()
-                            val s = if (args.size == 0) "" else args.map { it.tostr(true)+"," }.joinToString("")
-                            this.nest("""
-                                ${e.tostr(true)}($s ${f.tostr(true)})
-                        """)
-                        }
                         (XCEU && e is Expr.Acc && e.tk.str in XOPERATORS) -> {
                             when (args.size) {
                                 1 -> this.nest("${e.tostr(true)} ${args[0].tostr(true)}")
@@ -1250,41 +1266,24 @@ class Parser (lexer_: Lexer)
                         else -> Expr.Call(e.tk, e, args)
                     }
                 }
-                else -> {
-                    assert(this.tk1.str == "\\")
-                    val f = this.lambda()
-                    this.nest("""
-                        ${e.tostr(true)}(${f.tostr(true)})
-                    """)
-                }
+                else -> error("impossible case")
             }
         )
     }
     fun expr_3_met (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_4_suf()
-        val ok = (XCEU && this.acceptFix("->"))
+        val ok = XCEU && (this.acceptFix("->") || this.acceptFix("<-"))
         if (!ok) {
             return e
         }
         if (xop!=null && xop!=this.tk0.str) {
             err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
-        return this.expr_3_met(this.tk0.str,
-            when (this.tk0.str) {
-                "->" -> {
-                    val call = this.expr_4_suf()
-                    if (call !is Expr.Call) {
-                        err(call.tk, "method call error : expected call")
-                    }
-                    call as Expr.Call
-                    val args = call.args.map { it.tostr(true) }.joinToString(",")
-                    this.nest("""
-                        ${call.proto.tostr(true)}(${e.tostr(true)}, $args)
-                    """)
-                }
-                else -> error("impossible case")
-            }
-        )
+        return when (this.tk0.str) {
+            "->" -> this.expr_3_met(this.tk0.str, method(this.expr_4_suf(), e, true))
+            "<-" -> method(e, this.expr_3_met(this.tk0.str, this.expr_4_suf()), false)
+            else -> error("impossible case")
+        }
     }
     fun expr_2_pre (): Expr {
         return when {
@@ -1370,28 +1369,8 @@ class Parser (lexer_: Lexer)
                     """)
                 )
             }
-            "-->" -> {
-                val f = this.expr_1_bin()
-                val s = if (f !is Expr.Proto) {
-                    "${f.tostr(true)}(${e.tostr(true)})}"
-                } else {
-                    assert(f.args.size <= 1)
-                    val a = f.args.getOrNull(0)
-                    """
-                    ${tk0.pos.pre()}do {
-                        val :xtmp ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} = ${e.tostr(true)}
-                        ${f.body.es.tostr(true)}
-                    }                    
-                    """
-                }
-                this.expr_0_out(op.str,
-                    this.nest(s)
-                )
-            }
-            "<--" -> {
-                val v = this.expr_0_out(op.str)
-                this.nest("${e.tostr(true)}(${v.tostr(true)})}")
-            }
+            "-->" -> this.expr_0_out(op.str, method(this.expr_1_bin(), e, true))
+            "<--" -> method(e, this.expr_0_out(op.str), false)
             else -> error("impossible case")
         }
     }

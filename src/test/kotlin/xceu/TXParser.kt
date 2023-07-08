@@ -236,7 +236,7 @@ class TXParser {
         val out = ceu.all("""
             10->10
         """)
-        assert(out == "anon : (lin 2, col 17) : method call error : expected call") { out }
+        assert(out == "anon : (lin 2, col 17) : call error : expected function") { out }
     }
 
     // SPAWN, PAR, RESUME-YIELD-ALL
