@@ -35,7 +35,7 @@
 - [x,y] = tup (destructor)
 - kill task
 - polymorphism
-    - poly var f = func (a:X, b:Y)
+    - poly var f = func ({a:X}, {b:Y})
     - poly func f (a:X, b:Y)
     - f({a},{b})
     - set MAX :T = 10

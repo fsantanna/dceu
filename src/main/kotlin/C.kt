@@ -769,6 +769,8 @@ fun Coder.main (tags: Tags): String {
                 if (ceu_depth(dst->up_block) < ceu_depth(src->up_dyns.dyns->up_block)) {
                     ceu_hold_rem(src);
                     ceu_hold_add(dst, src);
+                } else {
+                    return;
                 }
             }
             switch (src->type) {
@@ -817,7 +819,7 @@ fun Coder.main (tags: Tags): String {
         
         int ceu_block_chk (CEU_Value* src, CEU_Dyns* dst_dyns, CEU_HOLD dst_tphold) {
             if (src->type > CEU_VALUE_DYNAMIC) {
-                //printf("> depth=%d\n", ceu_block_chk_depth(src->Dyn,dst_dyns));
+                //printf(">>> dst=%d >= src=%d\n", ceu_depth(dst_dyns->up_block), ceu_depth(src->Dyn->up_dyns.dyns->up_block));
             }
             if (src->type == CEU_VALUE_REF) {
                 return 0;
@@ -841,7 +843,7 @@ fun Coder.main (tags: Tags): String {
                 } else if (src->Dyn->up_dyns.dyns==NULL || ceu_depth(dst_dyns->up_block) >= ceu_depth(src->Dyn->up_dyns.dyns->up_block)) {
                     return 1;
                 } else {
-                    //printf(">>> dst=%d >= src=%d\n", ceu_depth(dst_dyns->up_block), ceu_depth(src->Dyn->up_dyns.dyns->up_block));
+                    //printf("<<< dst=%d >= src=%d\n", ceu_depth(dst_dyns->up_block), ceu_depth(src->Dyn->up_dyns.dyns->up_block));
                     return 0;
                 }
             }

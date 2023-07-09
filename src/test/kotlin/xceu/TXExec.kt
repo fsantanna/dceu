@@ -3916,4 +3916,24 @@ class TXExec {
         assert(out == "line\n" +
                 "line\n") { out }
     }
+    @Test
+    fun all_19() {
+        val out = all("""
+            task T () {
+                set task.pub = []
+                await false
+            }
+            func f (v1, v2) {}
+            spawn {
+                val ts = tasks()
+                spawn in ts, T()
+                loop t in :tasks ts {
+                    val x = detrack(t)
+                    x and true and true and f(x.pub, x.pub)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }

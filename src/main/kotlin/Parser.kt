@@ -264,8 +264,8 @@ class Parser (lexer_: Lexer)
         val (id, tag, cnd) = id_tag_cnd()
         N++
         return """
-            val :xtmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-            if $not ${id ?: "ceu_$N"} {
+            val :xtmp ${id ?: "ceu_unt_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            if $not ${id ?: "ceu_unt_$N"} {
                 xbreak $nn
             } else { nil }
         """
@@ -283,8 +283,8 @@ class Parser (lexer_: Lexer)
         }
         N++
         return """
-            val :xtmp ${id ?: "ceu_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
-            if $not ${id ?: "ceu_$N"} {
+            val :xtmp ${id ?: "ceu_unt_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
+            if $not ${id ?: "ceu_unt_$N"} {
                 xbreak $nn
             } else { nil }
             $xblk
@@ -409,9 +409,9 @@ class Parser (lexer_: Lexer)
                 } else {
                     this.nest("""
                         ${tk0.pos.pre()}export {
-                            val :xtmp ceu_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
-                            if ceu_$N {
-                                val :xtmp $id ${tag?.str ?: ""} = ceu_$N
+                            val :xtmp ceu_exp_$N ${tag?.str ?: ""} = ${cnd.tostr(true)}
+                            if ceu_exp_$N {
+                                val :xtmp $id ${tag?.str ?: ""} = ceu_exp_$N
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}

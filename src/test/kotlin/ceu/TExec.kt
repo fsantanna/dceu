@@ -4086,4 +4086,28 @@ class TExec {
         assert(out == "1\t'a'\n") { out }
     }
     */
+
+    // ALL
+    @Test
+    fun all_01() {
+        val out = all("""
+            val T = (task () {
+                set task.pub = []
+                yield(nil)
+            })
+            val f = (func (v) {
+                nil
+            })
+            do {
+                val xxx = spawn T()
+                do {
+                    val zzz = xxx
+                    nil
+                }
+                f(xxx.pub)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }
