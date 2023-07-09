@@ -1981,6 +1981,24 @@ class TTask {
         assert(out == ":yielded\n") { out }
     }
     @Test
+    fun ff_pool11a_move() {
+        val out = all("""
+            var T = task () { yield(nil) }
+            var ts = tasks()
+            spawn in ts, T()
+            var yyy = catch true {
+                loop xxx in :tasks ts {
+                    val x = detrack(xxx).pub
+                    throw(xxx)
+                }
+            }
+            println(status(detrack(yyy)))
+        """)
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 9, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
     fun ff_pool11_check() {
         val out = all("""
             var T = task () { yield(nil) }

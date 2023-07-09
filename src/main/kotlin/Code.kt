@@ -2,9 +2,8 @@ package dceu
 
 import java.lang.Integer.min
 
-class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe, val sta: Static) {
+class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe, val mem: Mem) {
     val tops: Triple<MutableList<String>, MutableList<String>, MutableList<String>> = Triple(mutableListOf(),mutableListOf(), mutableListOf())
-    val mem: String = outer.mem(defers)
     val code: String = outer.code()
 
     fun Expr.Do.toc (isptr: Boolean): String {
@@ -66,7 +65,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_Block* _${idc}_;
                         """
                 }.joinToString("")}
-                    ${this.body.mem(defers)}
+                    ${mem.expr(this.body).second}
                 } CEU_Proto_Mem_$n;
                 """
                 val func = """ // BODY ${this.tk.dump()}

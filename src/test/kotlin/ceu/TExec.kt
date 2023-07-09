@@ -43,7 +43,8 @@ fun all (inp: String, pre: Boolean=false): String {
         val clos  = Clos(outer, ups, vars)
         val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, defs, vars, clos, unsf, sta)
+        val mem   = Mem(outer, ups)
+        val coder = Coder(outer, ups, defs, vars, clos, unsf, mem)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -228,6 +229,16 @@ class TExec {
             println(x)
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun bb_10_var() {
+        val out = all("""
+            do {
+                val x = println(10)
+                println(x)
+            }
+        """)
+        assert(out == "10\nnil\n") { out }
     }
 
     // INDEX / TUPLE
@@ -1208,14 +1219,14 @@ class TExec {
     @Test
     fun group1() {
         val out = all("""
-            export [a] {
-                val a = 10
+            export [aaa] {
+                val aaa = 10
             }
-            export [x] {
-                var x
-                set x = a
+            export [xxx] {
+                var xxx
+                set xxx = aaa
             }
-            print(x)
+            print(xxx)
         """)
         assert(out == "10") { out }
     }

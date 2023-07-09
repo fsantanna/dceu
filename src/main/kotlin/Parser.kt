@@ -1227,11 +1227,11 @@ class Parser (lexer_: Lexer)
                             val tag = this.tk0
                             this.acceptFix_err(")")
                             this.acceptFix_err(".")
-                            this.acceptEnu_err("Id")
+                            this.acceptFix("pub") || this.acceptEnu_err("Id")
                             val id = this.tk0
                             this.nest("""
-                                ${e.tk.pos.pre()}do {
-                                    val :tmp ceu_$N ${tag.str} = ${e.tostr(true)}
+                                ${e.tk.pos.pre()}export {
+                                    val :xtmp ceu_$N ${tag.str} = ${e.tostr(true)}
                                     ceu_$N.${id.str}
                                 }
                             """)

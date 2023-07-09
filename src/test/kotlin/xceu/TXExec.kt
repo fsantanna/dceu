@@ -3366,6 +3366,48 @@ class TXExec {
         """)
         assert(out == "1\t[:T]\n") { out }
     }
+    @Test
+    fun tt_04_tags() {
+        val out = all("""
+            data :T = [x]
+            task T () :T {
+                set task.pub = [10]
+                yield()
+            }
+            val t :T = spawn T()
+            println(t.pub.x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun tt_05_tags() {
+        val out = all("""
+            data :T = [x]
+            task T () :T {
+                set task.pub = [10]
+                yield()
+            }
+            val t = spawn T()
+            println(t.(:T).pub)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun tt_06_tags() {
+        val out = all("""
+            data :T = [x]
+            task T () :T {
+                set task.pub = [10]
+                yield()
+            }
+            val t = spawn T()
+            val p = do {
+                t.pub
+            }
+            println(p)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // TEMPLATE
 
@@ -3933,6 +3975,28 @@ class TXExec {
                 }
             }
             println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun all_20() {
+        val out = all("""
+            task T () {
+                await false
+            }
+            spawn {
+                val ts = tasks()
+                spawn in ts, T()
+                await true
+                catch true {
+                    loop b in :tasks ts {
+                        throw(move(b))
+                    }
+                }
+            }
+            loop {
+                broadcast in :global, :X []
+            } until false
         """)
         assert(out == ":ok\n") { out }
     }

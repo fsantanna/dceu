@@ -2,173 +2,208 @@ package dceu
 
 val union = "union"
 
-fun Expr.coexists (): Boolean {
-    return when (this) {
-        is Expr.Export, is Expr.Dcl -> true
-        is Expr.Set    -> this.dst.coexists() || this.src.coexists()
-        is Expr.If     -> this.cnd.coexists()
-        is Expr.Catch  -> this.cnd.coexists()
-        is Expr.Spawn  -> this.call.coexists()
-        is Expr.Bcast  -> this.xin.coexists() || this.evt.coexists()
-        is Expr.Yield  -> this.arg.coexists()
-        is Expr.Resume -> this.call.coexists()
-        is Expr.Toggle -> this.task.coexists() || this.on.coexists()
-        is Expr.Pub    -> this.x.coexists()
-        is Expr.Tuple  -> this.args.any { it.coexists() }
-        is Expr.Vector -> this.args.any { it.coexists() }
-        is Expr.Dict   -> this.args.any { it.first.coexists() || it.second.coexists() }
-        is Expr.Index  -> this.col.coexists() || this.idx.coexists()
-        is Expr.Call   -> this.proto.coexists() || this.args.any { it.coexists() }
-        else -> false
-    }
-}
+class Mem  (val outer: Expr.Do, val ups: Ups) {
+    fun expr (e: Expr): Pair<String, String> {
+        return when (e) {
+            is Expr.Export -> this.expr(e.body)
+            is Expr.Do -> {
+                val (fs, ss) = e.es.map { this.expr(it) }.unzip()
+                if (ups.pub[e] is Expr.Export) {
+                    Pair(fs.joinToString(""), ss.joinToString(""))
+                } else {
+                    Pair("", """
+                        struct { // BLOCK
+                            CEU_Block block_${e.n};
+                            ${fs.joinToString("")}
+                            $union {
+                                ${ss.joinToString("")}
+                            };
+                        };
+                    """)
+                }
+            }
 
-fun Expr.union_or_struct (): String {
-    return if (this.coexists()) "struct" else union
-}
+            is Expr.Dcl -> {
+                val id = e.id.str.id2c(e.n)
+                val xsrc = if (e.src == null) Pair("","") else this.expr(e.src)
+                val dcl = """
+                    struct { // DCL
+                        ${xsrc.first}
+                        ${if (id in listOf("evt", "_")) "" else {
+                            """
+                            CEU_Value ${id};
+                            CEU_Block* _${id}_; // can't be static b/c recursion
+                            """
+                        }}
+                    };
+                """
+                Pair(xsrc.first + dcl, xsrc.second)
+            }
 
-fun List<Expr>.seq (defers: Defers, i: Int): String {
-    return (i != this.size).cond {
-        """
-            ${this[i].union_or_struct()} { // SEQ
-                ${this[i].mem(defers)}
-                ${this.seq(defers, i+1)}
-            };
-        """
-    }
-}
+            is Expr.Set -> {
+                val xdst = this.expr(e.dst)
+                val xsrc = this.expr(e.src)
+                Pair(xdst.first + xsrc.first, """
+                    struct { // SET
+                        CEU_Value set_${e.n};
+                        $union {
+                            ${xdst.second}
+                            ${xsrc.second}
+                        };
+                    };
+                """)
+            }
 
-fun Expr.mem (defers: Defers): String {
-    return when (this) {
-        is Expr.Export -> this.body.mem(defers)
-        is Expr.Do -> """
-            struct { // BLOCK
-                CEU_Block block_$n;
-                ${defers.pub[this]!!.map { "int defer_${it.key.n};\n" }.joinToString("")}
-                ${es.seq(defers, 0)}
-            };
-        """
-        is Expr.Dcl -> {
-            val id = this.id.str.id2c(this.n)
-            """
-            struct { // DCL
-                struct {
-                    ${if (id in listOf("evt","_")) "" else {
-                        """
-                        CEU_Value ${id};
-                        CEU_Block* _${id}_; // can't be static b/c recursion
-                        """
-                    }}
-                    ${this.src.cond { it.mem(defers) } }
-                };
-            };
-            """
+            is Expr.If -> {
+                val xcnd = this.expr(e.cnd)
+                val xt = this.expr(e.t)
+                val xf = this.expr(e.f)
+                Pair(xcnd.first + xt.first + xf.first, """
+                    $union { // IF
+                        ${xcnd.second}
+                        ${xt.second}
+                        ${xf.second}
+                    };
+                """)
+            }
+
+            is Expr.Loop -> this.expr(e.body)
+            is Expr.Catch -> {
+                val xcnd = this.expr(e.cnd)
+                val xbdy = this.expr(e.body)
+                Pair(xcnd.first + xbdy.first, """
+                    $union { // CATCH
+                        ${xcnd.second}
+                        ${xbdy.second}
+                    };
+                """)
+            }
+
+            is Expr.Defer -> {
+                val xe = this.expr(e.body)
+                Pair(xe.first + """
+                    int defer_${e.n};                    
+                """, xe.second)
+            }
+            is Expr.Pass -> this.expr(e.e)
+            is Expr.Move -> this.expr(e.e)
+
+            is Expr.Spawn -> {
+                val xtsk = if (e.tasks == null) Pair("", "") else this.expr(e.tasks)
+                val xcal = this.expr(e.call)
+                Pair(xtsk.first + xcal.first, """
+                    struct { // SPAWN
+                        ${e.tasks.cond { "CEU_Value tasks_${e.n};" }}
+                        $union {
+                            ${xtsk.second}
+                            ${xcal.second}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Bcast -> {
+                val xxin = this.expr(e.xin)
+                val xevt = this.expr(e.evt)
+                Pair(xxin.first + xevt.first, """
+                    struct { // BCAST
+                        CEU_Value evt_${e.n};
+                        $union {
+                            ${xxin.second}
+                            ${xevt.second}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Yield -> this.expr(e.arg)
+            is Expr.Resume -> this.expr(e.call)
+            is Expr.Toggle -> {
+                val xtsk = this.expr(e.task)
+                val xon = this.expr(e.on)
+                Pair(xtsk.first + xon.first, """
+                    struct { // TOGGLE
+                        CEU_Value on_${e.n};
+                        $union {
+                            ${xtsk.second}
+                            ${xon.second}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Pub -> this.expr(e.x)
+
+            is Expr.Tuple -> {
+                val (fs, ss) = e.args.map { this.expr(it) }.unzip()
+                Pair(fs.joinToString(""), """
+                    struct { // TUPLE
+                        CEU_Dyn* tup_${e.n};
+                        $union {
+                            ${ss.joinToString("")}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Vector -> {
+                val (fs, ss) = e.args.map { this.expr(it) }.unzip()
+                Pair(fs.joinToString(""), """
+                    struct { // VECTOR
+                        CEU_Dyn* vec_${e.n};
+                        $union {
+                            ${ss.joinToString("")}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Dict -> {
+                val (fs1, ss1) = e.args.map { it.first  }.map { this.expr(it) }.unzip()
+                val (fs2, ss2) = e.args.map { it.second }.map { this.expr(it) }.unzip()
+                Pair(fs1.joinToString("") + fs2.joinToString(""), """
+                    struct { // DICT
+                        CEU_Dyn* dict_${e.n};
+                        CEU_Value key_${e.n};
+                        $union {
+                            ${ss1.joinToString("")}
+                            ${ss2.joinToString("")}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Index -> {
+                val xcol = this.expr(e.col)
+                val xidx = this.expr(e.idx)
+                Pair(xcol.first + xidx.first, """
+                    struct { // INDEX
+                        CEU_Value idx_${e.n};
+                        $union {
+                            ${xcol.second}
+                            ${xidx.second}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Call -> {
+                val xpro = this.expr(e.proto)
+                val (fs, ss) = e.args.map { this.expr(it) }.unzip()
+                Pair(xpro.first + fs.joinToString(""), """
+                    struct { // CALL
+                        ${e.args.mapIndexed { i, _ -> "CEU_Value arg_${i}_${e.n};\n" }.joinToString("")}
+                        $union {
+                            ${xpro.second}
+                            ${ss.joinToString("")}
+                        };
+                    };
+                """)
+            }
+
+            is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag,
+            is Expr.Bool, is Expr.Char, is Expr.Num, is Expr.Self, is Expr.Proto,
+            is Expr.Enum, is Expr.Data, is Expr.XBreak -> Pair("", "")
         }
-        is Expr.Set -> """
-            struct { // SET
-                CEU_Value set_$n;
-                $union {
-                    ${this.dst.mem(defers)}
-                    ${this.src.mem(defers)}
-                };
-            };
-            """
-        is Expr.If -> """
-            $union { // IF
-                ${this.cnd.mem(defers)}
-                ${this.t.mem(defers)}
-                ${this.f.mem(defers)}
-            };
-            """
-        is Expr.Loop -> this.body.mem(defers)
-        is Expr.Catch -> """
-            $union { // CATCH
-                ${this.cnd.mem(defers)}
-                ${this.body.mem(defers)}
-            };
-            """
-        is Expr.Defer -> this.body.mem(defers)
-        is Expr.Pass -> this.e.mem(defers)
-        is Expr.Move -> this.e.mem(defers)
-
-        is Expr.Spawn -> """
-            struct { // SPAWN
-                ${this.tasks.cond{"CEU_Value tasks_$n;"}}
-                $union {
-                    ${this.tasks.cond { it.mem(defers) }}
-                    ${this.call.mem(defers)}
-                };
-            };
-        """
-        is Expr.Bcast -> """
-            struct { // BCAST
-                CEU_Value evt_$n;
-                $union {
-                    ${this.xin.mem(defers)}
-                    ${this.evt.mem(defers)}
-                };
-            };
-            """
-        is Expr.Yield -> this.arg.mem(defers)
-        is Expr.Resume -> this.call.mem(defers)
-        is Expr.Toggle -> """
-            struct { // TOGGLE
-                CEU_Value on_$n;
-                $union {
-                    ${this.task.mem(defers)}
-                    ${this.on.mem(defers)}
-                };
-            };
-            """
-        is Expr.Pub -> this.x.mem(defers)
-
-        is Expr.Tuple -> """
-            struct { // TUPLE
-                CEU_Dyn* tup_$n;
-                $union {
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
-                };
-            };
-            """
-        is Expr.Vector -> """
-            struct { // VECTOR
-                CEU_Dyn* vec_$n;
-                $union {
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
-                };
-            };
-            """
-        is Expr.Dict -> """
-            struct { // DICT
-                CEU_Dyn* dict_$n;
-                CEU_Value key_$n;
-                $union {
-                    ${this.args.map {
-                        listOf(it.first.mem(defers),it.second.mem(defers))
-                    }.flatten().joinToString("")}
-                };
-            };
-            """
-        is Expr.Index -> """
-            struct { // INDEX
-                CEU_Value idx_$n;
-                $union {
-                    ${this.col.mem(defers)}
-                    ${this.idx.mem(defers)}
-                };
-            };
-            """
-        is Expr.Call -> """
-            struct { // CALL
-                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
-                $union {
-                    ${this.proto.mem(defers)}
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
-                };
-            };
-            """
-
-        is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
-        is Expr.Self, is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.XBreak -> ""
     }
 }

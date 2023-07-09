@@ -156,10 +156,11 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         val clos   = Clos(outer, ups, vars)
         val unsf   = Unsafe(outer, ups, vars)
         val sta    = Static(outer, ups, vars)
+        val mem   = Mem(outer, ups)
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder  = Coder(outer, ups, defers, vars, clos, unsf, sta)
+        val coder  = Coder(outer, ups, defers, vars, clos, unsf, mem)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;
