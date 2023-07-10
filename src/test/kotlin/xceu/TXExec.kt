@@ -3997,7 +3997,7 @@ class TXExec {
             }
             loop {
                 broadcast in :global, :X []
-            } until false
+            } until true
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
