@@ -3390,7 +3390,7 @@ class TXExec {
             val t = spawn T()
             println(t.(:T).pub)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "[10]\n") { out }
     }
     @Test
     fun tt_06_tags() {
@@ -3406,7 +3406,7 @@ class TXExec {
             }
             println(p)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "[10]\n") { out }
     }
 
     // TEMPLATE
@@ -3993,10 +3993,12 @@ class TXExec {
                         throw(move(b))
                     }
                 }
+                nil
             }
             loop {
                 broadcast in :global, :X []
             } until false
+            println(:ok)
         """)
         assert(out == ":ok\n") { out }
     }

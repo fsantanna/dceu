@@ -28,7 +28,6 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 val xsrc = if (e.src == null) Pair("","") else this.expr(e.src)
                 val dcl = """
                     struct { // DCL
-                        ${xsrc.first}
                         ${if (id in listOf("evt", "_")) "" else {
                             """
                             CEU_Value ${id};
