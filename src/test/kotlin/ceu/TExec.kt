@@ -487,11 +487,11 @@ class TExec {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
-    fun cc_tuple14_move_out() {
+    fun cc_tuple14_drop_out() {
         val out = all("""
             val out = do {
                 val ins = [1,2,3]
-                move(ins)
+                drop(ins)
             }
             println(out)
         """, true)
@@ -521,18 +521,18 @@ class TExec {
         assert(out == "10\n") { out }
     }
     @Test
-    fun cc_tuple16_move() {
+    fun cc_tuple16_drop() {
         val out = all("""
             val v = do {
-                move([[1,2]])
+                drop([[1,2]])
             }
             println(v)
         """)
         assert(out == "[[1,2]]\n") { out }
-        //assert(out == "anon : (lin 4, col 13) : invalid move : expected assignable expression") { out }
+        //assert(out == "anon : (lin 4, col 13) : invalid drop : expected assignable expression") { out }
     }
     @Test
-    fun cc_vector17_move() {
+    fun cc_vector17_drop() {
         val out = all("""
             val ttt = #[#[1,2]]
             println(ttt)
@@ -540,7 +540,7 @@ class TExec {
         assert(out == "#[#[1,2]]\n") { out }
     }
     @Test
-    fun cc_dict18_move() {
+    fun cc_dict18_drop() {
         val out = all("""
             val v = do {
                 @[(:v,@[(:v,2)])]
@@ -624,10 +624,10 @@ class TExec {
         assert(out == "[nil,nil,nil]\n[nil,10,nil]\n") { out }
     }
 
-    // MOVE
+    // DROP
 
     @Test
-    fun cm_00_move () {
+    fun cm_00_drop () {
         val out = all("""
             val f = func () {
                 [0,'a']
@@ -637,37 +637,37 @@ class TExec {
         assert(out == "[0,a]\n") { out }
     }
     @Test
-    fun cm_01_move () {
+    fun cm_01_drop () {
         val out = all("""
             val f = func () {
                 [0,'a']
             }
             val g = func () {
                 var v = f()
-                move(v)
+                drop(v)
             }
             println(g())
         """)
         assert(out == "[0,a]\n") { out }
     }
     @Test
-    fun cm_02_move () {
+    fun cm_02_drop () {
         val out = all("""
             val t = [[1]]
-            val s = move(t[0])
+            val s = drop(t[0])
             val d = @[(1,[1])]
-            val e = move(d[1])
+            val e = drop(d[1])
             println(t,t[0],s)
             println(d,d[1],e)
         """)
         assert(out == "[nil]\tnil\t[1]\n@[(1,nil)]\tnil\t[1]\n") { out }
     }
     @Test
-    fun cm_03_move() {
+    fun cm_03_drop() {
         val out = all("""
         var t = []
         do {
-            val x = move(t)
+            val x = drop(t)
             println(:x, x)
         }
         println(:t, t)
@@ -680,21 +680,21 @@ class TExec {
         val out = all("""
             var f = func (...) {
                 var x = [...]
-                move(x)
+                drop(x)
             }
             println(f(1,2,3))
         """)
         //assert(out == "[[1,2,3]]\n") { out }
         assert(out == "anon : (lin 6, col 21) : f(1,2,3)\n" +
-                "anon : (lin 4, col 22) : move error : multiple references\n" +
+                "anon : (lin 4, col 22) : drop error : multiple references\n" +
                 ":error\n") { out }
     }
     @Test
     fun cm_04() {
         val out = all("""
             var f = func (t) {
-                var x = [move(t)]
-                move(x)
+                var x = [drop(t)]
+                drop(x)
             }
             println(f([1,2,3]))
         """)
@@ -704,8 +704,8 @@ class TExec {
     fun cm_05() {
         val out = all("""
             val t1 = [1]
-            val t2 = [move(t1)]
-            val t3 = move(t2)
+            val t2 = [drop(t1)]
+            val t3 = drop(t2)
             println(t1, t2, t3)
         """)
         assert(out == "nil\tnil\t[[1]]\n") { out }
@@ -716,7 +716,7 @@ class TExec {
         val e = func () {nil}
         val g = func () {
             val co = [e]
-            move(co)
+            drop(co)
         }
         val x = g()
         println(x)
@@ -724,7 +724,7 @@ class TExec {
         assert(out.contains("[func: 0x")) { out }
     }
     @Test
-    fun cc_08_move() {
+    fun cc_08_drop() {
         val out = all("""
             val F = func (^x) {
                 func () {
@@ -1694,7 +1694,7 @@ class TExec {
                 do {
                     val vec = #[]
                     loop in :tasks ts, t {
-                        set vec[#vec] = move(t)
+                        set vec[#vec] = drop(t)
                     }
                     println(#vec)
                 }
@@ -3399,7 +3399,7 @@ class TExec {
             }
             var g = do {
                 var t = [1]
-                move(f(t))
+                drop(f(t))
             }
             println(g())
         """)
@@ -3416,7 +3416,7 @@ class TExec {
             }
             var g = do {
                 var t = [1]
-                move(f(move(t)))
+                drop(f(drop(t)))
             }
             println(g())
         """)
@@ -3435,7 +3435,7 @@ class TExec {
                 var t = [1]
                 var i = copy(f(t))
                 set t[0] = 10
-                move(i)
+                drop(i)
             }
             println(g())
         """)
@@ -3486,13 +3486,13 @@ class TExec {
                 val g = func () {
                     y
                 }
-                move(g)
+                drop(g)
             }
             println(f(1)())
             """,
         )
         assert(out == "anon : (lin 9, col 21) : f(1)\n" +
-                "anon : (lin 7, col 22) : move error : value is not movable\n" +
+                "anon : (lin 7, col 22) : drop error : value is not movable\n" +
                 ":error\n") { out }
     }
 
@@ -3591,7 +3591,7 @@ class TExec {
             do {
                 val out = do {
                     val ins = [1,2,3]
-                    move(ins)
+                    drop(ins)
                 }
                 println(`:number ceu_gc_count`)
             }
@@ -3619,7 +3619,7 @@ class TExec {
             do {
                 do {
                     var v = []
-                    move(v)
+                    drop(v)
                 }
                 ;; [] not captured, should be checked 
                 println(`:number ceu_gc_count`)

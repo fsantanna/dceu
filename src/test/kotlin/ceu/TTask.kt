@@ -644,10 +644,10 @@ class TTask {
         assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared") { out }
     }
 
-    // MOVE
+    // DROP
 
     @Test
-    fun cc_01_move_err () {
+    fun cc_01_drop_err () {
         val out = ceu.all("""
             val co = do {
                 val v
@@ -656,16 +656,16 @@ class TTask {
                     println(v)
                     println(:ok)
                 }) ()
-                move(x)
+                drop(x)
             }
             resume co()
         """)
-        assert(out == "anon : (lin 9, col 22) : move error : value is not movable\n" +
+        assert(out == "anon : (lin 9, col 22) : drop error : value is not movable\n" +
                 ":error\n") { out }
     }
 
     @Test
-    fun cc_02_move_ok () {
+    fun cc_02_drop_ok () {
         val out = ceu.all("""
             val tup = [nil]
             val co = do {
@@ -673,14 +673,14 @@ class TTask {
                     yield(nil)
                     println(:ok)
                 }) ()
-                move(x)
+                drop(x)
             }
             resume co()
         """)
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun cc_03_move() {
+    fun cc_03_drop() {
         val out = all("""
         val f = func (x) {
             x()
@@ -697,14 +697,14 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun cc_04_move() {
+    fun cc_04_drop() {
         val out = all("""
         val f = func (co) {
             resume co()
         }
         val C = coro () {
             var t = []
-            yield(move(t))
+            yield(drop(t))
             println(:in, t)
         }
         do {
@@ -720,10 +720,10 @@ class TTask {
                 ":in\tnil\n") { out }
     }
     @Test
-    fun cc_05_move() {
+    fun cc_05_drop() {
         val out = all("""
             val F = func (^x) {
-                move(spawn (coro () {
+                drop(spawn (coro () {
                     yield(nil)
                     ^^x
                 }) ())
@@ -737,7 +737,7 @@ class TTask {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun cc_06_move() {
+    fun cc_06_drop() {
         val out = all("""
             do {
                 val F = (coro () { println(:ok) })
@@ -1537,7 +1537,7 @@ class TTask {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun ee_11_bcast_move() {
+    fun ee_11_bcast_drop() {
         val out = ceu.all(
             """
             var T = task () {
@@ -1550,12 +1550,12 @@ class TTask {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast in :global, move(e)
+            broadcast in :global, drop(e)
             ;;println(:2222)
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
+        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, drop(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
@@ -1965,14 +1965,14 @@ class TTask {
         //assert(out == ":yielded\n") { out }
     }
     @Test
-    fun ff_pool11_move() {
+    fun ff_pool11_drop() {
         val out = all("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
             var yyy
             loop in :tasks ts, xxx {
-                set yyy = move(xxx)
+                set yyy = drop(xxx)
             }
             println(status(detrack(yyy)))
         """)
@@ -3055,7 +3055,7 @@ class TTask {
                 set task.pub = x
                 yield(nil)
                 set task.pub = @[(:y,copy(evt))]
-                move(task.pub)
+                drop(task.pub)
             }
             var a = spawn (t) ([1])
             ;;println(a.pub)
@@ -4006,7 +4006,7 @@ class TTask {
             val t = catch true {
                 spawn in ts, T()
                 loop in :tasks ts, t {
-                    throw(move(t))
+                    throw(drop(t))
                 }
             }
             println(detrack(t).pub)
@@ -4024,7 +4024,7 @@ class TTask {
                 val ts = tasks()
                 spawn in ts, T()
                 loop in :tasks ts, t {
-                    throw(move(t))
+                    throw(drop(t))
                     nil
                 }
             }
@@ -4043,7 +4043,7 @@ class TTask {
             catch true {
                 spawn in ts, T()
                 loop in :tasks ts, t {
-                    throw(move(t))
+                    throw(drop(t))
                 }
             }
             println(:ok)

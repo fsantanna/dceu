@@ -227,7 +227,7 @@ This restriction ensures that terminating blocks (and consequently tasks)
 deallocate all memory at once.
 *More importantly, it provides static means to reason about the program.*
 To overcome this restriction, Ceu also provides an explicit
-[move](#copy-and-move) operation to reattach a dynamic value to an outer scope.
+[drop](#copy-and-drop) operation to deattach a dynamic value from its block.
 
 The next example illustrates lexical memory management and the validity of
 assignments:
@@ -247,7 +247,7 @@ guaranteed to be in memory while `y1` is visible.
 However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
 `y2` is deallocated at the end of the block, but `x1` remains visible.
 
-The next example uses `move` to reattach a local vector to an outer scope:
+The next example uses `drop` to reattach a local vector to an outer scope:
 
 ```
 func to-vector (it) {           ;; iterable -> vector
@@ -255,14 +255,14 @@ func to-vector (it) {           ;; iterable -> vector
     loop in iter(it), v {
         set ret[+] = v          ;; each value is appended to vector
     }
-    move(ret)                   ;; local vector is moved out
+    drop(ret)                   ;; local vector is moved out
 }
 ```
 
 The function `to-vector` receives an iterable value, and copies all of its
 values to a new vector, which is finally returned.
 Since the vector `ret` is allocated inside the function, it requires an
-explicit `move` to reattach it to the caller scope.
+explicit `drop` to reattach it to the caller scope.
 
 Note that values of the [basic types](#basic-types), such as numbers, have no
 assignment restrictions because they are copied as a whole.
@@ -842,7 +842,7 @@ This is also valid for active [coroutines](#active-values) and
 This restriction permits that terminating blocks deallocate all dynamic values
 attached to them.
 
-Ceu also provides an explicit [move](#copy-and-move) operation to reattach a
+Ceu also provides an explicit [drop](#copy-and-drop) operation to reattach a
 dynamic value to an outer scope.
 
 Nevertheless, a dynamic value is still subject to garbage collection, given
@@ -1032,7 +1032,7 @@ A block delimits a lexical scope for variables and dynamic values:
 A variable is only visible to expressions in the block in which it was
 declared.
 A dynamic value cannot escape the block in which it was created (e.g., from
-assignments or returns), unless it is [moved](#copy-and-move) out.
+assignments or returns), unless it is [dropped](#copy-and-drop) out.
 For this reason, when a block terminates, all memory that was allocated inside
 it is automatically reclaimed.
 This is also valid for active [coroutines](#active-values) and
@@ -1069,7 +1069,7 @@ do {
 }
 
 do {
-    move(#[1,2,3])      ;; OK
+    drop(#[1,2,3])      ;; OK
 }
 ```
 
@@ -2365,10 +2365,10 @@ the sense that they cannot be written in Ceu itself:
 
 - `/=`:             [Equality Operators](#equality-operators)
 - `==`:             [Equality Operators](#equality-operators)
-- `copy`:           [Copy and Move](#copy-and-move)
+- `copy`:           [Copy and Drop](#copy-and-drop)
 - `coroutine`:      [Create, Resume, Spawn](#create-resume-spawn)
 - `detrack`:        [Track and Detrack](#track-and-detrack)
-- `move`:           [Copy and Move](#copy-and-move)
+- `drop`:           [Copy and Drop](#copy-and-drop)
 - `next`:           [Dictionary Next](#dictionary-next)
 - `print`:          [Print](#print)
 - `println`:        [Print](#print)
@@ -2469,10 +2469,10 @@ to-string(10)       ;; --> "10"
 to-tag(":number")   ;; --> :number
 ```
 
-### Copy and Move
+### Copy and Drop
 
 ```
-func move (v)   ;; --> v
+func drop (v)   ;; --> v
 func copy (v)   ;; --> v'
 ```
 
@@ -2480,8 +2480,8 @@ The function `copy` makes a deep copy of the given value `v`.
 Only values of the [basic types](#basic-types) and [collections](#collections)
 are supported.
 
-The function `move` makes a deep move of the given value `v`.
-A move [deattaches](#lexical-memory-management) the value from its current
+The function `drop` makes a deep drop of the given value `v`.
+A drop [deattaches](#lexical-memory-management) the value from its current
 [block](#blocks), allowing it to be reattached to an outer scope.
 Only values of the [basic types](#basic-types) and [collections](#collections)
 are supported.
@@ -2494,11 +2494,11 @@ copy(func() {})     ;; --> ERR: cannot copy function
 copy([1,[2],3])     ;; --> [1,[2],3]
 
 val v = 10
-move(v)             ;; --> 10 (innocuous move)
+drop(v)             ;; --> 10 (innocuous drop)
 
 val u = do {
     val t = [10]
-    move(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
+    drop(t)         ;; --> [10] (deattaches from `t`, reattaches to `u`)
 }
 ```
 

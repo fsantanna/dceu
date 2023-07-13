@@ -55,7 +55,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
-            is Expr.Move   -> this.map(listOf(this.e))
+            is Expr.Drop   -> this.map(listOf(this.e))
 
             is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.tasks))
             is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))

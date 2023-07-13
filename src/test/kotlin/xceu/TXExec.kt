@@ -227,7 +227,7 @@ class TXExec {
     fun bb_ifs10a() {
         val out = all("""
             val x = ifs it=[] {
-                true => move(it)
+                true => drop(it)
             }
             println(x)
         """, true)
@@ -1549,7 +1549,7 @@ class TXExec {
         assert(out == "1\n2\n3\n") { out }
     }
 
-    // ITER / MOVE
+    // ITER / DROP
 
     @Test
     fun ff_01_iter() {
@@ -1557,7 +1557,7 @@ class TXExec {
             val t1 = [[1],[2],[3]]
             val t2 = #[]
             loop in {0 => #t1{, i {
-                set t2[+] = move(t1[i])
+                set t2[+] = drop(t1[i])
             }
             println(t2)
             val t3 = #[]
@@ -1574,9 +1574,9 @@ class TXExec {
         val out = all("""
             coro genFunc () {
                 var v1 = [0,'a']
-                yield(move(v1))
+                yield(drop(v1))
                 var v2 = [1,'b']
-                yield(move(v2))
+                yield(drop(v2))
             }
             loop in genFunc, v {
                 println(v)
@@ -1595,7 +1595,7 @@ class TXExec {
         }
         val g = func () {
             val co = []
-            f(move(co))
+            f(drop(co))
         }
         val x = g()
         println(x)
@@ -1603,7 +1603,7 @@ class TXExec {
         assert(out.contains("[func: 0x")) { out }
     }
     @Test
-    fun ff_05_move() {
+    fun ff_05_drop() {
         val out = all("""
             val F = func (^x) {
                 spawn (coro () {
@@ -1622,7 +1622,7 @@ class TXExec {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun ff_06_move() {
+    fun ff_06_drop() {
         val out = all("""
             val F = func (^x) {
                 coro () {
@@ -1640,13 +1640,13 @@ class TXExec {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun ff_07_move() {
+    fun ff_07_drop() {
         val out = all("""
             func F () {
                 coro () {
                     loop {
                         val pos = []
-                        yield(move(pos))
+                        yield(drop(pos))
                     }
                 } --> \{
                     iter(it)
@@ -2297,7 +2297,7 @@ class TXExec {
             val co = spawn coro {
                 yield()
                 println(:ok)
-            } --> \{ move(it) }
+            } --> \{ drop(it) }
             resume co()
         """)
         //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
@@ -2330,7 +2330,7 @@ class TXExec {
     fun qq_06_thus() {
         val out = ceu.all(
             """
-            val co = \{ move(it) } <-- spawn coro {
+            val co = \{ drop(it) } <-- spawn coro {
                 yield()
                 println(:ok)
             }
@@ -3788,7 +3788,7 @@ class TXExec {
         coro C () {
             yield()
             var t = []
-            yield(move(t))
+            yield(drop(t))
         }
         do {
             val co = spawn C()
@@ -3820,7 +3820,7 @@ class TXExec {
             }
             coro Send (co, next) {
                 loop in iter(co), v {
-                    resume next(move(v))
+                    resume next(drop(v))
                 }
             }
             spawn Send(take, spawn Show())

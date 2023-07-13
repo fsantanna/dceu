@@ -255,7 +255,7 @@ func c-to-string (v) {
     loop in {0 => `:number strlen($v.Pointer)`{, i {
         set str[+] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
     }
-    move(str)
+    drop(str)
 }
 
 func :rec to-string (v) {
@@ -303,7 +303,7 @@ func to-vector (col, tp) {
     loop in iter(col,tp), v {
         set ret[+] = copy(v)
     }
-    move(ret)
+    drop(ret)
 }
 
 func to-tracks (...) {
@@ -316,12 +316,12 @@ func to-tracks (...) {
             }
             is? :x-tasks {
                 loop in :tasks v, i {
-                    set ret[+] = move(i)
+                    set ret[+] = drop(i)
                 }
             }
         }
     }
-    move(ret)
+    drop(ret)
 }
 
 func iterable-to-dict (itb) {
@@ -329,7 +329,7 @@ func iterable-to-dict (itb) {
     loop in iter(itb) {
         set dict[it] = true
     }
-    move(dict)
+    drop(dict)
 }
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

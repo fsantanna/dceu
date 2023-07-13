@@ -16,8 +16,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
     fun Expr.isdst (): Boolean {
         return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
-    fun Expr.ismove (): Boolean {
-        return ups.pub[this].let { it is Expr.Move && it.e==this }
+    fun Expr.isdrop (): Boolean {
+        return ups.pub[this].let { it is Expr.Drop && it.e==this }
     }
     fun Expr.asdst_src (): String {
         return "(ceu_mem->set_${(ups.pub[this] as Expr.Set).n})"
@@ -555,7 +555,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Enum -> ""
             is Expr.Data -> ""
             is Expr.Pass -> this.e.code()
-            is Expr.Move -> this.e.code()
+            is Expr.Drop -> this.e.code()
 
             is Expr.Spawn -> this.call.code()
             is Expr.Bcast -> {
@@ -677,7 +677,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_dyn_$n->Bcast.X.Task.pub = $src;
                         """
                     }
-                    this.ismove() -> error("TODO")
+                    this.isdrop() -> error("TODO")
                     else -> {
                         assrc("ceu_dyn_$n->Bcast.X.Task.pub") + """
                             if (ceu_isref) {
@@ -740,14 +740,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                          */
                     }
-                    this.ismove() -> {
+                    this.isdrop() -> {
                         val bupc = ups.first_block(this)!!.toc(true)
                         """
-                        { // ACC - MOVE
+                        { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
                             CEU_Value* args[1] = { &ceu_$n };
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
-                            ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
+                            ceu_ret = ceu_drop_f(&ceu_frame_$n, NULL, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(&ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
@@ -893,10 +893,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         """
                     }
-                    this.ismove() -> {
+                    this.isdrop() -> {
                         val bupc = ups.first_block(this)!!.toc(true)
                         """
-                        {   // INDEX - MOVE
+                        {   // INDEX - DROP
                             CEU_Value ceu_col_$n = ceu_acc;
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
@@ -921,7 +921,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Value* args[1] = { &ceu_val_$n };
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL, NULL };
-                            ceu_ret = ceu_move_f(&ceu_frame_$n, NULL, 1, args);
+                            ceu_ret = ceu_drop_f(&ceu_frame_$n, NULL, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(&ceu_val_$n, 0);
                             

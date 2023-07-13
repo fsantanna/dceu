@@ -687,7 +687,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
-            this.acceptFix("move") -> Expr.Move(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
+            this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
 
             this.acceptFix("spawn") -> {
                 val tk0 = this.tk0 as Tk.Fix

@@ -226,7 +226,7 @@ class TXJS {
         val out = all("""
             coro genFunc () {
                 loop in iter(#['a','b'],:all), v {
-                    yield(move(v))
+                    yield(drop(v))
                 }
             }
             val arr = to-vector(coroutine(genFunc))
@@ -503,7 +503,7 @@ class TXJS {
                     val tmp = yield(nil)
                     loop in iter(tmp), c {
                         if c == '\n' {
-                            yield(move(cur))
+                            yield(drop(cur))
                             set cur = ""
                         } else {
                             set cur[+] = c
@@ -625,7 +625,7 @@ class TXJS {
             var line = ""
             loop in iter(chars), c {
                 if c == '\n' {
-                    yield(move(line))
+                    yield(drop(line))
                     set line = ""
                 } else {
                     set line[+] = c
@@ -683,7 +683,7 @@ class TXJS {
             }
             coro Send (co, next) {
                 loop in iter(co), v {
-                    resume next(move(v))
+                    resume next(drop(v))
                 }
             }
             spawn Send(take2, spawn Show())
