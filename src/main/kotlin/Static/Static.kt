@@ -10,7 +10,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> this.body.traverse()
-            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 unused.add(this)
@@ -46,31 +45,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Spawn  -> {
-                this.call.traverse()
-                this.tasks?.traverse()
-            }
-            is Expr.Bcast  -> {
-                this.xin.traverse()
-                this.evt.traverse()
-            }
-            is Expr.Yield  -> {
-                if (!ups.inx(this)) {
-                    err(this.tk, "yield error : expected enclosing coro or task")
-                }
-                this.arg.traverse()
-            }
-            is Expr.Resume -> {
-                this.call.traverse()
-            }
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> this.x.traverse()
-            is Expr.Self   -> {
-                if (ups.true_x_c(this, this.tk.str) == null) {
-                    err(this.tk, "task error : missing enclosing task")
-                }
-            }
-
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val (_,dcl) = vars.get(this)
@@ -79,7 +53,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     err(this.tk, "access error : cannot access \"_\"")
                 }
             }
-            is Expr.EvtErr -> {}
+            is Expr.Err -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

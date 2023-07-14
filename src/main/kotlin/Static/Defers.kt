@@ -10,7 +10,6 @@ class Defers (outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> this.body.traverse()
-            is Expr.Export -> this.body.traverse()
             is Expr.Do -> {
                 pub[this] = mutableMapOf()
                 this.es.forEach { it.traverse() }
@@ -33,17 +32,9 @@ class Defers (outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
-            is Expr.Yield  -> this.arg.traverse()
-            is Expr.Resume -> this.call.traverse()
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> this.x.traverse()
-            is Expr.Self   -> {}
-
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
-            is Expr.EvtErr -> {}
+            is Expr.Err -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

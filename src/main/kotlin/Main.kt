@@ -4,8 +4,6 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-val XCEU = false
-//val XCEU = true
 var N = 1
 val D = "\$"
 
@@ -17,48 +15,32 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
-val KEYWORDS: SortedSet<String> = (setOf (
-    "broadcast", "catch", "coro", "data", "defer", "do", "drop", "else",
-    "enum", "err", "evt", "export", "false", "func", "if", "in", "loop",
-    "nil", "pass", /*"poly",*/ "pub", "resume", "set", "spawn", "task",
-    "toggle", "true", "until", "val", "var", "while", "yield", "xbreak"
-) + if (!XCEU) setOf() else setOf (
-    "and", "await", "awaiting", "every", "ifs", "in?", "is?", "is-not?", "not", "or",
-    "par", "par-and", "par-or", "resume-yield-all", "thus", "where", "with"
-)).toSortedSet()
+val KEYWORDS: SortedSet<String> = setOf (
+    "catch", "data", "defer", "do", "drop", "else",
+    "enum", "err", "false", "func", "if", "in", "loop",
+    "nil", "pass", /*"poly",*/ "set",
+    "true", "until", "val", "var", "xbreak"
+).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
-val XOPERATORS = if (!XCEU) setOf() else {
-    setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
-}
 
 val TAGS = listOf (
     ":nil", ":tag", ":bool", ":char", ":number", ":pointer", ":ref",
     ":dynamic",
-    ":func", ":coro", ":task",
+    ":func",
     ":tuple", ":vector", ":dict",
     ":bcast",
-        ":x-track",":x-coro", ":x-task", ":x-tasks",
-    ":fake", ":rec",
     ":clear",
     ":pre", ":ceu",
-    ":check-now",
     ":error",           // bcast-clear
-    ":tmp", ":xtmp",
-    ":global", ":local", //":task"   // bcast scope
-    ":yielded", ":toggled", ":resumed", ":terminated"
-) + if (!XCEU) emptySet() else setOf(
-    ":h", ":min", ":s", ":ms",
-    ":all", ":idx", ":key", ":val"
+    ":tmp", ":xtmp"
 )
 
 val GLOBALS = setOf (
-    "copy", "coroutine", "detrack", "next-dict", "print", "println",
-    "status", "string-to-tag", "sup?", "tags", "tasks", "throw",
-    "track", "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
+    "copy", "next-dict", "print", "println",
+    "string-to-tag", "sup?", "tags", "throw",
+    "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
 )
-
-data class Await (val now: Boolean, val cnd: Expr?, val tag: Pair<Expr.Tag,Expr?>?, val clk: List<Pair<Expr, Tk.Tag>>?, val spw: Expr.Spawn?)
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
@@ -72,8 +54,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val task: Pair<Tk.Tag?,Boolean>?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
-    data class Export (val tk_: Tk.Fix, val ids: List<String>, val body: Expr.Do) : Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean?, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
@@ -87,17 +68,9 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
-    data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
-    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
-    data class Toggle (val tk_: Tk.Fix, val task: Expr, val on: Expr): Expr(N++, tk_)
-    data class Pub    (val tk_: Tk.Fix, val x: Expr): Expr(N++, tk_)
-    data class Self   (val tk_: Tk.Fix): Expr(N++, tk_)
-
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
-    data class EvtErr (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Err    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)

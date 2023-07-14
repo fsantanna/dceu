@@ -14,17 +14,8 @@ fun Expr.tostr (pre: Boolean = false): String {
             val args = this.args.map { (id,tag) ->
                 id.tostr() + tag.cond {" ${tag!!.str}"}
             }.joinToString(",")
-            val task = this.task.let {
-                when {
-                    (it == null) -> ""
-                    (it.first != null) -> "${it.first!!.str} "
-                    it.second -> ":fake "
-                    else -> ""
-                }
-            }
-            "(" + this.tk.str + " (" + args + ") " + task + this.body.tostr(pre) + ")"
+            "(" + this.tk.str + " (" + args + ") " + this.body.tostr(pre) + ")"
         }
-        is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.body.es.tostr(pre) + "}"
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
             val xtmp = when (this.tmp) {
@@ -48,17 +39,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pass   -> "pass " + this.e.tostr(pre)
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
-        is Expr.Spawn  -> "spawn " + this.tasks.cond{"in "+it.tostr(pre)+", "} + this.call.tostr(pre)
-        is Expr.Bcast  -> "broadcast in " + this.xin.tostr(pre) + ", " + this.evt.tostr(pre)
-        is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
-        is Expr.Resume -> "resume " + this.call.tostr(pre)
-        is Expr.Toggle -> "toggle " + this.task.tostr(pre) + "(" + this.on.tostr() + ")"
-        is Expr.Pub    -> this.x.tostr(pre) + "." + this.tk.str
-        is Expr.Self   -> "task"
-
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()
-        is Expr.EvtErr -> this.tk.str
+        is Expr.Err -> this.tk.str
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str
         is Expr.Bool   -> this.tk.str

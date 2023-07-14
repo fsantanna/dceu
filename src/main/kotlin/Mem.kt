@@ -5,22 +5,17 @@ val union = "union"
 class Mem  (val outer: Expr.Do, val ups: Ups) {
     fun expr (e: Expr): Pair<String, String> {
         return when (e) {
-            is Expr.Export -> this.expr(e.body)
             is Expr.Do -> {
                 val (fs, ss) = e.es.map { this.expr(it) }.unzip()
-                if (ups.pub[e] is Expr.Export) {
-                    Pair(fs.joinToString(""), ss.joinToString(""))
-                } else {
-                    Pair("", """
-                        struct { // BLOCK
-                            CEU_Block block_${e.n};
-                            ${fs.joinToString("")}
-                            $union {
-                                ${ss.joinToString("")}
-                            };
+                Pair("", """
+                    struct { // BLOCK
+                        CEU_Block block_${e.n};
+                        ${fs.joinToString("")}
+                        $union {
+                            ${ss.joinToString("")}
                         };
-                    """)
-                }
+                    };
+                """)
             }
 
             is Expr.Dcl -> {
@@ -86,52 +81,6 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Pass -> this.expr(e.e)
             is Expr.Drop -> this.expr(e.e)
-
-            is Expr.Spawn -> {
-                val xtsk = if (e.tasks == null) Pair("", "") else this.expr(e.tasks)
-                val xcal = this.expr(e.call)
-                Pair(xtsk.first + xcal.first, """
-                    struct { // SPAWN
-                        ${e.tasks.cond { "CEU_Value tasks_${e.n};" }}
-                        $union {
-                            ${xtsk.second}
-                            ${xcal.second}
-                        };
-                    };
-                """)
-            }
-
-            is Expr.Bcast -> {
-                val xxin = this.expr(e.xin)
-                val xevt = this.expr(e.evt)
-                Pair(xxin.first + xevt.first, """
-                    struct { // BCAST
-                        CEU_Value evt_${e.n};
-                        $union {
-                            ${xxin.second}
-                            ${xevt.second}
-                        };
-                    };
-                """)
-            }
-
-            is Expr.Yield -> this.expr(e.arg)
-            is Expr.Resume -> this.expr(e.call)
-            is Expr.Toggle -> {
-                val xtsk = this.expr(e.task)
-                val xon = this.expr(e.on)
-                Pair(xtsk.first + xon.first, """
-                    struct { // TOGGLE
-                        CEU_Value on_${e.n};
-                        $union {
-                            ${xtsk.second}
-                            ${xon.second}
-                        };
-                    };
-                """)
-            }
-
-            is Expr.Pub -> this.expr(e.x)
 
             is Expr.Tuple -> {
                 val (fs, ss) = e.args.map { this.expr(it) }.unzip()
@@ -200,8 +149,8 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 """)
             }
 
-            is Expr.Nat, is Expr.Acc, is Expr.EvtErr, is Expr.Nil, is Expr.Tag,
-            is Expr.Bool, is Expr.Char, is Expr.Num, is Expr.Self, is Expr.Proto,
+            is Expr.Nat, is Expr.Acc, is Expr.Err, is Expr.Nil, is Expr.Tag,
+            is Expr.Bool, is Expr.Char, is Expr.Num, is Expr.Proto,
             is Expr.Enum, is Expr.Data, is Expr.XBreak -> Pair("", "")
         }
     }

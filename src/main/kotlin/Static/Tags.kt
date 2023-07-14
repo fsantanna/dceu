@@ -23,7 +23,6 @@ class Tags (outer: Expr.Do) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto -> this.body.traverse()
-            is Expr.Export -> this.body.traverse()
             is Expr.Do -> this.es.forEach { it.traverse() }
             is Expr.Dcl -> this.src?.traverse()
             is Expr.Set -> {
@@ -57,17 +56,9 @@ class Tags (outer: Expr.Do) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
-            is Expr.Yield  -> this.arg.traverse()
-            is Expr.Resume -> this.call.traverse()
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> this.x.traverse()
-            is Expr.Self   -> {}
-
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
-            is Expr.EvtErr -> {}
+            is Expr.Err -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> add(this.tk, this.tk.str, this.tk.str.tag2c(), null)
             is Expr.Bool   -> {}

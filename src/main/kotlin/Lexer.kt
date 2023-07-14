@@ -170,7 +170,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         break
                     }
                 }
-                (x in listOf('}','(',')','[',']',',','\$','\\')) -> yield(Tk.Fix(x.toString(), pos))
+                (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
                 (x == '.') -> {
                     val (n1,x1) = read2()
                     if (x1 == '.') {
@@ -205,11 +205,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     val op = x + read2While { it in OPERATORS }
                     when {
                         (op == "=") -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "=>")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "->")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "<-")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "-->") -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "<--") -> yield(Tk.Fix(op, pos))
                         else -> yield(Tk.Op(op, pos))
                     }
                 }
@@ -226,7 +221,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                             err(pos, "operator error : expected \"}\"")
                         }
                         when {
-                            op in XOPERATORS            -> yield(Tk.Id(op, pos, 0))
                             op.all  { it in OPERATORS } -> yield(Tk.Id("{{$op}}", pos, 0))
                             op.none { it in OPERATORS } -> yield(Tk.Op(op, pos, 0))
                             else -> err(pos, "operator error : invalid identifier")
@@ -247,7 +241,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                 (x.isLetter() || x=='_') -> {
                     val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
                     when {
-                        XOPERATORS.contains(id) -> yield(Tk.Op(id, pos))
                         KEYWORDS.contains(id) -> yield(Tk.Fix(id, pos))
                         else -> yield(Tk.Id(id, pos, 0))
                     }
@@ -411,33 +404,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                         err(stack.first().toPos(), "char error : expected '")
                     }
                     yield(Tk.Chr("'$c'", pos))
-                }
-                XCEU && (x == '"') -> {
-                    var c = '"'
-                    val v = read2Until {
-                        val brk = (it=='"' && c!='\\')
-                        c = it
-                        brk
-                    }
-                    yield(Tk.Fix("#[", pos))
-                    var i = 0
-                    while (i < v!!.length) {
-                        if (i > 0) {
-                            yield(Tk.Fix(",", pos))
-                        }
-                        val z = v[i]
-                        val zz = when {
-                            (z == '\'') -> "\\'"
-                            (z != '\\') -> z.toString()
-                            else -> {
-                                i++
-                                z.toString() + v[i]
-                            }
-                        }
-                        yield(Tk.Chr("'$zz'", pos))
-                        i++
-                    }
-                    yield(Tk.Fix("]", pos))
                 }
                 else -> {
                     TODO("$x - $pos")

@@ -162,7 +162,7 @@ export [to-string, to-number, to-tag]
             if type(v) == :vector {
                 if #v > 0 {
                     if type(v[0]) == :char {
-                        `:number atoi($v.Dyn->Ncast.Vector.buf)`
+                        `:number atoi($v.Dyn->Vector.buf)`
                     } else {
                         v   ;; TODO
                     }

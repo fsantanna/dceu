@@ -15,18 +15,16 @@ class Ups (outer: Expr.Do) {
         return this.all_until(e,cnd).firstOrNull()
     }
     fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
+        return this.first(e) { it is Expr.Do } as Expr.Do?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || (it is Expr.Do && this.pub[it] !is Expr.Export) }
+        return this.first(e) { it is Expr.Proto || (it is Expr.Do) }
     }
     fun inx (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
     fun first_true_x (e: Expr, x: String): Expr.Proto? {
-        return this.first(e) {
-            it is Expr.Proto && it.tk.str==x && (it.task==null || !it.task.second)
-        } as Expr.Proto?
+        return this.first(e) { it is Expr.Proto && it.tk.str==x } as Expr.Proto?
     }
     fun true_x_c (e: Expr, str: String): String? {
         val x = this.first_true_x(e, str)
@@ -34,7 +32,7 @@ class Ups (outer: Expr.Do) {
             .all_until(e) { it == x }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
-        return if (n == 0) null else "(ceu_frame${"->proto->Ncast.Proto.up_frame".repeat(n-1)})"
+        return if (n == 0) null else "(ceu_frame${"->proto->Proto.up_frame".repeat(n-1)})"
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {
@@ -43,7 +41,6 @@ class Ups (outer: Expr.Do) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
-            is Expr.Export -> this.map(listOf(this.body))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
@@ -57,17 +54,9 @@ class Ups (outer: Expr.Do) {
             is Expr.Pass   -> this.map(listOf(this.e))
             is Expr.Drop   -> this.map(listOf(this.e))
 
-            is Expr.Spawn  -> this.map(listOf(this.call) + listOfNotNull(this.tasks))
-            is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
-            is Expr.Yield  -> this.map(listOf(this.arg))
-            is Expr.Resume -> this.map(listOf(this.call))
-            is Expr.Toggle -> this.map(listOf(this.task, this.on))
-            is Expr.Pub    -> this.map(listOf(this.x))
-            is Expr.Self   -> emptyMap()
-
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
-            is Expr.EvtErr -> emptyMap()
+            is Expr.Err -> emptyMap()
             is Expr.Nil    -> emptyMap()
             is Expr.Tag    -> emptyMap()
             is Expr.Bool   -> emptyMap()

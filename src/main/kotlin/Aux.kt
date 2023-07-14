@@ -18,27 +18,24 @@ fun <T> T?.cond (f: (v:T)->String): String {
 
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
-        is Expr.Pub, is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
-        is Expr.EvtErr, /*is Expr.Nil,*/ is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
+        is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
+        is Expr.Err, /*is Expr.Nil,*/ is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
         else -> false
     }
 }
 
 fun Expr.is_lval (): Boolean {
     return when (this) {
-        is Expr.Pub -> true
         is Expr.Acc -> true
         is Expr.Index -> true
-        is Expr.Export -> this.body.es.last().is_lval()
         else -> false
     }
 }
 
-fun Expr.base (): Expr {
+fun Expr.base (): Expr.Acc {
     return when (this) {
         is Expr.Acc   -> this
         is Expr.Index -> this.col.base()
-        is Expr.Pub   -> this.x
         else -> {
             println(this)
             TODO()

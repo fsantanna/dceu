@@ -32,14 +32,14 @@ class TParser {
         val l = lexer(" evt ")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.EvtErr && e.tk.str == "evt")
+        assert(e is Expr.Err && e.tk.str == "evt")
     }
     @Test
     fun err4 () {
         val l = lexer(" err ")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.EvtErr && e.tk.str == "err")
+        assert(e is Expr.Err && e.tk.str == "err")
     }
 
     // EXPR.PARENS
@@ -274,7 +274,7 @@ class TParser {
         val l = lexer("x . pub")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e is Expr.Pub && e.x is Expr.Acc)
+        assert(e is Expr.Index && e.col is Expr.Acc)
         assert(e.tostr() == "x.pub") { e.tostr() }
     }
     @Test
@@ -495,30 +495,6 @@ class TParser {
         val l = lexer("export [:x] {}")
         val parser = Parser(l)
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
-    }
-    @Test
-    fun expr_export3() {
-        val l = lexer("export [] { nil }")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Export && e.ids.isEmpty() && e.body.es.size==1)
-        assert(e.tostr() == "export [] {\nnil\n}") { e.tostr() }
-    }
-    @Test
-    fun expr_export4() {
-        val l = lexer("export [x] { nil }")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Export && e.ids.first()=="x" && e.body.es.size==1)
-        assert(e.tostr() == "export [x] {\nnil\n}") { e.tostr() }
-    }
-    @Test
-    fun expr_export5() {
-        val l = lexer("export [x,y] { nil }")
-        val parser = Parser(l)
-        val e = parser.expr_prim()
-        assert(e is Expr.Export && e.ids.last()=="y" && e.body.es.size==1 && e.ids.size==2)
-        assert(e.tostr() == "export [x,y] {\nnil\n}") { e.tostr() }
     }
 
     // GROUP
