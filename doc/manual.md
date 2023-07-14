@@ -250,12 +250,12 @@ However, the assignment `x1=y2` is invalid because the tuple `[4,5,6]` held in
 The next example uses `move` to reattach a local vector to an outer scope:
 
 ```
-func to-vector (it) {           ;; iterable -> vector
-    val ret = #[]               ;; vector is allocated locally
-    loop in iter(it), v {
-        set ret[+] = v          ;; each value is appended to vector
+func to-vector (itr) {      ;; iterable -> vector
+    val ret = #[]           ;; vector is allocated locally
+    loop in itr, v {
+        set ret[+] = v      ;; each value is appended to vector
     }
-    move(ret)                   ;; local vector is moved out
+    move(ret)               ;; local vector is moved out
 }
 ```
 
