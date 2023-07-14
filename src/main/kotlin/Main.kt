@@ -17,7 +17,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
     "catch", "data", "defer", "do", "drop", "else",
-    "enum", "err", "false", "func", "if", "in", "loop",
+    "enum", "err", "false", "func", "if", "loop",
     "nil", "pass", /*"poly",*/ "set",
     "true", "until", "val", "var", "xbreak"
 ).toSortedSet()
@@ -25,14 +25,12 @@ val KEYWORDS: SortedSet<String> = setOf (
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
 
 val TAGS = listOf (
-    ":nil", ":tag", ":bool", ":char", ":number", ":pointer", ":ref",
+    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
     ":dynamic",
     ":func",
     ":tuple", ":vector", ":dict",
-    ":bcast",
-    ":clear",
     ":pre", ":ceu",
-    ":error",           // bcast-clear
+    ":error",
     ":tmp", ":xtmp"
 )
 

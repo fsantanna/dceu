@@ -18,7 +18,7 @@ val THROW = false
 //val THROW = true
 
 fun all (inp: String, pre: Boolean=false): String {
-    val prelude = if (XCEU) "build/xprelude.ceu" else "build/cprelude.ceu"
+    val prelude = "build/cprelude.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
@@ -988,19 +988,6 @@ class TExec {
         assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
     }
     @Test
-    fun vector10_pop_acc() {
-        val out = all("""
-            val v = #[1,2,3]
-            val x = export [] {
-                val i = v[#v - 1]
-                set v[#v - 1] = nil
-                i
-            }
-            println(x, #v)
-        """, true)
-        assert(out == "3\t2\n") { out }
-    }
-    @Test
     fun vector11_copy() {
         val out = all("""
             val t1 = #[]
@@ -1214,59 +1201,6 @@ class TExec {
         assert(out == "1\n") { out }
     }
 
-    // GROUP
-
-    @Test
-    fun group1() {
-        val out = all("""
-            export [aaa] {
-                val aaa = 10
-            }
-            export [xxx] {
-                var xxx
-                set xxx = aaa
-            }
-            print(xxx)
-        """)
-        assert(out == "10") { out }
-    }
-    @Test
-    fun group2_err() {
-        val out = all("""
-            export [] {
-                var a       ;; invisible
-                set a = 10
-            }
-            var x
-            set x = a
-            print(x)
-        """)
-        assert(out == "anon : (lin 7, col 21) : access error : variable \"a\" is not declared") { out }
-    }
-    @Test
-    fun group3() {
-        val out = all("""
-            val x = export [] {
-                val a = []
-                a
-            }
-            print(x)
-        """)
-        assert(out == "[]") { out }
-    }
-    @Test
-    fun export4() {
-        val out = all("""
-            export [aaa] {
-                val aaa = 10
-            }
-            export [bbb] {
-                val bbb = 20
-            }
-            println(aaa,bbb)
-        """)
-        assert(out == "10\t20\n") { out }
-    }
     @Test
     fun if5() {
         val out = all("""
@@ -1281,44 +1215,6 @@ class TExec {
                 val yyy = 20
             }
             println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun export6() {
-        val out = all("""
-            export [f] {
-                val v = []
-                val f = func () {
-                    v
-                }
-                ;;println(v, f)
-            }
-            do {
-                val x = f
-                nil
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun export7() {
-        val out = all("""
-            do {
-                export [f] {
-                    val v = []
-                    val f = func () {
-                        v
-                    }
-                    ;;println(v, f)
-                }
-                do {
-                    val x = f
-                    nil
-                }
-                println(:ok)
-            }
         """)
         assert(out == ":ok\n") { out }
     }
@@ -1588,22 +1484,6 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun scope18_tup() {
-        val out = all("""
-            val T = task (t1) {
-                val t2 = []
-                pass [t1,[],t2]
-                yield(nil)
-            }
-            do {
-                spawn T([])
-                nil
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
     fun scope19_tup() {
         val out = all("""
             do {
@@ -1664,54 +1544,6 @@ class TExec {
         """)
         assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n" +
                 ":error\n") { out }
-    }
-    @Test
-    fun scope23_tasks() {
-        val out = all("""
-            do {
-                val t = [tasks(), tasks()]
-                println(#t)
-            }
-        """)
-        assert(out == "2\n") { out }
-    }
-    @Test
-    fun scope24_tracks() {
-        val out = all("""
-            val T = task () { yield(nil) }
-            do {
-                val ts = tasks()
-                spawn in ts, T()
-                do {
-                    val vec = #[]
-                    loop t in :tasks ts {
-                        set vec[#vec] = t
-                    }
-                    println(vec)
-                }
-            }
-        """)
-        //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out.contains("#[x-track: 0x")) { out }
-    }
-    @Test
-    fun scope25_tracks() {
-        val out = all("""
-            val T = task () { yield(nil) }
-            do {
-                val ts = tasks()
-                spawn in ts, T()
-                do {
-                    val vec = #[]
-                    loop t in :tasks ts {
-                        set vec[#vec] = drop(t)
-                    }
-                    println(#vec)
-                }
-            }
-        """)
-        assert(out == "1\n") { out }
     }
     @Test
     fun scope26_args() {
@@ -2925,7 +2757,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "35\t291\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "17\t273\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2964,16 +2796,6 @@ class TExec {
             println(`:number ceu_gc_count`)
         """)
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
-    }
-    @Test
-    fun tags14() {
-        val out = all("""
-            val co = coro () {
-                yield(:x)
-            }
-            println(:y)
-        """)
-        assert(out == ":y\n") { out }
     }
     @Test
     fun tags15() {
@@ -3017,7 +2839,7 @@ class TExec {
                 to-number(:depois)
             )
         """, true)
-        assert(out == "35\t1000\t1001\t1002\t10\t11\t12\t36\t100\t101\t37\n") { out }
+        assert(out == "17\t1000\t1001\t1002\t10\t11\t12\t18\t100\t101\t19\n") { out }
     }
     @Test
     fun enum02() {
@@ -3072,18 +2894,6 @@ class TExec {
             println(13)
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
-    }
-    @Test
-    fun todo_defer2_err() {
-        val out = all("""
-            task () {
-                defer {
-                    yield(nil)   ;; no yield inside defer
-                }
-            }
-            println(1)
-        """)
-        assert(out == "TODO") { out }
     }
     @Test
     fun defer3() {
@@ -3663,81 +3473,6 @@ class TExec {
         assert(out == "[]\n0\n") { out }
     }
     @Test
-    fun gc13_bcast() {
-        val out = all("""
-            broadcast in :global, []
-            println(`:number ceu_gc_count`)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun gc14_bcast() {
-        val out = ceu.all(
-            """
-            var tk = task () {
-                yield(nil)
-                do {
-                    val xxx = evt
-                }
-                nil
-                ;;println(:out)
-            }
-            var co = spawn tk ()
-            broadcast in :global, []
-            println(`:number ceu_gc_count`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
-    fun gc14_bcast_err() {
-        val out = ceu.all(
-            """
-            var tk = task () {
-                do {
-                    yield(nil)
-                    var v = evt
-                }
-                nil
-                ;;println(:out)
-            }
-            var co = spawn tk ()
-            broadcast in :global, []
-            println(`:number ceu_gc_count`)
-        """
-        )
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
-    }   @Test
-    fun gc14_2_bcast_err() {
-        val out = ceu.all(
-            """
-            var tk = task () {
-                do {
-                    yield(nil)
-                    do {
-                        var v = evt
-                    }
-                }
-                nil
-                ;;println(:out)
-            }
-            var co = spawn tk ()
-            broadcast in :global, []
-            println(`:number ceu_gc_count`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
-        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-    }
-    @Test
     fun gc15_arg() {
         val out = ceu.all(
             """
@@ -3749,31 +3484,6 @@ class TExec {
         """
         )
         assert(out == "1\n") { out }
-    }
-    @Test
-    fun gc16_arg_bcast() {
-        val out = ceu.all(
-            """
-            var tk = task (v) {
-                do {
-                    yield(nil)
-                    ;;println(evt)
-                    do {
-                        val v' = evt
-                    }
-                }
-                nil
-                ;;println(:out)
-            }
-            var co = spawn (tk) ()
-            broadcast in :global, []
-            println(`:number ceu_gc_count`)
-        """
-        )
-        assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
-        //        "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
     }
 
     // MISC
@@ -4097,28 +3807,4 @@ class TExec {
         assert(out == "1\t'a'\n") { out }
     }
     */
-
-    // ALL
-    @Test
-    fun all_01() {
-        val out = all("""
-            val T = (task () {
-                set task.pub = []
-                yield(nil)
-            })
-            val f = (func (v) {
-                nil
-            })
-            do {
-                val xxx = spawn T()
-                do {
-                    val zzz = xxx
-                    nil
-                }
-                f(xxx.pub)
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
 }

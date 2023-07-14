@@ -417,6 +417,11 @@ class Parser (lexer_: Lexer)
         }
         return this.expr_4_suf(
             when (this.tk0.str) {
+                "[" -> {
+                    val idx = this.expr()
+                    this.acceptFix_err("]")
+                    Expr.Index(e.tk, e, idx)
+                }
                 "." -> {
                     this.acceptEnu_err("Id")
                     Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))

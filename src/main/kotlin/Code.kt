@@ -80,7 +80,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${clos.protos_refs[this].cond { """
                         CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->Proto.upvs.buf;                    
                     """ }}
-                    ${this.body.code()}
+                    do { // func
+                        ${this.body.code()}
+                    } while (0); // func
                     return ceu_ret;
                 }
                 """
@@ -249,7 +251,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             """
                         }}
                         {
-                            ${unsf.dos.contains(this).cond { "ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);" }}
                             { // move up dynamic ceu_acc (return or error)
                                 ${
                                     (f_b != null).cond {
@@ -273,13 +274,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ${(defers.pub[this]!!.size > 0).cond { """
                                 { // DEFERS ${this.tk.dump()}
                                     ceu_ret = CEU_RET_RETURN;
-                                    CEU_Value* ceu_evt_$N = ceu_evt;
-                                    ceu_evt = &CEU_EVT_NIL;
                                     ${defers.pub[this]!!.map{it.value}.reversed().joinToString("")}
                                     if (ceu_ret_$n!=CEU_RET_THROW && ceu_ret==CEU_RET_THROW) {
                                         ceu_acc_$n = ceu_acc;
                                     }
-                                    ceu_evt = ceu_evt_$N;
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                             """}}
@@ -302,7 +300,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     }.joinToString("")
                                 }}
                             }
-                            ${unsf.dos.contains(this).cond { "if (!dead)" }}
                             {
                                 // blocks: relink up, free down
                                 ${
@@ -412,14 +409,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     do { // catch
                         ${this.body.code()}
                     } while (0); // catch
-                    CEU_CONTINUE_ON_CLEAR();
                     if (ceu_ret == CEU_RET_THROW) {
                         ceu_ret = CEU_RET_RETURN;
                         CEU_Value ceu_err = ceu_acc;
                         do {
                             ${this.cnd.code()}
                         } while (0);
-                        assert(ceu_ret!=CEU_RET_YIELD && "bug found: cannot yield in catch condition");
                         CEU_CONTINUE_ON_THROW();
                         CEU_Value ceu_accx = ceu_acc;
                         if (!ceu_as_bool(&ceu_accx)) {
@@ -510,7 +505,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_Value ceu_$n = $idc;
                             CEU_Value* args[1] = { &ceu_$n };
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL };
-                            ceu_ret = ceu_drop_f(&ceu_frame_$n, NULL, 1, args);
+                            ceu_ret = ceu_drop_f(&ceu_frame_$n, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(&ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
@@ -536,7 +531,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Err -> {
                 when (this.tk.str) {
                     "err" -> assrc("ceu_err")
-                    "evt" -> assrc("(*ceu_evt)")
                     else -> error("impossible case")
                 }
             }
@@ -675,14 +669,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 default:
                                     assert(0 && "bug found");
                             }
-                            if (ceu_isref) {
-                                ceu_toref(&ceu_acc);
-                            }
                             
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Value* args[1] = { &ceu_val_$n };
                             CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL };
-                            ceu_ret = ceu_drop_f(&ceu_frame_$n, NULL, 1, args);
+                            ceu_ret = ceu_drop_f(&ceu_frame_$n, 1, args);
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(&ceu_val_$n, 0);
                             
@@ -727,9 +718,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             default:
                                 assert(0 && "bug found");
                         }
-                        if (ceu_isref) {
-                            ceu_toref(&ceu_acc);
-                        }
                     """
                 } + """
                 }
@@ -737,8 +725,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             }
             is Expr.Call -> {
                 val bupc = ups.first_block(this)!!.toc(true)
-                val pass_evt = ups.inx(this) && (this.proto is Expr.Proto) && (this.args.size == 0)
-
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.proto.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
@@ -775,12 +761,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
                     """ }}
                     CEU_Value* ceu_args_$n[${when {
-                        pass_evt  -> "1"
                         !has_dots -> this.args.size
                         else      -> "ceu_dots_$n + " + (this.args.size-1)
                     }}];
                     ${when {
-                        pass_evt  -> "ceu_args_$n[0] = ceu_evt;"
                         !has_dots -> args_vs
                         else      -> """
                             $args_vs
@@ -792,7 +776,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
                     ceu_ret = ceu_frame_$n.proto->Proto.f (
                         &ceu_frame_$n,
-                        ${if (pass_evt) -1 else this.args.let {
+                        ${this.args.let {
                             if (!has_dots) it.size.toString() else {
                                 "(" + (it.size-1) + " + ceu_dots_$n)"
                             }
