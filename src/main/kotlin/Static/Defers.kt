@@ -31,7 +31,7 @@ class Defers (outer: Expr.Do, val ups: Ups) {
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
-            is Expr.Move   -> this.e.traverse()
+            is Expr.Drop   -> this.e.traverse()
 
             is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
             is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }

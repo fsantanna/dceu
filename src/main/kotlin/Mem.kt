@@ -85,7 +85,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 """, xe.second)
             }
             is Expr.Pass -> this.expr(e.e)
-            is Expr.Move -> this.expr(e.e)
+            is Expr.Drop -> this.expr(e.e)
 
             is Expr.Spawn -> {
                 val xtsk = if (e.tasks == null) Pair("", "") else this.expr(e.tasks)
