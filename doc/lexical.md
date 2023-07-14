@@ -7,10 +7,14 @@ management is one of the key aspects of the language:
 - Strict escaping rules to preserve structure reasoning.
 - Garbage collection restricted to local references only.
 
+- goal
+- basic concepts
+- basic rules
+
 ## Dynamic Values
 
-Ceu respects the lexical structure of the program also when dealing with
-dynamic values, which allocate memory.
+Ceu respects the lexical structure of the program even when dealing with
+dynamic values, which allocate new memory.
 Ceu supports 10 types with [dynamic values](manual-out#dynamic-values), which
 are all subject to lexical memory management:
 

@@ -1965,14 +1965,14 @@ class TTask {
         //assert(out == ":yielded\n") { out }
     }
     @Test
-    fun ff_pool11_move() {
+    fun ff_pool11_drop() {
         val out = all("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
             var yyy
             loop xxx in :tasks ts {
-                set yyy = move(xxx)
+                set yyy = drop(xxx)
             }
             println(status(detrack(yyy)))
         """)
@@ -4023,7 +4023,7 @@ class TTask {
             val ts = tasks()
             val t = catch true {
                 spawn in ts, T()
-                loop in :tasks ts, t {
+                loop t in :tasks ts {
                     throw(drop(t))
                 }
             }

@@ -1705,7 +1705,7 @@ class TExec {
                 do {
                     val vec = #[]
                     loop t in :tasks ts {
-                        set vec[#vec] = move(t)
+                        set vec[#vec] = drop(t)
                     }
                     println(#vec)
                 }
