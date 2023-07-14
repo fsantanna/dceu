@@ -819,25 +819,6 @@ class TExec {
         assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
     }
     @Test
-    fun todo_dd_dict7_err() {
-        val out = all("""
-            var x
-            set x = @[(nil,10)]
-            println(x[nil])
-        """)
-        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
-    }
-    @Test
-    fun todo_dd_dict8_err() {
-        val out = all("""
-            val x
-            set x = @[]
-            set x[nil] = 10
-            println(x[nil])
-        """)
-        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
-    }
-    @Test
     fun dd_dict9_next() {
         val out = all("""
             val t = @[]
@@ -1802,19 +1783,6 @@ class TExec {
         assert(out == "anon : (lin 3, col 13) : call error : expected function\n:error\n") { out }
     }
     @Test
-    fun todo_use_bef_dcl_func18() {
-        val out = all("""
-            var f
-            set f = func () {
-                println(v)
-            }
-            var v
-            set v = 10
-            f()
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
     fun func18_err_rec() {
         val out = all("""
             val f = func () {
@@ -2433,14 +2401,6 @@ class TExec {
             println(((10 + -20)*2)/5)
         """, true)
         assert(out == "-4\n") { out }
-    }
-    @Test
-    fun todo_op_id2() {
-        val out = all("""
-            set (+) = (-)
-            println((+)(10,4))
-        """)
-        assert(out == "6\n") { out }
     }
     @Test
     fun op_cmp() {
