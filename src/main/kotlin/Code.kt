@@ -33,7 +33,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
         return when {
             (tmp == null) -> "CEU_HOLD_MUTABLE"
             (tmp == true) -> "CEU_HOLD_FLEETING"
-            (unsf.chk_up_safe(this) || (ups.first(this){ it is Expr.Proto }?.tk?.str == "func")) -> "CEU_HOLD_FLEETING"
+            (ups.first(this){ it is Expr.Proto } != null) -> "CEU_HOLD_FLEETING"
             else -> "CEU_HOLD_MUTABLE"
         }
 
@@ -135,7 +135,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val depth = when {
                     (f_b == null) -> "1"
-                    (f_b is Expr.Proto) -> "1"
+                    (f_b is Expr.Proto) -> "ceu_frame->up_block->depth + 1"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
                 val dcls = vars.blk_to_dcls[this]!!
@@ -146,9 +146,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     .map    { it.id.str.id2c(it.n) }
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, NULL, NULL };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ceu_frame, NULL };
                     void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
-                    ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
                     #ifdef CEU_DEBUG
                     printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, ceu_frame);
                     #endif
@@ -164,7 +163,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ }}
                     ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                         f_b as Expr.Proto
-                        val istask = (f_b.tk.str != "func")
                         val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                         val args_n = f_b.args.size - 1
                         """
@@ -174,14 +172,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 val dcl = vars.get(this, it.first.str)
                                 val idc = it.first.str.id2c(dcl.n)
                                 """
-                                ${istask.cond { """
-                                    if (ceu_x->Bcast.X.Task.up_tasks != NULL) {
-                                        ceu_mem->_${idc}_ = ceu_x->hold.up_block;
-                                    } else
-                                """}}
-                                { // else
-                                    ceu_mem->_${idc}_ = &ceu_mem->block_$n;
-                                }
+                                ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                 if (ceu_i < ceu_n) {
                                     if (!ceu_block_chk_set(ceu_args[ceu_i], ceu_mem->_${idc}_, CEU_HOLD_FLEETING)) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
@@ -208,16 +199,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """ 
                     }}
-                    ${
-                        (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                            "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
-                        }
-                    }
-                    ${
-                        (f_b is Expr.Do).cond {
-                            "ceu_mem->block_${bup!!.n}.dn_block = &ceu_mem->block_$n;"
-                        }
-                    }
                     { // because of "decrement refs" below
                         ${ids.map {
                             if (it in listOf("evt","_")) "" else """
@@ -256,11 +237,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     (f_b != null).cond {
                                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
                                         """
-                                        ${
-                                            (f_b!!.tk.str != "func").cond {
-                                                "ceu_mem->block_$n.ispub = 0;"
-                                            }
-                                        }
                                         if (!ceu_block_chk_set(&ceu_acc, $up1, CEU_HOLD_FLEETING)) {
                                             CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                                             // prioritize scope error over whatever there is now
@@ -299,20 +275,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     }.joinToString("")
                                 }}
                             }
-                            {
-                                // blocks: relink up, free down
-                                ${
-                                    (f_b is Expr.Do).cond {
-                                        "ceu_mem->block_${bup!!.n}.dn_block = NULL;"
-                                    }
-                                }
-                                ${
-                                    (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                                        "ceu_x->Bcast.X.dn_block = NULL;"
-                                    }
-                                }
-                                ceu_block_free(&ceu_mem->block_$n);
-                            }
+                            ceu_block_free(&ceu_mem->block_$n);
                         }
                         ceu_acc = ceu_acc_$n;
                         ceu_ret = ceu_ret_$n;
