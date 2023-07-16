@@ -550,12 +550,20 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BLOCK
         void ceu_hold_add (CEU_Block* blk, CEU_Dyn* dyn) {
+            assert(dyn->hold.nxt_dyn == NULL);
             dyn->hold.up_block = blk;
             dyn->hold.nxt_dyn = blk->fst_dyn;
             blk->fst_dyn = dyn;
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
-            dyn->hold.up_block->fst_dyn = dyn->hold.nxt_dyn;
+            CEU_Dyn** ptr = &dyn->hold.up_block->fst_dyn;
+            do {
+                if (*ptr == dyn) {
+                    *ptr = dyn->hold.nxt_dyn;
+                    break;
+                }
+            } while (ptr = &(*ptr)->hold.nxt_dyn);
+            dyn->hold.nxt_dyn = NULL;
             dyn->hold.up_block = NULL;
         }
 
