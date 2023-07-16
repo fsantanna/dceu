@@ -97,7 +97,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ceu_proto_f_$n,
                         { ${clos.protos_refs[this]?.size ?: 0}, NULL }
                     },
-                    &${up_blk.toc(true)}->dn_dyns,
+                    ${up_blk.toc(true)},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"}
                 );
                 ${clos.protos_refs[this].cond {
@@ -114,9 +114,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
                             if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                                 assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
-                                //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->hold.dyns, ceu_up->Dyn->hold.type));
+                                //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->hold.up_block, ceu_up->Dyn->hold.type));
                             } else {
-                                assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->hold.dyns, ceu_proto_$n->hold.type));
+                                assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->hold.up_block, ceu_proto_$n->hold.type));
                             }
                             ceu_gc_inc(ceu_up);
                             ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Proto.upvs.buf)->${idc} = *ceu_up;
@@ -146,7 +146,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     .map    { it.id.str.id2c(it.n) }
                 """
                 { // BLOCK ${this.tk.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&ceu_mem->block_$n}, NULL };
+                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, NULL, NULL };
                     void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                     ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
                     #ifdef CEU_DEBUG
@@ -154,9 +154,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     #endif
                     ${(f_b == null).cond { """
                     {   // ... for main block
-                        CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
+                        CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n, ceu_argc);
                         for (int i=0; i<ceu_argc; i++) {
-                            CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
+                            CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n, ceu_argv[i]);
                             assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} }));
                         }
                         ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
@@ -176,14 +176,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 """
                                 ${istask.cond { """
                                     if (ceu_x->Bcast.X.Task.up_tasks != NULL) {
-                                        ceu_mem->_${idc}_ = ceu_x->hold.dyns->up_block;
+                                        ceu_mem->_${idc}_ = ceu_x->hold.up_block;
                                     } else
                                 """}}
                                 { // else
                                     ceu_mem->_${idc}_ = &ceu_mem->block_$n;
                                 }
                                 if (ceu_i < ceu_n) {
-                                    if (!ceu_block_chk_set(ceu_args[ceu_i], &ceu_mem->_${idc}_->dn_dyns, CEU_HOLD_FLEETING)) {
+                                    if (!ceu_block_chk_set(ceu_args[ceu_i], ceu_mem->_${idc}_, CEU_HOLD_FLEETING)) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
                                     ceu_mem->$idc = *ceu_args[ceu_i];
@@ -198,7 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 val idc = f_b.args.last()!!.first.str.id2c(null)
                                 """
                                 int ceu_tup_n = MAX(0,ceu_n-$args_n);
-                                CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
+                                CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n, ceu_tup_n);
                                 for (int i=0; i<ceu_tup_n; i++) {
                                     assert(ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]));
                                 }
@@ -261,7 +261,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                                 "ceu_mem->block_$n.ispub = 0;"
                                             }
                                         }
-                                        if (!ceu_block_chk_set(&ceu_acc, &$up1->dn_dyns, CEU_HOLD_FLEETING)) {
+                                        if (!ceu_block_chk_set(&ceu_acc, $up1, CEU_HOLD_FLEETING)) {
                                             CEU_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                                             // prioritize scope error over whatever there is now
                                             ceu_acc_$n = CEU_ERR_ERROR;
@@ -286,8 +286,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     """
                                     if (ceu_mem->$it.type > CEU_VALUE_DYNAMIC) {
                                         ceu_gc_dec(&ceu_mem->$it,
-                                                   (ceu_mem->$it.Dyn->hold.dyns != NULL) &&
-                                                   (ceu_mem->$it.Dyn->hold.dyns->up_block == &ceu_mem->block_$n)
+                                                   (ceu_mem->$it.Dyn->hold.up_block == &ceu_mem->block_$n)
                                         );
                                     }
                                     """
@@ -338,7 +337,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                     ${(this.init && this.src!=null && !unused).cond {
                         this.src!!.code() + """
-                            if (!ceu_block_chk_set(&ceu_acc, &$bupc->dn_dyns, ${this.tmp_hold(this.tmp)})) {
+                            if (!ceu_block_chk_set(&ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                             }
                         """
@@ -477,7 +476,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_block_chk_set(&$src, &${_idc_}->dn_dyns, ${this.tmp_hold(dcl.tmp)})) {
+                            if (!ceu_block_chk_set(&$src, ${_idc_}, ${this.tmp_hold(dcl.tmp)})) {
                                 CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                             }
                             ceu_gc_inc(&$src);
@@ -542,7 +541,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
             is Expr.Tuple -> """
                 { // TUPLE ${this.tk.dump()}
-                    ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, ${this.args.size});
+                    ceu_mem->tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc(true)}, ${this.args.size});
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -556,7 +555,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             """
             is Expr.Vector -> """
                 { // VECTOR ${this.tk.dump()}
-                    ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
+                    ceu_mem->vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc(true)});
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -570,7 +569,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Dict -> {
                 """
                 { // DICT ${this.tk.dump()}
-                    ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
+                    ceu_mem->dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc(true)});
                     assert(ceu_mem->dict_$n != NULL);
                     ${this.args.map { """
                         {
@@ -618,10 +617,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     this.isdst() -> {
                         val src = this.asdst_src()
                         """
-                        if (!ceu_block_chk_set(&ceu_mem->idx_$n, ceu_acc.Dyn->hold.dyns, CEU_HOLD_FLEETING)) {
+                        if (!ceu_block_chk_set(&ceu_mem->idx_$n, ceu_acc.Dyn->hold.up_block, CEU_HOLD_FLEETING)) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
-                        if (!ceu_block_chk_set(&$src, ceu_acc.Dyn->hold.dyns, CEU_HOLD_FLEETING)) {
+                        if (!ceu_block_chk_set(&$src, ceu_acc.Dyn->hold.up_block, CEU_HOLD_FLEETING)) {
                             CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         switch (ceu_acc.type) {
