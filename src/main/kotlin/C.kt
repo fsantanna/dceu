@@ -610,8 +610,13 @@ fun Coder.main (tags: Tags): String {
         }
 
         int ceu_depth (CEU_Block* blk) {
-            int base = (blk->up_frame->up_block == NULL) ? 0 : ceu_depth(blk->up_frame->up_block);
-            return base + blk->depth;
+            if (blk == NULL) {
+                return 0;
+            } else if (blk->up_frame->up_block == NULL) {
+                return blk->depth;
+            } else {
+                return blk->depth + ceu_depth(blk->up_frame->up_block);
+            }
         }
         
         void ceu_block_set (CEU_Dyn* src, CEU_Block* dst, CEU_HOLD tphold) {
