@@ -43,8 +43,7 @@ fun all (inp: String, pre: Boolean=false): String {
         val clos  = Clos(outer, ups, vars)
         val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val mem   = Mem(outer, ups)
-        val coder = Coder(outer, ups, defs, vars, clos, unsf, mem)
+        val coder = Coder(outer, ups, defs, vars, clos, unsf)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
