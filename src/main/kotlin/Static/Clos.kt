@@ -83,7 +83,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.col.traverse()
                 this.idx.traverse()
             }
-            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

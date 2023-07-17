@@ -109,8 +109,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return when {
             (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
             (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
-            else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Proto.up_frame".repeat(N)}->${mem})->$idc)",
-                "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Proto.up_frame".repeat(N)}->${mem})->_${idc}_)")
+            else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->closure->up_frame".repeat(N)}->${mem})->$idc)",
+                "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->closure->up_frame".repeat(N)}->${mem})->_${idc}_)")
         }
     }
 
@@ -283,7 +283,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.idx.traverse()
                 data(this)
             }
-            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

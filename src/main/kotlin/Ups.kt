@@ -29,7 +29,7 @@ class Ups (outer: Expr.Do) {
             .all_until(e) { it == x }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
-        return if (n == 0) null else "(ceu_frame${"->proto->Proto.up_frame".repeat(n-1)})"
+        return if (n == 0) null else "(ceu_frame${"->closure->up_frame".repeat(n-1)})"
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {
@@ -63,7 +63,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Vector -> this.map(this.args)
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.proto)) + this.map(this.args)
+            is Expr.Call   -> this.map(listOf(this.closure)) + this.map(this.args)
         }
     }
 }

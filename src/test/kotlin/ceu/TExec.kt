@@ -614,7 +614,7 @@ class TExec {
                     val y = copy(x)
                     do {
                         set x = copy(y)
-                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->hold.type);`
+                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->Any.hold.type);`
                         set v = x       ;; err
                     }
                 }
@@ -935,14 +935,14 @@ class TExec {
         val out = all("""
             #[1,nil,3]  ;; v[2] = nil, but #v===1
         """)
-        assert(out.contains("ceu_vector_set: Assertion `i == vec->Vector.its-1' failed.")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
     }
     @Test
     fun todo_vector6b_err() {
         val out = all("""
             #[1,'a',3]  ;; different type
         """)
-        assert(out.contains("ceu_vector_set: Assertion `v.type == vec->Vector.type' failed.")) { out }
+        assert(out.contains("ceu_vector_set: Assertion `v.type == vec->unit' failed.")) { out }
     }
     @Test
     fun vector7_err() {

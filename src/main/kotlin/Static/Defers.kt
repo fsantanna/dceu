@@ -47,7 +47,7 @@ class Defers (outer: Expr.Do, val ups: Ups) {
                 this.col.traverse()
                 this.idx.traverse()
             }
-            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

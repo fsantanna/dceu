@@ -86,7 +86,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 val (fs, ss) = e.args.map { this.expr(it) }.unzip()
                 Pair(fs.joinToString(""), """
                     struct { // TUPLE
-                        CEU_Dyn* tup_${e.n};
+                        CEU_Tuple* tup_${e.n};
                         $union {
                             ${ss.joinToString("")}
                         };
@@ -98,7 +98,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 val (fs, ss) = e.args.map { this.expr(it) }.unzip()
                 Pair(fs.joinToString(""), """
                     struct { // VECTOR
-                        CEU_Dyn* vec_${e.n};
+                        CEU_Vector* vec_${e.n};
                         $union {
                             ${ss.joinToString("")}
                         };
@@ -111,7 +111,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 val (fs2, ss2) = e.args.map { it.second }.map { this.expr(it) }.unzip()
                 Pair(fs1.joinToString("") + fs2.joinToString(""), """
                     struct { // DICT
-                        CEU_Dyn* dict_${e.n};
+                        CEU_Dict* dict_${e.n};
                         CEU_Value key_${e.n};
                         $union {
                             ${ss1.joinToString("")}
@@ -136,7 +136,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
             }
 
             is Expr.Call -> {
-                val xpro = this.expr(e.proto)
+                val xpro = this.expr(e.closure)
                 val (fs, ss) = e.args.map { this.expr(it) }.unzip()
                 Pair(xpro.first + fs.joinToString(""), """
                     struct { // CALL

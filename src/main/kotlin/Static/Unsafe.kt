@@ -93,17 +93,17 @@ class Unsafe (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.idx.traverse()
             }
             is Expr.Call   -> {
-                this.proto.traverse()
+                this.closure.traverse()
                 this.args.forEach { it.traverse() }
 
-                when (this.proto) {
+                when (this.closure) {
                     is Expr.Proto -> {
-                        if (funcs.contains(this.proto)) {
+                        if (funcs.contains(this.closure)) {
                             this.set_up_unsafe()
                         }
                     }
                     is Expr.Acc -> {
-                        val (_,dcl) = vars.get(this.proto)
+                        val (_,dcl) = vars.get(this.closure)
                         when {
                             (dcl.tk.str == "var") -> this.set_up_unsafe()
                             GLOBALS.contains(dcl.id.str) -> {} // SAFE

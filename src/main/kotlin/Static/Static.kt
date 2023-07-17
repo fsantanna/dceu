@@ -67,7 +67,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.idx.traverse()
             }
             is Expr.Call   -> {
-                this.proto.traverse()
+                this.closure.traverse()
                 this.args.forEach { it.traverse() }
             }
         }
