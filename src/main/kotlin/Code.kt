@@ -85,6 +85,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
+                // UPVALS
                 ${clos.protos_refs[this].cond {
                     it.map { dcl ->
                         val dcl_blk = vars.dcl_to_blk[dcl]!!
