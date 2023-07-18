@@ -1408,10 +1408,8 @@ fun Coder.main (tags: Tags): String {
         CEU_Value string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_string_dash_to_dash_tag} };
     """ +
     """ // FUNCS
-        //CEU_Closure _ceu_closure_ = { NULL, {}, {} };
         CEU_Frame _ceu_frame_ = { NULL, NULL };
         CEU_Frame* ceu_frame = &_ceu_frame_;
-        ${pres.joinToString("")}
     """ +
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
