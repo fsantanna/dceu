@@ -29,7 +29,7 @@ val TAGS = listOf (
     ":dynamic",
     ":func",
     ":tuple", ":vector", ":dict",
-    ":pre", ":ceu",
+    ":ceu",
     ":error",
     ":tmp", ":xtmp"
 )

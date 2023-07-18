@@ -382,21 +382,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
-                val (pre,pos) = when (this.tk_.tag) {
-                    null -> Pair(null, body)
-                    ":pre" -> Pair(body, "")
-                    ":ceu" -> Pair(null, assrc(body))
+                when (this.tk_.tag) {
+                    null   -> body
+                    ":ceu" -> assrc(body)
                     else -> {
                         val (TAG,Tag) = this.tk_.tag.drop(1).let {
                             Pair(it.uppercase(), it.first().uppercase()+it.drop(1))
                         }
-                        Pair(null, assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })"))
+                        assrc("((CEU_Value){ CEU_VALUE_$TAG, {.$Tag=($body)} })")
                     }
                 }
-                if (pre != null) {
-                    pres.add(pre)
-                }
-                pos
             }
             is Expr.Acc -> {
                 val (blk,dcl) = vars.get(this)

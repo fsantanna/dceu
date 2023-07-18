@@ -2345,7 +2345,7 @@ class TExec {
     @Test
     fun native13_pre() {
         val out = all("""
-            ```:pre
+            ```
             int X = 1;
             ```
             var f
@@ -2716,7 +2716,7 @@ class TExec {
             println(tags(t,:T), tags(t,:T.S))
             println(tags(s,:T), tags(s,:T.S))
         """, true)
-        assert(out == "17\t273\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "16\t272\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -2798,7 +2798,7 @@ class TExec {
                 to-number(:depois)
             )
         """, true)
-        assert(out == "17\t1000\t1001\t1002\t10\t11\t12\t18\t100\t101\t19\n") { out }
+        assert(out == "16\t1000\t1001\t1002\t10\t11\t12\t17\t100\t101\t18\n") { out }
     }
     @Test
     fun enum02() {
