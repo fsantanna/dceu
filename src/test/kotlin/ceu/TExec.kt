@@ -2654,14 +2654,14 @@ class TExec {
         val out = all("""
             tags([],2)
         """)
-        assert(out.contains("Assertion `tag->type == CEU_VALUE_TAG'")) { out }
+        assert(out.contains("Assertion `tag.type == CEU_VALUE_TAG'")) { out }
     }
     @Test
     fun tags7_err() {
         val out = all("""
             tags([],:x,nil)
         """)
-        assert(out.contains("Assertion `bool->type == CEU_VALUE_BOOL' failed")) { out }
+        assert(out.contains("Assertion `bool.type == CEU_VALUE_BOOL' failed")) { out }
     }
     @Test
     fun tags8() {

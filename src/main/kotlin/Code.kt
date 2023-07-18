@@ -137,14 +137,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     printf(">>> BLOCK = %p in %p\n", &ceu_block_$n, ceu_frame);
                     #endif
                     ${(f_b == null).cond { """
-                    {   // ... for main block
+                    //{   // ... for main block
                         CEU_Tuple* tup = ceu_tuple_create(&ceu_block_$n, ceu_argc);
                         for (int i=0; i<ceu_argc; i++) {
                             CEU_Vector* vec = ceu_vector_from_c_string(&ceu_block_$n, ceu_argv[i]);
                             assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
                         }
                         CEU_Value _dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
-                    }
+                    //}
                     """ }}
                     ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                         f_b as Expr.Proto
@@ -176,7 +176,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 int ceu_tup_n = MAX(0,ceu_n-$args_n);
                                 CEU_Tuple* ceu_tup = ceu_tuple_create(&ceu_block_$n, ceu_tup_n);
                                 for (int i=0; i<ceu_tup_n; i++) {
-                                    assert(ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]));
+                                    assert(ceu_tuple_set(ceu_tup, i, ceu_args[$args_n+i]));
                                 }
                                 $idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup} };
                                 ceu_gc_inc($idc);
@@ -190,7 +190,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ }.joinToString("")
                     }
                     ${defers.pub[this]!!.map {
-                        "CEU_Value ceu_defer_${it.key.n} = 0;\n"
+                        "int ceu_defer_${it.key.n} = 0;\n"
                     }.joinToString("")}
                     do { // block
                         $body
