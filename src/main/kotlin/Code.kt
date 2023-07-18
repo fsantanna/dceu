@@ -3,6 +3,7 @@ package dceu
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe) {
+    val pres: MutableList<String> = mutableListOf()
     val code: String = outer.code()
 
     fun Expr.Do.toc (isptr: Boolean): String {
@@ -45,7 +46,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Proto -> {
                 val up_blk = ups.first_block(this)!!
 
-                """ // TYPE ${this.tk.dump()}
+                val pre = """ // TYPE ${this.tk.dump()}
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
@@ -76,7 +77,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         } while (0); // func
                         return ceu_ret;
                     }
-                """ + """ // CLOSURE ${this.tk.dump()}
+                """
+
+                val pos = """ // CLOSURE ${this.tk.dump()}
                 CEU_Closure* ceu_closure_$n = ceu_closure_create (
                     ${up_blk.toc(true)},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"},
@@ -86,15 +89,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 );
                 // UPVALS
                 ${clos.protos_refs[this].cond {
-                    it.map { dcl ->
-                        val dcl_blk = vars.dcl_to_blk[dcl]!!
-                        val idc = dcl.id.str.id2c(dcl.n)
-                        val btw = ups
-                            .all_until(this) { dcl_blk==it }
-                            .filter { it is Expr.Proto }
-                            .count() // other protos in between myself and dcl, so it its an upref (upv=2)
-                        val upv = min(2, btw)
-                        """
+                        it.map { dcl ->
+                            val dcl_blk = vars.dcl_to_blk[dcl]!!
+                            val idc = dcl.id.str.id2c(dcl.n)
+                            val btw = ups
+                                .all_until(this) { dcl_blk==it }
+                                .filter { it is Expr.Proto }
+                                .count() // other protos in between myself and dcl, so it its an upref (upv=2)
+                            val upv = min(2, btw)
+                            """
                         {
                             CEU_Value ceu_up = ${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
                             if (ceu_up.type > CEU_VALUE_DYNAMIC) {
@@ -107,11 +110,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             ((CEU_Proto_Upvs_$n*)ceu_closure_$n->upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
-                    }.joinToString("\n")                    
-                }}
+                        }.joinToString("\n")
+                    }}
                 assert(ceu_closure_$n != NULL);
                 ${assrc("((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} })")}
                 """
+
+                if (clos.protos_refs.containsKey(this)) {
+                    pres.add(pre)
+                    pos
+                } else {
+                    pre + pos
+                }
             }
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
@@ -184,14 +194,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         """ 
                     }}
                     ${dcls.map {
-                        if (it in listOf("evt","_")) "" else """
+                        if (it == "_") "" else """
                             CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
-                    """ }.joinToString("")
-                    }
+                            CEU_Block* _${it}_ = NULL;
+                        """
+                    }.joinToString("")}
                     ${defers.pub[this]!!.map {
                         "int ceu_defer_${it.key.n} = 0;\n"
                     }.joinToString("")}
                     do { // block
+                        ${(f_b == null).cond{ pres.joinToString("") }}
                         $body
                     } while (0); // block
                     #ifdef CEU_DEBUG
@@ -274,7 +286,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
 
                 """
-                //CEU_Value $idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
                         if (!ceu_block_chk_set(ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
@@ -289,13 +300,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         (this.src == null) -> ""
                         else -> "$idc = ceu_acc;"
                     }}
-                    CEU_Block* _${idc}_ = $bupc;   // can't be static b/c recursion
+                    _${idc}_ = $bupc;
                     ceu_gc_inc(${idc});
-                    #if 1
-                        ${assrc(idc)}
-                    #else // b/c of ret scope
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    #endif
+                    ${assrc(idc)}
                     """
                 }}
                 """
