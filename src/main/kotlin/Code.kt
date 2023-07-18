@@ -142,13 +142,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 { // BLOCK ${this.tk.dump()}
                     CEU_Block ceu_block_$n = (CEU_Block) { $depth, ceu_frame, NULL };
                     ${(f_b == null).cond { """
-                    // main block varargs (...)
-                    CEU_Tuple* tup = ceu_tuple_create(&ceu_block_$n, ceu_argc);
-                    for (int i=0; i<ceu_argc; i++) {
-                        CEU_Vector* vec = ceu_vector_from_c_string(&ceu_block_$n, ceu_argv[i]);
-                        assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
-                    }
-                    CEU_Value _dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
+                        // main block varargs (...)
+                        CEU_Tuple* tup = ceu_tuple_create(&ceu_block_$n, ceu_argc);
+                        for (int i=0; i<ceu_argc; i++) {
+                            CEU_Vector* vec = ceu_vector_from_c_string(&ceu_block_$n, ceu_argv[i]);
+                            assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
+                        }
+                        CEU_Value _dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
                     """ }}
                     ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                         f_b as Expr.Proto
@@ -156,22 +156,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         val args_n = f_b.args.size - 1
                         """
                         { // func args
-                            int ceu_i = 0;
-                            ${f_b.args.filter { it.first.str!="..." }.map {
-                                val dcl = vars.get(this, it.first.str)
-                                val idc = it.first.str.id2c(dcl.n)
+                            ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
+                                val dcl = vars.get(this, arg.first.str)
+                                val idc = arg.first.str.id2c(dcl.n)
                                 """
                                 _${idc}_ = &ceu_block_$n;
-                                if (ceu_i < ceu_n) {
-                                    if (!ceu_block_chk_set(ceu_args[ceu_i], _${idc}_, CEU_HOLD_FLEETING)) {
+                                if ($i < ceu_n) {
+                                    if (!ceu_block_chk_set(ceu_args[$i], &ceu_block_$n, CEU_HOLD_FLEETING)) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
-                                    $idc = ceu_args[ceu_i];
+                                    $idc = ceu_args[$i];
                                     ceu_gc_inc($idc);
                                 } else {
                                     $idc = (CEU_Value) { CEU_VALUE_NIL };
                                 }
-                                ceu_i++;
                                 """
                             }.joinToString("")}
                             ${dots.cond {
@@ -195,17 +193,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${defers.pub[this]!!.map {
                         "int ceu_defer_${it.key.n} = 0;\n"
                     }.joinToString("")}
-                    do { // block
+                    
+                    // >>> block
+                    do {
                         ${(f_b == null).cond{ pres.joinToString("") }}
                         $body
-                    } while (0); // block
-                    if (ceu_ret == CEU_RET_THROW) {
-                        // must be before frees
-                        ${(f_b == null).cond { "ceu_error_list_print();" }}
-                    }
+                    } while (0);
+                    // <<< block
+                    
                     { // ceu_ret/ceu_acc: save/restore
                         CEU_RET   ceu_ret_$n = ceu_ret;
                         CEU_Value ceu_acc_$n = ceu_acc;
+                        ${(f_b == null).cond { """
+                            if (ceu_ret == CEU_RET_THROW) {
+                                ceu_error_list_print();
+                            }
+                        """ }}
                         ${(f_b is Expr.Proto).cond {
                             """
                             if (ceu_ret != CEU_RET_THROW) {
@@ -240,7 +243,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 }
                             """}}
                             ${dcls.filter { it != "_" }.map { """
-                                ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
+                            	if ($it.type > CEU_VALUE_DYNAMIC) {
+                                	ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
+				                }
                             """ }.joinToString("")}
                             ${(f_b is Expr.Proto).cond {
                                 (f_b as Expr.Proto).args.map {
@@ -347,10 +352,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         ceu_gc_dec(ceu_err, 0);    // do not check, bc throw value may be captured in assignment
                         ${assrc("ceu_acc = ceu_err")}
-                        /*
-                        ceu_gc_dec(ceu_err, 1);
-                        ${assrc("ceu_acc = (CEU_Value) { CEU_VALUE_NIL }")}
-                        */
                     }
                 }
                 """
