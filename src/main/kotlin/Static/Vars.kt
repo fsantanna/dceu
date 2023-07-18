@@ -106,12 +106,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
         val idc = dcl.id.str.id2c(dcl.n)
+        return Pair(idc, "_${idc}_")
+        /*
         return when {
             (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
             (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
             else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->closure->up_frame".repeat(N)}->${mem})->$idc)",
                 "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->closure->up_frame".repeat(N)}->${mem})->_${idc}_)")
         }
+         */
     }
 
     fun Expr.traverse () {

@@ -36,10 +36,10 @@ do {
 
 ## Holding Blocks
 
-A dynamic value is attached to exactly one [block](manual-out.md#blocks) at any
-given time during execution.
-The value may move between blocks during execution, but it is still always
-attached to a single holding block.
+A dynamic value is always attached to exactly one [block](manual-out.md#blocks)
+at any given time.
+The value can move between blocks, but remains attached to a single holding
+block.
 The value is automatically released from memory when the holding block
 terminates.
 
