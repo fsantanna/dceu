@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }.joinToString("\n")                    
                 }}
                 assert(ceu_closure_$n != NULL);
-                ${assrc("(CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} }")}
+                ${assrc("((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} })")}
                 """
             }
             is Expr.Do -> {
@@ -123,9 +123,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     (f_b is Expr.Proto) -> "ceu_frame->up_block->depth + 1"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val dcls = vars.blk_to_dcls[this]!!
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                val ids = dcls.filter { it.init }
+                val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c(it.n) }
@@ -184,7 +183,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """ 
                     }}
-                    ${ids.map {
+                    ${dcls.map {
                         if (it in listOf("evt","_")) "" else """
                             CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
                     """ }.joinToString("")
@@ -239,7 +238,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 }
                             """}}
                             { // decrement refs
-                                ${ids.map { if (it in listOf("evt","_")) "" else
+                                ${dcls.map { if (it in listOf("evt","_")) "" else
                                     """
                                     if ($it.type > CEU_VALUE_DYNAMIC) {
                                         ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
@@ -275,7 +274,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
 
                 """
-                CEU_Value $idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
+                //CEU_Value $idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
                         if (!ceu_block_chk_set(ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
@@ -434,18 +433,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         """
                     }
                     else -> assrc(idc)
-                    /*
-                    when {
-                        !xvar.dcl.poly -> assrc(idc)    // ACC ${this.tk.dump()}
-                        xvar.dcl.poly -> """
-                            assert($idc.type==CEU_VALUE_DICT && "TODO");
-                            CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
-                            CEU_Value ceu_fld = ceu_dict_get($idc.Dyn, &ceu_tag);
-                            ${assrc("ceu_fld")}
-                        """
-                        else -> error("impossible case")
-                    }
-                     */
                 }
             }
             is Expr.Err -> {
@@ -471,7 +458,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """
                     }.joinToString("")}
-                    ${assrc("(CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} }")}
+                    ${assrc("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} })")}
                 }
             """
             is Expr.Vector -> """
@@ -484,7 +471,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : incompatible scopes");
                         """
                     }.joinToString("")}
-                    ${assrc("(CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ceu_vec_$n} }")}
+                    ${assrc("((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ceu_vec_$n} })")}
                 }
             """
             is Expr.Dict -> {
@@ -502,7 +489,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : dict error : incompatible scopes");
                         }
                     """ }.joinToString("")}
-                    ${assrc("(CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ceu_dict_$n} }")}
+                    ${assrc("((CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ceu_dict_$n} })")}
                 }
                 """
             }
