@@ -50,8 +50,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
-                            "CEU_Value ${it.id.str.id2c(it.n)};"
-                        }.joinToString("")}
+                                "CEU_Value ${it.id.str.id2c(it.n)};"
+                            }.joinToString("")}
                         } CEU_Proto_Upvs_$n;                    
                     """ }}
                 """ + """ // PROTO ${this.tk.dump()}
@@ -141,19 +141,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
                 { // BLOCK ${this.tk.dump()}
                     CEU_Block ceu_block_$n = (CEU_Block) { $depth, ceu_frame, NULL };
-                    void* ceu_block = &ceu_block_$n;   // generic name to debug
-                    #ifdef CEU_DEBUG
-                    printf(">>> BLOCK = %p in %p\n", &ceu_block_$n, ceu_frame);
-                    #endif
                     ${(f_b == null).cond { """
-                    //{   // ... for main block
-                        CEU_Tuple* tup = ceu_tuple_create(&ceu_block_$n, ceu_argc);
-                        for (int i=0; i<ceu_argc; i++) {
-                            CEU_Vector* vec = ceu_vector_from_c_string(&ceu_block_$n, ceu_argv[i]);
-                            assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
-                        }
-                        CEU_Value _dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
-                    //}
+                    // main block varargs (...)
+                    CEU_Tuple* tup = ceu_tuple_create(&ceu_block_$n, ceu_argc);
+                    for (int i=0; i<ceu_argc; i++) {
+                        CEU_Vector* vec = ceu_vector_from_c_string(&ceu_block_$n, ceu_argv[i]);
+                        assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
+                    }
+                    CEU_Value _dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
                     """ }}
                     ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                         f_b as Expr.Proto
@@ -193,12 +188,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """ 
                     }}
-                    ${dcls.map {
-                        if (it == "_") "" else """
-                            CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
-                            CEU_Block* _${it}_ = NULL;
-                        """
-                    }.joinToString("")}
+                    ${dcls.filter { it != "_" }.map { """
+                        CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
+                        CEU_Block* _${it}_ = NULL;
+                    """ }.joinToString("")}
                     ${defers.pub[this]!!.map {
                         "int ceu_defer_${it.key.n} = 0;\n"
                     }.joinToString("")}
@@ -206,9 +199,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ${(f_b == null).cond{ pres.joinToString("") }}
                         $body
                     } while (0); // block
-                    #ifdef CEU_DEBUG
-                    printf("<<< BLOCK = %d/%p in %p\n", $n, &ceu_block_$n, ceu_frame);
-                    #endif
                     if (ceu_ret == CEU_RET_THROW) {
                         // must be before frees
                         ${(f_b == null).cond { "ceu_error_list_print();" }}
@@ -249,22 +239,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     ceu_ret_$n = MIN(ceu_ret_$n, ceu_ret);
                                 }
                             """}}
-                            { // decrement refs
-                                ${dcls.map { if (it in listOf("evt","_")) "" else
-                                    """
-                                    if ($it.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
-                                    }
-                                    """
-                                }.joinToString("")}
-                                ${(f_b is Expr.Proto).cond {
-                                    (f_b as Expr.Proto).args.map {
-                                        val dcl = vars.get(this, it.first.str)
-                                        val idc = it.first.str.id2c(dcl.n)
-                                        "ceu_gc_dec($idc, 1);"
-                                    }.joinToString("")
-                                }}
-                            }
+                            ${dcls.filter { it != "_" }.map { """
+                                ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
+                            """ }.joinToString("")}
+                            ${(f_b is Expr.Proto).cond {
+                                (f_b as Expr.Proto).args.map {
+                                    val dcl = vars.get(this, it.first.str)
+                                    val idc = it.first.str.id2c(dcl.n)
+                                    "ceu_gc_dec($idc, 1);"
+                                }.joinToString("")
+                            }}
                             ceu_block_free(&ceu_block_$n);
                         }
                         ceu_acc = ceu_acc_$n;
