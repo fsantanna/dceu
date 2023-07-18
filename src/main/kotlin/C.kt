@@ -1411,7 +1411,6 @@ fun Coder.main (tags: Tags): String {
         //CEU_Closure _ceu_closure_ = { NULL, {}, {} };
         CEU_Frame _ceu_frame_ = { NULL, NULL };
         CEU_Frame* ceu_frame = &_ceu_frame_;
-        ${pres.joinToString("")}
     """ +
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {

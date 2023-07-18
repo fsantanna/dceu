@@ -3,7 +3,6 @@ package dceu
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Vars, val clos: Clos, val unsf: Unsafe) {
-    val pres: MutableList<String> = mutableListOf()
     val code: String = outer.code()
 
     fun Expr.Do.toc (isptr: Boolean): String {
