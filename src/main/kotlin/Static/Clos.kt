@@ -2,7 +2,7 @@ package dceu
 
 class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // Protos that cannot be closures:
-    //  - they access at least 1 free var w/o upval modifiers
+    //  - they access at least 1 non-local free var w/o upval modifiers (globals are allowed)
     //  - for each var access ACC, we get its declaration DCL in block BLK
     //      - if ACC/DCL have no upval modifiers
     //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
