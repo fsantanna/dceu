@@ -156,7 +156,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                                 """
                                 _${idc}_ = &ceu_block_$n;
                                 if ($i < ceu_n) {
-                                    if (!ceu_hold_chk_set(ceu_args[$i], &ceu_block_$n, CEU_HOLD_FLEETING)) {
+                                    if (!ceu_hold_chk_set(&ceu_block_$n, CEU_HOLD_FLEETING, ceu_args[$i])) {
                                         ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
                                     $idc = ceu_args[$i];
@@ -194,7 +194,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
                         """
                         // move up dynamic ceu_acc (return or error)
-                        if (!ceu_hold_chk_set(ceu_acc, $up1, CEU_HOLD_FLEETING)) {
+                        if (!ceu_hold_chk_set($up1, CEU_HOLD_FLEETING, ceu_acc)) {
                             ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                         }
                         """
@@ -231,7 +231,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 """
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        if (!ceu_hold_chk_set(ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
+                        if (!ceu_hold_chk_set($bupc, ${this.tmp_hold(this.tmp)}, ceu_acc)) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                         }
                     """
@@ -310,7 +310,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set($src, ${_idc_}, ${this.tmp_hold(dcl.tmp)})) {
+                            if (!ceu_hold_chk_set(${_idc_}, ${this.tmp_hold(dcl.tmp)}, $src)) {
                                 ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                             }
                             ceu_gc_inc($src);

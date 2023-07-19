@@ -624,7 +624,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        int ceu_hold_chk_set (CEU_Value src, CEU_Block* blk, CEU_HOLD dst_tphold) {
+        int ceu_hold_chk_set (CEU_Block* blk, CEU_HOLD dst_tphold, CEU_Value src) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return 1;
             }
@@ -632,6 +632,7 @@ fun Coder.main (tags: Tags): String {
                 (src.Dyn->Any.hold.type == CEU_HOLD_FLEETING) ||
                 (blk->depth >= src.Dyn->Any.hold.up_block->depth)
             );
+            //printf(">>>> ok=%d | src=%d | blk-%d>=%d-src\n", ok, src.Dyn->Any.hold.type, blk->depth, src.Dyn->Any.hold.up_block->depth);
             if (ok) {
                 ceu_hold_set(src.Dyn, blk, dst_tphold);
             }
@@ -642,11 +643,27 @@ fun Coder.main (tags: Tags): String {
             if (v.type < CEU_VALUE_DYNAMIC) {
                 return 1;
             }
-            int ok = ceu_hold_chk_set(v, col->Any.hold.up_block, col->Any.hold.type);            
-            if (col->Any.hold.type <= CEU_HOLD_COLLECTION) {
-                ceu_hold_set(col, v.Dyn->Any.hold.up_block, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hold.type));
+            
+            // col affects v
+            if (!(
+                (ceu_hold_chk_set(col->Any.hold.up_block, col->Any.hold.type, v)) ||
+                (col->Any.hold.type <= CEU_HOLD_COLLECTION)
+            )) {
+                return 0;
             }
-            return ok;
+                     
+            // v also affects fleeting col with outermost scope
+            if (col->Any.hold.type <= CEU_HOLD_COLLECTION) {
+                col->Any.hold.type = MAX(col->Any.hold.type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hold.type));
+                if (
+                    //(col->Any.hold.type == CEU_HOLD_FLEETING) ||
+                    (v.Dyn->Any.hold.up_block->depth < col->Any.hold.up_block->depth)
+                ) {
+                    //puts("-=-=-=-");
+                    ceu_hold_chg(&col->Any, v.Dyn->Any.hold.up_block);
+                }
+            }
+            return 1;
         }
     """ +
     """ // TUPLE / VECTOR / DICT
