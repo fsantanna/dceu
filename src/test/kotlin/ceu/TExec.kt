@@ -37,13 +37,11 @@ fun all (inp: String, pre: Boolean=false): String {
     val c = try {
         val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups   = Ups(outer)
-        val defs  = Defers(outer, ups)
         val tags  = Tags(outer)
         val vars  = Vars(outer, ups)
         val clos  = Clos(outer, ups, vars)
-        val unsf  = Unsafe(outer, ups, vars)
         val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, defs, vars, clos, unsf)
+        val coder = Coder(outer, ups, vars, clos)
         coder.main(tags)
     } catch (e: Throwable) {
         if (THROW) {
@@ -1882,9 +1880,9 @@ class TExec {
     fun loop0() {
         val out = all("""
             do {
-                loop 1 {
+                loop {
                     println(:in)
-                    xbreak 1
+                    break
                 }
             }
             println(:out)
@@ -1896,7 +1894,12 @@ class TExec {
         val out = all("""
             var x
             set x = false
-            loop until x {
+            loop {
+                if x {
+                    break
+                } else {
+                    nil
+                }
                 set x = true
             }
             println(x)

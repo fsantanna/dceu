@@ -34,9 +34,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.body.traverse()
-            is Expr.XBreak -> {}
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Break -> {}
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
@@ -70,7 +68,6 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     }
                 }
             }
-            is Expr.Err -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

@@ -3,7 +3,6 @@ package dceu
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
-    val evts: MutableMap<Expr.Err, String?> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
 
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
@@ -34,14 +33,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     null
                 } else {
                     Pair(null, this.datas[dcl.tag.str]!!)
-                }
-            }
-            is Expr.Err -> {
-                val x = evts[e]
-                when {
-                    (x == null) -> null
-                    (this.datas[x] == null) -> null
-                    else -> Pair(null, this.datas[x])
                 }
             }
             is Expr.Index -> {
@@ -182,9 +173,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> this.body.traverse()
-            is Expr.XBreak -> {}
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Break -> {}
             is Expr.Enum   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
@@ -255,12 +244,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Acc    -> acc_to_dcl[this] = find(this, this.tk.str, this.tk_.upv)
-            is Expr.Err -> {
-                val dcl = dcls.findLast { "evt" == it.id.str }
-                if (dcl != null) {
-                    evts[this] = dcl.tag!!.str
-                }
-            }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

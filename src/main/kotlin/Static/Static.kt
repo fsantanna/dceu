@@ -37,9 +37,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.body.traverse()
             }
-            is Expr.XBreak -> {}
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Break -> {}
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
@@ -53,7 +51,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     err(this.tk, "access error : cannot access \"_\"")
                 }
             }
-            is Expr.Err -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}

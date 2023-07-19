@@ -195,38 +195,6 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun until (nn: Int): String {
-        if (!this.acceptFix("until")) {
-            return ""
-        }
-        val cnd = this.expr()
-        N++
-        return """
-            val :xtmp ceu_unt_$N = ${cnd.tostr(true)}
-            if ceu_unt_$N {
-                xbreak $nn
-            } else { nil }
-        """
-    }
-    fun untils (nn: Int): String {
-        if (!this.acceptFix("until")) {
-            return ""
-        }
-
-        val cnd = this.expr()
-        val xblk = if (!this.checkFix("{")) "" else {
-            this.block().es.tostr(true) + untils(nn)
-        }
-        N++
-        return """
-            val :xtmp ceu_unt_$N = ${cnd.tostr(true)}
-            if ceu_unt_$N {
-                xbreak $nn
-            } else { nil }
-            $xblk
-        """
-    }
-
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -274,31 +242,8 @@ class Parser (lexer_: Lexer)
                 val f = this.block()
                 Expr.If(tk0, cnd, t, f)
             }
-            this.acceptFix("xbreak") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptEnu_err("Num")
-                Expr.XBreak(tk0, this.tk0.str.toInt())
-            }
-            this.acceptFix("loop") -> {
-                val tk0 = this.tk0 as Tk.Fix
-
-                if (this.acceptEnu("Num")) {
-                    val nn = this.tk0.str.toInt()
-                    val blk = this.block()
-                    return Expr.Loop(tk0, nn, Expr.Do(tk0, blk.es))
-                } else {
-                    val nn = N++
-                    this.nest("""
-                        do {
-                            loop $nn {
-                                ${until(nn)}
-                                ${this.block().es.tostr(true)}
-                                ${untils(nn)}
-                            }
-                        }
-                    """)
-                }
-            }
+            this.acceptFix("break") -> Expr.Break(this.tk0 as Tk.Fix)
+            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
             this.acceptFix("func") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
@@ -307,12 +252,6 @@ class Parser (lexer_: Lexer)
                 val blk = this.block(this.tk1)
                 Expr.Proto(tk0, args, blk)
             }
-            this.acceptFix("catch") -> {
-                val cnd = this.expr()
-                val blk = this.block()
-                Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
-            }
-            this.acceptFix("defer") -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
             this.acceptFix("enum") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("{")
@@ -361,7 +300,6 @@ class Parser (lexer_: Lexer)
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
             this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
 
-            this.acceptFix("err") -> Expr.Err(this.tk0 as Tk.Fix)
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)

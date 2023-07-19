@@ -31,7 +31,7 @@ class TParser {
         val l = lexer(" err ")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e is Expr.Err && e.tk.str == "err")
+        assert(e is Expr.Acc && e.tk.str == "err")
     }
 
     // EXPR.PARENS

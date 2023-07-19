@@ -16,10 +16,10 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
-    "catch", "data", "defer", "do", "drop", "else",
-    "enum", "err", "false", "func", "if", "loop",
-    "nil", "pass", /*"poly",*/ "set",
-    "true", "until", "val", "var", "xbreak"
+    "break", "data", "do", "drop", "else",
+    "enum", "false", "func", "if", "loop",
+    "nil", "pass", "set",
+    "true", "val", "var"
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
@@ -30,13 +30,12 @@ val TAGS = listOf (
     ":func",
     ":tuple", ":vector", ":dict",
     ":ceu",
-    ":error",
     ":tmp", ":xtmp"
 )
 
 val GLOBALS = setOf (
     "copy", "next-dict", "print", "println",
-    "string-to-tag", "sup?", "tags", "throw",
+    "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
 )
 
@@ -57,10 +56,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean?, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class Loop   (val tk_: Tk.Fix, val nn: Int, val body: Expr.Do): Expr(N++, tk_)
-    data class XBreak (val tk_: Tk.Fix, val nn: Int): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
-    data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class Loop   (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class Break  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
@@ -68,7 +65,6 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
-    data class Err    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)
@@ -121,16 +117,14 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         //readLine()
         val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
         val ups    = Ups(outer)
-        val defers = Defers(outer, ups)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)
         val clos   = Clos(outer, ups, vars)
-        val unsf   = Unsafe(outer, ups, vars)
         val sta    = Static(outer, ups, vars)
         if (verbose) {
             System.err.println("... ceu -> c ...")
         }
-        val coder  = Coder(outer, ups, defers, vars, clos, unsf)
+        val coder  = Coder(outer, ups, vars, clos)
         coder.main(tags)
     } catch (e: Throwable) {
         //throw e;

@@ -28,10 +28,8 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
-        is Expr.Loop   -> "loop ${this.nn} " + this.body.tostr(pre)
-        is Expr.XBreak -> "xbreak ${this.nn}"
-        is Expr.Catch  -> "catch " + this.cnd.tostr(pre) + " " + this.body.tostr(pre)
-        is Expr.Defer  -> "defer " + this.body.tostr(pre)
+        is Expr.Loop   -> "loop " + this.body.tostr(pre)
+        is Expr.Break -> "break"
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
@@ -41,7 +39,6 @@ fun Expr.tostr (pre: Boolean = false): String {
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()
-        is Expr.Err -> this.tk.str
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str
         is Expr.Bool   -> this.tk.str
