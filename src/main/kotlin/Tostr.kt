@@ -5,6 +5,15 @@ fun Pos.pre (): String {
     return "^[${this.lin},${this.col}]"
 }
 
+fun Expr.dump (): String {
+    fun Tk.dump (): String {
+        return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})"
+    }
+    return if (!DUMP) "" else {
+        this.tk.dump() + " | " + this.tostr().take(15).filter { it != '\n' }
+    }
+}
+
 fun Expr.tostr (pre: Boolean = false): String {
     fun Tk.Id.tostr (): String {
         return "^".repeat(this.upv) + this.str
