@@ -252,7 +252,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
             }
             is Expr.Set -> {
                 """
-                { // SET ${this.tk.dump()}
+                { // SET | ${this.tk.dump()} | ${this.tostr().take(15).filter { it!='\n' }}
                     ${this.src.code()}
                     CEU_Value ceu_set_$n = ceu_acc;
                     ${this.dst.code()}

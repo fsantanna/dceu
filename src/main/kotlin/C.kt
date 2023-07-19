@@ -172,7 +172,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_add (CEU_Any* dyn, CEU_Block* blk);
         void ceu_hold_rem (CEU_Any* dyn);
 
-        void ceu_hold_set (CEU_Dyn* src, CEU_Block* dst_blk, CEU_HOLD dst_tphold);
+        void ceu_hold_set (CEU_Block* dst_blk, CEU_HOLD dst_tphold, CEU_Dyn* src);
         
         CEU_Tuple*   ceu_tuple_create   (CEU_Block* hld, int n);
         CEU_Vector*  ceu_vector_create  (CEU_Block* hld);
@@ -582,24 +582,28 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk);
         }
 
-        void ceu_hold_set (CEU_Dyn* src, CEU_Block* blk, CEU_HOLD tphold) {
+        void ceu_hold_set (CEU_Block* blk, CEU_HOLD tphold, CEU_Dyn* src) {
             src->Any.hold.type = MAX(src->Any.hold.type,tphold);
-            if (blk->depth >= src->Any.hold.up_block->depth) {
-                return; // do not change block if src is already in outer
+            int ok = (blk->depth >= src->Any.hold.up_block->depth);
+            if (!ok || tphold==CEU_HOLD_COLLECTION) {
+                // do not change block if src is already in outer, unless fleeting collection
+                ceu_hold_chg(&src->Any, blk);
             }
-            ceu_hold_chg(&src->Any, blk);
+            if (ok) {
+                return;
+            }
             switch (src->Any.type) {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src->Closure.upvs.its; i++) {
                         if (src->Closure.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(src->Closure.upvs.buf[i].Dyn, blk, tphold);
+                            ceu_hold_set(blk, tphold, src->Closure.upvs.buf[i].Dyn);
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.its; i++) {
                         if (src->Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(src->Tuple.buf[i].Dyn, blk, tphold);
+                            ceu_hold_set(blk, tphold, src->Tuple.buf[i].Dyn);
                         }
                     }
                     break;
@@ -607,17 +611,17 @@ fun Coder.main (tags: Tags): String {
                     if (src->Vector.unit > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Vector.unit);
                         for (int i=0; i<src->Vector.its; i++) {
-                            ceu_hold_set(*(CEU_Dyn**)(src->Vector.buf + i*sz), blk, tphold);
+                            ceu_hold_set(blk, tphold, *(CEU_Dyn**)(src->Vector.buf + i*sz));
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dict.max; i++) {
                         if ((*src->Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set((*src->Dict.buf)[i][0].Dyn, blk, tphold);
+                            ceu_hold_set(blk, tphold, (*src->Dict.buf)[i][0].Dyn);
                         }
                         if ((*src->Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set((*src->Dict.buf)[i][1].Dyn, blk, tphold);
+                            ceu_hold_set(blk, tphold, (*src->Dict.buf)[i][1].Dyn);
                         }
                     }
                     break;
@@ -634,7 +638,7 @@ fun Coder.main (tags: Tags): String {
             );
             //printf(">>>> ok=%d | src=%d | blk-%d>=%d-src\n", ok, src.Dyn->Any.hold.type, blk->depth, src.Dyn->Any.hold.up_block->depth);
             if (ok) {
-                ceu_hold_set(src.Dyn, blk, dst_tphold);
+                ceu_hold_set(blk, dst_tphold, src.Dyn);
             }
             return ok;
         }
@@ -652,15 +656,17 @@ fun Coder.main (tags: Tags): String {
                 return 0;
             }
                      
-            // v also affects fleeting col with outermost scope
-            if (col->Any.hold.type <= CEU_HOLD_COLLECTION) {
+            // v also affects fleeting col with innermost scope
+            if (col->Any.hold.type == CEU_HOLD_FLEETING) {
+                return ceu_hold_chk_set(v.Dyn->Any.hold.up_block, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hold.type), ceu_dyn_to_val(col));
+            } else if (
+                (col->Any.hold.type <= CEU_HOLD_COLLECTION) &&
+                (v.Dyn->Any.hold.up_block->depth >= col->Any.hold.up_block->depth)
+            ) {
                 col->Any.hold.type = MAX(col->Any.hold.type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hold.type));
-                if (v.Dyn->Any.hold.up_block->depth < col->Any.hold.up_block->depth) {
-                    //puts("-=-=-=-");
-                    ceu_hold_chg(&col->Any, v.Dyn->Any.hold.up_block);
-                }
+                ceu_hold_chg(&col->Any, v.Dyn->Any.hold.up_block);
+                return 1;
             }
-            return 1;
         }
     """ +
     """ // TUPLE / VECTOR / DICT

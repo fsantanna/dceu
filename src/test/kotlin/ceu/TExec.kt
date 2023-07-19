@@ -397,7 +397,7 @@ class TExec {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
-                    [x]                   ;; invalid set: cannot return "var x" from this scope
+                    [x]     ;; invalid set: cannot return "var x" from this scope
                 } else {
                     0
                 }
@@ -1615,6 +1615,20 @@ class TExec {
             println(f([nil]))
         """)
         assert(out == "anon : (lin 2, col 30) : block escape error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope28() {
+        val out = all("""
+            var f = func (v) {
+                [v]
+            }
+            var g = do {
+                val t = [1]
+                f(t)
+            }
+            println(g)
+        """)
+        assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
     }
 
     // IF

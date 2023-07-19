@@ -5,7 +5,7 @@ fun Pos.isSameLine (oth: Pos): Boolean {
 }
 
 fun Tk.dump (): String {
-    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
+    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})"
 }
 
 fun <T> T?.cond (f: (v:T)->String): String {
