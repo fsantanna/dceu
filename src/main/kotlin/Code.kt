@@ -98,9 +98,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         {
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
                             if (ceu_up.type > CEU_VALUE_DYNAMIC) {
-                                assert(ceu_block_chk_set_mutual(&ceu_up.Dyn->Any, (CEU_Any*)ceu_closure_$n));
+                                assert(ceu_hold_chk_set_mutual(&ceu_up.Dyn->Any, (CEU_Any*)ceu_closure_$n));
                             } else {
-                                assert(ceu_block_chk_set(ceu_up, ceu_closure_$n->hold.up_block, ceu_closure_$n->hold.type));
+                                assert(ceu_hold_chk_set(ceu_up, ceu_closure_$n->hold.up_block, ceu_closure_$n->hold.type));
                             }
                             ceu_gc_inc(ceu_up);
                             ((CEU_Proto_Upvs_$n*)ceu_closure_$n->upvs.buf)->${idc} = ceu_up;
@@ -158,7 +158,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                                 """
                                 _${idc}_ = &ceu_block_$n;
                                 if ($i < ceu_n) {
-                                    if (!ceu_block_chk_set(ceu_args[$i], &ceu_block_$n, CEU_HOLD_FLEETING)) {
+                                    if (!ceu_hold_chk_set(ceu_args[$i], &ceu_block_$n, CEU_HOLD_FLEETING)) {
                                         ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
                                     $idc = ceu_args[$i];
@@ -196,7 +196,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
                         """
                         // move up dynamic ceu_acc (return or error)
-                        if (!ceu_block_chk_set(ceu_acc, $up1, CEU_HOLD_FLEETING)) {
+                        if (!ceu_hold_chk_set(ceu_acc, $up1, CEU_HOLD_FLEETING)) {
                             ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
                         }
                         """
@@ -233,7 +233,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 """
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        if (!ceu_block_chk_set(ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
+                        if (!ceu_hold_chk_set(ceu_acc, $bupc, ${this.tmp_hold(this.tmp)})) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
                         }
                     """
@@ -312,7 +312,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_block_chk_set($src, ${_idc_}, ${this.tmp_hold(dcl.tmp)})) {
+                            if (!ceu_hold_chk_set($src, ${_idc_}, ${this.tmp_hold(dcl.tmp)})) {
                                 ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                             }
                             ceu_gc_inc($src);
@@ -422,10 +422,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     this.isdst() -> {
                         val src = this.asdst_src()
                         """
-                        if (!ceu_block_chk_set(ceu_idx_$n, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
+                        if (!ceu_hold_chk_set(ceu_idx_$n, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
-                        if (!ceu_block_chk_set($src, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
+                        if (!ceu_hold_chk_set($src, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
                         }
                         int ok = 1;
