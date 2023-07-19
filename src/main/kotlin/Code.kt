@@ -201,7 +201,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     }}
                     ${dcls.filter { it != "_" }.map { """
                         if ($it.type > CEU_VALUE_DYNAMIC) {
-                            ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
+                            ceu_gc_dec($it, ($it.Dyn->Any.hld_block == &ceu_block_$n));
                         }
                     """ }.joinToString("")}
                     ${(f_b is Expr.Proto).cond { """

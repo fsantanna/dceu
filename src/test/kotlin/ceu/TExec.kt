@@ -607,7 +607,7 @@ class TExec {
                     val y = copy(x)
                     do {
                         set x = copy(y)
-                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->Any.hold.type);`
+                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->Any.hld_type);`
                         set v = x       ;; err
                     }
                 }
