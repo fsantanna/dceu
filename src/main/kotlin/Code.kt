@@ -101,7 +101,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         """
                         {
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
-                            assert(ceu_hold_chk_set_mutual((CEU_Dyn*)ceu_closure_$n, ceu_up));
+                            assert(ceu_hold_chk_set_col((CEU_Dyn*)ceu_closure_$n, ceu_up));
                             ceu_gc_inc(ceu_up);
                             ((CEU_Proto_Upvs_$n*)ceu_closure_$n->upvs.buf)->${idc} = ceu_up;
                         }
@@ -420,12 +420,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     this.isdst() -> {
                         val src = this.asdst_src()
                         """
-                        if (!ceu_hold_chk_set(ceu_idx_$n, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
-                            ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
-                        }
-                        if (!ceu_hold_chk_set($src, ceu_acc.Dyn->Any.hold.up_block, CEU_HOLD_FLEETING)) {
-                            ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : set error : incompatible scopes");
-                        }
                         int ok = 1;
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:

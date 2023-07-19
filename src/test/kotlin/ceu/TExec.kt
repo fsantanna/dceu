@@ -1515,7 +1515,55 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun scope22_dict() {
+    fun scope22a_tup() {
+        val out = all("""
+            val d = [nil]
+            do {
+                val t2 = []
+                set d[0] = t2
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22b_vec() {
+        val out = all("""
+            val d = [nil]
+            do {
+                val t2 = #[]
+                set d[0] = t2
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22c_dic() {
+        val out = all("""
+            val d = @[]
+            do {
+                val t2 = []
+                set d[t2] = 10
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22d_dic() {
+        val out = all("""
+            val d = @[]
+            do {
+                val t2 = []
+                set d[10] = t2
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22x_dict() {
         val out = all("""
             do {
                 val t1 = []
@@ -1555,7 +1603,7 @@ class TExec {
             }
             println(f([nil]))
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 2, col 30) : block escape error : incompatible scopes\n") { out }
     }
 
     // IF
@@ -2864,13 +2912,13 @@ class TExec {
     @Test
     fun tup22() {
         val out = all("""
-            var g = do {
-                var t = [1]
+            do {
+                val t = []
                 [t]
             }
-            println(g)
+            println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
+        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n" +
                 "") { out }
     }
     @Test
