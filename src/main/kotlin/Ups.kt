@@ -23,14 +23,6 @@ class Ups (outer: Expr.Do) {
     fun first_true_x (e: Expr, x: String): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str==x } as Expr.Proto?
     }
-    fun true_x_c (e: Expr, str: String): String? {
-        val x = this.first_true_x(e, str)
-        val n = this     // find first non fake
-            .all_until(e) { it == x }
-            .filter { it is Expr.Proto } // but count all protos in between
-            .count()
-        return if (n == 0) null else "(ceu_frame${"->closure->up_frame".repeat(n-1)})"
-    }
 
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {

@@ -87,8 +87,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
-    fun id2c (e: Expr, blk: Expr.Do, dcl: Expr.Dcl, upv: Int): Pair<String,String> {
-        val idc = dcl.id.str.id2c(dcl.n)
+    fun id2c (dcl: Expr.Dcl, upv: Int): Pair<String,String> {
+        val idc = dcl.id.str.id2c()
         return if (upv == 2) {
             Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
         } else {
@@ -236,7 +236,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             }
                             val dcl = find(this, id, 0)
                             val blk = dcl_to_blk[dcl]!!
-                            val (idx,_) = id2c(this, blk, dcl, 0)
+                            val (idx,_) = id2c(dcl, 0)
                             "($idx)$no"
                         }
                     }

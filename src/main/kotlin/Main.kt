@@ -25,7 +25,7 @@ val KEYWORDS: SortedSet<String> = setOf (
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
 
 val TAGS = listOf (
-    ":nil", ":tag", ":bool", ":char", ":number", ":pointer",
+    ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
     ":dynamic",
     ":func",
     ":tuple", ":vector", ":dict",

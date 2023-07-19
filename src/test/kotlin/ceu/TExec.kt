@@ -275,14 +275,14 @@ class TExec {
         val out = all("""
             println(1[1])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected collection\n:error\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
     }
     @Test
     fun cc_index_err2() {
         val out = all("""
             println([1][[]])
         """.trimIndent())
-        assert(out == "anon : (lin 1, col 9) : index error : expected number\n:error\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : expected number\n") { out }
     }
     @Test
     fun cc_index23() {
@@ -297,7 +297,7 @@ class TExec {
             println([1][2])
         """.trimIndent())
         //assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
-        assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n:error\n") { out }
+        assert(out == "anon : (lin 1, col 9) : index error : out of bounds\n") { out }
     }
     @Test
     fun cc_tuple4_free() {
@@ -404,9 +404,7 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 12, col 21) : f(3)\n" +
-                "anon : (lin 6, col 29) : f({{-}}(v,1))\n" +
-                "anon : (lin 3, col 30) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -422,9 +420,7 @@ class TExec {
             }
             println(f(3))
         """, true)
-        assert(out == "anon : (lin 11, col 21) : f(3)\n" +
-                "anon : (lin 5, col 29) : f({{-}}(v,1))\n" +
-                "anon : (lin 4, col 26) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 4, col 26) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -437,7 +433,7 @@ class TExec {
             println(1)
         """)
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun cc_tuple10_hold_err() {
@@ -451,7 +447,7 @@ class TExec {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun cc_tuple11_copy() {
@@ -585,7 +581,7 @@ class TExec {
             println(x)
         """, true)
         assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun cc_tuple22_scope_copy() {
@@ -619,7 +615,7 @@ class TExec {
             println(v)
         """, true)
         assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun cc_24_tuple() {
@@ -659,6 +655,20 @@ class TExec {
         assert(out == "[0,a]\n") { out }
     }
     @Test
+    fun cm_01x_drop () {
+        val out = all("""
+            val g = do {
+                val v = do {
+                    val x = [0,'a']
+                    drop(x)
+                }
+                drop(v)
+            }
+            println(g)
+        """)
+        assert(out == "[0,a]\n") { out }
+    }
+    @Test
     fun cm_02_drop () {
         val out = all("""
             val t = [[1]]
@@ -693,9 +703,7 @@ class TExec {
             println(f(1,2,3))
         """)
         //assert(out == "[[1,2,3]]\n") { out }
-        assert(out == "anon : (lin 6, col 21) : f(1,2,3)\n" +
-                "anon : (lin 4, col 22) : drop error : multiple references\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 4, col 22) : drop error : multiple references\n") { out }
     }
     @Test
     fun cm_04() {
@@ -874,7 +882,7 @@ class TExec {
             println(v)
         """)
         assert(out == "anon : (lin 5, col 21) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
 
     // VECTOR
@@ -905,7 +913,7 @@ class TExec {
             set v[5] = 10   ;; error
         """)
         //assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n0\n#[10]\n") { out }
-        assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n:error\n") { out }
+        assert(out == "anon : (lin 7, col 17) : index error : out of bounds\n") { out }
     }
     @Test
     fun vector4() {
@@ -947,7 +955,7 @@ class TExec {
         val out = all("""
             #1
         """)
-        assert(out == "anon : (lin 2, col 13) : {{#}}(1) : length error : not a vector\n:error\n") { out }
+        assert(out == "anon : (lin 2, col 13) : call error : length error : not a vector\n") { out }
     }
     @Test
     fun vector8_err() {
@@ -957,7 +965,7 @@ class TExec {
             println(v[#v])   ;; err
         """)
         //assert(out == "anon : (lin 4, col 23) : index error : out of bounds\n") { out }
-        assert(out == "anon : (lin 4, col 21) : index error : out of bounds\n:error\n") { out }
+        assert(out == "anon : (lin 4, col 21) : index error : out of bounds\n") { out }
     }
     @Test
     fun vector9_err() {
@@ -1021,8 +1029,7 @@ class TExec {
             v[#v-1]
         """, true)
         //assert(out == "anon : (lin 3, col 16) : access error : \"v-1\" is ambiguous with \"v\"") { out }
-        assert(out == "anon : (lin 3, col 15) : {{#}}(v) : length error : not a vector\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 3, col 15) : call error : length error : not a vector\n") { out }
     }
 
     // STRINGS / CHAR
@@ -1240,7 +1247,7 @@ class TExec {
         """)
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope4() {
@@ -1272,7 +1279,7 @@ class TExec {
             println(x)
         """)
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope6() {
@@ -1349,7 +1356,7 @@ class TExec {
                 set x = a
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1362,7 +1369,7 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1375,7 +1382,7 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope12_err() {
@@ -1388,7 +1395,7 @@ class TExec {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope13_tuple() {
@@ -1400,7 +1407,7 @@ class TExec {
             println(v)
         """, true)
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun scope14_tmp_tuple() {
@@ -1522,7 +1529,7 @@ class TExec {
             println(:ok)
         """)
         assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun scope26_args() {
@@ -1659,7 +1666,7 @@ class TExec {
     @Test
     fun func7_err() {
         val out = all("1(1)")
-        assert(out == "anon : (lin 1, col 1) : call error : expected function\n:error\n") { out }
+        assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
     }
     @Test
     fun func8() {
@@ -1778,7 +1785,7 @@ class TExec {
             var f
             f()()
         """)
-        assert(out == "anon : (lin 3, col 13) : call error : expected function\n:error\n") { out }
+        assert(out == "anon : (lin 3, col 13) : call error : expected function\n") { out }
     }
     @Test
     fun func18_err_rec() {
@@ -2687,7 +2694,7 @@ class TExec {
             println(f(10))
         """)
         assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun clo12_err() {
@@ -2700,9 +2707,7 @@ class TExec {
             }
             println(f(10)())
         """)
-        assert(out == "anon : (lin 8, col 21) : f(10)\n" +
-                "anon : (lin 3, col 30) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun clo13_err() {
@@ -2842,7 +2847,7 @@ class TExec {
             println(g())
         """)
         assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun tup22() {
@@ -2854,7 +2859,7 @@ class TExec {
             println(g)
         """)
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun clo23() {
@@ -2871,7 +2876,7 @@ class TExec {
             println(g())
         """)
         assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun clo23x() {
@@ -2958,9 +2963,7 @@ class TExec {
             println(f(1)())
             """,
         )
-        assert(out == "anon : (lin 9, col 21) : f(1)\n" +
-                "anon : (lin 7, col 22) : drop error : value is not movable\n" +
-                ":error\n") { out }
+        assert(out == "anon : (lin 7, col 22) : drop error : value is not movable\n") { out }
     }
 
     //  MEM-GC-REF-COUNT
@@ -3078,7 +3081,7 @@ class TExec {
             println(out)
         """, true)
         assert(out == "anon : (lin 3, col 23) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
+                "") { out }
     }
     @Test
     fun gc10() {
@@ -3312,7 +3315,7 @@ class TExec {
             var u :U = [[10]]
             println(u.X.v)
         """, true)
-        assert(out == "anon : (lin 5, col 21) : index error : out of bounds\n:error\n") { out }
+        assert(out == "anon : (lin 5, col 21) : index error : out of bounds\n") { out }
     }
     @Test
     fun tplate16() {

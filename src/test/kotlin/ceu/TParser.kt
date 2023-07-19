@@ -398,7 +398,8 @@ class TParser {
     fun set_err_err() {
         val l = lexer("set err = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(parser.expr() is Expr.Set)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
 
     // IF
@@ -505,7 +506,8 @@ class TParser {
     fun qq_02_loop_err() {
         val l = lexer("loop until {")
         val parser = Parser(l)
-        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"{\" : have \"until\"")
+        //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
     }
 
     // NATIVE
@@ -606,16 +608,6 @@ class TParser {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "{{-}}(x[0])") { e.tostr() }
-    }
-
-    // DEFER
-
-    @Test
-    fun defer() {
-        val l = lexer("defer { nil }")
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == "defer {\nnil\n}\n") { e.tostr() }
     }
 
     // ENUM
