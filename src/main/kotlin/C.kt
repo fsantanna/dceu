@@ -655,10 +655,7 @@ fun Coder.main (tags: Tags): String {
             // v also affects fleeting col with outermost scope
             if (col->Any.hold.type <= CEU_HOLD_COLLECTION) {
                 col->Any.hold.type = MAX(col->Any.hold.type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hold.type));
-                if (
-                    //(col->Any.hold.type == CEU_HOLD_FLEETING) ||
-                    (v.Dyn->Any.hold.up_block->depth < col->Any.hold.up_block->depth)
-                ) {
+                if (v.Dyn->Any.hold.up_block->depth < col->Any.hold.up_block->depth) {
                     //puts("-=-=-=-");
                     ceu_hold_chg(&col->Any, v.Dyn->Any.hold.up_block);
                 }
