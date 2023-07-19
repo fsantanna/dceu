@@ -44,8 +44,7 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE,
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
-            CEU_VALUE_DICT,
-            CEU_VALUE_ANY
+            CEU_VALUE_DICT
         } CEU_VALUE;
         
         typedef struct CEU_Value {
@@ -652,7 +651,7 @@ fun Coder.main (tags: Tags): String {
             if (v.type < CEU_VALUE_DYNAMIC) {
                 return 1;
             } else if (col->Any.hold.type == CEU_HOLD_FLEETING) {
-                return ceu_hold_chk_set((CEU_Value){CEU_VALUE_ANY,{.Dyn=col}}, v.Dyn->Any.hold.up_block, v.Dyn->Any.hold.type);
+                return ceu_hold_chk_set((CEU_Value){col->Any.type,{.Dyn=col}}, v.Dyn->Any.hold.up_block, v.Dyn->Any.hold.type);
             } else {
                 return ceu_hold_chk_set(v, col->Any.hold.up_block, col->Any.hold.type);
             }
