@@ -1545,6 +1545,18 @@ class TExec {
         """)
         assert(out == "[[1],[2]]\n") { out }
     }
+    @Test
+    fun scope27_glb_vs_tup() {
+        val out = all("""
+            val f = func (t) {
+                val x = []
+                set t[0] = x
+                t
+            }
+            println(f([nil]))
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // IF
 

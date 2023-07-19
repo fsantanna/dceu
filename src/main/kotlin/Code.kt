@@ -84,32 +84,30 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
+                assert(ceu_closure_$n != NULL);
+                CEU_Value ceu_ret_$n = ((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} });
+                ${assrc("ceu_ret_$n")}
+                
                 // UPVALS
                 ${clos.protos_refs[this].cond {
-                        it.map { dcl ->
-                            val dcl_blk = vars.dcl_to_blk[dcl]!!
-                            val idc = dcl.id.str.id2c()
-                            val btw = ups
-                                .all_until(this) { dcl_blk==it }
-                                .filter { it is Expr.Proto }
-                                .count() // other protos in between myself and dcl, so it its an upref (upv=2)
-                            val upv = min(2, btw)
-                            """
+                    it.map { dcl ->
+                        val dcl_blk = vars.dcl_to_blk[dcl]!!
+                        val idc = dcl.id.str.id2c()
+                        val btw = ups
+                            .all_until(this) { dcl_blk==it }
+                            .filter { it is Expr.Proto }
+                            .count() // other protos in between myself and dcl, so it its an upref (upv=2)
+                        val upv = min(2, btw)
+                        """
                         {
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
-                            if (ceu_up.type > CEU_VALUE_DYNAMIC) {
-                                assert(ceu_hold_chk_set_mutual(&ceu_up.Dyn->Any, (CEU_Any*)ceu_closure_$n));
-                            } else {
-                                assert(ceu_hold_chk_set(ceu_up, ceu_closure_$n->hold.up_block, ceu_closure_$n->hold.type));
-                            }
+                            assert(ceu_hold_chk_set_mutual((CEU_Dyn*)ceu_closure_$n, ceu_up));
                             ceu_gc_inc(ceu_up);
                             ((CEU_Proto_Upvs_$n*)ceu_closure_$n->upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
-                        }.joinToString("\n")
-                    }}
-                assert(ceu_closure_$n != NULL);
-                ${assrc("((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} })")}
+                    }.joinToString("\n")
+                }}
                 """
 
                 if (clos.protos_refs.containsKey(this)) {
