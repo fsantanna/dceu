@@ -19,13 +19,14 @@ fun Coder.main (tags: Tags): String {
         #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
-        typedef enum {
+        typedef enum CEU_HOLD {
             CEU_HOLD_FLEETING = 0,  // not assigned, dst assigns
             CEU_HOLD_COLLECTION,    // fleeting col with non-fleeting objs 
             CEU_HOLD_MUTABLE,       // set and assignable to narrow 
             CEU_HOLD_IMMUTABLE,     // set but not assignable (nested fun)
             CEU_HOLD_MAX
-        } CEU_HOLD;
+        } __attribute__ ((__packed__)) CEU_HOLD;
+        _Static_assert(sizeof(CEU_HOLD) == 1);
     """ +
     """   // CEU_Value, CEU_Dyn
         union CEU_Dyn;
@@ -46,7 +47,8 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
             CEU_VALUE_DICT
-        } CEU_VALUE;
+        } __attribute__ ((__packed__)) CEU_VALUE;
+        _Static_assert(sizeof(CEU_VALUE) == 1);
         
         typedef struct CEU_Value {
             CEU_VALUE type;
