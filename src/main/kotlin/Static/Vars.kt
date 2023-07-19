@@ -144,7 +144,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (this.id.str!="evt" && dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
+                if (dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
@@ -163,7 +163,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                if (this.id.str!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
+                if (this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
             }

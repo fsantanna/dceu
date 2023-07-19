@@ -205,8 +205,8 @@ class Parser (lexer_: Lexer)
                     this.acceptTag(":xtmp") -> false
                     else                        -> null
                 }
-                this.acceptFix("evt") || this.acceptEnu_err("Id")
-                val id = this.tk0.let { if (it is Tk.Id) it else Tk.Id("evt",it.pos,0) }
+                this.acceptEnu_err("Id")
+                val id = this.tk0 as Tk.Id
                 if (id.str == "...") {
                     err(this.tk0, "invalid declaration : unexpected ...")
                 }

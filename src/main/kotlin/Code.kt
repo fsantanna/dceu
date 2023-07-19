@@ -231,12 +231,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                 """
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        if (!ceu_hold_chk_set($bupc, ${this.tmp_hold(this.tmp)}, ceu_acc)) {
-                            ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : declaration error : incompatible scopes");
-                        }
+                        assert(ceu_hold_chk_set($bupc, ${this.tmp_hold(this.tmp)}, ceu_acc));
                     """
                 }}
-                ${if (id in listOf("evt","_")) "" else {
+                ${if (id == "_") "" else {
                     """
                     ${when {
                         !this.init -> ""
