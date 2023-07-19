@@ -207,12 +207,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         }
                     """ }.joinToString("")}
                     ${(f_b is Expr.Proto).cond { """
-                        ceu_gc_inc(ceu_acc);
                         ${(f_b as Expr.Proto).args.map {
                             val idc = it.first.str.id2c()
-                            "ceu_gc_dec($idc, 1);"
+                            """
+                            if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                            }
+                            """
                         }.joinToString("")}
-                        ceu_gc_dec(ceu_acc, 0);
                     """}}
                     ceu_block_free(&ceu_block_$n);
                 }
