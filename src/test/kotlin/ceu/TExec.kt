@@ -844,7 +844,8 @@ class TExec {
             set t[:b] = 20
             set t[:c] = 30
             var k = next-dict(t)
-            loop until k == nil {
+            loop {
+                if (k == nil) { break } else { nil }
                 println(k, t[k])
                 set k = next-dict(t,k)
             }
@@ -1920,7 +1921,8 @@ class TExec {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop until i == nil {
+                loop {
+                    if (i == nil) { break } else { nil }
                     println(i)
                     set i = it[0](it)
                 }
@@ -1943,269 +1945,10 @@ class TExec {
     @Test
     fun loop3() {
         val out = all("""
-            val v = loop until 10 {nil}
+            val v = loop {if (10) { break } else { nil }}
             println(v)
         """)
         assert(out == "10\n") { out }
-    }
-
-    // THROW / CATCH
-
-    @Test
-    fun catch1() {
-        val out = all("""
-            catch err==:x {
-                throw(:x)
-                println(9)
-            }
-            println(1)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun catch2_err() {
-        val out = all("""
-            catch err==:x {
-                throw(:y)
-                println(9)
-            }
-            println(1)
-        """.trimIndent())
-        assert(out == "anon : (lin 2, col 5) : throw(:y)\n" +
-                "throw error : uncaught exception\n" +
-                ":y\n") { out }
-    }
-    @Test
-    fun catch3() {
-        val out = all("""
-            var f
-            set f = func () {
-                catch err==:xxx {
-                    throw(:yyy)
-                    println(91)
-                }
-                println(9)
-            }
-            catch err==:yyy {
-                catch err==:xxx {
-                    f()
-                    println(92)
-                }
-                println(93)
-            }
-            println(1)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun catch4_valgrind() {
-        val out = all("""
-            catch err==:x {
-                throw([])
-                println(9)
-            }
-            println(1)
-        """.trimIndent())
-        //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == "anon : (lin 2, col 5) : throw([])\n" +
-                "throw error : uncaught exception\n" +
-                "[]\n") { out }
-    }
-    @Test
-    fun catch5() {
-        val out = all("""
-            catch err==:e1 {
-                catch err==:e2 {
-                    catch err==:e3 {
-                        catch err==:e4 {
-                            println(1)
-                            throw(:e3)
-                            println(99)
-                        }
-                        println(99)
-                    }
-                    println(2)
-                    throw(:e1)
-                    println(99)
-                }
-                println(99)
-            }
-            println(3)
-        """)
-        assert(out == "1\n2\n3\n") { out }
-    }
-    @Test
-    fun catch6_err() {
-        val out = all("""
-            catch true {
-                throw(:y)
-                println(9)
-            }
-            println(1)
-        """.trimIndent())
-        //assert(out == "anon : (lin 1, col 1) : catch error : expected tag\n") { out }
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun catch7() {
-        val out = ceu.all(
-            """
-            catch do {
-                err==:x
-            } {
-                throw(:x)
-                println(9)
-            }
-            println(1)
-        """
-        )
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun catch8() {
-        val out = ceu.all(
-            """
-            var x
-            catch do {
-                set x = err
-                err[0]==:x
-            } {
-                throw([:x])
-                println(9)
-            }
-            println(x)
-        """
-        )
-        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
-        //        "anon : (lin 7, col 17) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "[:x]\n") { out }
-    }
-    @Test
-    fun catch89_err() {
-        val out = ceu.all(
-            """
-            do {
-                catch do {  ;; err is binded to x and is being moved up
-                    var x
-                    set x = err
-                    println(err) `/* XXXX */`
-                    false
-                } {
-                    throw([:x])
-                    println(9)
-                }
-            }
-            println(:ok)
-            """
-        )
-        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
-        //        "anon : (lin 8, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        //assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
-        //        "anon : (lin 9, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
-                "anon : (lin 9, col 21) : throw([:x])\n" +
-                "throw error : uncaught exception\n" +
-                "[:x]\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun catch9() {
-        val out = ceu.all(
-            """
-            var x
-            catch do {
-                set x = err
-                err==:x
-            } {
-                throw(:x)
-                println(9)
-            }
-            println(x)
-        """
-        )
-        assert(out == ":x\n") { out }
-    }
-    @Test
-    fun catch10_err() {
-        val out = ceu.all(
-            """
-            catch err[0]==:x {
-                throw([:x])
-                println(9)
-            }
-            println(err)
-        """
-        )
-        //assert(out == "nil\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-    @Test
-    fun catch11() {
-        val out = ceu.all(
-            """
-            catch false {
-                throw(:xxx)
-                println(9)
-            }
-            println(1)
-        """.trimIndent()
-        )
-        assert(out == "anon : (lin 2, col 5) : throw(:xxx)\n" +
-                "throw error : uncaught exception\n" +
-                ":xxx\n") { out }
-    }
-    @Test
-    fun catch12() {
-        val out = all("""
-            catch err==[] {
-                throw([])
-                println(9)
-            }
-            println(1)
-        """)
-        assert(out == "anon : (lin 3, col 17) : throw([])\n" +
-                "throw error : uncaught exception\n" +
-                "[]\n") { out }
-    }
-    @Test
-    fun catch13() {
-        val out = ceu.all(
-            """
-            var x
-            set x = err
-            do {
-                set x = err
-            }
-            println(1)
-            """
-        )
-        //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "1\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-    @Test
-    fun catch14() {
-        val out = all("""
-            catch err==[] {
-                var xxx
-                set xxx = []
-                throw(xxx)
-            }
-            println(1)
-        """)
-        assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw(xxx)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
-        //assert(out == "anon : (lin 5, col 17) : throw(xxx) : throw error : incompatible scopes\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
     }
 
     // NATIVE
@@ -2823,65 +2566,6 @@ class TExec {
             println(:tag, :x, :1000, :y)
         """)
         assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'") { out }
-    }
-
-    // DEFER
-
-    @Test
-    fun defer1() {
-        val out = all("""
-            var f
-            set f = func () {
-                println(111)
-                defer { println(222) }
-                println(333)
-            }
-            defer { println(1) }
-            do {
-                println(2)
-                defer { println(3) }
-                println(4)
-                do {
-                    println(5)
-                    f()
-                    defer { println(6) }
-                    println(7)
-                }
-                println(8)
-                defer { println(9) }
-                println(10)
-            }
-            println(11)
-            defer { println(12) }
-            println(13)
-        """)
-        assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
-    }
-    @Test
-    fun defer3() {
-        val out = all("""
-            catch err==nil {
-                defer {
-                    throw(nil)
-                }
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun defer4_err() {
-        val out = all("""
-            do {
-                defer {
-                    throw(nil)
-                }
-            }
-            println(:ok)
-        """)
-        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
-                "throw error : uncaught exception\n" +
-                "nil\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS

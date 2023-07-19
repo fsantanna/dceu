@@ -28,7 +28,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.Loop   -> {
                 val up = ups.pub[this]
-                assert(up is Expr.Do && up.es.last().n==this.n) { "bug found: invalid do-loop" }
                 this.body.es.last().let {
                     if (it.is_innocuous()) {
                         //err(it.tk, "invalid expression : innocuous expression")

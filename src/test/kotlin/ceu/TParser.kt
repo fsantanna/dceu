@@ -498,9 +498,8 @@ class TParser {
     fun qq_01_loop_err() {
         val l = lexer("loop { pass nil }")
         val parser = Parser(l)
-        val e1 = parser.expr() as Expr.Do
-        val e2 = e1.es.last() as Expr.Loop
-        assert(e2.body.tostr() == "{\npass nil\n}") { e2.body.tostr() }
+        val e1 = parser.expr() as Expr.Loop
+        assert(e1.body.tostr() == "{\npass nil\n}") { e1.body.tostr() }
     }
     @Test
     fun qq_02_loop_err() {

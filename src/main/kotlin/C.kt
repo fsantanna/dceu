@@ -282,7 +282,7 @@ fun Coder.main (tags: Tags): String {
         }}
     """ +
     """ // IMPLS
-        void ceu_error (char* msg) {
+        void ceu_error1 (char* msg) {
             fprintf(stderr, "%s\n", msg);
             exit(0);
         }
@@ -290,9 +290,9 @@ fun Coder.main (tags: Tags): String {
             fprintf(stderr, "%s : %s\n", msg1, msg2);
             exit(0);
         }
-        void ceu_assert (CEU_Value v) {
+        void ceu_assert1 (CEU_Value v) {
             if (v.type == CEU_VALUE_ERROR) {
-                ceu_error(v.Error);
+                ceu_error1(v.Error);
             }
         }
         void ceu_assert2 (CEU_Value v, char* msg1) {
@@ -300,6 +300,11 @@ fun Coder.main (tags: Tags): String {
                 ceu_error2(msg1, v.Error);
             }
         }
+        CEU_Value ceu_error_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n==1 && args[0].type==CEU_VALUE_TAG);
+            ceu_error1(ceu_tag_to_string(args[0].Tag));
+        }
+
         int ceu_as_bool (CEU_Value v) {
             return !(v.type==CEU_VALUE_NIL || (v.type==CEU_VALUE_BOOL && !v.Bool));
         }
@@ -1286,6 +1291,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE, NULL, 1, {CEU_HOLD_MUTABLE,NULL,NULL},
             NULL, ceu_copy_f, {0,NULL}
         };
+        static CEU_Closure ceu_error = { 
+            CEU_VALUE_CLOSURE, NULL, 1, {CEU_HOLD_MUTABLE,NULL,NULL},
+            NULL, ceu_error_f, {0,NULL}
+        };
         static CEU_Closure ceu_next_dash_dict = { 
             CEU_VALUE_CLOSURE, NULL, 1, {CEU_HOLD_MUTABLE,NULL,NULL},
             NULL, ceu_next_dash_dict_f, {0,NULL}
@@ -1332,6 +1341,7 @@ fun Coder.main (tags: Tags): String {
         };
 
         CEU_Value copy                    = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_copy}                    };
+        CEU_Value error                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
         CEU_Value next_dash_dict          = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_next_dash_dict}          };
         CEU_Value print                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
         CEU_Value println                 = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_println}                 };
