@@ -65,7 +65,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                             CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->closure->upvs.buf;                    
                         """ }}
                         ${this.args.map { (id,_) ->
-                            val dcl = vars.get(this.body, id.str)
                             val idc = id.str.id2c()
                             """
                             CEU_Value $idc;
@@ -155,7 +154,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         """
                         { // func args
                             ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                val dcl = vars.get(this, arg.first.str)
                                 val idc = arg.first.str.id2c()
                                 """
                                 _${idc}_ = &ceu_block_$n;
@@ -188,36 +186,35 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                         CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
                         CEU_Block* _${it}_ = NULL;
                     """ }.joinToString("")}
+                    ${(f_b == null).cond{ pres.joinToString("") }}
                     
                     // >>> block
-                    ${(f_b == null).cond{ pres.joinToString("") }}
                     $body
                     // <<< block
                     
-                    ${(f_b is Expr.Proto).cond {"ceu_gc_inc(ceu_acc);"}}
                     ${(f_b != null).cond {
-                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
-                            """
-                            // move up dynamic ceu_acc (return or error)
-                            if (!ceu_block_chk_set(ceu_acc, $up1, CEU_HOLD_FLEETING)) {
-                                ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
-                            }
-                            """
+                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bup!!.toc(true)
+                        """
+                        // move up dynamic ceu_acc (return or error)
+                        if (!ceu_block_chk_set(ceu_acc, $up1, CEU_HOLD_FLEETING)) {
+                            ceu_error1(&ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : block escape error : incompatible scopes");
+                        }
+                        """
                     }}
                     ${dcls.filter { it != "_" }.map { """
                         if ($it.type > CEU_VALUE_DYNAMIC) {
                             ceu_gc_dec($it, ($it.Dyn->Any.hold.up_block == &ceu_block_$n));
                         }
                     """ }.joinToString("")}
-                    ${(f_b is Expr.Proto).cond {
-                        (f_b as Expr.Proto).args.map {
-                            val dcl = vars.get(this, it.first.str)
+                    ${(f_b is Expr.Proto).cond { """
+                        ceu_gc_inc(ceu_acc);
+                        ${(f_b as Expr.Proto).args.map {
                             val idc = it.first.str.id2c()
                             "ceu_gc_dec($idc, 1);"
-                        }.joinToString("")
-                    }}
+                        }.joinToString("")}
+                        ceu_gc_dec(ceu_acc, 0);
+                    """}}
                     ceu_block_free(&ceu_block_$n);
-                    ${(f_b is Expr.Proto).cond { "ceu_gc_dec(ceu_acc, 0);" }}
                 }
                 """
             }
