@@ -703,8 +703,7 @@ fun Coder.main (tags: Tags): String {
 
             if (v.type > CEU_VALUE_DYNAMIC) {
                 if (v.Dyn->Any.hold.type!=CEU_HOLD_FLEETING && v.Dyn->Any.hold.up_block->depth > tup->hold.up_block->depth) {
-                    ceu_hold_rem((CEU_Any*)tup);
-                    ceu_hold_add((CEU_Any*)tup, v.Dyn->Any.hold.up_block);
+                    ceu_hold_chg((CEU_Any*)tup, v.Dyn->Any.hold.up_block);
                 }
             }
 
@@ -732,8 +731,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 if (v.type > CEU_VALUE_DYNAMIC) {
                     if (v.Dyn->Any.hold.up_block->depth > vec->hold.up_block->depth) {
-                        ceu_hold_rem((CEU_Any*)vec);
-                        ceu_hold_add((CEU_Any*)vec, v.Dyn->Any.hold.up_block);
+                        ceu_hold_chg((CEU_Any*)vec, v.Dyn->Any.hold.up_block);
                     }
                 }
                 
@@ -821,8 +819,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val) {
             if (key.type > CEU_VALUE_DYNAMIC) {
                 if (key.Dyn->Any.hold.up_block->depth > col->hold.up_block->depth) {
-                    ceu_hold_rem((CEU_Any*)col);
-                    ceu_hold_add((CEU_Any*)col, key.Dyn->Any.hold.up_block);
+                    ceu_hold_chg((CEU_Any*)col, key.Dyn->Any.hold.up_block);
                 }
                 assert(ceu_hold_chk_set_mutual(&key.Dyn->Any, (CEU_Any*)col));
             } else {
@@ -830,8 +827,7 @@ fun Coder.main (tags: Tags): String {
             }
             if (val.type > CEU_VALUE_DYNAMIC) {
                 if (val.Dyn->Any.hold.up_block->depth > col->hold.up_block->depth) {
-                    ceu_hold_rem((CEU_Any*)col);
-                    ceu_hold_add((CEU_Any*)col, val.Dyn->Any.hold.up_block);
+                    ceu_hold_chg((CEU_Any*)col, val.Dyn->Any.hold.up_block);
                 }
             }
 
@@ -1143,8 +1139,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : multiple references"} };
             }
             dyn->Any.hold.type = CEU_HOLD_FLEETING;
-            ceu_hold_rem(&dyn->Any);
-            ceu_hold_add(&dyn->Any, frame->up_block);
+            ceu_hold_chg(&dyn->Any, frame->up_block);
 
             switch (src.type) {
                 case CEU_VALUE_CLOSURE:
