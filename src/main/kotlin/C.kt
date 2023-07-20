@@ -607,14 +607,14 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLOSURE:
                     for (int i=0; i<src->Closure.upvs.its; i++) {
                         if (src->Closure.upvs.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(dst, depth, tphold, src->Closure.upvs.buf[i].Dyn);
+                            ceu_hold_set(dst, depth, MAX(tphold,src->Closure.upvs.buf[i].Dyn->Any.hld_type), src->Closure.upvs.buf[i].Dyn);
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src->Tuple.its; i++) {
                         if (src->Tuple.buf[i].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(dst, depth, tphold, src->Tuple.buf[i].Dyn);
+                            ceu_hold_set(dst, depth, MAX(tphold,src->Tuple.buf[i].Dyn->Any.hld_type), src->Tuple.buf[i].Dyn);
                         }
                     }
                     break;
@@ -622,17 +622,17 @@ fun Coder.main (tags: Tags): String {
                     if (src->Vector.unit > CEU_VALUE_DYNAMIC) {
                         int sz = ceu_tag_to_size(src->Vector.unit);
                         for (int i=0; i<src->Vector.its; i++) {
-                            ceu_hold_set(dst, depth, tphold, *(CEU_Dyn**)(src->Vector.buf + i*sz));
+                            ceu_hold_set(dst, depth, MAX(tphold,(*(CEU_Dyn**)(src->Vector.buf + i*sz))->Any.hld_type), *(CEU_Dyn**)(src->Vector.buf + i*sz));
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src->Dict.max; i++) {
                         if ((*src->Dict.buf)[i][0].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(dst, depth, tphold, (*src->Dict.buf)[i][0].Dyn);
+                            ceu_hold_set(dst, depth, MAX(tphold,((*src->Dict.buf)[i][0].Dyn)->Any.hld_type), (*src->Dict.buf)[i][0].Dyn);
                         }
                         if ((*src->Dict.buf)[i][1].type > CEU_VALUE_DYNAMIC) {
-                            ceu_hold_set(dst, depth, tphold, (*src->Dict.buf)[i][1].Dyn);
+                            ceu_hold_set(dst, depth, MAX(tphold,((*src->Dict.buf)[i][1].Dyn)->Any.hld_type), (*src->Dict.buf)[i][1].Dyn);
                         }
                     }
                     break;

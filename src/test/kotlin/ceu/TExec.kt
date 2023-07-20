@@ -12,8 +12,8 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
-val VALGRIND = "valgrind "
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 
@@ -1502,6 +1502,17 @@ class TExec {
                     pass [t1,[],t2]
                     nil
                 }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope19_leak() {
+        val out = all("""
+            val t1 = [9]
+            do {
+                pass [t1]
             }
             println(:ok)
         """)
