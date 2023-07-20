@@ -254,11 +254,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos) {
                     ${this.src.code()}
                     CEU_Value ceu_set_$n = ceu_acc;
                     ${this.dst.code()}
-                    #if 1
-                        ${assrc("ceu_set_$n")}
-                    #else // b/c of ret scope
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    #endif
+                    ${assrc("ceu_set_$n")}
                 }
                 """
             }

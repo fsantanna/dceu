@@ -1610,8 +1610,43 @@ class TExec {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n" +
-                "") { out }
+        assert(out == "anon : (lin 7, col 25) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22y_dict() {
+        val out = all("""
+            val t1 = []
+            val d = @[(t1,t1)]
+            do {
+                val t2 = []
+                set d[:x] = t2
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun scope22z_dict() {
+        val out = all("""
+            val xxx = []
+            val yyy = @[(xxx,xxx)]
+            println(yyy)
+            error(:ok)
+        """)
+        assert(out == "anon : (lin 5, col 13) : call error : :ok\n" +
+                "@[([],[])]\n") { out }
+    }
+    @Test
+    fun scope22z_tuple() {
+        val out = all("""
+            val xxx = [1]
+            val yyy = [xxx,xxx]
+            println(yyy)
+            error(:ok)
+        """)
+        assert(out == "anon : (lin 5, col 13) : call error : :ok\n" +
+                "[[1],[1]]\n") { out }
     }
     @Test
     fun scope26_args() {

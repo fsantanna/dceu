@@ -596,7 +596,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Dyn* src) {
             src->Any.hld_type = MAX(src->Any.hld_type,tphold);
             int ok = (depth >= src->Any.hld_depth);
-            if (!ok || tphold==CEU_HOLD_COLLECTION) {
+            if (!ok || (tphold==CEU_HOLD_COLLECTION && depth!=src->Any.hld_depth)) {
                 // do not change block if src is already in outer, unless fleeting collection
                 ceu_hold_chg(src, dst, depth);
             }
@@ -670,12 +670,17 @@ fun Coder.main (tags: Tags): String {
             // v also affects fleeting col with innermost scope
             if (col->Any.hld_type == CEU_HOLD_FLEETING) {
                 return ceu_hold_chk_set(&v.Dyn->Any.hld_next, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
-            } else if (
-                (col->Any.hld_type <= CEU_HOLD_COLLECTION) &&
-                (v.Dyn->Any.hld_depth >= col->Any.hld_depth)
-            ) {
-                col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type));
-                ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
+            } else if (col->Any.hld_type <= CEU_HOLD_COLLECTION) {
+                if (v.Dyn->Any.hld_depth < col->Any.hld_depth) {
+                    return 1;
+                } else {
+                    col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type));
+                    if (v.Dyn->Any.hld_depth > col->Any.hld_depth) {
+                        ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
+                    }
+                    return 1;
+                }
+            } else {
                 return 1;
             }
         }
