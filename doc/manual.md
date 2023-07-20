@@ -641,7 +641,7 @@ Examples:
 
 ```
 val n = `:number 10`            ;; native 10 is converted to Ceu number
-val x = `$n`                    ;; `x` is set to Ceu `n` as is
+val x = `:ceu $n`               ;; `x` is set to Ceu `n` as is
 `:pre #include <x.h>`           ;; includes x.h at the top of the final
 `printf("> %f\n", $n.Number);`  ;; outputs `n` as a number
 ```
@@ -715,7 +715,7 @@ literals](#literals).
 
 ## Collections
 
-Ceu has 3 collection types:
+Ceu provides 3 collection types:
 
 ```
 tuple    vector    dict
@@ -882,7 +882,7 @@ Examples:
 [1,2,3]             ;; a tuple
 :Pos [10,10]        ;; a tagged tuple
 #[1,2,3]            ;; a vector
-[(:x,10), x=10]     ;; a dictionary with equivalent key mappings
+@[(:x,10), x=10]    ;; a dictionary with equivalent key mappings
 ```
 
 ### Prototypes
@@ -1421,7 +1421,7 @@ Examples:
 ```
 #vec            ;; unary operation
 x - 10          ;; binary operation
-{{-}}(x,10)       ;; operation as call
+{{-}}(x,10)     ;; operation as call
 f(10,20)        ;; normal call
 ```
 
