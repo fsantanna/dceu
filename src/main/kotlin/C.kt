@@ -149,12 +149,6 @@ fun Coder.main (tags: Tags): String {
             int tag;
             struct CEU_Tags_List* next;
         } CEU_Tags_List;
-
-        typedef struct CEU_Error_List {
-            char* msg;
-            int shown;
-            struct CEU_Error_List* next;
-        } CEU_Error_List;
     """ +
     """ // PROTOS
         CEU_Value ceu_type_f (CEU_Frame* _1, int n, CEU_Value args[]);
@@ -320,6 +314,22 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
             return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
+        }
+        
+        void ceu_dump (CEU_Value v) {
+            puts(">>>>>>>>>>>");
+            ceu_print1(NULL, v);
+            puts(" <<<");
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                printf("    dyn   = %p\n", v.Dyn);
+                printf("    refs  = %d\n", v.Dyn->Any.refs);
+                printf("    hold  = %d\n", v.Dyn->Any.hld_type);
+                printf("    depth = %d\n", v.Dyn->Any.hld_depth);
+                printf("    prev  = %p\n", v.Dyn->Any.hld_prev);
+                printf("    &next = %p\n", &v.Dyn->Any.hld_next);
+                printf("    next  = %p\n", v.Dyn->Any.hld_next);
+            }
+            puts("<<<<<<<<<<<");
         }
 
         int ceu_as_bool (CEU_Value v) {
@@ -570,13 +580,15 @@ fun Coder.main (tags: Tags): String {
             *nxt = dyn;
         }
         void ceu_hold_rem (CEU_Dyn* dyn) {
-            *dyn->Any.hld_prev = dyn->Any.hld_next;
+            *(dyn->Any.hld_prev) = dyn->Any.hld_next;
             if (dyn->Any.hld_next != NULL) {
                 dyn->Any.hld_next->Any.hld_prev = dyn->Any.hld_prev;
             }
-            //dyn->hld_prev = dyn->hld_next = NULL;
+            dyn->Any.hld_prev = NULL;
+            dyn->Any.hld_next = NULL;
         }
-        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Dyn** nxt) {
+        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Dyn** nxt, int depth) {
+            dyn->Any.hld_depth = depth;
             ceu_hold_rem(dyn);
             ceu_hold_add(dyn, nxt);
         }
@@ -586,7 +598,7 @@ fun Coder.main (tags: Tags): String {
             int ok = (depth >= src->Any.hld_depth);
             if (!ok || tphold==CEU_HOLD_COLLECTION) {
                 // do not change block if src is already in outer, unless fleeting collection
-                ceu_hold_chg(src, dst);
+                ceu_hold_chg(src, dst, depth);
             }
             if (ok) {
                 return;
@@ -649,7 +661,7 @@ fun Coder.main (tags: Tags): String {
             
             // col affects v
             if (!(
-                (ceu_hold_chk_set(&col, col->Any.hld_depth, col->Any.hld_type, v)) ||
+                (ceu_hold_chk_set(&col->Any.hld_next, col->Any.hld_depth, col->Any.hld_type, v)) ||
                 (col->Any.hld_type <= CEU_HOLD_COLLECTION)
             )) {
                 return 0;
@@ -657,13 +669,13 @@ fun Coder.main (tags: Tags): String {
                      
             // v also affects fleeting col with innermost scope
             if (col->Any.hld_type == CEU_HOLD_FLEETING) {
-                return ceu_hold_chk_set(&v.Dyn, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
+                return ceu_hold_chk_set(&v.Dyn->Any.hld_next, v.Dyn->Any.hld_depth, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type), ceu_dyn_to_val(col));
             } else if (
                 (col->Any.hld_type <= CEU_HOLD_COLLECTION) &&
                 (v.Dyn->Any.hld_depth >= col->Any.hld_depth)
             ) {
                 col->Any.hld_type = MAX(col->Any.hld_type, MIN(CEU_HOLD_COLLECTION,v.Dyn->Any.hld_type));
-                ceu_hold_chg(col, &v.Dyn);
+                ceu_hold_chg(col, v.Dyn->Any.hld_prev, v.Dyn->Any.hld_depth);
                 return 1;
             }
         }
@@ -1108,7 +1120,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : multiple references"} };
             }
             dyn->Any.hld_type = CEU_HOLD_FLEETING;
-            ceu_hold_chg(dyn, &frame->up_block->dyns);
+            ceu_hold_chg(dyn, &frame->up_block->dyns, frame->up_block->depth);
 
             switch (src.type) {
                 case CEU_VALUE_CLOSURE:

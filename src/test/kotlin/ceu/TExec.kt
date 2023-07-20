@@ -12,8 +12,8 @@ import java.io.File
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-val VALGRIND = ""
-//val VALGRIND = "valgrind "
+//val VALGRIND = ""
+val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 
@@ -1265,6 +1265,18 @@ class TExec {
             println(x)
         """)
         assert(out == "[1,[4,5,6],[4,5,6]]\n") { out }
+    }
+    @Test
+    fun scope4x() {
+        val out = all("""
+            val x = [0]
+            do {
+                set x[0] = [1]
+                nil
+            }
+            println(x)
+        """)
+        assert(out == "[[1]]\n") { out }
     }
     @Test
     fun scope5_err() {
