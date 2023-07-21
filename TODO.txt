@@ -17,7 +17,9 @@
 
 # NEXT
 
-- share primitive
+- await, bcast: obligatory parenthesis
+- xbreak(e) <-- return expression
+- share primitive?
 - call: f <- [...], f() <-- [...]
 - next => dict-next, iter-next
     - itr->next()

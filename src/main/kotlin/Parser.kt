@@ -1273,7 +1273,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_2_pre (): Expr {
         return when {
-            this.acceptEnu("Tag") -> {
+            XCEU && this.acceptEnu("Tag") -> {
                 if (this.checkFix("[")) {
                     val tk0 = this.tk0
                     val tup = this.expr_prim()
