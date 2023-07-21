@@ -1540,7 +1540,7 @@ If  : `if´ [ID [TAG] `=´] Expr (Block | `->´ Expr)
 An `if` tests a condition expression and executes one of the two possible
 branches.
 If the condition is [true](#basic-types), the `if` executes the first branch.
-Otherwise, it executes the optional `else` branch.
+Otherwise, it executes the optional `else` branch, which defaults to `nil`.
 
 The condition expression can be can be assigned to an optional
 [variable declaration](#variables-declarations-and-assignments) and can be
