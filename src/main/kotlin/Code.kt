@@ -500,15 +500,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
             is Expr.Loop -> """
                 { // LOOP ${this.tk.dump()}
-                CEU_LOOP_NEXT_${this.nn}:;
+                CEU_LOOP_NEXT_${this.n}:;
                     ${this.body.code()}
-                    goto CEU_LOOP_NEXT_${this.nn};
-                CEU_LOOP_DONE_${this.nn}:;
+                    goto CEU_LOOP_NEXT_${this.n};
+                CEU_LOOP_DONE_${this.n}:;
                     //ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
             is Expr.XBreak -> """
-                goto CEU_LOOP_DONE_${this.nn};
+                goto CEU_LOOP_DONE_${ups.first(this) { it is Expr.Loop }!!.n};
             """.trimIndent()
             is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}

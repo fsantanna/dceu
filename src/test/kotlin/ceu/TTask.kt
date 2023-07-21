@@ -7,10 +7,10 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 fun yield (ok: String = "ok"): String {
-    return "do { var $ok=false; loop until $ok { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } }"
+    return "do { var $ok=false; loop { if $ok { break } else { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } } }"
 }
 fun await (evt: String): String {
-    return "do { var ok; set ok=false; yield(nil); loop until ok { if $evt { set ok=true } else { yield(nil) } } }"
+    return "do { var ok; set ok=false; yield(nil); loop { if ok { break } else { if $evt { set ok=true } else { yield(nil) } } } }"
 }
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

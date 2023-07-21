@@ -750,6 +750,35 @@ class TExec {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun cc_09_drop_nest() {
+        val out = all(
+            """
+            val f = func (v) {
+                ;; consumes v
+                10
+            }
+            do {
+                val x = []
+                val y = f(drop(x))
+                println(x, y)
+            }
+        """
+        )
+        assert(out == "nil\t10\n") { out }
+    }
+    @Test
+    fun cc_10_drop_multi_err() {
+        val out = all("""
+            do {
+                val t1 = [1,2,3]
+                val t2 = t1
+                drop(t1)            ;; ERR: `t1` has multiple references
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n:error\n") { out }
+    }
 
     // DICT
 
@@ -866,7 +895,8 @@ class TExec {
             set t[:b] = 20
             set t[:c] = 30
             var k = next-dict(t)
-            loop until k == nil {
+            loop {
+                if k == nil { xbreak } else { nil }
                 println(k, t[k])
                 set k = next-dict(t,k)
             }
@@ -2080,12 +2110,23 @@ class TExec {
     // LOOP
 
     @Test
+    fun loop0_break() {
+        val out = all("""
+            loop {
+                func () {
+                    xbreak
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : xbreak error : expected enclosing loop") { out }
+    }
+    @Test
     fun loop0() {
         val out = all("""
             do {
-                loop 1 {
+                loop {
                     println(:in)
-                    xbreak 1
+                    xbreak
                 }
             }
             println(:out)
@@ -2097,7 +2138,8 @@ class TExec {
         val out = all("""
             var x
             set x = false
-            loop until x {
+            loop {
+                if x { xbreak } else { nil }
                 set x = true
             }
             println(x)
@@ -2118,7 +2160,8 @@ class TExec {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop until i == nil {
+                loop {
+                    if i == nil { xbreak } else { nil }
                     println(i)
                     set i = it[0](it)
                 }
@@ -2141,7 +2184,8 @@ class TExec {
     @Test
     fun loop3() {
         val out = all("""
-            val v = loop until 10 {nil}
+            val v = loop { if 10 { xbreak } else { nil }
+; nil}
             println(v)
         """)
         assert(out == "10\n") { out }

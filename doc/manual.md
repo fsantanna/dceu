@@ -2471,6 +2471,8 @@ to-tag(":number")   ;; --> :number
 
 ### Copy and Drop
 
+`TODO: lval, set nil, single ref, only a problem if par scope`
+
 ```
 func drop (v)   ;; --> v
 func copy (v)   ;; --> v'

@@ -77,7 +77,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Fix && it.str == "spawn" })
         assert(tks.next().let { it is Tk.Fix && it.str == "loop" })
         assert(tks.next().let { it is Tk.Fix && it.str == "yield" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "while" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "while" })
         assert(tks.next().let { it is Tk.Id  && it.str == "vary10" })
         assert(tks.next().let { it is Tk.Fix && it.str == "catch" })
         assert(tks.next().let { it is Tk.Fix && it.str == "resume" })

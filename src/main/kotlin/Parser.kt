@@ -266,7 +266,7 @@ class Parser (lexer_: Lexer)
         return """
             val :xtmp ${id ?: "ceu_unt_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
             if $not ${id ?: "ceu_unt_$N"} {
-                xbreak $nn
+                xbreak
             } else { nil }
         """
     }
@@ -285,7 +285,7 @@ class Parser (lexer_: Lexer)
         return """
             val :xtmp ${id ?: "ceu_unt_$N"} ${tag ?: ""} = ${cnd.tostr(true)}
             if $not ${id ?: "ceu_unt_$N"} {
-                xbreak $nn
+                xbreak
             } else { nil }
             $xblk
         """
@@ -420,18 +420,13 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("xbreak") -> {
-                val tk0 = this.tk0 as Tk.Fix
-                this.acceptEnu_err("Num")
-                Expr.XBreak(tk0, this.tk0.str.toInt())
-            }
+            this.acceptFix("xbreak") -> Expr.XBreak(this.tk0 as Tk.Fix)
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
 
-                if (this.acceptEnu("Num")) {
-                    val nn = this.tk0.str.toInt()
+                if (this.checkFix("{")) {
                     val blk = this.block()
-                    return Expr.Loop(tk0, nn, Expr.Do(tk0, blk.es))
+                    return Expr.Loop(tk0, Expr.Do(tk0, blk.es))
                 }
 
                 val pre0 = tk0.pos.pre()
@@ -456,15 +451,6 @@ class Parser (lexer_: Lexer)
                         """ }
 
                     }
-                    !xin -> {
-                        { body -> """
-                            do {
-                                loop $nn {
-                                    $body
-                                }
-                            }
-                        """ }
-                    }
                     this.acceptTag(":tasks") -> {
                         val tasks = this.expr() ;
                         { body: String -> """
@@ -477,10 +463,10 @@ class Parser (lexer_: Lexer)
                                 ```
                                 val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                 var ceu_i_$N = 0
-                                ${pre0}loop $nn {
+                                ${pre0}loop {
                                     if ceu_i_$N == ceu_n_$N {
                                         pass nil     ;; return value
-                                        xbreak $nn
+                                        xbreak
                                     } else { nil }
                                     val ceu_dyn_$N = `:pointer ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.buf[(int)ceu_mem->ceu_i_$N.Number]`
                                     if ceu_dyn_$N == `:pointer NULL` {
@@ -542,10 +528,10 @@ class Parser (lexer_: Lexer)
                                     ${if (tkA.str=="{") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
-                                loop $nn {
+                                loop {
                                     if $id $cmp ceu_limit_$N {
                                         pass nil     ;; return value
-                                        xbreak $nn
+                                        xbreak
                                     } else { nil }
                                     $body
                                     set $id = $id $op ceu_step_$N
@@ -560,11 +546,11 @@ class Parser (lexer_: Lexer)
                             ${pre0}do {
                                 val :xtmp ceu_it_$N :Iterator = iter(${iter.tostr(true)})
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
-                                loop $nn {
+                                loop {
                                     val :xtmp $id $tag = ${pre0}ceu_it_$N.f(ceu_it_$N)
                                     if $id == nil {
                                         pass nil     ;; return value
-                                        xbreak $nn
+                                        xbreak
                                     } else { nil }
                                     $body
                                 }
