@@ -430,6 +430,7 @@ class Parser (lexer_: Lexer)
                 }
 
                 val pre0 = tk0.pos.pre()
+                val tk1 = this.tk1
 
                 val xid = this.acceptEnu("Id")
                 val (id,tag) = if (!xid) Pair("it","") else {
@@ -437,21 +438,13 @@ class Parser (lexer_: Lexer)
                 }
 
                 val xin = this.acceptFix("in")
+                if (xin && !XCEU) {
+                    this.checkTag_err(":tasks")
+                }
+
                 val nn = N++
                 val f = when {
-                    (!xin && xid) -> {
-                        { body -> """
-                            do {
-                                var $id $tag = 0
-                                loop $nn {
-                                    $body
-                                    set $id = $id + 1
-                                }
-                            }
-                        """ }
-
-                    }
-                    this.acceptTag(":tasks") -> {
+                    xin && this.acceptTag(":tasks") -> {
                         val tasks = this.expr() ;
                         { body: String -> """
                             ${pre0}do {
@@ -495,6 +488,18 @@ class Parser (lexer_: Lexer)
                             }
                             """
                         }
+                    }
+                    XCEU && (!xin && xid) -> {
+                        { body -> """
+                            do {
+                                var $id $tag = 0
+                                loop $nn {
+                                    $body
+                                    set $id = $id + 1
+                                }
+                            }
+                        """ }
+
                     }
                     XCEU && (this.acceptFix("}") || this.acceptFix("{")) -> {
                         // [x -> y]
@@ -559,7 +564,7 @@ class Parser (lexer_: Lexer)
                         }
                     }
                     else -> {
-                        err(this.tk1, "invalid loop : unexpected ${this.tk1.str}")
+                        err(tk1, "invalid loop : unexpected ${tk1.str}")
                         error("unreachable")
                     }
                 }

@@ -631,21 +631,20 @@ class TParser {
     fun qq_01_loop_err() {
         val l = lexer("loop { pass nil }")
         val parser = Parser(l)
-        val e1 = parser.expr() as Expr.Do
-        val e2 = e1.es.last() as Expr.Loop
-        assert(e2.body.tostr() == "{\npass nil\n}") { e2.body.tostr() }
+        val e1 = parser.expr() as Expr.Loop
+        assert(e1.body.tostr() == "{\npass nil\n}") { e1.body.tostr() }
     }
     @Test
     fun qq_02_loop_err() {
         val l = lexer("loop until {")
         val parser = Parser(l)
-        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : invalid loop : unexpected until")
     }
     @Test
     fun qq_03_loop_err() {
         val l = lexer("loop x { }")
         val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 10) : expected expression : have \"}\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 6) : invalid loop : unexpected x")
     }
 
     // NATIVE
@@ -919,7 +918,7 @@ class TParser {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 18) : expected \"{\" : have \"[\"")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 18) : invalid loop : unexpected [")
     }
     @Test
     fun tasks3_err() {
@@ -931,7 +930,7 @@ class TParser {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 4, col 23) : invalid loop : unexpected {")
+        assert(trap { parser.exprs() } == "anon : (lin 4, col 23) : expected \":tasks\" : have \"{\"")
     }
     @Test
     fun tasks4_err() {
@@ -976,7 +975,7 @@ class TParser {
             }
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : invalid loop : unexpected 1")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : expected \":tasks\" : have \"1\"")
     }
     @Test
     fun iter2_err() {

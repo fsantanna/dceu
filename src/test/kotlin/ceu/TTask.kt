@@ -7,10 +7,10 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 
 fun yield (ok: String = "ok"): String {
-    return "do { var $ok=false; loop { if $ok { break } else { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } } }"
+    return "do { var $ok=false; loop { if $ok { xbreak } else { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } } }"
 }
 fun await (evt: String): String {
-    return "do { var ok; set ok=false; yield(nil); loop { if ok { break } else { if $evt { set ok=true } else { yield(nil) } } } }"
+    return "do { var ok; set ok=false; yield(nil); loop { if ok { xbreak } else { if $evt { set ok=true } else { yield(nil) } } } }"
 }
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -1208,7 +1208,7 @@ class TTask {
             var tk
             set tk = task (v) {
                 yield(nil)
-                do { var ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
+                do { var ok=false; loop { if ok { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } } }
                 println(evt)                
             }
             var co1 = spawn tk ()
@@ -1255,10 +1255,10 @@ class TTask {
             set tk = task (v) {
                 println(v)
                 ;;yield(nil)
-                do { var ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
+                do { var ok=false; loop { if ok { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } } }
                 ;;yield(nil)
                 println(evt)                
-                do { var ok2=false; loop until ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=true } else { nil } } }
+                do { var ok2=false; loop { if ok2 { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok2=true } else { nil } } } }
                 ;;yield(nil)
                 println(evt)                
             }
@@ -1286,7 +1286,7 @@ class TTask {
             """
             var T
             set T = task (v) {
-                do { var ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
+                do { var ok=false; loop { if ok { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } } }
                 ;;yield(nil)
                 println(v)
             }
@@ -2172,10 +2172,10 @@ class TTask {
                     println(20)
                     println(30)
                 }
-                do { var ok1; set ok1=false; loop until ok1 { yield(nil;) if type(evt)/=:x-task { set ok1=true } else { nil } } }
+                do { var ok1; set ok1=false; loop { if ok1 { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok1=true } else { nil } } } }
                 ;;yield(nil)
                 if v {
-                    do { var ok; set ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
+                    do { var ok; set ok=false; loop { if ok { xbreak } else { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } } }
                     ;;yield(nil)
                 } else {
                     nil
@@ -2602,8 +2602,12 @@ class TTask {
             set fff = func (x) { x }
             spawn task () {
                 yield(nil)
-                loop until evt[:type]==:x {
-                    yield(nil)
+                loop {
+                    if evt[:type]==:x {
+                        xbreak
+                    } else {
+                        yield(nil)
+                    }
                 }
                 println(99)
             }()
@@ -4494,14 +4498,20 @@ class TTask {
                 ;;println(:blk11, `:pointer ceu_block`)
                 loop {
                     ;;println(:blk12, `:pointer ceu_block`)
-                    yield(nil); loop until evt==10 { yield(nil) }
+                    yield(nil); loop { if evt==10 { xbreak } else { yield(nil) } }
                     println(:1)
                     var t = spawn task () {
                         ;;println(:cor2, `:pointer ceu_x`)
                         ;;println(:blk2, `:pointer ceu_block`)
-                        yield(nil); loop until evt==10 { yield(nil) }
+                        yield(nil); loop { if evt==10 { xbreak } else { yield(nil) } }
                     } ()
-                    loop until status(t)==:terminated { yield(nil) }
+                    loop {
+                        if status(t)==:terminated {
+                            xbreak
+                        } else {
+                            yield(nil)
+                        }
+                    }
                     println(:2)
                 }
             } ()
