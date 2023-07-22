@@ -1511,8 +1511,8 @@ precedence priority (from higher to lower):
 3. binary operations       ;; x + y
 ```
 
-Currently, binary operators in Ceu have no precedence or associativity rules,
-requiring parenthesis for disambiguation:
+All binary operators are left-associative and have the same precedence.
+Expressions with multiple operators require parenthesis for disambiguation:
 
 ```
 Parens : `(´ Expr `)´
@@ -1524,6 +1524,7 @@ Examples:
 #f(10).x        ;; # ((f(10)) .x)
 x + 10 - 1      ;; ERR: requires parenthesis
 - x + y         ;; (-x) + y
+x or y or z     ;; (x or y) or z
 ```
 
 ## Conditionals and Loops
