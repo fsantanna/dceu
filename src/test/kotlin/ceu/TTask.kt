@@ -1375,6 +1375,20 @@ class TTask {
         assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
     @Test
+    fun ee_bcast_in6x() {
+        val out = ceu.all(
+            """
+            val T = task (v) {
+                spawn (task () :fake {
+                    println(v, evt)
+                }) ()
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun ee_bcast_in7() {
         val out = all("""
             spawn (task () {

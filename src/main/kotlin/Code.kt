@@ -48,7 +48,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val isx = (this.tk.str != "func")
                 val up_blk = ups.first_block(this)!!
 
-                val pre = """ // TYPE ${this.tk.dump()}
+                val type = """ // TYPE ${this.tk.dump()}
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
@@ -67,7 +67,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }.joinToString("")}
                         ${mem.expr(this.body).second}
                     } CEU_Proto_Mem_$n;
-                """ + """ // PROTO ${this.tk.dump()}
+                """
+
+                val proto = """// PROTO ${this.tk.dump()}
                     CEU_RET ceu_proto_f_$n (
                         CEU_Frame* ceu_frame,
                         CEU_BStack* ceu_bstack,
@@ -99,7 +101,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         ${clos.protos_refs[this].cond { """
                         CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->Ncast.Proto.upvs.buf;                    
                     """ }}
-                    """ + """ // WHILE
+                        // WHILE
                         do { // func
                             ${isx.cond{"""
                             switch (ceu_x->Bcast.X.pc) {
@@ -114,61 +116,60 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 ${this.body.code()}
                             ${isx.cond{"}\n}\n"}}
                         } while (0); // func
-                    """ + isx.cond{ """  // TERMINATE
-                        assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
-                        ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
-                        ceu_x->Bcast.X.Task.pub = ceu_acc;
-                        ceu_x->Bcast.X.pc = -1;
-                        int intasks = (ceu_x->Bcast.X.Task.up_tasks != NULL);
-    
-                        if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
-                            // do not signal termination: clear comes from clearing enclosing block,
-                            // which also clears all possible interested awaits
-                        } else if (ceu_ret == CEU_RET_THROW) {
-                            // do not signal termination: throw clears enclosing block,
-                            // which also clears all possible interested awaits
-                        } else if (ceu_x->type == CEU_VALUE_X_TASK) {
-                            // only signal on normal termination
-    
-                            // ceu_ret/ceu_acc: save/restore
-                            CEU_RET   ceu_ret_$n = ceu_ret;
-                            CEU_Value ceu_acc_$n = ceu_acc;
-    
-                            CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
-                            CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
-                            // enclosing frame
-                            {
-                                CEU_Frame* ceu_frame_$n = ceu_x->up_dyns.dyns->up_block->up_frame;
-                                if (ceu_frame_$n->x == NULL) {
-                                    // enclosing block
-                                    ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                        // TERMINATE
+                        ${isx.cond { """
+                            assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
+                            ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
+                            ceu_x->Bcast.X.Task.pub = ceu_acc;
+                            ceu_x->Bcast.X.pc = -1;
+                            int intasks = (ceu_x->Bcast.X.Task.up_tasks != NULL);
+        
+                            if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
+                                // do not signal termination: clear comes from clearing enclosing block,
+                                // which also clears all possible interested awaits
+                            } else if (ceu_ret == CEU_RET_THROW) {
+                                // do not signal termination: throw clears enclosing block,
+                                // which also clears all possible interested awaits
+                            } else if (ceu_x->type == CEU_VALUE_X_TASK) {
+                                // only signal on normal termination
+        
+                                // ceu_ret/ceu_acc: save/restore
+                                CEU_RET   ceu_ret_$n = ceu_ret;
+                                CEU_Value ceu_acc_$n = ceu_acc;
+        
+                                CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
+                                CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
+                                // enclosing frame
+                                {
+                                    CEU_Frame* ceu_frame_$n = ceu_x->up_dyns.dyns->up_block->up_frame;
+                                    if (ceu_frame_$n->x == NULL) {
+                                        // enclosing block
+                                        ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                                    } else {
+                                        // enclosing coro of enclosing block
+                                        ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_frame_$n->x, &ceu_evt_$n));
+                                    }
+                                }
+                                if (ceu_bstack_$n.block == NULL) {
+                                    return ceu_ret;
+                                }
+                            
+                                if (intasks) {
+                                    ceu_hold_rem(ceu_x);
+                                    ceu_dyn_free(ceu_x);
+                                }
+        
+                                if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
+                                    ceu_acc = ceu_acc_$n;
                                 } else {
-                                    // enclosing coro of enclosing block
-                                    ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_frame_$n->x, &ceu_evt_$n));
+                                    // do not restore acc: we were ok, but now we did throw
                                 }
                             }
-                            if (ceu_bstack_$n.block == NULL) {
-                                return ceu_ret;
-                            }
-                        
-                            if (intasks) {
-                                ceu_hold_rem(ceu_x);
-                                ceu_dyn_free(ceu_x);
-                            }
-    
-                            if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
-                                ceu_acc = ceu_acc_$n;
-                            } else {
-                                // do not restore acc: we were ok, but now we did throw
-                            }
-                        }
-                    """} + """
+                        """ }}
                         return ceu_ret;
                     }
                 """
-                //tops.second.add(type)
-                //println(listOf(this.tk.pos, clos.protos_noclos.contains(this)))
-                //tops.third.add(func)
+
                 val pos = """
                     CEU_Dyn* ceu_proto_$n = ceu_proto_create (
                         CEU_VALUE_P_${this.tk.str.uppercase()},
@@ -210,12 +211,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     assert(ceu_proto_$n != NULL);
                     ${assrc("(CEU_Value) { CEU_VALUE_P_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
-                if (clos.protos_refs.containsKey(this)) {
-                    tops.second.add(pre)
+                if ((this.tk.str != "func") || clos.protos_refs.containsKey(this)) {
+                    tops.second.add(type)
+                    tops.third.add(proto)
                     //pres.add(pre)
                     pos
                 } else {
-                    pre + pos
+                    type + proto + pos
                 }
             }
             is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
