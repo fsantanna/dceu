@@ -428,9 +428,8 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
 
                 val pre0 = tk0.pos.pre()
-                val tk1 = this.tk1
 
-                val xid = XCEU && this.acceptEnu("Id")
+                val xid = this.acceptEnu("Id")
                 val (id,tag) = if (!xid) Pair("it","") else {
                     Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
                 }
@@ -484,7 +483,7 @@ class Parser (lexer_: Lexer)
                         }
                     }
                     !XCEU -> {
-                        err(tk1, "invalid loop : unexpected ${tk1.str}")
+                        err(this.tk1, "invalid loop : unexpected ${this.tk1.str}")
                         error("unreachable")
                     }
                     (!xin && xid) -> {

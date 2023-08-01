@@ -137,7 +137,7 @@ export [to-string, to-number, to-tag]
             var i = 0
             val n = `:number strlen($v.Pointer)`
             var str = #[]
-            loop {
+            xloop {
                 if i == n {
                     xbreak
                 } else {

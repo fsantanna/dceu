@@ -904,7 +904,7 @@ class TExec {
             set t[:b] = 20
             set t[:c] = 30
             var k = next-dict(t)
-            loop {
+            xloop {
                 if k == nil { xbreak } else { nil }
                 println(k, t[k])
                 set k = next-dict(t,k)
@@ -2121,7 +2121,7 @@ class TExec {
     @Test
     fun loop0_break() {
         val out = all("""
-            loop {
+            xloop {
                 func () {
                     xbreak
                 }
@@ -2133,7 +2133,7 @@ class TExec {
     fun loop0() {
         val out = all("""
             do {
-                loop {
+                xloop {
                     println(:in)
                     xbreak
                 }
@@ -2147,7 +2147,7 @@ class TExec {
         val out = all("""
             var x
             set x = false
-            loop {
+            xloop {
                 if x { xbreak } else { nil }
                 set x = true
             }
@@ -2169,7 +2169,7 @@ class TExec {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop {
+                xloop {
                     if i == nil { xbreak } else { nil }
                     println(i)
                     set i = it[0](it)
@@ -2193,7 +2193,7 @@ class TExec {
     @Test
     fun loop3() {
         val out = all("""
-            val v = loop { if 10 { xbreak } else { nil }
+            val v = xloop { if 10 { xbreak } else { nil }
 ; nil}
             println(v)
         """)
