@@ -48,7 +48,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val isx = (this.tk.str != "func")
                 val up_blk = ups.first_block(this)!!
 
-                val type = """ // TYPE ${this.tk.dump()}
+                val type = """ // TYPE ${this.dump()}
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
@@ -69,7 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     } CEU_Proto_Mem_$n;
                 """
 
-                val proto = """// PROTO ${this.tk.dump()}
+                val proto = """// PROTO ${this.dump()}
                     CEU_RET ceu_proto_f_$n (
                         CEU_Frame* ceu_frame,
                         CEU_BStack* ceu_bstack,
@@ -214,7 +214,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 if ((this.tk.str != "func") || clos.protos_refs.containsKey(this)) {
                     tops.second.add(type)
                     tops.third.add(proto)
-                    //pres.add(pre)
                     pos
                 } else {
                     type + proto + pos
@@ -238,7 +237,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c(it.n) }
                 """
-                { // BLOCK ${this.tk.dump()}
+                { // BLOCK ${this.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&ceu_mem->block_$n}, NULL };
                     void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
                     ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
@@ -378,7 +377,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 }
                             """}}
                             ${(defers.pub[this]!!.size > 0).cond { """
-                                { // DEFERS ${this.tk.dump()}
+                                { // DEFERS ${this.dump()}
                                     ceu_ret = CEU_RET_RETURN;
                                     CEU_Value* ceu_evt_$N = ceu_evt;
                                     ceu_evt = &CEU_EVT_NIL;
@@ -444,7 +443,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
 
                 """
-                { // DCL ${this.tk.dump()}
+                { // DCL ${this.dump()}
                     ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                     ${(this.init && this.src!=null && !unused).cond {
                         this.src!!.code() + """
@@ -482,7 +481,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             }
             is Expr.Set -> {
                 """
-                { // SET ${this.tk.dump()}
+                { // SET ${this.dump()}
                     ${this.src.code()}
                     ceu_mem->set_$n = ceu_acc;
                     ${this.dst.code()}
@@ -495,7 +494,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
             }
             is Expr.If -> """
-                { // IF ${this.tk.dump()}
+                { // IF ${this.dump()}
                     ${this.cnd.code()}
                     CEU_Value ceu_accx = ceu_acc;
                     if (ceu_as_bool(&ceu_accx)) {
@@ -506,7 +505,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
                 """
             is Expr.XLoop -> """
-                { // LOOP ${this.tk.dump()}
+                { // LOOP ${this.dump()}
                 CEU_LOOP_NEXT_${this.n}:;
                     ${this.body.code()}
                     goto CEU_LOOP_NEXT_${this.n};
@@ -518,7 +517,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 goto CEU_LOOP_DONE_${ups.first(this) { it is Expr.XLoop }!!.n};
             """.trimIndent()
             is Expr.Catch -> """
-                { // CATCH ${this.tk.dump()}
+                { // CATCH ${this.dump()}
                     do { // catch
                         ${this.body.code()}
                     } while (0); // catch
@@ -569,7 +568,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val intask = (ups.first(this){ it is Expr.Proto }?.tk?.str == "task")
                 val oktask = ups.true_x_c(this, "task")
                 """
-                { // BCAST ${this.tk.dump()}
+                { // BCAST ${this.dump()}
                     ${intask.cond {"""
                     ceu_x->Bcast.X.pc = $n;   // because of clear
                 case $n:
@@ -624,7 +623,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """
             }
             is Expr.Yield -> """
-                { // YIELD ${this.tk.dump()}
+                { // YIELD ${this.dump()}
                     ${this.arg.code()}
                     ceu_x->Bcast.X.pc = $n;      // next resume
                     ceu_x->Bcast.status = CEU_X_STATUS_YIELDED;
@@ -764,7 +763,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     else -> assrc(idc)
                     /*
                     when {
-                        !xvar.dcl.poly -> assrc(idc)    // ACC ${this.tk.dump()}
+                        !xvar.dcl.poly -> assrc(idc)    // ACC ${this.dump()}
                         xvar.dcl.poly -> """
                             assert($idc.type==CEU_VALUE_DICT && "TODO");
                             CEU_Value ceu_tag = { CEU_VALUE_TAG, {.Tag=CEU_TAG_number} };
@@ -790,7 +789,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
 
             is Expr.Tuple -> """
-                { // TUPLE ${this.tk.dump()}
+                { // TUPLE ${this.dump()}
                     ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, ${this.args.size});
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
@@ -804,7 +803,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
             """
             is Expr.Vector -> """
-                { // VECTOR ${this.tk.dump()}
+                { // VECTOR ${this.dump()}
                     ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
@@ -818,7 +817,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             """
             is Expr.Dict -> {
                 """
-                { // DICT ${this.tk.dump()}
+                { // DICT ${this.dump()}
                     ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
                     assert(ceu_mem->dict_$n != NULL);
                     ${this.args.map { """
@@ -848,7 +847,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                 }
                 """
-                { // INDEX  ${this.tk.dump()}
+                { // INDEX  ${this.dump()}
                     // IDX
                     ${if (idx == -1) {
                         """
@@ -1036,7 +1035,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """ +
 
                 iscall.cond{"""
-                // CALL ${this.tk.dump()}
+                // CALL ${this.dump()}
                     ${this.proto.code()}
                     CEU_Value ceu_proto_$n = ceu_acc;
                     if (ceu_proto_$n.type != CEU_VALUE_P_FUNC) {
@@ -1046,7 +1045,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """} +
 
                 spawn.cond{"""
-                // SPAWN/CORO ${this.tk.dump()}
+                // SPAWN/CORO ${this.dump()}
                     ${istasks.cond {
                         spawn!!.tasks!!.code() + """
                         ceu_mem->tasks_${spawn!!.n} = ceu_acc;
@@ -1078,7 +1077,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 """} +
 
                 resume.cond{"""
-                // RESUME ${this.tk.dump()}
+                // RESUME ${this.dump()}
                     ${this.proto.code()}
                     CEU_Value ceu_x_$n = ceu_acc;
                     if (ceu_x_$n.type!=CEU_VALUE_X_CORO || (ceu_x_$n.Dyn->Bcast.status!=CEU_X_STATUS_YIELDED && ceu_x_$n.Dyn->Bcast.status!=CEU_X_STATUS_TOGGLED)) {                

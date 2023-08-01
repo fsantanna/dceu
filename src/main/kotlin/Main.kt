@@ -4,6 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var DUMP = true
 val XCEU = false
 //val XCEU = true
 var N = 1
@@ -127,6 +128,7 @@ fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
 fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List<String>): String {
+    DUMP = false
     if (verbose) {
         System.err.println("... parsing ...")
     }

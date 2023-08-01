@@ -4,10 +4,6 @@ fun Pos.isSameLine (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin)
 }
 
-fun Tk.dump (): String {
-    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
-}
-
 fun <T> T?.cond (f: (v:T)->String): String {
     return when (this) {
         null  -> ""
