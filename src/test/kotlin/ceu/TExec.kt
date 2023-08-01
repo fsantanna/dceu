@@ -207,6 +207,15 @@ class TExec {
         assert(out == "anon : (lin 3, col 21) : access error : cannot access \"_\"") { out }
     }
     @Test
+    fun bb_07x_und() {
+        val out = all("""
+            val _ = 10
+            val _ = 10
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun bb_08_und() {
         val out = all("""
             do {

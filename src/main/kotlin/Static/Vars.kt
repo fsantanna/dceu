@@ -204,7 +204,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (this.id.str!="evt" && dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
+                if (this.id.str !in listOf("_","evt") && dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
