@@ -48,170 +48,175 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val isx = (this.tk.str != "func")
                 val up_blk = ups.first_block(this)!!
 
-                val type = """ // TYPE ${this.tk.dump()}
-                ${clos.protos_refs[this].cond { """
-                    typedef struct {
-                        ${clos.protos_refs[this]!!.map {
-                        "CEU_Value ${it.id.str.id2c(it.n)};"
-                    }.joinToString("")}
-                    } CEU_Proto_Upvs_$n;                    
-                """ }}
-                typedef struct {
-                    ${this.args.map { (id,_) ->
-                        val dcl = vars.get(this.body, id.str)
-                        val idc = id.str.id2c(dcl.n)
-                        """
-                        CEU_Value $idc;
-                        CEU_Block* _${idc}_;
-                        """
-                }.joinToString("")}
-                    ${mem.expr(this.body).second}
-                } CEU_Proto_Mem_$n;
-                """
-                val func = """ // BODY ${this.tk.dump()}
-                CEU_RET ceu_proto_f_$n (
-                    CEU_Frame* ceu_frame,
-                    CEU_BStack* ceu_bstack,
-                    int ceu_n,
-                    CEU_Value* ceu_args[]
-                ) {
-                    ${isfunc.cond{"""
-                        CEU_Proto_Mem_$n _ceu_mem_;
-                        CEU_Proto_Mem_$n* ceu_mem = &_ceu_mem_;
-                        ceu_frame->mem = (char*) ceu_mem;
-                    """}}
-                    ${isx.cond{"""
-                        CEU_Dyn* ceu_x = ceu_frame->x;
-                        #ifdef CEU_DEBUG
-                        printf("pc=%2d, status=%d, coro=%p, evt=%d\n", ceu_x->Bcast.X.pc, ceu_x->Bcast.status, ceu_x, ceu_n==CEU_ARG_EVT && ceu_args[0]==&CEU_EVT_CLEAR);
-                        #endif
-                        CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
-                        CEU_Value* ceu_evt = &CEU_EVT_NIL;
-                        if (ceu_n == CEU_ARG_EVT) {
-                            ceu_evt = ceu_args[0];
-                        }
-                        assert(ceu_x->Bcast.status==CEU_X_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR);
-                        //if (ceu_evt != &CEU_EVT_CLEAR) {
-                            ceu_x->Bcast.status = CEU_X_STATUS_RESUMED;
-                        //}
-                    """}}
-                    CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
-                    CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
+                val pre = """ // TYPE ${this.tk.dump()}
                     ${clos.protos_refs[this].cond { """
+                        typedef struct {
+                            ${clos.protos_refs[this]!!.map {
+                            "CEU_Value ${it.id.str.id2c(it.n)};"
+                        }.joinToString("")}
+                        } CEU_Proto_Upvs_$n;                    
+                    """ }}
+                    typedef struct {
+                        ${this.args.map { (id,_) ->
+                            val dcl = vars.get(this.body, id.str)
+                            val idc = id.str.id2c(dcl.n)
+                            """
+                            CEU_Value $idc;
+                            CEU_Block* _${idc}_;
+                            """
+                    }.joinToString("")}
+                        ${mem.expr(this.body).second}
+                    } CEU_Proto_Mem_$n;
+                """ + """ // PROTO ${this.tk.dump()}
+                    CEU_RET ceu_proto_f_$n (
+                        CEU_Frame* ceu_frame,
+                        CEU_BStack* ceu_bstack,
+                        int ceu_n,
+                        CEU_Value* ceu_args[]
+                    ) {
+                        ${isfunc.cond{"""
+                            CEU_Proto_Mem_$n _ceu_mem_;
+                            CEU_Proto_Mem_$n* ceu_mem = &_ceu_mem_;
+                            ceu_frame->mem = (char*) ceu_mem;
+                        """}}
+                        ${isx.cond{"""
+                            CEU_Dyn* ceu_x = ceu_frame->x;
+                            #ifdef CEU_DEBUG
+                            printf("pc=%2d, status=%d, coro=%p, evt=%d\n", ceu_x->Bcast.X.pc, ceu_x->Bcast.status, ceu_x, ceu_n==CEU_ARG_EVT && ceu_args[0]==&CEU_EVT_CLEAR);
+                            #endif
+                            CEU_Proto_Mem_$n* ceu_mem = (CEU_Proto_Mem_$n*) ceu_frame->mem;
+                            CEU_Value* ceu_evt = &CEU_EVT_NIL;
+                            if (ceu_n == CEU_ARG_EVT) {
+                                ceu_evt = ceu_args[0];
+                            }
+                            assert(ceu_x->Bcast.status==CEU_X_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR);
+                            //if (ceu_evt != &CEU_EVT_CLEAR) {
+                                ceu_x->Bcast.status = CEU_X_STATUS_RESUMED;
+                            //}
+                        """}}
+                        CEU_RET ceu_ret = (ceu_n == CEU_ARG_ERR) ? CEU_RET_THROW : CEU_RET_RETURN;
+                        CEU_Proto_Mem_$n* ceu_mem_$n = ceu_mem;
+                        ${clos.protos_refs[this].cond { """
                         CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->proto->Ncast.Proto.upvs.buf;                    
                     """ }}
-                    """ +
-                    """ // WHILE
-                    do { // func
-                        ${isx.cond{"""
-                        switch (ceu_x->Bcast.X.pc) {
-                            case -1:
-                                assert(0 && "bug found");
-                                break;
-                            case 0: {
-                                //ceu_x->tphold = 1;   // do not allow started coro to change scope
-                                CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
-                        """}}
-                            // BODY
-                            ${this.body.code()}
-                        ${isx.cond{"}\n}\n"}}
-                    } while (0); // func
+                    """ + """ // WHILE
+                        do { // func
+                            ${isx.cond{"""
+                            switch (ceu_x->Bcast.X.pc) {
+                                case -1:
+                                    assert(0 && "bug found");
+                                    break;
+                                case 0: {
+                                    //ceu_x->tphold = 1;   // do not allow started coro to change scope
+                                    CEU_CONTINUE_ON_CLEAR_THROW(); // may start with clear w/ coroutine() w/o resume
+                            """}}
+                                // BODY
+                                ${this.body.code()}
+                            ${isx.cond{"}\n}\n"}}
+                        } while (0); // func
                     """ + isx.cond{ """  // TERMINATE
-                    assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
-                    ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
-                    ceu_x->Bcast.X.Task.pub = ceu_acc;
-                    ceu_x->Bcast.X.pc = -1;
-                    int intasks = (ceu_x->Bcast.X.Task.up_tasks != NULL);
-
-                    if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
-                        // do not signal termination: clear comes from clearing enclosing block,
-                        // which also clears all possible interested awaits
-                    } else if (ceu_ret == CEU_RET_THROW) {
-                        // do not signal termination: throw clears enclosing block,
-                        // which also clears all possible interested awaits
-                    } else if (ceu_x->type == CEU_VALUE_X_TASK) {
-                        // only signal on normal termination
-
-                        // ceu_ret/ceu_acc: save/restore
-                        CEU_RET   ceu_ret_$n = ceu_ret;
-                        CEU_Value ceu_acc_$n = ceu_acc;
-
-                        CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
-                        CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
-                        // enclosing frame
-                        {
-                            CEU_Frame* ceu_frame_$n = ceu_x->up_dyns.dyns->up_block->up_frame;
-                            if (ceu_frame_$n->x == NULL) {
-                                // enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                        assert(ceu_x->Bcast.status != CEU_X_STATUS_TERMINATED);
+                        ceu_x->Bcast.status = CEU_X_STATUS_TERMINATED;
+                        ceu_x->Bcast.X.Task.pub = ceu_acc;
+                        ceu_x->Bcast.X.pc = -1;
+                        int intasks = (ceu_x->Bcast.X.Task.up_tasks != NULL);
+    
+                        if (ceu_n==-1 && ceu_evt==&CEU_EVT_CLEAR) {
+                            // do not signal termination: clear comes from clearing enclosing block,
+                            // which also clears all possible interested awaits
+                        } else if (ceu_ret == CEU_RET_THROW) {
+                            // do not signal termination: throw clears enclosing block,
+                            // which also clears all possible interested awaits
+                        } else if (ceu_x->type == CEU_VALUE_X_TASK) {
+                            // only signal on normal termination
+    
+                            // ceu_ret/ceu_acc: save/restore
+                            CEU_RET   ceu_ret_$n = ceu_ret;
+                            CEU_Value ceu_acc_$n = ceu_acc;
+    
+                            CEU_Value ceu_evt_$n = { CEU_VALUE_X_TASK, {.Dyn=ceu_x} };
+                            CEU_BStack ceu_bstack_$n = { ceu_x->up_dyns.dyns->up_block, ceu_bstack };
+                            // enclosing frame
+                            {
+                                CEU_Frame* ceu_frame_$n = ceu_x->up_dyns.dyns->up_block->up_frame;
+                                if (ceu_frame_$n->x == NULL) {
+                                    // enclosing block
+                                    ceu_ret = MIN(ceu_ret, ceu_bcast_blocks(&ceu_bstack_$n, ceu_x->up_dyns.dyns->up_block, &ceu_evt_$n, NULL));
+                                } else {
+                                    // enclosing coro of enclosing block
+                                    ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_frame_$n->x, &ceu_evt_$n));
+                                }
+                            }
+                            if (ceu_bstack_$n.block == NULL) {
+                                return ceu_ret;
+                            }
+                        
+                            if (intasks) {
+                                ceu_hold_rem(ceu_x);
+                                ceu_dyn_free(ceu_x);
+                            }
+    
+                            if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
+                                ceu_acc = ceu_acc_$n;
                             } else {
-                                // enclosing coro of enclosing block
-                                ceu_ret = MIN(ceu_ret, ceu_bcast_dyn(&ceu_bstack_$n, ceu_frame_$n->x, &ceu_evt_$n));
+                                // do not restore acc: we were ok, but now we did throw
                             }
                         }
-                        if (ceu_bstack_$n.block == NULL) {
-                            return ceu_ret;
-                        }
-                    
-                        if (intasks) {
-                            ceu_hold_rem(ceu_x);
-                            ceu_dyn_free(ceu_x);
-                        }
-
-                        if (ceu_ret_$n==CEU_RET_THROW || ceu_ret!=CEU_RET_THROW) {
-                            ceu_acc = ceu_acc_$n;
-                        } else {
-                            // do not restore acc: we were ok, but now we did throw
-                        }
-                    }
                     """} + """
-                    return ceu_ret;
-                }
+                        return ceu_ret;
+                    }
                 """
-                tops.second.add(type)
+                //tops.second.add(type)
                 //println(listOf(this.tk.pos, clos.protos_noclos.contains(this)))
-                tops.third.add(func)
-                """
-                CEU_Dyn* ceu_proto_$n = ceu_proto_create (
-                    CEU_VALUE_P_${this.tk.str.uppercase()},
-                    (CEU_Proto) {
-                        ${if (up_blk == outer) "NULL" else "ceu_frame"},
-                        ceu_proto_f_$n,
-                        { ${clos.protos_refs[this]?.size ?: 0}, NULL },
-                        { .X = {
-                            sizeof(CEU_Proto_Mem_$n)
-                        } }
-                    },
-                    &${up_blk.toc(true)}->dn_dyns,
-                    ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"}
-                );
-                ${clos.protos_refs[this].cond {
-                    it.map { dcl ->
-                        val dcl_blk = vars.dcl_to_blk[dcl]!!
-                        val idc = dcl.id.str.id2c(dcl.n)
-                        val btw = ups
-                            .all_until(this) { dcl_blk==it }
-                            .filter { it is Expr.Proto }
-                            .count() // other protos in between myself and dcl, so it its an upref (upv=2)
-                        val upv = min(2, btw)
-                        """
-                        {
-                            CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
-                            if (ceu_up->type > CEU_VALUE_DYNAMIC) {
-                                assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
-                                //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
-                            } else {
-                                assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->up_dyns.dyns, ceu_proto_$n->tphold));
+                //tops.third.add(func)
+                val pos = """
+                    CEU_Dyn* ceu_proto_$n = ceu_proto_create (
+                        CEU_VALUE_P_${this.tk.str.uppercase()},
+                        (CEU_Proto) {
+                            ${if (up_blk == outer) "NULL" else "ceu_frame"},
+                            ceu_proto_f_$n,
+                            { ${clos.protos_refs[this]?.size ?: 0}, NULL },
+                            { .X = {
+                                sizeof(CEU_Proto_Mem_$n)
+                            } }
+                        },
+                        &${up_blk.toc(true)}->dn_dyns,
+                        ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"}
+                    );
+                    ${clos.protos_refs[this].cond {
+                        it.map { dcl ->
+                            val dcl_blk = vars.dcl_to_blk[dcl]!!
+                            val idc = dcl.id.str.id2c(dcl.n)
+                            val btw = ups
+                                .all_until(this) { dcl_blk==it }
+                                .filter { it is Expr.Proto }
+                                .count() // other protos in between myself and dcl, so it its an upref (upv=2)
+                            val upv = min(2, btw)
+                            """
+                            {
+                                CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
+                                if (ceu_up->type > CEU_VALUE_DYNAMIC) {
+                                    assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
+                                    //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
+                                } else {
+                                    assert(ceu_block_chk_set(ceu_up, ceu_proto_$n->up_dyns.dyns, ceu_proto_$n->tphold));
+                                }
+                                ceu_gc_inc(ceu_up);
+                                ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
                             }
-                            ceu_gc_inc(ceu_up);
-                            ((CEU_Proto_Upvs_$n*)ceu_proto_$n->Ncast.Proto.upvs.buf)->${idc} = *ceu_up;
-                        }
-                        """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
-                    }.joinToString("\n")                    
-                }}
-                assert(ceu_proto_$n != NULL);
-                ${assrc("(CEU_Value) { CEU_VALUE_P_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
+                            """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
+                        }.joinToString("\n")                    
+                    }}
+                    assert(ceu_proto_$n != NULL);
+                    ${assrc("(CEU_Value) { CEU_VALUE_P_${this.tk.str.uppercase()}, {.Dyn=ceu_proto_$n} }")}
                 """
+                if (clos.protos_refs.containsKey(this)) {
+                    tops.second.add(pre)
+                    //pres.add(pre)
+                    pos
+                } else {
+                    pre + pos
+                }
             }
             is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
