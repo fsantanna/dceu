@@ -2555,6 +2555,28 @@ class TXExec {
     */
 
     @Test
+    fun mm_01_loop() {
+        val out = all("""
+            func {{+}} (v1, v2) {
+                `:number (${D}v1.Number + ${D}v2.Number)`
+            }
+            loop it {
+                println(it)
+            } until true
+        """)
+        assert(out == "0\n") { out }
+    }
+    @Test
+    fun mm_03_loop() {
+        val out = all("""
+            loop {
+                xbreak
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun until4() {
         val out = all("""
             println(loop {

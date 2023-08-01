@@ -234,7 +234,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop   -> this.body.traverse()
+            is Expr.XLoop  -> this.body.traverse()
             is Expr.XBreak -> {}
             is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()

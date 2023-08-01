@@ -27,7 +27,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop   -> {
+            is Expr.XLoop   -> {
                 val up = ups.pub[this]
                 //assert(up is Expr.Do && up.es.last().n==this.n) { "bug found: invalid do-loop" }
                 this.body.es.last().let {
@@ -39,7 +39,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.body.traverse()
             }
             is Expr.XBreak -> {
-                if (ups.first(this) { it is Expr.Loop || it is Expr.Proto } !is Expr.Loop) {
+                if (ups.first(this) { it is Expr.XLoop || it is Expr.Proto } !is Expr.XLoop) {
                     err(this.tk, "xbreak error : expected enclosing loop")
                 }
             }

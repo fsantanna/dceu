@@ -255,12 +255,13 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun until (nn: Int): String {
-        if (!(this.acceptFix("until") || XCEU && this.acceptFix("while"))) {
-            return ""
+    fun until (): String {
+        val not = when {
+            !XCEU -> return ""
+            this.acceptFix("until") -> ""
+            this.acceptFix("while") -> "not"
+            else -> return ""
         }
-
-        val not = if (this.tk0.str == "until") "" else "not"
         val (id, tag, cnd) = id_tag_cnd()
         N++
         return """
@@ -271,15 +272,16 @@ class Parser (lexer_: Lexer)
         """
     }
 
-    fun untils (nn: Int): String {
-        if (!(this.acceptFix("until")||this.acceptFix("while"))) {
-            return ""
+    fun untils (): String {
+        val not = when {
+            !XCEU -> return ""
+            this.acceptFix("until") -> ""
+            this.acceptFix("while") -> "not"
+            else -> return ""
         }
-
-        val not = if (this.tk0.str == "until") "" else "not"
         val (id,tag,cnd) = id_tag_cnd()
         val xblk = if (!this.checkFix("{")) "" else {
-            this.block().es.tostr(true) + untils(nn)
+            this.block().es.tostr(true) + untils()
         }
         N++
         return """
@@ -421,30 +423,22 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("xbreak") -> Expr.XBreak(this.tk0 as Tk.Fix)
+            this.acceptFix("xloop") -> Expr.XLoop(this.tk0 as Tk.Fix, this.block())
             this.acceptFix("loop") -> {
                 val tk0 = this.tk0 as Tk.Fix
-
-                if (this.checkFix("{")) {
-                    val blk = this.block()
-                    return Expr.Loop(tk0, Expr.Do(tk0, blk.es))
-                }
 
                 val pre0 = tk0.pos.pre()
                 val tk1 = this.tk1
 
-                val xid = this.acceptEnu("Id")
+                val xid = XCEU && this.acceptEnu("Id")
                 val (id,tag) = if (!xid) Pair("it","") else {
                     Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
                 }
 
                 val xin = this.acceptFix("in")
-                if (xin && !XCEU) {
-                    this.checkTag_err(":tasks")
-                }
 
-                val nn = N++
                 val f = when {
-                    xin && this.acceptTag(":tasks") -> {
+                    (xin && this.acceptTag(":tasks")) -> {
                         val tasks = this.expr() ;
                         { body: String -> """
                             ${pre0}do {
@@ -456,7 +450,7 @@ class Parser (lexer_: Lexer)
                                 ```
                                 val ceu_n_$N = `:number ceu_mem->ceu_tasks_$N.Dyn->Bcast.Tasks.dyns.its`
                                 var ceu_i_$N = 0
-                                ${pre0}loop {
+                                ${pre0}xloop {
                                     if ceu_i_$N == ceu_n_$N {
                                         pass nil     ;; return value
                                         xbreak
@@ -489,19 +483,29 @@ class Parser (lexer_: Lexer)
                             """
                         }
                     }
-                    XCEU && (!xin && xid) -> {
+                    !XCEU -> {
+                        err(tk1, "invalid loop : unexpected ${tk1.str}")
+                        error("unreachable")
+                    }
+                    (!xin && xid) -> {
                         { body -> """
                             do {
                                 var $id $tag = 0
-                                loop $nn {
+                                xloop {
                                     $body
                                     set $id = $id + 1
                                 }
                             }
                         """ }
-
                     }
-                    XCEU && (this.acceptFix("}") || this.acceptFix("{")) -> {
+                    (!xin && !xid) -> {
+                        { body -> """
+                            xloop {
+                                $body
+                            }
+                        """ }
+                    }
+                    (this.acceptFix("}") || this.acceptFix("{")) -> {
                         // [x -> y]
                         val tkA = this.tk0 as Tk.Fix
                         val eA = this.expr()
@@ -533,7 +537,7 @@ class Parser (lexer_: Lexer)
                                     ${if (tkA.str=="{") 0 else "ceu_step_$N"}
                                 )
                                 val ceu_limit_$N = ${eB.tostr(true)}
-                                loop {
+                                xloop {
                                     if $id $cmp ceu_limit_$N {
                                         pass nil     ;; return value
                                         xbreak
@@ -545,13 +549,13 @@ class Parser (lexer_: Lexer)
                             """
                         }
                     }
-                    XCEU -> {
+                    else -> {
                         val iter = this.expr() ;
                         { body: String -> """
                             ${pre0}do {
                                 val :xtmp ceu_it_$N :Iterator = iter(${iter.tostr(true)})
                                 ;;assert(ceu_it_$N is? :Iterator, "expected :Iterator")
-                                loop {
+                                xloop {
                                     val :xtmp $id $tag = ${pre0}ceu_it_$N.f(ceu_it_$N)
                                     if $id == nil {
                                         pass nil     ;; return value
@@ -563,16 +567,12 @@ class Parser (lexer_: Lexer)
                             """
                         }
                     }
-                    else -> {
-                        err(tk1, "invalid loop : unexpected ${tk1.str}")
-                        error("unreachable")
-                    }
                 }
 
                 val body = """
-                    ${until(nn)}
+                    ${until()}
                     ${this.block().es.tostr(true)}
-                    ${untils(nn)}
+                    ${untils()}
                 """
                 this.nest(f(body))
             }
@@ -1033,15 +1033,14 @@ class Parser (lexer_: Lexer)
                 }
             }
             (XCEU && this.acceptFix("every")) -> {
-                val nn = N
                 val pre0 = this.tk0.pos.pre()
                 this.nest("""
                     ${pre0}do {
-                        ${pre0}loop $nn {
+                        ${pre0}loop {
                             ${pre0}${await().tostr()}
-                            ${until(nn)}
+                            ${until()}
                             ${this.block().es.tostr(true)}
-                            ${untils(nn)}
+                            ${untils()}
                         }
                     }
                 """)//.let { println(it); it })

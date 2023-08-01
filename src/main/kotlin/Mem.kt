@@ -66,7 +66,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 """)
             }
 
-            is Expr.Loop -> this.expr(e.body)
+            is Expr.XLoop -> this.expr(e.body)
             is Expr.Catch -> {
                 val xcnd = this.expr(e.cnd)
                 val xbdy = this.expr(e.body)

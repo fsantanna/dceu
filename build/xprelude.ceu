@@ -333,9 +333,9 @@ func to-tracks (...) {
     drop(ret)
 }
 
-func iterable-to-dict (itb) {
+func iterable-to-dict (itr) {
     val dict = @[]
-    loop in iter(itb) {
+    loop in iter(itr) {
         set dict[it] = true
     }
     drop(dict)

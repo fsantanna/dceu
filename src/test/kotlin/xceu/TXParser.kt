@@ -56,9 +56,10 @@ class TXParser {
     fun empty4_loop() {
         val l = lexer("loop until false { }")
         val parser = Parser(l)
+        //println(parser.expr_prim().tostr())
         val x = parser.expr_prim() as Expr.Do
-        val e = x.es.last() as Expr.Loop
-        assert(e.body.es.last() is Expr.Nil)
+        val e = x.es.last() as Expr.XLoop
+        assert(e.body.es.last() is Expr.Set)
         //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
     }
 

@@ -498,7 +498,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                 }
                 """
-            is Expr.Loop -> """
+            is Expr.XLoop -> """
                 { // LOOP ${this.tk.dump()}
                 CEU_LOOP_NEXT_${this.n}:;
                     ${this.body.code()}
@@ -508,7 +508,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 }
                 """
             is Expr.XBreak -> """
-                goto CEU_LOOP_DONE_${ups.first(this) { it is Expr.Loop }!!.n};
+                goto CEU_LOOP_DONE_${ups.first(this) { it is Expr.XLoop }!!.n};
             """.trimIndent()
             is Expr.Catch -> """
                 { // CATCH ${this.tk.dump()}
