@@ -2036,10 +2036,10 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value id_track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
                 CEU_Value id_type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
                 CEU_Value id_tuple      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tuple}         };
-                CEU_Value id_op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
-                CEU_Value id_sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
-                CEU_Value id_op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
-                CEU_Value id_op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
+                CEU_Value op_hash       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
+                CEU_Value id_sup_question_ = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
+                CEU_Value op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
+                CEU_Value op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
                 CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_string_dash_to_dash_tag}  };
 
                 ${this.code}

@@ -132,6 +132,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
         val idc = dcl.id.str.id2c(dcl.n)
         return when {
+            true -> Pair(idc, "_${idc}_")
             (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
             (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
             else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->$idc)",

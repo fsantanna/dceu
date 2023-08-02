@@ -259,31 +259,34 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                         val args_n = f_b.args.size - 1
                         """
-                        { // func args
+                        //{ // func args
                             int ceu_i = 0;
                             ${f_b.args.filter { it.first.str!="..." }.map {
                                 val dcl = vars.get(this, it.first.str)
-                                val idc = it.first.str.id2c(dcl.n)
+                                val idc = vars.id2c(this,this,dcl,0)
+                            
                                 """
+                                CEU_Value ${idc.first};
+                                CEU_Block* ${idc.second};
                                 ${istask.cond { """
                                     if (ceu_x->Bcast.X.Task.up_tasks != NULL) {
-                                        ceu_mem->_${idc}_ = ceu_x->up_dyns.dyns->up_block;
+                                        ${idc.second} = ceu_x->up_dyns.dyns->up_block;
                                     } else
                                 """}}
                                 { // else
-                                    ceu_mem->_${idc}_ = &ceu_mem->block_$n;
+                                    ${idc.second} = &ceu_mem->block_$n;
                                 }
                                 if (ceu_i < ceu_n) {
                                     ${unsf.chk_up_safe(this).cond { """
                                         ceu_deref(ceu_args[ceu_i]);
                                     """ }}
-                                    if (!ceu_block_chk_set(ceu_args[ceu_i], &ceu_mem->_${idc}_->dn_dyns, CEU_HOLD_FLEETING)) {
+                                    if (!ceu_block_chk_set(ceu_args[ceu_i], &${idc.second}->dn_dyns, CEU_HOLD_FLEETING)) {
                                         CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : argument error : incompatible scopes");
                                     }
-                                    ceu_mem->$idc = *ceu_args[ceu_i];
-                                    ceu_gc_inc(&ceu_mem->$idc);
+                                    ${idc.first} = *ceu_args[ceu_i];
+                                    ceu_gc_inc(&${idc.first});
                                 } else {
-                                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };
+                                    ${idc.first} = (CEU_Value) { CEU_VALUE_NIL };
                                 }
                                 ceu_i++;
                                 """
@@ -299,7 +302,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 ceu_mem->$idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=ceu_tup} };
                                 ceu_gc_inc(&ceu_mem->$idc);
                             """ }}
-                        }
+                        //}
                         """ 
                     }}
                     ${ids.map { """

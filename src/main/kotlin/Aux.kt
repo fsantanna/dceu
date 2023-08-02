@@ -50,39 +50,32 @@ fun String.tag2c (): String {
 }
 
 fun String.id2c (n: Int?): String {
-    fun String.aux (): String {
-        return if (this[0] == '{') {
-            val MAP = mapOf(
-                Pair('+', "plus"),
-                Pair('-', "minus"),
-                Pair('*', "asterisk"),
-                Pair('/', "slash"),
-                Pair('>', "greater"),
-                Pair('<', "less"),
-                Pair('=', "equals"),
-                Pair('!', "exclaim"),
-                Pair('|', "bar"),
-                Pair('&', "ampersand"),
-                Pair('#', "hash"),
-            )
-            "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
-        } else {
-            val MAP = mapOf(
-                Pair('.', "_dot_"),
-                Pair('-', "_dash_"),
-                Pair('\'', "_plic_"),
-                Pair('?', "_question_"),
-                Pair('!', "_bang_"),
-            )
-            this.toList().map { MAP[it] ?: it }.joinToString("")
-        }
-    }
-    return if (this.length>=3 && this.first()=='_' && this.last()=='_') {
-        '_' + this.drop(1).dropLast(1).aux() + '_'
+    return if (this[0] == '{') {
+        val MAP = mapOf(
+            Pair('+', "plus"),
+            Pair('-', "minus"),
+            Pair('*', "asterisk"),
+            Pair('/', "slash"),
+            Pair('>', "greater"),
+            Pair('<', "less"),
+            Pair('=', "equals"),
+            Pair('!', "exclaim"),
+            Pair('|', "bar"),
+            Pair('&', "ampersand"),
+            Pair('#', "hash"),
+        )
+        "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
     } else {
-        this.aux()
+        val MAP = mapOf(
+            Pair('.', "_dot_"),
+            Pair('-', "_dash_"),
+            Pair('\'', "_plic_"),
+            Pair('?', "_question_"),
+            Pair('!', "_bang_"),
+        )
+        "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
     }.let {
-        if (n==null || this in GLOBALS || this.startsWith("ceu_")) {
+        if (n==null || this in GLOBALS) {
             it
         } else {
             it + "_" + n
