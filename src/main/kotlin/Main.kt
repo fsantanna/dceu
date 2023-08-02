@@ -4,8 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-val XCEU = false
-//val XCEU = true
+val CEU = 1
 
 var DUMP = true
 var N = 1
