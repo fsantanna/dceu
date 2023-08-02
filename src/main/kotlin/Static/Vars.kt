@@ -107,6 +107,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 this.body.traverse()
             }
+            is Expr.Export -> {
+                val size = dcls.size
+                this.body.traverse()
+                for (i in dcls.size-1 downTo size) {
+                    if (!this.ids.contains(dcls[i].id.str)) {
+                        dcls.removeAt(i)
+                    }
+                }
+            }
             is Expr.Do     -> {
                 blk_to_dcls[this] = mutableListOf()
                 val size = dcls.size    // restore this size after nested block

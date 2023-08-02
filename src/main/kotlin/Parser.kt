@@ -198,6 +198,19 @@ class Parser (lexer_: Lexer)
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
+            this.acceptFix("export") -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val ids = if (CEU==3 && this.checkFix("{")) emptyList() else {
+                    this.acceptFix_err("[")
+                    val l = list0("]",",") {
+                        this.acceptFix("evt") || this.acceptEnu_err("Id")
+                        this.tk0.str
+                    }
+                    this.acceptFix_err("]")
+                    l
+                }
+                Expr.Export(tk0, ids, this.block())
+            }
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tmp = this.acceptTag(":tmp")
