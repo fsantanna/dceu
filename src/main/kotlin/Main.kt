@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-val CEU = 1
+var CEU = 1
 
 var DUMP = true
 var N = 1
@@ -18,16 +18,20 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
-val KEYWORDS: SortedSet<String> = setOf (
-    "data", "do", "drop", "else",
-    "enum", "export", "false", "func", "if",
-    "nil", "pass", "set",
-    "true", "val", "var",
-    "xloop", "xbreak"
+val KEYWORDS: SortedSet<String> = (
+    setOf (
+        "data", "do", "drop", "else",
+        "enum", "false", "func", "if",
+        "nil", "pass", "set",
+        "true", "val", "var",
+        "xloop", "xbreak"
+    ) + (if (CEU <= 1) setOf() else setOf (
+        "export"
+    ))
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
-val XOPERATORS = setOf("and", "not", "or")
+val XOPERATORS = if (CEU <= 2) setOf() else setOf("and", "not", "or")
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
@@ -101,6 +105,7 @@ fun exec (cmd: String): Pair<Boolean,String> {
 }
 fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List<String>): String {
     DUMP = false
+    CEU = 3
     if (verbose) {
         System.err.println("... parsing ...")
     }

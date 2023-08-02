@@ -59,7 +59,7 @@ fun all (inp: String, pre: Boolean=false): String {
 }
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class TExec {
+class Exec_01 {
 
     // PRINT
 
@@ -1074,7 +1074,7 @@ class TExec {
         assert(out == "3\t#[1,2,3]\n5\t#[1,2,3,4,5]\n4\t#[1,2,3,4]\n") { out }
     }
     @Test
-    fun todo_vector6a_err() {
+    fun vector6a_err() {
         val out = all(
             """
             #[1,nil,3]  ;; v[2] = nil, but #v===1
@@ -1083,7 +1083,7 @@ class TExec {
         assert(out.contains("ceu_vector_set: Assertion `i == vec->its-1' failed.")) { out }
     }
     @Test
-    fun todo_vector6b_err() {
+    fun vector6b_err() {
         val out = all(
             """
             #[1,'a',3]  ;; different type
@@ -2039,8 +2039,8 @@ class TExec {
             println(x)
         """
         )
-        //assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
-        assert(out == "1\n") { out }
+        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        //assert(out == "1\n") { out }
     }
     @Test
     fun if2_err() {
@@ -2052,7 +2052,8 @@ class TExec {
             println(x)
         """
         )
-        assert(out == "nil\n") { out }
+        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
+        //assert(out == "nil\n") { out }
     }
     @Test
     fun if3_err() {
@@ -2087,70 +2088,6 @@ class TExec {
         )
         //assert(out == "anon : (lin 1, col 4) : if error : invalid condition\n") { out }
         assert(out == "1\n") { out }
-    }
-
-    // OPS: not, and, or
-
-    @Test
-    fun op_or_and() {
-        val out = all("""
-            println(true or println(1))
-            println(false and println(1))
-        """)
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun op_not() {
-        val out = all("""
-            println(not nil and not false)
-        """)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun op2_or_and() {
-        val out = all("""
-            println(1 or error(5))
-            println(1 and 2)
-            println(nil and 2)
-            println(nil or 2)
-        """)
-        assert(out == "1\n2\nnil\n2\n") { out }
-    }
-    @Test
-    fun op3_or_and() {
-        val out = all("""
-            println(true and ([] or []))
-        """)
-        assert(out == "[]\n") { out }
-    }
-    @Test
-    fun xop3_or_and() {
-        val out = all("""
-            val v = do {
-                val :tmp x = []
-                if x { x } else { [] }
-            }
-            println(v)
-        """)
-        assert(out == "[]\n") { out }
-    }
-    @Test
-    fun op4_and_and() {
-        val out = all("""
-            val v = true and
-                true and 10
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun op5_plus_plus() {
-        val out = all("""
-            val v = 5 +
-                5 + 10
-            println(v)
-        """, true)
-        assert(out == "20\n") { out }
     }
 
     // FUNC / CALL
@@ -2589,6 +2526,18 @@ class TExec {
             println(xloop { xbreak(x) })
         """)
         assert(out == "10\n") { out }
+    }
+
+    @Test
+    fun loop6_break() {
+        val out = all("""
+            xloop {
+                func () {
+                    xbreak
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : xbreak error : expected enclosing loop") { out }
     }
 
     // NATIVE
@@ -4327,7 +4276,7 @@ class TExec {
                 xloop {                                                                      
                     if i == 0 {                                                             
                         xbreak(s)                                                            
-                    }                                                                       
+                    } else { nil }
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           

@@ -60,7 +60,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Id  && it.str == "evt" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "export" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "export" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
         assert(tks.next().let { it is Tk.Id  && it.str == "pub" })
         assert(tks.next().let { it is Tk.Id  && it.str == "task" })
@@ -101,9 +101,9 @@ class Lexer_01 {
     fun ids2() {
         val l = lexer("and or not")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Op && it.str == "and" })
-        assert(tks.next().let { it is Tk.Op && it.str == "or" })
-        assert(tks.next().let { it is Tk.Op && it.str == "not" })
+        assert(tks.next().let { it is Tk.Id && it.str == "and" })
+        assert(tks.next().let { it is Tk.Id && it.str == "or" })
+        assert(tks.next().let { it is Tk.Id && it.str == "not" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }

@@ -247,10 +247,16 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val cnd = this.expr()
                 val t = this.block()
-                val f = if (this.acceptFix("else")) {
-                    this.block()
-                } else {
-                    Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                val f = when {
+                    (CEU <= 2) -> {
+                        this.acceptFix_err("else")
+                        this.block()
+                    }
+                    this.acceptFix("else") -> {
+                        this.block()
+                    } else -> {
+                        Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
+                    }
                 }
                 Expr.If(tk0, cnd, t, f)
             }

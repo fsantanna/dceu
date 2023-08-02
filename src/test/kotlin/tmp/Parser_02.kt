@@ -6,6 +6,45 @@ import org.junit.Test
 
 class Parser_02 {
 
+    // EXPORT
+
+    @Test
+    fun oo_01_export_err() {
+        val l = tmp.lexer("export {}")
+        val parser = Parser(l)
+        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
+    }
+    @Test
+    fun oo_02_export_err() {
+        val l = tmp.lexer("export [:x] {}")
+        val parser = Parser(l)
+        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
+    }
+    @Test
+    fun oo_03_export() {
+        val l = tmp.lexer("export [] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.isEmpty() && e.body.es.size==1)
+        assert(e.tostr() == "export [] {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun oo_04_export() {
+        val l = tmp.lexer("export [x] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.first()=="x" && e.body.es.size==1)
+        assert(e.tostr() == "export [x] {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun oo_05_export() {
+        val l = tmp.lexer("export [x,y] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.last()=="y" && e.body.es.size==1 && e.ids.size==2)
+        assert(e.tostr() == "export [x,y] {\nnil\n}") { e.tostr() }
+    }
+
     // EVT / ERR / PUB
 
     @Test
