@@ -20,10 +20,11 @@ const val VERSION  = "v$MAJOR.$MINOR.$REVISION"
 val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
-    "break", "data", "do", "drop", "else",
-    "enum", "false", "func", "if", "loop",
+    "data", "do", "drop", "else",
+    "enum", "false", "func", "if",
     "nil", "pass", "set",
-    "true", "val", "var"
+    "true", "val", "var",
+    "xloop", "xbreak"
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
@@ -61,8 +62,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class Loop   (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
-    data class Break  (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
+    data class XLoop  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class XBreak (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)

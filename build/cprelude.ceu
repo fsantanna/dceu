@@ -126,9 +126,9 @@ set to-string = func (v) {
         var i = 0
         val n = `:number strlen($v.Pointer)`
         var str = #[]
-        loop {
+        xloop {
             if i == n {
-                break
+                xbreak
             } else {
                 nil
             }

@@ -499,16 +499,16 @@ class TParser {
 
     @Test
     fun qq_01_loop_err() {
-        val l = lexer("loop { pass nil }")
+        val l = lexer("xloop { pass nil }")
         val parser = Parser(l)
-        val e1 = parser.expr() as Expr.Loop
+        val e1 = parser.expr() as Expr.XLoop
         assert(e1.body.tostr() == "{\npass nil\n}") { e1.body.tostr() }
     }
     @Test
     fun qq_02_loop_err() {
-        val l = lexer("loop until {")
+        val l = lexer("xloop until {")
         val parser = Parser(l)
-        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 6) : expected \"{\" : have \"until\"")
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 7) : expected \"{\" : have \"until\"")
         //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
     }
 

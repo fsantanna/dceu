@@ -269,12 +269,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.Loop -> """
+            is Expr.XLoop -> """
                 while (1) { // LOOP | ${this.dump()}
                     ${this.body.code()}
                 }
                 """
-            is Expr.Break -> """
+            is Expr.XBreak -> """
                 ${this.e.code()}
                 break;
             """

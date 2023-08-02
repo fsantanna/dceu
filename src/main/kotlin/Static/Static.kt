@@ -30,7 +30,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.Loop   -> {
+            is Expr.XLoop  -> {
                 this.body.es.last().let {
                     if (it.is_innocuous()) {
                         //err(it.tk, "invalid expression : innocuous expression")
@@ -39,7 +39,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.body.traverse()
             }
-            is Expr.Break  -> this.e.traverse()
+            is Expr.XBreak -> this.e.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()

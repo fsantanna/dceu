@@ -974,8 +974,8 @@ class TExec {
             set t[:b] = 20
             set t[:c] = 30
             var k = next(t)
-            loop {
-                if (k == nil) { break } else { nil }
+            xloop {
+                if (k == nil) { xbreak } else { nil }
                 println(k, t[k])
                 set k = next(t,k)
             }
@@ -2489,9 +2489,9 @@ class TExec {
         val out = all(
             """
             do {
-                loop {
+                xloop {
                     println(:in)
-                    break
+                    xbreak
                 }
             }
             println(:out)
@@ -2505,9 +2505,9 @@ class TExec {
             """
             var x
             set x = false
-            loop {
+            xloop {
                 if x {
-                    break
+                    xbreak
                 } else {
                     nil
                 }
@@ -2533,8 +2533,8 @@ class TExec {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                loop {
-                    if (i == nil) { break } else { nil }
+                xloop {
+                    if (i == nil) { xbreak } else { nil }
                     println(i)
                     set i = it[0](it)
                 }
@@ -2561,7 +2561,7 @@ class TExec {
     fun loop3() {
         val out = all(
             """
-            val v = loop {if (10) { break(10) } else { nil }}
+            val v = xloop {if (10) { xbreak(10) } else { nil }}
             println(v)
         """
         )
@@ -2571,11 +2571,11 @@ class TExec {
     fun loop4() {
         val out = all(
             """
-            val v1 = loop {
-                break(10)
+            val v1 = xloop {
+                xbreak(10)
             }
-            val v2 = loop {
-                break
+            val v2 = xloop {
+                xbreak
             }
             println(v1, v2)
         """
@@ -2586,7 +2586,7 @@ class TExec {
     fun loop5() {
         val out = all("""
             val x = 10
-            println(loop { break(x) })
+            println(xloop { xbreak(x) })
         """)
         assert(out == "10\n") { out }
     }
@@ -4324,9 +4324,9 @@ class TExec {
             var sum = func (n) {                                                            
                 var i = n                                                                   
                 var s = 0                                                                   
-                loop {                                                                      
+                xloop {                                                                      
                     if i == 0 {                                                             
-                        break(s)                                                            
+                        xbreak(s)                                                            
                     }                                                                       
                     set s = s + i                                                           
                     set i = i - 1                                                           
