@@ -4,10 +4,6 @@ fun Pos.isSameLine (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin)
 }
 
-fun Tk.dump (): String {
-    return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})\n"
-}
-
 fun <T> T?.cond (f: (v:T)->String): String {
     return when (this) {
         null  -> ""
@@ -18,31 +14,17 @@ fun <T> T?.cond (f: (v:T)->String): String {
 
 fun Expr.is_innocuous (): Boolean {
     return when (this) {
-        is Expr.Pub, is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
-        is Expr.EvtErr, /*is Expr.Nil,*/ is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
+        is Expr.Tuple, is Expr.Vector, is Expr.Dict, is Expr.Index, is Expr.Acc,
+        /*is Expr.Nil,*/ is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> true
         else -> false
     }
 }
 
 fun Expr.is_lval (): Boolean {
     return when (this) {
-        is Expr.Pub -> true
         is Expr.Acc -> true
         is Expr.Index -> true
-        is Expr.Export -> this.body.es.last().is_lval()
         else -> false
-    }
-}
-
-fun Expr.base (): Expr {
-    return when (this) {
-        is Expr.Acc   -> this
-        is Expr.Index -> this.col.base()
-        is Expr.Pub   -> this.x
-        else -> {
-            println(this)
-            TODO()
-        }
     }
 }
 
@@ -53,44 +35,31 @@ fun String.tag2c (): String {
         .replace('-','_')
 }
 
-fun String.id2c (n: Int?): String {
-    fun String.aux (): String {
-        return if (this[0] == '{') {
-            val MAP = mapOf(
-                Pair('+', "plus"),
-                Pair('-', "minus"),
-                Pair('*', "asterisk"),
-                Pair('/', "slash"),
-                Pair('>', "greater"),
-                Pair('<', "less"),
-                Pair('=', "equals"),
-                Pair('!', "exclaim"),
-                Pair('|', "bar"),
-                Pair('&', "ampersand"),
-                Pair('#', "hash"),
-            )
-            "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
-        } else {
-            val MAP = mapOf(
-                Pair('.', "_dot_"),
-                Pair('-', "_dash_"),
-                Pair('\'', "_plic_"),
-                Pair('?', "_question_"),
-                Pair('!', "_bang_"),
-            )
-            this.toList().map { MAP[it] ?: it }.joinToString("")
-        }
-    }
-    return if (this.length>=3 && this.first()=='_' && this.last()=='_') {
-        '_' + this.drop(1).dropLast(1).aux() + '_'
+fun String.id2c (): String {
+    return if (this[0] == '{') {
+        val MAP = mapOf(
+            Pair('+', "plus"),
+            Pair('-', "minus"),
+            Pair('*', "asterisk"),
+            Pair('/', "slash"),
+            Pair('>', "greater"),
+            Pair('<', "less"),
+            Pair('=', "equals"),
+            Pair('!', "exclaim"),
+            Pair('|', "bar"),
+            Pair('&', "ampersand"),
+            Pair('#', "hash"),
+        )
+        "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
     } else {
-        this.aux()
-    }.let {
-        if (n==null || this in GLOBALS || this.startsWith("ceu_")) {
-            it
-        } else {
-            it + "_" + n
-        }
+        val MAP = mapOf(
+            Pair('.', "_dot_"),
+            Pair('-', "_dash_"),
+            Pair('\'', "_plic_"),
+            Pair('?', "_question_"),
+            Pair('!', "_bang_"),
+        )
+        "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
     }
 }
 

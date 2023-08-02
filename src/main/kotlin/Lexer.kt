@@ -171,7 +171,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                 }
                 (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
-                XCEU && (x == '\\') -> yield(Tk.Fix(x.toString(), pos))
                 (x == '.') -> {
                     val (n1,x1) = read2()
                     if (x1 == '.') {
@@ -206,11 +205,6 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     val op = x + read2While { it in OPERATORS }
                     when {
                         (op == "=") -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "=>")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "->")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "<-")  -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "-->") -> yield(Tk.Fix(op, pos))
-                        XCEU && (op == "<--") -> yield(Tk.Fix(op, pos))
                         else -> yield(Tk.Op(op, pos))
                     }
                 }
@@ -413,7 +407,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
                     }
                     yield(Tk.Chr("'$c'", pos))
                 }
-                XCEU && (x == '"') -> {
+                (x == '"') -> {
                     var c = '"'
                     val v = read2Until {
                         val brk = (it=='"' && c!='\\')

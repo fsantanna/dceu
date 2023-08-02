@@ -3,7 +3,6 @@ package dceu
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
 class Vars (val outer: Expr.Do, val ups: Ups) {
-    val evts: MutableMap<Expr.EvtErr, String?> = mutableMapOf()
     val datas = mutableMapOf<String,LData>()
 
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
@@ -35,39 +34,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 } else {
                     Pair(null, this.datas[dcl.tag.str]!!)
                 }
-            }
-            is Expr.EvtErr -> {
-                val x = evts[e]
-                when {
-                    (x == null) -> null
-                    (this.datas[x] == null) -> null
-                    else -> Pair(null, this.datas[x])
-                }
-            }
-            is Expr.Pub -> when (e.x) {
-                is Expr.Self -> {
-                    // task.pub -> task (...) :T {...}
-                    val task = ups.first_true_x(e,"task")
-                    when {
-                        (task == null) -> null
-                        (task.task!!.first == null) -> null
-                        else -> {
-                            val tag = task.task.first!!.str
-                            Pair(null, this.datas[tag]!!)
-                        }
-                    }
-                }
-                is Expr.Acc -> {
-                    // x.pub -> x:T
-                    val dcl = acc_to_dcl[e.x]!!
-                    if (dcl.tag == null) {
-                        null
-                    } else {
-                        val tag = dcl.tag.str
-                        Pair(null, this.datas[tag]!!)
-                    }
-                }
-                else -> null
             }
             is Expr.Index -> {
                 val d = this.data(e.col)
@@ -121,32 +87,18 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
-    fun id2c (e: Expr, blk: Expr.Do, dcl: Expr.Dcl, upv: Int): Pair<String,String> {
-        val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
-        val start = if (upv==2) e else blk
-        val fup = ups.first(start) { it is Expr.Proto }
-        val N = if (upv==2) 0 else {
-            ups
-                .all_until(e) { it==blk }  // go up until find dcl blk
-                .count { it is Expr.Proto }          // count protos in between acc-dcl
-        }
-        val idc = dcl.id.str.id2c(dcl.n)
-        return when {
-            (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
-            (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
-            else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->$idc)",
-                "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->_${idc}_)")
+    fun id2c (dcl: Expr.Dcl, upv: Int): Pair<String,String> {
+        val idc = dcl.id.str.id2c()
+        return if (upv == 2) {
+            Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
+        } else {
+            Pair(idc, "_${idc}_")
         }
     }
 
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                if (this.task!=null && this.task.first!=null && !datas.containsKey(this.task.first!!.str)) {
-                    val tag = this.task.first!!
-                    err(tag, "declaration error : data ${tag.str} is not declared")
-                }
-
                 this.args.forEach { (_,tag) ->
                     if (tag!=null && !datas.containsKey(tag.str)) {
                         err(tag, "declaration error : data ${tag.str} is not declared")
@@ -154,15 +106,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
 
                 this.body.traverse()
-            }
-            is Expr.Export -> {
-                val size = dcls.size
-                this.body.traverse()
-                for (i in dcls.size-1 downTo size) {
-                    if (!this.ids.contains(dcls[i].id.str)) {
-                        dcls.removeAt(i)
-                    }
-                }
             }
             is Expr.Do     -> {
                 blk_to_dcls[this] = mutableListOf()
@@ -194,17 +137,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 // nest into expressions
                 this.es.forEach { it.traverse() }
 
-                // do not remove ids listed in outer export
-                if (ups.pub[this] !is Expr.Export) {
-                    repeat(dcls.size - size) {
-                        dcls.removeLast()
-                    }
+                repeat(dcls.size - size) {
+                    dcls.removeLast()
                 }
             }
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (this.id.str !in listOf("_","evt") && dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
+                if (dcls.findLast { this.id.str == it.id.str } != null) {    // TODO
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
@@ -213,9 +153,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 dcl_to_blk[this] = blk
                 blk_to_dcls[blk]!!.add(this)
 
-                val bup = ups.first(this) {
-                    it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == this.id.str } }
-                }!! as Expr.Do
+                val bup = ups.first_block(this)
                 when {
                     (this.id.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")
@@ -225,7 +163,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                if (this.id.str!="evt" && this.tag!=null && !datas.containsKey(this.tag.str)) {
+                if (this.tag!=null && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
             }
@@ -234,10 +172,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.XLoop  -> this.body.traverse()
-            is Expr.XBreak -> {}
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Loop   -> this.body.traverse()
+            is Expr.Break  -> this.e.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)
@@ -258,14 +194,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
-
-            is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
-            is Expr.Yield  -> this.arg.traverse()
-            is Expr.Resume -> this.call.traverse()
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> this.x.traverse()
-            is Expr.Self   -> {}
 
             is Expr.Nat    -> {
                 nat_to_str[this] = this.tk.str.let {
@@ -307,8 +235,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                                 err(tk, "native error : (lin $l, col $c) : invalid identifier")
                             }
                             val dcl = find(this, id, 0)
-                            val blk = dcl_to_blk[dcl]!!
-                            val (idx,_) = id2c(this, blk, dcl, 0)
+                            val (idx,_) = id2c(dcl, 0)
                             "($idx)$no"
                         }
                     }
@@ -316,12 +243,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
             }
             is Expr.Acc    -> acc_to_dcl[this] = find(this, this.tk.str, this.tk_.upv)
-            is Expr.EvtErr -> {
-                val dcl = dcls.findLast { "evt" == it.id.str }
-                if (dcl != null) {
-                    evts[this] = dcl.tag!!.str
-                }
-            }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
@@ -335,7 +256,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.idx.traverse()
                 data(this)
             }
-            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

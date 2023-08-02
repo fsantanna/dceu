@@ -2,7 +2,7 @@ package dceu
 
 class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // Protos that cannot be closures:
-    //  - they access at least 1 free var w/o upval modifiers
+    //  - they access at least 1 non-local free var w/o upval modifiers (globals are allowed)
     //  - for each var access ACC, we get its declaration DCL in block BLK
     //      - if ACC/DCL have no upval modifiers
     //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
@@ -26,7 +26,6 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> this.body.traverse()
-            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> this.src?.traverse()
             is Expr.Set    -> {
@@ -34,22 +33,12 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.XLoop  -> this.body.traverse()
-            is Expr.XBreak -> {}
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Loop   -> this.body.traverse()
+            is Expr.Break -> this.e.traverse()
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
-
-            is Expr.Spawn  -> { this.call.traverse() ; this.tasks?.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
-            is Expr.Yield  -> this.arg.traverse()
-            is Expr.Resume -> this.call.traverse()
-            is Expr.Toggle -> { this.task.traverse() ; this.on.traverse() }
-            is Expr.Pub    -> {}
-            is Expr.Self   -> {}
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
@@ -79,7 +68,6 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     }
                 }
             }
-            is Expr.EvtErr -> {}
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
@@ -92,7 +80,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.col.traverse()
                 this.idx.traverse()
             }
-            is Expr.Call   -> { this.proto.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }

@@ -51,47 +51,48 @@ class TLexer {
 
     @Test
     fun ids() {
-        val l = lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
+        val l =
+            lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "evt" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "export" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "evt" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "export" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "pub" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "task" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "pub" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "task" })
         //assert(tks.next().let { it is Tk.Fix && it.str == "poly" })
         assert(tks.next().let { it is Tk.Id  && it.str == "poly" })
         assert(tks.next().let { it is Tk.Id  && it.str == "group" })
         assert(tks.next().let { it is Tk.Id  && it.str == "track" })
         assert(tks.next().let { it is Tk.Fix && it.str == "enum" })
         assert(tks.next().let { it is Tk.Id  && it.str == "XXX" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "coro" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "defer" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "err" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "coro" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "defer" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "err" })
         assert(tks.next().let { it is Tk.Fix && it.str == "set" })
         assert(tks.next().let { it is Tk.Id  && it.str == "coroutine" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "spawn" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "spawn" })
         assert(tks.next().let { it is Tk.Fix && it.str == "loop" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "yield" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "yield" })
         assert(tks.next().let { it is Tk.Id  && it.str == "while" })
         assert(tks.next().let { it is Tk.Id  && it.str == "vary10" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "catch" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "resume" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "catch" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "resume" })
         assert(tks.next().let { it is Tk.Fix && it.str == "else" })
         assert(tks.next().let { it is Tk.Fix && it.str == "var" })
         assert(tks.next().let { it is Tk.Fix && it.str == "do" })
         assert(tks.next().let { it is Tk.Id  && it.str == "native" })
         assert(tks.next().let { it is Tk.Id  && it.str == "_do_" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "broadcast" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "broadcast" })
         assert(tks.next().let { it is Tk.Fix && it.str == "true" })
         assert(tks.next().let { it is Tk.Fix && it.str == "data" })
         assert(tks.next().let { it is Tk.Fix && it.str == "func" })
         assert(tks.next().let { it is Tk.Id  && it.str == "b10" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "in" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "in" })
         assert(tks.next().let { it is Tk.Fix && it.str == "false" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
@@ -100,9 +101,9 @@ class TLexer {
     fun ids2() {
         val l = lexer("and or not")
         val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.str == "and" })
-        assert(tks.next().let { it is Tk.Id && it.str == "or" })
-        assert(tks.next().let { it is Tk.Id && it.str == "not" })
+        assert(tks.next().let { it is Tk.Op && it.str == "and" })
+        assert(tks.next().let { it is Tk.Op && it.str == "or" })
+        assert(tks.next().let { it is Tk.Op && it.str == "not" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -148,14 +149,16 @@ class TLexer {
 
     @Test
     fun comments1() {
-        val l = lexer("""
+        val l = lexer(
+            """
             x - y - z ;;
             var ;;x
             ;;
             val ;; x
             ;; -
             -
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.pos.lin==1 && it.pos.col==1 && it.str == "x" })
         assert(tks.next().let { it is Tk.Op && it.pos.lin==1 && it.pos.col==3 && it.str == "-" })
@@ -169,12 +172,14 @@ class TLexer {
     }
     @Test
     fun comments2() {
-        val l = lexer("""
+        val l = lexer(
+            """
             x ;;;
             var ;;x
             val ;;; y
             z
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         //println(tks.next())
         assert(tks.next().let { it is Tk.Id && it.pos.lin==1 && it.pos.col==1 && it.str == "x" })
@@ -183,7 +188,8 @@ class TLexer {
     }
     @Test
     fun comments3() {
-        val l = lexer("""
+        val l = lexer(
+            """
             x
             ;;;
             ;;;;
@@ -195,33 +201,38 @@ class TLexer {
             ;;;;
             ;;;
             y
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "x" })
         assert(tks.next().let { it is Tk.Id && it.str == "y" })
     }
     @Test
     fun comments4_err() {
-        val l = lexer("""
+        val l = lexer(
+            """
             x
             ;;;
             ;;;;
             ;;;
             y
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "x" })
         assert(tks.next().let { it is Tk.Eof })
     }
     @Test
     fun comments5_err() {
-        val l = lexer("""
+        val l = lexer(
+            """
             x
             ;;;;
             ;;;
             ;;;;
             y
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "x" })
         assert(tks.next().let { it is Tk.Id && it.str == "y" })
@@ -230,12 +241,14 @@ class TLexer {
 
     @Test
     fun native() {
-        val l = lexer("""
+        val l = lexer(
+            """
             ` abc `
             `{ijk}`
             ` {i${D}jk} `
             `  {ijk} 
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==1 && it.pos.col==1 && it.str==" abc " })
         assert(tks.next().let { it is Tk.Nat && it.pos.lin==2 && it.pos.col==1 && it.str=="{ijk}" })
@@ -338,7 +351,8 @@ class TLexer {
 
     @Test
     fun inc1() {
-        val l = lexer("""
+        val l = lexer(
+            """
             before
             ^["test.ceu"]
             after
@@ -346,7 +360,8 @@ class TLexer {
             first
             ^["xxx.ceu",7,9]
             xxx
-        """.trimIndent())
+        """.trimIndent()
+        )
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.pos.file=="anon"     && it.pos.lin==1 && it.pos.col==1 && it.str == "before" })
         assert(tks.next().let { it is Tk.Num && it.pos.file=="test.ceu" && it.pos.lin==1 && it.pos.col==1 && it.str == "1" })
@@ -483,19 +498,5 @@ class TLexer {
         val l = lexer(":a.b.c.d.e")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' : max hierarchy of 4")
-    }
-    @Test
-    fun todo_tags8_err() {
-        val l = lexer(":{x")
-        val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token : error : unterminated {")
-    }
-    @Test
-    fun todo_tags9() {
-        val l = lexer(":{()}")
-        val tks = l.lex().iterator()
-        //println(tks.next())
-        assert(tks.next().str == ":()")
-        assert(tks.next() is Tk.Eof)
     }
 }
