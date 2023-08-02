@@ -1,7 +1,6 @@
-package tmp
+package tst_02
 
 import dceu.*
-import org.junit.Ignore
 import org.junit.Test
 
 class Parser_02 {
@@ -10,19 +9,19 @@ class Parser_02 {
 
     @Test
     fun oo_01_export_err() {
-        val l = tmp.lexer("export {}")
+        val l = tst_02.lexer("export {}")
         val parser = Parser(l)
-        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
+        assert(tst_02.trap { parser.expr_prim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
     }
     @Test
     fun oo_02_export_err() {
-        val l = tmp.lexer("export [:x] {}")
+        val l = tst_02.lexer("export [:x] {}")
         val parser = Parser(l)
-        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
+        assert(tst_02.trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
     }
     @Test
     fun oo_03_export() {
-        val l = tmp.lexer("export [] { nil }")
+        val l = tst_02.lexer("export [] { nil }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.isEmpty() && e.body.es.size==1)
@@ -30,7 +29,7 @@ class Parser_02 {
     }
     @Test
     fun oo_04_export() {
-        val l = tmp.lexer("export [x] { nil }")
+        val l = tst_02.lexer("export [x] { nil }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.first()=="x" && e.body.es.size==1)
@@ -38,7 +37,7 @@ class Parser_02 {
     }
     @Test
     fun oo_05_export() {
-        val l = tmp.lexer("export [x,y] { nil }")
+        val l = tst_02.lexer("export [x,y] { nil }")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Export && e.ids.last()=="y" && e.body.es.size==1 && e.ids.size==2)
@@ -170,7 +169,7 @@ class Parser_02 {
             1
         """.trimIndent())
         val parser = Parser(l)
-        assert(ceu.trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
+        assert(tst_01.trap { parser.expr() } == "anon : (lin 2, col 1) : expected \"(\" : have \"1\"")
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
     @Test

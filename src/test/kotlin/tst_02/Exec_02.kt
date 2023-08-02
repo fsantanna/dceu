@@ -1,12 +1,10 @@
-package tmp
+package tst_02
 
-import ceu.all
+import tst_01.all
 import dceu.*
 import org.junit.FixMethodOrder
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import java.io.File
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
@@ -461,7 +459,7 @@ class Exec_02 {
     }
     @Test
     fun dd_07_catch() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             catch do {
                 err==:x
@@ -476,7 +474,7 @@ class Exec_02 {
     }
     @Test
     fun dd_08_catch() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var x
             catch do {
@@ -497,7 +495,7 @@ class Exec_02 {
     }
     @Test
     fun dd_09_catch_err() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             do {
                 catch do {  ;; err is binded to x and is being moved up
@@ -529,7 +527,7 @@ class Exec_02 {
     }
     @Test
     fun dd_10_catch() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var x
             catch do {
@@ -546,7 +544,7 @@ class Exec_02 {
     }
     @Test
     fun dd_11_catch_err() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             catch err[0]==:x {
                 throw([:x])
@@ -560,7 +558,7 @@ class Exec_02 {
     }
     @Test
     fun dd_12_catch() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             catch false {
                 throw(:xxx)
@@ -588,7 +586,7 @@ class Exec_02 {
     }
     @Test
     fun dd_14_catch() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var x
             set x = err
@@ -704,7 +702,7 @@ class Exec_02 {
     }
     @Test
     fun ff_02_gc_bcast() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var tk = task () {
                 yield(nil)
@@ -726,7 +724,7 @@ class Exec_02 {
     }
     @Test
     fun ff_03_gc_bcast_err() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var tk = task () {
                 do {
@@ -748,7 +746,7 @@ class Exec_02 {
     }
     @Test
     fun ff_04_gc_bcast_err() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var tk = task () {
                 do {
@@ -772,7 +770,7 @@ class Exec_02 {
     }
     @Test
     fun ff_05_gc_bcast_arg() {
-        val out = ceu.all(
+        val out = tst_01.all(
             """
             var tk = task (v) {
                 do {

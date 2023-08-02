@@ -1,4 +1,4 @@
-package ceu
+package tst_01
 
 import dceu.*
 import org.junit.Test
