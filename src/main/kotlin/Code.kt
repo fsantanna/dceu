@@ -7,7 +7,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
     val code: String = outer.code()
 
     fun Expr.Do.toc (isptr: Boolean): String {
-        return "ceu_mem->block_${this.n}".let {
+        return vars.id2c(this, this, "ceu_block", 0, this.n).first.let {
             if (isptr) "(&($it))" else it
         }
     }
@@ -181,7 +181,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 sizeof(CEU_Proto_Mem_$n)
                             } }
                         },
-                        &${up_blk.toc(true)}->dn_dyns,
+                        &${up_blk.toc(false)}.dn_dyns,
                         ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUTABLE" else "CEU_HOLD_FLEETING"}
                     );
                     ${clos.protos_refs[this].cond {
@@ -195,7 +195,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             val upv = min(2, btw)
                             """
                             {
-                                CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl, upv).first};
+                                CEU_Value* ceu_up = &${vars.id2c(ups.pub[this]!!, dcl_blk, dcl.id.str, upv, dcl.n).first};
                                 if (ceu_up->type > CEU_VALUE_DYNAMIC) {
                                     assert(ceu_block_chk_set_mutual(ceu_up->Dyn, ceu_proto_$n));
                                     //assert(CEU_RET_RETURN == ceu_block_set(ceu_proto_$n, ceu_up->Dyn->up_dyns.dyns, ceu_up->Dyn->tphold));
@@ -234,23 +234,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val ids = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { Pair(it.id.str, vars.id2c(this,this,it,0)) }
+                    .map    { Pair(it.id.str, vars.id2c(this,this,it.id.str,0,it.n)) }
+                val blkc = vars.id2c(this, this, "ceu_block", 0, this.n).first
                 """
                 { // BLOCK ${this.dump()}
-                    ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&ceu_mem->block_$n}, NULL };
-                    void* ceu_block = &ceu_mem->block_$n;   // generic name to debug
-                    ${(this == outer).cond { "ceu_block_global = ceu_block;" }}
+                    CEU_Block ceu_block_$n;
+                    $blkc = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&$blkc}, NULL };
+                    ${(this == outer).cond { "ceu_block_global = &$blkc;" }}
                     #ifdef CEU_DEBUG
-                    printf(">>> BLOCK = %p in %p\n", &ceu_mem->block_$n, ceu_frame);
+                    printf(">>> BLOCK = %p in %p\n", &$blkc, ceu_frame);
                     #endif
                     ${(f_b == null).cond { """
                     {   // ... for main block
-                        CEU_Dyn* tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_argc);
+                        CEU_Dyn* tup = ceu_tuple_create(&$blkc.dn_dyns, ceu_argc);
                         for (int i=0; i<ceu_argc; i++) {
-                            CEU_Dyn* vec = ceu_vector_from_c_string(&ceu_mem->block_$n.dn_dyns, ceu_argv[i]);
+                            CEU_Dyn* vec = ceu_vector_from_c_string(&$blkc.dn_dyns, ceu_argv[i]);
                             assert(ceu_tuple_set(tup, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=vec} }));
                         }
-                        ceu_mem->_dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
+                        CEU_Value id__dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=tup} };
                     }
                     """ }}
                     ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
@@ -263,7 +264,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             int ceu_i = 0;
                             ${f_b.args.filter { it.first.str!="..." }.map {
                                 val dcl = vars.get(this, it.first.str)
-                                val idc = vars.id2c(this,this,dcl,0)
+                                val idc = vars.id2c(this, this, dcl.id.str, 0, dcl.n)
                             
                                 """
                                 CEU_Value ${idc.first};
@@ -274,7 +275,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     } else
                                 """}}
                                 { // else
-                                    ${idc.second} = &ceu_mem->block_$n;
+                                    ${idc.second} = &$blkc;
                                 }
                                 if (ceu_i < ceu_n) {
                                     ${unsf.chk_up_safe(this).cond { """
@@ -295,7 +296,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 val idc = f_b.args.last()!!.first.str.id2c(null)
                                 """
                                 int ceu_tup_n = MAX(0,ceu_n-$args_n);
-                                CEU_Dyn* ceu_tup = ceu_tuple_create(&ceu_mem->block_$n.dn_dyns, ceu_tup_n);
+                                CEU_Dyn* ceu_tup = ceu_tuple_create(&$blkc.dn_dyns, ceu_tup_n);
                                 for (int i=0; i<ceu_tup_n; i++) {
                                     assert(ceu_tuple_set(ceu_tup, i, *ceu_args[$args_n+i]));
                                 }
@@ -313,12 +314,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     """ }.joinToString("")}
                     ${
                         (f_b is Expr.Proto && f_b.tk.str != "func").cond {
-                            "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
+                            "ceu_x->Bcast.X.dn_block = &$blkc;"
                         }
                     }
                     ${
                         (f_b is Expr.Do).cond {
-                            "ceu_mem->block_${bup!!.n}.dn_block = &ceu_mem->block_$n;"
+                            "$blkc.dn_block = &$blkc;"
                         }
                     }
                     { // because of "decrement refs" below
@@ -354,7 +355,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             """
                         }}
                         {
-                            ${unsf.dos.contains(this).cond { "ceu_bstack_clear(ceu_bstack, &ceu_mem->block_$n);" }}
+                            ${unsf.dos.contains(this).cond { "ceu_bstack_clear(ceu_bstack, &$blkc);" }}
                             { // move up dynamic ceu_acc (return or error)
                                 ${
                                     (f_b != null).cond {
@@ -362,7 +363,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                         """
                                         ${
                                             (f_b!!.tk.str != "func").cond {
-                                                "ceu_mem->block_$n.ispub = 0;"
+                                                "$blkc.ispub = 0;"
                                             }
                                         }
                                         if (!ceu_block_chk_set(&ceu_acc, &$up1->dn_dyns, CEU_HOLD_FLEETING)) {
@@ -379,8 +380,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 int dead = 0;
                                 {
                                     // cleanup active nested spawns in this block
-                                    CEU_BStack ceu_bstack_$n = { &ceu_mem->block_$n, ceu_bstack };
-                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &ceu_mem->block_$n.dn_dyns, &CEU_EVT_CLEAR));
+                                    CEU_BStack ceu_bstack_$n = { &$blkc, ceu_bstack };
+                                    assert(CEU_RET_RETURN == ceu_bcast_dyns(&ceu_bstack_$n, &$blkc.dn_dyns, &CEU_EVT_CLEAR));
                                     dead = (ceu_bstack!=NULL && ceu_bstack_$n.block==NULL);
                                 }
                             """}}
@@ -403,7 +404,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     if (${it.second.first}.type > CEU_VALUE_DYNAMIC) {
                                         ceu_gc_dec(&${it.second.first},
                                                    (${it.second.first}.Dyn->up_dyns.dyns != NULL) &&
-                                                   (${it.second.first}.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n)
+                                                   (${it.second.first}.Dyn->up_dyns.dyns->up_block == &$blkc)
                                         );
                                     }
                                     """
@@ -421,7 +422,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 // blocks: relink up, free down
                                 ${
                                     (f_b is Expr.Do).cond {
-                                        "ceu_mem->block_${bup!!.n}.dn_block = NULL;"
+                                        "$blkc.dn_block = NULL;"
                                     }
                                 }
                                 ${
@@ -429,7 +430,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                         "ceu_x->Bcast.X.dn_block = NULL;"
                                     }
                                 }
-                                ceu_block_free(&ceu_mem->block_$n);
+                                ceu_block_free(&$blkc);
                             }
                         }
                         ceu_acc = ceu_acc_$n;
@@ -723,7 +724,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             }
             is Expr.Acc -> {
                 val (blk,dcl) = vars.get(this)
-                val (idc,_idc_) = vars.id2c(this,blk,dcl,this.tk_.upv)
+                val (idc,_idc_) = vars.id2c(this, blk, dcl.id.str, this.tk_.upv, dcl.n)
                 when {
                     this.isdst() -> {
                         val src = this.asdst_src()
@@ -798,7 +799,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
             is Expr.Tuple -> """
                 { // TUPLE ${this.dump()}
-                    ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns, ${this.args.size});
+                    ceu_mem->tup_$n = ceu_tuple_create(&${ups.first_block(this)!!.toc(false)}.dn_dyns, ${this.args.size});
                     assert(ceu_mem->tup_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -812,7 +813,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             """
             is Expr.Vector -> """
                 { // VECTOR ${this.dump()}
-                    ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
+                    ceu_mem->vec_$n = ceu_vector_create(&${ups.first_block(this)!!.toc(false)}.dn_dyns);
                     assert(ceu_mem->vec_$n != NULL);
                     ${this.args.mapIndexed { i, it ->
                         it.code() + """
@@ -826,7 +827,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
             is Expr.Dict -> {
                 """
                 { // DICT ${this.dump()}
-                    ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(true)}->dn_dyns);
+                    ceu_mem->dict_$n = ceu_dict_create(&${ups.first_block(this)!!.toc(false)}.dn_dyns);
                     assert(ceu_mem->dict_$n != NULL);
                     ${this.args.map { """
                         {
@@ -1022,7 +1023,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.proto.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    vars.id2c(this, blk, dcl, 0).first
+                    vars.id2c(this, blk, dcl.id.str, 0, dcl.n).first
                 }
                 //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 

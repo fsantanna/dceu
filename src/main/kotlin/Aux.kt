@@ -50,30 +50,35 @@ fun String.tag2c (): String {
 }
 
 fun String.id2c (n: Int?): String {
-    return if (this[0] == '{') {
-        val MAP = mapOf(
-            Pair('+', "plus"),
-            Pair('-', "minus"),
-            Pair('*', "asterisk"),
-            Pair('/', "slash"),
-            Pair('>', "greater"),
-            Pair('<', "less"),
-            Pair('=', "equals"),
-            Pair('!', "exclaim"),
-            Pair('|', "bar"),
-            Pair('&', "ampersand"),
-            Pair('#', "hash"),
-        )
-        "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
-    } else {
-        val MAP = mapOf(
-            Pair('.', "_dot_"),
-            Pair('-', "_dash_"),
-            Pair('\'', "_plic_"),
-            Pair('?', "_question_"),
-            Pair('!', "_bang_"),
-        )
-        "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
+    return when {
+        this.take(4) == "ceu_" -> this
+        (this[0] == '{') -> {
+            val MAP = mapOf(
+                Pair('+', "plus"),
+                Pair('-', "minus"),
+                Pair('*', "asterisk"),
+                Pair('/', "slash"),
+                Pair('>', "greater"),
+                Pair('<', "less"),
+                Pair('=', "equals"),
+                Pair('!', "exclaim"),
+                Pair('|', "bar"),
+                Pair('&', "ampersand"),
+                Pair('#', "hash"),
+            )
+            "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
+        }
+
+        else -> {
+            val MAP = mapOf(
+                Pair('.', "_dot_"),
+                Pair('-', "_dash_"),
+                Pair('\'', "_plic_"),
+                Pair('?', "_question_"),
+                Pair('!', "_bang_"),
+            )
+            "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
+        }
     }.let {
         if (n==null || this in GLOBALS) {
             it

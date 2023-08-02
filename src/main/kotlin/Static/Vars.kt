@@ -121,7 +121,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
     }
 
-    fun id2c (e: Expr, blk: Expr.Do, dcl: Expr.Dcl, upv: Int): Pair<String,String> {
+    fun id2c (e: Expr, blk: Expr.Do, id: String, upv: Int, n: Int): Pair<String,String> {
         val (Mem,mem) = if (upv == 2) Pair("Upvs","upvs") else Pair("Mem","mem")
         val start = if (upv==2) e else blk
         val fup = ups.first(start) { it is Expr.Proto }
@@ -130,7 +130,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 .all_until(e) { it==blk }  // go up until find dcl blk
                 .count { it is Expr.Proto }          // count protos in between acc-dcl
         }
-        val idc = dcl.id.str.id2c(dcl.n)
+        val idc = id.id2c(n)
         return when {
             true -> Pair(idc, "_${idc}_")
             (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
@@ -309,7 +309,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                             }
                             val dcl = find(this, id, 0)
                             val blk = dcl_to_blk[dcl]!!
-                            val (idx,_) = id2c(this, blk, dcl, 0)
+                            val (idx,_) = id2c(this, blk, dcl.id.str, 0, dcl.n)
                             "($idx)$no"
                         }
                     }
