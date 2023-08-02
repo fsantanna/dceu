@@ -132,11 +132,18 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         }
         val idc = id.id2c(n)
         return when {
-            true -> Pair(idc, "_${idc}_")
-            (fup == null) -> Pair("(ceu_${mem}_${outer.n}->$idc)","(ceu_${mem}_${outer.n}->_${idc}_)")
-            (N == 0) -> Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
-            else -> Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->$idc)",
-                "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->_${idc}_)")
+            //(fup == null) -> Pair("(ceu_mem_${outer.n}->$idc)","(ceu_mem_${outer.n}->_${idc}_)")
+            (N==0 && mem=="upvs") -> {
+                Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
+            }
+            (fup==null || N==0) -> {
+                // Pair("(ceu_${mem}->$idc)", "(ceu_${mem}->_${idc}_)")
+                Pair(idc, "_${idc}_")
+            }
+            else -> {
+                Pair("(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->$idc)",
+                     "(((CEU_Proto_${Mem}_${fup.n}*) ceu_frame ${"->proto->Ncast.Proto.up_frame".repeat(N)}->${mem})->_${idc}_)")
+            }
         }
     }
 

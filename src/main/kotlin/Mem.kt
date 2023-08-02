@@ -13,7 +13,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                 } else {
                     Pair("", """
                         struct { // BLOCK
-                            CEU_Block block_${e.n};
+                            //CEU_Block block_${e.n};
                             ${fs.joinToString("")}
                             $union {
                                 ${ss.joinToString("")}
@@ -36,7 +36,7 @@ class Mem  (val outer: Expr.Do, val ups: Ups) {
                         }}
                     };
                 """
-                Pair(xsrc.first + dcl, xsrc.second)
+                Pair(xsrc.first /*+ dcl*/, xsrc.second)
             }
 
             is Expr.Set -> {
