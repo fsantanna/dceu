@@ -5,6 +5,8 @@ import java.io.Reader
 import java.util.*
 
 var CEU = 1
+    // 1: basic
+    // 2: export, copy, _
 
 var DUMP = true
 var N = 1

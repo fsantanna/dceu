@@ -229,7 +229,7 @@ class Exec_01 {
             println(_)
         """
         )
-        assert(out == "anon : (lin 3, col 21) : access error : cannot access \"_\"") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun bb_08_und() {

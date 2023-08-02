@@ -178,7 +178,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             """ 
                         }}
-                        ${dcls.filter { it != "_" }.map { """
+                        ${dcls.filter { CEU<=1 || it!="_" }.map { """
                             CEU_Value $it = (CEU_Value) { CEU_VALUE_NIL };
                             CEU_Block* _${it}_ = NULL;
                         """ }.joinToString("")}
@@ -197,7 +197,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             """
                         }}
-                        ${dcls.filter { it != "_" }.map { """
+                        ${dcls.filter { CEU<=1 || it!="_" }.map { """
                             if ($it.type > CEU_VALUE_DYNAMIC) {
                                 ceu_gc_dec($it, ($it.Dyn->Any.hld_depth == ceu_block_$n->depth));
                             }
@@ -236,7 +236,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """
                 }}
-                ${if (id == "_") "" else {
+                ${if (CEU>=2 && id=="_") "" else {
                     """
                     ${when {
                         !this.init -> ""

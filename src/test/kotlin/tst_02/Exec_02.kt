@@ -794,10 +794,35 @@ class Exec_02 {
         //        ":error\n") { out }
     }
 
-    // XXX
+    // UNDERSCORE
 
     @Test
-    fun bb_07x_und() {
+    fun gg_01_und() {
+        val out = all(
+            """
+            val _ = 10
+            println(_)
+        """
+        )
+        assert(out == "anon : (lin 3, col 21) : access error : cannot access \"_\"") { out }
+    }
+    @Test
+    fun gg_02_und() {
+        val out = all(
+            """
+            do {
+                val _ = println(10)
+            }
+            do {
+                val _ = println(20)
+            }
+            println(:ok)
+        """
+        )
+        assert(out == "10\n20\n:ok\n") { out }
+    }
+    @Test
+    fun gg_03_und() {
         val out = all("""
             val _ = 10
             val _ = 10
@@ -805,6 +830,9 @@ class Exec_02 {
         """)
         assert(out == ":ok\n") { out }
     }
+
+    // XXX
+
     @Test
     fun todo_use_bef_dcl_func18() {
         val out = all("""
