@@ -1,9 +1,9 @@
-package tst_02
+package tst_03
 
 import dceu.*
 import org.junit.Test
 
-class Parser_02 {
+class Parser_03 {
 
     // EXPORT
 

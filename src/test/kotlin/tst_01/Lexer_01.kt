@@ -3,15 +3,6 @@ package tst_01
 import dceu.*
 import org.junit.Test
 
-fun trap (f: ()->Unit): String {
-    try {
-        f()
-        error("impossible case")
-    } catch (e: Throwable) {
-        return e.message!!
-    }
-}
-
 fun lexer (str: String): Lexer {
     return Lexer(listOf(Pair(Triple("anon",1,1), str.reader())))
 }

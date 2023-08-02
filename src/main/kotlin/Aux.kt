@@ -1,5 +1,14 @@
 package dceu
 
+fun trap (f: ()->Unit): String {
+    try {
+        f()
+        error("impossible case")
+    } catch (e: Throwable) {
+        return e.message!!
+    }
+}
+
 fun Pos.isSameLine (oth: Pos): Boolean {
     return (this.file==oth.file && this.lin==oth.lin)
 }

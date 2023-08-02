@@ -5,8 +5,9 @@ import java.io.Reader
 import java.util.*
 
 var CEU = 1
-    // 1: basic
-    // 2: export, copy, _
+    // 1: dyn-lex
+    // 2: defer, throw/catch
+    // 3: export, copy, _
 
 var DUMP = true
 var N = 1

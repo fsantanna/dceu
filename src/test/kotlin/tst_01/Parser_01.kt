@@ -516,7 +516,7 @@ class Parser_01 {
         val l = tst_02.lexer("xloop x { }")
         val parser = Parser(l)
         //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : invalid loop : unexpected x")
-        assert(tst_02.trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \"{\" : have \"x\"")
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \"{\" : have \"x\"")
     }
 
     // NATIVE
