@@ -230,12 +230,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     (f_b is Expr.Proto) -> "1"
                     else -> "(${bup!!.toc(false)}.depth + 1)"
                 }
-                val dcls = vars.blk_to_dcls[this]!!
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
-                val ids = dcls.filter { it.init }
+                val ids = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { it.id.str.id2c(it.n) }
+                    .map    { Pair(it.id.str, vars.id2c(this,this,it,0)) }
                 """
                 { // BLOCK ${this.dump()}
                     ceu_mem->block_$n = (CEU_Block) { $depth, ${if (f_b?.tk?.str != "func") 1 else 0}, ceu_frame, {0,0,NULL,&ceu_mem->block_$n}, NULL };
@@ -303,6 +302,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                         }
                         """ 
                     }}
+                    ${ids.map { """
+                        CEU_Value ${it.second.first};
+                        CEU_Block* ${it.second.second};
+                        ${it.second.first} = (CEU_Value) { CEU_VALUE_NIL };
+                        ${it.second.second} = NULL;
+                    """ }.joinToString("")}
                     ${
                         (f_b is Expr.Proto && f_b.tk.str != "func").cond {
                             "ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
@@ -315,8 +320,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                     }
                     { // because of "decrement refs" below
                         ${ids.map {
-                            if (it in listOf("evt","_")) "" else """
-                                ceu_mem->$it = (CEU_Value) { CEU_VALUE_NIL };
+                            if (it.first in listOf("evt","_")) "" else """
+                                ${it.second.first} = (CEU_Value) { CEU_VALUE_NIL };
                         """ }.joinToString("")
                         }
                     }
@@ -390,12 +395,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                 }
                             """}}
                             { // decrement refs
-                                ${ids.map { if (it in listOf("evt","_")) "" else
+                                ${ids.map { if (it.first in listOf("evt","_")) "" else
                                     """
-                                    if (ceu_mem->$it.type > CEU_VALUE_DYNAMIC) {
-                                        ceu_gc_dec(&ceu_mem->$it,
-                                                   (ceu_mem->$it.Dyn->up_dyns.dyns != NULL) &&
-                                                   (ceu_mem->$it.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n)
+                                    if (${it.second.first}.type > CEU_VALUE_DYNAMIC) {
+                                        ceu_gc_dec(&${it.second.first},
+                                                   (${it.second.first}.Dyn->up_dyns.dyns != NULL) &&
+                                                   (${it.second.first}.Dyn->up_dyns.dyns->up_block == &ceu_mem->block_$n)
                                         );
                                     }
                                     """
@@ -404,7 +409,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                                     (f_b as Expr.Proto).args.map {
                                         val dcl = vars.get(this, it.first.str)
                                         val idc = it.first.str.id2c(dcl.n)
-                                        "ceu_gc_dec(&ceu_mem->$idc, 1);"
+                                        "ceu_gc_dec(&$idc, 1);"
                                     }.joinToString("")
                                 }}
                             }
@@ -444,7 +449,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
 
                 """
                 { // DCL ${this.dump()}
-                    ceu_mem->$idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
+                    $idc = (CEU_Value) { CEU_VALUE_NIL };      // src may fail (protect var w/ nil)
                     ${(this.init && this.src!=null && !unused).cond {
                         this.src!!.code() + """
                             ${unsf.chk_up_safe(this).cond { """
@@ -465,12 +470,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val defers: Defers, val vars: Var
                             */
                             !this.init -> ""
                             (this.src == null) -> ""
-                            else -> "ceu_mem->$idc = ceu_acc;"
+                            else -> "$idc = ceu_acc;"
                         }}
-                        ceu_mem->_${idc}_ = $bupc;   // can't be static b/c recursion
-                        ceu_gc_inc(&ceu_mem->${idc});
+                        _${idc}_ = $bupc;   // can't be static b/c recursion
+                        ceu_gc_inc(&${idc});
                         #if 1
-                            ${assrc("ceu_mem->$idc")}
+                            ${assrc("$idc")}
                         #else // b/c of ret scope
                             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                         #endif

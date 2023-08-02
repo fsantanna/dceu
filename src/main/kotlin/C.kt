@@ -1932,117 +1932,116 @@ fun Coder.main (tags: Tags): String {
         int main (int ceu_argc, char** ceu_argv) {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             do {
-                {
-                    static CEU_Dyn ceu_copy = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_tasks = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_tasks_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_coroutine = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_detrack = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_next_dash_dict = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_next_dash_dict_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_print = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_println = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_status = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_sup_question_ = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_sup_question__f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_tags = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_throw = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_track = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_tuple = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_tuple_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_type = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_op_equals_equals = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_op_hash = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_op_slash_equals = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} } }
-                        }
-                    };
-                    static CEU_Dyn ceu_string_dash_to_dash_tag = { 
-                        CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
-                            .Ncast = { .Proto = { NULL, ceu_string_dash_to_dash_tag_f, {0,NULL}, {{0}} } }
-                        }
-                    };
+                static CEU_Dyn ceu_copy = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_copy_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_tasks = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_tasks_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_coroutine = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_coroutine_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_detrack = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_detrack_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_next_dash_dict = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_next_dash_dict_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_print = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_print_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_println = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_println_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_status = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_status_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_sup_question_ = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_sup_question__f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_tags = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_tags_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_throw = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_throw_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_track = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_track_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_tuple = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_tuple_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_type = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_type_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_op_equals_equals = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_op_equals_equals_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_op_hash = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_op_hash_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_op_slash_equals = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_op_slash_equals_f, {0,NULL}, {{0}} } }
+                    }
+                };
+                static CEU_Dyn ceu_string_dash_to_dash_tag = { 
+                    CEU_VALUE_P_FUNC, {NULL,-1}, NULL, CEU_HOLD_MUTABLE, 1, {
+                        .Ncast = { .Proto = { NULL, ceu_string_dash_to_dash_tag_f, {0,NULL}, {{0}} } }
+                    }
+                };
 
-                    ceu_mem->copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
-                    ceu_mem->coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
-                    ceu_mem->detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
-                    ceu_mem->next_dash_dict = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next_dash_dict}         };
-                    ceu_mem->print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
-                    ceu_mem->println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
-                    ceu_mem->status     = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_status}       };
-                    ceu_mem->tags       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tags}         };
-                    ceu_mem->tasks      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tasks}        };
-                    ceu_mem->throw      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_throw}        };
-                    ceu_mem->track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
-                    ceu_mem->type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
-                    ceu_mem->tuple      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tuple}         };
-                    ceu_mem->op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
-                    ceu_mem->sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
-                    ceu_mem->op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
-                    ceu_mem->op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
-                    ceu_mem->string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_string_dash_to_dash_tag}  };
-                }
+                CEU_Value id_copy       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_copy}         };
+                CEU_Value id_coroutine  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_coroutine}    };
+                CEU_Value id_detrack    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_detrack}      };
+                CEU_Value id_next_dash_dict = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_next_dash_dict}         };
+                CEU_Value id_print      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_print}        };
+                CEU_Value id_println    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_println}      };            
+                CEU_Value id_status     = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_status}       };
+                CEU_Value id_tags       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tags}         };
+                CEU_Value id_tasks      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tasks}        };
+                CEU_Value id_throw      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_throw}        };
+                CEU_Value id_track      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_track}        };
+                CEU_Value id_type       = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_type}         };
+                CEU_Value id_tuple      = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_tuple}         };
+                CEU_Value id_op_hash    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_hash}      };
+                CEU_Value id_sup_question_    = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_sup_question_}     };
+                CEU_Value id_op_equals_equals = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_equals_equals} };
+                CEU_Value id_op_slash_equals  = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_op_slash_equals}  };
+                CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_P_FUNC, {.Dyn=&ceu_string_dash_to_dash_tag}  };
+
                 ${this.code}
                 return 0;
             } while (0);
