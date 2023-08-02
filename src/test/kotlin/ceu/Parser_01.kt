@@ -3,9 +3,9 @@ package ceu
 import dceu.*
 import org.junit.Test
 
-class TParser {
+class Parser_01 {
 
-    // EXPR.VAR / EVT / ERR
+    // VAR
 
     @Test
     fun expr_var () {
@@ -34,7 +34,7 @@ class TParser {
         assert(e is Expr.Acc && e.tk.str == "err")
     }
 
-    // EXPR.PARENS
+    // PARENS
 
     @Test
     fun expr_parens() {
@@ -63,7 +63,7 @@ class TParser {
         assert(e.tostr() == "println({{*}}(2,{{-}}(3,1)))")
     }
 
-    // EXPR.NUM / EXPR.NIL / EXPR.BOOL
+    // NUM / NIL / BOOL
 
     @Test
     fun expr_num() {
@@ -101,7 +101,7 @@ class TParser {
         assert(e is Expr.Char && e.tk.str == "'x'")
     }
 
-    // EXPR.ECALL
+    // CALL
 
     @Test
     fun expr_call1() {
@@ -246,7 +246,7 @@ class TParser {
         assert(e.tostr() == "v[{{#}}(v)]") { e.tostr() }
     }
 
-    // EXPR.INDEX / PUB
+    // INDEX
 
     @Test
     fun index1() {
@@ -323,7 +323,7 @@ class TParser {
         assert(es.tostr() == "var v2\n[tp,v1,v2]\n") { es.tostr() }
     }
 
-    // EXPR.DCL
+    // DCL
 
     @Test
     fun expr_dcl_var() {
@@ -356,7 +356,7 @@ class TParser {
         assert(e.tostr() == "var x = 1")
     }
 
-    // EXPR.SET
+    // SET
 
     @Test
     fun expr_set() {
@@ -438,6 +438,45 @@ class TParser {
         assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}") { e.tostr() }
     }
 
+    // EXPORT
+
+    @Test
+    fun oo_01_export_err() {
+        val l = tmp.lexer("export {}")
+        val parser = Parser(l)
+        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 8) : expected \"[\" : have \"{\"")
+    }
+    @Test
+    fun oo_02_export_err() {
+        val l = tmp.lexer("export [:x] {}")
+        val parser = Parser(l)
+        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 9) : expected identifier : have \":x\"")
+    }
+    @Test
+    fun oo_03_export() {
+        val l = tmp.lexer("export [] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.isEmpty() && e.body.es.size==1)
+        assert(e.tostr() == "export [] {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun oo_04_export() {
+        val l = tmp.lexer("export [x] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.first()=="x" && e.body.es.size==1)
+        assert(e.tostr() == "export [x] {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun oo_05_export() {
+        val l = tmp.lexer("export [x,y] { nil }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Export && e.ids.last()=="y" && e.body.es.size==1 && e.ids.size==2)
+        assert(e.tostr() == "export [x,y] {\nnil\n}") { e.tostr() }
+    }
+
     // FUNC
 
     @Test
@@ -510,6 +549,13 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 7) : expected \"{\" : have \"until\"")
         //assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 12) : expected expression : have \"{\"")
+    }
+    @Test
+    fun qq_03_loop_err() {
+        val l = tmp.lexer("xloop x { }")
+        val parser = Parser(l)
+        //assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : invalid loop : unexpected x")
+        assert(tmp.trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \"{\" : have \"x\"")
     }
 
     // NATIVE

@@ -30,6 +30,7 @@ class Ups (outer: Expr.Do) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.body))
+            is Expr.Export -> this.map(listOf(this.body))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))

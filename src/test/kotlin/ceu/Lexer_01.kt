@@ -16,7 +16,7 @@ fun lexer (str: String): Lexer {
     return Lexer(listOf(Pair(Triple("anon",1,1), str.reader())))
 }
 
-class TLexer {
+class Lexer_01 {
     @Test
     fun syms() {
         val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")
@@ -60,7 +60,7 @@ class TLexer {
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Id  && it.str == "evt" })
-        assert(tks.next().let { it is Tk.Id  && it.str == "export" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "export" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
         assert(tks.next().let { it is Tk.Id  && it.str == "pub" })
         assert(tks.next().let { it is Tk.Id  && it.str == "task" })

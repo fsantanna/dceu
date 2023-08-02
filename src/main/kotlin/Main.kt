@@ -20,7 +20,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = setOf (
     "data", "do", "drop", "else",
-    "enum", "false", "func", "if",
+    "enum", "export", "false", "func", "if",
     "nil", "pass", "set",
     "true", "val", "var",
     "xloop", "xbreak"
@@ -57,6 +57,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
+    data class Export (val tk_: Tk.Fix, val ids: List<String>, val body: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)

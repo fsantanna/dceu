@@ -14,6 +14,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 cons.add(ups.first_block(this)!!)
                 this.body.traverse()
             }
+            is Expr.Export -> this.body.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 unused.add(this)
