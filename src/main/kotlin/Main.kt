@@ -4,12 +4,22 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 3
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: export, copy, _
 
-var DUMP = true
+// search in tests output for
+//  definitely|Invalid read|Invalid write|uninitialised|uninitialized
+//  - definitely lost
+//  - Invalid read of size
+//  - uninitialised value
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
+val THROW = false
+//val THROW = true
+
+var DUMP = false
 var N = 1
 val D = "\$"
 
@@ -106,22 +116,19 @@ fun exec (cmds: List<String>): Pair<Boolean,String> {
 fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
-fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List<String>): String {
-    DUMP = false
-    CEU = 3
+
+fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
         System.err.println("... parsing ...")
     }
-    val inps = listOf(
-        Pair(Triple(name,1,1), reader),
-        Pair(Triple("prelude.ceu",1,1), FileX("@/prelude.ceu").reader())
-    )
     val lexer = Lexer(inps)
     val parser = Parser(lexer)
     val es = try {
         parser.exprs()
     } catch (e: Throwable) {
-        //throw e;
+        if (THROW) {
+            throw e
+        }
         return e.message!! + "\n"
     }
     //println(es.map { it.tostr()+"\n" }.joinToString(""))
@@ -142,26 +149,39 @@ fun all (verbose: Boolean, name: String, reader: Reader, out: String, args: List
         val coder  = Coder(outer, ups, vars, clos, sta)
         coder.main(tags)
     } catch (e: Throwable) {
-        //throw e;
+        if (THROW) {
+            throw e
+        }
         return e.message!! + "\n"
     }
     if (verbose) {
         System.err.println("... c -> exe ...")
     }
     File("$out.c").writeText(c)
-    val (ok2, out2) = exec(listOf("gcc", "$out.c", "-l", "m", "-o", "$out.exe") + args)
+    val (ok2, out2) = exec(listOf("gcc", "-Werror", "$out.c", "-l", "m", "-o", "$out.exe") + args)
     if (!ok2) {
         return out2
     }
     if (verbose) {
         System.err.println("... executing ...")
     }
-    val (_, out3) = exec("./$out.exe")
+    val (_, out3) = exec("$VALGRIND./$out.exe")
     //println(out3)
     return out3
 }
 
+fun test (inp: String, pre: Boolean=false): String {
+    val prelude = if (CEU == 3) "build/xprelude.ceu" else "build/cprelude.ceu"
+    val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
+        listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
+    }
+    return all(false, inps, "out", emptyList())
+}
+
 fun main (args: Array<String>) {
+    DUMP = false
+    CEU = 3
+
     val (xs, ys) = args.cmds_opts()
 
     try {
@@ -190,9 +210,13 @@ fun main (args: Array<String>) {
             ys.containsKey("--version") -> println("dceu " + VERSION)
             (xinp == null) -> println("expected filename")
             else -> {
-                    val f = File(xinp)
-                    val out = all(ys.containsKey("--verbose"), xinp, f.reader(), f.nameWithoutExtension, xccs)
-                    print(out)
+                val f = File(xinp)
+                val inps = listOf(
+                    Pair(Triple(xinp,1,1), f.reader()),
+                    Pair(Triple("prelude.ceu",1,1), FileX("@/prelude.ceu").reader())
+                )
+                val out = all(ys.containsKey("--verbose"), inps, f.nameWithoutExtension, xccs)
+                print(out)
             }
         }
     } catch (e: Throwable) {

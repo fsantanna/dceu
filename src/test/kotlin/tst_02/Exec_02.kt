@@ -1,6 +1,5 @@
 package tst_02
 
-import tst_01.all
 import dceu.*
 import org.junit.FixMethodOrder
 import org.junit.Test
@@ -14,7 +13,7 @@ class Exec_02 {
 
     @Test
     fun aa_01_copy_tuple() {
-        val out = all("""
+        val out = test("""
             val t1 = [1,2,3]
             val t2 = copy(t1)
             val t3 = t1
@@ -28,7 +27,7 @@ class Exec_02 {
     }
     @Test
     fun aa_02_copy_tuple_rec() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func (v) {
                 ;;println(v)
@@ -44,7 +43,7 @@ class Exec_02 {
     }
     @Test
     fun aa_03_copy_tuple_out() {
-        val out = all("""
+        val out = test("""
             val out = do {
                 val ins = [1,2,3]
                 copy(ins)
@@ -55,7 +54,7 @@ class Exec_02 {
     }
     @Test
     fun aa_04_copy_tuple_scope() {
-        val out = all("""
+        val out = test("""
             var x = [1,2,3]
             do {
                 val y = copy(x)
@@ -70,7 +69,7 @@ class Exec_02 {
     }
     @Test
     fun aa_05_copy_tuple_scope() {
-        val out = all("""
+        val out = test("""
             var x = [1,2,3]
             do {
                 val y = copy(x)
@@ -84,7 +83,7 @@ class Exec_02 {
     }
     @Test
     fun aa_06_copy_tuple_scope() {
-        val out = all("""
+        val out = test("""
             var v
             do {
                 var x = [1,2,3]
@@ -107,7 +106,7 @@ class Exec_02 {
 
     @Test
     fun ab_01_copy_dict() {
-        val out = all("""
+        val out = test("""
             val t1 = @[]
             set t1[:x] = 1
             val t2 = t1
@@ -122,7 +121,7 @@ class Exec_02 {
     }
     @Test
     fun ab_02_copy_dict() {
-        val out = all("""
+        val out = test("""
             var x
             set x = @[(nil,10)]
             println(x[nil])
@@ -131,7 +130,7 @@ class Exec_02 {
     }
     @Test
     fun ab_03_copy_dict() {
-        val out = all("""
+        val out = test("""
             val x
             set x = @[]
             set x[nil] = 10
@@ -144,7 +143,7 @@ class Exec_02 {
 
     @Test
     fun ac_01_copy_vector() {
-        val out = all("""
+        val out = test("""
             val v = #[1,2,3]
             val x = export [] {
                 val i = v[#v - 1]
@@ -157,7 +156,7 @@ class Exec_02 {
     }
     @Test
     fun ac_02_copy_vector() {
-        val out = all("""
+        val out = test("""
             val t1 = #[]
             set t1[#t1] = 1
             println(t1)
@@ -166,7 +165,7 @@ class Exec_02 {
     }
     @Test
     fun ac_03_copy_vector() {
-        val out = all("""
+        val out = test("""
             val t1 = #[]        ;; [1,2]
             set t1[#t1] = 1
             val t2 = t1         ;; [1,2]
@@ -184,7 +183,7 @@ class Exec_02 {
     //@Ignore
     @Test
     fun todo_ad_01_copy_clos() {
-        val out = all("""
+        val out = test("""
             var f = func (^a) {
                 func () {
                     ^^a
@@ -205,7 +204,7 @@ class Exec_02 {
 
     @Test
     fun bb_01_export() {
-        val out = all("""
+        val out = test("""
             export [aaa] {
                 val aaa = 10
             }
@@ -219,7 +218,7 @@ class Exec_02 {
     }
     @Test
     fun bb_02_export() {
-        val out = all("""
+        val out = test("""
             export [] {
                 var a       ;; invisible
                 set a = 10
@@ -232,7 +231,7 @@ class Exec_02 {
     }
     @Test
     fun bb_03_export() {
-        val out = all("""
+        val out = test("""
             val x = export [] {
                 val a = []
                 a
@@ -243,7 +242,7 @@ class Exec_02 {
     }
     @Test
     fun bb_04_export() {
-        val out = all("""
+        val out = test("""
             export [aaa] {
                 val aaa = 10
             }
@@ -256,7 +255,7 @@ class Exec_02 {
     }
     @Test
     fun bb_05_export() {
-        val out = all("""
+        val out = test("""
             export [f] {
                 val v = []
                 val f = func () {
@@ -274,7 +273,7 @@ class Exec_02 {
     }
     @Test
     fun bb_06_export() {
-        val out = all("""
+        val out = test("""
             do {
                 export [f] {
                     val v = []
@@ -297,7 +296,7 @@ class Exec_02 {
 
     @Test
     fun cc_01_scope_tasks() {
-        val out = all("""
+        val out = test("""
             do {
                 val t = [tasks(), tasks()]
                 println(#t)
@@ -307,7 +306,7 @@ class Exec_02 {
     }
     @Test
     fun cc_02_scope_tracks() {
-        val out = all("""
+        val out = test("""
             val T = task () { yield(nil) }
             do {
                 val ts = tasks()
@@ -327,7 +326,7 @@ class Exec_02 {
     }
     @Test
     fun cc_03_scope_tracks() {
-        val out = all("""
+        val out = test("""
             val T = task () { yield(nil) }
             do {
                 val ts = tasks()
@@ -345,7 +344,7 @@ class Exec_02 {
     }
     @Test
     fun cc_04_scope_task() {
-        val out = all("""
+        val out = test("""
             val T = task (t1) {
                 val t2 = []
                 pass [t1,[],t2]
@@ -364,7 +363,7 @@ class Exec_02 {
 
     @Test
     fun dd_01_catch() {
-        val out = all("""
+        val out = test("""
             catch err==:x {
                 throw(:x)
                 println(9)
@@ -375,7 +374,7 @@ class Exec_02 {
     }
     @Test
     fun dd_02_catch_err() {
-        val out = all("""
+        val out = test("""
             catch err==:x {
                 throw(:y)
                 println(9)
@@ -388,7 +387,7 @@ class Exec_02 {
     }
     @Test
     fun dd_03_catch() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func () {
                 catch err==:xxx {
@@ -410,7 +409,7 @@ class Exec_02 {
     }
     @Test
     fun dd_04_catch_valgrind() {
-        val out = all("""
+        val out = test("""
             catch err==:x {
                 throw([])
                 println(9)
@@ -424,7 +423,7 @@ class Exec_02 {
     }
     @Test
     fun dd_05_catch() {
-        val out = all("""
+        val out = test("""
             catch err==:e1 {
                 catch err==:e2 {
                     catch err==:e3 {
@@ -447,7 +446,7 @@ class Exec_02 {
     }
     @Test
     fun dd_06_catch_err() {
-        val out = all("""
+        val out = test("""
             catch true {
                 throw(:y)
                 println(9)
@@ -459,7 +458,7 @@ class Exec_02 {
     }
     @Test
     fun dd_07_catch() {
-        val out = tst_01.all(
+        val out = test(
             """
             catch do {
                 err==:x
@@ -474,7 +473,7 @@ class Exec_02 {
     }
     @Test
     fun dd_08_catch() {
-        val out = tst_01.all(
+        val out = test(
             """
             var x
             catch do {
@@ -495,7 +494,7 @@ class Exec_02 {
     }
     @Test
     fun dd_09_catch_err() {
-        val out = tst_01.all(
+        val out = test(
             """
             do {
                 catch do {  ;; err is binded to x and is being moved up
@@ -527,7 +526,7 @@ class Exec_02 {
     }
     @Test
     fun dd_10_catch() {
-        val out = tst_01.all(
+        val out = test(
             """
             var x
             catch do {
@@ -544,7 +543,7 @@ class Exec_02 {
     }
     @Test
     fun dd_11_catch_err() {
-        val out = tst_01.all(
+        val out = test(
             """
             catch err[0]==:x {
                 throw([:x])
@@ -558,7 +557,7 @@ class Exec_02 {
     }
     @Test
     fun dd_12_catch() {
-        val out = tst_01.all(
+        val out = test(
             """
             catch false {
                 throw(:xxx)
@@ -573,7 +572,7 @@ class Exec_02 {
     }
     @Test
     fun dd_13_catch() {
-        val out = all("""
+        val out = test("""
             catch err==[] {
                 throw([])
                 println(9)
@@ -586,7 +585,7 @@ class Exec_02 {
     }
     @Test
     fun dd_14_catch() {
-        val out = tst_01.all(
+        val out = test(
             """
             var x
             set x = err
@@ -602,7 +601,7 @@ class Exec_02 {
     }
     @Test
     fun dd_15_catch() {
-        val out = all("""
+        val out = test("""
             catch err==[] {
                 var xxx
                 set xxx = []
@@ -623,7 +622,7 @@ class Exec_02 {
 
     @Test
     fun ee_01_defer() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func () {
                 println(111)
@@ -653,7 +652,7 @@ class Exec_02 {
     }
     @Test
     fun todo_ee_01_defer2_err() {
-        val out = all("""
+        val out = test("""
             task () {
                 defer {
                     yield(nil)   ;; no yield inside defer
@@ -665,7 +664,7 @@ class Exec_02 {
     }
     @Test
     fun ee_03_defer() {
-        val out = all("""
+        val out = test("""
             catch err==nil {
                 defer {
                     throw(nil)
@@ -677,7 +676,7 @@ class Exec_02 {
     }
     @Test
     fun ee_04_defer_err() {
-        val out = all("""
+        val out = test("""
             do {
                 defer {
                     throw(nil)
@@ -694,7 +693,7 @@ class Exec_02 {
 
     @Test
     fun ff_01_gc_bcast() {
-        val out = all("""
+        val out = test("""
             broadcast in :global, []
             println(`:number ceu_gc_count`)
         """)
@@ -702,7 +701,7 @@ class Exec_02 {
     }
     @Test
     fun ff_02_gc_bcast() {
-        val out = tst_01.all(
+        val out = test(
             """
             var tk = task () {
                 yield(nil)
@@ -724,7 +723,7 @@ class Exec_02 {
     }
     @Test
     fun ff_03_gc_bcast_err() {
-        val out = tst_01.all(
+        val out = test(
             """
             var tk = task () {
                 do {
@@ -746,7 +745,7 @@ class Exec_02 {
     }
     @Test
     fun ff_04_gc_bcast_err() {
-        val out = tst_01.all(
+        val out = test(
             """
             var tk = task () {
                 do {
@@ -770,7 +769,7 @@ class Exec_02 {
     }
     @Test
     fun ff_05_gc_bcast_arg() {
-        val out = tst_01.all(
+        val out = test(
             """
             var tk = task (v) {
                 do {
@@ -798,7 +797,7 @@ class Exec_02 {
 
     @Test
     fun gg_01_und() {
-        val out = all(
+        val out = test(
             """
             val _ = 10
             println(_)
@@ -808,7 +807,7 @@ class Exec_02 {
     }
     @Test
     fun gg_02_und() {
-        val out = all(
+        val out = test(
             """
             do {
                 val _ = println(10)
@@ -823,7 +822,7 @@ class Exec_02 {
     }
     @Test
     fun gg_03_und() {
-        val out = all("""
+        val out = test("""
             val _ = 10
             val _ = 10
             println(:ok)
@@ -835,7 +834,7 @@ class Exec_02 {
 
     @Test
     fun todo_use_bef_dcl_func18() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func () {
                 println(v)
@@ -849,7 +848,7 @@ class Exec_02 {
 
     @Test
     fun todo_op_id2() {
-        val out = all("""
+        val out = test("""
             set (+) = (-)
             println((+)(10,4))
         """)
@@ -857,7 +856,7 @@ class Exec_02 {
     }
     @Test
     fun tags14() {
-        val out = all("""
+        val out = test("""
             val co = coro () {
                 yield(:x)
             }
@@ -867,7 +866,7 @@ class Exec_02 {
     }
     @Test
     fun tags15() {
-        val out = all("""
+        val out = test("""
             val t = tags([], :x, true)
             val s = copy(t)
             println(s)
@@ -876,7 +875,7 @@ class Exec_02 {
     }
     @Test
     fun all_01() {
-        val out = all("""
+        val out = test("""
             val T = (task () {
                 set task.pub = []
                 yield(nil)
@@ -903,7 +902,7 @@ class Exec_02 {
 
     @Test
     fun op_or_and() {
-        val out = all("""
+        val out = test("""
             println(true or println(1))
             println(false and println(1))
         """)
@@ -911,14 +910,14 @@ class Exec_02 {
     }
     @Test
     fun op_not() {
-        val out = all("""
+        val out = test("""
             println(not nil and not false)
         """)
         assert(out == "true\n") { out }
     }
     @Test
     fun op2_or_and() {
-        val out = all("""
+        val out = test("""
             println(1 or error(5))
             println(1 and 2)
             println(nil and 2)
@@ -928,14 +927,14 @@ class Exec_02 {
     }
     @Test
     fun op3_or_and() {
-        val out = all("""
+        val out = test("""
             println(true and ([] or []))
         """)
         assert(out == "[]\n") { out }
     }
     @Test
     fun xop3_or_and() {
-        val out = all("""
+        val out = test("""
             val v = do {
                 val :tmp x = []
                 if x { x } else { [] }
@@ -946,7 +945,7 @@ class Exec_02 {
     }
     @Test
     fun op4_and_and() {
-        val out = all("""
+        val out = test("""
             val v = true and
                 true and 10
             println(v)
@@ -955,7 +954,7 @@ class Exec_02 {
     }
     @Test
     fun op5_plus_plus() {
-        val out = all("""
+        val out = test("""
             val v = 5 +
                 5 + 10
             println(v)

@@ -4,7 +4,6 @@ import dceu.*
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
-import tst_01.all
 
 fun yield (ok: String = "ok"): String {
     return "do { var $ok=false; xloop { if $ok { xbreak } else { yield(nil); if type(evt)/=:x-task { set $ok=true } else { nil } } } }"
@@ -20,7 +19,7 @@ class Task_03 {
 
     @Test
     fun aa_coro0() {
-        val out = all("""
+        val out = test("""
             val t = coro (v) {
                 v
             }
@@ -32,7 +31,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro1() {
-        val out = all("""
+        val out = test("""
             var t
             set t = coro (v) {
                 var v' = v
@@ -55,7 +54,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro2_err() {
-        val out = all("""
+        val out = test("""
             coroutine(func () {nil})
         """.trimIndent())
         assert(out == "anon : (lin 1, col 1) : coroutine((func () { nil })) : coroutine error : expected coro\n" +
@@ -63,7 +62,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro3_err() {
-        val out = all("""
+        val out = test("""
             var f
             resume f()
         """.trimIndent())
@@ -71,7 +70,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro4_err() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro () {nil})
             resume co()
@@ -81,7 +80,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro5_err() {
-        val out = all("""
+        val out = test("""
             val co = coroutine(coro () { nil
             })
             resume co()
@@ -91,7 +90,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro6() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro (v) {
                 val v' = yield(nil) 
@@ -104,7 +103,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro7() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro (v) {
                 println(v)
@@ -117,7 +116,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro8_err() {
-        val out = all("""
+        val out = test("""
             var xxx
             resume xxx() ;;(xxx(1))
         """)
@@ -125,7 +124,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro9_mult() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro (x,y) {
                 println(x,y)
@@ -136,7 +135,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro10_err() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro () {
                 yield(nil)
@@ -148,7 +147,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro11_class() {
-        val out = all("""
+        val out = test("""
             var T
             set T = coro (x,y) {
                 println(x,y)
@@ -159,7 +158,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro12_tuple_leak() {
-        val out = all("""
+        val out = test("""
             val T = coro () {
                 pass [1,2,3]
                 yield(nil)
@@ -171,7 +170,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro13_defer() {
-        val out = all("""
+        val out = test("""
             var T
             set T = coro () {
                 defer {
@@ -189,14 +188,14 @@ class Task_03 {
     }
     @Test
     fun aa_yield14_err() {
-        val out = all("""
+        val out = test("""
             yield(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task") { out }
     }
     @Test
     fun aa_yield15_err() {
-        val out = all("""
+        val out = test("""
             coro () {
                 func () {
                     yield(nil)
@@ -207,7 +206,7 @@ class Task_03 {
     }
     @Test
     fun aa_task16_nest() {
-        val out = all("""
+        val out = test("""
             spawn (task (v1) {
                 println(v1)
             }) (1)
@@ -216,7 +215,7 @@ class Task_03 {
     }
     @Test
     fun aa_17_coro_nest_err() {
-        val out = all("""
+        val out = test("""
             var T = coro () {
                 spawn coro () {
                     yield(nil)
@@ -231,7 +230,7 @@ class Task_03 {
     }
     @Test
     fun aa_task17_nest_err() {
-        val out = all("""
+        val out = test("""
             spawn task (v1) {
                 spawn task (v2) {
                     spawn task (v3) {
@@ -248,7 +247,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro18_defer() {
-        val out = all("""
+        val out = test("""
             var T
             set T = coro () {
                 defer {
@@ -267,7 +266,7 @@ class Task_03 {
     }
     @Test
     fun aa_task19_self_escape_err() {
-        val out = all("""
+        val out = test("""
             var T1 = coro (co) {
                 yield(nil)
             }
@@ -284,7 +283,7 @@ class Task_03 {
     }
     @Test
     fun todo_aa_task19a_self_escape() {
-        val out = all("""
+        val out = test("""
             val T1 = task (co) {
                 println(:3)
                 yield(nil)
@@ -304,7 +303,7 @@ class Task_03 {
     }
     @Test
     fun todo_aa_task20_self() {
-        val out = all("""
+        val out = test("""
             var T1 = task (co) {
                 println(:3)
                 yield(nil)
@@ -330,7 +329,7 @@ class Task_03 {
     }
     @Test
     fun aa_task21_self() {
-        val out = all("""
+        val out = test("""
             var t = []
             resume t()
         """)
@@ -338,7 +337,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro22a_defer() {
-        val out = all("""
+        val out = test("""
             val T = coro () {
                 println(1)
                 yield(nil)   ;; never awakes
@@ -353,7 +352,7 @@ class Task_03 {
     }
     @Test
     fun aa_coro22_defer() {
-        val out = all("""
+        val out = test("""
             var T
             set T = coro () {
                 defer {
@@ -374,14 +373,14 @@ class Task_03 {
     }
     @Test
     fun aa_task23_notask() {
-        val out = all("""
+        val out = test("""
             task
         """)
         assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
     @Test
     fun aa_coro24_defer() {
-        val out = all("""
+        val out = test("""
             val F = coro () {
                 defer {
                     println(:xxx)
@@ -402,7 +401,7 @@ class Task_03 {
     }
     @Test
     fun aa_25_yield_tmp() {
-        val out = all("""
+        val out = test("""
             val F = coro () {
                 val :tmp x
                 yield(nil)
@@ -415,7 +414,7 @@ class Task_03 {
 
     @Test
     fun bb_spawn1() {
-        val out = all("""
+        val out = test("""
             var t
             set t = coro (v) {
                 var v' = v
@@ -438,7 +437,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn2() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (x,y) {
                 println(x,y)
@@ -449,21 +448,21 @@ class Task_03 {
     }
     @Test
     fun bb_spawn3_err() {
-        val out = all("""
+        val out = test("""
             spawn (func () {nil}) ()
         """)
         assert(out == "anon : (lin 2, col 20) : spawn error : expected coro or task\n:error\n") { out }
     }
     @Test
     fun bb_spawn4_err() {
-        val out = all("""
+        val out = test("""
             spawn (func () {nil})
         """)
         assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call") { out }
     }
     @Test
     fun bb_coro_spawn5() {
-        val out = all("""
+        val out = test("""
             var t
             set t = coro () {
                 println(1)
@@ -483,7 +482,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn6_err() {
-        val out = all("""
+        val out = test("""
             var x
             set x = do {
                 spawn (task() {nil}) ()
@@ -495,7 +494,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn67_err() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 nil
@@ -509,7 +508,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn7_err() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () { nil }
             var f
@@ -525,7 +524,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn8_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 spawn (task () :fake {
@@ -545,7 +544,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn9() {
-        val out = all("""
+        val out = test("""
             var x
             set x = do {
                 spawn (task() {println(1)}) ()
@@ -557,7 +556,7 @@ class Task_03 {
     }
     @Test
     fun bb_coro_spawn10() {
-        val out = all("""
+        val out = test("""
             var t
             set t = coro () {
                 println(1)
@@ -577,7 +576,7 @@ class Task_03 {
     }
     @Test
     fun bb_coro_spawn11() {
-        val out = all("""
+        val out = test("""
             var t
             var f
             set f = func () {
@@ -601,7 +600,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn12_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 spawn (task () :fake {
@@ -617,7 +616,7 @@ class Task_03 {
     }
     @Test
     fun bb_spawn13_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 nil ;;println(v)
@@ -635,7 +634,7 @@ class Task_03 {
     }
     @Test
     fun bb_14_err() {
-        val out = all("""
+        val out = test("""
             var f = func () {
                 t
             }
@@ -648,7 +647,7 @@ class Task_03 {
 
     @Test
     fun cc_01_drop_err () {
-        val out = all("""
+        val out = test("""
             val co = do {
                 val v
                 val x = spawn (coro () {
@@ -666,7 +665,7 @@ class Task_03 {
 
     @Test
     fun cc_02_drop_ok () {
-        val out = all("""
+        val out = test("""
             val tup = [nil]
             val co = do {
                 var x = spawn (coro () {
@@ -681,7 +680,7 @@ class Task_03 {
     }
     @Test
     fun cc_03_drop() {
-        val out = all("""
+        val out = test("""
         val f = func (x) {
             x()
         }
@@ -698,7 +697,7 @@ class Task_03 {
     }
     @Test
     fun cc_04_drop() {
-        val out = all("""
+        val out = test("""
         val f = func (co) {
             resume co()
         }
@@ -721,7 +720,7 @@ class Task_03 {
     }
     @Test
     fun cc_05_drop() {
-        val out = all("""
+        val out = test("""
             val F = func (^x) {
                 drop(spawn (coro () {
                     yield(nil)
@@ -738,7 +737,7 @@ class Task_03 {
     }
     @Test
     fun cc_06_drop() {
-        val out = all("""
+        val out = test("""
             do {
                 val F = (coro () { println(:ok) })
                 val f = do {        ;; dst=2
@@ -754,7 +753,7 @@ class Task_03 {
 
     @Test
     fun cc_group1() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 println(v)
@@ -770,7 +769,7 @@ class Task_03 {
     }
     @Test
     fun cc_group2_no_more_spawn_export() {
-        val out = all("""
+        val out = test("""
             export [T] {
                 var T
                 set T = task (v) {
@@ -795,7 +794,7 @@ class Task_03 {
     }
     @Test
     fun cc_group3() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func () {
                 nil
@@ -811,7 +810,7 @@ class Task_03 {
     }
     @Test
     fun cc_group4() {
-        val out = all("""
+        val out = test("""
             export [f] {
                 var cur = nil
                 val f = func () {
@@ -842,7 +841,7 @@ class Task_03 {
 
     @Test
     fun dd_throw1() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro (x,y) {
                 throw(:e2)
@@ -857,7 +856,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw2() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine(coro (x,y) {
                 yield(nil)
@@ -875,7 +874,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw3_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 spawn task () {
@@ -894,14 +893,14 @@ class Task_03 {
     }
     @Test
     fun dd_throw4_err() {
-        val out = all("""
+        val out = test("""
             broadcast in :task, nil
         """)
         assert(out == "anon : (lin 2, col 26) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
     fun dd_throw5_err() {
-        val out = all("""
+        val out = test("""
             spawn (task () :fake {
                 broadcast in :task, nil
             }) ()
@@ -911,7 +910,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw6() {
-        val out = all("""
+        val out = test("""
             var co
             set co = coroutine (coro () {
                 catch :e1 {
@@ -934,7 +933,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw7() {
-        val out = all("""
+        val out = test("""
             var co
             set co = spawn (task () {
                 catch :e1 {
@@ -961,7 +960,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw8() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () {
@@ -997,7 +996,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw9_fake() {
-        val out = all("""
+        val out = test("""
             catch err==:err {
                 spawn (task () :fake {
                     throw(:err)
@@ -1009,7 +1008,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw10_fake() {
-        val out = all("""
+        val out = test("""
             catch err == :xxx {
                 spawn task () {
                     yield(nil)
@@ -1024,7 +1023,7 @@ class Task_03 {
     }
     @Test
     fun dd_throw11_fake() {
-        val out = all("""
+        val out = test("""
             spawn task () { 
                 catch {{==}}(err,:err) {
                     spawn task () :fake {
@@ -1044,14 +1043,14 @@ class Task_03 {
 
     @Test
     fun ee_bcast0() {
-        val out = all("""
+        val out = test("""
             println(broadcast in :global, 1)
         """)
         assert(out == "nil\n") { out }
     }
     @Test
     fun ee_bcast001() {
-        val out = all(
+        val out = test(
             """
             spawn task () {
                 println(1)
@@ -1065,7 +1064,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast01() {
-        val out = all("""
+        val out = test("""
             var tk = task (v) {
                 yield(nil)
                 println(v, evt)
@@ -1081,7 +1080,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast1() {
-        val out = all("""
+        val out = test("""
             var tk
             set tk = task (v) {
                 yield(nil)
@@ -1102,7 +1101,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast2() {
-        val out = all("""
+        val out = test("""
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
                     yield(nil)  ;; awakes from outer bcast
@@ -1117,7 +1116,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast3() {
-        val out = all("""
+        val out = test("""
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
                     ${yield()}
@@ -1135,7 +1134,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast4() {
-        val out = all("""
+        val out = test("""
             var tk
             set tk = task () {
                 yield(nil)
@@ -1160,7 +1159,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast5() {
-        val out = all("""
+        val out = test("""
             var tk
             set tk = task (v) {
                 println(v)
@@ -1174,7 +1173,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast6() {
-        val out = all("""
+        val out = test("""
             func () {
                  broadcast in :global, 1
             }
@@ -1184,7 +1183,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast7() {
-        val out = all("""
+        val out = test("""
             var tk
             set tk = task () {
                 yield(nil)
@@ -1204,7 +1203,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast8() {
-        val out = all("""
+        val out = test("""
             var tk
             set tk = task (v) {
                 yield(nil)
@@ -1223,7 +1222,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast9() {
-        val out = all(
+        val out = test(
             """
             var tk = task (v) {
                 yield(nil)
@@ -1249,7 +1248,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast10() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (v) {
@@ -1282,7 +1281,7 @@ class Task_03 {
 
     @Test
     fun ee_bcast_in1() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task (v) {
@@ -1301,17 +1300,17 @@ class Task_03 {
     }
     @Test
     fun ee_bcast_in2_err() {
-        val out = all(" broadcast in nil, nil")
+        val out = test(" broadcast in nil, nil")
         assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
     fun ee_bcast_in3_err() {
-        val out = all(" broadcast in :xxx, nil")
+        val out = test(" broadcast in :xxx, nil")
         assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
     fun ee_bcast_in4() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task (v) {
@@ -1331,7 +1330,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast_in5() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task (v) {
@@ -1348,7 +1347,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast_in6() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task (v) {
@@ -1376,7 +1375,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast_in7() {
-        val out = all("""
+        val out = test("""
             spawn (task () {
                 spawn (task () {
                     yield(nil)
@@ -1391,7 +1390,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast_in7a() {
-        val out = all("""
+        val out = test("""
             ;;println(:BLOCK0, `:pointer ceu_block`)
             spawn (task () {
                 ;;println(:CORO1, `:pointer ceu_x`)
@@ -1413,7 +1412,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast08_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task () {
@@ -1440,7 +1439,7 @@ class Task_03 {
     }
     @Test
     fun todo_ee_bcast09_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task () {
@@ -1459,7 +1458,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast10_err() {
-        val out = all(
+        val out = test(
             """
             var T = task () {
                 yield(nil)
@@ -1480,7 +1479,7 @@ class Task_03 {
     }
     @Test
     fun ee_11_bcast_err() {
-        val out = all(
+        val out = test(
             """
             var T = task () {
                 yield(nil)
@@ -1505,7 +1504,7 @@ class Task_03 {
     }
     @Test
     fun ee_12_bcast_err() {
-        val out = all(
+        val out = test(
             """
             var T = task () {
                 yield(nil)
@@ -1528,7 +1527,7 @@ class Task_03 {
     }
     @Test
     fun ee_11_bcast_err_a() {
-        val out = all(
+        val out = test(
             """
             broadcast in :global, []
             println(:ok)
@@ -1538,7 +1537,7 @@ class Task_03 {
     }
     @Test
     fun ee_11_bcast_drop() {
-        val out = all(
+        val out = test(
             """
             var T = task () {
                 yield(nil)
@@ -1561,7 +1560,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast12_err() {
-        val out = all(
+        val out = test(
             """
             var T = task () {
                 yield(nil)
@@ -1586,7 +1585,7 @@ class Task_03 {
     }
     @Test
     fun ee_bcast13_err() {
-        val out = all(
+        val out = test(
             """
             var T1 = task () {
                 yield(nil)
@@ -1621,7 +1620,7 @@ class Task_03 {
 
     @Test
     fun ee_14_bcast_tuple_func_ok() {
-        val out = all("""
+        val out = test("""
             var fff = func (v) {
                 println(v)
             }
@@ -1636,7 +1635,7 @@ class Task_03 {
     }
     @Test
     fun ee_15_bcast_tuple_func_no() {
-        val out = all("""
+        val out = test("""
             var f = func (v) {
                 var x = v[0]
                 println(x)
@@ -1656,7 +1655,7 @@ class Task_03 {
     }
     @Test
     fun ee_15_bcast_tuple_func_ok() {
-        val out = all("""
+        val out = test("""
             var f = func (v) {
                 val :tmp x = v[0]
                 println(x)
@@ -1672,7 +1671,7 @@ class Task_03 {
     }
     @Test
     fun ee_16_bcast_tuple_func_ok() {
-        val out = all("""
+        val out = test("""
             var f = func (v) {
                 val :tmp x = [0]
                 set x[0] = v[0]
@@ -1689,7 +1688,7 @@ class Task_03 {
     }
     @Test
     fun ee_17_bcast_tuple_func_ok() {
-        val out = all("""
+        val out = test("""
             val f = func (v) {
                 println(v)
             }
@@ -1714,7 +1713,7 @@ class Task_03 {
     }
     @Test
     fun ee_18_bcast_tuple_func_ok() {
-        val out = all("""
+        val out = test("""
             val f = func (v) {
                 println(v)
             }
@@ -1737,7 +1736,7 @@ class Task_03 {
     }
     @Test
     fun ee_19_bcast_copy() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
                 val v = copy(evt)
@@ -1754,7 +1753,7 @@ class Task_03 {
 
     @Test
     fun ff_pool0() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () { nil }
@@ -1767,7 +1766,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool0a() {
-        val out = all(
+        val out = test(
             """
             var x
             spawn in tasks(), (task(){nil})(x)
@@ -1778,7 +1777,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool0b() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () { yield(nil) }
@@ -1791,7 +1790,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool1() {
-        val out = all("""
+        val out = test("""
             var ts
             set ts = tasks()
             println(type(ts))
@@ -1810,7 +1809,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool2_leak() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 pass [1,2,3]
@@ -1826,7 +1825,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool4_defer() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 defer {
@@ -1844,7 +1843,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool5_scope() {
-        val out = all("""
+        val out = test("""
             do {
                 var ts
                 set ts = tasks()
@@ -1862,7 +1861,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool6_terminate() {
-        val out = all("""
+        val out = test("""
             do {
                 var ts
                 set ts = tasks()
@@ -1881,7 +1880,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool7_leak() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -1895,7 +1894,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool8_err() {
-        val out = all("""
+        val out = test("""
             loop x in :tasks nil {
                 10
             }
@@ -1904,7 +1903,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool8a_err() {
-        val out = all("""
+        val out = test("""
             loop x in :tasks nil {
                 pass nil
             }
@@ -1913,7 +1912,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool9_term() {
-        val out = all("""
+        val out = test("""
             var T = task () {
                 yield(nil)
             }
@@ -1929,7 +1928,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool10_term() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -1950,7 +1949,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11_plain() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -1966,7 +1965,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11_drop() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -1982,7 +1981,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11a_move() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -2000,7 +1999,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11_check() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -2012,7 +2011,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11_copy() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -2028,7 +2027,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool11a_err_scope() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () { yield(nil) }
             var ts
@@ -2047,7 +2046,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool12_bcast() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil); println(:ok) }
             var ts = tasks()
             spawn in ts, T()
@@ -2059,7 +2058,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool12_err_scope() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () { yield(nil) }
@@ -2083,7 +2082,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool13_scope() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () { yield(nil) }
@@ -2105,7 +2104,7 @@ class Task_03 {
     }
     @Test
     fun ff_poolX_scope() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () { yield(nil) }
@@ -2123,7 +2122,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool14_max_err() {
-        val out = all(
+        val out = test(
             """
             tasks(0)
         """
@@ -2134,7 +2133,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool15_max_err() {
-        val out = all(
+        val out = test(
             """
             tasks(nil)
         """
@@ -2145,7 +2144,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool16_max() {
-        val out = all(
+        val out = test(
             """
             var ts = tasks(1)
             var T = task () { yield(nil) }
@@ -2161,7 +2160,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool17_term() {
-        val out = all(
+        val out = test(
             """
             var ts
             set ts = tasks(2)
@@ -2195,7 +2194,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool18_throw() {
-        val out = all(
+        val out = test(
             """
             println(1)
             catch err==:ok {
@@ -2224,7 +2223,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool19_throw() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task (v) {
@@ -2244,7 +2243,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool20_throw() {
-        val out = all(
+        val out = test(
             """
             var ts
             set ts = tasks(2)
@@ -2278,7 +2277,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool21_throw() {
-        val out = all(
+        val out = test(
             """
             var ts
             set ts = tasks(2)
@@ -2312,7 +2311,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool22() {
-        val out = all("""
+        val out = test("""
             var ts
             set ts = tasks()
             println(type(ts))
@@ -2335,7 +2334,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool23_throw() {
-        val out = all(
+        val out = test(
             """
             spawn (task () {
                 catch err==:ok {
@@ -2354,7 +2353,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool24_term() {
-        val out = all(
+        val out = test(
             """
             var T
             set T = task () {
@@ -2373,7 +2372,7 @@ class Task_03 {
     }
     @Test
     fun todo_pool25_valgrind() {
-        val out = all(
+        val out = test(
             """
             var ts
             set ts = tasks(1)
@@ -2391,7 +2390,7 @@ class Task_03 {
     }
     @Test
     fun todo_ff_pool26_reuse_awake() {
-        val out = all(
+        val out = test(
             """
             var T = task (n) {
                 set task.pub = n
@@ -2425,7 +2424,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool27_term() {
-        val out = all("""
+        val out = test("""
             var T = task () {
                 spawn task () {
                     yield(nil)
@@ -2447,7 +2446,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool28_val() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -2464,7 +2463,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool29_val() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -2482,7 +2481,7 @@ class Task_03 {
     }
     @Test
     fun ff_pool30_scope() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var ts = tasks()
             spawn in ts, T()
@@ -2501,7 +2500,7 @@ class Task_03 {
 
     @Test
     fun gg_evt_hld1_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2525,7 +2524,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld1_1_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2548,7 +2547,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld2_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2572,7 +2571,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld2a() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2596,7 +2595,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld3() {
-        val out = all(
+        val out = test(
         """
             var fff
             set fff = func (x) { x }
@@ -2621,7 +2620,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld4() {
-        val out = all(
+        val out = test(
             """
             var fff
             set fff = func (x) { x }
@@ -2645,7 +2644,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt45() {
-        val out = all(
+        val out = test(
             """
             spawn task () {
                 println(111)
@@ -2661,7 +2660,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt5() {
-        val out = all(
+        val out = test(
             """
             spawn task () {
                 xloop {
@@ -2676,7 +2675,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt6() {
-        val out = all(
+        val out = test(
             """
             spawn task () {
                 xloop {
@@ -2693,7 +2692,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt7_err() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = []
@@ -2708,7 +2707,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld8_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2732,7 +2731,7 @@ class Task_03 {
     }
     @Test
     fun gg_evt_hld9_err() {
-        val out = all(
+        val out = test(
             """
             var tk
             set tk = task (xxx) {
@@ -2753,7 +2752,7 @@ class Task_03 {
 
     @Test
     fun hh_pub1_err() {
-        val out = all("""
+        val out = test("""
             var a
             a.pub
         """, true)
@@ -2761,7 +2760,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub2_err() {
-        val out = all("""
+        val out = test("""
             task.pub
         """, true)
         //assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
@@ -2769,7 +2768,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub3() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task (v1) {
                 set task.pub = v1
@@ -2786,7 +2785,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub4_err() {
-        val out = all("""
+        val out = test("""
             val t = task () {
                 set task.pub = []
             }
@@ -2800,7 +2799,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub4a_err() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 set task.pub = []
                 yield(nil)
@@ -2821,7 +2820,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub5() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 set task.pub = 10
@@ -2833,7 +2832,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub56_pool() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]  ;; valgrind test
@@ -2846,7 +2845,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub562_pool() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 pass task.pub ;; useless test
@@ -2859,7 +2858,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub6_pool() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -2877,7 +2876,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub7_pool_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -2898,7 +2897,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub8_fake_task() {
-        val out = all("""
+        val out = test("""
             spawn (task () {
                 set task.pub = 1
                 spawn (task () :fake {
@@ -2911,7 +2910,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub9_fake_task_err() {
-        val out = all("""
+        val out = test("""
             spawn (task () {
                 set task.pub = []
                 var x
@@ -2932,7 +2931,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub9_10_fake_task() {
-        val out = all("""
+        val out = test("""
             spawn (task () {
                 set task.pub = [10]
                 var x
@@ -2946,7 +2945,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub10_fake_err() {
-        val out = all("""
+        val out = test("""
             spawn (task () :fake {
                 task.pub
             }) ()
@@ -2956,7 +2955,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub11_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -2976,7 +2975,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub12_index_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -2991,7 +2990,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub13_index_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -3005,7 +3004,7 @@ class Task_03 {
     }
     @Test
     fun pub14_index_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [[@[(:x,10)]]]
@@ -3019,7 +3018,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub15_task() {
-        val out = all("""
+        val out = test("""
         spawn task () :fake { 
             var y
             set y = do {     
@@ -3042,7 +3041,7 @@ class Task_03 {
     }
     @Test
     fun hh_pub15a_task_err() {
-        val out = all("""
+        val out = test("""
         spawn task () :fake { 
             var y
             set y = do {     
@@ -3067,7 +3066,7 @@ class Task_03 {
     }
     @Test
     fun todo_hh_pub16_err() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task (v) {
                 set task.pub = v
@@ -3091,7 +3090,7 @@ class Task_03 {
     }
     @Test
     fun hh_17_pub_out() {
-        val out = all("""
+        val out = test("""
             var t = task () {
                 set task.pub = []
                 yield(nil)
@@ -3105,7 +3104,7 @@ class Task_03 {
     }
     @Test
     fun hh_18_pub_out_err() {
-        val out = all("""
+        val out = test("""
             var t = task () {
                 set task.pub = []
                 task.pub
@@ -3120,7 +3119,7 @@ class Task_03 {
     }
     @Test
     fun hh_19_pub_tasks_tup() {
-        val out = all("""
+        val out = test("""
             val tup = []
             val T = task () {
                 set task.pub = tup
@@ -3135,7 +3134,7 @@ class Task_03 {
     }
     @Test
     fun hh_20_pub_pass() {
-        val out = all("""
+        val out = test("""
             val S = task (t) {
                 println(t)
                 yield(nil)
@@ -3154,7 +3153,7 @@ class Task_03 {
 
     @Test
     fun ii_status1_err() {
-        val out = all("""
+        val out = test("""
             var a
             status(a)
         """, true)
@@ -3162,7 +3161,7 @@ class Task_03 {
     }
     @Test
     fun ii_status2_err() {
-        val out = all("""
+        val out = test("""
             status(task)
         """, true)
         //assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
@@ -3170,7 +3169,7 @@ class Task_03 {
     }
     @Test
     fun ii_status3_err() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 set status(task) = nil     ;; error: cannot assign to status
@@ -3180,7 +3179,7 @@ class Task_03 {
     }
     @Test
     fun ii_status4() {
-        val out = all("""
+        val out = test("""
             var t
             set t = coro () {
                 println(10, status(coro))
@@ -3201,7 +3200,7 @@ class Task_03 {
     }
     @Test
     fun todo_ii_status5() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (x) {
                 println(10, status(task))
@@ -3236,7 +3235,7 @@ class Task_03 {
 
     @Test
     fun todo_jj_toggle1() { // should be rt error
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -3251,14 +3250,14 @@ class Task_03 {
     }
     @Test
     fun jj_toggle2_err() {
-        val out = all("""
+        val out = test("""
             toggle 1 (true)
         """)
         assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled coroutine\n:error\n") { out }
     }
     @Test
     fun jj_toggle3_coro() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -3277,7 +3276,7 @@ class Task_03 {
     }
     @Test
     fun jj_toggle4_tasks() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -3297,7 +3296,7 @@ class Task_03 {
     }
     @Test
     fun jj_toggle5_defer() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 defer {
@@ -3317,7 +3316,7 @@ class Task_03 {
     }
     @Test
     fun jj_toggle6_defer_tasks() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 defer {
@@ -3341,7 +3340,7 @@ class Task_03 {
 
     @Test
     fun kk_esc1_err() {
-        val out = all("""
+        val out = test("""
             var f
             set f = func () {
                 coroutine(coro() {nil})
@@ -3354,7 +3353,7 @@ class Task_03 {
     }
     @Test
     fun kk_esc2() {
-        val out = all("""
+        val out = test("""
             var T
             set T = coro () { nil }
             var xxx
@@ -3371,7 +3370,7 @@ class Task_03 {
 
     @Test
     fun ll_track1_err() {
-        val out = all("""
+        val out = test("""
             track(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : track(nil)\n" +
@@ -3380,7 +3379,7 @@ class Task_03 {
     }
     @Test
     fun ll_track2() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var t = spawn T()
             var x = track(t)
@@ -3390,7 +3389,7 @@ class Task_03 {
     }
     @Test
     fun ll_track2a() {
-        val out = all("""
+        val out = test("""
             var T = task () { yield(nil) }
             var t = spawn T ()
             var x = track(t)
@@ -3402,7 +3401,7 @@ class Task_03 {
     }
     @Test
     fun ll_track3_err() {
-        val out = all("""
+        val out = test("""
             var T = task () { nil }
             var t = spawn T()
             var x
@@ -3416,7 +3415,7 @@ class Task_03 {
     }
     @Test
     fun ll_track4() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 yield(nil)
@@ -3433,7 +3432,7 @@ class Task_03 {
     }
     @Test
     fun ll_track5_err() {
-        val out = all("""
+        val out = test("""
             var x
             set x = nil
             println(x.pub)  ;; not coro/track()
@@ -3442,7 +3441,7 @@ class Task_03 {
     }
     @Test
     fun ll_track5_err2() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -3457,7 +3456,7 @@ class Task_03 {
     }
     @Test
     fun ll_track6_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () { yield(nil) }
             var x
@@ -3474,7 +3473,7 @@ class Task_03 {
     }
     @Test
     fun ll_track7() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -3490,7 +3489,7 @@ class Task_03 {
     }
     @Test
     fun ll_track8_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task () {
                 set task.pub = [10]
@@ -3511,7 +3510,7 @@ class Task_03 {
     }
     @Test
     fun ll_track09_err() {
-        val out = all("""
+        val out = test("""
             var T = task (v) {
                 yield(nil)
             }
@@ -3528,7 +3527,7 @@ class Task_03 {
     }
     @Test
     fun ll_track09() {
-        val out = all("""
+        val out = test("""
             var T = task (v) {
                 set task.pub = [v]
                 yield(nil)
@@ -3548,7 +3547,7 @@ class Task_03 {
     }
     @Test
     fun ll_track10() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 set task.pub = [v]
@@ -3573,7 +3572,7 @@ class Task_03 {
     }
     @Test
     fun ll_track11_err() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 set task.pub = [v]
@@ -3594,7 +3593,7 @@ class Task_03 {
     }
     @Test
     fun ll_track12_throw() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 yield(nil)
@@ -3615,7 +3614,7 @@ class Task_03 {
     }
     @Test
     fun ll_track13_throw() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (v) {
                 set task.pub = [v]
@@ -3640,7 +3639,7 @@ class Task_03 {
     }
     @Test
     fun ll_track14() {
-        val out = all("""
+        val out = test("""
             var T = task () {
                 set task.pub = [10]
                 ${await("evt==:evt")}
@@ -3668,7 +3667,7 @@ class Task_03 {
     }
     @Test
     fun ll_track15_simplify() {
-        val out = all("""
+        val out = test("""
             var T = task (v) {
                 yield(nil)
             }
@@ -3686,7 +3685,7 @@ class Task_03 {
     }
     @Test
     fun ll_track16_hold_err() {
-        val out = all("""
+        val out = test("""
             var T = task (v) {
                 yield(nil)
             }
@@ -3703,7 +3702,7 @@ class Task_03 {
     }
     @Test
     fun ll_17_detrack_err() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -3721,7 +3720,7 @@ class Task_03 {
     }
     @Test
     fun ll_18_track_scope() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -3737,7 +3736,7 @@ class Task_03 {
     }
     @Test
     fun ll_19_track_scope() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 set task.pub = 1
                 yield(nil)
@@ -3752,7 +3751,7 @@ class Task_03 {
     }
     @Test
     fun ll_20_track_scope() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 set task.pub = 1
                 yield(nil)
@@ -3771,7 +3770,7 @@ class Task_03 {
 
     @Test
     fun mm_01_data_await() {
-        val out = all("""
+        val out = test("""
             data :E = [x,y]
             spawn task () {
                 var evt :E
@@ -3784,7 +3783,7 @@ class Task_03 {
     }
     @Test
     fun mm_02_data_await() {
-        val out = all("""
+        val out = test("""
             data :E = [x,y]
             data :F = [i,j]
             spawn task () {
@@ -3802,14 +3801,14 @@ class Task_03 {
     }
     @Test
     fun mm_03_data_pub_err() {
-        val out = all("""
+        val out = test("""
             task () :T { nil }
         """, true)
         assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared") { out }
     }
     @Test
     fun mm_04_data_pub() {
-        val out = all("""
+        val out = test("""
             data :T = [x,y]
             spawn task () :T {
                 set task.pub = [10,20]
@@ -3820,7 +3819,7 @@ class Task_03 {
     }
     @Test
     fun mm_05_data_pub_err() {
-        val out = all("""
+        val out = test("""
             var t = spawn task () { nil } ()
             println(t.pub.y)
         """, true)
@@ -3829,7 +3828,7 @@ class Task_03 {
     }
     @Test
     fun mm_06_data_pub() {
-        val out = all("""
+        val out = test("""
             data :T = [x,y]
             var t :T = spawn task () {
                 set task.pub = [10,20]
@@ -3841,7 +3840,7 @@ class Task_03 {
     }
     @Test
     fun todo_mm_07_data_pub() {
-        val out = all("""
+        val out = test("""
             data :T = [x,y]
             var t :T = spawn task () {
                 set task.pub = [10,20]
@@ -3855,7 +3854,7 @@ class Task_03 {
     }
     @Test
     fun todo_mm_08_data_pool_pub() {
-        val out = all("""
+        val out = test("""
             data :T = [x,y]
             var ts = tasks()
             spawn in ts, task () {
@@ -3870,7 +3869,7 @@ class Task_03 {
     }
     @Test
     fun mm_09_data_pool_pub() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 set task.pub.x = 10
                 nil
@@ -3885,7 +3884,7 @@ class Task_03 {
 
     @Test
     fun nn_01_expose_err() {
-        val out = all("""
+        val out = test("""
             var t = task () {
                 set task.pub = []
                 yield(nil)
@@ -3900,7 +3899,7 @@ class Task_03 {
     }
     @Test
     fun nn_02_expose_err() {
-        val out = all("""
+        val out = test("""
             var f = func (t) {
                 var p = t.pub   ;; ok
                 set p = t.pub   ;; ok
@@ -3928,7 +3927,7 @@ class Task_03 {
     }
     @Test
     fun nn_03_expose_err() {
-        val out = all("""
+        val out = test("""
             var f = func (t) {
                 var p = t.pub   ;; ok
                 p               ;; ok
@@ -3951,7 +3950,7 @@ class Task_03 {
     }
     @Test
     fun nn_04_expose_err() {
-        val out = all("""
+        val out = test("""
             var p
             var f = func (t) {
                 set p = t.pub   ;; no
@@ -3971,7 +3970,7 @@ class Task_03 {
     }
     @Test
     fun nn_05_expose() {
-        val out = all("""
+        val out = test("""
             var T = task (t) {
                 set task.pub = []
                 if t {
@@ -3993,7 +3992,7 @@ class Task_03 {
     }
     @Test
     fun nn_06_expose() {
-        val out = all("""
+        val out = test("""
             val f = func (t) { false }
             val T = task () {
                 set task.pub = []
@@ -4019,7 +4018,7 @@ class Task_03 {
     }
     @Test
     fun nn_09_throw_track() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 set task.pub = 10
                 yield(nil)
@@ -4038,7 +4037,7 @@ class Task_03 {
     }
     @Test
     fun nn_10_throw_track() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -4057,7 +4056,7 @@ class Task_03 {
     }
     @Test
     fun nn_11_throw_track() {
-        val out = all("""
+        val out = test("""
             val T = task () {
                 yield(nil)
             }
@@ -4075,7 +4074,7 @@ class Task_03 {
 
     @Test
     fun nn_pub17_err_expose() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 set task.pub = []
@@ -4091,7 +4090,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub18_err_expose() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 set task.pub = @[]
@@ -4107,7 +4106,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub19_err_expose() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task () {
                 set task.pub = #[]
@@ -4122,7 +4121,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub20_func() {
-        val out = all("""
+        val out = test("""
             var t
             set t = task (v) {
                 set task.pub = v
@@ -4138,7 +4137,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub21_func_expose() {
-        val out = all("""
+        val out = test("""
             var t = task (v) {
                 set task.pub = v
                 var f = func () {
@@ -4155,7 +4154,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub_22_nopub() {
-        val out = all("""
+        val out = test("""
             var U
             set U = task () {
                 set task.pub = func () {
@@ -4174,7 +4173,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub_23_nopub() {
-        val out = all("""
+        val out = test("""
             var U
             set U = task () {
                 set task.pub = [10]
@@ -4191,7 +4190,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub_24_nopub() {
-        val out = all("""
+        val out = test("""
             var U
             set U = task () {
                 var x
@@ -4208,7 +4207,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub25() {
-        val out = all("""
+        val out = test("""
             var t = task (v) {
                 set task.pub = @[]
                 nil
@@ -4220,7 +4219,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub26_pool_err() {
-        val out = all("""
+        val out = test("""
             var T = task () {
                 set task.pub = [10]
                 yield(nil)
@@ -4240,7 +4239,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub27_func_expose() {
-        val out = all("""
+        val out = test("""
             var t = task (v) {
                 set task.pub = v
                 var f = func (p) {
@@ -4257,7 +4256,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub28_func_tst() {
-        val out = all("""
+        val out = test("""
             var t = task (v) {
                 set task.pub = v
                 var xxx
@@ -4270,7 +4269,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub30_pool_err() {
-        val out = all("""
+        val out = test("""
             var T = task () {
                 set task.pub = [10]
                 yield(nil)
@@ -4295,7 +4294,7 @@ class Task_03 {
     }
     @Test
     fun nn_pub31_func_expose() {
-        val out = all("""
+        val out = test("""
             var f = func (t) {
                 t.pub
             }
@@ -4319,7 +4318,7 @@ class Task_03 {
 
     @Test
     fun zz_xceu1() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 spawn (task () {
                     yield(nil)
@@ -4334,7 +4333,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu2() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 yield(nil)
                 println(evt)
@@ -4354,7 +4353,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu3() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 yield(nil)
                 println(evt)
@@ -4374,7 +4373,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu4() {
-        val out = all("""
+        val out = test("""
             catch true {
                 spawn task () :fake {
                     throw([tags([],:x,true)])
@@ -4387,7 +4386,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu5() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 catch err==:or {
                     spawn task () {
@@ -4415,7 +4414,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu6() {
-        val out = all("""
+        val out = test("""
             var T
             set T = task (pos) {
                 yield(nil)
@@ -4436,7 +4435,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu7() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 do {
                     spawn task () {
@@ -4454,7 +4453,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu8() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 do {
                     spawn task () {
@@ -4471,7 +4470,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu9 () {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 do {
                     spawn task () {
@@ -4491,7 +4490,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu10 () {
-        val out = all("""
+        val out = test("""
             ;;println(:blk0, `:pointer ceu_block`)
             spawn task () {
                 ;;println(:cor1, `:pointer ceu_x`)
@@ -4524,7 +4523,7 @@ class Task_03 {
     }
     @Test
     fun zz_xceu11 () {
-        val out = all("""
+        val out = test("""
             data :X = [x]
             task () :X {
                 task () :fake {
@@ -4537,7 +4536,7 @@ class Task_03 {
     }
     @Test
     fun zz_12_kill() {
-        val out = all("""
+        val out = test("""
             spawn task () {
                 do {
                     val t1 = spawn task () {

@@ -1,6 +1,7 @@
 package tst_01
 
 import dceu.*
+import org.junit.BeforeClass
 import org.junit.Test
 
 fun lexer (str: String): Lexer {
@@ -8,6 +9,15 @@ fun lexer (str: String): Lexer {
 }
 
 class Lexer_01 {
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        internal fun reset () {
+            CEU = 1
+            DUMP = true
+        }
+    }
+
     @Test
     fun syms() {
         val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")

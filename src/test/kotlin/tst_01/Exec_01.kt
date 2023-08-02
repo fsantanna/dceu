@@ -1,71 +1,28 @@
 package tst_01
 
 import dceu.*
+import org.junit.BeforeClass
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.File
 
-// search in tests output for
-//  definitely|Invalid read|Invalid write|uninitialised|uninitialized
-//  - definitely lost
-//  - Invalid read of size
-//  - uninitialised value
-val VALGRIND = ""
-//val VALGRIND = "valgrind "
-val THROW = false
-//val THROW = true
-
-fun all (inp: String, pre: Boolean=false): String {
-    val prelude = if (CEU == 3) "build/xprelude.ceu" else "build/cprelude.ceu"
-    val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
-        listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
-    }
-    val lexer = Lexer(inps)
-    val parser = Parser(lexer)
-    val es = try {
-        parser.exprs()
-    } catch (e: Throwable) {
-        if (THROW) {
-            throw e
-        }
-        return e.message!!
-    }
-    //println(es)
-    //println(es.map { it.tostr(false)+"\n" }.joinToString(""))
-    val c = try {
-        val outer = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
-        val ups   = Ups(outer)
-        val tags  = Tags(outer)
-        val vars  = Vars(outer, ups)
-        val clos  = Clos(outer, ups, vars)
-        val sta   = Static(outer, ups, vars)
-        val coder = Coder(outer, ups, vars, clos, sta)
-        coder.main(tags)
-    } catch (e: Throwable) {
-        if (THROW) {
-            throw e
-        }
-        return e.message!!
-    }
-    File("out.c").writeText(c)
-    val (ok2, out2) = exec("gcc -Werror out.c -lm -o out.exe")
-    if (!ok2) {
-        return out2
-    }
-    val (_, out3) = exec("$VALGRIND./out.exe")
-    //println(out3)
-    return out3
-}
-
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_01 {
+    companion object {
+        @BeforeClass
+        @JvmStatic
+        internal fun reset () {
+            CEU = 1
+            DUMP = true
+        }
+    }
 
     // PRINT
 
     @Test
     fun aa_print1() {
-        val out = all(
+        val out = test(
             """
             print([10])
         """
@@ -74,7 +31,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print2() {
-        val out = all(
+        val out = test(
             """
             print(10)
             println(20)
@@ -84,7 +41,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print3a() {
-        val out = all(
+        val out = test(
             """
             println(func () { nil })
         """
@@ -93,7 +50,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print3b() {
-        val out = all(
+        val out = test(
             """
             println([[],[1,2,3]])
             println(func () { nil })
@@ -103,7 +60,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print34() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = (func () { nil })
@@ -119,7 +76,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print_err1() {
-        val out = all(
+        val out = test(
             """
             println(1)
         """
@@ -128,7 +85,7 @@ class Exec_01 {
     }
     @Test
     fun aa_print_err2() {
-        val out = all(
+        val out = test(
             """
             print(1)
             print()
@@ -141,17 +98,17 @@ class Exec_01 {
     }
     @Test
     fun aa_print4() {
-        val out = all("print(nil)")
+        val out = test("print(nil)")
         assert(out == "nil") { out }
     }
     @Test
     fun aa_print5() {
-        val out = all("print(true)")
+        val out = test("print(true)")
         assert(out == "true") { out }
     }
     @Test
     fun aa_print6() {
-        val out = all("println(false)")
+        val out = test("println(false)")
         assert(out == "false\n") { out }
     }
 
@@ -159,7 +116,7 @@ class Exec_01 {
 
     @Test
     fun bb_var1() {
-        val out = all(
+        val out = test(
             """
             var v
             print(v)
@@ -169,7 +126,7 @@ class Exec_01 {
     }
     @Test
     fun bb_var2() {
-        val out = all(
+        val out = test(
             """
             var vvv = 1
             print(vvv)
@@ -179,7 +136,7 @@ class Exec_01 {
     }
     @Test
     fun bb_var3() {
-        val out = all(
+        val out = test(
             """
             var this-is-a-var = 1
             print(this-is-a-var)
@@ -189,7 +146,7 @@ class Exec_01 {
     }
     @Test
     fun bb_var4_kebab_amb() {
-        val out = all(
+        val out = test(
             """
             var x = 10
             var y = 5
@@ -197,11 +154,11 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 4, col 21) : access error : \"x-y\" is ambiguous with \"x\"") { out }
-        assert(out == "anon : (lin 4, col 21) : access error : variable \"x-y\" is not declared") { out }
+        assert(out == "anon : (lin 4, col 21) : access error : variable \"x-y\" is not declared\n") { out }
     }
     @Test
     fun bb_var5_kebab_amb() {
-        val out = all(
+        val out = test(
             """
             var x = 10
             val y-z = 5
@@ -209,21 +166,21 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 4, col 21) : access error : \"h-y-z\" is ambiguous with \"y-z\"") { out }
-        assert(out == "anon : (lin 4, col 21) : access error : variable \"h-y-z\" is not declared") { out }
+        assert(out == "anon : (lin 4, col 21) : access error : variable \"h-y-z\" is not declared\n") { out }
     }
     @Test
     fun bb_06_val() {
-        val out = all(
+        val out = test(
             """
             val v
             set v = 10
         """
         )
-        assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable\n") { out }
     }
     @Test
     fun bb_07_und() {
-        val out = all(
+        val out = test(
             """
             val _ = 10
             println(_)
@@ -233,7 +190,7 @@ class Exec_01 {
     }
     @Test
     fun bb_08_und() {
-        val out = all(
+        val out = test(
             """
             do {
                 val _ = println(10)
@@ -248,7 +205,7 @@ class Exec_01 {
     }
     @Test
     fun bb_09_nested_var() {
-        val out = all(
+        val out = test(
             """
             val x = do {
                 val x = 10
@@ -261,7 +218,7 @@ class Exec_01 {
     }
     @Test
     fun bb_10_var() {
-        val out = all(
+        val out = test(
             """
             do {
                 val x = println(10)
@@ -276,17 +233,17 @@ class Exec_01 {
 
     @Test
     fun cc_index01_err() {
-        val out = all(
+        val out = test(
             """
             [1,2,3][1]
             nil
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression") { out }
+        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
     }
     @Test
     fun cc_index01() {
-        val out = all(
+        val out = test(
             """
             pass [1,2,3][1]
             println(1)
@@ -296,7 +253,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index011() {
-        val out = all(
+        val out = test(
             """
             println([1,2,3][1])
         """
@@ -305,7 +262,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index_err01() {
-        val out = all(
+        val out = test(
             """
             println([1,[2],3][1])   ;; [2] is at block, not at call arg // index made it outside call
         """
@@ -314,7 +271,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index_err1() {
-        val out = all(
+        val out = test(
             """
             println(1[1])
         """.trimIndent()
@@ -323,7 +280,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index_err2() {
-        val out = all(
+        val out = test(
             """
             println([1][[]])
         """.trimIndent()
@@ -332,7 +289,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index23() {
-        val out = all(
+        val out = test(
             """
             println([[1]][[0][0]])
         """.trimIndent()
@@ -341,7 +298,7 @@ class Exec_01 {
     }
     @Test
     fun cc_index_err3() {
-        val out = all(
+        val out = test(
             """
             println([1][2])
         """.trimIndent()
@@ -351,7 +308,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple4_free() {
-        val out = all(
+        val out = test(
             """
             pass [1,2,3]
             println(1)
@@ -361,7 +318,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple46_free() {
-        val out = all(
+        val out = test(
             """
             pass [[]]
             println(1)
@@ -371,7 +328,7 @@ class Exec_01 {
     }
     @Test
     fun cc_vec_free() {
-        val out = all(
+        val out = test(
             """
             pass #[]
             println(1)
@@ -381,7 +338,7 @@ class Exec_01 {
     }
     @Test
     fun cc_dic_free() {
-        val out = all(
+        val out = test(
             """
             pass @[]
             println(1)
@@ -391,7 +348,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple45_free() {
-        val out = all(
+        val out = test(
             """
             pass [1,2,3][1]
             println(1)
@@ -401,7 +358,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple5_free() {
-        val out = all(
+        val out = test(
             """
             val f = func () { nil }
             f([1,2,3])
@@ -412,7 +369,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple56_free() {
-        val out = all(
+        val out = test(
             """
             val x = do {
                 [1]
@@ -424,7 +381,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple6a_free() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (v) {
@@ -441,7 +398,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple6_free() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (v) {
@@ -459,7 +416,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple7_hold_err() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (v) {
@@ -478,7 +435,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple8_hold_err() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (v) {
@@ -496,7 +453,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple9_hold_err() {
-        val out = all(
+        val out = test(
             """
             do {
                 var x
@@ -511,7 +468,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple10_hold_err() {
-        val out = all(
+        val out = test(
             """
             println(do {
                 var xxx
@@ -527,7 +484,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple14_drop_out() {
-        val out = all(
+        val out = test(
             """
             val out = do {
                 val ins = [1,2,3]
@@ -540,7 +497,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple15_call_scope() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 v
@@ -555,7 +512,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple15x_call_scope() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 v
@@ -567,7 +524,7 @@ class Exec_01 {
     }
     @Test
     fun cc_tuple16_drop() {
-        val out = all(
+        val out = test(
             """
             val v = do {
                 drop([[1,2]])
@@ -580,7 +537,7 @@ class Exec_01 {
     }
     @Test
     fun cc_vector17_drop() {
-        val out = all(
+        val out = test(
             """
             val ttt = #[#[1,2]]
             println(ttt)
@@ -590,7 +547,7 @@ class Exec_01 {
     }
     @Test
     fun cc_dict18_drop() {
-        val out = all(
+        val out = test(
             """
             val v = do {
                 @[(:v,@[(:v,2)])]
@@ -602,7 +559,7 @@ class Exec_01 {
     }
     @Test
     fun cc_vector19_print() {
-        val out = all(
+        val out = test(
             """
             println(#[#[1,2]])
         """
@@ -611,7 +568,7 @@ class Exec_01 {
     }
     @Test
     fun cc_vector20() {
-        val out = all(
+        val out = test(
             """
             val v = #[10]
             println(v[#v - 1])
@@ -621,7 +578,7 @@ class Exec_01 {
     }
     @Test
     fun cc_24_tuple() {
-        val out = all(
+        val out = test(
             """
             val t = tuple(3)
             println(t)
@@ -636,7 +593,7 @@ class Exec_01 {
 
     @Test
     fun cm_00_drop () {
-        val out = all(
+        val out = test(
             """
             val f = func () {
                 [0,'a']
@@ -648,7 +605,7 @@ class Exec_01 {
     }
     @Test
     fun cm_01_drop () {
-        val out = all(
+        val out = test(
             """
             val f = func () {
                 [0,'a']
@@ -664,7 +621,7 @@ class Exec_01 {
     }
     @Test
     fun cm_01x_drop () {
-        val out = all(
+        val out = test(
             """
             val g = do {
                 val v = do {
@@ -680,7 +637,7 @@ class Exec_01 {
     }
     @Test
     fun cm_02_drop () {
-        val out = all(
+        val out = test(
             """
             val t = [[1]]
             val s = drop(t[0])
@@ -694,7 +651,7 @@ class Exec_01 {
     }
     @Test
     fun cm_03_drop() {
-        val out = all(
+        val out = test(
             """
         var t = []
         do {
@@ -709,7 +666,7 @@ class Exec_01 {
     }
     @Test
     fun cm_04_dots() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 var x = [...]
@@ -723,7 +680,7 @@ class Exec_01 {
     }
     @Test
     fun cm_04() {
-        val out = all(
+        val out = test(
             """
             var f = func (t) {
                 var x = [drop(t)]
@@ -736,7 +693,7 @@ class Exec_01 {
     }
     @Test
     fun cm_05() {
-        val out = all(
+        val out = test(
             """
             val t1 = [1]
             val t2 = [drop(t1)]
@@ -748,7 +705,7 @@ class Exec_01 {
     }
     @Test
     fun cc_07_global() {
-        val out = all(
+        val out = test(
             """
         val e = func () {nil}
         val g = func () {
@@ -763,7 +720,7 @@ class Exec_01 {
     }
     @Test
     fun cc_08_drop() {
-        val out = all(
+        val out = test(
             """
             val F = func (^x) {
                 func () {
@@ -781,7 +738,7 @@ class Exec_01 {
     }
     @Test
     fun cc_09_drop_nest() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 ;; consumes v
@@ -798,7 +755,7 @@ class Exec_01 {
     }
     @Test
     fun cc_10_drop_multi_err() {
-        val out = all("""
+        val out = test("""
             val x = do {
                 val t1 = [1,2,3]
                 val t2 = t1
@@ -811,7 +768,7 @@ class Exec_01 {
     }
     @Test
     fun cc_11_drop_deep() {
-        val out = all("""
+        val out = test("""
             do {
                 val t1 = [1]
                 do {
@@ -825,7 +782,7 @@ class Exec_01 {
     }
     @Test
     fun cc_12_drop_deep() {
-        val out = all("""
+        val out = test("""
             do {
                 val t1 = [1]
                 val t2 = t1
@@ -840,7 +797,7 @@ class Exec_01 {
     }
     @Test
     fun cc_13_drop_cycle() {
-        val out = all(
+        val out = test(
             """
             val z = do {
                 var x = [nil]
@@ -855,7 +812,7 @@ class Exec_01 {
     }
     @Test
     fun cc_14_drop_cycle() {
-        val out = all(
+        val out = test(
             """
             val z = do {
                 var x = [nil]
@@ -874,7 +831,7 @@ class Exec_01 {
 
     @Test
     fun dd_dict0() {
-        val out = all(
+        val out = test(
             """
             println(@[(:key,:val)])
         """
@@ -883,7 +840,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict1() {
-        val out = all(
+        val out = test(
             """
             println(type(@[(1,2)]))
             println(@[(1,2)])
@@ -893,7 +850,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict2() {
-        val out = all(
+        val out = test(
             """
             val t = @[(:x,1)]
             println(t[:x])
@@ -903,7 +860,7 @@ class Exec_01 {
     }
     @Test
     fun dict7_init() {
-        val out = all("""
+        val out = test("""
             var t = @[x=1, y=2]
             println(t.x, t.y)
         """)
@@ -911,7 +868,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict3() {
-        val out = all(
+        val out = test(
             """
             val t = @[(:x,1)]
             println(t[:y])
@@ -921,7 +878,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict4() {
-        val out = all(
+        val out = test(
             """
             val t = @[(:x,1)]
             set t[:x] = 2
@@ -932,7 +889,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict5() {
-        val out = all(
+        val out = test(
             """
             val t = @[]
             set t[:x] = 1
@@ -944,7 +901,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict9_next() {
-        val out = all(
+        val out = test(
             """
             val t = @[]
             set t[:x] = 1
@@ -962,7 +919,7 @@ class Exec_01 {
     }
     @Test
     fun dd_dict10_next() {
-        val out = all(
+        val out = test(
             """
             val t = @[]
             set t[:x] = 1
@@ -985,7 +942,7 @@ class Exec_01 {
     }
     @Test
     fun dd_11_dict_set() {
-        val out = all(
+        val out = test(
             """
             val v = @[]
             do {
@@ -998,7 +955,7 @@ class Exec_01 {
     }
     @Test
     fun dd_12_dict_set_err() {
-        val out = all(
+        val out = test(
             """
             val v = @[]
             do {
@@ -1016,7 +973,7 @@ class Exec_01 {
 
     @Test
     fun ee_vector1() {
-        val out = all(
+        val out = test(
             """
             println(#[])
         """
@@ -1025,7 +982,7 @@ class Exec_01 {
     }
     @Test
     fun vector2() {
-        val out = all(
+        val out = test(
             """
             println(type(#[]))
             println(#[1,2,3])
@@ -1035,7 +992,7 @@ class Exec_01 {
     }
     @Test
     fun vector3_err() {
-        val out = all(
+        val out = test(
             """
             var v
             set v = #[]
@@ -1050,7 +1007,7 @@ class Exec_01 {
     }
     @Test
     fun vector4() {
-        val out = all(
+        val out = test(
             """
             println(#(#[1,2,3]))
         """
@@ -1059,7 +1016,7 @@ class Exec_01 {
     }
     @Test
     fun vector5() {
-        val out = all(
+        val out = test(
             """
             val v = #[1,2,3]
             println(#v, v)
@@ -1075,7 +1032,7 @@ class Exec_01 {
     }
     @Test
     fun vector6a_err() {
-        val out = all(
+        val out = test(
             """
             #[1,nil,3]  ;; v[2] = nil, but #v===1
         """
@@ -1084,7 +1041,7 @@ class Exec_01 {
     }
     @Test
     fun vector6b_err() {
-        val out = all(
+        val out = test(
             """
             #[1,'a',3]  ;; different type
         """
@@ -1093,7 +1050,7 @@ class Exec_01 {
     }
     @Test
     fun vector7_err() {
-        val out = all(
+        val out = test(
             """
             #1
         """
@@ -1102,7 +1059,7 @@ class Exec_01 {
     }
     @Test
     fun vector8_err() {
-        val out = all(
+        val out = test(
             """
             var v
             set v = #[1,2,3]
@@ -1114,16 +1071,16 @@ class Exec_01 {
     }
     @Test
     fun vector9_err() {
-        val out = all(
+        val out = test(
             """
             set #v = 0
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination\n") { out }
     }
     @Test
     fun vector13_add() {
-        val out = all(
+        val out = test(
             """
             do {       
                 val ceu_ifs_17 = true    
@@ -1141,17 +1098,17 @@ class Exec_01 {
     }
     @Test
     fun vector14_err() {
-        val out = all(
+        val out = test(
             """
             ;;val v
             set v[#v-1] = nil
         """, true
         )
-        assert(out == "anon : (lin 3, col 17) : access error : variable \"v\" is not declared") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"v\" is not declared\n") { out }
     }
     @Test
     fun vector15_err() {
-        val out = all(
+        val out = test(
             """
             val v
             v[#v-1]
@@ -1165,7 +1122,7 @@ class Exec_01 {
 
     @Test
     fun string1() {
-        val out = all(
+        val out = test(
             """
             val v = #['a','b','c']
             set v[#v] = 'a'
@@ -1182,7 +1139,7 @@ class Exec_01 {
 
     @Test
     fun dcl() {
-        val out = all(
+        val out = test(
             """
             val x
             println(x)
@@ -1192,7 +1149,7 @@ class Exec_01 {
     }
     @Test
     fun dcl_chars() {
-        val out = all(
+        val out = test(
             """
             val x'
             val f!
@@ -1206,17 +1163,17 @@ class Exec_01 {
     }
     @Test
     fun dcl_redeclaration_err() {
-        val out = all(
+        val out = test(
             """
             val x
             val x
         """
         )
-        assert(out == "anon : (lin 3, col 13) : declaration error : variable \"x\" is already declared") { out }
+        assert(out == "anon : (lin 3, col 13) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun todo_dcl4_dup() {
-        val out = all(
+        val out = test(
             """
             do {
                 val x
@@ -1235,7 +1192,7 @@ class Exec_01 {
 
     @Test
     fun set1() {
-        val out = all(
+        val out = test(
             """
             val x = [10]
             println(x)
@@ -1245,7 +1202,7 @@ class Exec_01 {
     }
     @Test
     fun set2() {
-        val out = all(
+        val out = test(
             """
             val x = [10,20,[30]]
             set x[1] = 22
@@ -1257,25 +1214,25 @@ class Exec_01 {
     }
     @Test
     fun set_err1() {
-        val out = all(
+        val out = test(
             """
             set 1 = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination\n") { out }
     }
     @Test
     fun set_err2() {
-        val out = all(
+        val out = test(
             """
             set [1] = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination\n") { out }
     }
     @Test
     fun set_index() {
-        val out = all(
+        val out = test(
             """
             val i = 1
             println([1,2,3][i])
@@ -1288,7 +1245,7 @@ class Exec_01 {
 
     @Test
     fun do1() {  // set whole tuple?
-        val out = all(
+        val out = test(
             """
             do { nil }
         """
@@ -1297,7 +1254,7 @@ class Exec_01 {
     }
     @Test
     fun do2() {
-        val out = all(
+        val out = test(
             """
             do {
                 val a = 1
@@ -1309,7 +1266,7 @@ class Exec_01 {
     }
     @Test
     fun do3() {
-        val out = all(
+        val out = test(
             """
             val x = do {
                 val a = 10
@@ -1322,7 +1279,7 @@ class Exec_01 {
     }
     @Test
     fun do4() {
-        val out = all(
+        val out = test(
             """
             val x = do {nil}
             println(x)
@@ -1332,7 +1289,7 @@ class Exec_01 {
     }
     @Test
     fun do5() {
-        val out = all(
+        val out = test(
             """
             do {
                 val x
@@ -1348,7 +1305,7 @@ class Exec_01 {
 
     @Test
     fun if5() {
-        val out = all(
+        val out = test(
             """
             if true {
                 val aaa = 10
@@ -1367,7 +1324,7 @@ class Exec_01 {
     }
     @Test
     fun export8() {
-        val out = all(
+        val out = test(
             """
             do {
                 val v = []
@@ -1389,7 +1346,7 @@ class Exec_01 {
 
     @Test
     fun scope1() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1402,7 +1359,7 @@ class Exec_01 {
     }
     @Test
     fun scope_err2() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1418,7 +1375,7 @@ class Exec_01 {
     }
     @Test
     fun scope4() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1437,7 +1394,7 @@ class Exec_01 {
     }
     @Test
     fun scope4x() {
-        val out = all(
+        val out = test(
             """
             val x = [0]
             do {
@@ -1451,7 +1408,7 @@ class Exec_01 {
     }
     @Test
     fun scope5_err() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1468,7 +1425,7 @@ class Exec_01 {
     }
     @Test
     fun scope6() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1484,7 +1441,7 @@ class Exec_01 {
     }
     @Test
     fun scope7() {
-        val out = all(
+        val out = test(
             """
             var xs
             set xs = do {
@@ -1497,7 +1454,7 @@ class Exec_01 {
     }
     @Test
     fun scope8_underscore() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1512,7 +1469,7 @@ class Exec_01 {
     }
     @Test
     fun scope8b_underscore() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1522,12 +1479,12 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"") { out }
+        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope8c_underscore() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1538,12 +1495,12 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
     fun scope9_err() {
-        val out = all(
+        val out = test(
             """
             var x
             do {
@@ -1557,7 +1514,7 @@ class Exec_01 {
     }
     @Test
     fun scope10_err() {
-        val out = all(
+        val out = test(
             """
             var out
             do {
@@ -1572,7 +1529,7 @@ class Exec_01 {
     }
     @Test
     fun scope11_err() {
-        val out = all(
+        val out = test(
             """
             var out
             do {
@@ -1587,7 +1544,7 @@ class Exec_01 {
     }
     @Test
     fun scope12_err() {
-        val out = all(
+        val out = test(
             """
             var out
             do {
@@ -1602,7 +1559,7 @@ class Exec_01 {
     }
     @Test
     fun scope13_tuple() {
-        val out = all(
+        val out = test(
             """
             val v = do {
                 val x = []
@@ -1616,7 +1573,7 @@ class Exec_01 {
     }
     @Test
     fun scope14_tmp_tuple() {
-        val out = all(
+        val out = test(
             """
             val :tmp x = [0]
             set x[0] = []
@@ -1627,7 +1584,7 @@ class Exec_01 {
     }
     @Test
     fun scope15_global_func() {
-        val out = all(
+        val out = test(
             """
             val f = func () { nil }
             val g = func (v) {
@@ -1644,7 +1601,7 @@ class Exec_01 {
     }
     @Test
     fun scope15x_global_func() {
-        val out = all(
+        val out = test(
             """
             val t = []
             val x = do {
@@ -1657,7 +1614,7 @@ class Exec_01 {
     }
     @Test
     fun scope16_glb_vs_tup() {
-        val out = all(
+        val out = test(
             """
             val g = func () { nil }
             val f = func (v) {
@@ -1675,7 +1632,7 @@ class Exec_01 {
     }
     @Test
     fun scope17_glb_vs_tup() {
-        val out = all(
+        val out = test(
             """
             val f = func () {
                 nil
@@ -1697,7 +1654,7 @@ class Exec_01 {
     }
     @Test
     fun scope19_tup() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t1 = []
@@ -1714,7 +1671,7 @@ class Exec_01 {
     }
     @Test
     fun scope19x_tup() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t1 = []
@@ -1730,7 +1687,7 @@ class Exec_01 {
     }
     @Test
     fun scope19_leak() {
-        val out = all(
+        val out = test(
             """
             val t1 = [9]
             do {
@@ -1743,7 +1700,7 @@ class Exec_01 {
     }
     @Test
     fun scope20_vec() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t1 = []
@@ -1760,7 +1717,7 @@ class Exec_01 {
     }
     @Test
     fun scope21_dict() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t1 = []
@@ -1777,7 +1734,7 @@ class Exec_01 {
     }
     @Test
     fun scope22a_tup() {
-        val out = all(
+        val out = test(
             """
             val d = [nil]
             do {
@@ -1791,7 +1748,7 @@ class Exec_01 {
     }
     @Test
     fun scope22b_vec() {
-        val out = all(
+        val out = test(
             """
             val d = [nil]
             do {
@@ -1805,7 +1762,7 @@ class Exec_01 {
     }
     @Test
     fun scope22c_dic() {
-        val out = all(
+        val out = test(
             """
             val d = @[]
             do {
@@ -1819,7 +1776,7 @@ class Exec_01 {
     }
     @Test
     fun scope22d_dic() {
-        val out = all(
+        val out = test(
             """
             val d = @[]
             do {
@@ -1833,7 +1790,7 @@ class Exec_01 {
     }
     @Test
     fun scope22x_dict() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t1 = []
@@ -1851,7 +1808,7 @@ class Exec_01 {
     }
     @Test
     fun scope22y_dict() {
-        val out = all(
+        val out = test(
             """
             val t1 = []
             val d = @[(t1,t1)]
@@ -1867,7 +1824,7 @@ class Exec_01 {
     }
     @Test
     fun scope22z_dict() {
-        val out = all(
+        val out = test(
             """
             val xxx = []
             val yyy = @[(xxx,xxx)]
@@ -1880,7 +1837,7 @@ class Exec_01 {
     }
     @Test
     fun scope22z_tuple() {
-        val out = all(
+        val out = test(
             """
             val xxx = [1]
             val yyy = [xxx,xxx]
@@ -1893,7 +1850,7 @@ class Exec_01 {
     }
     @Test
     fun scope26_args() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 [v, [2]]
@@ -1909,7 +1866,7 @@ class Exec_01 {
     }
     @Test
     fun scope26y_args() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 [v, [2]]
@@ -1923,7 +1880,7 @@ class Exec_01 {
     }
     @Test
     fun scope26z_args() {
-        val out = all(
+        val out = test(
             """
             val v = [1]
             val x = do {
@@ -1936,7 +1893,7 @@ class Exec_01 {
     }
     @Test
     fun scope26x_args() {
-        val out = all(
+        val out = test(
             """
             val f = func (v) {
                 [v, [2]]
@@ -1953,7 +1910,7 @@ class Exec_01 {
     }
     @Test
     fun scope27_glb_vs_tup() {
-        val out = all(
+        val out = test(
             """
             val f = func (t) {
                 val x = []
@@ -1969,7 +1926,7 @@ class Exec_01 {
     }
     @Test
     fun scope28() {
-        val out = all(
+        val out = test(
             """
             var f = func (v) {
                 [v]
@@ -1985,7 +1942,7 @@ class Exec_01 {
     }
     @Test
     fun scope29() {
-        val out = all("""
+        val out = test("""
             val f = func (v) {
                 v
             }
@@ -1998,7 +1955,7 @@ class Exec_01 {
     }
     @Test
     fun scope29x() {
-        val out = all("""
+        val out = test("""
             val f = func (v) {
                 v
             }
@@ -2011,7 +1968,7 @@ class Exec_01 {
     }
     @Test
     fun scope30() {
-        val out = all("""
+        val out = test("""
             val cycle = func (v) {
                 set v[3] = v
                 v
@@ -2032,19 +1989,19 @@ class Exec_01 {
 
     @Test
     fun if1_err() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = if (true) { 1 }
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "anon : (lin 4, col 13) : expected \"else\" : have \"println\"\n") { out }
         //assert(out == "1\n") { out }
     }
     @Test
     fun if2_err() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = 10
@@ -2052,12 +2009,12 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"") { out }
+        assert(out == "anon : (lin 5, col 13) : expected \"else\" : have \"println\"\n") { out }
         //assert(out == "nil\n") { out }
     }
     @Test
     fun if3_err() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = 10
@@ -2066,11 +2023,11 @@ class Exec_01 {
         """.trimIndent()
         )
         //assert(out == "anon : (lin 3, col 13) : if error : invalid condition\n") { out }
-        assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"") { out }
+        assert(out == "anon : (lin 3, col 19) : expected expression : have \"}\"\n") { out }
     }
     @Test
     fun if4_err() {
-        val out = all(
+        val out = test(
             """
             println(if [] {nil} else {nil})
         """.trimIndent()
@@ -2080,7 +2037,7 @@ class Exec_01 {
     }
     @Test
     fun if_hld() {
-        val out = all(
+        val out = test(
             """
             if [] {nil} else {nil}
             println(1)
@@ -2094,7 +2051,7 @@ class Exec_01 {
 
     @Test
     fun func1() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func () { nil }
@@ -2107,7 +2064,7 @@ class Exec_01 {
     }
     @Test
     fun func2() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func () {
@@ -2122,7 +2079,7 @@ class Exec_01 {
     }
     @Test
     fun func3() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (xxx) {
@@ -2138,7 +2095,7 @@ class Exec_01 {
     }
     @Test
     fun func4() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (x) {
@@ -2153,7 +2110,7 @@ class Exec_01 {
     }
     @Test
     fun func5_err() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (x) {
@@ -2169,12 +2126,12 @@ class Exec_01 {
     }
     @Test
     fun func7_err() {
-        val out = all("1(1)")
+        val out = test("1(1)")
         assert(out == "anon : (lin 1, col 1) : call error : expected function\n") { out }
     }
     @Test
     fun func8() {
-        val out = all(
+        val out = test(
             """
             pass 1
             pass (1)
@@ -2185,7 +2142,7 @@ class Exec_01 {
     }
     @Test
     fun func9() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (a,b) {
@@ -2201,16 +2158,16 @@ class Exec_01 {
     }
     @Test
     fun func10_err() {
-        val out = all(
+        val out = test(
             """
             f()
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : access error : variable \"f\" is not declared") { out }
+        assert(out == "anon : (lin 1, col 1) : access error : variable \"f\" is not declared\n") { out }
     }
     @Test
     fun func11() {
-        val out = all(
+        val out = test(
             """
             println(func (x) {
                 var fff
@@ -2226,7 +2183,7 @@ class Exec_01 {
     }
     @Test
     fun func12() {
-        val out = all(
+        val out = test(
             """
             var fff
             set fff = func (xxx) {
@@ -2242,7 +2199,7 @@ class Exec_01 {
     }
     @Test
     fun func13() {
-        val out = all(
+        val out = test(
             """
             func () {
                 var fff
@@ -2257,7 +2214,7 @@ class Exec_01 {
     }
     @Test
     fun func14() {
-        val out = all(
+        val out = test(
             """
             println(func (x) {
                 var fff
@@ -2273,7 +2230,7 @@ class Exec_01 {
     }
     @Test
     fun func15() {
-        val out = all(
+        val out = test(
             """
             func (xxx) {
                 println(xxx)
@@ -2287,7 +2244,7 @@ class Exec_01 {
     }
     @Test
     fun func16_print() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = println
@@ -2298,7 +2255,7 @@ class Exec_01 {
     }
     @Test
     fun func17_ff() {
-        val out = all(
+        val out = test(
             """
             var f
             f()()
@@ -2308,21 +2265,21 @@ class Exec_01 {
     }
     @Test
     fun func18_err_rec() {
-        val out = all(
+        val out = test(
             """
             val f = func () {
                 f()
             }
         """
         )
-        assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
 
     @Test
     fun nn_01_dots_tup() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 println(#..., ...[1])
@@ -2334,7 +2291,7 @@ class Exec_01 {
     }
     @Test
     fun nn_02_dots_err() {
-        val out = all(
+        val out = test(
             """
             var f = func () {
                 println(...)
@@ -2347,7 +2304,7 @@ class Exec_01 {
     }
     @Test
     fun nn_03_dots() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 println(...)
@@ -2359,7 +2316,7 @@ class Exec_01 {
     }
     @Test
     fun nn_04_dots_gc() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 println(...)
@@ -2372,7 +2329,7 @@ class Exec_01 {
     }
     @Test
     fun nn_05_dots() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 println(...)
@@ -2384,7 +2341,7 @@ class Exec_01 {
     }
     @Test
     fun nn_06_dots_tup() {
-        val out = all(
+        val out = test(
             """
             var f = func (x, ...) {
                 var y = ...
@@ -2397,7 +2354,7 @@ class Exec_01 {
     }
     @Test
     fun nn_07_dots_main() {
-        val out = all(
+        val out = test(
             """
             println(...)
         """
@@ -2406,7 +2363,7 @@ class Exec_01 {
     }
     @Test
     fun nn_08_dots_set() {
-        val out = all(
+        val out = test(
             """
             var f = func (...) {
                 set ... = 1
@@ -2416,14 +2373,14 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...") { out }
+        assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...\n") { out }
     }
 
     // LOOP
 
     @Test
     fun loop0() {
-        val out = all(
+        val out = test(
             """
             do {
                 xloop {
@@ -2438,7 +2395,7 @@ class Exec_01 {
     }
     @Test
     fun loop1() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = false
@@ -2457,7 +2414,7 @@ class Exec_01 {
     }
     @Test
     fun loop2() {
-        val out = all(
+        val out = test(
             """
             val f = func (t) {
                 if t[1] == 5 {
@@ -2482,7 +2439,7 @@ class Exec_01 {
     }
     @Test
     fun loop2a() {
-        val out = all(
+        val out = test(
             """
             val f = func (t) {
                 nil
@@ -2496,7 +2453,7 @@ class Exec_01 {
     }
     @Test
     fun loop3() {
-        val out = all(
+        val out = test(
             """
             val v = xloop {if (10) { xbreak(10) } else { nil }}
             println(v)
@@ -2506,7 +2463,7 @@ class Exec_01 {
     }
     @Test
     fun loop4() {
-        val out = all(
+        val out = test(
             """
             val v1 = xloop {
                 xbreak(10)
@@ -2521,7 +2478,7 @@ class Exec_01 {
     }
     @Test
     fun loop5() {
-        val out = all("""
+        val out = test("""
             val x = 10
             println(xloop { xbreak(x) })
         """)
@@ -2530,21 +2487,21 @@ class Exec_01 {
 
     @Test
     fun loop6_break() {
-        val out = all("""
+        val out = test("""
             xloop {
                 func () {
                     xbreak
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : xbreak error : expected enclosing loop") { out }
+        assert(out == "anon : (lin 4, col 21) : xbreak error : expected enclosing loop\n") { out }
     }
 
     // NATIVE
 
     @Test
     fun native1() {
-        val out = all(
+        val out = test(
             """
             ```
                 printf("xxx\n");
@@ -2555,7 +2512,7 @@ class Exec_01 {
     }
     @Test
     fun native2_num() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = `:number 1.5`
@@ -2567,7 +2524,7 @@ class Exec_01 {
     }
     @Test
     fun native3_str() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = `:pointer "ola"`
@@ -2580,7 +2537,7 @@ class Exec_01 {
     }
     @Test
     fun native4_err() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = ``` ```
@@ -2591,7 +2548,7 @@ class Exec_01 {
     }
     @Test
     fun native5() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = 10
@@ -2606,7 +2563,7 @@ class Exec_01 {
     }
     @Test
     fun native6() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = 1
@@ -2620,7 +2577,7 @@ class Exec_01 {
     }
     @Test
     fun native7_err() {
-        val out = all(
+        val out = test(
             """
              `
              
@@ -2629,11 +2586,11 @@ class Exec_01 {
              `
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 3, col 4) : invalid identifier\n") { out }
     }
     @Test
     fun native8() {
-        val out = all(
+        val out = test(
             """
             var x
             set x = 0
@@ -2651,27 +2608,27 @@ class Exec_01 {
     }
     @Test
     fun native9_err() {
-        val out = all(
+        val out = test(
             """
              `
                 $D 
              `
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 2, col 4) : invalid identifier\n") { out }
     }
     @Test
     fun native10_err() {
-        val out = all(
+        val out = test(
             """
             ` ($D) `
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 4) : invalid identifier") { out }
+        assert(out == "anon : (lin 1, col 1) : native error : (lin 1, col 4) : invalid identifier\n") { out }
     }
     @Test
     fun native11_pointer() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func () {
@@ -2694,7 +2651,7 @@ class Exec_01 {
     }
     @Test
     fun native12_pointer() {
-        val out = all(
+        val out = test(
             """
             println(`:pointer"oi"`)
         """
@@ -2703,7 +2660,7 @@ class Exec_01 {
     }
     @Test
     fun native13_pre() {
-        val out = all(
+        val out = test(
             """
             ```
             int X = 1;
@@ -2719,7 +2676,7 @@ class Exec_01 {
     }
     @Test
     fun native14_char() {
-        val out = all(
+        val out = test(
             """
             var c
             set c = `:char 'x'`
@@ -2730,7 +2687,7 @@ class Exec_01 {
     }
     @Test
     fun native15_func() {
-        val out = all(
+        val out = test(
             """
             var f = func (v) {
                 println(v)
@@ -2744,7 +2701,7 @@ class Exec_01 {
     }
     @Test
     fun native16_func() {
-        val out = all("""
+        val out = test("""
             val n = `:number 10`                ;; native 10 is converted to `dyn-lex` number
             val x = `:ceu ${D}n`                ;; `x` is set to `dyn-lex` `n` as is
             `printf("> %f\n", ${D}n.Number);`   ;; outputs `n` as a number
@@ -2756,7 +2713,7 @@ class Exec_01 {
 
     @Test
     fun op_umn() {
-        val out = all(
+        val out = test(
             """
             println(-10)
         """, true
@@ -2765,7 +2722,7 @@ class Exec_01 {
     }
     @Test
     fun op_id1() {
-        val out = all(
+        val out = test(
             """
             println({{-}}(10,4))
         """, true
@@ -2774,7 +2731,7 @@ class Exec_01 {
     }
     @Test
     fun op_arithX() {
-        val out = all(
+        val out = test(
             """
             println(((10 + -20)*2)/5)
         """, true
@@ -2783,7 +2740,7 @@ class Exec_01 {
     }
     @Test
     fun op_cmp() {
-        val out = all(
+        val out = test(
             """
             println(1 > 2)
             println(1 < 2)
@@ -2797,7 +2754,7 @@ class Exec_01 {
     }
     @Test
     fun op_eq() {
-        val out = all(
+        val out = test(
             """
             println(1 == 1)
             println(1 /= 1)
@@ -2807,7 +2764,7 @@ class Exec_01 {
     }
     @Test
     fun op_prec_ok() {
-        val out = all(
+        val out = test(
             """
             println(2 + 3 + 1)
         """, true
@@ -2816,7 +2773,7 @@ class Exec_01 {
     }
     @Test
     fun op_assoc() {
-        val out = all(
+        val out = test(
             """
             println((2 * 3) - 1)
         """, true
@@ -2825,7 +2782,7 @@ class Exec_01 {
     }
     @Test
     fun ops_oth() {
-        val out = all(
+        val out = test(
             """
             println(2**3)
             println(8//3)
@@ -2836,7 +2793,7 @@ class Exec_01 {
     }
     @Test
     fun ops_id() {
-        val out = all(
+        val out = test(
             """
             val add = func (x,y) {
                 x + y
@@ -2851,7 +2808,7 @@ class Exec_01 {
 
     @Test
     fun pp_01_op_eqeq_tup() {
-        val out = all(
+        val out = test(
             """
             println([1] == [1])
             println([ ] == [1])
@@ -2863,7 +2820,7 @@ class Exec_01 {
     }
     @Test
     fun pp_02_op_eqeq_tup() {
-        val out = all(
+        val out = test(
             """
             println([1,[1],1] == [1,[1],1])
         """
@@ -2872,7 +2829,7 @@ class Exec_01 {
     }
     @Test
     fun pp_03_op_eqs_dic() {
-        val out = all(
+        val out = test(
             """
             println(@[] == @[])
             println(@[] /= @[])
@@ -2882,7 +2839,7 @@ class Exec_01 {
     }
     @Test
     fun pp_04_op_eqs_vec() {
-        val out = all(
+        val out = test(
             """
             println(#[] ==  #[])
             println(#[] /=  #[])
@@ -2892,7 +2849,7 @@ class Exec_01 {
     }
     @Test
     fun pp_05_op_eqs_vec_dic_tup() {
-        val out = all(
+        val out = test(
             """
             println([#[],@[]] == [#[],@[]])
             println([#[],@[]] /= [#[],@[]])
@@ -2905,7 +2862,7 @@ class Exec_01 {
 
     @Test
     fun tostring1() {
-        val out = all(
+        val out = test(
             """
             var s
             set s = to-string(10)
@@ -2916,7 +2873,7 @@ class Exec_01 {
     }
     @Test
     fun tonumber2() {
-        val out = all(
+        val out = test(
             """
             var n
             set n = to-number(#['1','0'])
@@ -2927,7 +2884,7 @@ class Exec_01 {
     }
     @Test
     fun tonumber_tostring3() {
-        val out = all(
+        val out = test(
             """
             var s
             set s = to-string(to-number(#['1','0']))
@@ -2938,7 +2895,7 @@ class Exec_01 {
     }
     @Test
     fun ff_01_string_to_tag() {
-        val out = all(
+        val out = test(
             """
             pass :xyz
             println(string-to-tag(#[':','x']))
@@ -2951,7 +2908,7 @@ class Exec_01 {
     }
     @Test
     fun ff_02_string_to_tag() {
-        val out = all(
+        val out = test(
             """
             data :A = []
             data :A.B = []
@@ -2963,7 +2920,7 @@ class Exec_01 {
     }
     @Test
     fun ff_03_string_to_tag() {
-        val out = all(
+        val out = test(
             """
             val x = string-to-tag(#[':','x'])
             println(x == :x)
@@ -2978,7 +2935,7 @@ class Exec_01 {
 
     @Test
     fun ff_04_string_to_tag() {
-        val out = all("""
+        val out = test("""
             pass :xyz
             println(string-to-tag(":x"))
             println(string-to-tag(":xyz"))
@@ -2988,7 +2945,7 @@ class Exec_01 {
     }
     @Test
     fun ff_05_string_to_tag() {
-        val out = all("""
+        val out = test("""
             data :A = []
             data :A.B = []
             data :A.B.C = []
@@ -3001,7 +2958,7 @@ class Exec_01 {
 
     @Test
     fun type1() {
-        val out = all(
+        val out = test(
             """
             var t
             set t = type(1)
@@ -3017,7 +2974,7 @@ class Exec_01 {
 
     @Test
     fun tags1() {
-        val out = all(
+        val out = test(
             """
             println(:xxx)
             println(:xxx == :yyy)
@@ -3030,7 +2987,7 @@ class Exec_01 {
     }
     @Test
     fun tags2() {
-        val out = all(
+        val out = test(
             """
             func () {
                 println(:xxx)
@@ -3044,7 +3001,7 @@ class Exec_01 {
     }
     @Test
     fun tags3() {
-        val out = all(
+        val out = test(
             """
             func () {
                 println(:Xxx.Yyy)
@@ -3054,11 +3011,11 @@ class Exec_01 {
             }()
         """
         )
-        assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared") { out }
+        assert(out == "anon : (lin 3, col 25) : tag error : parent tag :Xxx is not declared\n") { out }
     }
     @Test
     fun tags3a() {
-        val out = all(
+        val out = test(
             """
             func () {
                 println(:Xxx)
@@ -3072,7 +3029,7 @@ class Exec_01 {
     }
     @Test
     fun tags4_err() {
-        val out = all(
+        val out = test(
             """
             println(tags())
         """
@@ -3081,7 +3038,7 @@ class Exec_01 {
     }
     @Test
     fun tags4() {
-        val out = all(
+        val out = test(
             """
             println(tags([]))
         """
@@ -3090,7 +3047,7 @@ class Exec_01 {
     }
     @Test
     fun tags5() {
-        val out = all(
+        val out = test(
             """
             println(tags(1,:2))
         """
@@ -3099,7 +3056,7 @@ class Exec_01 {
     }
     @Test
     fun tags6_err() {
-        val out = all(
+        val out = test(
             """
             tags([],2)
         """
@@ -3108,7 +3065,7 @@ class Exec_01 {
     }
     @Test
     fun tags7_err() {
-        val out = all(
+        val out = test(
             """
             tags([],:x,nil)
         """
@@ -3117,7 +3074,7 @@ class Exec_01 {
     }
     @Test
     fun tags8() {
-        val out = all(
+        val out = test(
             """
             var t
             set t = []
@@ -3135,7 +3092,7 @@ class Exec_01 {
     }
     @Test
     fun tags9() {
-        val out = all(
+        val out = test(
             """
             var t
             set t = []
@@ -3151,16 +3108,16 @@ class Exec_01 {
     }
     @Test
     fun tags10() {
-        val out = all(
+        val out = test(
             """
             println(:x-a-x, :i.j.a)
         """, true
         )
-        assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared") { out }
+        assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared\n") { out }
     }
     @Test
     fun tags10a() {
-        val out = all(
+        val out = test(
             """
             println(:x-a-x, :i-j-a)
         """, true
@@ -3169,7 +3126,7 @@ class Exec_01 {
     }
     @Test
     fun tags11() {
-        val out = all(
+        val out = test(
             """
             var t = tags([], :T,   true)
             var s = tags([], :T.S, true)
@@ -3182,7 +3139,7 @@ class Exec_01 {
     }
     @Test
     fun tags12() {
-        val out = all(
+        val out = test(
             """
             pass :A
             pass :A.I
@@ -3206,7 +3163,7 @@ class Exec_01 {
     }
     @Test
     fun tags13() {
-        val out = all(
+        val out = test(
             """
             var t = []
             tags(t, :X, true)
@@ -3227,7 +3184,7 @@ class Exec_01 {
 
     @Test
     fun enum01() {
-        val out = all(
+        val out = test(
             """
             pass :antes
             enum {
@@ -3261,7 +3218,7 @@ class Exec_01 {
     }
     @Test
     fun enum02() {
-        val out = all(
+        val out = test(
             """
             enum {
                 :x = `1000`,
@@ -3274,7 +3231,7 @@ class Exec_01 {
     }
     @Test
     fun enum03() {
-        val out = all(
+        val out = test(
             """
             enum {
                 :x.y
@@ -3282,50 +3239,50 @@ class Exec_01 {
             println(:tag, :x, :1000, :y)
         """
         )
-        assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'") { out }
+        assert(out == "anon : (lin 3, col 17) : enum error : enum tag cannot contain '.'\n") { out }
     }
 
     // CLOSURE / ESCAPE / FUNC / UPVALS
 
     @Test
     fun clo1_err() {
-        val out = all(
+        val out = test(
             """
             var ^^x     ;; can't declare upref
         """
         )
-        assert(out == "anon : (lin 2, col 13) : var error : cannot declare an upref") { out }
+        assert(out == "anon : (lin 2, col 13) : var error : cannot declare an upref\n") { out }
     }
     @Test
     fun clo2_err() {
-        val out = all(
+        val out = test(
             """
             var ^x     ;; upvar can't be global
         """
         )
-        assert(out == "anon : (lin 2, col 13) : var error : cannot declare a global upvar") { out }
+        assert(out == "anon : (lin 2, col 13) : var error : cannot declare a global upvar\n") { out }
     }
     @Test
     fun clo3_err() {
-        val out = all(
+        val out = test(
             """
             ^x     ;; upvar can't be in global
         """
         )
-        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared\n") { out }
     }
     @Test
     fun clo4_err() {
-        val out = all(
+        val out = test(
             """
             ^^x     ;; upref can't be in global
         """
         )
-        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared") { out }
+        assert(out == "anon : (lin 2, col 13) : access error : variable \"x\" is not declared\n") { out }
     }
     @Test
     fun clo5_err() {
-        val out = all(
+        val out = test(
             """
             var g
             set g = 10
@@ -3340,11 +3297,11 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 6, col 17) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 6, col 17) : invalid set : destination is immutable\n") { out }
     }
     @Test
     fun clo6_err() {
-        val out = all(
+        val out = test(
             """
             var g
             set g = 10
@@ -3359,11 +3316,11 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 7, col 21) : invalid set : destination is immutable") { out }
+        assert(out == "anon : (lin 7, col 21) : invalid set : destination is immutable\n") { out }
     }
     @Test
     fun clo7_err() {
-        val out = all(
+        val out = test(
             """
             do {
                 var ^x     ;; err: no associated upref
@@ -3372,22 +3329,22 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 3, col 17) : var error : unreferenced upvar") { out }
+        assert(out == "anon : (lin 3, col 17) : var error : unreferenced upvar\n") { out }
     }
     @Test
     fun clo8_err() {
-        val out = all(
+        val out = test(
             """
             do {
                 ^^x     ;; err: no associated upvar
             }
         """
         )
-        assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared") { out }
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"x\" is not declared\n") { out }
     }
     @Test
     fun clo9_err() {
-        val out = all(
+        val out = test(
             """
             do {
                 var x
@@ -3395,11 +3352,11 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 4, col 17) : access error : incompatible upval modifier") { out }
+        assert(out == "anon : (lin 4, col 17) : access error : incompatible upval modifier\n") { out }
     }
     @Test
     fun clo10_err() {
-        val out = all(
+        val out = test(
             """
             do {
                 var ^x
@@ -3407,11 +3364,11 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 4, col 17) : access error : unnecessary upref modifier") { out }
+        assert(out == "anon : (lin 4, col 17) : access error : unnecessary upref modifier\n") { out }
     }
     @Test
     fun clo11_err() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = do {
@@ -3428,7 +3385,7 @@ class Exec_01 {
     }
     @Test
     fun clo12_err() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (x) {
@@ -3443,7 +3400,7 @@ class Exec_01 {
     }
     @Test
     fun clo13_err() {
-        val out = all(
+        val out = test(
             """
             var g
             set g = 10
@@ -3460,7 +3417,7 @@ class Exec_01 {
     }
     @Test
     fun clo14() {
-        val out = all(
+        val out = test(
             """
             var g
             set g = 10
@@ -3477,7 +3434,7 @@ class Exec_01 {
     }
     @Test
     fun clo15() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (^x) {
@@ -3494,7 +3451,7 @@ class Exec_01 {
     }
     @Test
     fun clo16() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func () {
@@ -3510,7 +3467,7 @@ class Exec_01 {
     }
     @Test
     fun clo17() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (^x) {
@@ -3527,7 +3484,7 @@ class Exec_01 {
     }
     @Test
     fun clo18() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (^x) {
@@ -3542,7 +3499,7 @@ class Exec_01 {
     }
     @Test
     fun clo19() {
-        val out = all(
+        val out = test(
             """
             var curry
             set curry = func (^fff) {
@@ -3564,7 +3521,7 @@ class Exec_01 {
     }
     @Test
     fun clo20() {
-        val out = all(
+        val out = test(
             """
             var curry
             set curry = func (^fff) {
@@ -3584,7 +3541,7 @@ class Exec_01 {
     }
     @Test
     fun clo21() {
-        val out = all(
+        val out = test(
             """
             var f = func (^a) {
                 func () {
@@ -3603,7 +3560,7 @@ class Exec_01 {
     }
     @Test
     fun tup22() {
-        val out = all(
+        val out = test(
             """
             do {
                 val t = []
@@ -3617,7 +3574,7 @@ class Exec_01 {
     }
     @Test
     fun clo23() {
-        val out = all(
+        val out = test(
             """
             var f = func (^a) {
                 func () {
@@ -3636,7 +3593,7 @@ class Exec_01 {
     }
     @Test
     fun clo23x() {
-        val out = all(
+        val out = test(
             """
             var f = func (^a) {
                 func () {
@@ -3654,7 +3611,7 @@ class Exec_01 {
     }
     @Test
     fun clo25_compose() {
-        val out = all(
+        val out = test(
             """
             var comp = func (^f) {
                 func (v) {
@@ -3672,7 +3629,7 @@ class Exec_01 {
     }
     @Test
     fun clo26_compose() {
-        val out = all(
+        val out = test(
             """
             var comp = func (^f,^g) {
                 func (v) {
@@ -3690,7 +3647,7 @@ class Exec_01 {
     }
     @Test
     fun clo27_escape_err() {
-        val out = all(
+        val out = test(
             """
             val x = 10
             val f = func (y) {
@@ -3709,7 +3666,7 @@ class Exec_01 {
 
     @Test
     fun gc0() {
-        val out = all(
+        val out = test(
             """
             do {
                 val xxx = []
@@ -3722,7 +3679,7 @@ class Exec_01 {
     }
     @Test
     fun gc1() {
-        val out = all(
+        val out = test(
             """
             var xxx = []
             set xxx = []
@@ -3733,7 +3690,7 @@ class Exec_01 {
     }
     @Test
     fun gc2() {
-        val out = all(
+        val out = test(
             """
             pass []  ;; not checked
             pass []  ;; not checked
@@ -3745,7 +3702,7 @@ class Exec_01 {
     }
     @Test
     fun gc3_cycle() {
-        val out = all(
+        val out = test(
             """
             var x = [nil]
             var y = [x]
@@ -3759,7 +3716,7 @@ class Exec_01 {
     }
     @Test
     fun gc4() {
-        val out = all(
+        val out = test(
             """
             var x = []
             var y = [x]
@@ -3773,7 +3730,7 @@ class Exec_01 {
     }
     @Test
     fun gc5() {
-        val out = all(
+        val out = test(
             """
             var x = []
             do {
@@ -3787,7 +3744,7 @@ class Exec_01 {
     }
     @Test
     fun gc6() {
-        val out = all(
+        val out = test(
             """
             var x = [[],[]]
             set x = nil
@@ -3798,7 +3755,7 @@ class Exec_01 {
     }
     @Test
     fun gc7() {
-        val out = all(
+        val out = test(
             """
             var f = func (v) {
                 v
@@ -3812,7 +3769,7 @@ class Exec_01 {
     }
     @Test
     fun gc8() {
-        val out = all(
+        val out = test(
             """
             do {
                 val out = do {
@@ -3828,7 +3785,7 @@ class Exec_01 {
     }
     @Test
     fun gc9() {
-        val out = all(
+        val out = test(
             """
             var out
             set out = do {
@@ -3844,7 +3801,7 @@ class Exec_01 {
     }
     @Test
     fun gc10() {
-        val out = all(
+        val out = test(
             """
             do {
                 do {
@@ -3862,7 +3819,7 @@ class Exec_01 {
     }
     @Test
     fun gc11() {
-        val out = all(
+        val out = test(
             """
             var f = func (v) {
                 v   ;; not captured, should be checked after call
@@ -3878,7 +3835,7 @@ class Exec_01 {
     }
     @Test
     fun gc12() {
-        val out = all(
+        val out = test(
             """
             println([]) ;; println does not check
             println(`:number ceu_gc_count`)
@@ -3888,7 +3845,7 @@ class Exec_01 {
     }
     @Test
     fun gc15_arg() {
-        val out = all(
+        val out = test(
             """
             var f = func (v) {
                 nil
@@ -3904,7 +3861,7 @@ class Exec_01 {
 
     @Test
     fun id_c() {
-        val out = all(
+        val out = test(
             """
             var xxx
             set xxx = func () {nil}
@@ -3915,7 +3872,7 @@ class Exec_01 {
     }
     @Test
     fun clo1() {
-        val out = all(
+        val out = test(
             """
             var f
             set f = func (^x) {
@@ -3933,40 +3890,40 @@ class Exec_01 {
 
     @Test
     fun tplate01_err() {
-        val out = all(
+        val out = test(
             """
             data :T = []
             data :T = []
         """, true
         )
-        assert(out == "anon : (lin 3, col 18) : data error : data :T is already declared") { out }
+        assert(out == "anon : (lin 3, col 18) : data error : data :T is already declared\n") { out }
     }
     @Test
     fun tplate02_err() {
-        val out = all(
+        val out = test(
             """
             data :T = []
             var t :T
             println(t.x)
         """, true
         )
-        assert(out == "anon : (lin 4, col 23) : index error : undeclared data field :x") { out }
+        assert(out == "anon : (lin 4, col 23) : index error : undeclared data field :x\n") { out }
     }
     @Test
     fun tplate03_err() {
-        val out = all(
+        val out = test(
             """
             data :T = []
             var v :U
             println(v)
         """, true
         )
-        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared") { out }
+        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared\n") { out }
         //assert(out == "nil\n") { out }
     }
     @Test
     fun tplate04() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             var t :T
@@ -3978,7 +3935,7 @@ class Exec_01 {
     }
     @Test
     fun tplate05() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             var t :T
@@ -3990,7 +3947,7 @@ class Exec_01 {
     }
     @Test
     fun tplate06() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             data :T.S = [z]
@@ -4002,7 +3959,7 @@ class Exec_01 {
     }
     @Test
     fun tplate07() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             data :T.S = [z]
@@ -4018,7 +3975,7 @@ class Exec_01 {
     }
     @Test
     fun tplate08() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             data :T.S = [z]
@@ -4033,44 +3990,44 @@ class Exec_01 {
     }
     @Test
     fun tplate09_err() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,x]
         """, true
         )
-        assert(out == "anon : (lin 2, col 18) : data error : found duplicate ids") { out }
+        assert(out == "anon : (lin 2, col 18) : data error : found duplicate ids\n") { out }
     }
     @Test
     fun tplate10_err() {
-        val out = all(
+        val out = test(
             """
             data :T   = [x,y]
             data :T.S = [x]
         """, true
         )
-        assert(out == "anon : (lin 3, col 18) : data error : found duplicate ids") { out }
+        assert(out == "anon : (lin 3, col 18) : data error : found duplicate ids\n") { out }
     }
     @Test
     fun tplate11_err() {
-        val out = all(
+        val out = test(
             """
             data :T.S = [x]
         """, true
         )
-        assert(out == "anon : (lin 2, col 18) : tag error : parent tag :T is not declared") { out }
+        assert(out == "anon : (lin 2, col 18) : tag error : parent tag :T is not declared\n") { out }
     }
     @Test
     fun tplate12_err() {
-        val out = all(
+        val out = test(
             """
             data :T = [x:U]
         """, true
         )
-        assert(out == "anon : (lin 2, col 25) : data error : data :U is not declared") { out }
+        assert(out == "anon : (lin 2, col 25) : data error : data :U is not declared\n") { out }
     }
     @Test
     fun tplate12() {
-        val out = all(
+        val out = test(
             """
             data :T = [v]
             data :U = [t:T]
@@ -4082,7 +4039,7 @@ class Exec_01 {
     }
     @Test
     fun tplate13_err() {
-        val out = all(
+        val out = test(
             """
             data :T = [v]
             data :U = [t:T]
@@ -4090,13 +4047,13 @@ class Exec_01 {
             println(u.t.X)
         """, true
         )
-        assert(out == "anon : (lin 5, col 25) : index error : undeclared data field :X") { out }
+        assert(out == "anon : (lin 5, col 25) : index error : undeclared data field :X\n") { out }
         //assert(out == "anon : (lin 5, col 21) : index error : expected number\n" +
         //        ":error") { out }
     }
     @Test
     fun tplate14_err() {
-        val out = all(
+        val out = test(
             """
             data :T = [v]
             data :U = [t:T]
@@ -4104,11 +4061,11 @@ class Exec_01 {
             println(u.X.v)
         """, true
         )
-        assert(out == "anon : (lin 5, col 23) : index error : undeclared data field :X") { out }
+        assert(out == "anon : (lin 5, col 23) : index error : undeclared data field :X\n") { out }
     }
     @Test
     fun tplate15_err() {
-        val out = all(
+        val out = test(
             """
             data :T = [v]
             data :U = [t:T,X]
@@ -4120,7 +4077,7 @@ class Exec_01 {
     }
     @Test
     fun tplate16() {
-        val out = all(
+        val out = test(
             """
             data :U = [a]
             data :T = [x,y]
@@ -4136,7 +4093,7 @@ class Exec_01 {
     }
     @Test
     fun tplate17_func() {
-        val out = all(
+        val out = test(
             """
             data :T = [x,y]
             var f = func (t:T) {
@@ -4149,7 +4106,7 @@ class Exec_01 {
     }
     @Test
     fun tplate18_tup() {
-        val out = all(
+        val out = test(
             """
             data :T = [v]
             val t :T = [[1,2,3]]
@@ -4160,12 +4117,12 @@ class Exec_01 {
     }
     @Test
     fun tplate19_err() {
-        val out = all(
+        val out = test(
             """
             val f = func (x :X) { x.s }
         """
         )
-        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared") { out }
+        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
     }
 
     // POLY
@@ -4269,7 +4226,7 @@ class Exec_01 {
     // ALL
     @Test
     fun zz_01_sum() {
-        val out = all("""
+        val out = test("""
             var sum = func (n) {                                                            
                 var i = n                                                                   
                 var s = 0                                                                   
