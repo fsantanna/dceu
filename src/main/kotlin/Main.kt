@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 2
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: export, copy, _
@@ -38,7 +38,7 @@ val KEYWORDS: SortedSet<String> = (
         "nil", "pass", "set",
         "true", "val", "var",
         "xloop", "xbreak"
-    ) + (if (CEU <= 2) setOf() else setOf (
+    ) + (if (CEU <= 1) setOf() else setOf (
         "catch", "defer", /*"throw",*/
     ))
 ).toSortedSet()

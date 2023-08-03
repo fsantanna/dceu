@@ -4,6 +4,7 @@ import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val pres: MutableList<String> = mutableListOf()
+    val defers: MutableMap<Expr.Do, Pair<String,String>> = mutableMapOf()
     val code: String = outer.code()
 
     fun Expr.Do.toc (): String {
@@ -122,12 +123,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.id.str.id2c() }
+                val common = """
+                    // >>> block
+                    ${defers[this].cond { it.first }}
+                    $body
+                    ${defers[this].cond { it.second }}
+                    // <<< block                    
+                """
                 if (f_b is Expr.Do && dcls.isEmpty() && !sta.cons.contains(this)) {
                     """
                     CEU_Block* ceu_block_$n = ${bupc!!};
-                    // >>> block
-                    $body
-                    // <<< block
+                    $common
                     """
                 } else {
                     """
@@ -183,11 +189,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Block* _${it}_ = NULL;
                         """ }.joinToString("")}
                         ${(f_b == null).cond{ pres.joinToString("") }}
-                        
-                        // >>> block
-                        $body
-                        // <<< block
-                        
+                        $common
                         ${(f_b != null).cond {
                             val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc!!
                             """
@@ -284,8 +286,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
-            is Expr.Catch  -> TODO()
-            is Expr.Defer  -> TODO()
+            is Expr.Catch -> TODO()
+            is Expr.Defer -> {
+                val (ini,end) = defers.getOrDefault(ups.first_block(this)!!, Pair("",""))
+                val inix = """
+                    int ceu_defer_$n = 1;
+                """
+                val endx = """
+                    if (ceu_defer_$n) {
+                        ${this.body.code()}
+                    }
+                """
+                defers[ups.first_block(this)!!] = Pair(ini+inix, endx+end)
+                """
+                ceu_defer_$n = 1;
+                ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
+                """
+            }
 
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!

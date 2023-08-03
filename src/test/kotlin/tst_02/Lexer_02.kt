@@ -16,7 +16,7 @@ class Lexer_02 {
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "defer" })
         assert(tks.next().let { it is Tk.Fix && it.str == "catch" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "throw" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
