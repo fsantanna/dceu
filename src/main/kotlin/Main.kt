@@ -38,8 +38,8 @@ val KEYWORDS: SortedSet<String> = (
         "nil", "pass", "set",
         "true", "val", "var",
         "xloop", "xbreak"
-    ) + (if (CEU <= 1) setOf() else setOf (
-        "export"
+    ) + (if (CEU <= 2) setOf() else setOf (
+        "catch", "defer", /*"throw",*/
     ))
 ).toSortedSet()
 
@@ -85,6 +85,9 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
+
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
+    data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

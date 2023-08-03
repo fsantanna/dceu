@@ -55,6 +55,9 @@ class Tags (outer: Expr.Do) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
+            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Defer  -> this.body.traverse()
+
             is Expr.Nat    -> {}
             is Expr.Acc    -> {}
             is Expr.Nil    -> {}

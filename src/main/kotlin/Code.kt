@@ -284,6 +284,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
+            is Expr.Catch  -> TODO()
+            is Expr.Defer  -> TODO()
+
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
                 when (this.tk_.tag) {
