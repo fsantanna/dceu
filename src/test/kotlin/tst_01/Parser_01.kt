@@ -5,15 +5,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 class Parser_01 {
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        internal fun reset () {
-            CEU = 1
-            DUMP = true
-        }
-    }
-
     // VAR
 
     @Test

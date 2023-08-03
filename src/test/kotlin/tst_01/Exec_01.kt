@@ -9,15 +9,6 @@ import java.io.File
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_01 {
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        internal fun reset () {
-            CEU = 1
-            DUMP = true
-        }
-    }
-
     // PRINT
 
     @Test

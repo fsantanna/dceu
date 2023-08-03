@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 3
+var CEU = 1
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: export, copy, _
@@ -183,10 +183,7 @@ fun test (inp: String, pre: Boolean=false): String {
 
 fun main (args: Array<String>) {
     DUMP = false
-    CEU = 3
-
     val (xs, ys) = args.cmds_opts()
-
     try {
         val xinp = if (xs.size > 0) xs[0] else null
         val xccs = (when {

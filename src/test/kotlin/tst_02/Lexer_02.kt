@@ -9,14 +9,6 @@ fun lexer (str: String): Lexer {
 }
 
 class Lexer_02 {
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        internal fun reset () {
-            CEU = 2
-            DUMP = true
-        }
-    }
     @Test
     fun aa_01_ids() {
         val l =

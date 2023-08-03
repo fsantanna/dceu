@@ -8,15 +8,6 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        internal fun reset () {
-            CEU = 2
-            DUMP = true
-        }
-    }
-
     // THROW / CATCH
 
     @Test

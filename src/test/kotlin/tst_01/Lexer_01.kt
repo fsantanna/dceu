@@ -9,15 +9,6 @@ fun lexer (str: String): Lexer {
 }
 
 class Lexer_01 {
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        internal fun reset () {
-            CEU = 1
-            DUMP = true
-        }
-    }
-
     @Test
     fun syms() {
         val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")
