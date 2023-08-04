@@ -4,6 +4,7 @@ fun Coder.main (tags: Tags): String {
     return ("" +
     """ // INCLUDES / DEFINES / ENUMS
         //#define CEU_DEBUG
+        #define CEU $CEU
         #include <stdio.h>
         #include <stdlib.h>
         #include <stddef.h>
@@ -1133,7 +1134,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """
-        // EQ / NEQ / LEN
+        // EQ / NEQ / LEN / IS' / IS-NOT'
         CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
             CEU_Value e1 = args[0];
@@ -1186,7 +1187,28 @@ fun Coder.main (tags: Tags): String {
             } else {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
-        }        
+        }
+
+        #if CEU >= 2
+        CEU_Value ceu_is_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+            assert(n == 2);
+            if (ceu_op_equals_equals_f(_1, n, args).Bool) {
+                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+            }
+            if (ceu_type_f(_1, 1, &args[1]).Tag != CEU_VALUE_TAG) {
+                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+            }
+            if (ceu_type_f(_1, 1, &args[0]).Tag == args[1].Tag) {
+                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+            }
+            return ceu_tags_f(_1, n, args);
+        }
+        CEU_Value ceu_is_not_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+            CEU_Value ret = ceu_is_f(_1, n, args);
+            ret.Bool = !ret.Bool;
+            return ret;
+        }
+        #endif
     """ +
     """ // GLOBALS
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, NULL };
@@ -1201,6 +1223,16 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_error_f, {0,NULL}
         };
+        #if CEU >= 2
+        CEU_Closure ceu_is = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_is_f, {0,NULL}
+        };
+        CEU_Closure ceu_is_not = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_is_not_f, {0,NULL}
+        };
+        #endif
         CEU_Closure ceu_next = { 
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_next_f, {0,NULL}
@@ -1248,6 +1280,10 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
         CEU_Value id_error                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
+        #if CEU >= 2
+        CEU_Value id_is_plic_                = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is}                      };
+        CEU_Value id_is_dash_not_plic_       = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is_not}                  };
+        #endif
         CEU_Value id_next                    = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_next}                    };
         CEU_Value id_print                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
         CEU_Value id_println                 = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_println}                 };

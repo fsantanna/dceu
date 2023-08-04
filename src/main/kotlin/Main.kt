@@ -59,7 +59,7 @@ val GLOBALS = setOf (
     "dump", "error", "next", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
-)
+) + (if (CEU <= 1) setOf() else setOf("is'", "is-not'"))
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)

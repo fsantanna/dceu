@@ -9,10 +9,38 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
 
+    // IS / IS-NOT
+
+    // is', is-not´
+
+    @Test
+    fun aa_01_is() {
+        val out = test("""
+            println(is'([], :bool))
+            println(is'([], :tuple))
+            println(is-not'(1, :tuple))
+            println(is-not'(1, :number))
+        """, true)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun aa_02_is() {
+        val out = test("""
+            val t = []
+            tags(t,:x,true)
+            println(is'(t, :x))
+            tags(t,:y,true)
+            println(is-not'(t, :y))
+            tags(t,:x,false)
+            println(is-not'(t, :x))
+        """, true)
+        assert(out == "true\nfalse\ntrue\n") { out }
+    }
+
     // DEFER
 
     @Test
-    fun aa_01_defer() {
+    fun ee_01_defer() {
         val out = test("""
             println(1)
             defer { println(2) }
@@ -22,7 +50,7 @@ class Exec_02 {
         assert(out == "1\n4\n3\n2\n") { out }
     }
     @Test
-    fun aa_02_defer() {
+    fun ee_02_defer() {
         val out = test("""
             var f
             set f = func () {
@@ -52,7 +80,7 @@ class Exec_02 {
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
     @Test
-    fun todo_aa_03_defer_err() {
+    fun todo_ee_03_defer_err() {
         val out = test("""
             task () {
                 defer {
@@ -64,7 +92,7 @@ class Exec_02 {
         assert(out == "TODO") { out }
     }
     @Test
-    fun aa_05_defer_err() {
+    fun ee_05_defer_err() {
         val out = test("""
             do {
                 defer {
@@ -81,7 +109,7 @@ class Exec_02 {
     // THROW / CATCH
 
     @Test
-    fun bb_01_catch() {
+    fun jj_01_catch() {
         val out = test("""
             catch err==:x {
                 throw(:x)
@@ -92,7 +120,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bb_02_catch_err() {
+    fun jj_02_catch_err() {
         val out = test("""
             catch err==:x {
                 throw(:y)
@@ -105,7 +133,7 @@ class Exec_02 {
                 ":y\n") { out }
     }
     @Test
-    fun bb_03_catch() {
+    fun jj_03_catch() {
         val out = test("""
             var f
             set f = func () {
@@ -127,7 +155,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bb_04_catch_valgrind() {
+    fun jj_04_catch_valgrind() {
         val out = test("""
             catch err==:x {
                 throw([])
@@ -141,7 +169,7 @@ class Exec_02 {
                 "[]\n") { out }
     }
     @Test
-    fun bb_05_catch() {
+    fun jj_05_catch() {
         val out = test("""
             catch err==:e1 {
                 catch err==:e2 {
@@ -164,7 +192,7 @@ class Exec_02 {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun bb_06_catch_err() {
+    fun jj_06_catch_err() {
         val out = test("""
             catch true {
                 throw(:y)
@@ -176,7 +204,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bb_07_catch() {
+    fun jj_07_catch() {
         val out = test(
             """
             catch do {
@@ -191,7 +219,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun bb_08_catch() {
+    fun jj_08_catch() {
         val out = test(
             """
             var x
@@ -212,7 +240,7 @@ class Exec_02 {
         assert(out == "[:x]\n") { out }
     }
     @Test
-    fun bb_09_catch_err() {
+    fun jj_09_catch_err() {
         val out = test(
             """
             do {
@@ -244,7 +272,7 @@ class Exec_02 {
                 ":error\n") { out }
     }
     @Test
-    fun bb_10_catch() {
+    fun jj_10_catch() {
         val out = test(
             """
             var x
@@ -261,7 +289,7 @@ class Exec_02 {
         assert(out == ":x\n") { out }
     }
     @Test
-    fun bb_11_catch_err() {
+    fun jj_11_catch_err() {
         val out = test(
             """
             catch err[0]==:x {
@@ -275,7 +303,7 @@ class Exec_02 {
         assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
     }
     @Test
-    fun bb_12_catch() {
+    fun jj_12_catch() {
         val out = test(
             """
             catch false {
@@ -290,7 +318,7 @@ class Exec_02 {
                 ":xxx\n") { out }
     }
     @Test
-    fun bb_13_catch() {
+    fun jj_13_catch() {
         val out = test("""
             catch err==[] {
                 throw([])
@@ -303,7 +331,7 @@ class Exec_02 {
                 "[]\n") { out }
     }
     @Test
-    fun bb_14_catch() {
+    fun jj_14_catch() {
         val out = test(
             """
             var x
@@ -319,7 +347,7 @@ class Exec_02 {
         assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
     }
     @Test
-    fun bb_15_catch() {
+    fun jj_15_catch() {
         val out = test("""
             catch err==[] {
                 var xxx
