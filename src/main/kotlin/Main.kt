@@ -86,7 +86,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr?, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)

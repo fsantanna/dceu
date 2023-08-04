@@ -207,7 +207,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Catch  -> { this.cnd.traverse() ; this.body.traverse() }
+            is Expr.Catch  -> { this.cnd?.traverse() ; this.body.traverse() }
             is Expr.Defer  -> this.body.traverse()
 
             is Expr.Nat    -> {
