@@ -189,9 +189,8 @@ fun Coder.main (tags: Tags): String {
         void ceu_print1 (CEU_Frame* _1, CEU_Value v);
         CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]);
     """ +
-    """ // GLOBALS
+    """ // GC_COUNT / TAGS
         int ceu_gc_count = 0;
-        
         ${ tags.pub.values.let {
             fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
                 return l
@@ -278,7 +277,7 @@ fun Coder.main (tags: Tags): String {
             """
         }}
     """ +
-    """ // IMPLS
+    """ // EXIT / ERROR / ASSERT
         void ceu_exit (CEU_Block* blk) {
             if (blk == NULL) {
                 exit(0);
@@ -311,7 +310,8 @@ fun Coder.main (tags: Tags): String {
             assert(n==1 && args[0].type==CEU_VALUE_TAG);
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
         }
-
+    """ +
+    """ // IMPLS
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
             return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
         }
@@ -1134,7 +1134,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """
-        // EQ / NEQ / LEN / IS' / IS-NOT'
+        // EQ / NEQ / LEN
         CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
             CEU_Value e1 = args[0];
@@ -1188,7 +1188,9 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
         }
-
+    """ +
+    """
+        // IS' / IS-NOT' / THROW
         #if CEU >= 2
         CEU_Value ceu_is_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
@@ -1203,6 +1205,7 @@ fun Coder.main (tags: Tags): String {
             }
             return ceu_tags_f(_1, n, args);
         }
+        
         CEU_Value ceu_is_not_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             CEU_Value ret = ceu_is_f(_1, n, args);
             ret.Bool = !ret.Bool;
@@ -1223,16 +1226,6 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_error_f, {0,NULL}
         };
-        #if CEU >= 2
-        CEU_Closure ceu_is = { 
-            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
-            &_ceu_frame_, ceu_is_f, {0,NULL}
-        };
-        CEU_Closure ceu_is_not = { 
-            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
-            &_ceu_frame_, ceu_is_not_f, {0,NULL}
-        };
-        #endif
         CEU_Closure ceu_next = { 
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_next_f, {0,NULL}
@@ -1277,13 +1270,24 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_string_dash_to_dash_tag_f, {0,NULL}
         };
+        #if CEU >= 2
+        CEU_Closure ceu_is = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_is_f, {0,NULL}
+        };
+        CEU_Closure ceu_is_not = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_is_not_f, {0,NULL}
+        };
+        CEU_Closure ceu_throw = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_throw_f, {0,NULL}
+            }
+        };
+        #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
         CEU_Value id_error                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
-        #if CEU >= 2
-        CEU_Value id_is_plic_                = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is}                      };
-        CEU_Value id_is_dash_not_plic_       = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is_not}                  };
-        #endif
         CEU_Value id_next                    = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_next}                    };
         CEU_Value id_print                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
         CEU_Value id_println                 = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_println}                 };
@@ -1295,6 +1299,11 @@ fun Coder.main (tags: Tags): String {
         CEU_Value op_equals_equals           = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_op_equals_equals}        };
         CEU_Value op_slash_equals            = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_op_slash_equals}         };
         CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_string_dash_to_dash_tag} };
+        #if CEU >= 2
+        CEU_Value id_is_plic_                = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is}                      };
+        CEU_Value id_is_dash_not_plic_       = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is_not}                  };
+        CEU_Value id_throw                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_throw}                   };
+        #endif
     """ +
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
