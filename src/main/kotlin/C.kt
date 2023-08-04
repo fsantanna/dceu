@@ -169,10 +169,10 @@ fun Coder.main (tags: Tags): String {
 
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Dyn* src);
         
-        CEU_Value    ceu_tuple_create   (CEU_Block* hld, int n);
-        CEU_Value    ceu_vector_create  (CEU_Block* hld);
-        CEU_Value    ceu_dict_create    (CEU_Block* hld);
-        CEU_Closure* ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        CEU_Value ceu_tuple_create   (CEU_Block* hld, int n);
+        CEU_Value ceu_vector_create  (CEU_Block* hld);
+        CEU_Value ceu_dict_create    (CEU_Block* hld);
+        CEU_Value ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
 
         int ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
 
@@ -987,7 +987,7 @@ fun Coder.main (tags: Tags): String {
                 0, 0, CEU_VALUE_NIL, buf
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} });
+            return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
         CEU_Value ceu_dict_create (CEU_Block* blk) {
@@ -998,10 +998,10 @@ fun Coder.main (tags: Tags): String {
                 0, NULL
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ((CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} });
+            return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Closure* ceu_closure_create (CEU_Block* blk, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+        CEU_Value ceu_closure_create (CEU_Block* blk, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs) {
             CEU_Closure* ret = malloc(sizeof(CEU_Closure));
             assert(ret != NULL);
             CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
@@ -1014,7 +1014,7 @@ fun Coder.main (tags: Tags): String {
                 frame, proto, { upvs, buf }
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ret;
+            return (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ret } };
         }        
     """ +
     """ // PRINT

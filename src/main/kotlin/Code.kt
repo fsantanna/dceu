@@ -67,15 +67,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
 
                 val pos = """ // CLOSURE | ${this.dump()}
-                CEU_Closure* ceu_closure_$n = ceu_closure_create (
+                CEU_Value ceu_ret_$n = ceu_closure_create (
                     ${up_blk.toc()},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
                     ceu_proto_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
-                assert(ceu_closure_$n != NULL);
-                CEU_Value ceu_ret_$n = ((CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)ceu_closure_$n} });
                 ${assrc("ceu_ret_$n")}
                 
                 // UPVALS
@@ -91,9 +89,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         {
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
-                            assert(ceu_hold_chk_set_col((CEU_Dyn*)ceu_closure_$n, ceu_up));
+                            assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up));
                             ceu_gc_inc(ceu_up);
-                            ((CEU_Proto_Upvs_$n*)ceu_closure_$n->upvs.buf)->${idc} = ceu_up;
+                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Closure.upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                     }.joinToString("\n")
