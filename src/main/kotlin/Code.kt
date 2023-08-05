@@ -394,20 +394,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.toc()
                 """
                 { // DICT | ${this.dump()}
-                    CEU_Dict* ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc()});
-                    assert(ceu_dict_$n != NULL);
+                    CEU_Value ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc()});
                     ${this.args.map { """
                         {
                             ${it.first.code()}
                             CEU_Value ceu_key_$n = ceu_acc;
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = ceu_acc;
-                            if (!ceu_dict_set(ceu_dict_$n, ceu_key_$n, ceu_val_$n)) {
+                            if (!ceu_dict_set(&ceu_dict_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n)) {
                                 ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : dict error : incompatible scopes");
                             }
                         }
                     """ }.joinToString("")}
-                    ${assrc("((CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ceu_dict_$n} })")}
+                    ${assrc("ceu_dict_$n")}
                 }
                 """
             }
