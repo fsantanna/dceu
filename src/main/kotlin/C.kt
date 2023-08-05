@@ -170,7 +170,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Dyn* src);
         
         CEU_Tuple*   ceu_tuple_create   (CEU_Block* hld, int n);
-        CEU_Vector*  ceu_vector_create  (CEU_Block* hld);
+        CEU_Value    ceu_vector_create  (CEU_Block* hld);
         CEU_Dict*    ceu_dict_create    (CEU_Block* hld);
         CEU_Closure* ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
 
@@ -178,7 +178,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_vector_get (CEU_Vector* vec, int i);
         int ceu_vector_set (CEU_Vector* vec, int i, CEU_Value v);
-        CEU_Vector* ceu_vector_from_c_string (CEU_Block* hld, const char* str);
+        CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str);
         
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
         CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
@@ -850,11 +850,11 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_Vector* ceu_vector_from_c_string (CEU_Block* hld, const char* str) {
-            CEU_Vector* vec = ceu_vector_create(hld);
+        CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str) {
+            CEU_Value vec = ceu_vector_create(hld);
             int N = strlen(str);
             for (int i=0; i<N; i++) {
-                assert(ceu_vector_set(vec, vec->its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} }));
+                assert(ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} }));
             }
             return vec;
         }
@@ -977,7 +977,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
         }
         
-        CEU_Vector* ceu_vector_create (CEU_Block* blk) {
+        CEU_Value ceu_vector_create (CEU_Block* blk) {
             CEU_Vector* ret = malloc(sizeof(CEU_Vector));
             assert(ret != NULL);
             char* buf = malloc(1);  // because of '\0' in empty strings
@@ -988,7 +988,7 @@ fun Coder.main (tags: Tags): String {
                 0, 0, CEU_VALUE_NIL, buf
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ret;
+            return ((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} });
         }
         
         CEU_Dict* ceu_dict_create (CEU_Block* blk) {
@@ -1282,7 +1282,6 @@ fun Coder.main (tags: Tags): String {
         CEU_Closure ceu_throw = { 
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_throw_f, {0,NULL}
-            }
         };
         #endif
 

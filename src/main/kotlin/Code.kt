@@ -144,8 +144,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // main block varargs (...)
                             CEU_Tuple* ceu_tup_$n = ceu_tuple_create(ceu_block_$n, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
-                                CEU_Vector* vec = ceu_vector_from_c_string(ceu_block_$n, ceu_argv[i]);
-                                assert(ceu_tuple_set(ceu_tup_$n, i, (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)vec} }));
+                                CEU_Value vec = ceu_vector_from_c_string(ceu_block_$n, ceu_argv[i]);
+                                assert(ceu_tuple_set(ceu_tup_$n, i, vec));
                             }
                             CEU_Value id__dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} };
                         """ }}
@@ -286,7 +286,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
-            is Expr.Catch -> TODO()
             is Expr.Defer -> {
                 val (ini,end) = defers.getOrDefault(ups.first_block(this)!!, Pair("",""))
                 val inix = """
@@ -382,16 +381,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.toc()
                 """
                 { // VECTOR | ${this.dump()}
-                    CEU_Vector* ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc()});
-                    assert(ceu_vec_$n != NULL);
+                    CEU_Value ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc()});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
-                        if (!ceu_vector_set(ceu_vec_$n, $i, ceu_acc)) {
+                        if (!ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc)) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : vector error : incompatible scopes");
                         }
                         """
                 }.joinToString("")}
-                    ${assrc("((CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ceu_vec_$n} })")}
+                    ${assrc("ceu_vec_$n")}
                 }
                 """
             }
