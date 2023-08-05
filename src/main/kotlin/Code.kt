@@ -142,12 +142,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Block* ceu_block_$n = &_ceu_block_$n; 
                         ${(f_b == null).cond { """
                             // main block varargs (...)
-                            CEU_Tuple* ceu_tup_$n = ceu_tuple_create(ceu_block_$n, ceu_argc);
+                            CEU_Value id__dot__dot__dot_ = ceu_tuple_create(ceu_block_$n, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
                                 CEU_Value vec = ceu_vector_from_c_string(ceu_block_$n, ceu_argv[i]);
-                                assert(ceu_tuple_set(ceu_tup_$n, i, vec));
+                                assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
                             }
-                            CEU_Value id__dot__dot__dot_ = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} };
                         """ }}
                         ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
                             f_b as Expr.Proto
@@ -174,11 +173,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     val idc = f_b.args.last()!!.first.str.id2c()
                                     """
                                     int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
-                                    CEU_Tuple* ceu_tup_$n = ceu_tuple_create(ceu_block_$n, ceu_tup_n_$n);
+                                    $idc = ceu_tuple_create(ceu_block_$n, ceu_tup_n_$n);
                                     for (int i=0; i<ceu_tup_n_$n; i++) {
-                                        assert(ceu_tuple_set(ceu_tup_$n, i, ceu_args[$args_n+i]));
+                                        assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
                                     }
-                                    $idc = (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} };
                                     ceu_gc_inc($idc);
                                 """ }}
                             }
@@ -364,16 +362,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.toc()
                 """
                 { // TUPLE | ${this.dump()}
-                    CEU_Tuple* ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc()}, ${this.args.size});
-                    assert(ceu_tup_$n != NULL);
+                    CEU_Value ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc()}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
-                        if (!ceu_tuple_set(ceu_tup_$n, $i, ceu_acc)) {
+                        if (!ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc)) {
                             ceu_error1($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : tuple error : incompatible scopes");
                         }
                         """
                 }.joinToString("")}
-                    ${assrc("((CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ceu_tup_$n} })")}
+                    ${assrc("ceu_tup_$n")}
                 }
                 """
             }

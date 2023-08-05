@@ -169,7 +169,7 @@ fun Coder.main (tags: Tags): String {
 
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD tphold, CEU_Dyn* src);
         
-        CEU_Tuple*   ceu_tuple_create   (CEU_Block* hld, int n);
+        CEU_Value    ceu_tuple_create   (CEU_Block* hld, int n);
         CEU_Value    ceu_vector_create  (CEU_Block* hld);
         CEU_Dict*    ceu_dict_create    (CEU_Block* hld);
         CEU_Closure* ceu_closure_create (CEU_Block* hld, CEU_HOLD tphold, CEU_Frame* frame, CEU_Proto proto, int upvs);
@@ -388,16 +388,16 @@ fun Coder.main (tags: Tags): String {
                             cur = cur->next;
                         }
                     }
-                    CEU_Tuple* tup = ceu_tuple_create(frame->up_block, len);
+                    CEU_Value tup = ceu_tuple_create(frame->up_block, len);
                     {
                         CEU_Tags_List* cur = tags;
                         int i = 0;
                         while (cur != NULL) {
-                            assert(ceu_tuple_set(tup, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
+                            assert(ceu_tuple_set(&tup.Dyn->Tuple, i++, (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }));
                             cur = cur->next;
                         }
                     }                    
-                    return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
+                    return tup;
                 }
                 case 2: {   // check
                     CEU_Value ret = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
@@ -959,7 +959,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // CREATES
-        CEU_Tuple* ceu_tuple_create (CEU_Block* blk, int n) {
+        CEU_Value ceu_tuple_create (CEU_Block* blk, int n) {
             CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Tuple) {
@@ -968,13 +968,12 @@ fun Coder.main (tags: Tags): String {
             };
             memset(ret->buf, 0, n*sizeof(CEU_Value));
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return ret;
+            return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
         }
         
         CEU_Value ceu_tuple_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 && args[0].type==CEU_VALUE_NUMBER);
-            CEU_Tuple* tup = ceu_tuple_create(frame->up_block, args[0].Number);
-            return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)tup} };
+            return ceu_tuple_create(frame->up_block, args[0].Number);
         }
         
         CEU_Value ceu_vector_create (CEU_Block* blk) {
