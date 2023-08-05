@@ -79,39 +79,13 @@ class Exec_02 {
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
-    @Test
-    fun todo_ee_03_defer_err() {
-        val out = test("""
-            task () {
-                defer {
-                    yield(nil)   ;; no yield inside defer
-                }
-            }
-            println(1)
-        """)
-        assert(out == "TODO") { out }
-    }
-    @Test
-    fun ee_05_defer_err() {
-        val out = test("""
-            do {
-                defer {
-                    throw(nil)
-                }
-            }
-            println(:ok)
-        """)
-        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
-                "throw error : uncaught exception\n" +
-                "nil\n") { out }
-    }
 
     // THROW / CATCH
 
     @Test
     fun jj_01_catch() {
         val out = test("""
-            catch err==:x {
+            catch :x {
                 throw(:x)
                 println(9)
             }
@@ -122,7 +96,7 @@ class Exec_02 {
     @Test
     fun jj_02_catch_err() {
         val out = test("""
-            catch err==:x {
+            catch :x {
                 throw(:y)
                 println(9)
             }
@@ -368,7 +342,7 @@ class Exec_02 {
     // THROW/CATCH / DEFER
 
     @Test
-    fun cc_01_throw_defer() {
+    fun pp_01_throw_defer() {
         val out = test("""
             catch err==nil {
                 defer {
@@ -378,6 +352,20 @@ class Exec_02 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun pp_02_defer_err() {
+        val out = test("""
+            do {
+                defer {
+                    throw(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
+                "throw error : uncaught exception\n" +
+                "nil\n") { out }
     }
 
 }

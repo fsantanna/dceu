@@ -20,6 +20,14 @@ fun Coder.main (tags: Tags): String {
         #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
+        #if CEU >= 2
+        #define CEU_CONTINUE_ON_THROW() {           \
+            if (ceu_acc.type == CEU_VALUE_THROW) {  \
+                continue;                           \
+            }                                       \
+        }
+        #endif
+
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
@@ -46,6 +54,9 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE,
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
+        #if CEU >= 2
+            CEU_VALUE_THROW,
+        #endif
             CEU_VALUE_DICT
         } __attribute__ ((__packed__)) CEU_VALUE;
         _Static_assert(sizeof(CEU_VALUE) == 1);
@@ -114,12 +125,21 @@ fun Coder.main (tags: Tags): String {
             } upvs;
         } CEU_Closure;
         
+        typedef struct CEU_Throw {
+            _CEU_Dyn_
+            CEU_Value val;
+            CEU_Value stk;
+        } CEU_Throw;
+
         typedef union CEU_Dyn {                                                                 
             struct CEU_Any     Any;
             struct CEU_Tuple   Tuple;
             struct CEU_Vector  Vector;
             struct CEU_Dict    Dict;
             struct CEU_Closure Closure;
+        #if CEU >= 2
+            struct CEU_Throw   Throw;
+        #endif
         } CEU_Dyn;        
     """ +
     """ // CEU_Frame, CEU_Block
@@ -1113,6 +1133,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLOSURE:
                     printf("func: %p", v.Dyn);
                     break;
+        #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    printf("throw: %p | ", v.Dyn);
+                    ceu_print1(_1, v.Dyn->Throw.val);
+                    break;
+        #endif
                 default:
                     assert(0 && "bug found");
             }
@@ -1165,6 +1191,11 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_CLOSURE:
                         v = (e1.Dyn == e2.Dyn);
                         break;
+            #if CEU >= 2
+                    case CEU_VALUE_THROW:
+                        v = (e1.Dyn == e2.Dyn);
+                        break;
+            #endif
                     default:
                         assert(0 && "bug found");
                 }
@@ -1209,6 +1240,27 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret = ceu_is_f(_1, n, args);
             ret.Bool = !ret.Bool;
             return ret;
+        }
+
+        CEU_Value ceu_throw_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value val = args[0];
+            CEU_Value stk = ceu_vector_create(frame->up_block);
+            
+            ceu_gc_inc(val);
+            ceu_gc_inc(stk);
+
+            ceu_hold_add(val.Dyn, &frame->up_block->dyns);
+            ceu_hold_add(stk.Dyn, &frame->up_block->dyns);
+
+            CEU_Throw* ret = malloc(sizeof(CEU_Throw));
+            assert(ret != NULL);
+            ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
+            *ret = (CEU_Throw) {
+                CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, frame->up_block->depth, NULL, NULL, NULL,
+                val, stk
+            };
+            return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
         #endif
     """ +
@@ -1306,7 +1358,7 @@ fun Coder.main (tags: Tags): String {
     """ // MAIN
         int main (int ceu_argc, char** ceu_argv) {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
-            CEU_Value ceu_acc;        
+            CEU_Value ceu_acc;
             ${this.code}
             return 0;
         }

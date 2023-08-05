@@ -124,7 +124,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val common = """
                     // >>> block
                     ${defers[this].cond { it.first }}
+                    ${(CEU >= 2).cond { "do {" }}
                     $body
+                    ${(CEU >= 2).cond { "} while (0);" }}
                     ${defers[this].cond { it.second }}
                     // <<< block                    
                 """
@@ -210,6 +212,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 """
                             }.joinToString("")}
                         """}}
+                        ${(f_b == null).cond { 
+                            """
+                            #if CEU >= 2
+                                _ceu_dump_(ceu_acc);
+                                if (ceu_acc.type == CEU_VALUE_THROW) {
+                                    fprintf(stderr, "throw error : uncaught exception\n");
+                                }
+                            #endif
+                            """
+                        }}
                         ceu_block_free(ceu_block_$n);
                     }
                     """
@@ -298,6 +310,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
                 """
             }
+            is Expr.Catch -> """
+                { // CATCH ${this.dump()}
+                    do { // catch
+                        ${this.body.code()}
+                    } while (0); // catch
+                    if (ceu_acc.type == CEU_VALUE_THROW) {
+                        ${this.cnd.cond { """
+                            CEU_Value ceu_err = ceu_acc;
+                            do {
+                                ${this.cnd!!.code()}
+                            } while (0);
+                            CEU_CONTINUE_ON_THROW();
+                            ceu_acc = ceu_err;
+                            CEU_Value args[] = { ceu_err, ceu_acc };
+                            if (!ceu_is_f(ceu_frame, 2, args).Bool) {
+                                continue; // uncaught, rethrow
+                            }
+                        """ }}
+                    }
+                }
+                """
 
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
@@ -570,6 +603,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_args_$n
                     );
                     ceu_assert2($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error");
+                    ${(CEU >= 2).cond { """
+                        _ceu_dump_(ceu_acc);
+                        CEU_CONTINUE_ON_THROW();
+                    """ }}
                 } // CALL
                 """
             }

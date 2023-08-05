@@ -51,6 +51,7 @@ val TAGS = listOf (
     ":dynamic",
     ":func",
     ":tuple", ":vector", ":dict",
+) + (if (CEU <= 1) listOf() else listOf(":throw")) + listOf(
     ":ceu",
     ":tmp"
 )
@@ -59,7 +60,7 @@ val GLOBALS = setOf (
     "dump", "error", "next", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
-) + (if (CEU <= 1) setOf() else setOf("is'", "is-not'"))
+) + (if (CEU <= 1) setOf() else setOf("is'", "is-not'", "throw"))
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
