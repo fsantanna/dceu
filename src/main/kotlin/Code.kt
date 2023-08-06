@@ -318,6 +318,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         ${this.cnd.cond { """
                             CEU_Value ceu_err = ceu_acc;
+                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                             do {
                                 ${this.cnd!!.code()}
                             } while (0);

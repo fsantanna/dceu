@@ -20,7 +20,7 @@ class Exec_02 {
             println(is'([], :tuple))
             println(is-not'(1, :tuple))
             println(is-not'(1, :number))
-        """, true)
+        """)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
     }
     @Test

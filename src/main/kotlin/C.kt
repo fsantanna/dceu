@@ -578,6 +578,10 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_DICT:
                     free(dyn->Dict.buf);
                     break;
+        #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    break;
+        #endif
                 default:
                     assert(0 && "bug found");
             }
@@ -594,7 +598,7 @@ fun Coder.main (tags: Tags): String {
             blk->dyns = NULL;
         }
     """ +
-    """ // HOLD
+    """ // HOLD / DROP
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Dyn** nxt) {
             dyn->Any.hld_prev = nxt;
             dyn->Any.hld_next = *nxt;
@@ -676,6 +680,12 @@ fun Coder.main (tags: Tags): String {
                         }
                     }
                     break;
+            #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.val);
+                    ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.stk);
+                    break;
+            #endif
             }
             return 1;
         }
@@ -1250,16 +1260,13 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_inc(val);
             ceu_gc_inc(stk);
 
-            ceu_hold_add(val.Dyn, &frame->up_block->dyns);
-            ceu_hold_add(stk.Dyn, &frame->up_block->dyns);
-
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
-            ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
             *ret = (CEU_Throw) {
                 CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, frame->up_block->depth, NULL, NULL, NULL,
                 val, stk
             };
+            ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
         #endif
