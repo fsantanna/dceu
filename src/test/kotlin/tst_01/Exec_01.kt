@@ -482,7 +482,7 @@ class Exec_01 {
                 drop(ins)
             }
             println(out)
-        """, true
+        """
         )
         assert(out == "[1,2,3]\n") { out }
     }
@@ -705,7 +705,7 @@ class Exec_01 {
         }
         val x = g()
         println(x)
-        """, true
+        """
         )
         assert(out.contains("[func: 0x")) { out }
     }
@@ -1083,7 +1083,7 @@ class Exec_01 {
                 }
                 println(v)
             }
-        """, true
+        """
         )
         assert(out == "#[10]\n") { out }
     }
@@ -1557,7 +1557,7 @@ class Exec_01 {
                 [x]         ;; invalid return
             }
             println(v)
-        """, true
+        """
         )
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
                 "") { out }
@@ -2931,7 +2931,7 @@ class Exec_01 {
             println(string-to-tag(":x"))
             println(string-to-tag(":xyz"))
             println(string-to-tag("xyz"))
-        """, true)
+        """)
         assert(out == "nil\n:xyz\nnil\n") { out }
     }
     @Test
@@ -2941,7 +2941,7 @@ class Exec_01 {
             data :A.B = []
             data :A.B.C = []
             println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
-        """, true)
+        """)
         assert(out == ":A\t:A.B\t:A.B.C\n") { out }
     }
 
@@ -3093,7 +3093,7 @@ class Exec_01 {
             println(tags(t, :y))
             tags(t,:x,false)
             println(tags(t, :x))
-        """, true
+        """
         )
         assert(out == "true\ntrue\nfalse\n") { out }
     }
@@ -3102,7 +3102,7 @@ class Exec_01 {
         val out = test(
             """
             println(:x-a-x, :i.j.a)
-        """, true
+        """
         )
         assert(out == "anon : (lin 2, col 29) : tag error : parent tag :i.j is not declared\n") { out }
     }
@@ -3111,7 +3111,7 @@ class Exec_01 {
         val out = test(
             """
             println(:x-a-x, :i-j-a)
-        """, true
+        """
         )
         assert(out == ":x-a-x\t:i-j-a\n") { out }
     }
@@ -3148,7 +3148,7 @@ class Exec_01 {
             println(sup?(:A.J, :A.I.Y))
             println(sup?(:A.I.X, :A))
             println(sup?(:B, :B.I.X.a))
-        """, true
+        """
         )
         assert(out == "true\ntrue\nfalse\nfalse\nfalse\ntrue\n") { out }
     }
@@ -3785,7 +3785,7 @@ class Exec_01 {
                 ins
             }
             println(out)
-        """, true
+        """
         )
         assert(out == "anon : (lin 3, col 23) : block escape error : incompatible scopes\n" +
                 "") { out }

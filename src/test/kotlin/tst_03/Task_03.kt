@@ -2755,14 +2755,14 @@ class Task_03 {
         val out = test("""
             var a
             a.pub
-        """, true)
+        """)
         assert(out == "anon : (lin 3, col 15) : pub error : expected task\n:error\n") { out }
     }
     @Test
     fun hh_pub2_err() {
         val out = test("""
             task.pub
-        """, true)
+        """)
         //assert(out == "anon : (lin 2, col 18) : pub error : expected enclosing task") { out }
         assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
     }
@@ -2905,7 +2905,7 @@ class Task_03 {
                 }) ()
                 nil
             }) ()
-        """, true)
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -2940,7 +2940,7 @@ class Task_03 {
                 }) ()
                 println(x)
             }) ()
-        """, true)
+        """)
         assert(out == "10\n") { out }
     }
     @Test
@@ -2949,7 +2949,7 @@ class Task_03 {
             spawn (task () :fake {
                 task.pub
             }) ()
-        """, true)
+        """)
         //assert(out == "anon : (lin 3, col 22) : pub error : expected enclosing task") { out }
         assert(out == "anon : (lin 3, col 17) : task error : missing enclosing task") { out }
     }
@@ -3084,7 +3084,7 @@ class Task_03 {
             ;;println(a.pub)
             broadcast in a, [3]
             ;;println(a.pub)
-        """, true)
+        """)
         //assert(out == "[1]\n[2]\n@[(:y,[3])]\n") { out }
         assert(out == "TODO\n") { out }
     }
@@ -3156,14 +3156,14 @@ class Task_03 {
         val out = test("""
             var a
             status(a)
-        """, true)
+        """)
         assert(out == "anon : (lin 3, col 13) : status(a) : status error : expected coroutine\n:error\n") { out }
     }
     @Test
     fun ii_status2_err() {
         val out = test("""
             status(task)
-        """, true)
+        """)
         //assert(out == "anon : (lin 2, col 18) : status error : expected enclosing task") { out }
         assert(out == "anon : (lin 2, col 20) : task error : missing enclosing task") { out }
     }
@@ -3174,7 +3174,7 @@ class Task_03 {
             set t = task () {
                 set status(task) = nil     ;; error: cannot assign to status
             }
-        """, true)
+        """)
         assert(out == "anon : (lin 4, col 17) : invalid set : expected assignable destination") { out }
     }
     @Test
@@ -3346,7 +3346,7 @@ class Task_03 {
                 coroutine(coro() {nil})
             }
             println(f())
-        """, true)
+        """)
         //assert(out == "anon : (lin 6, col 21) : f()\n" +
         //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
         assert(out.contains("coro: 0x"))
@@ -3778,7 +3778,7 @@ class Task_03 {
                 println(evt.x)
             } ()
             broadcast in :global, tags([10,20], :E, true)
-        """, true)
+        """)
         assert(out == "10\n") { out }
     }
     @Test
@@ -3796,14 +3796,14 @@ class Task_03 {
             } ()
             broadcast in :global, tags([10,20], :E, true)
             broadcast in :global, tags([10,20], :F, true)
-        """, true)
+        """)
         assert(out == "10\n20\n") { out }
     }
     @Test
     fun mm_03_data_pub_err() {
         val out = test("""
             task () :T { nil }
-        """, true)
+        """)
         assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared") { out }
     }
     @Test
@@ -3814,7 +3814,7 @@ class Task_03 {
                 set task.pub = [10,20]
                 println(task.pub.x)
             } ()
-        """, true)
+        """)
         assert(out == "10\n") { out }
     }
     @Test
@@ -3822,7 +3822,7 @@ class Task_03 {
         val out = test("""
             var t = spawn task () { nil } ()
             println(t.pub.y)
-        """, true)
+        """)
         assert(out == "anon : (lin 3, col 23) : index error : expected collection\n" +
                 ":error\n") { out }
     }
@@ -3835,7 +3835,7 @@ class Task_03 {
                 yield(nil)
             } ()
             println(t.pub.y)
-        """, true)
+        """)
         assert(out == "20\n") { out }
     }
     @Test

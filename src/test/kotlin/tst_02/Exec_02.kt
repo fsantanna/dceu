@@ -33,7 +33,7 @@ class Exec_02 {
             println(is-not'(t, :y))
             tags(t,:x,false)
             println(is-not'(t, :x))
-        """, true)
+        """)
         assert(out == "true\nfalse\ntrue\n") { out }
     }
 

@@ -22,7 +22,7 @@ class Exec_03 {
             println(t1)
             println(t2)
             println(t3)
-        """, true)
+        """)
         assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
     }
     @Test
@@ -49,7 +49,7 @@ class Exec_03 {
                 copy(ins)
             }
             println(out)
-        """, true)
+        """)
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -63,7 +63,7 @@ class Exec_03 {
                 }
             }
             println(x)
-        """, true)
+        """)
         assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
@@ -78,7 +78,7 @@ class Exec_03 {
                 }
             }
             println(x)
-        """, true)
+        """)
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
@@ -97,7 +97,7 @@ class Exec_03 {
                 }
             }
             println(v)
-        """, true)
+        """)
         assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
                 ":error\n") { out }
     }
@@ -160,7 +160,7 @@ class Exec_03 {
             val t1 = #[]
             set t1[#t1] = 1
             println(t1)
-        """, true)
+        """)
         assert(out == "#[1]\n") { out }
     }
     @Test
@@ -175,7 +175,7 @@ class Exec_03 {
             println(t1)
             println(t2)
             println(t3)
-        """, true)
+        """)
         assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
     }
 
