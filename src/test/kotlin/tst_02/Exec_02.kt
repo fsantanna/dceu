@@ -37,6 +37,18 @@ class Exec_02 {
         assert(out == "true\nfalse\ntrue\n") { out }
     }
 
+    // POINTER-TO-STRING
+
+    @Test
+    fun bb_01() {
+        val out = test("""
+            val ptr = `:pointer "abc"`
+            val str = pointer-to-string(ptr)
+            println(str)
+        """)
+        assert(out == "abc\n") { out }
+    }
+
     // DEFER
 
     @Test

@@ -208,6 +208,10 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_print1 (CEU_Frame* _1, CEU_Value v);
         CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]);
+
+        #if CEU >= 2
+        CEU_Value ceu_pointer_dash_to_dash_string_f (CEU_Frame* frame, int n, CEU_Value args[]);
+        #endif
     """ +
     """ // GC_COUNT / TAGS
         int ceu_gc_count = 0;
@@ -314,22 +318,38 @@ fun Coder.main (tags: Tags): String {
             fprintf(stderr, "%s : %s\n", pre, err.Error);
             ceu_exit(blk);
         }
-        CEU_Value ceu_assert1 (CEU_Block* blk, CEU_Value v) {
-            if (v.type == CEU_VALUE_ERROR) {
-                ceu_error1(blk, v);
+        CEU_Value ceu_assert1 (CEU_Block* blk, CEU_Value err) {
+            if (err.type == CEU_VALUE_ERROR) {
+                ceu_error1(blk, err);
             }
-            return v;
+            return err;
         }
-        CEU_Value ceu_assert2 (CEU_Block* blk, CEU_Value v, char* msg1) {
-            if (v.type == CEU_VALUE_ERROR) {
-                ceu_error2(blk, msg1, v);
+        CEU_Value ceu_assert2 (CEU_Block* blk, CEU_Value err, char* pre) {
+            if (err.type == CEU_VALUE_ERROR) {
+                ceu_error2(blk, pre, err);
             }
-            return v;
+            return err;
         }
         CEU_Value ceu_error_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n==1 && args[0].type==CEU_VALUE_TAG);
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
         }
+        
+        #if CEU <= 1
+        #define CEU_ERROR2(blk,pre,err)  ceu_error2(blk,pre,err)
+        #define CEU_ASSERT2(blk,err,pre) ceu_assert2(blk,err,pre)
+        #else
+        #define CEU_ERROR2(blk,pre,err) {       \
+            CEU_Value ceu_str = ceu_pointer_to_string(blk,pre); \
+            ceu_vector_set(&err.Dyn->Throw.stk.Dyn->Vector, err.Dyn->Throw.stk.Dyn->Vector.its, ceu_str);    \
+            continue;                           \
+        }
+        #define CEU_ASSERT2(blk,err,pre) {      \
+            if (err.type == CEU_VALUE_THROW) {  \
+                CEU_ERROR2(blk,pre,err);        \
+            }                                   \
+        }
+        #endif
     """ +
     """ // IMPLS
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
@@ -1236,7 +1256,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """
-        // IS' / IS-NOT' / THROW
+        // IS' / IS-NOT' / THROW / POINTER-TO-STRING
         #if CEU >= 2
         CEU_Value ceu_is_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
@@ -1274,6 +1294,22 @@ fun Coder.main (tags: Tags): String {
             };
             ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
+        }
+
+        CEU_Value ceu_pointer_to_string (CEU_Block* blk, const char* ptr) {
+            CEU_Value str = ceu_vector_create(blk);
+            int len = strlen(ptr);
+            for (int i=0; i<len; i++) {
+                CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
+                ceu_vector_set(&str.Dyn->Vector, i, chr);
+            }
+            return str;
+        }
+
+        CEU_Value ceu_pointer_dash_to_dash_string_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n == 1);
+            assert(args[0].type == CEU_VALUE_POINTER);
+            return ceu_pointer_to_string(frame->up_block, args[0].Pointer);
         }
         #endif
     """ +
@@ -1343,6 +1379,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_is_not_f, {0,NULL}
         };
+        CEU_Closure ceu_pointer_dash_to_dash_string = { 
+            CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_pointer_dash_to_dash_string_f, {0,NULL}
+        };
         CEU_Closure ceu_throw = { 
             CEU_VALUE_CLOSURE, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_throw_f, {0,NULL}
@@ -1365,6 +1405,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 2
         CEU_Value id_is_plic_                = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is}                      };
         CEU_Value id_is_dash_not_plic_       = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_is_not}                  };
+        CEU_Value id_pointer_dash_to_dash_string = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_pointer_dash_to_dash_string} };
         CEU_Value id_throw                   = (CEU_Value) { CEU_VALUE_CLOSURE, {.Dyn=(CEU_Dyn*)&ceu_throw}                   };
         #endif
     """ +
