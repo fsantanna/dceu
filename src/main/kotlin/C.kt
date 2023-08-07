@@ -306,23 +306,23 @@ fun Coder.main (tags: Tags): String {
             ceu_block_free(blk);
             return ceu_exit(up);
         }
-        void ceu_error1 (CEU_Block* blk, char* msg) {
-            fprintf(stderr, "%s\n", msg);
+        void ceu_error1 (CEU_Block* blk, CEU_Value err) {
+            fprintf(stderr, "%s\n", err.Error);
             ceu_exit(blk);
         }
-        void ceu_error2 (CEU_Block* blk, char* msg1, char* msg2) {
-            fprintf(stderr, "%s : %s\n", msg1, msg2);
+        void ceu_error2 (CEU_Block* blk, char* pre, CEU_Value err) {
+            fprintf(stderr, "%s : %s\n", pre, err.Error);
             ceu_exit(blk);
         }
         CEU_Value ceu_assert1 (CEU_Block* blk, CEU_Value v) {
             if (v.type == CEU_VALUE_ERROR) {
-                ceu_error1(blk, v.Error);
+                ceu_error1(blk, v);
             }
             return v;
         }
         CEU_Value ceu_assert2 (CEU_Block* blk, CEU_Value v, char* msg1) {
             if (v.type == CEU_VALUE_ERROR) {
-                ceu_error2(blk, msg1, v.Error);
+                ceu_error2(blk, msg1, v);
             }
             return v;
         }
