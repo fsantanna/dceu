@@ -519,6 +519,12 @@ fun Coder.main (tags: Tags): String {
                         ceu_gc_dec((*dyn->Dict.buf)[i][1], 1);
                     }
                     break;
+            #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    ceu_gc_dec(dyn->Throw.val, 1);
+                    ceu_gc_dec(dyn->Throw.stk, 1);
+                    break;
+            #endif
                 default:
                     assert(0);
                     break;

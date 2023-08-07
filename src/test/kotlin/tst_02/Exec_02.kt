@@ -85,13 +85,13 @@ class Exec_02 {
     @Test
     fun jj_01_catch() {
         val out = test("""
-            catch :x {
+            val err = catch :x {
                 throw(:x)
                 println(9)
             }
-            println(1)
+            println(err)
         """)
-        assert(out == "1\n") { out }
+        assert(out == ":x\n") { out }
     }
     @Test
     fun jj_02_catch_err() {
