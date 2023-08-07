@@ -329,6 +329,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value args[] = { ceu_err, ceu_acc };
                             ceu_acc = ceu_err;
                             if (!ceu_is_f(ceu_frame, 2, args).Bool) {
+                    if (ceu_err.type==CEU_VALUE_REF || (ceu_err.type>CEU_VALUE_DYNAMIC && ceu_err.Dyn->tphold!=CEU_HOLD_NON)) {
+                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : rethrow error : incompatible scopes");
+                    }
                                 continue; // uncaught, rethrow
                             }
                         """ }}
@@ -612,6 +615,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }},
                         ceu_args_$n
                     );
+                    CEU_CONTINUE_ON_THROW_MSG("${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ceu_assert2($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : call error");
                     ${(CEU >= 2).cond { """
                         _ceu_dump_(ceu_acc);
