@@ -19,7 +19,7 @@ val VALGRIND = ""
 val THROW = false
 //val THROW = true
 
-var DUMP = false
+var DUMP = true
 var N = 1
 val D = "\$"
 

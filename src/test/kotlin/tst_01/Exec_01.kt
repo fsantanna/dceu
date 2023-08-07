@@ -784,7 +784,7 @@ class Exec_01 {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == "anon : (lin 6, col 21) : declaration error : incompatible scopes\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
