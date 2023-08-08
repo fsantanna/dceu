@@ -249,8 +249,7 @@ class Exec_02 {
     fun jj_11_catch() {
         val out = test("""
             catch [] {
-                var xxx
-                set xxx = []
+                val xxx = []
                 throw(xxx)
             }
             println(1)
@@ -259,9 +258,6 @@ class Exec_02 {
                 "anon : (lin 5, col 17) : throw(xxx)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
-        //assert(out == "anon : (lin 5, col 17) : throw(xxx) : throw error : incompatible scopes\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
     }
 
     // THROW/CATCH / DEFER

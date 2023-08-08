@@ -708,8 +708,12 @@ fun Coder.main (tags: Tags): String {
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.val);
-                    ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.stk);
+                    if (!ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.val)) {
+                        return 0;
+                    }
+                    if (!ceu_hold_chk_set(dst, depth, tphold, src.Dyn->Throw.stk)) {
+                        return 0;
+                    }
                     break;
             #endif
             }
@@ -1292,7 +1296,11 @@ fun Coder.main (tags: Tags): String {
                 CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, frame->up_block->depth, NULL, NULL, NULL,
                 val, stk
             };
+            
             ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
+            ceu_hold_chk_set_col((CEU_Dyn*)ret, val);
+            ceu_hold_chk_set_col((CEU_Dyn*)ret, stk);
+            
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
         }
 
