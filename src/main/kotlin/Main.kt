@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 2
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: export, copy, _
