@@ -135,7 +135,7 @@ class Exec_02 {
                 " v  throw error : :y\n") { out }
     }
     @Test
-    fun jj_03_catch() {
+    fun jj_04_catch() {
         val out = test("""
             var f
             set f = func () {
@@ -157,7 +157,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun jj_04_catch_valgrind() {
+    fun jj_05_catch_valgrind() {
         val out = test("""
             catch :x {
                 throw([])
@@ -170,7 +170,7 @@ class Exec_02 {
                 " v  throw error : []\n") { out }
     }
     @Test
-    fun jj_05_catch() {
+    fun jj_06_catch() {
         val out = test("""
             catch :e1 {
                 catch :e2 {
@@ -193,7 +193,7 @@ class Exec_02 {
         assert(out == "1\n2\n3\n") { out }
     }
     @Test
-    fun jj_06_catch_err() {
+    fun jj_07_catch_err() {
         val out = test("""
             catch {
                 throw(:y)
@@ -205,7 +205,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun jj_07_catch() {
+    fun jj_08_catch() {
         val out = test(
             """
             catch do {
@@ -220,91 +220,7 @@ class Exec_02 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun jj_08_catch() {
-        val out = test(
-            """
-            var x
-            catch do {
-                set x = err
-                err[0]==:x
-            } {
-                throw([:y])
-                println(9)
-            }
-            println(x)
-        """
-        )
-        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
-        //        "anon : (lin 7, col 17) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "[:x]\n") { out }
-    }
-    @Test
-    fun jj_09_catch_err() {
-        val out = test(
-            """
-            do {
-                catch do {  ;; err is binded to x and is being moved up
-                    var x
-                    set x = err
-                    println(err) `/* XXXX */`
-                    false
-                } {
-                    throw([:x])
-                    println(9)
-                }
-            }
-            println(:ok)
-            """
-        )
-        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
-        //        "anon : (lin 8, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        //assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
-        //        "anon : (lin 9, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
-                "anon : (lin 9, col 21) : throw([:x])\n" +
-                "throw error : uncaught exception\n" +
-                "[:x]\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun jj_10_catch() {
-        val out = test(
-            """
-            var x
-            catch do {
-                set x = err
-                err==:x
-            } {
-                throw(:x)
-                println(9)
-            }
-            println(x)
-        """
-        )
-        assert(out == ":x\n") { out }
-    }
-    @Test
-    fun jj_11_catch_err() {
-        val out = test(
-            """
-            catch err[0]==:x {
-                throw([:x])
-                println(9)
-            }
-            println(err)
-        """
-        )
-        //assert(out == "nil\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-    @Test
-    fun jj_12_catch() {
+    fun jj_09_catch() {
         val out = test(
             """
             catch false {
@@ -318,7 +234,7 @@ class Exec_02 {
                 " v  throw error : :xxx\n") { out }
     }
     @Test
-    fun jj_13_catch() {
+    fun jj_10_catch() {
         val out = test("""
             catch [] {
                 throw([])
@@ -330,23 +246,7 @@ class Exec_02 {
                 " v  throw error : []\n") { out }
     }
     @Test
-    fun jj_14_catch() {
-        val out = test(
-            """
-            var x
-            set x = err
-            do {
-                set x = err
-            }
-            println(1)
-            """
-        )
-        //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "1\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-    @Test
-    fun jj_15_catch() {
+    fun jj_11_catch() {
         val out = test("""
             catch [] {
                 var xxx
