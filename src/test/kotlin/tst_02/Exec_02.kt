@@ -113,24 +113,40 @@ class Exec_02 {
                 println(9)
             }
             println(1)
-        """.trimIndent())
-        assert(out == "anon : (lin 2, col 5) : throw(:y)\n" +
-                "throw error : uncaught exception\n" +
-                ":y\n") { out }
+        """)
+        assert(out == " |  anon : (lin 3, col 17) : throw(:y)\n" +
+                " v  throw error : :y\n") { out }
+    }
+    @Test
+    fun jj_03_catch_err() {
+        val out = test("""
+            val f = func () {
+                throw(:y)
+                println(9)
+            }
+            catch :x {
+                f()
+                println(9)
+            }
+            println(1)
+        """)
+        assert(out == " |  anon : (lin 7, col 17) : f()\n" +
+                " |  anon : (lin 3, col 17) : throw(:y)\n" +
+                " v  throw error : :y\n") { out }
     }
     @Test
     fun jj_03_catch() {
         val out = test("""
             var f
             set f = func () {
-                catch err==:xxx {
+                catch :xxx {
                     throw(:yyy)
                     println(91)
                 }
                 println(9)
             }
-            catch err==:yyy {
-                catch err==:xxx {
+            catch :yyy {
+                catch :xxx {
                     f()
                     println(92)
                 }
@@ -143,24 +159,23 @@ class Exec_02 {
     @Test
     fun jj_04_catch_valgrind() {
         val out = test("""
-            catch err==:x {
+            catch :x {
                 throw([])
                 println(9)
             }
             println(1)
         """.trimIndent())
         //assert(out == "anon : (lin 2, col 5) : throw error : expected tag\n") { out }
-        assert(out == "anon : (lin 2, col 5) : throw([])\n" +
-                "throw error : uncaught exception\n" +
-                "[]\n") { out }
+        assert(out == " |  anon : (lin 2, col 5) : throw([])\n" +
+                " v  throw error : []\n") { out }
     }
     @Test
     fun jj_05_catch() {
         val out = test("""
-            catch err==:e1 {
-                catch err==:e2 {
-                    catch err==:e3 {
-                        catch err==:e4 {
+            catch :e1 {
+                catch :e2 {
+                    catch :e3 {
+                        catch :e4 {
                             println(1)
                             throw(:e3)
                             println(99)
@@ -180,7 +195,7 @@ class Exec_02 {
     @Test
     fun jj_06_catch_err() {
         val out = test("""
-            catch true {
+            catch {
                 throw(:y)
                 println(9)
             }
@@ -194,7 +209,7 @@ class Exec_02 {
         val out = test(
             """
             catch do {
-                err==:x
+                :x
             } {
                 throw(:x)
                 println(9)
@@ -213,7 +228,7 @@ class Exec_02 {
                 set x = err
                 err[0]==:x
             } {
-                throw([:x])
+                throw([:y])
                 println(9)
             }
             println(x)
@@ -299,22 +314,20 @@ class Exec_02 {
             println(1)
         """.trimIndent()
         )
-        assert(out == "anon : (lin 2, col 5) : throw(:xxx)\n" +
-                "throw error : uncaught exception\n" +
-                ":xxx\n") { out }
+        assert(out == " |  anon : (lin 2, col 5) : throw(:xxx)\n" +
+                " v  throw error : :xxx\n") { out }
     }
     @Test
     fun jj_13_catch() {
         val out = test("""
-            catch err==[] {
+            catch [] {
                 throw([])
                 println(9)
             }
             println(1)
         """)
-        assert(out == "anon : (lin 3, col 17) : throw([])\n" +
-                "throw error : uncaught exception\n" +
-                "[]\n") { out }
+        assert(out == " |  anon : (lin 3, col 17) : throw([])\n" +
+                " v  throw error : []\n") { out }
     }
     @Test
     fun jj_14_catch() {
@@ -335,7 +348,7 @@ class Exec_02 {
     @Test
     fun jj_15_catch() {
         val out = test("""
-            catch err==[] {
+            catch [] {
                 var xxx
                 set xxx = []
                 throw(xxx)
@@ -356,7 +369,7 @@ class Exec_02 {
     @Test
     fun pp_01_throw_defer() {
         val out = test("""
-            catch err==nil {
+            catch nil {
                 defer {
                     throw(nil)
                 }

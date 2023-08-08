@@ -217,9 +217,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(f_b == null).cond { 
                             """
                             #if CEU >= 2
-                                _ceu_dump_(ceu_acc);
                                 if (ceu_acc.type == CEU_VALUE_THROW) {
-                                    fprintf(stderr, "throw error : uncaught exception\n");
+                                    int N = ceu_acc.Dyn->Throw.stk.Dyn->Vector.its;
+                                    CEU_Vector* vals = &ceu_acc.Dyn->Throw.stk.Dyn->Vector;
+                                    for (int i=N-1; i>=0; i--) {
+                                        printf(" |  %s\n", ceu_vector_get(vals,i).Dyn->Vector.buf);
+                                    }
+                                    printf(" v  throw error : ");
+                                    ceu_print1(ceu_frame, ceu_acc.Dyn->Throw.val);
+                                    puts("");
                                 }
                             #endif
                             """
