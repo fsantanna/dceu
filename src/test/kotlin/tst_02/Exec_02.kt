@@ -268,6 +268,15 @@ class Exec_02 {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun todo_jj_13_throw_catch_condition() {
+        val out = test("""
+            catch throw(2) {
+                throw(1)
+            }
+        """)
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
+    }
 
     // THROW/CATCH / DEFER
 
