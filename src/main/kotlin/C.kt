@@ -339,13 +339,18 @@ fun Coder.main (tags: Tags): String {
         #define CEU_ERROR2(blk,pre,err)  ceu_error2(blk,pre,err)
         #define CEU_ASSERT2(blk,err,pre) ceu_assert2(blk,err,pre)
         #else
-        #define CEU_ERROR2(blk,pre,err) {       \
+        #define CEU_ERROR2(blk,pre,err) {                       \
+            if (err.type == CEU_VALUE_THROW) {                  \
+                ceu_acc = err;                                  \
+            } else {                                            \
+                ceu_acc = _ceu_throw_(blk, err);                \
+            }                                                   \
             CEU_Value ceu_str = ceu_pointer_to_string(blk,pre); \
-            ceu_vector_set(&err.Dyn->Throw.stk.Dyn->Vector, err.Dyn->Throw.stk.Dyn->Vector.its, ceu_str);    \
-            continue;                           \
+            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str)); \
+            continue;                                           \
         }
         #define CEU_ASSERT2(blk,err,pre) {      \
-            if (err.type == CEU_VALUE_THROW) {  \
+            if (err.type==CEU_VALUE_ERROR || err.type==CEU_VALUE_THROW) {  \
                 CEU_ERROR2(blk,pre,err);        \
             }                                   \
         }
@@ -1107,6 +1112,9 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_NIL:
                     printf("nil");
                     break;
+                case CEU_VALUE_ERROR:
+                    printf("%s", v.Error);
+                    break;
                 case CEU_VALUE_TAG:
                     printf("%s", ceu_tag_to_string(v.Tag));
                     break;
@@ -1282,10 +1290,8 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_throw_f (CEU_Frame* frame, int n, CEU_Value args[]) {
-            assert(n == 1);
-            CEU_Value val = args[0];
-            CEU_Value stk = ceu_vector_create(frame->up_block);
+        CEU_Value _ceu_throw_ (CEU_Block* blk, CEU_Value val) {
+            CEU_Value stk = ceu_vector_create(blk);
             
             ceu_gc_inc(val);
             ceu_gc_inc(stk);
@@ -1293,15 +1299,20 @@ fun Coder.main (tags: Tags): String {
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
             *ret = (CEU_Throw) {
-                CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, frame->up_block->depth, NULL, NULL, NULL,
+                CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, blk->depth, NULL, NULL, NULL,
                 val, stk
             };
             
-            ceu_hold_add((CEU_Dyn*)ret, &frame->up_block->dyns);
+            ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
             ceu_hold_chk_set_col((CEU_Dyn*)ret, val);
             ceu_hold_chk_set_col((CEU_Dyn*)ret, stk);
             
             return (CEU_Value) { CEU_VALUE_THROW, {.Dyn=(CEU_Dyn*)ret} };
+        }
+
+        CEU_Value ceu_throw_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n == 1);
+            return _ceu_throw_(frame->up_block, args[0]);
         }
 
         CEU_Value ceu_pointer_to_string (CEU_Block* blk, const char* ptr) {

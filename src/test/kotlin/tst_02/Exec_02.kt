@@ -259,6 +259,17 @@ class Exec_02 {
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
     }
+    @Test
+    fun jj_12_catch() {
+        val out = test("""
+            val t = catch {
+                val xxx = []
+                throw(drop(xxx))
+            }
+            println(t)
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // THROW/CATCH / DEFER
 

@@ -196,7 +196,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             if (!ceu_hold_chk_set(&$up1->dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
                                 do {
-                                    CEU_ERROR2(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    CEU_ERROR2($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                 } while (0);
                             }
                             """
@@ -327,8 +327,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${this.body.code()}
                     } while (0); // catch
                     if (ceu_acc.type == CEU_VALUE_THROW) {
+                        CEU_Value ceu_err = ceu_acc;
                         ${this.cnd.cond { """
-                            CEU_Value ceu_err = ceu_acc;
                             ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                             do {
                                 ${this.cnd!!.code()}
@@ -342,10 +342,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_acc = ceu_err;
                                 continue; // uncaught, rethrow
                             }
-                            ceu_acc = ceu_err.Dyn->Throw.val;
                             ceu_gc_inc(ceu_err.Dyn->Throw.val);
                             ceu_gc_dec(ceu_err, 1);
                         """ }}
+                        ceu_acc = ceu_err.Dyn->Throw.val;
                     }
                 }
                 """
