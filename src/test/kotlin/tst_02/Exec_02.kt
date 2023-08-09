@@ -254,10 +254,8 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == "anon : (lin 2, col 27) : block escape error : incompatible scopes\n" +
-                "anon : (lin 5, col 17) : throw(xxx)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
+        assert(out == " |  anon : (lin 2, col 22)\n" +
+                " v  throw error : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun jj_12_catch() {
@@ -274,7 +272,7 @@ class Exec_02 {
     // THROW/CATCH / DEFER
 
     @Test
-    fun pp_01_throw_defer() {
+    fun todo_pp_01_throw_defer() {
         val out = test("""
             catch nil {
                 defer {
@@ -283,21 +281,27 @@ class Exec_02 {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
     @Test
-    fun pp_02_defer_err() {
+    fun todo_pp_02_defer_err() {
         val out = test("""
-            do {
+            val v = do {
                 defer {
-                    throw(nil)
+                    println(:1)
+                }
+                defer {
+                    println(:2)
+                    throw(:err)
+                    println(:3)
+                }
+                defer {
+                    println(:4)
                 }
             }
-            println(:ok)
+            println(:ok, v)
         """)
-        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
-                "throw error : uncaught exception\n" +
-                "nil\n") { out }
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
 
 }
