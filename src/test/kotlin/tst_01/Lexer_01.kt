@@ -10,7 +10,7 @@ fun lexer (str: String): Lexer {
 
 class Lexer_01 {
     @Test
-    fun syms() {
+    fun aa_01_syms() {
         val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")
         val tks = l.lex().iterator()
         assert(tks.next().str == "{")
@@ -32,7 +32,7 @@ class Lexer_01 {
         assert(!tks.hasNext())
     }
     @Test
-    fun syms2() {
+    fun aa_02_syms() {
         val l = lexer("@[ #[ @1")
         val tks = l.lex().iterator()
         assert(tks.next().str == "@[")
@@ -42,7 +42,7 @@ class Lexer_01 {
     }
 
     @Test
-    fun ids() {
+    fun bb_01_ids() {
         val l =
             lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn xloop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
         val tks = l.lex().iterator()
@@ -90,7 +90,7 @@ class Lexer_01 {
         assert(!tks.hasNext())
     }
     @Test
-    fun ids2() {
+    fun bb_02_ids() {
         val l = lexer("and or not")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "and" })
@@ -100,7 +100,7 @@ class Lexer_01 {
         assert(!tks.hasNext())
     }
     @Test
-    fun ids3() {
+    fun bb_03_ids() {
         val l = lexer("x-1 x-a")
         val tks = l.lex().iterator()
         //assert(tks.next().let { it is Tk.Id  && it.str == "x-1" })
@@ -112,7 +112,7 @@ class Lexer_01 {
         assert(!tks.hasNext())
     }
     @Test
-    fun is_isnot() {
+    fun bb_04_is_isnot() {
         val l = lexer("is? is-not? in? in-not?")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.str == "is?" })
@@ -124,7 +124,7 @@ class Lexer_01 {
     }
 
     @Test
-    fun vararg() {
+    fun cc_01_vararg() {
         val l = lexer(".. ... . .. ....")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "." })
@@ -140,7 +140,7 @@ class Lexer_01 {
     }
 
     @Test
-    fun comments1() {
+    fun dd_01_comments() {
         val l = lexer(
             """
             x - y - z ;;
@@ -163,7 +163,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==6 && it.pos.col==2 })
     }
     @Test
-    fun comments2() {
+    fun dd_02_comments() {
         val l = lexer(
             """
             x ;;;
@@ -179,7 +179,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id && it.pos.lin==4 && it.pos.col==1 && it.str == "z" })
     }
     @Test
-    fun comments3() {
+    fun dd_03_comments() {
         val l = lexer(
             """
             x
@@ -200,7 +200,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id && it.str == "y" })
     }
     @Test
-    fun comments4_err() {
+    fun dd_04_comments_err() {
         val l = lexer(
             """
             x
@@ -215,7 +215,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Eof })
     }
     @Test
-    fun comments5_err() {
+    fun dd_05_comments_err() {
         val l = lexer(
             """
             x
@@ -232,7 +232,7 @@ class Lexer_01 {
     }
 
     @Test
-    fun native() {
+    fun ee_01_native() {
         val l = lexer(
             """
             ` abc `
@@ -250,7 +250,7 @@ class Lexer_01 {
     }
 
     @Test
-    fun ops1() {
+    fun ff_01_ops() {
         val l = lexer("{{-}} {{+}} {{x}} {{*/}} -> ( + ({{==}})")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "{{-}}" })
@@ -268,7 +268,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==41 })
     }
     @Test
-    fun ops2() {
+    fun ff_02_ops() {
         val l = lexer("> < >= <= == /=")
         val tks = l.lex().iterator()
         assert(tks.next().str == ">")
@@ -280,7 +280,7 @@ class Lexer_01 {
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun ops3() {
+    fun ff_03_ops() {
         val l = lexer("=== =/= !! {{===}} {{!!}}")
         val tks = l.lex().iterator()
         assert(tks.next().str == "===")
@@ -291,20 +291,20 @@ class Lexer_01 {
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun ops5_err() {
+    fun ff_04_ops_err() {
         val l = lexer("{{===}")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : expected \"}\"")
     }
     @Test
-    fun ops4_err() {
+    fun ff_05_ops_err() {
         val l = lexer("{{x=}}")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : invalid identifier")
     }
 
     @Test
-    fun chr1() {
+    fun gg_01_chr() {
         val l = lexer("'x' '\\n' '\\'' '\\\\'")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Chr && it.str == "'x'" })
@@ -314,25 +314,25 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==19 })
     }
     @Test
-    fun chr2_err() {
+    fun gg_02_chr_err() {
         val l = lexer("'x")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 3) : char error : expected '")
     }
     @Test
-    fun chr3_err() {
+    fun gg_03_chr_err() {
         val l = lexer("'\\'")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }
     @Test
-    fun chr4_err() {
+    fun gg_04_chr_err() {
         val l = lexer("'\\n")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
     }
     @Test
-    fun chr5_err() {
+    fun gg_05_chr_err() {
         val l = lexer("'abc'")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 4) : char error : expected '")
@@ -342,7 +342,7 @@ class Lexer_01 {
     // INCLUDE
 
     @Test
-    fun inc1() {
+    fun hh_01_inc() {
         val l = lexer(
             """
             before
@@ -364,61 +364,61 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Eof && it.pos.lin==7 && it.pos.col==12 })
     }
     @Test
-    fun inc2_err() {
+    fun hh_02_inc_err() {
         val l = lexer("^[")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
-    fun inc3_err() {
+    fun hh_03_inc_err() {
         val l = lexer("^[]")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
-    fun inc4_err() {
+    fun hh_04_inc_err() {
         val l = lexer("^[jkj]")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
     }
     @Test
-    fun inc5_err() {
+    fun hh_05_inc_err() {
         val l = lexer("^[1,]")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected number")
     }
     @Test
-    fun inc6_err() {
+    fun hh_06_inc_err() {
         val l = lexer("^[1,1,1]")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"]\"")
     }
     @Test
-    fun inc7_err() {
+    fun hh_07_inc_err() {
         val l = lexer("^[\"")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : unterminated \"")
     }
     @Test
-    fun inc8_err() {
+    fun hh_08_inc_err() {
         val l = lexer("^[\"xxx\"]")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : file not found : xxx")
     }
     @Test
-    fun inc9_err() {
+    fun hh_09_inc_err() {
         val l = lexer("^")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"[\"")
     }
     @Test
-    fun inc10() {
+    fun hh_10_inc() {
         val l = lexer("^[1]x")
         val tks = l.lex().iterator()
         assert(tks.next().let { it.pos.lin==1 && it.pos.col==1 && it.str=="x" })
     }
     @Test
-    fun inc11() {
+    fun hh_11_inc() {
         val l = lexer("^[2,10]x")
         val tks = l.lex().iterator()
         assert(tks.next().let { it.pos.lin==2 && it.pos.col==10 && it.str=="x" })
@@ -427,14 +427,14 @@ class Lexer_01 {
     // UPVALS
 
     @Test
-    fun up1() {
+    fun ii_01_up() {
         val l = lexer("^id ^if")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.upv==1 && it.str=="id" && it.pos.lin==1 && it.pos.col==1 })
         assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : unexpected keyword")
     }
     @Test
-    fun up2() {
+    fun ii_02_up() {
         val l = lexer("^^x ^^^z")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.upv==2 && it.str=="x" && it.pos.lin==1 && it.pos.col==1 })
@@ -444,33 +444,33 @@ class Lexer_01 {
     // TAGS
 
     @Test
-    fun tags1() {
+    fun jj_01_tags() {
         val l = lexer(":tag")
         val tks = l.lex().iterator()
         assert(tks.next().str == ":tag")
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun tags2_err() {
+    fun jj_02_tags_err() {
         val l = lexer(":(")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
     }
     @Test
-    fun tags3_err() {
+    fun jj_03_tags_err() {
         val l = lexer(":")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
     }
     @Test
-    fun tags4() {
+    fun jj_04_tags() {
         val l = lexer(":X.y.z")
         val tks = l.lex().iterator()
         assert(tks.next().str == ":X.y.z")
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun tags4a() {
+    fun jj_05_tags() {
         val l = lexer(":X.y.1")
         val tks = l.lex().iterator()
         assert(tks.next().str == ":X.y")
@@ -479,27 +479,27 @@ class Lexer_01 {
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun tags6() {
+    fun jj_06_tags() {
         val l = lexer(":X-y-z")
         val tks = l.lex().iterator()
         assert(tks.next().str == ":X-y-z")
         assert(tks.next() is Tk.Eof)
     }
     @Test
-    fun tags7() {
+    fun jj_07_tags() {
         val l = lexer(":a.b.c.d.e")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : excess of '.' : max hierarchy of 4")
     }
     @Test
-    fun tags8_err() {
+    fun jj_08_tags_err() {
         val l = lexer(":{x")
         val tks = l.lex().iterator()
         assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
         //assert(trap { tks.next() } == "anon : (lin 1, col 1) : token : error : unterminated {")
     }
     @Test
-    fun tags9() {
+    fun jj_09_tags() {
         val l = lexer(":{()}")
         val tks = l.lex().iterator()
         //println(tks.next())

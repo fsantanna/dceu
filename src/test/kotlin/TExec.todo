@@ -1,0 +1,800 @@
+class TExec {
+    // UNDERSCORE
+
+    @Test
+    fun gg_01_und() {
+        val out = test(
+            """
+            val _ = 10
+            println(_)
+        """
+        )
+        assert(out == "anon : (lin 3, col 21) : access error : cannot access \"_\"") { out }
+    }
+    @Test
+    fun gg_02_und() {
+        val out = test(
+            """
+            do {
+                val _ = println(10)
+            }
+            do {
+                val _ = println(20)
+            }
+            println(:ok)
+        """
+        )
+        assert(out == "10\n20\n:ok\n") { out }
+    }
+    @Test
+    fun gg_03_und() {
+        val out = test("""
+            val _ = 10
+            val _ = 10
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // TUPLE
+
+    @Test
+    fun cc_tuple11_copy() {
+        val out = all("""
+            val t1 = [1,2,3]
+            val t2 = copy(t1)
+            val t3 = t1
+            set t1[2] = 999
+            set t2[0] = 10
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "[1,2,999]\n[10,2,3]\n[1,2,999]\n") { out }
+    }
+    @Test
+    fun cc_tuple12_free_copy() {
+        val out = all("""
+            var f
+            set f = func (v) {
+                ;;println(v)
+                if v > 0 {
+                    copy([f(v - 1)])
+                } else {
+                    0
+                }
+            }
+            println(f(3))
+        """, true)
+        assert(out == "[[[0]]]\n") { out }
+    }
+    @Test
+    fun cc_tuple13_copy_out() {
+        val out = all("""
+            val out = do {
+                val ins = [1,2,3]
+                copy(ins)
+            }
+            println(out)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+
+    @Test
+    fun cc_tuple21_scope_copy() {
+        val out = all("""
+            var x = [1,2,3]
+            do {
+                val y = copy(x)
+                do {
+                    set x = y
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "anon : (lin 6, col 25) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun cc_tuple22_scope_copy() {
+        val out = all("""
+            var x = [1,2,3]
+            do {
+                val y = copy(x)
+                do {
+                    set x = copy(y)
+                }
+            }
+            println(x)
+        """, true)
+        assert(out == "[1,2,3]\n") { out }
+    }
+    @Test
+    fun cc_tuple23_scope_copy() {
+        val out = all("""
+            var v
+            do {
+                var x = [1,2,3]
+                do {
+                    val y = copy(x)
+                    do {
+                        set x = copy(y)
+                        ;;`printf(">>> %d\n", ceu_mem->x.Dyn->tphold);`
+                        set v = x       ;; err
+                    }
+                }
+            }
+            println(v)
+        """, true)
+        assert(out == "anon : (lin 10, col 29) : set error : incompatible scopes\n" +
+                ":error\n") { out }
+    }
+
+    // DICT
+
+    @Test
+    fun dd_dict6_copy() {
+        val out = all("""
+            val t1 = @[]
+            set t1[:x] = 1
+            val t2 = t1
+            val t3 = copy(t1)
+            set t1[:y] = 2
+            set t3[:y] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """)
+        assert(out == "@[(:x,1),(:y,2)]\n@[(:x,1),(:y,2)]\n@[(:x,1),(:y,20)]\n") { out }
+    }
+    @Test
+    fun todo_dd_dict7_err() {
+        val out = all("""
+            var x
+            set x = @[(nil,10)]
+            println(x[nil])
+        """)
+        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
+    }
+    @Test
+    fun todo_dd_dict8_err() {
+        val out = all("""
+            val x
+            set x = @[]
+            set x[nil] = 10
+            println(x[nil])
+        """)
+        assert(out.contains("ceu_dict_set: Assertion `key->type != CEU_VALUE_NIL' failed")) { out }
+    }
+
+    // VECTOR
+
+    @Test
+    fun vector10_pop_acc() {
+        val out = all("""
+            val v = #[1,2,3]
+            val x = export [] {
+                val i = v[#v - 1]
+                set v[#v - 1] = nil
+                i
+            }
+            println(x, #v)
+        """, true)
+        assert(out == "3\t2\n") { out }
+    }
+    @Test
+    fun vector11_copy() {
+        val out = all("""
+            val t1 = #[]
+            set t1[#t1] = 1
+            println(t1)
+        """, true)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun vector12_copy() {
+        val out = all("""
+            val t1 = #[]        ;; [1,2]
+            set t1[#t1] = 1
+            val t2 = t1         ;; [1,2]
+            val t3 = copy(t1)   ;; [1,20]
+            set t1[#t1] = 2
+            set t3[#t3] = 20
+            println(t1)
+            println(t2)
+            println(t3)
+        """, true)
+        assert(out == "#[1,2]\n#[1,2]\n#[1,20]\n") { out }
+    }
+
+    // GROUP
+
+    @Test
+    fun group1() {
+        val out = all("""
+            export [a] {
+                val a = 10
+            }
+            export [x] {
+                var x
+                set x = a
+            }
+            print(x)
+        """)
+        assert(out == "10") { out }
+    }
+    @Test
+    fun group2_err() {
+        val out = all("""
+            export [] {
+                var a       ;; invisible
+                set a = 10
+            }
+            var x
+            set x = a
+            print(x)
+        """)
+        assert(out == "anon : (lin 7, col 21) : access error : variable \"a\" is not declared") { out }
+    }
+    @Test
+    fun group3() {
+        val out = all("""
+            val x = export [] {
+                val a = []
+                a
+            }
+            print(x)
+        """)
+        assert(out == "[]") { out }
+    }
+    @Test
+    fun export4() {
+        val out = all("""
+            export [aaa] {
+                val aaa = 10
+            }
+            export [bbb] {
+                val bbb = 20
+            }
+            println(aaa,bbb)
+        """)
+        assert(out == "10\t20\n") { out }
+    }
+    @Test
+    fun export6() {
+        val out = all("""
+            export [f] {
+                val v = []
+                val f = func () {
+                    v
+                }
+                ;;println(v, f)
+            }
+            do {
+                val x = f
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun export7() {
+        val out = all("""
+            do {
+                export [f] {
+                    val v = []
+                    val f = func () {
+                        v
+                    }
+                    ;;println(v, f)
+                }
+                do {
+                    val x = f
+                    nil
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // SCOPE
+
+    @Test
+    fun scope18_tup() {
+        val out = all("""
+            val T = task (t1) {
+                val t2 = []
+                pass [t1,[],t2]
+                yield(nil)
+            }
+            do {
+                spawn T([])
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun scope23_tasks() {
+        val out = all("""
+            do {
+                val t = [tasks(), tasks()]
+                println(#t)
+            }
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun scope24_tracks() {
+        val out = all("""
+            val T = task () { yield(nil) }
+            do {
+                val ts = tasks()
+                spawn in ts, T()
+                do {
+                    val vec = #[]
+                    loop in :tasks ts, t {
+                        set vec[#vec] = t
+                    }
+                    println(vec)
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("#[x-track: 0x")) { out }
+    }
+    @Test
+    fun scope25_tracks() {
+        val out = all("""
+            val T = task () { yield(nil) }
+            do {
+                val ts = tasks()
+                spawn in ts, T()
+                do {
+                    val vec = #[]
+                    loop in :tasks ts, t {
+                        set vec[#vec] = move(t)
+                    }
+                    println(#vec)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+
+    // FUNC / CALL
+
+    @Test
+    fun todo_use_bef_dcl_func18() {
+        val out = all("""
+            var f
+            set f = func () {
+                println(v)
+            }
+            var v
+            set v = 10
+            f()
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    // LOOP
+
+    @Test
+    fun loop1() {
+        val out = all("""
+            var x
+            set x = false
+            loop until x {
+                set x = true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun loop2() {
+        val out = all("""
+            val f = func (t) {
+                if t[1] == 5 {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1]
+                }
+            }
+            do {
+                val it = [f, 0]
+                var i = it[0](it)
+                loop until i == nil {
+                    println(i)
+                    set i = it[0](it)
+                }
+            }
+        """, true)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+    @Test
+    fun loop3() {
+        val out = all("""
+            val v = loop until 10 {nil}
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+
+    // THROW / CATCH
+
+    @Test
+    fun catch8() {
+        val out = ceu.all(
+            """
+            var x
+            catch do {
+                set x = err
+                err[0]==:x
+            } {
+                throw([:x])
+                println(9)
+            }
+            println(x)
+        """
+        )
+        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+        //        "anon : (lin 7, col 17) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "[:x]\n") { out }
+    }
+    @Test
+    fun catch89_err() {
+        val out = ceu.all(
+            """
+            do {
+                catch do {  ;; err is binded to x and is being moved up
+                    var x
+                    set x = err
+                    println(err) `/* XXXX */`
+                    false
+                } {
+                    throw([:x])
+                    println(9)
+                }
+            }
+            println(:ok)
+            """
+        )
+        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
+        //        "anon : (lin 8, col 21) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        //assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
+        //        "anon : (lin 9, col 21) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        ":error\n") { out }
+        assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
+                "anon : (lin 9, col 21) : throw([:x])\n" +
+                "throw error : uncaught exception\n" +
+                "[:x]\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun catch10_err() {
+        val out = ceu.all(
+            """
+            catch err[0]==:x {
+                throw([:x])
+                println(9)
+            }
+            println(err)
+        """
+        )
+        //assert(out == "nil\n") { out }
+        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
+    }
+    @Test
+    fun catch13() {
+        val out = ceu.all(
+            """
+            var x
+            set x = err
+            do {
+                set x = err
+            }
+            println(1)
+            """
+        )
+        //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
+    }
+
+    // OPERATORS
+
+    @Test
+    fun todo_op_id2() {
+        val out = all("""
+            set (+) = (-)
+            println((+)(10,4))
+        """)
+        assert(out == "6\n") { out }
+    }
+
+    // TYPE
+
+    @Test
+    fun tags14() {
+        val out = all("""
+            val co = coro () {
+                yield(:x)
+            }
+            println(:y)
+        """)
+        assert(out == ":y\n") { out }
+    }
+    @Test
+    fun tags15() {
+        val out = all("""
+            val t = tags([], :x, true)
+            val s = copy(t)
+            println(s)
+        """)
+        assert(out == ":x []\n") { out }
+    }
+
+    // DEFER
+
+    @Test
+    fun todo_defer2_err() {
+        val out = all("""
+            task () {
+                defer {
+                    yield(nil)   ;; no yield inside defer
+                }
+            }
+            println(1)
+        """)
+        assert(out == "TODO") { out }
+    }
+    @Test
+    fun defer4_err() {
+        val out = all("""
+            do {
+                defer {
+                    throw(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
+                "throw error : uncaught exception\n" +
+                "nil\n") { out }
+    }
+
+    // CLOSURE / ESCAPE / FUNC / UPVALS
+
+    @Ignore
+    @Test
+    fun todo_clo24_copy() {
+        val out = all("""
+            var f = func (^a) {
+                func () {
+                    ^^a
+                }
+            }
+            var g = do {
+                var t = [1]
+                var i = copy(f(t))
+                set t[0] = 10
+                move(i)
+            }
+            println(g())
+        """)
+        assert(out == "[1]\n") { out }
+    }
+
+    //  MEM-GC-REF-COUNT
+
+    @Test
+    fun gc13_bcast() {
+        val out = all("""
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc14_bcast() {
+        val out = ceu.all(
+            """
+            var tk = task () {
+                yield(nil)
+                do {
+                    val xxx = evt
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun gc14_bcast_err() {
+        val out = ceu.all(
+            """
+            var tk = task () {
+                do {
+                    yield(nil)
+                    var v = evt
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+                "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+                ":error\n") { out }
+    }   @Test
+    fun gc14_2_bcast_err() {
+        val out = ceu.all(
+            """
+            var tk = task () {
+                do {
+                    yield(nil)
+                    do {
+                        var v = evt
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun gc16_arg_bcast() {
+        val out = ceu.all(
+            """
+            var tk = task (v) {
+                do {
+                    yield(nil)
+                    ;;println(evt)
+                    do {
+                        val v' = evt
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn (tk) ()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+        """
+        )
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+
+    // POLY
+    /*
+    @Test
+    fun vv_01_poly_ret_type() {
+        val out = all("""
+            poly var min
+            poly set min :number = 1
+            poly set min :char   = 'a'
+            var n :number = min
+            var c :char   = min
+            println(min)
+            println(n, c)
+        """)
+        assert(out == "1\t'a'\n") { out }
+    }
+    @Test
+    fun vv_02_poly_ret_tag() {
+        val out = all("""
+            poly var min
+            poly set min :Nat  = 1
+            poly set min :Char = 'a'
+            var n :Nat  = min
+            var c :Char = min
+            println(n, c)
+        """)
+        assert(out == "[1,'a']\n") { out }
+    }
+    @Test
+    fun vv_02_poly_func_ret() {
+        val out = all("""
+            poly var read
+            poly set read = func () -> :Nat {
+                return 1
+            }
+            poly func read () -> :Char {
+                return 'a'
+            }
+            var n :Nat  = read()
+            var c :Char = read()
+            println(n, c)
+        """, true)
+        assert(out == "[1,'a']\n") { out }
+    }
+    @Test
+    fun vv_03_poly_func_args_one() {
+        val out = all("""
+            poly var f
+            poly set f = func (v:Nat) {
+                println(:Nat, v)
+            }
+            poly func f (v:Char) {
+                println(:Char, v)
+            }
+            f(:Nat  [1])
+            f(:Char ['a'])
+        """, true)
+        assert(out == ":Nat\t[1]\n:Char\t['a']\n") { out }
+    }
+    @Test
+    fun vv_04_poly_func_args_one() {
+        val out = all("""
+            poly var f
+            poly func f (v:number) {
+                println(:number, v)
+            }
+            poly set f = func (v:char) {
+                println(:char, v)
+            }
+            f(1)
+            f('a')
+        """, true)
+        assert(out == ":number\t1\n:char\t'a'\n") { out }
+    }
+    @Test
+    fun vv_04_poly_func_args_multi() {
+        val out = all("""
+            poly var f
+            poly func f (x:number, y:number) {
+                println(:number, x, :number, y)
+            }
+            poly set f = func (x:number, y:char) {
+                println(:number, x, :char, y)
+            }
+            f(1, 'a')
+            f(1, 2)
+        """, true)
+        assert(out == ":number\t1\t:char\t'a'\n:number\t1\t:number\t1\n") { out }
+    }
+    @Test
+    fun vv_05_poly_set_nopoly_err() {
+        val out = all("""
+            var min
+            poly set min :number = 1
+        """)
+        assert(out == "1\t'a'\n") { out }
+    }
+    */
+}

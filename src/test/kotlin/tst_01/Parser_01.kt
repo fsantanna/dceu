@@ -8,26 +8,33 @@ class Parser_01 {
     // VAR
 
     @Test
-    fun expr_var () {
+    fun aa_01_var () {
         val l = lexer(" x ")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Acc && e.tk.str == "x")
     }
     @Test
-    fun expr_var_err1 () {
+    fun aa_02_var_err () {
         val l = lexer(" { ")
         val parser = Parser(l)
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
-    fun expr_var_err2 () {
+    fun aa_03_var_err () {
         val l = lexer("  ")
         val parser = Parser(l)
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 3) : expected expression : have end of file")
     }
     @Test
-    fun err4 () {
+    fun aa_04_evt () {
+        val l = lexer(" evt ")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Acc && e.tk.str == "evt")
+    }
+    @Test
+    fun aa_05_err () {
         val l = lexer(" err ")
         val parser = Parser(l)
         val e = parser.expr_prim()
@@ -37,26 +44,26 @@ class Parser_01 {
     // PARENS
 
     @Test
-    fun expr_parens() {
+    fun bb_01_expr_parens() {
         val l = lexer(" ( a ) ")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Acc && e.tk.str == "a")
     }
     @Test
-    fun expr_parens_err() {
+    fun bb_02_expr_parens_err() {
         val l = lexer(" ( a  ")
         val parser = Parser(l)
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \")\" : have end of file")
     }
     @Test
-    fun op_prec_err() {
+    fun bb_03_op_prec_err() {
         val l = lexer("println(2 * 3 - 1)")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 15) : binary operation error : expected surrounding parentheses")
     }
     @Test
-    fun op_prec_ok() {
+    fun bb_04_op_prec_ok() {
         val l = lexer("println(2 * (3 - 1))")
         val parser = Parser(l)
         val e = parser.expr()
@@ -66,35 +73,35 @@ class Parser_01 {
     // NUM / NIL / BOOL
 
     @Test
-    fun expr_num() {
+    fun cc_01_num() {
         val l = lexer(" 1.5F ")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Num && e.tk.str == "1.5F")
     }
     @Test
-    fun expr_nil() {
+    fun cc_02_nil() {
         val l = lexer("nil")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Nil && e.tk.str == "nil")
     }
     @Test
-    fun expr_true() {
+    fun cc_03_true() {
         val l = lexer("true")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Bool && e.tk.str == "true")
     }
     @Test
-    fun expr_false() {
+    fun cc_04_false() {
         val l = lexer("false")
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Bool && e.tk.str == "false")
     }
     @Test
-    fun expr_char() {
+    fun cc_05_char() {
         val l = lexer("'x'")
         val parser = Parser(l)
         val e = parser.expr_prim()
@@ -104,21 +111,21 @@ class Parser_01 {
     // CALL
 
     @Test
-    fun expr_call1() {
+    fun dd_01_call() {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.tk.str=="f" && e.closure is Expr.Acc && e.args.size==2)
     }
     @Test
-    fun expr_call2() {
+    fun dd_02_call() {
         val l = lexer(" f() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
         assert(e is Expr.Call && e.closure.tk.str=="f" && e.closure is Expr.Acc && e.args.size==0)
     }
     @Test
-    fun expr_call3() {
+    fun dd_03_call() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
@@ -126,13 +133,13 @@ class Parser_01 {
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
-    fun expr_call_err1() {
+    fun dd_04_call_err() {
         val l = lexer("f (999 ")
         val parser = Parser(l)
         assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 8) : expected \")\" : have end of file")
     }
     @Test
-    fun expr_call_err2() {
+    fun dd_05_call_err() {
         val l = lexer(" f ({ ")
         val parser = Parser(l)
         assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected expression : have \"{\"")
@@ -141,27 +148,27 @@ class Parser_01 {
     // TUPLE
 
     @Test
-    fun expr_tuple1() {
+    fun ee_01_tuple() {
         val l = lexer(" [ 1.5F, x] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
         assert(e is Expr.Tuple && e.args.size==2)
     }
     @Test
-    fun expr_tuple2() {
+    fun ee_02_tuple() {
         val l = lexer("[[],[1,2,3]]")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
         assert(e.tostr() == "[[],[1,2,3]]")
     }
     @Test
-    fun expr_tuple_err() {
+    fun ee_03_tuple_err() {
         val l = lexer("[{")
         val parser = Parser(l)
         assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 2) : expected expression : have \"{\"")
     }
     @Test
-    fun tuple4() {
+    fun ee_04_tuple() {
         val l = lexer("[1.5F,] ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
@@ -393,6 +400,13 @@ class Parser_01 {
         val l = lexer("set (if true {nil} else {nil}) = nil")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+    }
+    @Test
+    fun set_evt_err() {
+        val l = lexer("set evt = nil")
+        val parser = Parser(l)
+        assert(parser.expr() is Expr.Set)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
     }
     @Test
     fun set_err_err() {
@@ -743,54 +757,4 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.tostr() == "data :U = [t:T]\n") { e.tostr() }
     }
-
-    // POLY
-    /*
-    @Test
-    fun gg_01_poly_err() {
-        val l = lexer("poly x")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : poly error : expected var or set")
-    }
-    @Test
-    fun gg_02_poly_err() {
-        val l = lexer("poly var x = 1")
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 1, col 12) : expected expression : have \"=\"")
-    }
-    @Test
-    fun gg_03_poly() {
-        val l = lexer("poly var x")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr(false) == "poly var x") { e.tostr() }
-    }
-    @Test
-    fun gg_04_poly_err() {
-        val l = lexer("poly set x = 1")
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 1, col 14) : expected \"func\" : have \"1\"")
-    }
-    @Test
-    fun gg_05_poly_set_tag() {
-        val l = lexer("poly set min :number = 1")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr(false) == "set min[:number] = 1") { e.tostr() }
-    }
-    @Test
-    fun gg_06_poly_set_func() {
-        val l = lexer("poly set f = func () { nil }")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr(false) == "poly var x") { e.tostr() }
-    }
-    @Test
-    fun gg_07_poly_set_err() {
-        val l = lexer("poly set f.x :number = 10")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr(false) == "poly var x") { e.tostr() }
-    }
-    */
 }
