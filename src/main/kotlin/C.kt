@@ -310,23 +310,13 @@ fun Coder.main (tags: Tags): String {
             ceu_block_free(blk);
             return ceu_exit(up);
         }
-        void ceu_error1 (CEU_Block* blk, CEU_Value err) {
-            fprintf(stderr, "%s\n", err.Error);
-            ceu_exit(blk);
-        }
-        void ceu_error2 (CEU_Block* blk, char* pre, CEU_Value err) {
+        void _ceu_error_ (CEU_Block* blk, char* pre, CEU_Value err) {
             fprintf(stderr, "%s : %s\n", pre, err.Error);
             ceu_exit(blk);
         }
-        CEU_Value ceu_assert1 (CEU_Block* blk, CEU_Value err) {
+        CEU_Value ceu_assert (CEU_Block* blk, CEU_Value err, char* pre) {
             if (err.type == CEU_VALUE_ERROR) {
-                ceu_error1(blk, err);
-            }
-            return err;
-        }
-        CEU_Value ceu_assert2 (CEU_Block* blk, CEU_Value err, char* pre) {
-            if (err.type == CEU_VALUE_ERROR) {
-                ceu_error2(blk, pre, err);
+                _ceu_error_(blk, pre, err);
             }
             return err;
         }
@@ -336,10 +326,10 @@ fun Coder.main (tags: Tags): String {
         }
         
         #if CEU <= 1
-        #define CEU_ERROR2(blk,pre,err)  ceu_error2(blk,pre,err)
-        #define CEU_ASSERT2(blk,err,pre) ceu_assert2(blk,err,pre)
+        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
+        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
         #else
-        #define CEU_ERROR2(blk,pre,err) {                       \
+        #define CEU_ERROR(blk,pre,err) {                       \
             if (err.type == CEU_VALUE_THROW) {                  \
                 ceu_acc = err;                                  \
             } else {                                            \
@@ -349,9 +339,9 @@ fun Coder.main (tags: Tags): String {
             assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str)); \
             continue;                                           \
         }
-        #define CEU_ASSERT2(blk,err,pre) {      \
+        #define CEU_ASSERT(blk,err,pre) {      \
             if (err.type==CEU_VALUE_ERROR || err.type==CEU_VALUE_THROW) {  \
-                CEU_ERROR2(blk,pre,err);        \
+                CEU_ERROR(blk,pre,err);        \
             }                                   \
         }
         #endif
@@ -452,7 +442,7 @@ fun Coder.main (tags: Tags): String {
                             tag,
                             (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} }
                         };
-                        ret = ceu_assert1(frame->up_block, ceu_sup_question__f(frame, 2, args));
+                        ret = ceu_sup_question__f(frame, 2, args);
                         if (ret.Bool) {
                             break;
                         }

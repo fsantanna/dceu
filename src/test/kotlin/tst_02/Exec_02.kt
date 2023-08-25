@@ -254,8 +254,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " |  anon : (lin 2, col 22)\n" +
-                " v  throw error : block escape error : incompatible scopes\n") { out }
+        assert(out == " v  anon : (lin 2, col 22) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun jj_12_catch() {
@@ -312,4 +311,24 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
+
+    // MISC
+
+    @Test
+    fun zz_01_func_err() {
+        val out = test("1(1)")
+        assert(out == " v  anon : (lin 1, col 1) : call error : expected function\n") { out }
+    }
+    @Test
+    fun zz_02_func_err() {
+        val out = test("""
+            val f = func () {
+                1(1)
+            }
+            f()
+        """)
+        assert(out == " |  anon : (lin 5, col 13) : f()\n" +
+                " v  anon : (lin 3, col 17) : call error : expected function\n") { out }
+    }
+
 }
