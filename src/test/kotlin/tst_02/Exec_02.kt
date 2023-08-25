@@ -312,5 +312,4 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
-
 }
