@@ -14,7 +14,7 @@ class Lexer_03 {
             lexer("coro coroutine spawn yield resume")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "coro" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "coroutine" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "coroutine" })
         assert(tks.next().let { it is Tk.Id  && it.str == "spawn" })
         assert(tks.next().let { it is Tk.Fix && it.str == "yield" })
         assert(tks.next().let { it is Tk.Fix && it.str == "resume" })

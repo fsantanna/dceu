@@ -45,6 +45,9 @@ class Ups (outer: Expr.Do) {
             is Expr.Catch  -> this.map(listOfNotNull(this.cnd) + listOf(this.body))
             is Expr.Defer  -> this.map(listOf(this.body))
 
+            is Expr.Yield  -> this.map(listOf(this.arg))
+            is Expr.Resume -> this.map(listOf(this.call))
+
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
             is Expr.Nil    -> emptyMap()

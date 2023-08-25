@@ -269,7 +269,7 @@ class Parser (lexer_: Lexer)
                 Expr.XBreak(this.tk0 as Tk.Fix, e)
             }
             this.acceptFix("xloop") -> Expr.XLoop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
-            this.acceptFix("func") -> {
+            this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("(")
                 val args = this.args(")")
@@ -333,6 +333,16 @@ class Parser (lexer_: Lexer)
                 }
                 val blk = this.block()
                 Expr.Catch(this.tk0 as Tk.Fix, cnd, blk)
+            }
+
+            (CEU>=3 && this.acceptFix("yield")) -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(CEU<10, CEU>10)!!)
+            (CEU>=3 && this.acceptFix("resume")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val call = this.expr_2_pre()
+                if (call !is Expr.Call) {
+                    err(tk1, "invalid resume : expected call")
+                }
+                Expr.Resume(tk0, call as Expr.Call)
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

@@ -44,6 +44,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> "catch " + this.cnd.cond { it.tostr(pre)} + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)
 
+        is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
+        is Expr.Resume -> "resume " + this.call.tostr(pre)
+
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()
         is Expr.Nil    -> this.tk.str

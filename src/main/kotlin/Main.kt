@@ -4,10 +4,12 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 3
     // 1: dyn-lex
     // 2: defer, throw/catch
-    // 3: export, copy, _
+    // 3: coro
+    // X: export, copy, _
+    // 99: XCEU
 
 // search in tests output for
 //  definitely|Invalid read|Invalid write|uninitialised|uninitialized
@@ -40,6 +42,8 @@ val KEYWORDS: SortedSet<String> = (
         "xloop", "xbreak"
     ) + (if (CEU <= 1) setOf() else setOf (
         "catch", "defer", /*"throw",*/
+    )) + (if (CEU <= 2) setOf() else setOf(
+        "coro", "resume",  "yield"
     ))
 ).toSortedSet()
 
@@ -60,7 +64,11 @@ val GLOBALS = setOf (
     "dump", "error", "next", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
-) + (if (CEU <= 1) setOf() else setOf("is'", "is-not'", "pointer-to-string", "throw"))
+) + (if (CEU <= 1) setOf() else setOf(
+    "is'", "is-not'", "pointer-to-string", "throw"
+)) + (if (CEU <= 2) setOf() else setOf(
+    "coroutine"
+))
 
 sealed class Tk (val str: String, val pos: Pos) {
     data class Eof (val pos_: Pos, val n_: Int=N++): Tk("", pos_)
@@ -89,6 +97,9 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr?, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
