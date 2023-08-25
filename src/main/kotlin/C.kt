@@ -57,10 +57,23 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 2
             CEU_VALUE_THROW,
         #endif
-            CEU_VALUE_DICT
+            CEU_VALUE_DICT,
+        #if CEU >= 3
+            CEU_VALUE_X_CORO,
+        #endif
+            CEU_VALUE_MAX
         } __attribute__ ((__packed__)) CEU_VALUE;
         _Static_assert(sizeof(CEU_VALUE) == 1);
         
+        #if CEU >= 3
+        typedef enum CEU_X_STATUS {
+            CEU_X_STATUS_YIELDED = 1,
+            //CEU_X_STATUS_TOGGLED,
+            CEU_X_STATUS_RESUMED,
+            CEU_X_STATUS_TERMINATED
+        } CEU_X_STATUS;
+        #endif
+
         typedef struct CEU_Value {
             CEU_VALUE type;
             union {
@@ -125,11 +138,22 @@ fun Coder.main (tags: Tags): String {
             } upvs;
         } CEU_Closure;
         
+        #if CEU >= 2
         typedef struct CEU_Throw {
             _CEU_Dyn_
             CEU_Value val;
             CEU_Value stk;
         } CEU_Throw;
+        #endif
+        
+        #if CEU >= 3
+        typedef struct CEU_X_Coro {
+            _CEU_Dyn_
+            struct CEU_Frame* frame;
+            int pc;
+            CEU_X_STATUS status;
+        } CEU_Coro;
+        #endif
 
         typedef union CEU_Dyn {                                                                 
             struct CEU_Any     Any;
@@ -139,6 +163,9 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Closure Closure;
         #if CEU >= 2
             struct CEU_Throw   Throw;
+        #endif
+        #if CEU >= 3
+            struct CEU_X_Coro  Coro;
         #endif
         } CEU_Dyn;        
     """ +

@@ -34,14 +34,6 @@ class TTask {
                 ":error\n") { out }
     }
     @Test
-    fun aa_coro3_err() {
-        val out = all("""
-            var f
-            resume f()
-        """.trimIndent())
-        assert(out == "anon : (lin 2, col 1) : resume error : expected yielded coro\n:error\n") { out }
-    }
-    @Test
     fun aa_coro4_err() {
         val out = all("""
             var co

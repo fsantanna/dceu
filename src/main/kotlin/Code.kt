@@ -366,6 +366,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
 
+            is Expr.Yield -> TODO()
+            is Expr.Resume -> this.call.code()
+
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
                 when (this.tk_.tag) {

@@ -27,7 +27,16 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro\n") { out }
     }
+    @Test
+    fun aa_03_resume_err() {
+        val out = test("""
+            val f
+            resume f()
+        """)
+        assert(out == " v  anon : (lin 3, col 13) : resume error : expected yielded coro\n") { out }
+    }
 
+    ///////////
     @Test
     fun aa_02_coro() {
         val out = test("""
