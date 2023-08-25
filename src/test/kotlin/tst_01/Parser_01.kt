@@ -1,7 +1,6 @@
 package tst_01
 
 import dceu.*
-import org.junit.BeforeClass
 import org.junit.Test
 
 class Parser_01 {
@@ -115,21 +114,21 @@ class Parser_01 {
         val l = lexer(" f (1.5F, x) ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.tk.str=="f" && e.closure is Expr.Acc && e.args.size==2)
+        assert(e is Expr.Call && e.tk.str=="f" && e.clo is Expr.Acc && e.args.size==2)
     }
     @Test
     fun dd_02_call() {
         val l = lexer(" f() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.closure.tk.str=="f" && e.closure is Expr.Acc && e.args.size==0)
+        assert(e is Expr.Call && e.clo.tk.str=="f" && e.clo is Expr.Acc && e.args.size==0)
     }
     @Test
     fun dd_03_call() {
         val l = lexer(" f(x,8)() ")
         val parser = Parser(l)
         val e = parser.expr_4_suf()
-        assert(e is Expr.Call && e.closure is Expr.Call && e.args.size==0)
+        assert(e is Expr.Call && e.clo is Expr.Call && e.args.size==0)
         assert(e.tostr() == "f(x,8)()")
     }
     @Test
