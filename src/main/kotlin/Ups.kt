@@ -63,7 +63,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Vector -> this.map(this.args)
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.closure)) + this.map(this.args)
+            is Expr.Call   -> this.map(listOf(this.clo)) + this.map(this.args)
         }
     }
 }

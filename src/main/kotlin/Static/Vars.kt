@@ -274,7 +274,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.idx.traverse()
                 data(this)
             }
-            is Expr.Call   -> { this.closure.traverse() ; this.args.forEach { it.traverse() } }
+            is Expr.Call   -> { this.clo.traverse() ; this.args.forEach { it.traverse() } }
         }
     }
 }
