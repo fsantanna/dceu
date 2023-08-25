@@ -18,7 +18,7 @@ class Exec_03 {
             }
             println(t)
         """)
-        assert(out == "1\n") { out }
+        assert(out.contains("coro: 0x")) { out }
     }
     @Test
     fun aa_02_yield_err() {
@@ -34,6 +34,17 @@ class Exec_03 {
             resume f()
         """)
         assert(out == " v  anon : (lin 3, col 13) : resume error : expected yielded coro\n") { out }
+    }
+    @Test
+    fun aa_04_coro() {
+        val out = test("""
+            val t = coro (v) {
+                v
+            }
+            val x = coroutine(t)
+            println(x)
+        """)
+        assert(out == "1\n") { out }
     }
 
     ///////////

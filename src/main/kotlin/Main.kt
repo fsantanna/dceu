@@ -54,8 +54,15 @@ val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
     ":dynamic",
     ":func",
+) + (if (CEU <= 2) listOf() else listOf(
+    ":coro"
+)) + listOf (
     ":tuple", ":vector", ":dict",
-) + (if (CEU <= 1) listOf() else listOf(":throw")) + listOf(
+) + (if (CEU <= 1) listOf() else listOf(
+    ":throw"
+)) + (if (CEU <= 2) listOf() else listOf(
+    ":x-coro"
+)) + listOf(
     ":ceu",
     ":tmp"
 )

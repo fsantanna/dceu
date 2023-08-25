@@ -330,5 +330,17 @@ class Exec_02 {
         assert(out == " |  anon : (lin 5, col 13) : f()\n" +
                 " v  anon : (lin 3, col 17) : call error : expected function\n") { out }
     }
+    @Test
+    fun zz_03_func_args() {
+        val out = test(
+            """
+            val f = func (x) {
+                println(x)
+            }
+            f(10)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
 
 }

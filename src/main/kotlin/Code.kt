@@ -52,7 +52,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ) {
                         CEU_Value ceu_acc;        
                         ${clos.protos_refs[this].cond { """
-                            CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->closure->upvs.buf;                    
+                            CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
                         ${this.args.map { (id,_) ->
                             val idc = id.str.id2c()
@@ -67,7 +67,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
 
                 val pos = """ // CLOSURE | ${this.dump()}
-                CEU_Value ceu_ret_$n = ceu_closure_create (
+                CEU_Value ceu_ret_$n = ceu_clo_create (
+                    CEU_VALUE_CLO_${this.tk.str.uppercase()},
                     ${up_blk.toc()},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
@@ -91,7 +92,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up));
                             ceu_gc_inc(ceu_up);
-                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Closure.upvs.buf)->${idc} = ceu_up;
+                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                     }.joinToString("\n")
@@ -636,7 +637,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """}}
 
-                    ceu_acc = ceu_frame_$n.closure->proto (
+                    ceu_acc = ceu_frame_$n.clo->proto (
                         &ceu_frame_$n,
                         ${this.args.let {
                             if (!has_dots) it.size.toString() else {
