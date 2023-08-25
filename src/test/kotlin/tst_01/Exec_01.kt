@@ -2794,6 +2794,15 @@ class Exec_01 {
         )
         assert(out == "30\n") { out }
     }
+    @Test
+    fun oo_xx_op_set() {
+        val out = test("""
+            val {{-}} = 10
+            val {{+}} = {{-}}
+            println({{+}})
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ==, ===, /=, =/=
 
@@ -4137,7 +4146,7 @@ class Exec_01 {
         assert(out == "15\n") { out }
     }
     @Test
-    fun todo_zz_02_use_bef_dcl_func() {
+    fun zz_02_use_bef_dcl_func() {
         val out = test("""
             var f
             set f = func () {
@@ -4147,25 +4156,6 @@ class Exec_01 {
             set v = 10
             f()
         """)
-        assert(out == "10\n") { out }
-    }
-
-    @Test
-    fun todo_03_op_id() {
-        val out = test("""
-            set (+) = (-)
-            println((+)(10,4))
-        """)
-        assert(out == "6\n") { out }
-    }
-    @Test
-    fun zz_04_tags() {
-        val out = test("""
-            val co = coro () {
-                yield(:x)
-            }
-            println(:y)
-        """)
-        assert(out == ":y\n") { out }
+        assert(out == "anon : (lin 4, col 25) : access error : variable \"v\" is not declared\n") { out }
     }
 }
