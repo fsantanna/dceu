@@ -24,6 +24,10 @@ class Ups (outer: Expr.Do) {
         return this.first(e) { it is Expr.Proto && it.tk.str==x } as Expr.Proto?
     }
 
+    fun inx (e: Expr): Boolean {
+        return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
+    }
+
     fun Expr.traverse (): Map<Expr,Expr> {
         fun Expr.map (l: List<Expr>): Map<Expr,Expr> {
             return l.map { it.traverse() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})

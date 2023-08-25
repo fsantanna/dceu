@@ -8,6 +8,39 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_03 {
+    // CORO / COROUTINE / YIELD / RESUME
+
+    @Test
+    fun aa_01_coro() {
+        val out = test("""
+            val t = coro (v) {
+                v
+            }
+            println(t)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun aa_02_yield_err() {
+        val out = test("""
+            yield(nil)
+        """)
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro\n") { out }
+    }
+
+    @Test
+    fun aa_02_coro() {
+        val out = test("""
+            val t = coro (v) {
+                v
+            }
+            val a = coroutine(t)
+            var v = resume a(1)
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
+
     @Test
     fun zz_04_tags() {
         val out = test("""
