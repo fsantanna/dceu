@@ -19,6 +19,13 @@ fun Coder.main (tags: Tags): String {
         #undef MIN
         #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+        
+        #define COMMA ,
+        #if CEU >= 3
+        #define CEU3(x) x
+        #else
+        #define CEU3(x)
+        #endif
 
         #if CEU >= 2
         #define CEU_CONTINUE_ON_THROW() {           \
@@ -1451,7 +1458,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, NULL };
-        CEU_Frame _ceu_frame_ = { NULL, &_ceu_block_, NULL };
+        CEU_Frame _ceu_frame_ = { NULL, &_ceu_block_ CEU3(COMMA NULL) };
         CEU_Frame* ceu_frame = &_ceu_frame_;
 
         CEU_Clo ceu_dump = { 
