@@ -162,6 +162,7 @@ class Exec_03 {
                 println(v)
             }
             val co = coroutine(CO)
+            resume co()
             resume co(10)
         """)
         assert(out == "10\n") { out }
@@ -182,6 +183,20 @@ class Exec_03 {
     @Test
     fun cc_09_resume_yield() {
         val out = test("""
+            val CO = coro (v1) {
+                val v2 = yield(v1)
+                v2
+            }
+            val co = coroutine(CO)
+            val v1 = resume co(10)
+            val v2 = resume co(v1)
+            println(v2)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_10_resume() {
+        val out = test("""
             $PLUS
             val CO = coro (v1) {        ;; 10
                 val v2 = yield(v1+1)    ;; 12
@@ -192,7 +207,7 @@ class Exec_03 {
             val v2 = resume co(v1+1)    ;; 13
             println(v2)
         """)
-        assert(out == "13\n") { out }
+        assert(out == "10\n") { out }
     }
 
     ///////////
