@@ -3661,6 +3661,19 @@ class Exec_01 {
         )
         assert(out == "anon : (lin 7, col 22) : drop error : value is not movable\n") { out }
     }
+    @Test
+    fun pp_28_clo_print() {
+        val out = test("""
+            val f = func (^x) {
+                func () {
+                    ^^x[0]
+                }
+            }
+            println(f([20]))
+        """)
+        assert(out.contains("func: 0x")) { out }
+        assert(out.contains(" | [[20]]")) { out }
+    }
 
     //  MEM-GC-REF-COUNT
 

@@ -1244,6 +1244,16 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_CLO_FUNC:
                     printf("func: %p", v.Dyn);
+                    if (v.Dyn->Clo.upvs.its > 0) {
+                        printf(" | [");
+                        for (int i=0; i<v.Dyn->Clo.upvs.its; i++) {
+                            if (i > 0) {
+                                printf(",");
+                            }
+                            ceu_print1(_1, v.Dyn->Clo.upvs.buf[i]);
+                        }
+                        printf("]");
+                    }
                     break;
         #if CEU >= 3
                 case CEU_VALUE_CLO_CORO:
