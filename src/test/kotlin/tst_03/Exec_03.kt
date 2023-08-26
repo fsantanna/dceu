@@ -113,6 +113,23 @@ class Exec_03 {
         """)
         assert(out == " v  anon : (lin 7, col 13) : resume error : expected yielded coro\n") { out }
     }
+    @Test
+    fun cc_04_coro_resume_yield() {
+        val out = test("""
+            val t = coro () {
+                println(1)
+                yield(nil)
+                println(2)
+                yield(nil)
+                println(3)
+            }
+            val a = coroutine(t)
+            resume a()
+            resume a()
+            resume a()
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
 
     ///////////
     @Test

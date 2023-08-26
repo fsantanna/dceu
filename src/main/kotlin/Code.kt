@@ -62,8 +62,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Block* _${idc}_;
                             """
                         }.joinToString("")}
+                        ${isexe.cond{"""
+                            CEU_EXE_Coro* ceu_exe = ceu_frame->exe;
+                            ceu_exe->status = CEU_EXE_STATUS_RESUMED;
+                            switch (ceu_exe->pc) {
+                                case 0:
+                        """}}
                         ${this.body.code()}
-                        ${isexe.cond { "ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;" }}
+                        ${isexe.cond{"""
+                                ceu_exe->status = CEU_EXE_STATUS_TERMINATED;
+                            }
+                        """}}
                         return ceu_acc;
                     }
                 """
@@ -370,8 +379,37 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
 
-            is Expr.Yield -> TODO()
             is Expr.Resume -> this.call.code()
+            is Expr.Yield -> """
+                { // YIELD ${this.dump()}
+                    ${this.arg.code()}
+                    ceu_exe->pc = $n;      // next resume
+                    ceu_exe->status = CEU_EXE_STATUS_YIELDED;
+                #if 0
+                    if (!ceu_block_chk_set(&ceu_acc, &ceu_frame->up_block->dn_dyns, CEU_HOLD_NON)) {
+                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : yield error : incompatible scopes");
+                    }
+                #endif
+                    return ceu_acc;
+                case $n:                    // resume here
+                #if 0
+                    if (ceu_ret != CEU_RET_THROW) {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    }
+                    CEU_CONTINUE_ON_CLEAR_THROW();
+                    if (ceu_n == CEU_ARG_EVT) {
+                        // resume single argument
+                    } else {
+                        assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
+                        if (ceu_n == 0) {
+                            // no argument
+                        } else {
+                            ${assrc("*ceu_args[0]")} // resume single argument
+                        }
+                    }
+                #endif
+                }
+                """
 
             is Expr.Nat -> {
                 val body = vars.nat_to_str[this]!!
