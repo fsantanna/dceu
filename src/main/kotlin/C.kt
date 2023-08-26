@@ -71,6 +71,22 @@ fun Coder.main (tags: Tags): String {
         } CEU_X_STATUS;
         #endif
     """ +
+    """ // CEU_Frame, CEU_Block
+        typedef struct CEU_Frame {          // call func / create task
+            struct CEU_Clo*   clo;
+            struct CEU_Block* up_block;     // block enclosing this call/coroutine
+        } CEU_Frame;
+
+        typedef struct CEU_Block {
+            uint16_t depth;
+            uint8_t  istop;
+            union {
+                struct CEU_Frame* frame;    // istop = 1
+                struct CEU_Block* block;    // istop = 0
+            } up;
+            union CEU_Dyn* dyns;            // list of allocated data to bcast/free
+        } CEU_Block;
+    """ +
     """   // CEU_Value, CEU_Dyn
         union CEU_Dyn;
         struct CEU_Block;
@@ -158,7 +174,7 @@ fun Coder.main (tags: Tags): String {
         typedef struct CEU_X_Coro {
             _CEU_Dyn_
             CEU_X_STATUS status;
-            struct CEU_Frame* frame;
+            struct CEU_Frame frame;
             int pc;
         } CEU_Coro;
         #endif
@@ -176,22 +192,6 @@ fun Coder.main (tags: Tags): String {
             struct CEU_X_Coro  Coro;
         #endif
         } CEU_Dyn;        
-    """ +
-    """ // CEU_Frame, CEU_Block
-        typedef struct CEU_Frame {          // call func / create task
-            struct CEU_Clo*   clo;
-            struct CEU_Block* up_block;     // block enclosing this call/coroutine
-        } CEU_Frame;
-
-        typedef struct CEU_Block {
-            uint16_t depth;
-            uint8_t  istop;
-            union {
-                struct CEU_Frame* frame;    // istop = 1
-                struct CEU_Block* block;    // istop = 0
-            } up;
-            union CEU_Dyn* dyns;            // list of allocated data to bcast/free
-        } CEU_Block;
     """ +
     """ // CEU_Tags
         typedef struct CEU_Tags_Names {
@@ -642,6 +642,11 @@ fun Coder.main (tags: Tags): String {
                     break;
         #if CEU >= 2
                 case CEU_VALUE_THROW:
+                    break;
+        #endif
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+                    //free(dyn->Coro.frame.mem);
                     break;
         #endif
                 default:
@@ -1129,17 +1134,14 @@ fun Coder.main (tags: Tags): String {
             
             CEU_Coro* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
-            CEU_Frame* frame = malloc(sizeof(CEU_Frame));
-            assert(frame != NULL);
             char* mem = malloc(clo.Dyn->Clo.exe.n_mem);
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
             *ret = (CEU_Coro) {
                 CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
-                CEU_X_STATUS_YIELDED, frame, 0
+                CEU_X_STATUS_YIELDED, { &clo.Dyn->Clo, blk /*, mem, ret*/ }, 0
             };
-            *frame = (CEU_Frame) { &clo.Dyn->Clo, blk /*, mem, ret*/ };
             
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
             return (CEU_Value) { CEU_VALUE_EXE_CORO, {.Dyn=(CEU_Dyn*)ret } };
@@ -1268,7 +1270,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    printf("coro: %p", v.Dyn);
+                    printf("x-coro: %p", v.Dyn);
                     break;
         #endif
                 default:

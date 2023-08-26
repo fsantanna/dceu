@@ -68,7 +68,7 @@ class Exec_03 {
             val x = coroutine(t)
             println(x)
         """)
-        assert(out == "1\n") { out }
+        assert(out.contains("x-coro: 0x")) { out }
     }
 
     ///////////
