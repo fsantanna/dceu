@@ -8,7 +8,7 @@ import org.junit.runners.MethodSorters
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_03 {
-    // CORO / COROUTINE / YIELD / RESUME
+    // CORO / YIELD / RESUME
 
     @Test
     fun aa_01_coro() {
@@ -21,22 +21,46 @@ class Exec_03 {
         assert(out.contains("coro: 0x")) { out }
     }
     @Test
-    fun aa_02_yield_err() {
+    fun aa_02_coro() {
+        val out = test("""
+            val t = coro (v) {
+                yield(v)
+            }
+            println(t)
+        """)
+        assert(out.contains("coro: 0x")) { out }
+    }
+    @Test
+    fun aa_03_yield_err() {
         val out = test("""
             yield(nil)
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro\n") { out }
     }
     @Test
-    fun aa_03_resume_err() {
+    fun aa_04_resume_err() {
         val out = test("""
             val f
             resume f()
         """)
         assert(out == " v  anon : (lin 3, col 13) : resume error : expected yielded coro\n") { out }
     }
+
+    // COROUTINE
+
     @Test
-    fun aa_04_coro() {
+    fun bb_01_coroutine_err() {
+        val out = test("""
+            val t = func (v) {
+                v
+            }
+            val x = coroutine(t)
+            println(x)
+        """)
+        assert(out == " v  anon : (lin 5, col 21) : coroutine(t) : coroutine error : expected coro\n") { out }
+    }
+    @Test
+    fun bb_02_coroutine_err() {
         val out = test("""
             val t = coro (v) {
                 v
@@ -49,7 +73,7 @@ class Exec_03 {
 
     ///////////
     @Test
-    fun aa_02_coro() {
+    fun xaa_02_coro() {
         val out = test("""
             val t = coro (v) {
                 v
