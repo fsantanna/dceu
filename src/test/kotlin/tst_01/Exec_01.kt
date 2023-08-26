@@ -1549,7 +1549,7 @@ class Exec_01 {
         assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun scope13_tuple() {
+    fun scope13_tuple_err() {
         val out = test(
             """
             val v = do {
@@ -1661,7 +1661,7 @@ class Exec_01 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun scope19x_tup() {
+    fun scope19x_tup_err() {
         val out = test(
             """
             do {
@@ -1883,7 +1883,7 @@ class Exec_01 {
         assert(out == "[[1],[2]]\n") { out }
     }
     @Test
-    fun scope26x_args() {
+    fun scope26x_args_err() {
         val out = test(
             """
             val f = func (v) {
@@ -1900,7 +1900,7 @@ class Exec_01 {
         assert(out == "anon : (lin 5, col 21) : block escape error : incompatible scopes\n") { out }
     }
     @Test
-    fun scope27_glb_vs_tup() {
+    fun scope27_glb_vs_tup_err() {
         val out = test(
             """
             val f = func (t) {
@@ -1916,7 +1916,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 30) : block escape error : incompatible scopes\n") { out }
     }
     @Test
-    fun scope28() {
+    fun scope28_err() {
         val out = test(
             """
             var f = func (v) {
@@ -3540,7 +3540,7 @@ class Exec_01 {
         assert(out == "[1,2]\n") { out }
     }
     @Test
-    fun clo21() {
+    fun clo21_err() {
         val out = test(
             """
             var f = func (^a) {
@@ -3559,7 +3559,7 @@ class Exec_01 {
                 "") { out }
     }
     @Test
-    fun tup22() {
+    fun tup22_err() {
         val out = test(
             """
             do {
@@ -3573,7 +3573,7 @@ class Exec_01 {
                 "") { out }
     }
     @Test
-    fun clo23() {
+    fun clo23_err() {
         val out = test(
             """
             var f = func (^a) {
@@ -3797,7 +3797,7 @@ class Exec_01 {
         assert(out == "0\n1\n") { out }
     }
     @Test
-    fun gc9() {
+    fun gc9_err() {
         val out = test(
             """
             var out

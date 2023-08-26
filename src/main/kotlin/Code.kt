@@ -161,8 +161,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     _${idc}_ = ceu_block_$n;
                                     if ($i < ceu_n) {
                                         if (!ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i])) {
-                                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
-                                            CEU_ERROR(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                            assert(0 && "TODO"); // restore code below on fail
+                                            //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
+                                            //CEU_ERROR(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                         }
                                         $idc = ceu_args[$i];
                                         ceu_gc_inc($idc);
@@ -601,6 +602,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Call -> {
+                val up = ups.pub[this]!!
                 val bupc = ups.first_block(this)!!.toc()
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
@@ -611,14 +613,25 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 
                 """
-                { // CALL | ${this.dump()}
-                    ${this.closure.code()}
-                    CEU_Value ceu_closure_$n = ceu_acc;
-                    if (ceu_closure_$n.type != CEU_VALUE_CLOSURE) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
-                        CEU_ERROR2($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                    }
-                    CEU_Frame ceu_frame_$n = { &ceu_closure_$n.Dyn->Closure, $bupc };
+                { // CALL - open | ${this.dump()}
+                    ${this.clo.code()}
+                    CEU_Value ceu_x_$n = ceu_acc;
+                    ${when (up) {
+                        is Expr.Resume -> """
+                            if (ceu_x_$n.type!=CEU_VALUE_EXE_CORO || (ceu_x_$n.Dyn->Coro.status!=CEU_X_STATUS_YIELDED /*&& ceu_x_$n.Dyn->Coro->status!=CEU_X_STATUS_TOGGLED*/)) {                
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
+                                CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
+                            }                            
+                        """
+                        else -> """
+                            if (ceu_x_$n.type != CEU_VALUE_CLO_FUNC) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            }                            
+                        """
+                    }}
+
+                    CEU_Frame ceu_frame_$n = { &ceu_x_$n.Dyn->Clo, $bupc };
                     ${has_dots.cond { """
                         int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
                     """ }}

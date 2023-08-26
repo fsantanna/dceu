@@ -5,7 +5,7 @@ import java.io.Reader
 import java.util.*
 
 var CEU = 3
-    // 1: dyn-lex
+    // 1: dyn-lex (15 valgrind xxx_err)
     // 2: defer, throw/catch
     // 3: coro
     // X: export, copy, _
