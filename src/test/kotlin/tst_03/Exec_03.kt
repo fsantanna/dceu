@@ -70,10 +70,18 @@ class Exec_03 {
         """)
         assert(out.contains("x-coro: 0x")) { out }
     }
-
-    ///////////
     @Test
-    fun xaa_02_coro() {
+    fun bb_03_coroutine_err() {
+        val out = test("""
+            coroutine(func () {nil})
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : coroutine((func () { nil })) : coroutine error : expected coro\n") { out }
+    }
+
+    // RESUME / YIELD
+
+    @Test
+    fun cc_01_coro_resume() {
         val out = test("""
             val t = coro (v) {
                 v
@@ -84,7 +92,29 @@ class Exec_03 {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun cc_02_coro_resume_dead_err() {
+        val out = test("""
+            val co = coroutine(coro () {nil})
+            resume co()
+            resume co()
+        """)
+        assert(out == " v  anon : (lin 4, col 13) : resume error : expected yielded coro\n") { out }
+    }
+    @Test
+    fun cc_03_coro_resume_dead_err() {
+        val out = test("""
+            val CO = coro () {
+                nil
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co()
+        """)
+        assert(out == " v  anon : (lin 7, col 13) : resume error : expected yielded coro\n") { out }
+    }
 
+    ///////////
     @Test
     fun zz_04_tags() {
         val out = test("""

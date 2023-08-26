@@ -63,18 +63,21 @@ fun Coder.main (tags: Tags): String {
         _Static_assert(sizeof(CEU_VALUE) == 1);
         
         #if CEU >= 3
-        typedef enum CEU_X_STATUS {
-            CEU_X_STATUS_YIELDED = 1,
-            //CEU_X_STATUS_TOGGLED,
-            CEU_X_STATUS_RESUMED,
-            CEU_X_STATUS_TERMINATED
-        } CEU_X_STATUS;
+        typedef enum CEU_EXE_STATUS {
+            CEU_EXE_STATUS_YIELDED = 1,
+            //CEU_EXE_STATUS_TOGGLED,
+            CEU_EXE_STATUS_RESUMED,
+            CEU_EXE_STATUS_TERMINATED
+        } CEU_EXE_STATUS;
         #endif
     """ +
     """ // CEU_Frame, CEU_Block
         typedef struct CEU_Frame {          // call func / create task
             struct CEU_Clo*   clo;
             struct CEU_Block* up_block;     // block enclosing this call/coroutine
+        #if CEU >= 3
+            struct CEU_EXE_Coro*  exe;          // coro/task<->frame point to each other
+        #endif
         } CEU_Frame;
 
         typedef struct CEU_Block {
@@ -171,25 +174,25 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 3
-        typedef struct CEU_X_Coro {
+        typedef struct CEU_EXE_Coro {
             _CEU_Dyn_
-            CEU_X_STATUS status;
+            CEU_EXE_STATUS status;
             struct CEU_Frame frame;
             int pc;
-        } CEU_Coro;
+        } CEU_EXE_Coro;
         #endif
 
         typedef union CEU_Dyn {                                                                 
-            struct CEU_Any     Any;
-            struct CEU_Tuple   Tuple;
-            struct CEU_Vector  Vector;
-            struct CEU_Dict    Dict;
-            struct CEU_Clo     Clo;
+            struct CEU_Any      Any;
+            struct CEU_Tuple    Tuple;
+            struct CEU_Vector   Vector;
+            struct CEU_Dict     Dict;
+            struct CEU_Clo      Clo;
         #if CEU >= 2
-            struct CEU_Throw   Throw;
+            struct CEU_Throw    Throw;
         #endif
         #if CEU >= 3
-            struct CEU_X_Coro  Coro;
+            struct CEU_EXE_Coro Coro;
         #endif
         } CEU_Dyn;        
     """ +
@@ -1132,15 +1135,15 @@ fun Coder.main (tags: Tags): String {
             assert(clo.type==CEU_VALUE_CLO_CORO /*|| clo.type==CEU_VALUE_P_TASK*/);
             ceu_gc_inc(clo);
             
-            CEU_Coro* ret = malloc(sizeof(CEU_Dyn));
+            CEU_EXE_Coro* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* mem = malloc(clo.Dyn->Clo.exe.n_mem);
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
-            *ret = (CEU_Coro) {
+            *ret = (CEU_EXE_Coro) {
                 CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
-                CEU_X_STATUS_YIELDED, { &clo.Dyn->Clo, blk /*, mem, ret*/ }, 0
+                CEU_EXE_STATUS_YIELDED, { &clo.Dyn->Clo, blk /*, mem*/, ret }, 0
             };
             
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
@@ -1448,7 +1451,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, NULL };
-        CEU_Frame _ceu_frame_ = { NULL, &_ceu_block_ };
+        CEU_Frame _ceu_frame_ = { NULL, &_ceu_block_, NULL };
         CEU_Frame* ceu_frame = &_ceu_frame_;
 
         CEU_Clo ceu_dump = { 

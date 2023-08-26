@@ -26,24 +26,6 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
     @Test
-    fun aa_coro2_err() {
-        val out = all("""
-            coroutine(func () {nil})
-        """.trimIndent())
-        assert(out == "anon : (lin 1, col 1) : coroutine((func () { nil })) : coroutine error : expected coro\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun aa_coro4_err() {
-        val out = all("""
-            var co
-            set co = coroutine(coro () {nil})
-            resume co()
-            resume co()
-        """.trimIndent())
-        assert(out == "anon : (lin 4, col 1) : resume error : expected yielded coro\n:error\n") { out }
-    }
-    @Test
     fun aa_coro5_err() {
         val out = all("""
             val co = coroutine(coro () { nil
@@ -3182,7 +3164,7 @@ class TTask {
             toggle t (false)
             resume t ()
         """)
-        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_X_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
+        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_EXE_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
     }
     @Test
     fun jj_toggle2_err() {

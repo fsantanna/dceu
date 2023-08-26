@@ -35,6 +35,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         return when (this) {
             is Expr.Proto -> {
                 val up_blk = ups.first_block(this)!!
+                val isexe = (this.tk.str != "func")
 
                 val pre = """ // TYPE | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
@@ -62,6 +63,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }.joinToString("")}
                         ${this.body.code()}
+                        ${isexe.cond { "ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;" }}
                         return ceu_acc;
                     }
                 """
@@ -412,7 +414,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
                             CEU_Value args[1] = { ceu_$n };
-                            CEU_Frame ceu_frame_$n = { NULL, $bupc };
+                            CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL };
                             CEU_ASSERT($bupc, ceu_drop_f(&ceu_frame_$n, 1, args), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
@@ -552,7 +554,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Value args[1] = { ceu_val_$n };
-                            CEU_Frame ceu_frame_$n = { NULL, $bupc };
+                            CEU_Frame ceu_frame_$n = { NULL, $bupc, NULL };
                             CEU_ASSERT($bupc, ceu_drop_f(&ceu_frame_$n, 1, args), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(ceu_val_$n, 0);
                             
@@ -618,20 +620,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_x_$n = ceu_acc;
                     ${when (up) {
                         is Expr.Resume -> """
-                            if (ceu_x_$n.type!=CEU_VALUE_EXE_CORO || (ceu_x_$n.Dyn->Coro.status!=CEU_X_STATUS_YIELDED /*&& ceu_x_$n.Dyn->Coro->status!=CEU_X_STATUS_TOGGLED*/)) {                
+                            if (ceu_x_$n.type!=CEU_VALUE_EXE_CORO || (ceu_x_$n.Dyn->Coro.status!=CEU_EXE_STATUS_YIELDED /*&& ceu_x_$n.Dyn->Coro->status!=CEU_EXE_STATUS_TOGGLED*/)) {                
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
                                 CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
                             }                            
+                            CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Coro.frame;
                         """
                         else -> """
                             if (ceu_x_$n.type != CEU_VALUE_CLO_FUNC) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }                            
+                            CEU_Frame ceu_frame_$n = { &ceu_x_$n.Dyn->Clo, $bupc, NULL };
                         """
                     }}
 
-                    CEU_Frame ceu_frame_$n = { &ceu_x_$n.Dyn->Clo, $bupc };
                     ${has_dots.cond { """
                         int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
                     """ }}
