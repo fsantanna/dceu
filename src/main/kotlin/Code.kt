@@ -365,9 +365,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in catch condition");
                             CEU_Value args[] = { ceu_err.Dyn->Throw.val, ceu_acc };
                             if (!ceu_is_f(ceu_frame, 2, args).Bool) {
-                    if (ceu_err.type==CEU_VALUE_REF || (ceu_err.type>CEU_VALUE_DYNAMIC && ceu_err.Dyn->tphold!=CEU_HOLD_NON)) {
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : rethrow error : incompatible scopes");
-                    }
                                 ceu_acc = ceu_err;
                                 continue; // uncaught, rethrow
                             }
@@ -391,23 +388,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 #endif
                     return ceu_acc;
-                case $n:                    // resume here
-                #if 0
-                    if (ceu_ret != CEU_RET_THROW) {
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    }
-                    CEU_CONTINUE_ON_CLEAR_THROW();
-                    if (ceu_n == CEU_ARG_EVT) {
-                        // resume single argument
+                case $n: // YIELD ${this.dump()}
+                    assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
+                    if (ceu_n == 0) {
+                        // no argument
                     } else {
-                        assert(ceu_n <= 1 && "bug found : not implemented : multiple arguments to resume");
-                        if (ceu_n == 0) {
-                            // no argument
-                        } else {
-                            ${assrc("*ceu_args[0]")} // resume single argument
-                        }
+                        ${assrc("ceu_args[0]")}
                     }
-                #endif
                 }
                 """
 

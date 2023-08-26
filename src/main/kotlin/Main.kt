@@ -139,6 +139,12 @@ fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
 
+val PLUS = """
+    val {{+}} = func (v1, v2) {
+        `:number (${D}v1.Number + ${D}v2.Number)`
+    }    
+"""
+
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
         System.err.println("... parsing ...")
