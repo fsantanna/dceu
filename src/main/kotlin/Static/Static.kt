@@ -8,6 +8,12 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
         outer.traverse()
     }
 
+    fun void (blk: Expr.Do): Boolean {
+        val dcls = vars.blk_to_dcls[blk]!!
+        val f_b = ups.pub[blk]?.let { ups.first_proto_or_block(it) }
+        return (f_b is Expr.Do) && dcls.isEmpty() && !this.cons.contains(blk)
+    }
+
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {

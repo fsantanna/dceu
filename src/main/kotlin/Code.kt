@@ -163,7 +163,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${defers[this].cond { it.second }}
                     // <<< block                    
                 """
-                if (f_b is Expr.Do && dcls.isEmpty() && !sta.cons.contains(this)) {
+                if (sta.void(this)) {
                     """
                     CEU_Block* ceu_block_$n = ${bupc!!};
                     $common
