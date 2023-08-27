@@ -80,10 +80,10 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // CEU_Frame, CEU_Block
         typedef struct CEU_Frame {          // call func / create task
-            struct CEU_Block* up_block;     // block enclosing this call/coroutine
-            struct CEU_Value* upvs;
+            struct CEU_Block*    up_block;  // block enclosing this call/coroutine
+            struct CEU_Clo*      clo;
         #if CEU >= 3
-            struct CEU_EXE_Coro*  exe;          // coro/task<->frame point to each other
+            struct CEU_EXE_Coro* exe;       // coro/task<->frame point to each other
         #endif
         } CEU_Frame;
 
@@ -1144,7 +1144,7 @@ fun Coder.main (tags: Tags): String {
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
             *ret = (CEU_EXE_Coro) {
                 CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
-                CEU_EXE_STATUS_YIELDED, { &clo.Dyn->Clo, blk /*, mem*/, ret }, 0
+                CEU_EXE_STATUS_YIELDED, { blk, clo.Dyn->Clo /*, mem*/, ret }, 0
             };
             
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
