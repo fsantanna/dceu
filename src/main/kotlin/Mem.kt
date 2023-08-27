@@ -56,12 +56,8 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
             """
             struct { // DCL
                 struct {
-                    ${if (id in listOf("evt","_")) "" else {
-                        """
-                        CEU_Value ${id};
-                        CEU_Block* _${id}_; // can't be static b/c recursion
-                        """
-                    }}
+                    CEU_Value ${id};
+                    CEU_Block* _${id}_;
                     ${this.src.cond { it.mem(defers) } }
                 };
             };

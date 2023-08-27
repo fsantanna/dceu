@@ -304,18 +304,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """
                 }}
-                ${if (CEU>=2 && this.id.str=="_") "" else {
-                    """
-                    ${when {
-                        !this.init -> ""
-                        (this.src == null) -> ""
-                        else -> "$idc = ceu_acc;"
-                    }}
-                    _${idc}_ = $bupc;
-                    ceu_gc_inc(${idc});
-                    ${assrc(idc)}
-                    """
+                ${when {
+                    !this.init -> ""
+                    (this.src == null) -> ""
+                    else -> "$idc = ceu_acc;"
                 }}
+                ceu_gc_inc($idc);
+                ${assrc(idc)}
                 """
             }
             is Expr.Set -> {

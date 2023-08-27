@@ -67,9 +67,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Acc    -> {
                 val (_,dcl) = vars.get(this)
                 unused.remove(dcl)
-                if (CEU>=2 && this.tk.str=="_") {
-                    err(this.tk, "access error : cannot access \"_\"")
-                }
+                //err(this.tk, "access error : cannot access \"_\"")
             }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}

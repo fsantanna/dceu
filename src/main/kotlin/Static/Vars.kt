@@ -154,11 +154,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                when {
-                    (CEU>=2 && this.id.str=="_") -> {}
-                    (CEU>=2 && this.id.str=="evt") -> {}
-                    (dcls.findLast { this.id.str == it.id.str } == null) -> {} // TODO
-                    else -> err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
+                if (dcls.any { this.id.str == it.id.str }) {
+                    err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
                 val blk = ups.first_block(this)!!
