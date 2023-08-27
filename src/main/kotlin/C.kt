@@ -80,8 +80,8 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // CEU_Frame, CEU_Block
         typedef struct CEU_Frame {          // call func / create task
-            struct CEU_Clo*   clo;
             struct CEU_Block* up_block;     // block enclosing this call/coroutine
+            struct CEU_Value* upvs;
         #if CEU >= 3
             struct CEU_EXE_Coro*  exe;          // coro/task<->frame point to each other
         #endif
@@ -1458,7 +1458,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, NULL };
-        CEU_Frame _ceu_frame_ = { NULL, &_ceu_block_ CEU3(COMMA NULL) };
+        CEU_Frame _ceu_frame_ = { &_ceu_block_, NULL CEU3(COMMA NULL) };
         CEU_Frame* ceu_frame = &_ceu_frame_;
 
         CEU_Clo ceu_dump = { 
