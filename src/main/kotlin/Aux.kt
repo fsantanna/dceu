@@ -44,7 +44,12 @@ fun String.tag2c (): String {
         .replace('-','_')
 }
 
-fun String.id2c (): String {
+fun Expr.Dcl.id2c (ups: Ups): String {
+    val n = if (ups.inexe(this)) this.n else 0
+    return this.id.str.id2c(n)
+}
+
+fun String.id2c (n: Int): String {
     return if (this[0] == '{') {
         val MAP = mapOf(
             Pair('+', "plus"),
@@ -69,6 +74,8 @@ fun String.id2c (): String {
             Pair('!', "_bang_"),
         )
         "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
+    }.let {
+        if (n == 0) it else (it + "_" + n)
     }
 }
 

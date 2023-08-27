@@ -24,7 +24,7 @@ class Ups (outer: Expr.Do) {
         return this.first(e) { it is Expr.Proto && it.tk.str==x } as Expr.Proto?
     }
 
-    fun inx (e: Expr): Boolean {
+    fun inexe (e: Expr): Boolean {
         return this.first(e) { it is Expr.Proto }.let { (it!=null && it.tk.str!="func") }
     }
 

@@ -41,7 +41,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
-                                "CEU_Value ${it.id.str.id2c()};"
+                                "CEU_Value ${it.id.str.id2c(0)};"
                             }.joinToString("")}
                         } CEU_Clo_Upvs_$n;                    
                     """ }}
@@ -49,8 +49,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${isexe.cond { """
                         typedef struct {
                             ${this.args.map { (id,_) ->
-                                val dcl = vars.get(this.body, id.str)
-                                val idc = id.str.id2c(dcl.n)
+                                val idc = vars.get(this.body, id.str).id2c(ups)
                                 """
                                 CEU_Value $idc;
                                 CEU_Block* _${idc}_;
@@ -69,11 +68,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
-                        ${clos.protos_refs[this].cond { """
+                        ${isexe.cond { """
                             CEU_Clo_Mem_$n* ceu_mem = (CEU_Clo_Mem_$n*) ceu_frame->exe->mem;                    
                         """ }}
                         ${this.args.map { (id,_) ->
-                            val idc = id.str.id2c()
+                            val idc = id.str.id2c(0)
                             """
                             CEU_Value $idc;
                             CEU_Block* _${idc}_;
@@ -109,7 +108,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${clos.protos_refs[this].cond {
                     it.map { dcl ->
                         val dcl_blk = vars.dcl_to_blk[dcl]!!
-                        val idc = dcl.id.str.id2c()
+                        val idc = dcl.id.str.id2c(0)
                         val btw = ups
                             .all_until(this) { dcl_blk==it }
                             .filter { it is Expr.Proto }
@@ -149,7 +148,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { it.id.str.id2c() }
+                    .map    { it.id.str.id2c(0) }
                 val common = """
                     // >>> block
                     ${defers[this].cond { it.first }}
@@ -184,7 +183,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             { // func args
                                 ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                    val idc = arg.first.str.id2c()
+                                    val idc = arg.first.str.id2c(0)
                                     """
                                     _${idc}_ = ceu_block_$n;
                                     if ($i < ceu_n) {
@@ -201,7 +200,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     """
                                 }.joinToString("")}
                                 ${dots.cond {
-                                    val idc = f_b.args.last()!!.first.str.id2c()
+                                    val idc = f_b.args.last()!!.first.str.id2c(0)
                                     """
                                     int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                     $idc = ceu_tuple_create(ceu_block_$n, ceu_tup_n_$n);
@@ -244,7 +243,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """ }.joinToString("")}
                         ${(f_b is Expr.Proto).cond { """
                             ${(f_b as Expr.Proto).args.map {
-                                val idc = it.first.str.id2c()
+                                val idc = it.first.str.id2c(0)
                                 """
                                 if ($idc.type > CEU_VALUE_DYNAMIC) {
                                     ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
@@ -287,8 +286,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Dcl -> {
-                val id = this.id.str
-                val idc = id.id2c()
+                val idc = this.id2c(ups)
                 val bupc = ups.first_block(this)!!.toc()
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
 
@@ -306,7 +304,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """
                 }}
-                ${if (CEU>=2 && id=="_") "" else {
+                ${if (CEU>=2 && this.id.str=="_") "" else {
                     """
                     ${when {
                         !this.init -> ""

@@ -88,10 +88,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     }
 
     fun id2c (dcl: Expr.Dcl, upv: Int): Pair<String,String> {
-        val idc = dcl.id.str.id2c()
         return if (upv == 2) {
+            val idc = dcl.id.str.id2c(0)
             Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
         } else {
+            val idc = dcl.id2c(ups)
             Pair(idc, "_${idc}_")
         }
     }
