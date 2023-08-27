@@ -208,9 +208,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // move up dynamic ceu_acc (return or error)
                             if (!ceu_hold_chk_set(&$up1->dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
-                                do {
+                            #if CEU <= 1
+                                    // free from this block
                                     CEU_ERROR(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            #else
+                                do {
+                                   // allocate throw on up
+                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                 } while (0);    // catch continue in CEU_ERROR
+                            #endif
                             }
                             """
                         }}
