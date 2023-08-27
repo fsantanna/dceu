@@ -98,11 +98,6 @@ fun Coder.main (tags: Tags): String {
         } CEU_Block;
     """ +
     """   // CEU_Value, CEU_Dyn
-        union CEU_Dyn;
-        struct CEU_Block;
-        struct CEU_Any;
-        struct CEU_Tags_List;
-
         typedef struct CEU_Value {
             CEU_VALUE type;
             union {
@@ -150,7 +145,6 @@ fun Coder.main (tags: Tags): String {
             CEU_Value (*buf)[0][2]; // resizable CEU_Value[n][2]
         } CEU_Dict;
         
-        struct CEU_Frame;
         typedef CEU_Value (*CEU_Proto) (
             struct CEU_Frame* frame,
             int n,
