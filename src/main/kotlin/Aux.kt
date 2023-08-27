@@ -47,41 +47,6 @@ fun String.tag2c (): String {
         .replace('-','_')
 }
 
-fun Expr.Dcl.id2c (ups: Ups): String {
-    val n = if (ups.inexe(this)) this.n else 0
-    return this.id.str.id2c(n)
-}
-
-fun String.id2c (n: Int): String {
-    return if (this[0] == '{') {
-        val MAP = mapOf(
-            Pair('+', "plus"),
-            Pair('-', "minus"),
-            Pair('*', "asterisk"),
-            Pair('/', "slash"),
-            Pair('>', "greater"),
-            Pair('<', "less"),
-            Pair('=', "equals"),
-            Pair('!', "exclaim"),
-            Pair('|', "bar"),
-            Pair('&', "ampersand"),
-            Pair('#', "hash"),
-        )
-        "op_" + this.drop(2).dropLast(2).toList().map { MAP[it] }.joinToString("_")
-    } else {
-        val MAP = mapOf(
-            Pair('.', "_dot_"),
-            Pair('-', "_dash_"),
-            Pair('\'', "_plic_"),
-            Pair('?', "_question_"),
-            Pair('!', "_bang_"),
-        )
-        "id_" + this.toList().map { MAP[it] ?: it }.joinToString("")
-    }.let {
-        if (n == 0) it else (it + "_" + n)
-    }
-}
-
 fun err (pos: Pos, str: String) {
     error(pos.file + " : (lin ${pos.lin}, col ${pos.col}) : $str")
 }
