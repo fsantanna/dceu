@@ -83,7 +83,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Block*    up_block;  // block enclosing this call/coroutine
             struct CEU_Clo*      clo;
         #if CEU >= 3
-            struct CEU_EXE_Coro* exe;       // coro/task<->frame point to each other
+            struct CEU_Exe_Coro* exe;       // coro/task<->frame point to each other
         #endif
         } CEU_Frame;
 
@@ -175,7 +175,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 3
-        typedef struct CEU_EXE_Coro {
+        typedef struct CEU_Exe_Coro {
             _CEU_Dyn_
             CEU_EXE_STATUS status;
             struct CEU_Frame frame;
@@ -193,7 +193,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Throw    Throw;
         #endif
         #if CEU >= 3
-            struct CEU_EXE_Coro Coro;
+            struct CEU_Exe_Coro Coro;
         #endif
         } CEU_Dyn;        
     """ +
@@ -1136,13 +1136,13 @@ fun Coder.main (tags: Tags): String {
             assert(clo.type==CEU_VALUE_CLO_CORO /*|| clo.type==CEU_VALUE_P_TASK*/);
             ceu_gc_inc(clo);
             
-            CEU_EXE_Coro* ret = malloc(sizeof(CEU_Dyn));
+            CEU_Exe_Coro* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* mem = malloc(clo.Dyn->Clo.exe.n_mem);
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
-            *ret = (CEU_EXE_Coro) {
+            *ret = (CEU_Exe_Coro) {
                 CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo /*, mem*/, ret }, 0
             };

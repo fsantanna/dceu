@@ -53,7 +53,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ) {
                         CEU_Value ceu_acc;        
                         ${clos.protos_refs[this].cond { """
-                            CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
+                            CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
                         ${this.args.map { (id,_) ->
                             val idc = id.str.id2c()
@@ -63,7 +63,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }.joinToString("")}
                         ${isexe.cond{"""
-                            CEU_EXE_Coro* ceu_exe = ceu_frame->exe;
+                            CEU_Exe_Coro* ceu_exe = ceu_frame->exe;
                             ceu_exe->status = CEU_EXE_STATUS_RESUMED;
                             switch (ceu_exe->pc) {
                                 case 0:
@@ -83,7 +83,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${up_blk.toc()},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
-                    ceu_proto_$n,
+                    ceu_clo_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
                 ${assrc("ceu_ret_$n")}
@@ -103,7 +103,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up));
                             ceu_gc_inc(ceu_up);
-                            ((CEU_Proto_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
+                            ((CEU_Clo_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                     }.joinToString("\n")
