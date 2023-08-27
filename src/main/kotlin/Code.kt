@@ -53,7 +53,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ) {
                         CEU_Value ceu_acc;        
                         ${clos.protos_refs[this].cond { """
-                            CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->upvs.buf;                    
+                            CEU_Proto_Upvs_$n* ceu_upvs = (CEU_Proto_Upvs_$n*) ceu_frame->upvs;                    
                         """ }}
                         ${this.args.map { (id,_) ->
                             val idc = id.str.id2c()
