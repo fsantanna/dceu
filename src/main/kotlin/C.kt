@@ -159,11 +159,13 @@ fun Coder.main (tags: Tags): String {
                 int its;     // number of upvals
                 CEU_Value* buf;
             } upvs;
+            union {
             #if CEU >= 3
-            struct {
-                int n_mem;  // space for locals
-            } exe;
+                struct {
+                    int n_mem;  // space for locals
+                } Exe;
             #endif
+            };
         } CEU_Clo;
         
         #if CEU >= 2
@@ -1127,6 +1129,9 @@ fun Coder.main (tags: Tags): String {
             *ret = (CEU_Clo) {
                 type, 0, hld_type, blk->depth, NULL, NULL, NULL,
                 frame, proto, { upvs, buf }
+        #if CEU >= 3
+                , 0 // set from outside
+        #endif
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
@@ -1139,7 +1144,7 @@ fun Coder.main (tags: Tags): String {
             
             CEU_Exe_Coro* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
-            char* mem = malloc(clo.Dyn->Clo.exe.n_mem);
+            char* mem = malloc(clo.Dyn->Clo.Exe.n_mem);
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;

@@ -45,7 +45,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }.joinToString("")}
                         } CEU_Clo_Upvs_$n;                    
                     """ }}
-                """ + """ // MEM | ${this.dump()}
+                """ +
+                """ // MEM | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct {
                             ${this.args.map { (id,_) ->
@@ -93,7 +94,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 """
 
-                val pos = """ // CLOSURE | ${this.dump()}
+                val pos = """ // CLO | ${this.dump()}
                 CEU_Value ceu_ret_$n = ceu_clo_create (
                     CEU_VALUE_CLO_${this.tk.str.uppercase()},
                     ${up_blk.toc()},
@@ -102,6 +103,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_clo_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
+                ${isexe.cond { """
+                    ceu_ret_$n.Dyn->Clo.Exe.n_mem = sizeof(CEU_Clo_Mem_$n);                    
+                """ }}
                 ${assrc("ceu_ret_$n")}
                 
                 // UPVALS
