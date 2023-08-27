@@ -46,7 +46,10 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
         is Expr.Export -> this.body.mem(defers)
         is Expr.Do -> """
             struct { // BLOCK
-                CEU_Block block_$n;
+                ${sta.void(this).cond { """
+                    CEU_Block _ceu_block_$n;
+                """ }}
+                CEU_Block* ceu_block_$n;
                 ${defers.pub[this]!!.map { "int defer_${it.key.n};\n" }.joinToString("")}
                 ${es.seq(defers, 0)}
             };

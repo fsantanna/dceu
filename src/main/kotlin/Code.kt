@@ -8,7 +8,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     val code: String = outer.code()
 
     fun Expr.Do.toc (): String {
-        return "ceu_block_${this.n}"
+        return if (ups.inexe(this)) {
+            "(ceu_mem->ceu_block_${this.n})"
+        } else {
+            "ceu_block_${this.n}"
+        }
     }
 
     fun Expr.isdst (): Boolean {
