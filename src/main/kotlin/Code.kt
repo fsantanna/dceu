@@ -148,7 +148,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { it.id.str.id2c(0) }
+                    .map    { it.id2c(ups) }
                 val common = """
                     // >>> block
                     ${defers[this].cond { it.first }}
