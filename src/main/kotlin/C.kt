@@ -180,7 +180,8 @@ fun Coder.main (tags: Tags): String {
             CEU_EXE_STATUS status;
             struct CEU_Frame frame;
             int pc;
-        } CEU_EXE_Coro;
+            char* mem;
+        } CEU_Exe_Coro;
         #endif
 
         typedef union CEU_Dyn {                                                                 
@@ -1144,7 +1145,7 @@ fun Coder.main (tags: Tags): String {
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
             *ret = (CEU_Exe_Coro) {
                 CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
-                CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo /*, mem*/, ret }, 0
+                CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, ret }, 0, mem
             };
             
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);

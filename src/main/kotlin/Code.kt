@@ -37,16 +37,30 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val up_blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
 
-                val pre = """ // TYPE | ${this.dump()}
+                val pre = """ // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
                                 "CEU_Value ${it.id.str.id2c()};"
                             }.joinToString("")}
-                        } CEU_Proto_Upvs_$n;                    
+                        } CEU_Clo_Upvs_$n;                    
                     """ }}
-                """ + """ // PROTO | ${this.dump()}
-                    CEU_Value ceu_proto_$n (
+                """ + """ // MEM | ${this.dump()}
+                    ${isexe.cond { """
+                        typedef struct {
+                            ${this.args.map { (id,_) ->
+                                val dcl = vars.get(this.body, id.str)
+                                val idc = id.str.id2c(dcl.n)
+                                """
+                                CEU_Value $idc;
+                                CEU_Block* _${idc}_;
+                                """
+                            }.joinToString("")}
+                            ${this.body.mem(defers)}
+                        } CEU_Clo_Mem_$n;                        
+                    """ }}
+                """ + """ // FUNC | ${this.dump()}
+                    CEU_Value ceu_clo_$n (
                         CEU_Frame* ceu_frame,
                         int ceu_n,
                         CEU_Value ceu_args[]
@@ -54,6 +68,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ceu_acc;        
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
+                        """ }}
+                        ${clos.protos_refs[this].cond { """
+                            CEU_Clo_Mem_$n* ceu_mem = (CEU_Clo_Mem_$n*) ceu_frame->exe->mem;                    
                         """ }}
                         ${this.args.map { (id,_) ->
                             val idc = id.str.id2c()
