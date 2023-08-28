@@ -30,30 +30,33 @@ fun Expr.union_or_struct (): String {
     return if (this.coexists()) "struct" else union
 }
 
-fun List<Expr>.seq (defers: MutableMap<Expr.Do, Pair<String,String>>, i: Int): String {
+fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>, i: Int): String {
     return (i != this.size).cond {
         """
             ${this[i].union_or_struct()} { // SEQ
-                ${this[i].mem(defers)}
-                ${this.seq(defers, i+1)}
+                ${this[i].mem(sta, defers)}
+                ${this.seq(sta, defers, i+1)}
             };
         """
     }
 }
 
-fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
+fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>): String {
     return when (this) {
-        is Expr.Export -> this.body.mem(defers)
-        is Expr.Do -> """
-            struct { // BLOCK
-                ${sta.void(this).cond { """
-                    CEU_Block _ceu_block_$n;
-                """ }}
-                CEU_Block* ceu_block_$n;
-                ${defers.pub[this]!!.map { "int defer_${it.key.n};\n" }.joinToString("")}
-                ${es.seq(defers, 0)}
-            };
-        """
+        is Expr.Export -> this.body.mem(sta, defers)
+        is Expr.Do -> {
+            if (!sta.ylds.contains(this)) "" else {
+                """
+                struct { // BLOCK
+                    ${sta.void(this).cond { """
+                        CEU_Block _ceu_block_$n;
+                    """ }}
+                    CEU_Block* ceu_block_$n;
+                    ${es.seq(sta, defers, 0)}
+                };
+                """
+            }
+        }
         is Expr.Dcl -> {
             val id = this.id.str.id2c(this.n)
             """
@@ -61,7 +64,7 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
                 struct {
                     CEU_Value ${id};
                     CEU_Block* _${id}_;
-                    ${this.src.cond { it.mem(defers) } }
+                    ${this.src.cond { it.mem(sta, defers) } }
                 };
             };
             """
@@ -70,38 +73,38 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
             struct { // SET
                 CEU_Value set_$n;
                 $union {
-                    ${this.dst.mem(defers)}
-                    ${this.src.mem(defers)}
+                    ${this.dst.mem(sta, defers)}
+                    ${this.src.mem(sta, defers)}
                 };
             };
             """
         is Expr.If -> """
             $union { // IF
-                ${this.cnd.mem(defers)}
-                ${this.t.mem(defers)}
-                ${this.f.mem(defers)}
+                ${this.cnd.mem(sta, defers)}
+                ${this.t.mem(sta, defers)}
+                ${this.f.mem(sta, defers)}
             };
             """
-        is Expr.XLoop -> this.body.mem(defers)
-        is Expr.Pass -> this.e.mem(defers)
-        is Expr.Drop -> this.e.mem(defers)
+        is Expr.XLoop -> this.body.mem(sta, defers)
+        is Expr.Pass -> this.e.mem(sta, defers)
+        is Expr.Drop -> this.e.mem(sta, defers)
 
         is Expr.Catch -> """
             $union { // CATCH
-                ${this.cnd?.mem(defers) ?: ""}
-                ${this.body.mem(defers)}
+                ${this.cnd?.mem(sta, defers) ?: ""}
+                ${this.body.mem(sta, defers)}
             };
         """
-        is Expr.Defer -> this.body.mem(defers)
+        is Expr.Defer -> this.body.mem(sta, defers)
 
-        is Expr.Yield -> this.arg.mem(defers)
-        is Expr.Resume -> this.call.mem(defers)
+        is Expr.Yield -> this.arg.mem(sta, defers)
+        is Expr.Resume -> this.call.mem(sta, defers)
 
         is Expr.Tuple -> """
             struct { // TUPLE
                 CEU_Dyn* tup_$n;
                 $union {
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
+                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
                 };
             };
             """
@@ -109,7 +112,7 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
             struct { // VECTOR
                 CEU_Dyn* vec_$n;
                 $union {
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
+                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
                 };
             };
             """
@@ -119,7 +122,7 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
                 CEU_Value key_$n;
                 $union {
                     ${this.args.map {
-                        listOf(it.first.mem(defers),it.second.mem(defers))
+                        listOf(it.first.mem(sta, defers),it.second.mem(sta, defers))
                     }.flatten().joinToString("")}
                 };
             };
@@ -128,8 +131,8 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
             struct { // INDEX
                 CEU_Value idx_$n;
                 $union {
-                    ${this.col.mem(defers)}
-                    ${this.idx.mem(defers)}
+                    ${this.col.mem(sta, defers)}
+                    ${this.idx.mem(sta, defers)}
                 };
             };
             """
@@ -137,8 +140,8 @@ fun Expr.mem (defers: MutableMap<Expr.Do, Pair<String,String>>): String {
             struct { // CALL
                 ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
                 $union {
-                    ${this.clo.mem(defers)}
-                    ${this.args.map { it.mem(defers) }.joinToString("")}
+                    ${this.clo.mem(sta, defers)}
+                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
                 };
             };
             """

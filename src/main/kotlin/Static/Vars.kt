@@ -35,7 +35,7 @@ fun String.id2c (n: Int? = null): String {
     }
 }
 
-class Vars (val outer: Expr.Do, val ups: Ups) {
+class Vars (val outer: Expr.Do, val ups: Ups, val blo: Block) {
     val datas = mutableMapOf<String,LData>()
 
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
@@ -126,7 +126,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val idc = dcl.id.str.id2c()
                 Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
             }
-            ups.inexe(dcl) -> {
+            blo.ylds.contains(dcl_to_blk[dcl]) -> {
                 val idc = dcl.id.str.id2c(dcl.n)
                 Pair("(ceu_mem->$idc)", "(ceu_mem->_${idc}_)")
             }

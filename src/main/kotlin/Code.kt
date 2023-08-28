@@ -8,7 +8,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     val code: String = outer.code()
 
     fun Expr.Do.toc (): String {
-        return if (ups.inexe(this)) {
+        return if (sta.ylds.contains(this)) {
             "(ceu_mem->ceu_block_${this.n})"
         } else {
             "ceu_block_${this.n}"
@@ -60,7 +60,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Block* _${idc}_;
                                 """
                             }.joinToString("")}
-                            ${this.body.mem(defers)}
+                            ${this.body.mem(sta, defers)}
                         } CEU_Clo_Mem_$n;                        
                     """ }}
                 """ + """ // FUNC | ${this.dump()}
@@ -145,7 +145,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val up = ups.pub[this]
-                val inexe = ups.inexe(this)
+                val ylds = sta.ylds.contains(this)
                 val bupc = up?.let { ups.first_block(it) }?.toc()
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val (depth,bf,ptr) = when {
@@ -221,7 +221,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             """ 
                         }}
-                        ${(!inexe).cond { """
+                        ${(!ylds).cond { """
                             ${dcls.map { """
                                 CEU_Value ${it.first};
                                 CEU_Block* ${it.second};
