@@ -1,15 +1,16 @@
 package dceu
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
-    // ylds: block yields -> vars must be in mem
-    // void: block is innocuous -> should be a proxy to up block
-
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val cons: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 constructor
+    val ylds: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 yield (including subs)
 
     init {
         outer.traverse()
     }
+
+    // ylds: block yields -> vars must be in mem
+    // void: block is innocuous -> should be a proxy to up block
 
     fun void (blk: Expr.Do): Boolean {
         val dcls = vars.blk_to_dcls[blk]!!
@@ -66,6 +67,9 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (!ups.inexe(this)) {
                     err(this.tk, "yield error : expected enclosing coro" + (if (CEU<=3) "" else "or task"))
                 }
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do }              // all blocks up to proto
+                    .forEach { ylds.add(it as Expr.Do) }
                 this.arg.traverse()
             }
             is Expr.Resume -> {
