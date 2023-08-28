@@ -653,7 +653,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    //free(dyn->Coro.frame.mem);
+                    free(dyn->Coro.mem);
                     break;
         #endif
                 default:
