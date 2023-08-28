@@ -2,7 +2,7 @@ package dceu
 
 typealias LData = List<Pair<Tk.Id,Tk.Tag?>>
 
-fun String.id2c (n: Int? = null): String {
+fun String.idc (n: Int? = null): String {
     return when {
         (this[0] == '{') -> {
             val MAP = mapOf(

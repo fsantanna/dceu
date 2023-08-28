@@ -48,7 +48,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>): St
             if (!sta.ylds.contains(this)) "" else {
                 """
                 struct { // BLOCK
-                    ${sta.void(this).cond { """
+                    ${(!sta.void(this)).cond { """
                         CEU_Block _ceu_block_$n;
                     """ }}
                     CEU_Block* ceu_block_$n;
@@ -58,7 +58,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>): St
             }
         }
         is Expr.Dcl -> {
-            val id = this.id.str.id2c(this.n)
+            val id = this.id.str.idc(this.n)
             """
             struct { // DCL
                 struct {

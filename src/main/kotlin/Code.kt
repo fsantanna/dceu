@@ -7,7 +7,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     val defers: MutableMap<Expr.Do, Pair<String,String>> = mutableMapOf()
     val code: String = outer.code()
 
-    fun Expr.Do.toc (): String {
+    fun Expr.Do.idc (): String {
         return if (sta.ylds.contains(this)) {
             "(ceu_mem->ceu_block_${this.n})"
         } else {
@@ -15,18 +15,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         }
     }
 
-    fun Expr.Dcl.id2c (upv: Int): Pair<String,String> {
+    fun Expr.Dcl.idc (upv: Int): Pair<String,String> {
         return when {
             (upv == 2) -> {
-                val idc = this.id.str.id2c()
+                val idc = this.id.str.idc()
                 Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
             }
             sta.ylds.contains(vars.dcl_to_blk[this]) -> {
-                val idc = this.id.str.id2c(this.n)
+                val idc = this.id.str.idc(this.n)
                 Pair("(ceu_mem->$idc)", "(ceu_mem->_${idc}_)")
             }
             else -> {
-                val idc = this.id.str.id2c()
+                val idc = this.id.str.idc()
                 Pair(idc, "_${idc}_")
             }
         }
@@ -62,7 +62,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
-                                "CEU_Value ${it.id.str.id2c()};"
+                                "CEU_Value ${it.id.str.idc()};"
                             }.joinToString("")}
                         } CEU_Clo_Upvs_$n;                    
                     """ }}
@@ -70,8 +70,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ // MEM | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct {
-                            ${this.args.map { (id,_) ->
-                                val idc = id.str.id2c()
+                            ${this.args.map { (arg,_) ->
+                                val dcl = vars.get(this.body, arg.str)
+                                val idc = dcl.id.str.idc(dcl.n)
                                 """
                                 CEU_Value $idc;
                                 CEU_Block* _${idc}_;
@@ -93,13 +94,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${isexe.cond { """
                             CEU_Clo_Mem_$n* ceu_mem = (CEU_Clo_Mem_$n*) ceu_frame->exe->mem;                    
                         """ }}
-                        ${this.args.map { (id,_) ->
-                            val idc = id.str.id2c()
-                            """
-                            CEU_Value $idc;
-                            CEU_Block* _${idc}_;
-                            """
-                        }.joinToString("")}
                         ${isexe.cond{"""
                             CEU_Exe_Coro* ceu_exe = ceu_frame->exe;
                             ceu_exe->status = CEU_EXE_STATUS_RESUMED;
@@ -118,7 +112,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val pos = """ // CLO | ${this.dump()}
                 CEU_Value ceu_ret_$n = ceu_clo_create (
                     CEU_VALUE_CLO_${this.tk.str.uppercase()},
-                    ${up_blk.toc()},
+                    ${up_blk.idc()},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
                     ${if (up_blk == outer) "NULL" else "ceu_frame"},
                     ceu_clo_$n,
@@ -133,7 +127,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${clos.protos_refs[this].cond {
                     it.map { dcl ->
                         val dcl_blk = vars.dcl_to_blk[dcl]!!
-                        val idc = dcl.id.str.id2c()
+                        val idc = dcl.id.str.idc()
                         val btw = ups
                             .all_until(this) { dcl_blk==it }
                             .filter { it is Expr.Proto }
@@ -141,7 +135,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val upv = min(2, btw)
                         """
                         {
-                            CEU_Value ceu_up = ${dcl.id2c(upv).first};
+                            CEU_Value ceu_up = ${dcl.idc(upv).first};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up));
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
@@ -161,9 +155,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
+                val blkc = this.idc()
                 val up = ups.pub[this]
                 val ylds = sta.ylds.contains(this)
-                val bupc = up?.let { ups.first_block(it) }?.toc()
+                val bupc = up?.let { ups.first_block(it) }?.idc()
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val (depth,bf,ptr) = when {
                     (f_b == null) -> Triple("1", "1", "{.frame=&_ceu_frame_}")
@@ -174,7 +169,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { it.id2c(0) }
+                    .map    { it.idc(0) }
                 val common = """
                     // >>> block
                     ${defers[this].cond { it.first }}
@@ -186,19 +181,32 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 if (sta.void(this)) {
                     """
-                    CEU_Block* ceu_block_$n = ${bupc!!};
+                    ${(!ylds).cond{"""
+                        CEU_Block* ceu_block_$n;
+                    """}}
+                    $blkc = ${bupc!!};
                     $common
                     """
                 } else {
                     """
                     { // BLOCK | ${this.dump()}
-                        CEU_Block _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, NULL };
-                        CEU_Block* ceu_block_$n = &_ceu_block_$n; 
+                        ${ylds.cond2({
+                            """
+                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, NULL };
+                            ceu_mem->ceu_block_$n = &ceu_mem->_ceu_block_$n;                                 
+                                
+                            """           
+                        },{
+                            """
+                            CEU_Block _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, NULL };
+                            CEU_Block* ceu_block_$n = &_ceu_block_$n;                                 
+                            """
+                        })}
                         ${(f_b == null).cond { """
                             // main block varargs (...)
-                            CEU_Value id__dot__dot__dot_ = ceu_tuple_create(ceu_block_$n, ceu_argc);
+                            CEU_Value id__dot__dot__dot_ = ceu_tuple_create($blkc, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
-                                CEU_Value vec = ceu_vector_from_c_string(ceu_block_$n, ceu_argv[i]);
+                                CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
                                 assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
                             }
                         """ }}
@@ -207,16 +215,25 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                             val args_n = f_b.args.size - 1
                             """
+                            ${(!ylds).cond {
+                                f_b.args.map { (id,_) ->
+                                    val idc = id.str.idc()
+                                    """
+                                    CEU_Value $idc;
+                                    CEU_Block* _${idc}_;
+                                    """
+                                }.joinToString("")}
+                            }
                             { // func args
                                 ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                    val idc = arg.first.str.id2c()
+                                    val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
                                     """
-                                    _${idc}_ = ceu_block_$n;
+                                    $_idc_ = $blkc;
                                     if ($i < ceu_n) {
-                                        if (!ceu_hold_chk_set(&ceu_block_$n->dyns, ceu_block_$n->depth, CEU_HOLD_FLEET, ceu_args[$i])) {
+                                        if (!ceu_hold_chk_set(&$blkc->dyns, $blkc->depth, CEU_HOLD_FLEET, ceu_args[$i])) {
                                             assert(0 && "TODO"); // restore code below on fail
                                             //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
-                                            //CEU_ERROR(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                            //CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                         }
                                         $idc = ceu_args[$i];
                                         ceu_gc_inc($idc);
@@ -226,10 +243,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     """
                                 }.joinToString("")}
                                 ${dots.cond {
-                                    val idc = f_b.args.last()!!.first.str.id2c()
+                                    val idc = f_b.args.last()!!.first.str.idc()
                                     """
                                     int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
-                                    $idc = ceu_tuple_create(ceu_block_$n, ceu_tup_n_$n);
+                                    $idc = ceu_tuple_create($blkc, ceu_tup_n_$n);
                                     for (int i=0; i<ceu_tup_n_$n; i++) {
                                         assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
                                     }
@@ -246,7 +263,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """ }}
                         ${dcls.map { """
                             ${it.first} = (CEU_Value) { CEU_VALUE_NIL };
-                            ${it.second} = ceu_block_$n;
+                            ${it.second} = $blkc;
                         """ }.joinToString("")}
                         ${(f_b == null).cond{ pres.joinToString("") }}
                         $common
@@ -258,7 +275,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
                             #if CEU <= 1
                                     // free from this block
-                                    CEU_ERROR(ceu_block_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                    CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             #else
                                 do {
                                    // allocate throw on up
@@ -270,12 +287,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }}
                         ${dcls.map { """
                             if (${it.first}.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld_depth == ceu_block_$n->depth));
+                                ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld_depth == $blkc->depth));
                             }
                         """ }.joinToString("")}
                         ${(f_b is Expr.Proto).cond { """
                             ${(f_b as Expr.Proto).args.map {
-                                val idc = it.first.str.id2c()
+                                val (idc,_) = vars.get(this, it.first.str).idc(0)
                                 """
                                 if ($idc.type > CEU_VALUE_DYNAMIC) {
                                     ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
@@ -312,14 +329,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             #endif
                             """
                         }}
-                        ceu_block_free(ceu_block_$n);
+                        ceu_block_free($blkc);
                     }
                     """
                 }
             }
             is Expr.Dcl -> {
-                val (idc,_) = this.id2c(0)
-                val bupc = ups.first_block(this)!!.toc()
+                val (idc,_) = this.idc(0)
+                val bupc = ups.first_block(this)!!.idc()
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
@@ -451,7 +468,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     var x = str
                     for (v in set) {
                         //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", v.id2c(0).first)
+                        x = x.replaceFirst("XXX", v.idc(0).first)
                     }
                     x
                 }
@@ -468,10 +485,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Acc -> {
                 val (blk,dcl) = vars.get(this)
-                val (idc,_idc_) = dcl.id2c(this.tk_.upv)
+                val (idc,_idc_) = dcl.idc(this.tk_.upv)
                 when {
                     this.isdst() -> {
-                        val bupc = ups.first_block(this)!!.toc()
+                        val bupc = ups.first_block(this)!!.idc()
                         val src = this.asdst_src()
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
@@ -489,7 +506,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }
                     this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.toc()
+                        val bupc = ups.first_block(this)!!.idc()
                         """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
@@ -512,10 +529,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Num -> assrc("((CEU_Value) { CEU_VALUE_NUMBER, {.Number=${this.tk.str}} })")
 
             is Expr.Tuple -> {
-                val bupc = ups.first_block(this)!!.toc()
+                val bupc = ups.first_block(this)!!.idc()
                 """
                 { // TUPLE | ${this.dump()}
-                    CEU_Value ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.toc()}, ${this.args.size});
+                    CEU_Value ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.idc()}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         if (!ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc)) {
@@ -529,10 +546,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Vector -> {
-                val bupc = ups.first_block(this)!!.toc()
+                val bupc = ups.first_block(this)!!.idc()
                 """
                 { // VECTOR | ${this.dump()}
-                    CEU_Value ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.toc()});
+                    CEU_Value ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.idc()});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         if (!ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc)) {
@@ -546,10 +563,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Dict -> {
-                val bupc = ups.first_block(this)!!.toc()
+                val bupc = ups.first_block(this)!!.idc()
                 """
                 { // DICT | ${this.dump()}
-                    CEU_Value ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.toc()});
+                    CEU_Value ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.idc()});
                     ${this.args.map { """
                         {
                             ${it.first.code()}
@@ -567,7 +584,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Index -> {
-                val bupc = ups.first_block(this)!!.toc()
+                val bupc = ups.first_block(this)!!.idc()
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
                 """
                 { // INDEX | ${this.dump()}
@@ -612,7 +629,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }
                     this.isdrop() -> {
-                        val bupc = ups.first_block(this)!!.toc()
+                        val bupc = ups.first_block(this)!!.idc()
                         """
                         {   // INDEX - DROP
                             CEU_Value ceu_col_$n = ceu_acc;
@@ -685,12 +702,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Call -> {
                 val up = ups.pub[this]!!
-                val bupc = ups.first_block(this)!!.toc()
+                val bupc = ups.first_block(this)!!.idc()
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    dcl.id2c(0).first
+                    dcl.idc(0).first
                 }
                 //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 

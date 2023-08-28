@@ -207,7 +207,7 @@ class Exec_03 {
             val v2 = resume co(v1+1)    ;; 13
             println(v2)
         """)
-        assert(out == "10\n") { out }
+        assert(out == "13\n") { out }
     }
 
     ///////////
