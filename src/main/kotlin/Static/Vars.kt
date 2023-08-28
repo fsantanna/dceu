@@ -35,7 +35,7 @@ fun String.id2c (n: Int? = null): String {
     }
 }
 
-class Vars (val outer: Expr.Do, val ups: Ups, val blo: Block) {
+class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
@@ -118,23 +118,6 @@ class Vars (val outer: Expr.Do, val ups: Ups, val blo: Block) {
 
     fun get (blk: Expr.Do, id: String): Expr.Dcl {
         return blk_to_dcls[blk]!!.findLast { it.id.str == id }!!
-    }
-
-    fun id2c (dcl: Expr.Dcl, upv: Int): Pair<String,String> {
-        return when {
-            (upv == 2) -> {
-                val idc = dcl.id.str.id2c()
-                Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
-            }
-            blo.ylds.contains(dcl_to_blk[dcl]) -> {
-                val idc = dcl.id.str.id2c(dcl.n)
-                Pair("(ceu_mem->$idc)", "(ceu_mem->_${idc}_)")
-            }
-            else -> {
-                val idc = dcl.id.str.id2c()
-                Pair(idc, "_${idc}_")
-            }
-        }
     }
 
     fun Expr.traverse () {

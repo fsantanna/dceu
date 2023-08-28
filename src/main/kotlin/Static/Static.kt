@@ -1,6 +1,9 @@
 package dceu
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
+    // ylds: block yields -> vars must be in mem
+    // void: block is innocuous -> should be a proxy to up block
+
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val cons: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 constructor
 

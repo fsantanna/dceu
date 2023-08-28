@@ -15,6 +15,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         }
     }
 
+    fun Expr.Dcl.id2c (upv: Int): Pair<String,String> {
+        return when {
+            (upv == 2) -> {
+                val idc = this.id.str.id2c()
+                Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
+            }
+            sta.ylds.contains(vars.dcl_to_blk[this]) -> {
+                val idc = this.id.str.id2c(this.n)
+                Pair("(ceu_mem->$idc)", "(ceu_mem->_${idc}_)")
+            }
+            else -> {
+                val idc = this.id.str.id2c()
+                Pair(idc, "_${idc}_")
+            }
+        }
+    }
+
     fun Expr.isdst (): Boolean {
         return ups.pub[this].let { it is Expr.Set && it.dst==this }
     }
