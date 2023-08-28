@@ -2,8 +2,8 @@ package dceu
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
-    val cons: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 constructor
-    val ylds: MutableSet<Expr.Do> = mutableSetOf() // block has at least 1 yield (including subs)
+    val cons:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 constructor
+    val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs)
 
     init {
         outer.traverse()

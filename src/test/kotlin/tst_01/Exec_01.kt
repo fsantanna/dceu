@@ -2699,6 +2699,18 @@ class Exec_01 {
         """)
         assert(out == "> 10.000000\n") { out }
     }
+    @Test
+    fun todo_native_XXX() {
+        val out = test(
+            """
+            var x
+            set x = 10
+            set x =  `:number ${D}x.Number /*XXX*/`
+            println(x)
+        """
+        )
+        assert(out == "10\n") { out }
+    }
 
     // OPERATORS
 

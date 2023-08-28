@@ -141,7 +141,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val upv = min(2, btw)
                         """
                         {
-                            CEU_Value ceu_up = ${vars.id2c(dcl, upv).first};
+                            CEU_Value ceu_up = ${dcl.id2c(upv).first};
                             assert(ceu_hold_chk_set_col(ceu_ret_$n.Dyn, ceu_up));
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$n*)ceu_ret_$n.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
@@ -174,7 +174,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
-                    .map    { vars.id2c(it,0) }
+                    .map    { it.id2c(0) }
                 val common = """
                     // >>> block
                     ${defers[this].cond { it.first }}
@@ -318,7 +318,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Dcl -> {
-                val (idc,_) = vars.id2c(this,0)
+                val (idc,_) = this.id2c(0)
                 val bupc = ups.first_block(this)!!.toc()
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
 
@@ -447,7 +447,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
 
             is Expr.Nat -> {
-                val body = vars.nat_to_str[this]!!
+                val body = vars.nats[this]!!.let { (set, str) ->
+                    var x = str
+                    for (v in set) {
+                        //println(setOf(x, v))
+                        x = x.replaceFirst("XXX", v.id2c(0).first)
+                    }
+                    x
+                }
                 when (this.tk_.tag) {
                     null   -> body + "\n" + assrc("((CEU_Value){ CEU_VALUE_NIL })")
                     ":ceu" -> assrc(body)
@@ -461,7 +468,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Acc -> {
                 val (blk,dcl) = vars.get(this)
-                val (idc,_idc_) = vars.id2c(dcl, this.tk_.upv)
+                val (idc,_idc_) = dcl.id2c(this.tk_.upv)
                 when {
                     this.isdst() -> {
                         val bupc = ups.first_block(this)!!.toc()
@@ -683,7 +690,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    vars.id2c(dcl, 0).first
+                    dcl.id2c(0).first
                 }
                 //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
 
