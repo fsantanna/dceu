@@ -210,6 +210,41 @@ class Exec_03 {
         assert(out == "13\n") { out }
     }
 
+    // MEM vs STACK
+
+    @Test
+    fun dd_01_stack() {
+        val out = test("""
+            val CO = coro (v1) {
+                val v2 = 2
+                println(v1, v2)
+                ```
+                printf("%f\t%f\n", id_v1.Number, id_v2.Number);
+                ```
+            }
+            val co = coroutine(CO)
+            resume co(1)
+        """)
+        assert(out == "1\t2\n1.000000\t2.000000\n") { out }
+    }
+    @Test
+    fun dd_02_mem() {
+        val out = test("""
+            val CO = coro (v1) {
+                val v2 = 2
+                println(v1, v2)
+                yield(nil)
+                ```
+                printf("%f\t%f\n", ceu_mem->id_v1_129.Number, ceu_mem->id_v2_17.Number);
+                ```
+            }
+            val co = coroutine(CO)
+            resume co(1)
+            resume co(1)
+        """)
+        assert(out == "1\t2\n1.000000\t2.000000\n") { out }
+    }
+
     ///////////
     @Test
     fun zz_04_tags() {

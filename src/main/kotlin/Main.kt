@@ -146,6 +146,7 @@ val PLUS = """
 """
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
+    N = 1
     if (verbose) {
         System.err.println("... parsing ...")
     }
