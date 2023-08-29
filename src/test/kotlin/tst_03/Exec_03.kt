@@ -449,7 +449,7 @@ class Exec_03 {
         assert(out == ":ok\n") { out }
     }
 
-    // DROP / THROW
+    // DROP / MOVE / OUT
 
     @Test
     fun ff_01_drop() {
@@ -475,7 +475,37 @@ class Exec_03 {
                 ":in\tnil\n") { out }
     }
     @Test
-    fun ff_02_throw() {
+    fun ff_02() {
+        val out = test("""
+            var f
+            set f = func () {
+                coroutine(coro() {nil})
+            }
+            println(f())
+        """)
+        //assert(out == "anon : (lin 6, col 21) : f()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+        assert(out.contains("coro: 0x"))
+    }
+    @Test
+    fun ff_03() {
+        val out = test("""
+            var T
+            set T = coro () { nil }
+            var xxx
+            do {
+                var t
+                set t = coroutine(T)
+                set xxx = t ;; error
+            }
+        """)
+        assert(out == " v  anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+    }
+
+    // THROW
+
+    @Test
+    fun gg_01_throw() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -490,7 +520,7 @@ class Exec_03 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun ff_03_throw() {
+    fun gg_02_throw() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -508,7 +538,7 @@ class Exec_03 {
         assert(out == "1\n3\n") { out }
     }
     @Test
-    fun ff_04_throw() {
+    fun gg_03_throw() {
         val out = test("""
             var co
             set co = coroutine (coro () {
