@@ -30,7 +30,7 @@ fun Expr.union_or_struct (): String {
     return if (this.coexists()) "struct" else union
 }
 
-fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>, i: Int): String {
+fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>, i: Int): String {
     return (i != this.size).cond {
         """
             ${this[i].union_or_struct()} { // SEQ
@@ -41,7 +41,7 @@ fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>
     }
 }
 
-fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>): String {
+fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>): String {
     return when (this) {
         is Expr.Export -> this.body.mem(sta, defers)
         is Expr.Do -> {
@@ -52,6 +52,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Pair<String,String>>): St
                         CEU_Block _ceu_block_$n;
                     """ }}
                     CEU_Block* ceu_block_$n;
+                    ${defers[this].cond { it.first.map { "int defer_${it};\n" }.joinToString("")} }
                     ${es.seq(sta, defers, 0)}
                 };
                 """

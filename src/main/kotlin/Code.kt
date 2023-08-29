@@ -4,7 +4,7 @@ import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
     val pres: MutableList<String> = mutableListOf()
-    val defers: MutableMap<Expr.Do, Pair<String,String>> = mutableMapOf()
+    val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
 
     fun Expr.Do.idc (): String {
@@ -14,7 +14,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             "ceu_block_${this.n}"
         }
     }
-
+    fun Expr.Defer.idc (): String {
+        return if (sta.ylds.contains(ups.first_block(this))) {
+            "(ceu_mem->defer_${this.n})"
+        } else {
+            "ceu_defer_${this.n}"
+        }
+    }
     fun Expr.Dcl.idc (upv: Int): Pair<String,String> {
         return when {
             (upv == 2) -> {
@@ -57,6 +63,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val up_blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
+                val code = this.body.code()
 
                 val pre = """ // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
@@ -100,7 +107,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             switch (ceu_exe->pc) {
                                 case 0:
                         """}}
-                        ${this.body.code()}
+                        $code
                         ${isexe.cond{"""
                                 ceu_exe->status = CEU_EXE_STATUS_TERMINATED;
                             }
@@ -172,11 +179,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .map    { it.idc(0) }
                 val common = """
                     // >>> block
-                    ${defers[this].cond { it.first }}
+                    ${defers[this].cond { it.second }}
                     ${(CEU >= 2).cond { "do {" }}
                     $body
                     ${(CEU >= 2).cond { "} while (0);" }}
-                    ${defers[this].cond { it.second }}
+                    ${defers[this].cond { it.third }}
                     // <<< block                    
                 """
                 if (sta.void(this)) {
@@ -402,21 +409,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Drop -> this.e.code()
 
             is Expr.Defer -> {
-                val (ini,end) = defers.getOrDefault(ups.first_block(this)!!, Pair("",""))
+                val idc = this.idc()
+                val (ns,ini,end) = defers.getOrDefault(ups.first_block(this)!!, Triple(mutableListOf(),"",""))
                 val inix = """
-                    int ceu_defer_$n = 1;
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond { 
+                        "int ceu_defer_$n;\n"
+                    }}
+                    $idc = 0;       // NO: do not yet execute on termination
                 """
                 val endx = """
-                    if (ceu_defer_$n) {
+                    if ($idc) {     // ??: execute only if activate
                         do {
                             ${this.body.code()}
                         } while (0);    // catch throw
                         assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
                     }
                 """
-                defers[ups.first_block(this)!!] = Pair(ini+inix, endx+end)
+                ns.add(n)
+                defers[ups.first_block(this)!!] = Triple(ns, ini+inix, endx+end)
+                println(listOf(111, ups.first_block(this)!!.n, defers[ups.first_block(this)!!]!=null))
                 """
-                ceu_defer_$n = 1;
+                $idc = 1;           // OK: execute on termination
                 ${assrc("((CEU_Value) { CEU_VALUE_NIL })")}
                 """
             }
