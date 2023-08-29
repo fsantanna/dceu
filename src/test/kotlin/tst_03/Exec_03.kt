@@ -258,6 +258,27 @@ class Exec_03 {
         """)
         assert(out == ":end\n:ok\n") { out }
     }
+    @Test
+    fun cc_15_yield_err() {
+        val out = test("""
+            coro () {
+                func () {
+                    yield(nil)
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
+    }
+    @Test
+    fun cc_16_tags() {
+        val out = test("""
+            val co = coro () {
+                yield(:x)
+            }
+            println(:y)
+        """)
+        assert(out == ":y\n") { out }
+    }
 
     // MEM vs STACK
 
@@ -320,16 +341,204 @@ class Exec_03 {
         """)
         assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
-
-    ///////////
     @Test
-    fun zz_04_tags() {
+    fun ee_02_coro_defer() {
         val out = test("""
-            val co = coro () {
-                yield(:x)
+            var T
+            set T = coro () {
+                defer {
+                    println(3)
+                }
+                println(1)
+                yield(nil)   ;; never awakes
+                println(2)
             }
-            println(:y)
+            println(0)
+            resume (coroutine(T)) ()
+            println(4)
         """)
-        assert(out == ":y\n") { out }
+        assert(out == "0\n1\n4\n3\n") { out }
+    }
+    @Test
+    fun ee_03_coro_defer() {
+        val out = test("""
+            var T
+            set T = coro () {
+                defer {
+                    println(3)
+                }
+                println(1)
+                yield(nil)   ;; never awakes
+                println(2)
+            }
+            val t = coroutine(T)
+            println(0)
+            resume t ()
+            println(4)
+        """)
+        assert(out == "0\n1\n4\n3\n") { out }
+    }
+    @Test
+    fun ee_04_coro_defer() {
+        val out = test("""
+            val T = coro () {
+                println(1)
+                yield(nil)   ;; never awakes
+                defer {
+                    println(999)
+                }
+            }
+            resume (coroutine(T)) ()
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun ee_05_coro_defer() {
+        val out = test("""
+            var T
+            set T = coro () {
+                defer {
+                    println(3)
+                }
+                println(1)
+                yield(nil)   ;; never awakes
+                defer {
+                    println(999)
+                }
+                println(2)
+            }
+            println(0)
+            resume (coroutine(T)) ()
+            println(4)
+        """)
+        assert(out == "0\n1\n4\n3\n") { out }
+    }
+    @Test
+    fun ee_06_coro_defer() {
+        val out = test("""
+            val F = coro () {
+                defer {
+                    println(:xxx)
+                }
+                yield(nil)
+                defer {
+                    println(:yyy)
+                }
+                yield(nil)
+            }
+            do {
+                val f = coroutine(F)
+                resume f()
+                resume f()
+            }
+        """)
+        assert(out == ":yyy\n:xxx\n") { out }
+    }
+    @Test
+    fun ee_07_move() {
+        val out = test("""
+            do {
+                val F = (coro () { println(:ok) })
+                val f = do {        ;; dst=2
+                    coroutine(F)    ;; src=3
+                }
+                resume f()
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // DROP / THROW
+
+    @Test
+    fun ff_01_drop() {
+        val out = test("""
+        val f = func (co) {
+            resume co()
+        }
+        val C = coro () {
+            var t = []
+            yield(drop(t))
+            println(:in, t)
+        }
+        do {
+            val co = coroutine(C)
+            do {
+                val v = f(co)
+                println(:out, v)
+            }
+            f(co)
+        }
+        """)
+        assert(out == ":out\t[]\n" +
+                ":in\tnil\n") { out }
+    }
+    @Test
+    fun ff_02_throw() {
+        val out = test("""
+            var co
+            set co = coroutine(coro (x,y) {
+                throw(:e2)
+            })
+            catch :e2 {
+                resume co(1,2)
+                println(99)
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ff_03_throw() {
+        val out = test("""
+            var co
+            set co = coroutine(coro (x,y) {
+                yield(nil)
+                throw(:e2)
+            })
+            catch :e2 {
+                resume co(1,2)
+                println(1)
+                resume co()
+                println(2)
+            }
+            println(3)
+        """)
+        assert(out == "1\n3\n") { out }
+    }
+    @Test
+    fun ff_04_throw() {
+        val out = test("""
+            var co
+            set co = coroutine (coro () {
+                catch :e1 {
+                    yield(nil)
+                    throw(:e1)
+                }
+                println(:e1)
+                yield(nil)
+                throw(:e2)
+            })
+            catch :e2 {
+                resume co()
+                resume co()
+                resume co()
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+
+    // STATUS
+
+    @Test
+    fun gg_01_status_err() {
+        val out = test("""
+            var a
+            status(a)
+        """, true)
+        assert(out == "anon : (lin 3, col 13) : status(a) : status error : expected coroutine\n:error\n") { out }
     }
 }

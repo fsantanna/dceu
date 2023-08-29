@@ -219,6 +219,16 @@ class Exec_01 {
         )
         assert(out == "10\nnil\n") { out }
     }
+    @Test
+    fun bb_11_err() {
+        val out = test("""
+            var f = func () {
+                t
+            }
+            var t
+        """)
+        assert(out == "anon : (lin 3, col 17) : access error : variable \"t\" is not declared\n") { out }
+    }
 
     // INDEX / TUPLE
 
@@ -2264,6 +2274,23 @@ class Exec_01 {
         """
         )
         assert(out == "anon : (lin 3, col 17) : access error : variable \"f\" is not declared\n") { out }
+    }
+    @Test
+    fun nn_19_func_out() {
+        val out = test("""
+        val f = func (x) {
+            x()
+        }
+        val F = func () {
+            []
+        }
+        do {
+            val l = f(F)
+            println(l)
+            nil
+        }
+        """)
+        assert(out == "[]\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...
