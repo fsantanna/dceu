@@ -27,9 +27,9 @@ fun Coder.main (tags: Tags): String {
         #define CEU3(x)
         #endif
 
-        #if CEU >= 2
-        #define CEU_CONTINUE_ON_THROW() {           \
-            if (ceu_acc.type == CEU_VALUE_THROW) {  \
+        #if CEU >= 3
+        #define CEU_CHECK_FREE() {                  \
+            if (ceu_n == CEU_ARG_FREE) {            \
                 continue;                           \
             }                                       \
         }
@@ -42,6 +42,11 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_MAX
         } __attribute__ ((__packed__)) CEU_HOLD;
         _Static_assert(sizeof(CEU_HOLD) == 1);
+        
+        typedef enum CEU_ARG {
+            CEU_ARG_FREE = -1,
+            CEU_ARG_ARGS =  0   // 1, 2, ...
+        } CEU_ARG;
 
         typedef enum CEU_VALUE {
             CEU_VALUE_NIL = 0,
@@ -381,11 +386,13 @@ fun Coder.main (tags: Tags): String {
             assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str)); \
             continue;                                           \
         }
-        #define CEU_ASSERT(blk,err,pre) {      \
-            if (err.type==CEU_VALUE_ERROR || err.type==CEU_VALUE_THROW) {  \
-                CEU_ERROR(blk,pre,err);        \
-            }                                   \
-        }
+        #define CEU_ASSERT(blk,err,pre) ({      \
+            CEU_Value ceu_err = err;            \
+            if (ceu_err.type==CEU_VALUE_ERROR || ceu_err.type==CEU_VALUE_THROW) {  \
+                CEU_ERROR(blk,pre,ceu_err);     \
+            };                                  \
+            ceu_err;                            \
+        })
         #endif
     """ +
     """ // IMPLS
@@ -653,6 +660,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+                    dyn->Coro.frame.clo->proto(&dyn->Coro.frame, CEU_ARG_FREE, NULL);
                     free(dyn->Coro.mem);
                     break;
         #endif

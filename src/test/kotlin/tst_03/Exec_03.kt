@@ -209,6 +209,55 @@ class Exec_03 {
         """)
         assert(out == "13\n") { out }
     }
+    @Test
+    fun cc_11_mult() {
+        val out = test("""
+            var co
+            set co = coroutine(coro (x,y) {
+                println(x,y)
+            })
+            resume co(1,2)
+        """)
+        assert(out == "1\t2\n") { out }
+    }
+    @Test
+    fun todo_cc_12_multi_err() {
+        val out = test("""
+            var co
+            set co = coroutine(coro () {
+                yield(nil)
+            })
+            resume co()
+            resume co(1,2)
+        """)
+        assert(out.contains("TODO: multiple arguments to resume")) { out }
+    }
+    @Test
+    fun cc_13_tuple_leak() {
+        val out = test("""
+            val T = coro () {
+                pass [1,2,3]
+                yield(nil)
+            }
+            resume (coroutine(T)) ()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun cc_14_coro_defer() {
+        val out = test("""
+            val T = coro () {
+                defer {
+                    println(:ok)
+                }
+                yield(nil)   ;; never awakes
+            }
+            resume (coroutine(T)) ()
+            println(:end)
+        """)
+        assert(out == ":end\n:ok\n") { out }
+    }
 
     // MEM vs STACK
 
@@ -243,6 +292,33 @@ class Exec_03 {
             resume co(1)
         """)
         assert(out == "1\t2\n1.000000\t2.000000\n") { out }
+    }
+
+    // ORIGINAL
+
+    @Test
+    fun ee_01_coro() {
+        val out = test("""
+            $PLUS
+            var t
+            set t = coro (v) {
+                var v' = v
+                println(v')          ;; 1
+                set v' = yield((v'+1)) 
+                println(v')          ;; 3
+                set v' = yield(v'+1) 
+                println(v')          ;; 5
+                v'+1
+            }
+            val a = coroutine(t)
+            var v = resume a(1)
+            println(v)              ;; 2
+            set v = resume a(v+1)
+            println(v)              ;; 4
+            set v = resume a(v+1)
+            println(v)              ;; 6
+        """)
+        assert(out == "1\n2\n3\n4\n5\n6\n") { out }
     }
 
     ///////////

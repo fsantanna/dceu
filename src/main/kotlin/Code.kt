@@ -330,6 +330,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }}
                         ceu_block_free($blkc);
+                        ${(f_b is Expr.Do).cond { """
+                            #if CEU >= 3
+                                CEU_CHECK_FREE()
+                            #endif
+                        """ }}
                     }
                     """
                 }
@@ -454,6 +459,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 #endif
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
+                    CEU_CHECK_FREE();
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
                     if (ceu_n == 0) {
                         // no argument

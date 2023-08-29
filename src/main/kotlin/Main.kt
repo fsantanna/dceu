@@ -200,7 +200,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
 }
 
 fun test (inp: String, pre: Boolean=false): String {
-    val prelude = if (CEU == 3) "build/xprelude.ceu" else "build/cprelude.ceu"
+    val prelude = if (CEU == 99) "build/xprelude.ceu" else "build/cprelude.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))
     }
