@@ -267,7 +267,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro\n") { out }
     }
     @Test
     fun cc_16_tags() {
@@ -305,7 +305,7 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil)
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_129.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_132.Number, ceu_mem->id_v2_17.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -536,9 +536,30 @@ class Exec_03 {
     @Test
     fun gg_01_status_err() {
         val out = test("""
-            var a
-            status(a)
-        """, true)
-        assert(out == "anon : (lin 3, col 13) : status(a) : status error : expected coroutine\n:error\n") { out }
+            val CO
+            status(CO)
+        """)
+        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
+    }
+    @Test
+    fun gg_02_status_err() {
+        val out = test("""
+            val CO = coro () { nil }
+            status(CO)
+        """)
+        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
+    }
+    @Test
+    fun gg_02_status() {
+        val out = test("""
+            val CO = coro () { yield(nil) }
+            val co = coroutine(CO)
+            println(status(co))
+            resume co()
+            println(status(co))
+            resume co()
+            println(status(co))
+        """,)
+        assert(out == ":yielded\n:yielded\n:terminated\n") { out }
     }
 }

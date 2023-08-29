@@ -2733,6 +2733,26 @@ class TTask {
     // STATUS
 
     @Test
+    fun gg_0X_status_coro() {
+        val out = test("""
+            var t
+            set t = coro () {
+                println(10, status(coro))
+                yield(nil)
+                println(20, status(coro))
+            }
+            var a
+            set a = coroutine(t)
+            println(1, status(a))
+            resume a()
+            println(2, status(a))
+            resume a()
+            println(3, status(a))
+        """)
+        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
+    }
+
+    @Test
     fun ii_status2_err() {
         val out = all("""
             status(task)
@@ -2749,27 +2769,6 @@ class TTask {
             }
         """, true)
         assert(out == "anon : (lin 4, col 17) : invalid set : expected assignable destination") { out }
-    }
-    @Test
-    fun ii_status4() {
-        val out = all("""
-            var t
-            set t = coro () {
-                println(10, status(coro))
-                yield(nil)
-                println(20, status(coro))
-            }
-            var a
-            set a = coroutine(t)
-            println(1, status(a))
-            resume a()
-            println(2, status(a))
-            resume a()
-            println(3, status(a))
-        """)
-        //assert(out == "anon : (lin 11, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 11, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "1\t:yielded\n10\t:resumed\n2\t:yielded\n20\t:resumed\n3\t:terminated\n") { out }
     }
     @Test
     fun todo_ii_status5() {

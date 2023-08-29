@@ -62,6 +62,8 @@ val TAGS = listOf (
     ":throw"
 )) + (if (CEU <= 2) listOf() else listOf(
     ":x-coro"
+)) + (if (CEU <= 2) listOf() else listOf(
+    ":yielded", ":resumed", ":terminated"
 )) + listOf(
     ":ceu",
     ":tmp"
@@ -74,7 +76,7 @@ val GLOBALS = setOf (
 ) + (if (CEU <= 1) setOf() else setOf(
     "is'", "is-not'", "pointer-to-string", "throw"
 )) + (if (CEU <= 2) setOf() else setOf(
-    "coroutine"
+    "coroutine", "status"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {

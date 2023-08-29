@@ -1451,19 +1451,14 @@ fun Coder.main (tags: Tags): String {
             }
             return ceu_exe_create(frame->up_block, coro);
         }
-        #if 0
-        CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value* args[]) {
+        CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value* coro = args[0];
-            ceu_deref(coro);
-            if (coro->type!=CEU_VALUE_EXE_CORO && coro->type!=CEU_VALUE_X_TASK) {
-                CEU_THROW_MSG("\0 : status error : expected coroutine");
-                CEU_THROW_RET(CEU_ERR_ERROR);
+            CEU_Value coro = args[0];
+            if (coro.type != CEU_VALUE_EXE_CORO /*&& coro->type!=CEU_VALUE_X_TASK*/) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected x-coro"} };
             }
-            ceu_acc = (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro->Dyn->Bcast.status + CEU_TAG_yielded - 1} };
-            return CEU_RET_RETURN;
+            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Coro.status + CEU_TAG_yielded - 1} };
         }
-        #endif
         #endif
     """ +
     """ // GLOBALS
@@ -1546,6 +1541,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
             &_ceu_frame_, ceu_coroutine_f, {0,NULL}
         };
+        CEU_Clo ceu_status = { 
+            CEU_VALUE_CLO_FUNC, 1, CEU_HOLD_MUTAB, 1, NULL, NULL, NULL,
+            &_ceu_frame_, ceu_status_f, {0,NULL}
+        };
         #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
@@ -1569,6 +1568,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
         CEU_Value id_coroutine               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_coroutine}               };
+        CEU_Value id_status                  = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_status}               };
         #endif
     """ +
     """ // MAIN
