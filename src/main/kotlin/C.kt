@@ -660,7 +660,9 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    dyn->Coro.frame.clo->proto(&dyn->Coro.frame, CEU_ARG_FREE, NULL);
+                    if (dyn->Coro.status != CEU_EXE_STATUS_TERMINATED) {
+                        dyn->Coro.frame.clo->proto(&dyn->Coro.frame, CEU_ARG_FREE, NULL);
+                    }
                     free(dyn->Coro.mem);
                     break;
         #endif
