@@ -144,7 +144,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }}
                 """
 
-                if (clos.protos_refs.containsKey(this)) {
+                if (!clos.protos_noclos.contains(this)) {
                     pres.add(pre)
                     pos
                 } else {

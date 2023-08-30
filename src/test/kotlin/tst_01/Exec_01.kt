@@ -3713,6 +3713,21 @@ class Exec_01 {
         assert(out.contains("func: 0x")) { out }
         assert(out.contains(" | [[20]]")) { out }
     }
+    @Test
+    fun pp_29_func_escape() {
+        val out = test(
+            """
+            val f = func () {
+                func () {
+                    println(:ok)
+                }
+            }
+            f()()
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
+
 
     //  MEM-GC-REF-COUNT
 

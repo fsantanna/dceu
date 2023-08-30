@@ -6,7 +6,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - for each var access ACC, we get its declaration DCL in block BLK
     //      - if ACC/DCL have no upval modifiers
     //      - we check if there's a func FUNC in between ACC -> [FUNC] -> BLK
-    val protos_noclos = mutableSetOf<Expr>()
+    val protos_noclos = mutableSetOf<Expr.Proto>()
 
     // Upvars (var ^up) with refs (^^up):
     //  - at least one refs access the var
@@ -71,7 +71,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         // access to normal noglb w/o upval modifier
                         ups.all_until(this) { it == blk }       // stop at enclosing declaration block
                             .filter { it is Expr.Proto }            // all crossing protos
-                            .forEach { protos_noclos.add(it) }        // mark them as noclos
+                            .forEach { protos_noclos.add(it as Expr.Proto) } // mark them as noclos
                     }
                 }
             }
