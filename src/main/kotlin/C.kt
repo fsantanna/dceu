@@ -682,7 +682,7 @@ fun Coder.main (tags: Tags): String {
             while (cur != NULL) {
                 CEU_Dyn* old = cur;
                 cur = old->Any.hld_next;
-                ceu_dyn_free((CEU_Dyn*)old);
+                ceu_dyn_free(old);
             }
             blk->dyns = NULL;
         }
