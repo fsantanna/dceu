@@ -151,7 +151,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     pre + pos
                 }
             }
-            is Expr.Export -> this.body.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val blkc = this.idc()

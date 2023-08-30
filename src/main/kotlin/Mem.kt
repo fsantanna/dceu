@@ -4,7 +4,7 @@ val union = "union"
 
 fun Expr.coexists (): Boolean {
     return when (this) {
-        is Expr.Export, is Expr.Dcl -> true
+        is Expr.Dcl    -> true
         is Expr.Set    -> this.dst.coexists() || this.src.coexists()
         is Expr.If     -> this.cnd.coexists()
         is Expr.Drop   -> this.e.coexists()
@@ -43,7 +43,6 @@ fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<
 
 fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>): String {
     return when (this) {
-        is Expr.Export -> this.body.mem(sta, defers)
         is Expr.Do -> {
             if (!sta.ylds.contains(this)) "" else {
                 """
