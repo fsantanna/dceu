@@ -86,7 +86,7 @@ fun Coder.main (tags: Tags): String {
     """ // CEU_Frame, CEU_Block
         typedef struct CEU_Frame {          // call func / create task
             struct CEU_Block*    up_block;  // block enclosing this call/coroutine
-            struct CEU_Clo*      clo;
+            struct CEU_Clo*      clo;       // TODO: should be CEU_Value, but CEU_Exe holds CEU_Frame, which holds CEU_Clo
         #if CEU >= 3
             struct CEU_Exe_Coro* exe;       // coro/task<->frame point to each other
         #endif
@@ -185,7 +185,7 @@ fun Coder.main (tags: Tags): String {
         typedef struct CEU_Exe_Coro {
             _CEU_Dyn_
             CEU_EXE_STATUS status;
-            struct CEU_Frame frame;
+            struct CEU_Frame frame;  // TODO: CEU_Exe holds CEU_Frame, which holds CEU_Clo
             int pc;
             char* mem;
         } CEU_Exe_Coro;
@@ -592,6 +592,11 @@ fun Coder.main (tags: Tags): String {
                     ceu_gc_dec(dyn->Throw.stk, 1);
                     break;
             #endif
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Coro.frame.clo), 1);
+                    break;
+        #endif
                 default:
                     assert(0);
                     break;
@@ -632,7 +637,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
     """ +
-    """ // BLOCK
+    """ // BLOCK / FREE
         void ceu_dyn_free (CEU_Dyn* dyn) {
             while (dyn->Any.tags != NULL) {
                 CEU_Tags_List* tag = dyn->Any.tags;
@@ -777,6 +782,13 @@ fun Coder.main (tags: Tags): String {
                     }
                     break;
             #endif
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+                    if (!ceu_hold_chk_set(dst, depth, hld_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Coro.frame.clo))) {
+                        return 0;
+                    }
+                    break;
+        #endif
             }
             return 1;
         }
@@ -887,6 +899,15 @@ fun Coder.main (tags: Tags): String {
                     }
                     break;
                 }
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO: {
+                    CEU_Value args[1] = { ceu_dyn_to_val((CEU_Dyn*)dyn->Coro.frame.clo) };
+                    CEU_Value ret = ceu_drop_f(frame, 1, args);
+                    if (ret.type == CEU_VALUE_ERROR) {
+                        return ret;
+                    }
+                }
+        #endif
                 default:
                     break;
             }
@@ -916,6 +937,9 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TUPLE:
                 case CEU_VALUE_VECTOR:
                 case CEU_VALUE_DICT:
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+        #endif
                     return ceu_sizeof(CEU_Value, Dyn);
                 default:
                     assert(0 && "bug found");
@@ -1346,13 +1370,14 @@ fun Coder.main (tags: Tags): String {
             #if CEU >= 3
                     case CEU_VALUE_CLO_CORO:
             #endif
-                        v = (e1.Dyn == e2.Dyn);
-                        break;
             #if CEU >= 2
                     case CEU_VALUE_THROW:
+            #endif
+            #if CEU >= 3
+                    case CEU_VALUE_EXE_CORO:
+            #endif
                         v = (e1.Dyn == e2.Dyn);
                         break;
-            #endif
                     default:
                         assert(0 && "bug found");
                 }
