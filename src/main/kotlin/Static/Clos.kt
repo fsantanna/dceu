@@ -46,6 +46,8 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> this.call.traverse()
 
+            is Expr.Spawn  -> this.call.traverse()
+
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val (blk,dcl) = vars.get(this)

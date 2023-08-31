@@ -14,6 +14,8 @@ fun Expr.coexists (): Boolean {
         is Expr.Yield  -> this.arg.coexists()
         is Expr.Resume -> this.call.coexists()
 
+        is Expr.Spawn  -> this.call.coexists()
+
         is Expr.Tuple  -> this.args.any { it.coexists() }
         is Expr.Vector -> this.args.any { it.coexists() }
         is Expr.Dict   -> this.args.any { it.first.coexists() || it.second.coexists() }
@@ -99,6 +101,8 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
 
         is Expr.Yield -> this.arg.mem(sta, defers)
         is Expr.Resume -> this.call.mem(sta, defers)
+
+        is Expr.Spawn -> this.call.mem(sta, defers)
 
         is Expr.Tuple -> """
             struct { // TUPLE

@@ -46,7 +46,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU <= 2) setOf() else setOf(
         "coro", "resume",  "yield"
     )) + (if (CEU <= 3) setOf() else setOf(
-        "task"
+        "task", "spawn"
     ))
 ).toSortedSet()
 
@@ -57,19 +57,23 @@ val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
     ":dynamic",
     ":func",
-) + (if (CEU <= 2) listOf() else listOf(
-    ":coro"
+) + (if (CEU < 3) listOf() else listOf(
+    ":coro",
+)) + (if (CEU < 4) listOf() else listOf(
+    ":task",
 )) + listOf (
     ":tuple", ":vector", ":dict",
-) + (if (CEU <= 1) listOf() else listOf(
-    ":throw"
-)) + (if (CEU <= 2) listOf() else listOf(
-    ":x-coro"
-)) + (if (CEU <= 2) listOf() else listOf(
+) + (if (CEU < 2) listOf() else listOf(
+    ":throw",
+)) + (if (CEU < 3) listOf() else listOf(
+    ":x-coro",
+)) + (if (CEU < 4) listOf() else listOf(
+    ":x-task",
+)) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
 )) + listOf(
     ":ceu",
-    ":tmp"
+    ":tmp",
 )
 
 val GLOBALS = setOf (
@@ -111,6 +115,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
+
+    data class Spawn  (val tk_: Tk.Fix, val call: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

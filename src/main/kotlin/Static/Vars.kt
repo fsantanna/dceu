@@ -225,6 +225,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> this.call.traverse()
 
+            is Expr.Spawn  -> this.call.traverse()
+
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
                     assert(!it.contains("XXX")) { "TODO: native cannot contain XXX"}

@@ -75,6 +75,8 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.call.traverse()
             }
 
+            is Expr.Spawn  -> this.call.traverse()
+
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
                 val (_,dcl) = vars.get(this)

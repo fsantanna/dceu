@@ -137,30 +137,6 @@ class TParser {
     // TASK / YIELD / RESUME
 
     @Test
-    fun task1() {
-        val l = lexer("""
-            set t = task (v) {
-                set v = yield((1)) 
-                yield((2)) 
-            }
-            coroutine(t)
-            set v = resume a(1)
-            resume a(2)
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == """
-            set t = (task (v) {
-            set v = yield(1)
-            yield(2)
-            })
-            coroutine(t)
-            set v = resume a(1)
-            resume a(2)
-            
-        """.trimIndent()) { e.tostr() }
-    }
-    @Test
     fun func3_err() {
         val l = lexer("""
             func () :fake {}
@@ -309,14 +285,6 @@ class TParser {
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
-    }
-    @Test
-    fun tasks7_err() {
-        val l = lexer("""
-            spawn
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
     }
 
     // ITER

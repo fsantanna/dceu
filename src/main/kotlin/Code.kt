@@ -473,6 +473,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
 
+            is Expr.Spawn -> TODO()
+
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str

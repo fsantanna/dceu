@@ -332,6 +332,14 @@ class Parser (lexer_: Lexer)
                 Expr.Resume(tk0, call as Expr.Call)
             }
 
+            (CEU>=4 && this.acceptFix("spawn")) -> {
+                val call = this.expr()
+                if (call !is Expr.Call) {
+                    err(this.tk1, "invalid spawn : expected call")
+                }
+                Expr.Spawn(this.tk0 as Tk.Fix, call)
+            }
+
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)

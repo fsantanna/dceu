@@ -43,6 +43,8 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Catch  -> "catch " + this.cnd.cond { it.tostr(pre)} + " " + this.body.tostr(pre)
         is Expr.Defer  -> "defer " + this.body.tostr(pre)
 
+        is Expr.Spawn  -> "spawn " + this.call.tostr(pre)
+
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
         is Expr.Resume -> "resume " + this.call.tostr(pre)
 
