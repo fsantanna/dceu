@@ -8,6 +8,7 @@ var CEU = 3
     // 1: dyn-lex (15 valgrind xxx_err)
     // 2: defer, throw/catch
     // 3: coro
+    // 4: task
     // X: export, copy, _
     // 99: XCEU
 
@@ -44,6 +45,8 @@ val KEYWORDS: SortedSet<String> = (
         "catch", "defer", /*"throw",*/
     )) + (if (CEU <= 2) setOf() else setOf(
         "coro", "resume",  "yield"
+    )) + (if (CEU <= 3) setOf() else setOf(
+        "task"
     ))
 ).toSortedSet()
 
