@@ -61,6 +61,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
             CEU_VALUE_CLO_CORO,
         #endif
+        #if CEU >= 3
+            CEU_VALUE_CLO_TASK,
+        #endif
             CEU_VALUE_TUPLE,
             CEU_VALUE_VECTOR,
             CEU_VALUE_DICT,
@@ -69,6 +72,9 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
             CEU_VALUE_EXE_CORO,
+        #endif
+        #if CEU >= 3
+            CEU_VALUE_EXE_TASK,
         #endif
             CEU_VALUE_MAX
         } __attribute__ ((__packed__)) CEU_VALUE;
@@ -1314,6 +1320,11 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+                    printf("x-coro: %p", v.Dyn);
+                    break;
+        #endif
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
                     printf("x-coro: %p", v.Dyn);
                     break;
         #endif
