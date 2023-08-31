@@ -16,7 +16,7 @@ class Exec_04 {
             val T = task (v) { nil }
             println(T)
         """)
-        assert(out == "1\n") { out }
+        assert(out.contains("task: 0x")) { out }
     }
     @Test
     fun aa_02_task_equal() {
@@ -34,7 +34,7 @@ class Exec_04 {
             val T = task (v) { nil }
             coroutine(T)
         """)
-        assert(out == "ERR\n") { out }
+        assert(out == " v  anon : (lin 3, col 13) : coroutine(T) : coroutine error : expected coro\n") { out }
     }
     @Test
     fun aa_04_task_err() {
@@ -42,7 +42,7 @@ class Exec_04 {
             val T = task (v) { nil }
             T()
         """)
-        assert(out == "ERR\n") { out }
+        assert(out == " v  anon : (lin 3, col 13) : call error : expected function\n") { out }
     }
 
     // SPAWN
@@ -54,7 +54,7 @@ class Exec_04 {
             val t = spawn T()
             println(t)
         """)
-        assert(out == "1\n") { out }
+        assert(out.contains("x-task: 0x")) { out }
     }
     @Test
     fun bb_02_resume_err() {
@@ -71,6 +71,13 @@ class Exec_04 {
             spawn (task (v1) {
                 println(v1)
             }) (1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun bb_04_spawn_err() {
+        val out = test("""
+            spawn nil()
         """)
         assert(out == "1\n") { out }
     }

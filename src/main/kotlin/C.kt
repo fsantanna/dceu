@@ -570,6 +570,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
                 case CEU_VALUE_CLO_CORO:
         #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
                         ceu_gc_dec(dyn->Clo.upvs.buf[i], 1);
                     }
@@ -655,6 +658,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
                 case CEU_VALUE_CLO_CORO:
         #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
                     free(dyn->Clo.upvs.buf);
                     break;
                 case CEU_VALUE_TUPLE:       // buf w/ dyn
@@ -671,6 +677,9 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
                     if (dyn->Coro.status != CEU_EXE_STATUS_TERMINATED) {
                         dyn->Coro.frame.clo->proto(&dyn->Coro.frame, CEU_ARG_FREE, NULL);
                     }
@@ -1179,7 +1188,7 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 3
         CEU_Value ceu_exe_create (CEU_Block* blk, CEU_Value clo) {
-            assert(clo.type==CEU_VALUE_CLO_CORO /*|| clo.type==CEU_VALUE_P_TASK*/);
+            assert(clo.type==CEU_VALUE_CLO_CORO || clo.type==CEU_VALUE_CLO_TASK);
             ceu_gc_inc(clo);
             
             CEU_Exe_Coro* ret = malloc(sizeof(CEU_Dyn));
@@ -1187,14 +1196,15 @@ fun Coder.main (tags: Tags): String {
             char* mem = malloc(clo.Dyn->Clo.Exe.n_mem);
             assert(mem != NULL);
             
+            int tag = clo.type + (CEU_VALUE_EXE_CORO - CEU_VALUE_CLO_CORO);
             int hld_type = (clo.Dyn->Clo.hld_type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld_type;
             *ret = (CEU_Exe_Coro) {
-                CEU_VALUE_EXE_CORO, 1, hld_type, blk->depth, NULL, NULL, NULL,
+                tag, 1, hld_type, blk->depth, NULL, NULL, NULL,
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, ret }, 0, mem
             };
             
             ceu_hold_add((CEU_Dyn*)ret, &blk->dyns);
-            return (CEU_Value) { CEU_VALUE_EXE_CORO, {.Dyn=(CEU_Dyn*)ret } };
+            return (CEU_Value) { tag, {.Dyn=(CEU_Dyn*)ret } };
         }
         #endif        
     """ +
@@ -1312,6 +1322,11 @@ fun Coder.main (tags: Tags): String {
                     printf("coro: %p", v.Dyn);
                     break;
         #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+                    printf("task: %p", v.Dyn);
+                    break;
+        #endif
         #if CEU >= 2
                 case CEU_VALUE_THROW:
                     printf("throw: %p | ", v.Dyn);
@@ -1325,7 +1340,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
-                    printf("x-coro: %p", v.Dyn);
+                    printf("x-task: %p", v.Dyn);
                     break;
         #endif
                 default:
@@ -1381,11 +1396,17 @@ fun Coder.main (tags: Tags): String {
             #if CEU >= 3
                     case CEU_VALUE_CLO_CORO:
             #endif
+            #if CEU >= 4
+                    case CEU_VALUE_CLO_TASK:
+            #endif
             #if CEU >= 2
                     case CEU_VALUE_THROW:
             #endif
             #if CEU >= 3
                     case CEU_VALUE_EXE_CORO:
+            #endif
+            #if CEU >= 4
+                    case CEU_VALUE_EXE_TASK:
             #endif
                         v = (e1.Dyn == e2.Dyn);
                         break;
