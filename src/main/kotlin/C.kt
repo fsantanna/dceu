@@ -929,6 +929,11 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_NIL };;
         }        
     """ +
+    """ // BCAST
+        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
+            return (CEU_Value) { CEU_VALUE_NIL };
+        }
+    """ +
     """ // TUPLE / VECTOR / DICT
         #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
         int ceu_tag_to_size (int type) {

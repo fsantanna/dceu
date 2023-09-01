@@ -106,7 +106,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
         is Expr.Spawn -> this.call.mem(sta, defers)
         is Expr.Bcast -> """
             struct { // BCAST
-                //CEU_Value evt_$n;
+                CEU_Value evt_$n;
                 $union {
                     ${this.xin.mem(sta, defers)}
                     ${this.evt.mem(sta, defers)}
