@@ -175,7 +175,7 @@ class Exec_04 {
                 yield(nil)
                 println(2)
             }()
-             broadcast in :global, nil
+            broadcast in :global, nil
         """
         )
         assert(out == "1\n2\n") { out }

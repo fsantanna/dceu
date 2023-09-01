@@ -706,17 +706,15 @@ class Exec_01 {
     }
     @Test
     fun cc_07_global() {
-        val out = test(
-            """
-        val e = func () {nil}
-        val g = func () {
-            val co = [e]
-            drop(co)
-        }
-        val x = g()
-        println(x)
-        """
-        )
+        val out = test("""
+            val e = func () {nil}
+            val g = func () {
+                val co = [e]
+                drop(co)
+            }
+            val x = g()
+            println(x)
+        """)
         assert(out.contains("[func: 0x")) { out }
     }
     @Test

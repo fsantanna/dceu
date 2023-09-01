@@ -174,8 +174,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
                 """
-                // pres funcs
-                ${(f_b == null).cond{ pres.joinToString("") }}
                 { // BLOCK | ${this.dump()}
                     // CEU_Block ceu_block;
                     ${(!ylds).cond { """
@@ -267,6 +265,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${it.first} = (CEU_Value) { CEU_VALUE_NIL };
                         ${it.second} = $blkc;
                     """ }.joinToString("")}
+                    // pres funcs
+                    ${(f_b == null).cond{ pres.joinToString("") }}
                     // link up.dn.block = me
                     ${(CEU >= 4).cond {
                         if (f_b is Expr.Proto) {
@@ -358,7 +358,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // block free, check free
                     ${(!isvoid).cond { """
                         ceu_block_free($blkc);
-                        ${(ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
+                        ${(f_b is Expr.Do && ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
                             #if CEU >= 3
                                 CEU_CHECK_FREE()
                             #endif
