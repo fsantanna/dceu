@@ -99,7 +99,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Block*    up_block;  // block enclosing this call/coroutine
             struct CEU_Clo*      clo;       // TODO: should be CEU_Value, but CEU_Exe holds CEU_Frame, which holds CEU_Clo
         #if CEU >= 3
-            struct CEU_Exe_Coro* exe;       // coro/task<->frame point to each other
+            struct CEU_Exe* exe;       // coro/task<->frame point to each other
         #endif
         } CEU_Frame;
 
@@ -200,13 +200,20 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 3
-        typedef struct CEU_Exe_Coro {
+        typedef struct CEU_Exe {
             _CEU_Dyn_
             CEU_EXE_STATUS status;
             struct CEU_Frame frame;  // TODO: CEU_Exe holds CEU_Frame, which holds CEU_Clo
             int pc;
             char* mem;
-        } CEU_Exe_Coro;
+            union {
+            #if CEU >= 4
+                struct {
+                    CEU_Block* dn_block;
+                } Task;
+            #endif
+            };
+        } CEU_Exe;
         #endif
 
         typedef union CEU_Dyn {                                                                 
@@ -219,7 +226,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Throw    Throw;
         #endif
         #if CEU >= 3
-            struct CEU_Exe_Coro Coro;
+            struct CEU_Exe      Exe;
         #endif
         } CEU_Dyn;        
     """ +
@@ -615,7 +622,7 @@ fun Coder.main (tags: Tags): String {
             #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Coro.frame.clo), 1);
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), 1);
                     break;
         #endif
                 default:
@@ -692,10 +699,10 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
         #endif
-                    if (dyn->Coro.status != CEU_EXE_STATUS_TERMINATED) {
-                        dyn->Coro.frame.clo->proto(&dyn->Coro.frame, CEU_ARG_FREE, NULL);
+                    if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
+                        dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
                     }
-                    free(dyn->Coro.mem);
+                    free(dyn->Exe.mem);
                     break;
         #endif
                 default:
@@ -811,7 +818,7 @@ fun Coder.main (tags: Tags): String {
             #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    if (!ceu_hold_chk_set(dst, depth, hld_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Coro.frame.clo))) {
+                    if (!ceu_hold_chk_set(dst, depth, hld_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo))) {
                         return 0;
                     }
                     break;
@@ -928,7 +935,7 @@ fun Coder.main (tags: Tags): String {
                 }
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO: {
-                    CEU_Value args[1] = { ceu_dyn_to_val((CEU_Dyn*)dyn->Coro.frame.clo) };
+                    CEU_Value args[1] = { ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo) };
                     CEU_Value ret = ceu_drop_f(frame, 1, args);
                     if (ret.type == CEU_VALUE_ERROR) {
                         return ret;
@@ -943,17 +950,25 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BCAST
     #if CEU >= 4
-        void ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
+        void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
+        void ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
             while (dyn != NULL) {
-                if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
+                if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe.status==CEU_EXE_STATUS_YIELDED) {
+                    ceu_bcast_blocks(dyn->Exe.Task.dn_block, evt);
                     CEU_Value args[] = { evt };
-                    dyn->Coro.frame.clo->proto(&dyn->Coro.frame, 1, args);
+                    dyn->Exe.frame.clo->proto(&dyn->Exe.frame, 1, args);
+                    if (dyn->Exe.status == CEU_EXE_STATUS_TERMINATED) {
+                        ceu_bcast_blocks(blk, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=dyn} });
+                    }
                 }
                 dyn = dyn->Any.hld.next;
             }
         }
         void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
-            ceu_bcast_dyns(blk->dn.dyns, evt);
+            while (blk != NULL) {
+                ceu_bcast_dyns(blk, blk->dn.dyns, evt);
+                blk = blk->dn.block;
+            }
         }
     #endif
     """ +
@@ -1219,14 +1234,14 @@ fun Coder.main (tags: Tags): String {
             assert(clo.type==CEU_VALUE_CLO_CORO || clo.type==CEU_VALUE_CLO_TASK);
             ceu_gc_inc(clo);
             
-            CEU_Exe_Coro* ret = malloc(sizeof(CEU_Dyn));
+            CEU_Exe* ret = malloc(sizeof(CEU_Dyn));
             assert(ret != NULL);
             char* mem = malloc(clo.Dyn->Clo.Exe.n_mem);
             assert(mem != NULL);
             
             int tag = clo.type + (CEU_VALUE_EXE_CORO - CEU_VALUE_CLO_CORO);
             int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
-            *ret = (CEU_Exe_Coro) {
+            *ret = (CEU_Exe) {
                 tag, 1, NULL, { hld_type, blk->depth, NULL, NULL },
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, ret }, 0, mem
             };
@@ -1542,7 +1557,7 @@ fun Coder.main (tags: Tags): String {
             if (coro.type != CEU_VALUE_EXE_CORO /*&& coro->type!=CEU_VALUE_X_TASK*/) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected x-coro"} };
             }
-            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Coro.status + CEU_TAG_yielded - 1} };
+            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Exe.status + CEU_TAG_yielded - 1} };
         }
         #endif
     """ +

@@ -516,58 +516,6 @@ class TTask {
     // BCAST / BROADCAST
 
     @Test
-    fun ee_bcast01() {
-        val out = all("""
-            var tk = task (v) {
-                yield(nil)
-                println(v, evt)
-                val v' = yield(nil)
-                println(v', evt)
-            }
-            spawn tk ()
-            broadcast in :global, 1
-            broadcast in :global, 2
-            broadcast in :global, 3
-        """)
-        assert(out == "nil\t1\nnil\t2\n") { out }
-    }
-    @Test
-    fun ee_bcast1() {
-        val out = all("""
-            var tk
-            set tk = task (v) {
-                yield(nil)
-                println(v)
-                println(evt)
-                var v' = yield(nil)
-                println(v')
-                println(evt)
-            }
-            var co1 = spawn tk()
-            var co2 = spawn tk()
-            broadcast in :global, 1
-            broadcast in :global, 2
-            broadcast in :global, 3
-        """)
-        //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains("nil\n1\nnil\n1\nnil\n2\nnil\nx-task: 0x")) { out }
-    }
-    @Test
-    fun ee_bcast2() {
-        val out = all("""
-            var co1 = spawn (task () {
-                var co2 = spawn (task () {
-                    yield(nil)  ;; awakes from outer bcast
-                    println(2)
-                }) ()
-                yield(nil)      ;; awakes from co2 termination
-                println(1)
-            }) ()
-            broadcast in :global, nil
-        """)
-        assert(out == "2\n1\n") { out }
-    }
-    @Test
     fun ee_bcast3() {
         val out = all("""
             var co1 = spawn (task () {

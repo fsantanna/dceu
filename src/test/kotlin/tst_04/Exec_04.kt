@@ -180,6 +180,56 @@ class Exec_04 {
         )
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun dd_03_bcast() {
+        val out = test("""
+            var tk = task (v) {
+                val e1 = yield(nil)
+                println(:1, e1)
+                val e2 = yield(nil)
+                println(:2, e2)
+            }
+            spawn tk ()
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
+        """)
+        assert(out == ":1\t1\n:2\t2\n") { out }
+    }
+    @Test
+    fun dd_04_bcast() {
+        val out = test("""
+            var tk
+            set tk = task (v) {
+                val e1 = yield(nil)
+                println(v,e1)
+                var e2 = yield(nil)
+                println(v,e2)
+            }
+            var co1 = spawn tk(:1)
+            var co2 = spawn tk(:2)
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
+        """)
+        //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
+        assert(out.contains(":2\t1\n:1\t1\n:2\t2\n:1\tpointer: 0x")) { out }
+    }
+    @Test
+    fun dd_05_bcast() {
+        val out = test("""
+            var co1 = spawn (task () {
+                var co2 = spawn (task () {
+                    yield(nil)  ;; awakes from outer bcast
+                    println(2)
+                }) ()
+                yield(nil)      ;; awakes from co2 termination
+                println(1)
+            }) ()
+            broadcast in :global, nil
+        """)
+        assert(out == "2\n1\n") { out }
+    }
 
     // THROW
 
