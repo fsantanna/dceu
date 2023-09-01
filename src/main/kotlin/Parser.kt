@@ -465,26 +465,9 @@ class Parser (lexer_: Lexer)
         }
         val op = this.tk0
         val e2 = this.expr_2_pre()
-        return this.expr_1_bin(op.str,
-            when (op.str) {
-                "or" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :tmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} { ceu_${e1.n} } else { ${e2.tostr(true)} }
-                    }
-                """)
-                "and" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :tmp ceu_${e1.n} = ${e1.tostr(true)} 
-                        if ceu_${e1.n} { ${e2.tostr(true)} } else { ceu_${e1.n} }
-                    }
-                """)
-                else -> {
-                    val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-                    Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))
-                }
-            }
-        )
+        val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
+        val e = Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))
+        return this.expr_1_bin(op.str, e)
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()

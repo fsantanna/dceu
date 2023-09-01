@@ -3,7 +3,7 @@ class TTask {
     // TASK / COROUTINE / RESUME / YIELD
 
     @Test
-    fun aa_17_coro_nest_err() {
+    fun aa_17_coro_spawn_nest_err() {
         val out = ceu.all("""
             var T = coro () {
                 spawn coro () {
@@ -98,14 +98,6 @@ class TTask {
         assert(out == ":1\n:2\n:3\n:4\n:5\n:6\n:7\n:8\n") { out }
     }
     @Test
-    fun aa_task21_self() {
-        val out = all("""
-            var t = []
-            resume t()
-        """)
-        assert(out == "anon : (lin 3, col 13) : resume error : expected yielded coro\n:error\n") { out }
-    }
-    @Test
     fun aa_task23_notask() {
         val out = all("""
             task
@@ -149,31 +141,6 @@ class TTask {
         assert(out == "1\n:x-coro\n3\n4\n5\n6\n") { out }
     }
     @Test
-    fun bb_spawn2() {
-        val out = all("""
-            var T
-            set T = task (x,y) {
-                println(x,y)
-            }
-            spawn T(1,2)
-        """)
-        assert(out == "1\t2\n") { out }
-    }
-    @Test
-    fun bb_spawn3_err() {
-        val out = all("""
-            spawn (func () {nil}) ()
-        """)
-        assert(out == "anon : (lin 2, col 20) : spawn error : expected coro or task\n:error\n") { out }
-    }
-    @Test
-    fun bb_spawn4_err() {
-        val out = all("""
-            spawn (func () {nil})
-        """)
-        assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call") { out }
-    }
-    @Test
     fun bb_coro_spawn5() {
         val out = all("""
             var t
@@ -194,50 +161,8 @@ class TTask {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun bb_spawn6_err() {
-        val out = all("""
-            var x
-            set x = do {
-                spawn (task() {nil}) ()
-            }
-            println(2)
-        """)
-        //assert(out == "anon : (lin 3, col 21) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == "2\n") { out }
-    }
-    @Test
-    fun bb_spawn67_err() {
-        val out = all("""
-            var t
-            set t = task () {
-                nil
-            }
-            var co
-            set co = if true { spawn t() } else { nil }
-            println(:ok)
-        """)
-        //assert(out == "anon : (lin 7, col 30) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun bb_spawn7_err() {
-        val out = all("""
-            var t
-            set t = task () { nil }
-            var f
-            set f = func () {
-                spawn t()
-            }
-            f()
-            println(:ok)
-        """)
-        //assert(out == "anon : (lin 8, col 13) : f()\n" +
-        //        "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun bb_spawn8_err() {
-        val out = all("""
+    fun cc_04_scope() {
+        val out = test("""
             var T
             set T = task () {
                 spawn (task () :fake {
@@ -254,18 +179,6 @@ class TTask {
         //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
         //        "1\n" +
         //        ":error\n") { out }
-    }
-    @Test
-    fun bb_spawn9() {
-        val out = all("""
-            var x
-            set x = do {
-                spawn (task() {println(1)}) ()
-                nil
-            }
-            println(2)
-        """)
-        assert(out == "1\n2\n") { out }
     }
     @Test
     fun bb_coro_spawn10() {
@@ -326,24 +239,6 @@ class TTask {
         assert(out == "1\n") { out }
         //assert(out == "anon : (lin 8, col 19) : T()\n" +
         //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
-    fun bb_spawn13_err() {
-        val out = all("""
-            var T
-            set T = task (v) {
-                nil ;;println(v)
-            }
-            var t
-            set t = do {
-                var v
-                set v = 10
-                spawn T(v)  ;; ERR: coro in nested scope cannot escape
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-        //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
     }
 
     // MOVE
@@ -601,21 +496,6 @@ class TTask {
         assert(out == "10\n") { out }
     }
     @Test
-    fun dd_throw10_fake() {
-        val out = all("""
-            catch err == :xxx {
-                spawn task () {
-                    yield(nil)
-                }()
-                spawn task () {
-                    throw(:xxx)
-                }()
-            }
-            println(10)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
     fun dd_throw11_fake() {
         val out = all("""
             spawn task () { 
@@ -635,13 +515,6 @@ class TTask {
 
     // BCAST / BROADCAST
 
-    @Test
-    fun ee_bcast0() {
-        val out = all("""
-            println(broadcast in :global, 1)
-        """)
-        assert(out == "nil\n") { out }
-    }
     @Test
     fun ee_bcast001() {
         val out = ceu.all(

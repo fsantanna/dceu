@@ -1483,52 +1483,6 @@ class Exec_01 {
         assert(out == "[10]\n") { out }
     }
     @Test
-    fun scope8_underscore() {
-        val out = test(
-            """
-            var x
-            do {
-                val :tmp a = [1,2,3]
-                set x = a
-            }
-            println(x)
-        """
-        )
-        assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun scope8b_underscore() {
-        val out = test(
-            """
-            var x
-            do {
-                var :tmp a = [1,2,3]
-                set x = a
-            }
-            println(x)
-        """
-        )
-        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun scope8c_underscore() {
-        val out = test(
-            """
-            var x
-            do {
-                val :tmp a
-                set a = [1,2,3]
-                set x = a
-            }
-            println(x)
-        """
-        )
-        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
     fun scope9_err() {
         val out = test(
             """
@@ -1600,17 +1554,6 @@ class Exec_01 {
         )
         assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n" +
                 "") { out }
-    }
-    @Test
-    fun scope14_tmp_tuple() {
-        val out = test(
-            """
-            val :tmp x = [0]
-            set x[0] = []
-            println(x)
-        """
-        )
-        assert(out == "[[]]\n") { out }
     }
     @Test
     fun scope15_global_func() {
@@ -2013,6 +1956,100 @@ class Exec_01 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+
+    // SCOPE / :TMP / :tmp
+
+    @Test
+    fun mm_01_tmp() {
+        val out = test(
+            """
+            var x
+            do {
+                val :tmp a = [1,2,3]
+                set x = a
+            }
+            println(x)
+        """
+        )
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun mm_02_tmp() {
+        val out = test(
+            """
+            var x
+            do {
+                var :tmp a = [1,2,3]
+                set x = a
+            }
+            println(x)
+        """
+        )
+        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun mm_03_tmp() {
+        val out = test(
+            """
+            var x
+            do {
+                val :tmp a
+                set a = [1,2,3]
+                set x = a
+            }
+            println(x)
+        """
+        )
+        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable\n") { out }
+        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun mm_04_tmp() {
+        val out = test(
+            """
+            val :tmp x = [0]
+            set x[0] = []
+            println(x)
+        """
+        )
+        assert(out == "[[]]\n") { out }
+    }
+    @Test
+    fun mm_05_tmp() {
+        val out = test("""
+            val v = do {
+                val :tmp x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun mm_06_tmp_err() {
+        val out = test("""
+            val v = do {
+                val x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "anon : (lin 2, col 21) : block escape error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun mm_06_and_or() {
+        val out = test("""
+            val t = func () { println(:t) ; true  }
+            val f = func () { println(:f) ; false }
+            println(${AND("t()", "f()")})
+            println(${OR("t()", "f()")})
+            println(${AND("[]", "false")})
+            println(${OR("false", "[]")})
+        """)
+        assert(out == ":t\n:f\nfalse\n:t\ntrue\nfalse\n[]\n") { out }
     }
 
     // IF

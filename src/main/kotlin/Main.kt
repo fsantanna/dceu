@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 3
+var CEU = 1
     // 1: dyn-lex (15 valgrind xxx_err)
     // 2: defer, throw/catch
     // 3: coro
@@ -154,6 +154,24 @@ val PLUS = """
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
 """
+
+fun OR (v1:String, v2:String): String {
+    return """
+        do {
+            val :tmp v1 = $v1 
+            if v1 { v1 } else { $v2 }
+        }
+    """
+}
+
+fun AND (v1:String, v2:String): String {
+    return """
+        do {
+            val :tmp v1 = $v1 
+            if v1 { $v2 } else { v1 }
+        }
+    """
+}
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     N = 1
