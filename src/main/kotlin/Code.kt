@@ -190,13 +190,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     { // BLOCK | ${this.dump()}
                         ${ylds.cond2({
                             """
-                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, NULL };
+                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, CEU4(NULL COMMA) NULL };
                             ceu_mem->ceu_block_$n = &ceu_mem->_ceu_block_$n;                                 
                                 
                             """           
                         },{
                             """
-                            CEU_Block _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, NULL };
+                            CEU_Block _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, CEU4(NULL COMMA) NULL };
                             CEU_Block* ceu_block_$n = &_ceu_block_$n;                                 
                             """
                         })}

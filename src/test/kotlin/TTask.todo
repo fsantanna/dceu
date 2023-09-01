@@ -516,20 +516,6 @@ class TTask {
     // BCAST / BROADCAST
 
     @Test
-    fun ee_bcast001() {
-        val out = ceu.all(
-            """
-            spawn task () {
-                println(1)
-                yield(nil)
-                println(2)
-            }()
-             broadcast in :global, nil
-        """
-        )
-        assert(out == "1\n2\n") { out }
-    }
-    @Test
     fun ee_bcast01() {
         val out = all("""
             var tk = task (v) {

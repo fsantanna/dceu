@@ -26,6 +26,11 @@ fun Coder.main (tags: Tags): String {
         #else
         #define CEU3(x)
         #endif
+        #if CEU >= 4
+        #define CEU4(x) x
+        #else
+        #define CEU4(x)
+        #endif
 
         #if CEU >= 3
         #define CEU_CHECK_FREE() {                  \
@@ -105,7 +110,12 @@ fun Coder.main (tags: Tags): String {
                 struct CEU_Frame* frame;    // istop = 1
                 struct CEU_Block* block;    // istop = 0
             } up;
-            union CEU_Dyn* dyns;            // list of allocated data to bcast/free
+            struct {
+        #if CEU >= 4
+                struct CEU_Block* block;
+        #endif
+                union CEU_Dyn* dyns;        // list of allocated data to bcast/free
+            } dn;
         } CEU_Block;
     """ +
     """   // CEU_Value, CEU_Dyn
@@ -932,9 +942,20 @@ fun Coder.main (tags: Tags): String {
         }        
     """ +
     """ // BCAST
-        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
-            return (CEU_Value) { CEU_VALUE_NIL };
+    #if CEU >= 4
+        void ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
+            while (dyn != NULL) {
+                if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
+                    CEU_Value args[] = { evt };
+                    dyn->Coro.frame.clo->proto(&dyn->Coro.frame, 1, args);
+                }
+                dyn = dyn->Any.hld.next;
+            }
         }
+        void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
+            ceu_bcast_dyns(blk->dn.dyns, evt);
+        }
+    #endif
     """ +
     """ // TUPLE / VECTOR / DICT
         #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
@@ -1206,7 +1227,7 @@ fun Coder.main (tags: Tags): String {
             int tag = clo.type + (CEU_VALUE_EXE_CORO - CEU_VALUE_CLO_CORO);
             int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
             *ret = (CEU_Exe_Coro) {
-                tag, 1, hld_type, blk->depth, NULL, NULL, NULL,
+                tag, 1, NULL, { hld_type, blk->depth, NULL, NULL },
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, ret }, 0, mem
             };
             
@@ -1472,7 +1493,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
             *ret = (CEU_Throw) {
-                CEU_VALUE_THROW, 0, CEU_HOLD_FLEET, blk->depth, NULL, NULL, NULL,
+                CEU_VALUE_THROW, 0, NULL, { CEU_HOLD_FLEET, blk->depth, NULL, NULL },
                 val, stk
             };
             

@@ -166,6 +166,20 @@ class Exec_04 {
         """)
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun dd_02_bcast() {
+        val out = test(
+            """
+            spawn task () {
+                println(1)
+                yield(nil)
+                println(2)
+            }()
+             broadcast in :global, nil
+        """
+        )
+        assert(out == "1\n2\n") { out }
+    }
 
     // THROW
 
