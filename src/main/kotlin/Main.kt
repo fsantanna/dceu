@@ -46,7 +46,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU <= 2) setOf() else setOf(
         "coro", "resume",  "yield"
     )) + (if (CEU <= 3) setOf() else setOf(
-        "task", "spawn"
+        "broadcast", "in", "spawn", "task"
     ))
 ).toSortedSet()
 
@@ -71,6 +71,8 @@ val TAGS = listOf (
     ":x-task",
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
+)) + (if (CEU < 4) listOf() else listOf(
+    ":global", ":local",
 )) + listOf(
     ":ceu",
     ":tmp",
@@ -117,6 +119,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val call: Expr): Expr(N++, tk_)
+    data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

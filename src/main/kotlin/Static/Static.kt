@@ -76,6 +76,10 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
 
             is Expr.Spawn  -> this.call.traverse()
+            is Expr.Bcast  -> {
+                this.xin.traverse()
+                this.evt.traverse()
+            }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {

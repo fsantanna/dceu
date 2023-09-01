@@ -339,6 +339,14 @@ class Parser (lexer_: Lexer)
                 }
                 Expr.Spawn(this.tk0 as Tk.Fix, call)
             }
+            (CEU>=4 && this.acceptFix("broadcast")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("in")
+                val xin = this.expr()
+                this.acceptFix_err(",")
+                val evt = this.expr()
+                Expr.Bcast(tk0, xin, evt)
+            }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)

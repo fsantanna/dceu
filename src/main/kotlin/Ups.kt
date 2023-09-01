@@ -52,6 +52,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Resume -> this.map(listOf(this.call))
 
             is Expr.Spawn  -> this.map(listOf(this.call))
+            is Expr.Bcast  -> this.map(listOf(this.evt, this.xin))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
