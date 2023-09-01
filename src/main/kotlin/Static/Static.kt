@@ -2,7 +2,7 @@ package dceu
 
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
-    val cons:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 constructor
+    val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
     val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs)
 
     init {
@@ -13,15 +13,16 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // void: block is innocuous -> should be a proxy to up block
 
     fun void (blk: Expr.Do): Boolean {
+        // has up block, no declarations, no spawns
         val dcls = vars.blk_to_dcls[blk]!!
         val f_b = ups.pub[blk]?.let { ups.first_proto_or_block(it) }
-        return (f_b is Expr.Do) && dcls.isEmpty() && !this.cons.contains(blk)
+        return (f_b is Expr.Do) && dcls.isEmpty() && !this.spws.contains(blk)
     }
 
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                cons.add(ups.first_block(this)!!)
+                spws.add(ups.first_block(this)!!)
                 this.body.traverse()
             }
             is Expr.Do     -> this.es.forEach { it.traverse() }
@@ -75,7 +76,10 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.call.traverse()
             }
 
-            is Expr.Spawn  -> this.call.traverse()
+            is Expr.Spawn  -> {
+                spws.add(ups.first_block(this)!!)
+                this.call.traverse()
+            }
             is Expr.Bcast  -> {
                 this.xin.traverse()
                 this.evt.traverse()
@@ -92,18 +96,9 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> {
-                cons.add(ups.first_block(this)!!)
-                this.args.forEach{ it.traverse() }
-            }
-            is Expr.Vector -> {
-                cons.add(ups.first_block(this)!!)
-                this.args.forEach{ it.traverse() }
-            }
-            is Expr.Dict   -> {
-                cons.add(ups.first_block(this)!!)
-                this.args.forEach { it.first.traverse() ; it.second.traverse() }
-            }
+            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
+            is Expr.Vector -> this.args.forEach{ it.traverse() }
+            is Expr.Dict   -> spws.add(ups.first_block(this)!!)
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()

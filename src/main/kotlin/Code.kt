@@ -152,63 +152,63 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Do -> {
+                val isvoid = sta.void(this)
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val blkc = this.idc("block")
                 val up = ups.pub[this]
                 val ylds = sta.ylds.contains(this)
-                val bupc = up?.let { ups.first_block(it) }?.idc("block")
                 val f_b = up?.let { ups.first_proto_or_block(it) }
+                val bupc = when {
+                    (up == null)        -> "(&_ceu_block_)"
+                    (f_b is Expr.Proto) -> "NULL"
+                    else                -> ups.first_block(up)!!.idc("block")
+                }
                 val (depth,bf,ptr) = when {
                     (f_b == null) -> Triple("1", "1", "{.frame=&_ceu_frame_}")
                     (f_b is Expr.Proto) -> Triple("ceu_frame->up_block->depth + 1", "1", "{.frame=ceu_frame}")
-                    else -> Triple("(${bupc!!}->depth + 1)", "0", "{.block=${bupc!!}}")
+                    else -> Triple("($bupc->depth + 1)", "0", "{.block=$bupc}")
                 }
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
-                val common = """
-                    // >>> block
-                    ${defers[this].cond { it.second }}
-                    ${(CEU >= 2).cond { "do {" }}
-                    $body
-                    ${(CEU >= 2).cond { "} while (0);" }}
-                    ${defers[this].cond { it.third }}
-                    // <<< block                    
                 """
-                if (sta.void(this)) {
-                    """
-                    ${(!ylds).cond{"""
+                // pres funcs
+                ${(f_b == null).cond{ pres.joinToString("") }}
+                { // BLOCK | ${this.dump()}
+                    // CEU_Block ceu_block;
+                    ${(!ylds).cond { """
+                        ${(!isvoid).cond { """
+                            CEU_Block _ceu_block_$n;
+                        """ }}
                         CEU_Block* ceu_block_$n;
                     """}}
-                    $blkc = ${bupc!!};
-                    $common
-                    """
-                } else {
-                    """
-                    { // BLOCK | ${this.dump()}
-                        ${ylds.cond2({
-                            """
-                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, CEU4(NULL COMMA) NULL };
-                            ceu_mem->ceu_block_$n = &ceu_mem->_ceu_block_$n;                                 
-                                
-                            """           
-                        },{
-                            """
-                            CEU_Block _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, CEU4(NULL COMMA) NULL };
-                            CEU_Block* ceu_block_$n = &_ceu_block_$n;                                 
-                            """
-                        })}
-                        ${(f_b == null).cond { """
+                    // ceu_block = ...;
+                    ${when {
+                        isvoid -> """
+                            $blkc = ${bupc};
+                        """
+                        ylds -> """
+                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4($bupc COMMA) NULL } };
+                            $blkc = &ceu_mem->_ceu_block_$n;                                 
+                        """
+                        else -> """
+                            _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4($bupc COMMA) NULL } };
+                            $blkc = &_ceu_block_$n;                                 
+                        """
+                    }}
+                    // main args, func args
+                    ${when {
+                        (f_b == null) -> """
                             // main block varargs (...)
                             CEU_Value id__dot__dot__dot_ = ceu_tuple_create($blkc, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
                                 CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
                                 assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
                             }
-                        """ }}
-                        ${(f_b is Expr.Proto).cond { // initialize parameters from outer proto
+                        """
+                        (f_b is Expr.Proto) -> {
                             f_b as Expr.Proto
                             val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                             val args_n = f_b.args.size - 1
@@ -224,8 +224,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             { // func args
                                 ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                    val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
-                                    """
+                                val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
+                                """
                                     $_idc_ = $blkc;
                                     if ($i < ceu_n) {
                                         if (!ceu_hold_chk_set(&$blkc->dn.dyns, $blkc->depth, CEU_HOLD_FLEET, ceu_args[$i])) {
@@ -239,10 +239,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         $idc = (CEU_Value) { CEU_VALUE_NIL };
                                     }
                                     """
-                                }.joinToString("")}
+                            }.joinToString("")}
                                 ${dots.cond {
-                                    val idc = f_b.args.last()!!.first.str.idc()
-                                    """
+                                val idc = f_b.args.last()!!.first.str.idc()
+                                """
                                     int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                     $idc = ceu_tuple_create($blkc, ceu_tup_n_$n);
                                     for (int i=0; i<ceu_tup_n_$n; i++) {
@@ -251,91 +251,121 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ceu_gc_inc($idc);
                                 """ }}
                             }
-                            """ 
-                        }}
-                        ${(!ylds).cond { """
-                            ${dcls.map { """
-                                CEU_Value ${it.first};
-                                CEU_Block* ${it.second};
-                            """ }.joinToString("")}
-                        """ }}
+                            """
+                        }
+                        else -> ""
+                    }}
+                    // inline vars dcls
+                    ${(!ylds).cond { """
                         ${dcls.map { """
-                            ${it.first} = (CEU_Value) { CEU_VALUE_NIL };
-                            ${it.second} = $blkc;
+                            CEU_Value ${it.first};
+                            CEU_Block* ${it.second};
                         """ }.joinToString("")}
-                        ${(f_b == null).cond{ pres.joinToString("") }}
-                        $common
-                        ${(f_b != null).cond {
-                            val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc!!
-                            """
-                            // move up dynamic ceu_acc (return or error)
-                            if (!ceu_hold_chk_set(&$up1->dn.dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc)) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
-                            #if CEU <= 1
-                                    // free from this block
-                                    CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            #else
-                                do {
-                                   // allocate throw on up
-                                    CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                } while (0);    // catch continue in CEU_ERROR
-                            #endif
-                            }
-                            """
-                        }}
-                        ${dcls.map { """
+                    """ }}
+                    // vars inits
+                    ${dcls.map { """
+                        ${it.first} = (CEU_Value) { CEU_VALUE_NIL };
+                        ${it.second} = $blkc;
+                    """ }.joinToString("")}
+                    // link up.dn.block = me
+                    ${(CEU >= 4).cond {
+                        if (f_b is Expr.Proto) {
+                            "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
+                        } else {
+                            "$bupc->dn.block = $blkc;"
+                        }
+                    }}
+                    // defers init
+                    ${defers[this].cond { it.second }}
+                    ${(CEU >= 2).cond { "do {" }}
+                    $body
+                    ${(CEU >= 2).cond { "} while (0);" }}
+                    // defers execute
+                    ${defers[this].cond { it.third }}
+                    // unlink up.dn.block = me
+                    ${(CEU >= 4).cond {
+                        if (f_b is Expr.Proto) {
+                            "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
+                        } else {
+                            "$bupc->dn.block = NULL;"
+                        }
+                    }}
+                    // move up dynamic ceu_acc (return or error)
+                    ${(f_b!=null && !isvoid).cond {
+                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
+                        """
+                        if (!ceu_hold_chk_set(&$up1->dn.dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc)) {
+                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
+                        #if CEU <= 1
+                                // free from this block
+                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                        #else
+                            do {
+                               // allocate throw on up
+                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            } while (0);    // catch continue in CEU_ERROR
+                        #endif
+                        }
+                        """
+                    }}
+                    // dcls gc-dec
+                    ${dcls.map { """
                             if (${it.first}.type > CEU_VALUE_DYNAMIC) {
                                 ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld.depth == $blkc->depth));
                             }
                         """ }.joinToString("")}
-                        ${(f_b is Expr.Proto).cond { """
-                            ${(f_b as Expr.Proto).args.map {
-                                val (idc,_) = vars.get(this, it.first.str).idc(0)
-                                """
-                                if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                    ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
-                                }
-                                """
-                            }.joinToString("")}
-                        """}}
-                        ${(f_b == null).cond { 
+                    // args gc-dec
+                    ${(f_b is Expr.Proto).cond { """
+                        ${(f_b as Expr.Proto).args.map {
+                            val (idc,_) = vars.get(this, it.first.str).idc(0)
                             """
-                            #if CEU >= 2
-                                if (ceu_acc.type == CEU_VALUE_THROW) {
-                                    int iserr = (ceu_acc.Dyn->Throw.val.type == CEU_VALUE_ERROR);
-                                    int N = ceu_acc.Dyn->Throw.stk.Dyn->Vector.its;
-                                    CEU_Vector* vals = &ceu_acc.Dyn->Throw.stk.Dyn->Vector;
-                                    for (int i=N-1; i>=0; i--) {
-                                        if (iserr && i==0) {
-                                            printf(" v  ");
-                                        } else {
-                                            printf(" |  ");
-                                        }
-                                        printf("%s", ceu_vector_get(vals,i).Dyn->Vector.buf);
-                                        if (iserr && i==0) {
-                                            printf(" : ");
-                                        } else {
-                                            puts("");
-                                        }
-                                    }
-                                    if (!iserr) {
-                                        printf(" v  throw error : ");
-                                    }
-                                    ceu_print1(ceu_frame, ceu_acc.Dyn->Throw.val);
-                                    puts("");
-                                }
-                            #endif
+                            if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                            }
                             """
-                        }}
+                        }.joinToString("")}
+                    """}}
+                    // uncaught throw
+                    ${(f_b == null).cond {
+                        """
+                        #if CEU >= 2
+                            if (ceu_acc.type == CEU_VALUE_THROW) {
+                                int iserr = (ceu_acc.Dyn->Throw.val.type == CEU_VALUE_ERROR);
+                                int N = ceu_acc.Dyn->Throw.stk.Dyn->Vector.its;
+                                CEU_Vector* vals = &ceu_acc.Dyn->Throw.stk.Dyn->Vector;
+                                for (int i=N-1; i>=0; i--) {
+                                    if (iserr && i==0) {
+                                        printf(" v  ");
+                                    } else {
+                                        printf(" |  ");
+                                    }
+                                    printf("%s", ceu_vector_get(vals,i).Dyn->Vector.buf);
+                                    if (iserr && i==0) {
+                                        printf(" : ");
+                                    } else {
+                                        puts("");
+                                    }
+                                }
+                                if (!iserr) {
+                                    printf(" v  throw error : ");
+                                }
+                                ceu_print1(ceu_frame, ceu_acc.Dyn->Throw.val);
+                                puts("");
+                            }
+                        #endif
+                        """
+                    }}
+                    // block free, check free
+                    ${(!isvoid).cond { """
                         ceu_block_free($blkc);
-                        ${(f_b is Expr.Do && ups.first(this){it is Expr.Proto}!=null).cond { """
+                        ${(ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
                             #if CEU >= 3
                                 CEU_CHECK_FREE()
                             #endif
                         """ }}
-                    }
-                    """
+                    """ }}
                 }
+                """
             }
             is Expr.Dcl -> {
                 val (idc,_) = this.idc(0)
