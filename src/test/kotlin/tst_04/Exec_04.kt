@@ -346,8 +346,35 @@ class Exec_04 {
         """)
         assert(out == "2\n2\n") { out }
     }
+    @Test
+    fun dd_13_bcast() {
+        val out = test(
+            """
+            var tk
+            set tk = task (v) {
+                println(v)
+                val e1 = ${AWAIT()}
+                println(e1)                
+                val e2 = ${AWAIT()}
+                println(e2)                
+            }
+            println(:1)
+            var co1 = spawn (tk) (10)
+            var co2 = spawn (tk) (10)
+            ;;catch {
+                func () {
+                    println(:2)
+                    broadcast in :global, [20]
+                    println(:3)
+                    broadcast in :global, @[(30,30)]
+                }()
+            ;;}
+        """
+        )
+        assert(out == ":1\n10\n10\n:2\n[20]\n[20]\n:3\n@[(30,30)]\n@[(30,30)]\n") { out }
+    }
 
-    // THROW
+    // THROW / CATCH
 
     @Test
     fun ee_01_throw() {
@@ -363,6 +390,158 @@ class Exec_04 {
             println(10)
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun ee_02_throw() {
+        val out = test("""
+            spawn task () {
+                throw(:err)
+            }()
+        """)
+        assert(out == " |  anon : (lin 2, col 19) : (task () { throw(:err) })()\n" +
+                " |  anon : (lin 3, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_03_throw() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                throw(:err)
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 6, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 4, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_04_throw() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                throw(:err)
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 6, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 4, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_05_throw() {
+        val out = test("""
+            spawn task () {
+                spawn task () {
+                    yield(nil)
+                    throw(:err)
+                }()
+                yield(nil)
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 5, col 21) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_06_throw() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                throw(:err)
+            }()
+            spawn task () {
+                nil
+            }()
+        """)
+        assert(out == ":err\n") { out }
+    }
+    @Test
+    fun ee_07_throw() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                throw(:err)
+            }()
+            spawn task () {
+                nil
+            }()
+        """)
+        assert(out == " |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+                " |  anon : (lin 4, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_08_throw() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                nil
+            }()
+            spawn task () {
+                yield(nil)
+                yield(nil)
+                throw(:err)
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 9, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+
+
+    @Test
+    fun ee_0X_bcast() {
+        val out = test(
+            """
+            val T = task (v) {
+                val :tmp e = yield(nil)
+                println(e)                
+            }
+            spawn T(10)
+            catch {
+                func () {
+                    broadcast in :global, []
+                }()
+            }
+        """
+        )
+        assert(out == "[]\n") { out }
+    }
+
+    // TASK TERMINATION
+
+    @Test
+    fun ff_01_term() {
+        val out = test("""
+            spawn task () {
+                val e = yield(nil)
+                println(:ok, e)
+            }()
+            spawn task () {
+                nil
+            }()
+        """)
+        assert(out.contains(":ok\tpointer: 0x")) { out }
+    }
+    @Test
+    fun ff_02_term() {
+        val out = test("""
+            spawn task () {
+                yield(nil)
+                println(:1)
+            }()
+            spawn task () {
+                yield(nil)
+                println(:2)
+                val e = yield(nil)
+                println(:ok, e)
+            }()
+            broadcast in :global, nil
+        """)
+        assert(out.contains(":2\n:1\n:ok\tpointer: 0x")) { out }
     }
 
     // MOVE

@@ -235,7 +235,7 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr()
                 val t = this.block()
                 val f = when {
-                    (CEU <= 99) -> {
+                    (CEU < 99) -> {
                         this.acceptFix_err("else")
                         this.block()
                     }

@@ -562,36 +562,6 @@ class TTask {
         )
         assert(out == "1\n2\n99\n") { out }
     }
-    @Test
-    fun ee_bcast10() {
-        val out = ceu.all(
-            """
-            var tk
-            set tk = task (v) {
-                println(v)
-                ;;yield(nil)
-                do { var ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
-                ;;yield(nil)
-                println(evt)                
-                do { var ok2=false; loop until ok2 { yield(nil;) if type(evt)/=:x-task { set ok2=true } else { nil } } }
-                ;;yield(nil)
-                println(evt)                
-            }
-            println(1)
-            var co1 = spawn (tk) (10)
-            var co2 = spawn (tk) (10)
-            catch err==:1 {
-                func () {
-                    println(2)
-                    broadcast in :global, [20]
-                    println(3)
-                    broadcast @[(30,30)]
-                }()
-            }
-        """
-        )
-        assert(out == "1\n10\n10\n2\n[20]\n[20]\n3\n@[(30,30)]\n@[(30,30)]\n") { out }
-    }
 
     // BCAST / SCOPE
 

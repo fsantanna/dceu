@@ -389,6 +389,31 @@ fun Coder.main (tags: Tags): String {
         }}
     """ +
     """ // EXIT / ERROR / ASSERT
+        #if CEU <= 1
+        #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
+        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
+        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
+        #else
+        #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
+        #define CEU_ERROR(blk,pre,err) {                       \
+            if (err.type == CEU_VALUE_THROW) {                  \
+                ceu_acc = err;                                  \
+            } else {                                            \
+                ceu_acc = _ceu_throw_(blk, err);                \
+            }                                                   \
+            CEU_Value ceu_str = ceu_pointer_to_string(blk,pre); \
+            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str)); \
+            continue;                                           \
+        }
+        #define CEU_ASSERT(blk,err,pre) ({      \
+            CEU_Value ceu_err = err;            \
+            if (CEU_ISERR(ceu_err)) {           \
+                CEU_ERROR(blk,pre,ceu_err);     \
+            };                                  \
+            ceu_err;                            \
+        })
+        #endif
+
         void ceu_exit (CEU_Block* blk) {
             if (blk == NULL) {
                 exit(0);
@@ -402,7 +427,7 @@ fun Coder.main (tags: Tags): String {
             ceu_exit(blk);
         }
         CEU_Value ceu_assert (CEU_Block* blk, CEU_Value err, char* pre) {
-            if (err.type == CEU_VALUE_ERROR) {
+            if (CEU_ISERR(err)) {
                 _ceu_error_(blk, pre, err);
             }
             return err;
@@ -410,30 +435,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_error_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n==1 && args[0].type==CEU_VALUE_TAG);
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
-        }
-        
-        #if CEU <= 1
-        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
-        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
-        #else
-        #define CEU_ERROR(blk,pre,err) {                       \
-            if (err.type == CEU_VALUE_THROW) {                  \
-                ceu_acc = err;                                  \
-            } else {                                            \
-                ceu_acc = _ceu_throw_(blk, err);                \
-            }                                                   \
-            CEU_Value ceu_str = ceu_pointer_to_string(blk,pre); \
-            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str)); \
-            continue;                                           \
-        }
-        #define CEU_ASSERT(blk,err,pre) ({      \
-            CEU_Value ceu_err = err;            \
-            if (ceu_err.type==CEU_VALUE_ERROR || ceu_err.type==CEU_VALUE_THROW) {  \
-                CEU_ERROR(blk,pre,ceu_err);     \
-            };                                  \
-            ceu_err;                            \
-        })
-        #endif
+        }        
     """ +
     """ // IMPLS
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
@@ -972,26 +974,41 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BCAST
     #if CEU >= 4
-        void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
-        void ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
+        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
+        CEU_Value ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
             // blk is required to signal dyn termination (blk is its enclosing block)
+            CEU_Value ret = { CEU_VALUE_NIL };
             while (dyn != NULL) {
                 if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe_Task.status==CEU_EXE_STATUS_YIELDED) {
-                    ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
+                    ret = ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
+                    if (CEU_ISERR(ret)) {
+                        return ret;
+                    }
                     CEU_Value args[] = { evt };
-                    dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
+                    ret = dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
+                    if (CEU_ISERR(ret)) {
+                        return ret;
+                    }
                     if (dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
-                        ceu_bcast_blocks(blk, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=dyn} });
+                        ret = ceu_bcast_blocks(blk, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=dyn} });
+                        if (CEU_ISERR(ret)) {
+                            return ret;
+                        }
                     }
                 }
                 dyn = dyn->Any.hld.next;
             }
+            return ret;
         }
-        void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
+        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                ceu_bcast_dyns(blk, blk->dn.dyns, evt);
+                CEU_Value ret = ceu_bcast_dyns(blk, blk->dn.dyns, evt);
+                if (CEU_ISERR(ret)) {
+                    return ret;
+                }
                 blk = blk->dn.block;
             }
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
     #endif
     """ +

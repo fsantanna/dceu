@@ -524,11 +524,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     assert(1 == ceu_hold_chk_set(&$bupc->dn.dyns, $bupc->depth, CEU_HOLD_IMMUT, $evtc));
                     ${this.xin.code()}
                     assert(ceu_acc.type==CEU_VALUE_TAG && ceu_acc.Tag==CEU_TAG_global);
-                    ceu_bcast_blocks(&_ceu_block_, $evtc);
+                    ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
+                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     if (ceu_hld_$n != -1) {
                         assert(1 == ceu_hold_chk_set(&$bupc->dn.dyns, $bupc->depth, ceu_hld_$n, $evtc));
                     }
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
             }
@@ -837,10 +837,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }},
                         ceu_args_$n
                     );
-                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    ${(up is Expr.Spawn).cond {
-                        "ceu_acc = ceu_x_$n;"
-                    }}
+                    ${(up is Expr.Spawn).cond2({ """
+                        if (ceu_x_$n.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
+                            ceu_acc = ceu_bcast_blocks($bupc, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_x_$n.Dyn} });
+                            CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
+                        }
+                        ceu_acc = ceu_x_$n;
+                    """ }, { """
+                        CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
+                    """})}
                 } // CALL - close
                 """
             }
