@@ -780,9 +780,9 @@ fun Coder.main (tags: Tags): String {
 
             src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,hld_type);
             int src_depth = src.Dyn->Any.hld.depth;
-            if (depth != src.Dyn->Any.hld.depth) {
+            //if (depth != src.Dyn->Any.hld.depth) {    // par depth from resume
                 ceu_hold_chg(src.Dyn, dst, depth);
-            }
+            //}
             //printf(">>> %d -> %d\n", src_depth, src.Dyn->Any.hld.depth);
             if (depth >= src_depth) {
                 return 1;
