@@ -305,7 +305,7 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil)
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_132.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_126.Number, ceu_mem->id_v2_17.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -513,16 +513,54 @@ class Exec_03 {
             }
             val t = coroutine(T)
             do {
-                val v = []
+                val v ;; true block
                 resume t([])
             }
             resume t()
         """)
         assert(out == "[]\n") { out }
     }
-
     @Test
     fun gg_02_scope() {
+        val out = test("""
+            val T = coro (v) {
+                yield(nil)
+                println(v)                
+            }
+            val t = coroutine(T)
+            do {
+                val v = []
+                resume t(v)
+            }
+            resume t()
+        """)
+        assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
+                " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun gg_03_scope() {
+        val out = test("""
+            val T = coro () {
+                val v = yield(nil)
+                yield(nil)
+                println(v)                
+            }
+            val t = coroutine(T)
+            resume t()
+            do {
+                val v = []
+                resume t(v)
+            }
+            resume t()
+        """)
+        assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
+                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+    }
+
+    // testar yield em catch/yield
+
+    @Test
+    fun gg_0X_scope() {
         val out = test("""
             val T = coro (v) {
                 val e = yield(nil)
