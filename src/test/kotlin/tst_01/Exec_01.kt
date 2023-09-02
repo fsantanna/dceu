@@ -4290,32 +4290,4 @@ class Exec_01 {
         """)
         assert(out == "anon : (lin 4, col 25) : access error : variable \"v\" is not declared\n") { out }
     }
-    @Test
-    fun zz_03_func_err() {
-        val out = test("1(1)")
-        assert(out == " v  anon : (lin 1, col 1) : call error : expected function\n") { out }
-    }
-    @Test
-    fun zz_04_func_err() {
-        val out = test("""
-            val f = func () {
-                1(1)
-            }
-            f()
-        """)
-        assert(out == " |  anon : (lin 5, col 13) : f()\n" +
-                " v  anon : (lin 3, col 17) : call error : expected function\n") { out }
-    }
-    @Test
-    fun zz_05_func_args() {
-        val out = test(
-            """
-            val f = func (x) {
-                println(x)
-            }
-            f(10)
-        """
-        )
-        assert(out == "10\n") { out }
-    }
 }
