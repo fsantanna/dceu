@@ -174,22 +174,25 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Value args[]
         );
 
-        typedef struct CEU_Clo {  // lexical func/coro/task
-            _CEU_Dyn_
-            struct CEU_Frame* up_frame;   // points to active frame
-            CEU_Proto proto;
-            struct {
-                int its;     // number of upvals
-                CEU_Value* buf;
+        #define _CEU_Clo_                   \
+            _CEU_Dyn_                       \
+            struct CEU_Frame* up_frame;     \
+            CEU_Proto proto;                \
+            struct {                        \
+                int its;                    \
+                CEU_Value* buf;             \
             } upvs;
-            union {
-            #if CEU >= 3
-                struct {
-                    int n_mem;  // space for locals
-                } Exe;
-            #endif
-            };
+
+        typedef struct CEU_Clo {
+            _CEU_Clo_
         } CEU_Clo;
+        
+        #if CEU >= 3
+        typedef struct CEU_Clo_Exe {
+            _CEU_Clo_
+            int mem_n;  // space for locals
+        } CEU_Clo_Exe;
+        #endif
         
         #if CEU >= 2
         typedef struct CEU_Throw {
@@ -200,20 +203,23 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 3
-        typedef struct CEU_Exe {
-            _CEU_Dyn_
-            CEU_EXE_STATUS status;
-            struct CEU_Frame frame;  // TODO: CEU_Exe holds CEU_Frame, which holds CEU_Clo
-            int pc;
+        #define _CEU_Exe_                   \
+            _CEU_Dyn_                       \
+            CEU_EXE_STATUS status;          \
+            struct CEU_Frame frame;         \
+            int pc;                         \
             char* mem;
-            union {
-            #if CEU >= 4
-                struct {
-                    CEU_Block* dn_block;
-                } Task;
-            #endif
-            };
+
+        typedef struct CEU_Exe {
+            _CEU_Exe_
         } CEU_Exe;
+        
+        #if CEU >= 4
+        typedef struct CEU_Exe_Task {
+            _CEU_Exe_
+            CEU_Block* dn_block;
+        } CEU_Exe_Task;
+        #endif
         #endif
 
         typedef union CEU_Dyn {                                                                 
@@ -222,11 +228,17 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Vector   Vector;
             struct CEU_Dict     Dict;
             struct CEU_Clo      Clo;
+        #if CEU >= 3
+            struct CEU_Clo_Exe  Clo_Exe;
+        #endif
         #if CEU >= 2
             struct CEU_Throw    Throw;
         #endif
         #if CEU >= 3
             struct CEU_Exe      Exe;
+        #endif
+        #if CEU >= 4
+            struct CEU_Exe_Task Task;
         #endif
         } CEU_Dyn;        
     """ +
@@ -261,10 +273,10 @@ fun Coder.main (tags: Tags): String {
 
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD hld_type, CEU_Dyn* src);
         
-        CEU_Value ceu_tuple_create   (CEU_Block* hld, int n);
-        CEU_Value ceu_vector_create  (CEU_Block* hld);
-        CEU_Value ceu_dict_create    (CEU_Block* hld);
-        CEU_Value ceu_clo_create     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
+        CEU_Value ceu_create_vector  (CEU_Block* hld);
+        CEU_Value ceu_create_dict    (CEU_Block* hld);
+        CEU_Value ceu_create_clo     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
 
         int ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v);
 
@@ -497,7 +509,7 @@ fun Coder.main (tags: Tags): String {
                             cur = cur->next;
                         }
                     }
-                    CEU_Value tup = ceu_tuple_create(frame->up_block, len);
+                    CEU_Value tup = ceu_create_tuple(frame->up_block, len);
                     {
                         CEU_Tags_List* cur = tags;
                         int i = 0;
@@ -818,6 +830,9 @@ fun Coder.main (tags: Tags): String {
             #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
                     if (!ceu_hold_chk_set(dst, depth, hld_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo))) {
                         return 0;
                     }
@@ -934,7 +949,11 @@ fun Coder.main (tags: Tags): String {
                     break;
                 }
         #if CEU >= 3
-                case CEU_VALUE_EXE_CORO: {
+                case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+                {
                     CEU_Value args[1] = { ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo) };
                     CEU_Value ret = ceu_drop_f(frame, 1, args);
                     if (ret.type == CEU_VALUE_ERROR) {
@@ -953,11 +972,11 @@ fun Coder.main (tags: Tags): String {
         void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         void ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
             while (dyn != NULL) {
-                if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe.status==CEU_EXE_STATUS_YIELDED) {
-                    ceu_bcast_blocks(dyn->Exe.Task.dn_block, evt);
+                if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe_Task.status==CEU_EXE_STATUS_YIELDED) {
+                    ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
                     CEU_Value args[] = { evt };
-                    dyn->Exe.frame.clo->proto(&dyn->Exe.frame, 1, args);
-                    if (dyn->Exe.status == CEU_EXE_STATUS_TERMINATED) {
+                    dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
+                    if (dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
                         ceu_bcast_blocks(blk, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=dyn} });
                     }
                 }
@@ -1060,7 +1079,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_Value ceu_vector_from_c_string (CEU_Block* hld, const char* str) {
-            CEU_Value vec = ceu_vector_create(hld);
+            CEU_Value vec = ceu_create_vector(hld);
             int N = strlen(str);
             for (int i=0; i<N; i++) {
                 assert(ceu_vector_set(&vec.Dyn->Vector, vec.Dyn->Vector.its, (CEU_Value) { CEU_VALUE_CHAR, {.Char=str[i]} }));
@@ -1168,7 +1187,7 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // CREATES
-        CEU_Value ceu_tuple_create (CEU_Block* blk, int n) {
+        CEU_Value ceu_create_tuple (CEU_Block* blk, int n) {
             CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Tuple) {
@@ -1182,10 +1201,10 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_tuple_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 && args[0].type==CEU_VALUE_NUMBER);
-            return ceu_tuple_create(frame->up_block, args[0].Number);
+            return ceu_create_tuple(frame->up_block, args[0].Number);
         }
         
-        CEU_Value ceu_vector_create (CEU_Block* blk) {
+        CEU_Value ceu_create_vector (CEU_Block* blk) {
             CEU_Vector* ret = malloc(sizeof(CEU_Vector));
             assert(ret != NULL);
             char* buf = malloc(1);  // because of '\0' in empty strings
@@ -1199,7 +1218,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Value ceu_dict_create (CEU_Block* blk) {
+        CEU_Value ceu_create_dict (CEU_Block* blk) {
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
             *ret = (CEU_Dict) {
@@ -1210,8 +1229,8 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
-        CEU_Value ceu_clo_create (int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
-            CEU_Clo* ret = malloc(sizeof(CEU_Clo));
+        CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            CEU_Clo* ret = malloc(sz);
             assert(ret != NULL);
             CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
             assert(buf != NULL);
@@ -1221,22 +1240,31 @@ fun Coder.main (tags: Tags): String {
             *ret = (CEU_Clo) {
                 type, 0, NULL, { hld_type, blk->depth, NULL, NULL },
                 frame, proto, { upvs, buf }
-        #if CEU >= 3
-                , 0 // set from outside
-        #endif
             };
             ceu_hold_add((CEU_Dyn*)ret, &blk->dn.dyns);
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
-        }        
+        }
+
+        CEU_Value ceu_create_clo (int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            return _ceu_create_clo_(sizeof(CEU_Clo), type, blk, hld_type, frame, proto, upvs);
+        }
 
         #if CEU >= 3
-        CEU_Value ceu_exe_create (CEU_Block* blk, CEU_Value clo) {
+        CEU_Value ceu_create_clo_exe (int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            CEU_Value clo = _ceu_create_clo_(sizeof(CEU_Clo_Exe), type, blk, hld_type, frame, proto, upvs);
+            clo.Dyn->Clo_Exe.mem_n = 0;
+            return clo;
+        }
+        #endif
+
+        #if CEU >= 3
+        CEU_Value _ceu_create_exe_ (int sz, CEU_Block* blk, CEU_Value clo) {
             assert(clo.type==CEU_VALUE_CLO_CORO || clo.type==CEU_VALUE_CLO_TASK);
             ceu_gc_inc(clo);
             
-            CEU_Exe* ret = malloc(sizeof(CEU_Dyn));
+            CEU_Exe* ret = malloc(sz);
             assert(ret != NULL);
-            char* mem = malloc(clo.Dyn->Clo.Exe.n_mem);
+            char* mem = malloc(clo.Dyn->Clo_Exe.mem_n);
             assert(mem != NULL);
             
             int tag = clo.type + (CEU_VALUE_EXE_CORO - CEU_VALUE_CLO_CORO);
@@ -1249,6 +1277,16 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add((CEU_Dyn*)ret, &blk->dn.dyns);
             return (CEU_Value) { tag, {.Dyn=(CEU_Dyn*)ret } };
         }
+        CEU_Value ceu_create_exe (CEU_Block* blk, CEU_Value clo) {
+            return _ceu_create_exe_(sizeof(CEU_Exe), blk, clo);
+        }
+        #if CEU >= 4
+        CEU_Value ceu_create_exe_task (CEU_Block* blk, CEU_Value clo) {
+            CEU_Value exe = _ceu_create_exe_(sizeof(CEU_Exe_Task), blk, clo);
+            exe.Dyn->Task.dn_block = NULL;
+            return exe;
+        }
+        #endif
         #endif        
     """ +
     """ // PRINT
@@ -1500,7 +1538,7 @@ fun Coder.main (tags: Tags): String {
         }
 
         CEU_Value _ceu_throw_ (CEU_Block* blk, CEU_Value val) {
-            CEU_Value stk = ceu_vector_create(blk);
+            CEU_Value stk = ceu_create_vector(blk);
             
             ceu_gc_inc(val);
             ceu_gc_inc(stk);
@@ -1525,7 +1563,7 @@ fun Coder.main (tags: Tags): String {
         }
 
         CEU_Value ceu_pointer_to_string (CEU_Block* blk, const char* ptr) {
-            CEU_Value str = ceu_vector_create(blk);
+            CEU_Value str = ceu_create_vector(blk);
             int len = strlen(ptr);
             for (int i=0; i<len; i++) {
                 CEU_Value chr = { CEU_VALUE_CHAR, {.Char=ptr[i]} };
@@ -1549,7 +1587,7 @@ fun Coder.main (tags: Tags): String {
             if (coro.type != CEU_VALUE_CLO_CORO) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="coroutine error : expected coro"} };
             }
-            return ceu_exe_create(frame->up_block, coro);
+            return ceu_create_exe(frame->up_block, coro);
         }
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);

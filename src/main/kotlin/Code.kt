@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
 
                 val pos = """ // CLO | ${this.dump()}
-                ceu_acc = ceu_clo_create (
+                ceu_acc = ceu_create_clo${isexe.cond{"_exe"}} (
                     CEU_VALUE_CLO_${this.tk.str.uppercase()},
                     ${up_blk.idc("block")},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
@@ -119,7 +119,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
                 ${isexe.cond { """
-                    ceu_acc.Dyn->Clo.Exe.n_mem = sizeof(CEU_Clo_Mem_$n);                    
+                    ceu_acc.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$n);                    
                 """ }}
                 
                 // UPVALS
@@ -213,7 +213,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${when {
                         (f_b == null) -> """
                             // main block varargs (...)
-                            CEU_Value id__dot__dot__dot_ = ceu_tuple_create($blkc, ceu_argc);
+                            CEU_Value id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
                             for (int i=0; i<ceu_argc; i++) {
                                 CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
                                 assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
@@ -255,7 +255,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val idc = f_b.args.last()!!.first.str.idc()
                                 """
                                     int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
-                                    $idc = ceu_tuple_create($blkc, ceu_tup_n_$n);
+                                    $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
                                     for (int i=0; i<ceu_tup_n_$n; i++) {
                                         assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
                                     }
@@ -601,7 +601,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // TUPLE | ${this.dump()}
-                    CEU_Value ceu_tup_$n = ceu_tuple_create(${ups.first_block(this)!!.idc("block")}, ${this.args.size});
+                    CEU_Value ceu_tup_$n = ceu_create_tuple(${ups.first_block(this)!!.idc("block")}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         if (!ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc)) {
@@ -618,7 +618,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // VECTOR | ${this.dump()}
-                    CEU_Value ceu_vec_$n = ceu_vector_create(${ups.first_block(this)!!.idc("block")});
+                    CEU_Value ceu_vec_$n = ceu_create_vector(${ups.first_block(this)!!.idc("block")});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         if (!ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc)) {
@@ -635,7 +635,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // DICT | ${this.dump()}
-                    CEU_Value ceu_dict_$n = ceu_dict_create(${ups.first_block(this)!!.idc("block")});
+                    CEU_Value ceu_dict_$n = ceu_create_dict(${ups.first_block(this)!!.idc("block")});
                     ${this.args.map { """
                         {
                             ${it.first.code()}
@@ -796,9 +796,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
                                 CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
                             }
-                            CEU_Value ceu_x_$n = ceu_exe_create($bupc, ceu_acc);
+                            CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
                             assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
-                            CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe.frame;
+                            CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
                         """
                         else -> """
                             if (ceu_acc.type != CEU_VALUE_CLO_FUNC) {
