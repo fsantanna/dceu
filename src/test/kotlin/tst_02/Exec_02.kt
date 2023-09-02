@@ -9,34 +9,6 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_02 {
 
-    // IS / IS-NOT
-
-    // is', is-not´
-
-    @Test
-    fun aa_01_is() {
-        val out = test("""
-            println(is'([], :bool))
-            println(is'([], :tuple))
-            println(is-not'(1, :tuple))
-            println(is-not'(1, :number))
-        """)
-        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
-    }
-    @Test
-    fun aa_02_is() {
-        val out = test("""
-            val t = []
-            tags(t,:x,true)
-            println(is'(t, :x))
-            tags(t,:y,true)
-            println(is-not'(t, :y))
-            tags(t,:x,false)
-            println(is-not'(t, :x))
-        """)
-        assert(out == "true\nfalse\ntrue\n") { out }
-    }
-
     // POINTER-TO-STRING
 
     @Test

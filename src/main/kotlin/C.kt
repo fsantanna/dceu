@@ -1536,28 +1536,8 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """
-        // IS' / IS-NOT' / THROW / POINTER-TO-STRING
+        // THROW / POINTER-TO-STRING
         #if CEU >= 2
-        CEU_Value ceu_is_f (CEU_Frame* _1, int n, CEU_Value args[]) {
-            assert(n == 2);
-            if (ceu_op_equals_equals_f(_1, n, args).Bool) {
-                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
-            }
-            if (ceu_type_f(_1, 1, &args[1]).Tag != CEU_VALUE_TAG) {
-                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
-            }
-            if (ceu_type_f(_1, 1, &args[0]).Tag == args[1].Tag) {
-                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
-            }
-            return ceu_tags_f(_1, n, args);
-        }
-        
-        CEU_Value ceu_is_not_f (CEU_Frame* _1, int n, CEU_Value args[]) {
-            CEU_Value ret = ceu_is_f(_1, n, args);
-            ret.Bool = !ret.Bool;
-            return ret;
-        }
-
         CEU_Value _ceu_throw_ (CEU_Block* blk, CEU_Value val) {
             CEU_Value stk = ceu_create_vector(blk);
             
@@ -1678,14 +1658,6 @@ fun Coder.main (tags: Tags): String {
             &_ceu_frame_, ceu_string_dash_to_dash_tag_f, {0,NULL}
         };
         #if CEU >= 2
-        CEU_Clo ceu_is = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, 1, NULL, NULL },
-            &_ceu_frame_, ceu_is_f, {0,NULL}
-        };
-        CEU_Clo ceu_is_not = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, 1, NULL, NULL },
-            &_ceu_frame_, ceu_is_not_f, {0,NULL}
-        };
         CEU_Clo ceu_pointer_dash_to_dash_string = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, 1, NULL, NULL },
             &_ceu_frame_, ceu_pointer_dash_to_dash_string_f, {0,NULL}
@@ -1720,8 +1692,6 @@ fun Coder.main (tags: Tags): String {
         CEU_Value op_slash_equals            = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_slash_equals}         };
         CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_string_dash_to_dash_tag} };
         #if CEU >= 2
-        CEU_Value id_is_plic_                = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_is}                      };
-        CEU_Value id_is_dash_not_plic_       = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_is_not}                  };
         CEU_Value id_pointer_dash_to_dash_string = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pointer_dash_to_dash_string} };
         CEU_Value id_throw                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_throw}                   };
         #endif

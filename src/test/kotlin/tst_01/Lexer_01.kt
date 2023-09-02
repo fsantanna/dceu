@@ -111,17 +111,6 @@ class Lexer_01 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
-    @Test
-    fun bb_04_is_isnot() {
-        val l = lexer("is? is-not? in? in-not?")
-        val tks = l.lex().iterator()
-        assert(tks.next().let { it is Tk.Id && it.str == "is?" })
-        assert(tks.next().let { it is Tk.Id && it.str == "is-not?" })
-        assert(tks.next().let { it is Tk.Id && it.str == "in?" })
-        assert(tks.next().let { it is Tk.Id && it.str == "in-not?" })
-        assert(tks.next() is Tk.Eof)
-        assert(!tks.hasNext())
-    }
 
     @Test
     fun cc_01_vararg() {
