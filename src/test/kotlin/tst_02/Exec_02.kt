@@ -248,6 +248,19 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed.")) { out }
     }
+    @Test
+    fun jj_14_blocks() {
+        val out = test("""
+            val v = catch true {
+                do {
+                    throw(:x)
+                }
+                println(9)
+            }
+            println(v)
+        """)
+        assert(out == ":x\n") { out }
+    }
 
     // CALL STACK
 

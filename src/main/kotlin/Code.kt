@@ -213,56 +213,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${when {
                         (f_b == null) -> """
                             // main block varargs (...)
-                            CEU_Value id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
-                            for (int i=0; i<ceu_argc; i++) {
-                                CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
-                                assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
-                            }
+                            CEU_Value id__dot__dot__dot_;
                         """
                         (f_b is Expr.Proto) -> {
-                            f_b as Expr.Proto
-                            val dots = (f_b.args.lastOrNull()?.first?.str == "...")
-                            val args_n = f_b.args.size - 1
-                            """
-                            ${(!ylds).cond {
+                            (!ylds).cond {
                                 f_b.args.map { (id,_) ->
                                     val idc = id.str.idc()
                                     """
                                     CEU_Value $idc;
                                     CEU_Block* _${idc}_;
                                     """
-                                }.joinToString("")}
-                            }
-                            { // func args
-                                ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
-                                """
-                                    $_idc_ = $blkc;
-                                    if ($i < ceu_n) {
-                                        if (!ceu_hold_chk_set(&$blkc->dn.dyns, $blkc->depth, CEU_HOLD_FLEET, ceu_args[$i])) {
-                                            assert(0 && "TODO"); // restore code below on fail
-                                            //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
-                                            //CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                        }
-                                        $idc = ceu_args[$i];
-                                        ceu_gc_inc($idc);
-                                    } else {
-                                        $idc = (CEU_Value) { CEU_VALUE_NIL };
-                                    }
-                                    """
                             }.joinToString("")}
-                                ${dots.cond {
-                                val idc = f_b.args.last()!!.first.str.idc()
-                                """
-                                    int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
-                                    $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
-                                    for (int i=0; i<ceu_tup_n_$n; i++) {
-                                        assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
-                                    }
-                                    ceu_gc_inc($idc);
-                                """ }}
-                            }
-                            """
                         }
                         else -> ""
                     }}
@@ -283,7 +244,60 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // pres funcs
                     ${(f_b == null).cond{ pres.joinToString("") }}
                     ${(CEU >= 2).cond { "do {" }}
-                    $body
+                        // main args, func args
+                        ${when {
+                            (f_b == null) -> """
+                                // main block varargs (...)
+                                id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
+                                for (int i=0; i<ceu_argc; i++) {
+                                    CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
+                                    assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
+                                }
+                            """
+                            (f_b is Expr.Proto) -> {
+                                val dots = (f_b.args.lastOrNull()?.first?.str == "...")
+                                val args_n = f_b.args.size - 1
+                                """
+                                { // func args
+                                    ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
+                                        val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
+                                        """
+                                        $_idc_ = $blkc;
+                                        if ($i < ceu_n) {
+                                            $idc = ceu_args[$i];
+                                            if (!ceu_hold_chk_set(&$blkc->dn.dyns, $blkc->depth, CEU_HOLD_FLEET, $idc)) {
+                                                assert(0 && "TODO"); // restore code below on fail
+                                                //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
+                                                //CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                            }
+                                            ceu_gc_inc($idc);
+                                            ${(f_b.tk.str != "func").cond {"""
+                                                 if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
+                                                    CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                                 }
+                                            """ }}
+                                        } else {
+                                            $idc = (CEU_Value) { CEU_VALUE_NIL };
+                                        }
+                                        """
+                                    }.joinToString("")}
+                                    ${dots.cond {
+                                        val idc = f_b.args.last()!!.first.str.idc()
+                                        """
+                                        int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
+                                        $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
+                                        for (int i=0; i<ceu_tup_n_$n; i++) {
+                                            assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
+                                        }
+                                        ceu_gc_inc($idc);
+                                    """ }}
+                                }
+                                """
+                        }
+                            else -> ""
+                        }}
+                        $body
                     ${(CEU >= 2).cond { "} while (0);" }}
                     // defers execute
                     ${defers[this].cond { it.third }}
@@ -360,14 +374,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #endif
                         """
                     }}
-                    // block free, check free
-                    ${(!isvoid).cond { """
-                        ceu_block_free($blkc);
-                        ${(f_b is Expr.Do && ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
-                            #if CEU >= 3
-                                CEU_CHECK_FREE()
-                            #endif
-                        """ }}
+                    // block free
+                    ${(!isvoid).cond { "ceu_block_free($blkc);" }}
+                    // check error
+                    ${(CEU>=2 && (f_b is Expr.Do)).cond { """
+                        if (CEU_ISERR(ceu_acc)) {
+                            continue;
+                        }                        
+                    """ }}
+                    // check free
+                    ${(CEU>=3 && (f_b is Expr.Do) && ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
+                        CEU_CHECK_FREE()
                     """ }}
                 }
                 """
