@@ -435,13 +435,35 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
+            is Expr.It    -> "ceu_acc = ceu_it;\n"
+            is Expr.Catch -> """
+                { // CATCH ${this.dump()}
+                    do { // catch
+                        ${this.body.code()}
+                    } while (0); // catch
+                    if (ceu_acc.type == CEU_VALUE_THROW) {
+                        CEU_Value ceu_err = ceu_acc;
+                        CEU_Value ceu_it  = ceu_err.Dyn->Throw.val;
+                        do {
+                            ${this.cnd.code()}
+                        } while (0);
+                        if (!ceu_as_bool(ceu_acc)) {
+                            ceu_acc = ceu_err;
+                            continue; // uncaught, rethrow
+                        }
+                        ceu_gc_inc(ceu_err.Dyn->Throw.val);
+                        ceu_gc_dec(ceu_err, 1);
+                        ceu_acc = ceu_err.Dyn->Throw.val;
+                    }
+                }
+                """
             is Expr.Defer -> {
                 val idc = this.idc()
                 val (ns,ini,end) = defers.getOrDefault(ups.first_block(this)!!, Triple(mutableListOf(),"",""))
                 val inix = """
-                    ${(!sta.ylds.contains(ups.first_block(this))).cond { 
-                        "int ceu_defer_$n;\n"
-                    }}
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                    "int ceu_defer_$n;\n"
+                }}
                     $idc = 0;       // NO: do not yet execute on termination
                 """
                 val endx = """
@@ -459,31 +481,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ceu_acc = ((CEU_Value) { CEU_VALUE_NIL });
                 """
             }
-            is Expr.Catch -> """
-                { // CATCH ${this.dump()}
-                    do { // catch
-                        ${this.body.code()}
-                    } while (0); // catch
-                    if (ceu_acc.type == CEU_VALUE_THROW) {
-                        CEU_Value ceu_err = ceu_acc;
-                        ${this.cnd.cond { """
-                            ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                            do {
-                                ${this.cnd!!.code()}
-                            } while (0);
-                            assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in catch condition");
-                            CEU_Value args[] = { ceu_err.Dyn->Throw.val, ceu_acc };
-                            if (!ceu_is_f(ceu_frame, 2, args).Bool) {
-                                ceu_acc = ceu_err;
-                                continue; // uncaught, rethrow
-                            }
-                            ceu_gc_inc(ceu_err.Dyn->Throw.val);
-                            ceu_gc_dec(ceu_err, 1);
-                        """ }}
-                        ceu_acc = ceu_err.Dyn->Throw.val;
-                    }
-                }
-                """
 
             is Expr.Resume -> this.call.code()
             is Expr.Yield -> """

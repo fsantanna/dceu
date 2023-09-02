@@ -40,13 +40,13 @@ val KEYWORDS: SortedSet<String> = (
         "enum", "false", "func", "if",
         "nil", "pass", "set",
         "true", "val", "var",
-        "xloop", "xbreak"
-    ) + (if (CEU <= 1) setOf() else setOf (
-        "catch", "defer", /*"throw",*/
-    )) + (if (CEU <= 2) setOf() else setOf(
-        "coro", "resume",  "yield"
-    )) + (if (CEU <= 3) setOf() else setOf(
-        "broadcast", "in", "spawn", "task"
+        "xloop", "xbreak",
+    ) + (if (CEU < 2) setOf() else setOf (
+        "catch", "defer", "it", /*"throw",*/
+    )) + (if (CEU < 3) setOf() else setOf(
+        "coro", "resume",  "yield",
+    )) + (if (CEU < 4) setOf() else setOf(
+        "broadcast", "in", "spawn", "task",
     ))
 ).toSortedSet()
 
@@ -112,7 +112,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr?, val body: Expr.Do): Expr(N++, tk_)
+    data class It     (val tk_: Tk.Fix): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)

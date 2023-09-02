@@ -24,7 +24,7 @@ fun Expr.coexists (): Boolean {
         is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
         is Expr.Proto, is Expr.Do, is Expr.XLoop, is Expr.XBreak, is Expr.Enum, is Expr.Data, is Expr.Pass -> false
-        is Expr.Defer -> false
+        is Expr.Defer, is Expr.It -> false
         is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
     }
 }
@@ -160,7 +160,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             };
             """
 
-        is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
+        is Expr.It, is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
         is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.XBreak -> ""
     }
 }

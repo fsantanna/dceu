@@ -60,7 +60,11 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Catch  -> { this.cnd?.traverse() ; this.body.traverse() }
+            is Expr.It     -> {}
+            is Expr.Catch  -> {
+                this.cnd.traverse()
+                this.body.traverse()
+            }
             is Expr.Defer  -> this.body.traverse()
 
             is Expr.Yield  -> {
