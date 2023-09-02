@@ -226,7 +226,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " v  anon : (lin 2, col 22) : block escape error : incompatible scopes\n") { out }
+        assert(out == " v  anon : (lin 2, col 26) : block escape error : incompatible scopes\n") { out }
     }
     @Test
     fun jj_12_catch() {

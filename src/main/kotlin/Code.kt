@@ -447,6 +447,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         do {
                             ${this.cnd.code()}
                         } while (0);
+                        assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {
                             ceu_acc = ceu_err;
                             continue; // uncaught, rethrow
