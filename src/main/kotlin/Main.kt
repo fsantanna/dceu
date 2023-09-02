@@ -157,7 +157,6 @@ val PLUS = """
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
 """
-
 fun OR (v1:String, v2:String): String {
     return """
         do {
@@ -166,12 +165,23 @@ fun OR (v1:String, v2:String): String {
         }
     """
 }
-
 fun AND (v1:String, v2:String): String {
     return """
         do {
             val :tmp v1 = $v1 
             if v1 { $v2 } else { v1 }
+        }
+    """
+}
+fun AWAIT (v:String=""): String {
+    return """
+        xloop {
+            val e = yield(nil)
+            if type(e) /= :pointer {
+                xbreak(e)
+            } else {
+                nil
+            }
         }
     """
 }

@@ -230,6 +230,122 @@ class Exec_04 {
         """)
         assert(out == "2\n1\n") { out }
     }
+    @Test
+    fun dd_06_bcast() {
+        val out = test("""
+            var tk
+            set tk = task (v) {
+                println(v)
+                val e = yield(nil)
+                println(e)
+            }
+            var co = spawn(tk)(1)
+            broadcast in :global, 2
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun dd_07_bcast() {
+        val out = test("""
+            func () {
+                 broadcast in :global, 1
+            }
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun dd_08_bcast() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+                println(:ok)
+            }
+            var t = spawn T()
+            do {
+                broadcast in :global, 1
+            }
+        """)
+        assert(out.contains(":ok\n")) { out }
+    }
+    @Test
+    fun dd_09_bcast() {
+        val out = test("""
+            var tk
+            set tk = task () {
+                yield(nil)
+                val e = yield(nil)
+                println(e)                
+            }
+            var co1 = spawn (tk) ()
+            var co2 = spawn tk ()
+            do {
+                 broadcast in :global, 1
+                 broadcast in :global, 2
+                 broadcast in :global, 3
+            }
+        """)
+        //assert(out == "2\n2\n") { out }
+        assert(out.contains("2\npointer: 0x")) { out }
+    }
+    @Test
+    fun dd_10_bcast() {
+        val out = test("""
+            var tk
+            set tk = task () {
+                val e1 = yield(nil)
+                var e2
+                do {
+                    println(e1)
+                    set e2 = yield(nil)
+                    println(e2)
+                }
+                do {
+                    println(e2)
+                    val e3 = yield(nil)
+                    println(e3)
+                }
+            }
+            spawn tk ()
+            broadcast in :global, 1
+            broadcast in :global, 2
+            broadcast in :global, 3
+            broadcast in :global, 4
+        """)
+        assert(out == "1\n2\n2\n3\n") { out }
+    }
+    @Test
+    fun dd_11_bcast_await() {
+        val out = test("""
+            val T = task (v) {
+                println(:1)
+                val e = ${AWAIT()}
+                println(:2, e)                
+            }
+            spawn T()
+            broadcast in :global, 10
+        """)
+        assert(out == ":1\n:2\t10\n") { out }
+    }
+    @Test
+    fun dd_12_bcast() {
+        val out = test("""
+            var tk
+            set tk = task (v) {
+                yield(nil)
+                val e = ${AWAIT()}
+                println(e)                
+            }
+            var co1 = spawn tk ()
+            var co2 = spawn tk ()
+            func () {
+                 broadcast in :global, 1
+                 broadcast in :global, 2
+                 broadcast in :global, 3
+            }()
+        """)
+        assert(out == "2\n2\n") { out }
+    }
 
     // THROW
 

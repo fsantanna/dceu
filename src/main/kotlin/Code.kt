@@ -202,7 +202,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """
                     }}
                     // link up.dn.block = me
-                    ${(CEU >= 4).cond {
+                    ${(CEU>=4 && !isvoid).cond {
                         if (f_b is Expr.Proto) {
                             "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
                         } else {
@@ -323,7 +323,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }.joinToString("")}
                     """}}
                     // unlink up.dn.block = me
-                    ${(CEU >= 4).cond {
+                    ${(CEU>=4 && !isvoid).cond {
                     if (f_b is Expr.Proto) {
                         "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
                     } else {
@@ -424,10 +424,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 while (1) { // LOOP | ${this.dump()}
                     ${this.body.code()}
                 }
+                CEU_LOOP_$n:
                 """
-            is Expr.XBreak -> """
+            is Expr.XBreak -> """ // XBREAK | ${this.dump()}
                 ${this.e.code()}
-                break;
+                goto CEU_LOOP_${ups.first(this) { it is Expr.XLoop }!!.n};
             """
             is Expr.Enum -> ""
             is Expr.Data -> ""

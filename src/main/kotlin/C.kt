@@ -974,6 +974,7 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
         void ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         void ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
+            // blk is required to signal dyn termination (blk is its enclosing block)
             while (dyn != NULL) {
                 if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe_Task.status==CEU_EXE_STATUS_YIELDED) {
                     ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
