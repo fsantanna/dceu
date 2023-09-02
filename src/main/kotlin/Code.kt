@@ -338,12 +338,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """}}
                     // unlink up.dn.block = me
                     ${(CEU>=4 && !isvoid).cond {
-                    if (f_b is Expr.Proto) {
-                        "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
-                    } else {
-                        "$bupc->dn.block = NULL;"
-                    }
-                }}
+                        if (f_b is Expr.Proto) {
+                            "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
+                        } else {
+                            "$bupc->dn.block = NULL;"
+                        }
+                    }}
                     // uncaught throw
                     ${(f_b == null).cond {
                         """
@@ -542,15 +542,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.evt.code()}
                     ${(!ylds).cond { "CEU_Value ceu_evt_$n;" }}
                     $evtc = ceu_acc;
-                    int ceu_hld_$n = (ceu_evt_$n.type < CEU_VALUE_DYNAMIC) ? -1 : ceu_evt_$n.Dyn->Any.hld.type;
-                    assert(1 == ceu_hold_chk_set(&$bupc->dn.dyns, $bupc->depth, CEU_HOLD_IMMUT, $evtc));
                     ${this.xin.code()}
                     assert(ceu_acc.type==CEU_VALUE_TAG && ceu_acc.Tag==CEU_TAG_global);
                     ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    if (ceu_hld_$n != -1) {
-                        assert(1 == ceu_hold_chk_set(&$bupc->dn.dyns, $bupc->depth, ceu_hld_$n, $evtc));
-                    }
                 }
                 """
             }
