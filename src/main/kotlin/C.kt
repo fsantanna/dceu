@@ -99,7 +99,10 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Block*    up_block;  // block enclosing this call/coroutine
             struct CEU_Clo*      clo;       // TODO: should be CEU_Value, but CEU_Exe holds CEU_Frame, which holds CEU_Clo
         #if CEU >= 3
-            struct CEU_Exe* exe;       // coro/task<->frame point to each other
+            union {
+                struct CEU_Exe*      exe;       // coro/task<->frame point to each other
+                struct CEU_Exe_Task* exe_task;
+            };
         #endif
         } CEU_Frame;
 
@@ -238,7 +241,7 @@ fun Coder.main (tags: Tags): String {
             struct CEU_Exe      Exe;
         #endif
         #if CEU >= 4
-            struct CEU_Exe_Task Task;
+            struct CEU_Exe_Task Exe_Task;
         #endif
         } CEU_Dyn;        
     """ +
@@ -1283,7 +1286,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
         CEU_Value ceu_create_exe_task (CEU_Block* blk, CEU_Value clo) {
             CEU_Value exe = _ceu_create_exe_(sizeof(CEU_Exe_Task), blk, clo);
-            exe.Dyn->Task.dn_block = NULL;
+            exe.Dyn->Exe_Task.dn_block = NULL;
             return exe;
         }
         #endif

@@ -198,7 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // link task.dn_block = me
                     ${(f_b is Expr.Proto && f_b.tk.str == "task").cond { """
-                        ceu_frame->exe->Task.dn_block = $blkc;                        
+                        ceu_frame->exe_task->dn_block = $blkc;                        
                     """
                     }}
                     // link up.dn.block = me
