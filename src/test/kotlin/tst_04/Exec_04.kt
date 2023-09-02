@@ -455,7 +455,9 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out == ":err\n") { out }
+        assert(out == " |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+                " |  anon : (lin 4, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
     }
     @Test
     fun ee_07_throw() {
@@ -490,14 +492,11 @@ class Exec_04 {
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
-
-
     @Test
     fun ee_0X_bcast() {
-        val out = test(
-            """
+        val out = test("""
             val T = task (v) {
-                val :tmp e = yield(nil)
+                val e = yield(nil)
                 println(e)                
             }
             spawn T(10)
@@ -506,8 +505,7 @@ class Exec_04 {
                     broadcast in :global, []
                 }()
             }
-        """
-        )
+        """)
         assert(out == "[]\n") { out }
     }
 
