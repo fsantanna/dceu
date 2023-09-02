@@ -69,7 +69,7 @@ class Exec_02 {
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch :x {
+            val err = catch it==:x {
                 throw(:x)
                 println(9)
             }
@@ -80,7 +80,7 @@ class Exec_02 {
     @Test
     fun jj_02_catch_err() {
         val out = test("""
-            catch :x {
+            catch it==:x {
                 throw(:y)
                 println(9)
             }
@@ -96,7 +96,7 @@ class Exec_02 {
                 throw(:y)
                 println(9)
             }
-            catch :x {
+            catch it==:x {
                 f()
                 println(9)
             }
@@ -111,14 +111,14 @@ class Exec_02 {
         val out = test("""
             var f
             set f = func () {
-                catch :xxx {
+                catch it==:xxx {
                     throw(:yyy)
                     println(91)
                 }
                 println(9)
             }
-            catch :yyy {
-                catch :xxx {
+            catch it==:yyy {
+                catch it==:xxx {
                     f()
                     println(92)
                 }
@@ -131,7 +131,7 @@ class Exec_02 {
     @Test
     fun jj_05_catch_valgrind() {
         val out = test("""
-            catch :x {
+            catch it==:x {
                 throw([])
                 println(9)
             }
@@ -144,10 +144,10 @@ class Exec_02 {
     @Test
     fun jj_06_catch() {
         val out = test("""
-            catch :e1 {
-                catch :e2 {
-                    catch :e3 {
-                        catch :e4 {
+            catch it==:e1 {
+                catch it==:e2 {
+                    catch it==:e3 {
+                        catch it==:e4 {
                             println(1)
                             throw(:e3)
                             println(99)
@@ -167,7 +167,7 @@ class Exec_02 {
     @Test
     fun jj_07_catch_err() {
         val out = test("""
-            catch {
+            catch true {
                 throw(:y)
                 println(9)
             }
@@ -180,7 +180,7 @@ class Exec_02 {
     fun jj_08_catch() {
         val out = test(
             """
-            catch do {
+            catch it==do {
                 :x
             } {
                 throw(:x)
@@ -208,7 +208,7 @@ class Exec_02 {
     @Test
     fun jj_10_catch() {
         val out = test("""
-            catch [] {
+            catch it==[] {
                 throw([])
                 println(9)
             }
@@ -220,7 +220,7 @@ class Exec_02 {
     @Test
     fun jj_11_catch() {
         val out = test("""
-            catch [] {
+            catch it==[] {
                 val xxx = []
                 throw(xxx)
             }
@@ -231,7 +231,7 @@ class Exec_02 {
     @Test
     fun jj_12_catch() {
         val out = test("""
-            val t = catch {
+            val t = catch true {
                 val xxx = []
                 throw(drop(xxx))
             }
@@ -254,7 +254,7 @@ class Exec_02 {
     @Test
     fun todo_pp_01_throw_defer() {
         val out = test("""
-            catch nil {
+            catch true {
                 defer {
                     throw(nil)
                 }
@@ -283,36 +283,4 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
-
-    // MISC
-
-    @Test
-    fun zz_01_func_err() {
-        val out = test("1(1)")
-        assert(out == " v  anon : (lin 1, col 1) : call error : expected function\n") { out }
-    }
-    @Test
-    fun zz_02_func_err() {
-        val out = test("""
-            val f = func () {
-                1(1)
-            }
-            f()
-        """)
-        assert(out == " |  anon : (lin 5, col 13) : f()\n" +
-                " v  anon : (lin 3, col 17) : call error : expected function\n") { out }
-    }
-    @Test
-    fun zz_03_func_args() {
-        val out = test(
-            """
-            val f = func (x) {
-                println(x)
-            }
-            f(10)
-        """
-        )
-        assert(out == "10\n") { out }
-    }
-
 }

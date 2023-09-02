@@ -25,4 +25,13 @@ class Parser_02 {
         assert(e.tostr() == "catch 1 {\nthrow(1)\n}\n") { e.tostr() }
     }
 
+    // IT
+
+    @Test
+    fun cc_01_it() {
+        val l = lexer("it")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "it\n") { e.tostr() }
+    }
 }
