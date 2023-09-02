@@ -492,6 +492,7 @@ class Exec_04 {
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
+
     @Test
     fun ee_0X_bcast() {
         val out = test("""
@@ -500,11 +501,11 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch {
+            ;;catch {
                 func () {
                     broadcast in :global, []
                 }()
-            }
+            ;;}
         """)
         assert(out == "[]\n") { out }
     }
@@ -541,6 +542,24 @@ class Exec_04 {
         """)
         assert(out.contains(":2\n:1\n:ok\tpointer: 0x")) { out }
     }
+
+    // SCOPE
+
+    @Test
+    fun gg_01_scope() {
+        val out = test("""
+            val T = task (v) {
+                val e = yield(nil)
+                println(e)                
+            }
+            spawn T(10)
+            func () {
+                broadcast in :global, []
+            }()
+        """)
+        assert(out == "[]\n") { out }
+    }
+
 
     // MOVE
 

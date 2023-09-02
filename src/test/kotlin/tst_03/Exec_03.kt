@@ -502,10 +502,45 @@ class Exec_03 {
         assert(out == " v  anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
     }
 
+    // SCOPE
+
+    @Test
+    fun gg_01_scope() {
+        val out = test("""
+            val T = coro (v) {
+                yield(nil)
+                println(v)                
+            }
+            val t = coroutine(T)
+            do {
+                val v = []
+                resume t([])
+            }
+            resume t()
+        """)
+        assert(out == "[]\n") { out }
+    }
+
+    @Test
+    fun gg_02_scope() {
+        val out = test("""
+            val T = coro (v) {
+                val e = yield(nil)
+                println(e)                
+            }
+            val t = coroutine(T)
+            func () {
+                resume t([])
+                resume t([])
+            }()
+        """)
+        assert(out == "[]\n") { out }
+    }
+
     // THROW
 
     @Test
-    fun gg_01_throw() {
+    fun hh_01_throw() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -520,7 +555,7 @@ class Exec_03 {
         assert(out == "1\n") { out }
     }
     @Test
-    fun gg_02_throw() {
+    fun hh_02_throw() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -538,7 +573,7 @@ class Exec_03 {
         assert(out == "1\n3\n") { out }
     }
     @Test
-    fun gg_03_throw() {
+    fun hh_03_throw() {
         val out = test("""
             var co
             set co = coroutine (coro () {
@@ -564,7 +599,7 @@ class Exec_03 {
     // STATUS
 
     @Test
-    fun gg_01_status_err() {
+    fun ii_01_status_err() {
         val out = test("""
             val CO
             status(CO)
@@ -572,7 +607,7 @@ class Exec_03 {
         assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
     }
     @Test
-    fun gg_02_status_err() {
+    fun ii_02_status_err() {
         val out = test("""
             val CO = coro () { nil }
             status(CO)
@@ -580,7 +615,7 @@ class Exec_03 {
         assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
     }
     @Test
-    fun gg_02_status() {
+    fun ii_02_status() {
         val out = test("""
             val CO = coro () { yield(nil) }
             val co = coroutine(CO)
