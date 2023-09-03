@@ -382,18 +382,22 @@ class TTask {
                 "99\n") { out }
     }
 
+
+    ////
+
+
     // THROW
 
     @Test
-    fun dd_throw3_err() {
-        val out = all("""
+    fun ee_12_throw_err() {
+        val out = test("""
             var T
             set T = task () {
                 spawn task () {
-                    yield(nil)
+                    yield(nil) { nil }
                     throw(:error )
                 }()
-                yield(nil)
+                yield(nil) { nil }
             }
             spawn in tasks(), T()
             broadcast in :global, nil
@@ -513,65 +517,14 @@ class TTask {
         assert(out == "10\n") { out }
     }
 
-    // BCAST / BROADCAST
-
-    @Test
-    fun ee_bcast3() {
-        val out = all("""
-            var co1 = spawn (task () {
-                var co2 = spawn (task () {
-                    ${yield()}
-                    throw(:error)
-                })()
-                ${yield()}
-                println(1)
-            })()
-            broadcast in :global, nil
-        """)
-        assert(out == "anon : (lin 10, col 13) : broadcast in :global, nil\n" +
-                "anon : (lin 5, col 21) : throw(:error)\n" +
-                "throw error : uncaught exception\n" +
-                ":error\n") { out }
-    }
-
-    ////
-
-    @Test
-    fun ee_bcast9() {
-        val out = ceu.all(
-            """
-            var tk = task (v) {
-                yield(nil)
-                val v' = yield(nil)
-                throw(:1)
-            }
-            var co1 = spawn tk ()
-            var co2 = spawn tk ()
-            catch err==:1 {
-                func () {
-                    println(1)
-                    broadcast in :global, 1
-                    println(2)
-                    broadcast 2
-                    println(3)
-                    broadcast in :global, 3
-                }()
-            }
-            println(99)
-        """
-        )
-        assert(out == "1\n2\n99\n") { out }
-    }
-
     // BCAST / SCOPE
 
     @Test
-    fun ee_bcast_in1() {
-        val out = ceu.all(
-            """
+    fun jj_05_bcast_in1() {
+        val out = test("""
             var T
             set T = task (v) {
-                do { var ok=false; loop until ok { yield(nil;) if type(evt)/=:x-task { set ok=true } else { nil } } }
+                ${AWAIT()}
                 ;;yield(nil)
                 println(v)
             }
@@ -580,8 +533,7 @@ class TTask {
             var t2
             set t2 = spawn T (2)
             broadcast in t1, nil
-        """
-        )
+        """)
         assert(out == "1\n") { out }
     }
     @Test
@@ -615,23 +567,6 @@ class TTask {
         assert(out == "2\n") { out }
     }
     @Test
-    fun ee_bcast_in5() {
-        val out = ceu.all(
-            """
-            var T
-            set T = task (v) {
-                spawn (task () {
-                    yield(nil)
-                    println(:ok)
-                }) ()
-                broadcast in :global, :ok
-            }
-            spawn T (2)
-        """
-        )
-        assert(out == ":ok\n") { out }
-    }
-    @Test
     fun ee_bcast_in6() {
         val out = ceu.all(
             """
@@ -659,21 +594,10 @@ class TTask {
         )
         assert(out == "1\t:ok\n2\t:ok\n") { out }
     }
-    @Test
-    fun ee_bcast_in7() {
-        val out = all("""
-            spawn (task () {
-                spawn (task () {
-                    yield(nil)
-                    broadcast nil
-                }) ()
-                yield(nil)
-            }) ()
-            broadcast in :global, nil
-            println(1)
-        """)
-        assert(out == "1\n") { out }
-    }
+
+
+
+
     @Test
     fun ee_bcast_in7a() {
         val out = all("""

@@ -539,6 +539,23 @@ class Exec_04 {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun ee_12_bcast() {
+        val out = test("""
+            var co1 = spawn (task () {
+                var co2 = spawn (task () {
+                    ${AWAIT()}
+                    throw(:error)
+                })()
+                ${AWAIT()}
+                println(1)
+            })()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 30, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 15, col 21) : throw(:error)\n" +
+                " v  throw error : :error\n") { out }
+    }
 
     // TASK TERMINATION
 
@@ -647,8 +664,6 @@ class Exec_04 {
         assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
     }
 
-    // MOVE
-
     // ORIG
 
     @Test
@@ -675,5 +690,58 @@ class Exec_04 {
             spawn (func () {nil})
         """)
         assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call\n") { out }
+    }
+    @Test
+    fun jj_04_bcast() {
+        val out = test("""
+            var tk = task (v) {
+                yield(nil) { nil }
+                val v' = yield(nil) { it }
+                throw(:1)
+            }
+            var co1 = spawn tk ()
+            var co2 = spawn tk ()
+            catch it==:1 {
+                func () {
+                    println(1)
+                    broadcast in :global, 1
+                    println(2)
+                    broadcast in :global, 2
+                    println(3)
+                    broadcast in :global, 3
+                }()
+            }
+            println(99)
+        """)
+        assert(out == "1\n2\n99\n") { out }
+    }
+    @Test
+    fun jj_05_bcast_in() {
+        val out = test("""
+            val T = task (v) {
+                spawn (task () {
+                    yield(nil) { nil }
+                    println(:ok)
+                }) ()
+                broadcast in :global, :ok
+            }
+            spawn T(2)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun jj_06_bcast_in() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil) { nil }
+                    broadcast in :global, nil
+                }) ()
+                yield(nil) { nil }
+            }) ()
+            broadcast in :global, nil
+            println(1)
+        """)
+        assert(out == "1\n") { out }
     }
 }

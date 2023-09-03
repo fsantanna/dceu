@@ -181,7 +181,7 @@ fun AWAIT (v:String=""): String {
                 if type(it) == :pointer {
                     false
                 } else {
-                    it
+                    if it { it } else { true }
                 }
             }
         }
