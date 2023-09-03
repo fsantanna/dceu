@@ -990,8 +990,7 @@ fun Coder.main (tags: Tags): String {
     """ // BCAST
     #if CEU >= 4
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
-        CEU_Value ceu_bcast_dyns (CEU_Block* blk, CEU_Dyn* dyn, CEU_Value evt) {
-            // blk is required to signal dyn termination (blk is its enclosing block)
+        CEU_Value ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
             CEU_Value ret = { CEU_VALUE_NIL };
             while (dyn != NULL) {
                 if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe_Task.status==CEU_EXE_STATUS_YIELDED) {
@@ -1004,12 +1003,6 @@ fun Coder.main (tags: Tags): String {
                     if (CEU_ISERR(ret)) {
                         return ret;
                     }
-                    if (dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
-                        ret = ceu_bcast_blocks(blk, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=dyn} });
-                        if (CEU_ISERR(ret)) {
-                            return ret;
-                        }
-                    }
                 }
                 dyn = dyn->Any.hld.next;
             }
@@ -1017,7 +1010,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                CEU_Value ret = ceu_bcast_dyns(blk, blk->dn.dyns, evt);
+                CEU_Value ret = ceu_bcast_dyns(blk->dn.dyns.first, evt);
                 if (CEU_ISERR(ret)) {
                     return ret;
                 }

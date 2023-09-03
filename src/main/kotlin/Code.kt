@@ -103,6 +103,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         // terminated
                         ${isexe.cond{"""
                             ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                            ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });
                         }
                         """}}
                         return ceu_acc;
@@ -856,10 +857,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${(up is Expr.Spawn).cond { """
-                        if (ceu_x_$n.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
-                            ceu_acc = ceu_bcast_blocks($bupc, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=ceu_x_$n.Dyn} });
-                            CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                        }
                         ceu_acc = ceu_x_$n;
                     """ }}
                 } // CALL - close
