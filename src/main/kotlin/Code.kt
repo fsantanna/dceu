@@ -178,6 +178,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
+
+                val loop_body = if (up !is Expr.XLoop) body else """
+                    while (1) { // LOOP | ${up.dump()}
+                        $body
+                    }
+                    CEU_LOOP_${up.n}:
+                """
+
                 """
                 { // BLOCK | ${this.dump()}
                     // CEU_Block ceu_block;
@@ -302,7 +310,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                             else -> ""
                         }}
-                        $body
+                        $loop_body
                     ${(CEU >= 2).cond { "} while (0);" }}
                     // defers execute
                     ${defers[this].cond { it.third }}
@@ -442,15 +450,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.XLoop -> """
-                while (1) { // LOOP | ${this.dump()}
-                    ${this.body.code()}
-                }
-                CEU_LOOP_$n:
-                """
+            is Expr.XLoop -> this.body.code()
             is Expr.XBreak -> """ // XBREAK | ${this.dump()}
-                ${this.e.code()}
-                goto CEU_LOOP_${ups.first(this) { it is Expr.XLoop }!!.n};
+                ${this.cnd.code()}
+                if (ceu_as_bool(ceu_acc)) {
+                    ${this.e.cond { it.code() }}
+                    goto CEU_LOOP_${ups.first(this) { it is Expr.XLoop }!!.n};
+                }
             """
             is Expr.Enum -> ""
             is Expr.Data -> ""

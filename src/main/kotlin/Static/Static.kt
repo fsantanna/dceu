@@ -51,9 +51,13 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.body.traverse()
             }
             is Expr.XBreak -> {
-                if (ups.first(this) { it is Expr.XLoop || it is Expr.Proto } !is Expr.XLoop) {
-                    err(this.tk, "xbreak error : expected enclosing loop")
+                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.XLoop) {
+                    // ok
+                } else {
+                    err(this.tk, "xbreak error : expected parent loop")
                 }
+                this.cnd.traverse()
+                this.e?.traverse()
             }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}

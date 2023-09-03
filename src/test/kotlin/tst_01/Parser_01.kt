@@ -532,6 +532,40 @@ class Parser_01 {
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 7) : expected \"{\" : have \"x\"")
     }
 
+    // BREAK
+
+    @Test
+    fun rr_01_break_err() {
+        val l = lexer("xbreak")
+        val parser = Parser(l)
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 7) : expected \"if\" : have end of file")
+    }
+    @Test
+    fun rr_02_break_err() {
+        val l = lexer("xbreak 1")
+        val parser = Parser(l)
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 8) : expected \"if\" : have \"1\"")
+    }
+    @Test
+    fun rr_03_break_err() {
+        val l = lexer("xbreak (1)")
+        val parser = Parser(l)
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 11) : expected \"if\" : have end of file")
+    }
+    @Test
+    fun rr_04_break_err() {
+        val l = lexer("xbreak (1) if")
+        val parser = Parser(l)
+        assert(trap { parser.expr_1_bin() } == "anon : (lin 1, col 14) : expected expression : have end of file")
+    }
+    @Test
+    fun rr_05_break() {
+        val l = lexer("xbreak (1) if true")
+        val parser = Parser(l)
+        val e = parser.expr() as Expr.XBreak
+        assert(e.tostr() == "xbreak(1) if true") { e.tostr() }
+    }
+
     // NATIVE
 
     @Test

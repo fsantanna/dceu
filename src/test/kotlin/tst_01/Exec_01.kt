@@ -931,7 +931,7 @@ class Exec_01 {
             set t[:c] = 30
             var k = next(t)
             xloop {
-                if (k == nil) { xbreak } else { nil }
+                xbreak if (k == nil)
                 println(k, t[k])
                 set k = next(t,k)
             }
@@ -2461,13 +2461,25 @@ class Exec_01 {
     // LOOP
 
     @Test
-    fun loop0() {
+    fun oo_01_loop_err() {
+        val out = test("""
+            xloop {
+                do {
+                    xbreak if true
+                }
+            }
+            println(:out)
+        """)
+        assert(out == "anon : (lin 4, col 21) : xbreak error : expected parent loop\n") { out }
+    }
+    @Test
+    fun oo_02_loop() {
         val out = test(
             """
             do {
                 xloop {
                     println(:in)
-                    xbreak
+                    xbreak if true
                 }
             }
             println(:out)
@@ -2476,17 +2488,13 @@ class Exec_01 {
         assert(out == ":in\n:out\n") { out }
     }
     @Test
-    fun loop1() {
+    fun oo_03_loop() {
         val out = test(
             """
             var x
             set x = false
             xloop {
-                if x {
-                    xbreak
-                } else {
-                    nil
-                }
+                xbreak if x
                 set x = true
             }
             println(x)
@@ -2495,7 +2503,7 @@ class Exec_01 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun loop2() {
+    fun oo_04_loop() {
         val out = test(
             """
             val f = func (t) {
@@ -2510,7 +2518,7 @@ class Exec_01 {
                 val it = [f, 0]
                 var i = it[0](it)
                 xloop {
-                    if (i == nil) { xbreak } else { nil }
+                    xbreak if (i == nil)
                     println(i)
                     set i = it[0](it)
                 }
@@ -2520,7 +2528,7 @@ class Exec_01 {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun loop2a() {
+    fun oo_05_loop() {
         val out = test(
             """
             val f = func (t) {
@@ -2534,24 +2542,24 @@ class Exec_01 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun loop3() {
+    fun oo_06_loop() {
         val out = test(
             """
-            val v = xloop {if (10) { xbreak(10) } else { nil }}
+            val v = xloop {xbreak if (10)}
             println(v)
         """
         )
         assert(out == "10\n") { out }
     }
     @Test
-    fun loop4() {
+    fun oo_07_loop() {
         val out = test(
             """
             val v1 = xloop {
-                xbreak(10)
+                xbreak if (10)
             }
             val v2 = xloop {
-                xbreak
+                xbreak(nil) if true
             }
             println(v1, v2)
         """
@@ -2559,24 +2567,47 @@ class Exec_01 {
         assert(out == "10\tnil\n") { out }
     }
     @Test
-    fun loop5() {
+    fun oo_08_loop() {
         val out = test("""
             val x = 10
-            println(xloop { xbreak(x) })
+            println(xloop { xbreak if (x) })
         """)
         assert(out == "10\n") { out }
     }
-
     @Test
-    fun loop6_break() {
+    fun oo_09_loop_break() {
         val out = test("""
             xloop {
                 func () {
-                    xbreak
+                    xbreak if true
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : xbreak error : expected enclosing loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : xbreak error : expected parent loop\n") { out }
+    }
+    @Test
+    fun oo_10_loop() {
+        val out = test("""
+            xloop {
+                do {
+                    val t = []
+                    xbreak if true
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 5, col 21) : xbreak error : expected parent loop\n") { out }
+    }
+    @Test
+    fun oo_11_loop() {
+        val out = test("""
+            xloop {
+                val t = []
+                xbreak if true
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // NATIVE
@@ -4266,9 +4297,7 @@ class Exec_01 {
                 var i = n                                                                   
                 var s = 0                                                                   
                 xloop {                                                                      
-                    if i == 0 {                                                             
-                        xbreak(s)                                                            
-                    } else { nil }
+                    xbreak(s) if i == 0
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           

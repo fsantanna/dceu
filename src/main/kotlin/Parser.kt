@@ -248,12 +248,13 @@ class Parser (lexer_: Lexer)
                 Expr.If(tk0, cnd, t, f)
             }
             this.acceptFix("xbreak") -> {
-                val e = if (this.checkFix("(")) {
+                val tk0 = this.tk0 as Tk.Fix
+                val e = if (!this.checkFix("(")) null else {
                     this.expr()
-                } else {
-                    Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy()))
                 }
-                Expr.XBreak(this.tk0 as Tk.Fix, e)
+                this.acceptFix_err("if")
+                val cnd = this.expr()
+                Expr.XBreak(tk0, cnd, e)
             }
             this.acceptFix("xloop") -> Expr.XLoop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
