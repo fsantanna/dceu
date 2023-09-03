@@ -531,7 +531,7 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch {
+            catch true {
                 func () {
                     broadcast in :global, []
                 }()
@@ -609,7 +609,7 @@ class Exec_04 {
     fun gg_03_bcast() {
         val out = test("""
             val T = task (v) {
-                yield(nil)
+                yield(nil) { nil }
                 println(v)                
             }
             spawn T([])
@@ -642,7 +642,7 @@ class Exec_04 {
             println(e)
         """
         )
-        assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
+        assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
     }
 
     // MOVE
