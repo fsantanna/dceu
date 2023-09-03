@@ -87,7 +87,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         int ceu_n,
                         CEU_Value ceu_args[]
                     ) {
-                        CEU_Value ceu_acc;        
+                        CEU_Value ceu_acc;
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
@@ -102,8 +102,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $code
                         // terminated
                         ${isexe.cond{"""
+                            ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             if (!CEU_ISERR(ceu_acc)) {
-                                ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                                 ${(this.tk.str == "task").cond { """
                                     ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
                                 """ }}
@@ -256,6 +256,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${defers[this].cond { it.second }}
                     // pres funcs
                     ${(f_b == null).cond{ pres.joinToString("") }}
+                    
                     ${(CEU >= 2).cond { "do {" }}
                         // main args, func args
                         ${when {
@@ -312,6 +313,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }}
                         $loop_body
                     ${(CEU >= 2).cond { "} while (0);" }}
+                    
                     // defers execute
                     ${defers[this].cond { it.third }}
                     // move up dynamic ceu_acc (return or error)
