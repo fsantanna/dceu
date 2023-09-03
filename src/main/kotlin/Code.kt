@@ -188,11 +188,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             $blkc = ${bupc};
                         """
                         ylds -> """
-                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) NULL } };
+                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
                             $blkc = &ceu_mem->_ceu_block_$n;                                 
                         """
                         else -> """
-                            _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) NULL } };
+                            _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
                             $blkc = &_ceu_block_$n;                                 
                         """
                     }}
@@ -265,7 +265,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         $_idc_ = $blkc;
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
-                                            if (!ceu_hold_chk_set(&$blkc->dn.dyns, $blkc->depth, CEU_HOLD_FLEET, $idc)) {
+                                            if (!ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc)) {
                                                 assert(0 && "TODO"); // restore code below on fail
                                                 //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
                                                 //CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -305,7 +305,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        if (!ceu_hold_chk_set(&$up1->dn.dyns, $up1->depth, CEU_HOLD_FLEET, ceu_acc)) {
+                        if (!ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
                         #if CEU <= 1
                                 // free from this block
@@ -322,7 +322,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // dcls gc-dec
                     ${dcls.map { """
                             if (${it.first}.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld.depth == $blkc->depth));
+                                ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld.block->depth == $blkc->depth));
                             }
                         """ }.joinToString("")}
                     // args gc-dec
@@ -402,7 +402,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // DCL | ${this.dump()}
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + """
-                        if (!ceu_hold_chk_set(&$bupc->dn.dyns, $bupc->depth, ${if (this.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc)) {
+                        if (!ceu_hold_chk_set($bupc, ${if (this.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : incompatible scopes"} };
                             CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                         }
@@ -582,7 +582,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set(&${_idc_}->dn.dyns, ${_idc_}->depth, ${if (dcl.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, $src)) {
+                            if (!ceu_hold_chk_set(${_idc_}, ${if (dcl.tmp) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, $src)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : incompatible scopes"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
