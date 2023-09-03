@@ -455,7 +455,6 @@ fun Coder.main (tags: Tags): String {
                 printf("    hold  = %d\n", v.Dyn->Any.hld.type);
                 printf("    block = %p\n", v.Dyn->Any.hld.block);
                 printf("    depth = %d\n", v.Dyn->Any.hld.block->depth);
-                printf("    &next = %p\n", &v.Dyn->Any.hld.next);
                 printf("    next  = %p\n", v.Dyn->Any.hld.next);
             }
             puts("<<<<<<<<<<<");
@@ -731,11 +730,21 @@ fun Coder.main (tags: Tags): String {
             free(dyn);
         }
         
+        void ceu_block_dump (CEU_Block* blk) {
+            printf(">>> BLOCK: %p\n", blk);
+            CEU_Dyn* cur = blk->dn.dyns.first;
+            while (cur != NULL) {
+                CEU_Value args[] = { ceu_dyn_to_val(cur) };
+                ceu_dump_f(NULL, 1, args);
+                CEU_Dyn* old = cur;
+                cur = old->Any.hld.next;
+            }
+        }
         void ceu_block_free (CEU_Block* blk) {
-            CEU_Dyn* cur = blk->dn.dyns.last;
+            CEU_Dyn* cur = blk->dn.dyns.first;
             while (cur != NULL) {
                 CEU_Dyn* old = cur;
-                cur = old->Any.hld.prev;
+                cur = old->Any.hld.next;
                 ceu_dyn_free(old);
             }
             blk->dn.dyns.first = NULL;
