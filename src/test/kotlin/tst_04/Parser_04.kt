@@ -19,8 +19,8 @@ class Parser_04 {
     fun aa_02_task() {
         val l = lexer("""
             set t = task (v) {
-                set v = yield((1)) 
-                yield((2)) 
+                set v = yield((1)) { nil }
+                yield((2)) { nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -30,8 +30,12 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (task (v) {
-            set v = yield(1)
-            yield(2)
+            set v = yield(1) {
+            nil
+            }
+            yield(2) {
+            nil
+            }
             })
             coroutine(t)
             set v = resume a(1)

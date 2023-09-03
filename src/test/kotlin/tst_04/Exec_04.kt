@@ -172,7 +172,7 @@ class Exec_04 {
             """
             spawn task () {
                 println(1)
-                yield(nil)
+                yield(nil) { nil }
                 println(2)
             }()
             broadcast in :global, nil
@@ -184,9 +184,9 @@ class Exec_04 {
     fun dd_03_bcast() {
         val out = test("""
             var tk = task (v) {
-                val e1 = yield(nil)
+                val e1 = yield(nil) { it }
                 println(:1, e1)
-                val e2 = yield(nil)
+                val e2 = yield(nil) { it }
                 println(:2, e2)
             }
             spawn tk ()
@@ -201,9 +201,9 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task (v) {
-                val e1 = yield(nil)
+                val e1 = yield(nil) { it }
                 println(v,e1)
-                var e2 = yield(nil)
+                var e2 = yield(nil) { it }
                 println(v,e2)
             }
             var co1 = spawn tk(:1)
@@ -220,10 +220,10 @@ class Exec_04 {
         val out = test("""
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
-                    yield(nil)  ;; awakes from outer bcast
+                    yield(nil) { nil }  ;; awakes from outer bcast
                     println(2)
                 }) ()
-                yield(nil)      ;; awakes from co2 termination
+                yield(nil) { nil }      ;; awakes from co2 termination
                 println(1)
             }) ()
             broadcast in :global, nil
@@ -236,7 +236,7 @@ class Exec_04 {
             var tk
             set tk = task (v) {
                 println(v)
-                val e = yield(nil)
+                val e = yield(nil) { it }
                 println(e)
             }
             var co = spawn(tk)(1)
@@ -258,7 +258,7 @@ class Exec_04 {
     fun dd_08_bcast() {
         val out = test("""
             val T = task () {
-                yield(nil)
+                yield(nil) { nil }
                 println(:ok)
             }
             var t = spawn T()
@@ -273,8 +273,8 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task () {
-                yield(nil)
-                val e = yield(nil)
+                yield(nil) { nil }
+                val e = yield(nil) { it }
                 println(e)                
             }
             var co1 = spawn (tk) ()
@@ -293,16 +293,16 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task () {
-                val e1 = yield(nil)
+                val e1 = yield(nil) { it }
                 var e2
                 do {
                     println(e1)
-                    set e2 = yield(nil)
+                    set e2 = yield(nil) { it }
                     println(e2)
                 }
                 do {
                     println(e2)
-                    val e3 = yield(nil)
+                    val e3 = yield(nil) { it }
                     println(e3)
                 }
             }
@@ -332,7 +332,7 @@ class Exec_04 {
         val out = test("""
             var tk
             set tk = task (v) {
-                yield(nil)
+                yield(nil) { nil }
                 val e = ${AWAIT()}
                 println(e)                
             }
@@ -381,7 +381,7 @@ class Exec_04 {
         val out = test("""
             catch :xxx {
                 spawn task () {
-                    yield(nil)
+                    yield(nil) { nil }
                 }()
                 spawn task () {
                     throw(:xxx)
@@ -406,7 +406,7 @@ class Exec_04 {
     fun ee_03_throw() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 throw(:err)
             }()
             broadcast in :global, nil
@@ -419,7 +419,7 @@ class Exec_04 {
     fun ee_04_throw() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 throw(:err)
             }()
             broadcast in :global, nil
@@ -433,10 +433,10 @@ class Exec_04 {
         val out = test("""
             spawn task () {
                 spawn task () {
-                    yield(nil)
+                    yield(nil) { nil }
                     throw(:err)
                 }()
-                yield(nil)
+                yield(nil) { nil }
             }()
             broadcast in :global, nil
         """)
@@ -448,7 +448,7 @@ class Exec_04 {
     fun ee_06_throw() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 throw(:err)
             }()
             spawn task () {
@@ -463,7 +463,7 @@ class Exec_04 {
     fun ee_07_throw() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 throw(:err)
             }()
             spawn task () {
@@ -478,12 +478,12 @@ class Exec_04 {
     fun ee_08_throw() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 nil
             }()
             spawn task () {
-                yield(nil)
-                yield(nil)
+                yield(nil) { nil }
+                yield(nil) { nil }
                 throw(:err)
             }()
             broadcast in :global, nil
@@ -497,7 +497,7 @@ class Exec_04 {
     fun ee_0X_bcast() {
         val out = test("""
             val T = task (v) {
-                val e = yield(nil)
+                val e = yield(nil) { it }
                 println(e)                
             }
             spawn T(10)
@@ -516,7 +516,7 @@ class Exec_04 {
     fun ff_01_term() {
         val out = test("""
             spawn task () {
-                val e = yield(nil)
+                val e = yield(nil) { it }
                 println(:ok, e)
             }()
             spawn task () {
@@ -529,13 +529,13 @@ class Exec_04 {
     fun ff_02_term() {
         val out = test("""
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 println(:1)
-                val e = yield(nil)
+                val e = yield(nil) { it }
                 println(:ok, e)
             }()
             spawn task () {
-                yield(nil)
+                yield(nil) { nil }
                 println(:2)
             }()
             broadcast in :global, nil
@@ -549,7 +549,7 @@ class Exec_04 {
     fun gg_01_scope() {
         val out = test("""
             val T = task (v) {
-                val e = yield(nil)
+                val e = yield(nil) { it }
                 println(e)                
             }
             spawn T(10)
