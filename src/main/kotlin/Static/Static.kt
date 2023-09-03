@@ -68,13 +68,27 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Defer  -> this.body.traverse()
 
             is Expr.Yield  -> {
-                if (!ups.inexe(this)) {
-                    err(this.tk, "yield error : expected enclosing coro" + (if (CEU<=3) "" else "or task"))
+                when {
+                    !ups.inexe(this)
+                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else "or task"))
+                    ups.any(this) { cnd ->
+                        ups.pub[cnd].let { catch ->
+                            ((catch is Expr.Catch) && catch.cnd==cnd)
+                        }
+                    }
+                        -> err(this.tk, "yield error : unexpected enclosing catch")
+                    ups.any(this) { blk ->
+                        ups.pub[blk].let { yld ->
+                            ((yld is Expr.Yield) && yld.blk==blk)
+                        }
+                    }
+                        -> err(this.tk, "yield error : unexpected enclosing yield")
                 }
                 ups.all_until(this) { it is Expr.Proto }
                     .filter  { it is Expr.Do }              // all blocks up to proto
                     .forEach { ylds.add(it as Expr.Do) }
                 this.arg.traverse()
+                this.blk.traverse()
             }
             is Expr.Resume -> {
                 this.call.traverse()

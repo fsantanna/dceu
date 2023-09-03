@@ -316,7 +316,12 @@ class Parser (lexer_: Lexer)
             (CEU>=2 && this.acceptFix("catch")) -> Expr.Catch(this.tk0 as Tk.Fix, this.expr(), this.block())
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
-            (CEU>=3 && this.acceptFix("yield")) -> Expr.Yield(this.tk0 as Tk.Fix, this.expr_in_parens(CEU<10, CEU>10)!!)
+            (CEU>=3 && this.acceptFix("yield")) -> {
+                Expr.Yield(this.tk0 as Tk.Fix,
+                    this.expr_in_parens(CEU<99, CEU>99)!!,
+                    this.block()
+                )
+            }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val call = this.expr_2_pre()

@@ -11,7 +11,7 @@ fun Expr.coexists (): Boolean {
 
         is Expr.Catch  -> this.cnd?.coexists() ?: false
 
-        is Expr.Yield  -> this.arg.coexists()
+        is Expr.Yield  -> this.arg.coexists() || this.blk.coexists()
         is Expr.Resume -> this.call.coexists()
 
         is Expr.Spawn  -> this.call.coexists()
@@ -100,7 +100,12 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
         """
         is Expr.Defer -> this.body.mem(sta, defers)
 
-        is Expr.Yield -> this.arg.mem(sta, defers)
+        is Expr.Yield -> """
+            $union { // YIELD
+                ${this.arg.mem(sta, defers)}
+                ${this.blk.mem(sta, defers)}
+            };
+        """
         is Expr.Resume -> this.call.mem(sta, defers)
 
         is Expr.Spawn -> this.call.mem(sta, defers)

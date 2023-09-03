@@ -31,11 +31,21 @@ class Parser_03 {
     // COROUTINE / YIELD / RESUME
 
     @Test
-    fun bb_01_coro() {
+    fun bb_01_yield_err() {
+        val l = lexer("""
+            yield(1)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
+        //val e = parser.expr()
+        //assert(e.tostr() == "yield(1)")
+    }
+    @Test
+    fun bb_02_coro() {
         val l = lexer("""
             set t = coro (v) {
-                set v = yield((1)) 
-                yield((2)) 
+                set v = yield((1)) { it }
+                yield((2)) { nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -45,8 +55,12 @@ class Parser_03 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (coro (v) {
-            set v = yield(1)
-            yield(2)
+            set v = yield(1) {
+            it
+            }
+            yield(2) {
+            nil
+            }
             })
             coroutine(t)
             set v = resume a(1)
@@ -55,7 +69,7 @@ class Parser_03 {
         """.trimIndent()) { e.tostr() }
     }
     @Test
-    fun bb_02_resume_err() {
+    fun bb_03_resume_err() {
         val l = lexer("""
             resume a
         """.trimIndent())
@@ -63,7 +77,7 @@ class Parser_03 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid resume : expected call")
     }
     @Test
-    fun bb_03_yield_err() {
+    fun bb_04_yield_err() {
         val l = lexer("""
             yield
             1
@@ -73,14 +87,15 @@ class Parser_03 {
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
     @Test
-    fun bb_04_yield_err() {
+    fun bb_05_yield_err() {
         val l = lexer("""
             yield
             (1)
+            { nil }
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-        assert(e.tostr() == "yield(1)")
+        assert(e.tostr() == "yield(1) {\nnil\n}") { e.tostr() }
     }
 }

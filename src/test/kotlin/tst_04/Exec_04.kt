@@ -364,14 +364,14 @@ class Exec_04 {
             ;;catch {
                 func () {
                     println(:2)
-                    broadcast in :global, [20]
+                    broadcast in :global, 20
                     println(:3)
-                    broadcast in :global, @[(30,30)]
+                    broadcast in :global, 30
                 }()
             ;;}
         """
         )
-        assert(out == ":1\n10\n10\n:2\n[20]\n[20]\n:3\n@[(30,30)]\n@[(30,30)]\n") { out }
+        assert(out == ":1\n10\n10\n:2\n20\n20\n:3\n30\n30\n") { out }
     }
 
     // THROW / CATCH
@@ -543,7 +543,7 @@ class Exec_04 {
         assert(out.contains(":1\n:2\n:ok\tpointer: 0x")) { out }
     }
 
-    // SCOPE
+    // SCOPE / BCAST
 
     @Test
     fun gg_01_scope() {
@@ -559,7 +559,34 @@ class Exec_04 {
         """)
         assert(out == "[]\n") { out }
     }
-
+    @Test
+    fun gg_02_bcast() {
+        val out = test(
+            """
+            var tk
+            set tk = task (v) {
+                println(v)
+                val e1 = ${AWAIT()}
+                println(e1)                
+                val e2 = ${AWAIT()}
+                println(e2)                
+            }
+            println(:1)
+            var co1 = spawn (tk) (10)
+            var co2 = spawn (tk) (10)
+            val e = catch true {
+                func () {
+                    println(:2)
+                    broadcast in :global, [20]
+                    println(:3)
+                    broadcast in :global, @[(30,30)]
+                }()
+            }
+            println(e)
+        """
+        )
+        assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
+    }
 
     // MOVE
 

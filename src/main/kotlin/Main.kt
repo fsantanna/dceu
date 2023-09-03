@@ -116,7 +116,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val call: Expr): Expr(N++, tk_)

@@ -12,7 +12,15 @@ class Ups (outer: Expr.Do) {
         }
     }
     fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
-        return this.all_until(e,cnd).firstOrNull()
+        val up = pub[e]
+        return when {
+            cnd(e) -> e
+            (up == null) -> null
+            else -> this.first(up,cnd)
+        }
+    }
+    fun any (e: Expr, cnd: (Expr)->Boolean): Boolean {
+        return this.first(e,cnd) != null
     }
     fun first_block (e: Expr): Expr.Do? {
         return this.first(e) { it is Expr.Do } as Expr.Do?
@@ -49,7 +57,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Catch  -> this.map(listOfNotNull(this.cnd) + listOf(this.body))
             is Expr.Defer  -> this.map(listOf(this.body))
 
-            is Expr.Yield  -> this.map(listOf(this.arg))
+            is Expr.Yield  -> this.map(listOf(this.arg) + listOf(this.blk))
             is Expr.Resume -> this.map(listOf(this.call))
 
             is Expr.Spawn  -> this.map(listOf(this.call))

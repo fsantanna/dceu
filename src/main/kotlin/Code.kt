@@ -104,7 +104,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${isexe.cond{"""
                             if (!CEU_ISERR(ceu_acc)) {
                                 ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                                ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });
+                                ${(this.tk.str == "task").cond { """
+                                    ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
+                                """ }}
                             }
                         }
                         """}}
@@ -275,10 +277,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             }
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
-                                                 if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
                                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
                                                     CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                                 }
+                                                }
                                             """ }}
                                         } else {
                                             $idc = (CEU_Value) { CEU_VALUE_NIL };
@@ -386,7 +388,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }                        
                     """ }}
                     // check free
-                    ${(CEU>=3 && (f_b is Expr.Do) && ups.first(this) { it is Expr.Proto && it.tk.str!="func" } != null).cond { """
+                    ${(CEU>=3 && (f_b is Expr.Do) && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
                         CEU_CHECK_FREE()
                     """ }}
                 }
@@ -511,24 +513,25 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.arg.code()}
                     ceu_frame->exe->pc = $n;      // next resume
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
-                #if 0
-                    if (!ceu_block_chk_set(&ceu_acc, &ceu_frame->up_block->dn_dyns, CEU_HOLD_NON)) {
-                        CEU_THROW_DO_MSG(CEU_ERR_ERROR, continue, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : yield error : incompatible scopes");
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : incompatible scopes"} };
+                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
-                #endif
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // (b/c of CEU_CHECK_FREE)
                     CEU_CHECK_FREE();
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
+                    CEU_Value ceu_it = (CEU_Value) { CEU_VALUE_NIL };
                     if (ceu_n == 0) {
                         // no argument
                     } else {
-                        ceu_acc = ceu_args[0];
-                         if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                         }
+                        ceu_it = ceu_args[0];
+                    }
+                    ${this.blk.code()}
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
+                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                 }
                 """
