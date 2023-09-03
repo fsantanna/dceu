@@ -213,7 +213,7 @@ class Exec_04 {
             broadcast in :global, 3
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains(":2\t1\n:1\t1\n:2\t2\n:1\tpointer: 0x")) { out }
+        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\tpointer: 0x")) { out }
     }
     @Test
     fun dd_05_bcast() {
@@ -531,16 +531,16 @@ class Exec_04 {
             spawn task () {
                 yield(nil)
                 println(:1)
+                val e = yield(nil)
+                println(:ok, e)
             }()
             spawn task () {
                 yield(nil)
                 println(:2)
-                val e = yield(nil)
-                println(:ok, e)
             }()
             broadcast in :global, nil
         """)
-        assert(out.contains(":2\n:1\n:ok\tpointer: 0x")) { out }
+        assert(out.contains(":1\n:2\n:ok\tpointer: 0x")) { out }
     }
 
     // SCOPE

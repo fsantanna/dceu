@@ -102,8 +102,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $code
                         // terminated
                         ${isexe.cond{"""
-                            ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                            ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });
+                            if (!CEU_ISERR(ceu_acc)) {
+                                ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });
+                            }
                         }
                         """}}
                         return ceu_acc;

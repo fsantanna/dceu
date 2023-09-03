@@ -991,8 +991,8 @@ fun Coder.main (tags: Tags): String {
     #if CEU >= 4
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         CEU_Value ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
-            CEU_Value ret = { CEU_VALUE_NIL };
             while (dyn != NULL) {
+                CEU_Value ret;
                 if (dyn->Any.type==CEU_VALUE_EXE_TASK && dyn->Exe_Task.status==CEU_EXE_STATUS_YIELDED) {
                     ret = ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
                     if (CEU_ISERR(ret)) {
@@ -1006,7 +1006,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 dyn = dyn->Any.hld.next;
             }
-            return ret;
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
