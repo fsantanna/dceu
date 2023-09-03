@@ -492,9 +492,23 @@ class Exec_04 {
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
-
     @Test
-    fun ee_0X_bcast() {
+    fun ee_09_bcast() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+                throw(:err)
+            }
+            spawn T()
+            spawn T()
+            broadcast in :global, nil
+        """)
+        assert(out == " |  anon : (lin 8, col 13) : broadcast in :global, nil\n" +
+                " |  anon : (lin 4, col 17) : throw(:err)\n" +
+                " v  throw error : :err\n") { out }
+    }
+    @Test
+    fun ee_10_bcast() {
         val out = test("""
             val T = task (v) {
                 val e = yield(nil) { it }
@@ -506,6 +520,22 @@ class Exec_04 {
                     broadcast in :global, []
                 }()
             ;;}
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun ee_11_bcast() {
+        val out = test("""
+            val T = task (v) {
+                val e = yield(nil) { it }
+                println(e)                
+            }
+            spawn T(10)
+            catch {
+                func () {
+                    broadcast in :global, []
+                }()
+            }
         """)
         assert(out == "[]\n") { out }
     }
@@ -561,6 +591,33 @@ class Exec_04 {
     }
     @Test
     fun gg_02_bcast() {
+        val out = test("""
+            val T = task () {
+                val e = yield(nil) { it }
+                println(e)
+                yield(nil) { nil }
+            }
+            spawn T()
+            spawn T()
+            broadcast in :global, []
+        """)
+        assert(out == "[]\n" +
+                " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
+                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun gg_03_bcast() {
+        val out = test("""
+            val T = task (v) {
+                yield(nil)
+                println(v)                
+            }
+            spawn T([])
+        """)
+        assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun gg_04_bcast() {
         val out = test(
             """
             var tk

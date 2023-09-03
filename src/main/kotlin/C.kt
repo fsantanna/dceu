@@ -718,9 +718,6 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
         #endif
-                    if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
-                        dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
-                    }
                     free(dyn->Exe.mem);
                     break;
         #endif
@@ -741,14 +738,31 @@ fun Coder.main (tags: Tags): String {
             }
         }
         void ceu_block_free (CEU_Block* blk) {
-            CEU_Dyn* cur = blk->dn.dyns.first;
-            while (cur != NULL) {
-                CEU_Dyn* old = cur;
-                cur = old->Any.hld.next;
-                ceu_dyn_free(old);
+            #if CEU >= 3
+            // first finalize EXE
+            for (
+                CEU_Dyn* cur = blk->dn.dyns.first;
+                cur != NULL;
+                cur = cur->Any.hld.next
+            ) {
+                if (cur->Any.type == CEU_VALUE_EXE_CORO CEU4(|| cur->Any.type==CEU_VALUE_EXE_TASK)) { 
+                    if (cur->Exe.status != CEU_EXE_STATUS_TERMINATED) {
+                        cur->Exe.frame.clo->proto(&cur->Exe.frame, CEU_ARG_FREE, NULL);
+                    }
+                }
             }
-            blk->dn.dyns.first = NULL;
-            blk->dn.dyns.last  = NULL;
+            #endif
+            // then free mem
+            {
+                CEU_Dyn* cur = blk->dn.dyns.first;
+                while (cur != NULL) {
+                    CEU_Dyn* old = cur;
+                    cur = old->Any.hld.next;
+                    ceu_dyn_free(old);
+                }
+                blk->dn.dyns.first = NULL;
+                blk->dn.dyns.last  = NULL;
+            }
         }
     """ +
     """ // HOLD / DROP
