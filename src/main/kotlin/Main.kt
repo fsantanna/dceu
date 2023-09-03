@@ -177,11 +177,12 @@ fun AND (v1:String, v2:String): String {
 fun AWAIT (v:String=""): String {
     return """
         xloop {
-            val e = yield(nil)
-            if type(e) /= :pointer {
-                xbreak(e)
-            } else {
-                nil
+            xbreak if yield(nil) {
+                if type(it) == :pointer {
+                    false
+                } else {
+                    it
+                }
             }
         }
     """
