@@ -180,10 +180,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .map    { it.idc(0) }
 
                 val loop_body = if (up !is Expr.XLoop) body else """
-                    while (1) { // LOOP | ${up.dump()}
+                    // LOOP | ${up.dump()}
+                    CEU_LOOP_START_${up.n}:
                         $body
-                    }
-                    CEU_LOOP_${up.n}:
+                        goto CEU_LOOP_START_${up.n};
+                    CEU_LOOP_STOP_${up.n}:
                 """
 
                 """
@@ -457,7 +458,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
                     ${this.e.cond { it.code() }}
-                    goto CEU_LOOP_${ups.first(this) { it is Expr.XLoop }!!.n};
+                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.XLoop }!!.n};
                 }
             """
             is Expr.Enum -> ""
