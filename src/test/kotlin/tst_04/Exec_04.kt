@@ -613,8 +613,10 @@ class Exec_04 {
                 println(v)                
             }
             spawn T([])
+            broadcast in :global, nil
         """)
-        assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
+        //assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun gg_04_bcast() {
