@@ -217,7 +217,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (f_b is Expr.Proto && f_b.tk.str == "task") -> """
                             ceu_frame->exe_task->dn_block = $blkc;                        
                         """
-                        (f_b is Expr.Do && !isvoid) -> """
+                        (f_b !is Expr.Proto && !isvoid) -> """
                             $bupc->dn.block = $blkc;
                         """
                         else -> ""
@@ -358,7 +358,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (f_b is Expr.Proto && f_b.tk.str == "task") -> """
                             ceu_frame->exe_task->dn_block = NULL;                        
                         """
-                        (f_b is Expr.Do && !isvoid) -> """
+                        (f_b !is Expr.Proto && !isvoid) -> """
                             $bupc->dn.block = NULL;
                         """
                         else -> ""
