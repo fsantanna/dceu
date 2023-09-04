@@ -44,6 +44,13 @@ class Exec_04 {
         """)
         assert(out == " v  anon : (lin 3, col 13) : call error : expected function\n") { out }
     }
+    @Test
+    fun aa_05_yield_err() {
+        val out = test("""
+            yield(nil) { nil }
+        """)
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+    }
 
     // SPAWN
 
@@ -664,10 +671,30 @@ class Exec_04 {
         assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
     }
 
+    // DROP / MOVE / OUT
+
+    @Test
+    fun jj_0X_task_nest() {
+        val out = test("""
+            spawn task (v1) {
+                spawn task (v2) {
+                    spawn task (v3) {
+                        println(v1,v2,v3)
+                        nil
+                    }(3)
+                }(2)
+            }(1)
+        """)
+        assert(out == "1\t2\t3\n" +
+                " |  anon : (lin 2, col 19) : (task (v1) { spawn (task (v2) { spawn (task (...)\n" +
+                " |  anon : (lin 3, col 23) : (task (v2) { spawn (task (v3) { println(v1,v2...)\n" +
+                " v  anon : (lin 3, col 33) : block escape error : incompatible scopes\n") { out }
+    }
+
     // ORIG
 
     @Test
-    fun jj_00_spawn() {
+    fun zz_00_spawn() {
         val out = test("""
             var T
             set T = task (x,y) {
@@ -678,21 +705,21 @@ class Exec_04 {
         assert(out == "1\t2\n") { out }
     }
     @Test
-    fun jj_02_spawn_err() {
+    fun zz_02_spawn_err() {
         val out = test("""
             spawn (func () {nil}) ()
         """)
         assert(out == " v  anon : (lin 2, col 36) : spawn error : expected task\n") { out }
     }
     @Test
-    fun jj_03_spawn_err() {
+    fun zz_03_spawn_err() {
         val out = test("""
             spawn (func () {nil})
         """)
         assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call\n") { out }
     }
     @Test
-    fun jj_04_bcast() {
+    fun zz_04_bcast() {
         val out = test("""
             var tk = task (v) {
                 yield(nil) { nil }
@@ -716,7 +743,7 @@ class Exec_04 {
         assert(out == "1\n2\n99\n") { out }
     }
     @Test
-    fun jj_05_bcast_in() {
+    fun zz_05_bcast_in() {
         val out = test("""
             val T = task (v) {
                 spawn (task () {
@@ -730,7 +757,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun jj_06_bcast_in() {
+    fun zz_06_bcast_in() {
         val out = test("""
             spawn (task () {
                 spawn (task () {

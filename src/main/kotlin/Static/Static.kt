@@ -30,6 +30,13 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 //  ylds.add(this)
                 //}
                 this.es.forEach { it.traverse() }
+                if (ylds.contains(this)) {
+                    vars.blk_to_dcls[this]?.forEach {
+                        if (it.tmp) {
+                            err(it.tk, "invalid declaration : \":tmp\" across yield")
+                        }
+                    }
+                }
             }
             is Expr.Dcl    -> {
                 unused.add(this)
@@ -79,7 +86,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Yield  -> {
                 when {
                     !ups.inexe(this)
-                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else "or task"))
+                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                     ups.any(this) { cnd ->
                         ups.pub[cnd].let { catch ->
                             ((catch is Expr.Catch) && catch.cnd==cnd)

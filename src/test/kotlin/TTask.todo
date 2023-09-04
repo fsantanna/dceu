@@ -18,23 +18,6 @@ class TTask {
         assert(out.contains("x-coro: 0x")) { out }
     }
     @Test
-    fun aa_task17_nest_err() {
-        val out = all("""
-            spawn task (v1) {
-                spawn task (v2) {
-                    spawn task (v3) {
-                        println(v1,v2,v3)
-                        nil
-                    }(3)
-                }(2)
-            }(1)
-        """)
-        ////assert(out == "1\t2\t3\n") { out }
-        //assert(out == "anon : (lin 2, col 19) : task (v1) { spawn task (v2) { spawn task (v3)...)\n" +
-        //        "anon : (lin 3, col 23) : task (v2) { spawn task (v3) { nil }(3) }(2)\n" +
-        //        "anon : (lin 3, col 33) : set error : incompatible scopes\n:error\n") { out }
-    }
-    @Test
     fun aa_task19_self_escape_err() {
         val out = all("""
             var T1 = coro (co) {
@@ -52,16 +35,16 @@ class TTask {
                 ":error\n") { out }
     }
     @Test
-    fun todo_aa_task19a_self_escape() {
-        val out = all("""
+    fun zz_07_self_escape() {
+        val out = test("""
             val T1 = task (co) {
                 println(:3)
-                yield(nil)
+                yield(nil) { nil }
                 println(:999)
             }
-            var T2 = task () {
+            var T2 = coro () {
                 println(:2)
-                yield(spawn T1(task))
+                yield(spawn T1(task)) { nil }
                 println(:999)
             }
             var t2 = coroutine(T2)
@@ -103,16 +86,6 @@ class TTask {
             task
         """)
         assert(out == "anon : (lin 2, col 13) : task error : missing enclosing task") { out }
-    }
-    @Test
-    fun aa_25_yield_tmp() {
-        val out = all("""
-            val F = coro () {
-                val :tmp x
-                yield(nil)
-            }
-        """)
-        assert(out == "anon : (lin 3, col 17) : invalid declaration : unsafe \":tmp\"") { out }
     }
 
     // SPAWN

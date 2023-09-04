@@ -449,6 +449,16 @@ class Exec_03 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun ee_08_yield_tmp() {
+        val out = test("""
+            val F = coro () {
+                val :tmp x
+                yield(nil) { nil }
+            }
+        """)
+        assert(out == "anon : (lin 3, col 17) : invalid declaration : \":tmp\" across yield\n") { out }
+    }
 
     // DROP / MOVE / OUT
 
