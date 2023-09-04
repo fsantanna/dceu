@@ -211,17 +211,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // link task.dn_block = me
-                    ${(f_b is Expr.Proto && f_b.tk.str == "task").cond { """
-                        ceu_frame->exe_task->dn_block = $blkc;                        
-                    """
-                    }}
                     // link up.dn.block = me
-                    ${(CEU>=4 && !isvoid).cond {
-                        if (f_b is Expr.Proto) {
-                            "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
-                        } else {
-                            "$bupc->dn.block = $blkc;"
-                        }
+                    ${when {
+                        (CEU < 4) -> ""
+                        (f_b is Expr.Proto && f_b.tk.str == "task") -> """
+                            ceu_frame->exe_task->dn_block = $blkc;                        
+                        """
+                        isvoid -> ""
+                        else -> """
+                            $bupc->dn.block = $blkc;
+                        """ 
                     }}
                     // main args, func args
                     ${when {
@@ -352,13 +351,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }.joinToString("")}
                     """}}
+                    // unlink task.dn_block = me
                     // unlink up.dn.block = me
-                    ${(CEU>=4 && !isvoid).cond {
-                        if (f_b is Expr.Proto) {
-                            "//ceu_x->Bcast.X.dn_block = &ceu_mem->block_$n;"
-                        } else {
-                            "$bupc->dn.block = NULL;"
-                        }
+                    ${when {
+                        (CEU < 4) -> ""
+                        (f_b is Expr.Proto && f_b.tk.str == "task") -> """
+                            ceu_frame->exe_task->dn_block = NULL;                        
+                        """
+                        isvoid -> ""
+                        else -> """
+                            $bupc->dn.block = NULL;
+                        """
                     }}
                     // uncaught throw
                     ${(f_b == null).cond {
