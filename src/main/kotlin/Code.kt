@@ -217,10 +217,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (f_b is Expr.Proto && f_b.tk.str == "task") -> """
                             ceu_frame->exe_task->dn_block = $blkc;                        
                         """
-                        isvoid -> ""
-                        else -> """
+                        (f_b is Expr.Do && !isvoid) -> """
                             $bupc->dn.block = $blkc;
-                        """ 
+                        """
+                        else -> ""
                     }}
                     // main args, func args
                     ${when {
@@ -358,10 +358,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (f_b is Expr.Proto && f_b.tk.str == "task") -> """
                             ceu_frame->exe_task->dn_block = NULL;                        
                         """
-                        isvoid -> ""
-                        else -> """
+                        (f_b is Expr.Do && !isvoid) -> """
                             $bupc->dn.block = NULL;
                         """
+                        else -> ""
                     }}
                     // uncaught throw
                     ${(f_b == null).cond {
