@@ -8,6 +8,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     val code: String = outer.code()
 
     fun Expr.idc (pre: String): String {
+        return if (sta.ylds.contains(ups.first_block(this)!!)) {
+            "(ceu_mem->${pre}_${this.n})"
+        } else {
+            "ceu_${pre}_${this.n}"
+        }
+    }
+    fun Expr.Do.idc (pre: String): String {
         return if (sta.ylds.contains(this)) {
             "(ceu_mem->ceu_${pre}_${this.n})"
         } else {
@@ -28,13 +35,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val idc = this.id.str.idc()
                 Pair(idc, "_${idc}_")
             }
-        }
-    }
-    fun Expr.Defer.idc (): String {
-        return if (sta.ylds.contains(ups.first_block(this))) {
-            "(ceu_mem->defer_${this.n})"
-        } else {
-            "ceu_defer_${this.n}"
         }
     }
 
@@ -493,7 +493,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
             is Expr.Defer -> {
-                val idc = this.idc()
+                val idc = this.idc("defer")
                 val (ns,ini,end) = defers.getOrDefault(ups.first_block(this)!!, Triple(mutableListOf(),"",""))
                 val inix = """
                     ${(!sta.ylds.contains(ups.first_block(this))).cond {
