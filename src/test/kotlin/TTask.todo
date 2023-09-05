@@ -398,69 +398,6 @@ class TTask {
                 "anon : (lin 3, col 30) : broadcast error : invalid target\n:error\n") { out }
     }
     @Test
-    fun dd_throw7() {
-        val out = all("""
-            var co
-            set co = spawn (task () {
-                catch :e1 {
-                    coroutine (coro () {
-                        yield(nil)
-                        throw(:e1)
-                    })()
-                    loop {
-                        yield(nil)
-                    }
-                }
-                println(:e1)
-                yield(nil)
-                throw(:e2)
-            })()
-            catch :e2 {
-                broadcast in :global, nil
-                broadcast in :global, nil
-                println(99)
-            }
-            println(:e2)
-        """)
-        assert(out == ":e1\n:e2\n") { out }
-    }
-    @Test
-    fun dd_throw8() {
-        val out = ceu.all(
-            """
-            var T
-            set T = task () {
-                catch err==:e1 {
-                    spawn task () {
-                        yield(nil)
-                        throw(:e1)
-                        println(:no)
-                    } ()
-                    loop { yield(nil) }
-                }
-                println(:ok1)
-                throw(:e2)
-                println(:no)
-            }
-            spawn (task () {
-                catch :e2 {
-                    spawn T()
-                    loop { yield(nil) }
-                }
-                println(:ok2)
-                throw(:e3)
-                println(:no)
-            }) ()
-            catch :e3 {
-                broadcast in :global, nil
-                println(:no)
-            }
-            println(:ok3)
-        """
-        )
-        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
-    }
-    @Test
     fun dd_throw9_fake() {
         val out = all("""
             catch err==:err {

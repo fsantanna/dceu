@@ -771,4 +771,91 @@ class Exec_04 {
         """)
         assert(out == "1\n") { out }
     }
+    @Test
+    fun zz_07_throw() {
+        val out = test("""
+            var co
+            set co = spawn (task () {
+                catch :e1 {
+                    coroutine (coro () {
+                        yield(nil) { nil }
+                        throw(:e1)
+                    })()
+                    xloop {
+                        yield(nil) { nil }
+                    }
+                }
+                println(:e1)
+                yield(nil) { nil }
+                throw(:e2)
+            })()
+            catch :e2 {
+                broadcast in :global, nil
+                broadcast in :global, nil
+                println(99)
+            }
+            println(:e2)
+        """)
+        assert(out == ":e1\n:e2\n") { out }
+    }
+    @Test
+    fun zz_08_throw() {
+        val out = test(
+            """
+            spawn task () {
+                catch it==:e1 {
+                    spawn task () {
+                        yield(nil) { nil }
+                        println(222)
+                        throw(:e1)
+                    } ()
+                    xloop { yield(nil) { nil } }
+                }
+                println(333)
+            } ()
+            catch true {
+                println(111)
+                broadcast in :global, nil
+            }
+            println(:END)
+        """
+        )
+        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
+    }
+    @Test
+    fun zz_09_throw() {
+        val out = test(
+            """
+            var T
+            set T = task () {
+                catch it==:e1 {
+                    spawn task () {
+                        yield(nil) { nil }
+                        throw(:e1)
+                        println(:no)
+                    } ()
+                    xloop { yield(nil) { nil } }
+                }
+                println(:ok1)
+                throw(:e2)
+                println(:no)
+            }
+            spawn (task () {
+                catch :e2 {
+                    spawn T()
+                    xloop { yield(nil) { nil } }
+                }
+                println(:ok2)
+                throw(:e3)
+                println(:no)
+            }) ()
+            catch :e3 {
+                broadcast in :global, nil
+                println(:no)
+            }
+            println(:ok3)
+        """
+        )
+        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
+    }
 }
