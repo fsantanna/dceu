@@ -534,7 +534,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
                     if (ceu_n == CEU_ARG_FREE) {
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // TODO: why?
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
                         continue;
                     }
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
