@@ -563,6 +563,35 @@ class Exec_04 {
                 " |  anon : (lin 15, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
+    @Test
+    fun ee_14_throw() {     // catch from nesting and broadcast
+        val out = test(
+            """
+            spawn task () {
+                catch it==:e1 {                     ;; catch 1st (yes catch)
+                    spawn task () {
+                        yield(nil) { nil }
+                        println(222)
+                        throw(:e1)                  ;; throw
+                    } ()
+                    xloop { yield(nil) { nil } }
+                }
+                println(333)
+            } ()
+            catch true {                            ;; catch 2nd (no catch)
+                println(111)
+                broadcast in :global, nil
+                println(444)
+            }
+            println(:END)
+        """
+        )
+        assert(out == "111\n" +
+                "222\n" +
+                "333\n" +
+                "444\n" +
+                ":END\n") { out }
+    }
 
     // TASK TERMINATION
 
@@ -797,30 +826,6 @@ class Exec_04 {
             println(:e2)
         """)
         assert(out == ":e1\n:e2\n") { out }
-    }
-    @Test
-    fun zz_08_throw() {
-        val out = test(
-            """
-            spawn task () {
-                catch it==:e1 {
-                    spawn task () {
-                        yield(nil) { nil }
-                        println(222)
-                        throw(:e1)
-                    } ()
-                    xloop { yield(nil) { nil } }
-                }
-                println(333)
-            } ()
-            catch true {
-                println(111)
-                broadcast in :global, nil
-            }
-            println(:END)
-        """
-        )
-        assert(out == ":ok1\n:ok2\n:ok3\n") { out }
     }
     @Test
     fun zz_09_throw() {

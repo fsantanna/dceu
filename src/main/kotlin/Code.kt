@@ -403,7 +403,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // check free
                     ${(CEU>=3 && (f_b is Expr.Do) && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        CEU_CHECK_FREE()
+                        if (ceu_n == CEU_ARG_FREE) {
+                            continue;   // do not execute next statement, instead free up block
+                        }
                     """ }}
                 }
                 """
@@ -531,14 +533,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
-                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // (b/c of CEU_CHECK_FREE)
-                    CEU_CHECK_FREE();
+                    if (ceu_n == CEU_ARG_FREE) {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };    // TODO: why?
+                        continue;
+                    }
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
                     CEU_Value ceu_it = (CEU_Value) { CEU_VALUE_NIL };
                     if (ceu_n == 0) {
                         // no argument
                     } else {
                         ceu_it = ceu_args[0];
+                    }
+                    if (CEU_ISERR(ceu_it)) {
+                        ceu_acc = ceu_it;
+                        continue;
                     }
                     ${this.blk.code()}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {

@@ -32,14 +32,6 @@ fun Coder.main (tags: Tags): String {
         #define CEU4(x)
         #endif
 
-        #if CEU >= 3
-        #define CEU_CHECK_FREE() {                  \
-            if (ceu_n == CEU_ARG_FREE) {            \
-                continue;                           \
-            }                                       \
-        }
-        #endif
-
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
@@ -49,8 +41,9 @@ fun Coder.main (tags: Tags): String {
         _Static_assert(sizeof(CEU_HOLD) == 1);
         
         typedef enum CEU_ARG {
-            CEU_ARG_FREE = -1,
-            CEU_ARG_ARGS =  0   // 1, 2, ...
+            //CEU_ARG_ERROR = -2,     // awake task to catch error from nested task
+            CEU_ARG_FREE  = -1,     // awake task to finalize defers and release memory
+            CEU_ARG_ARGS  =  0   // 1, 2, ...
         } CEU_ARG;
 
         typedef enum CEU_VALUE {
@@ -1017,12 +1010,13 @@ fun Coder.main (tags: Tags): String {
             while (dyn != NULL) {
                 if (dyn->Any.type == CEU_VALUE_EXE_TASK) {
                     CEU_Value ret = ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
-                    if (CEU_ISERR(ret)) {
-                        return ret;
-                    }
                     if (dyn->Exe_Task.status == CEU_EXE_STATUS_YIELDED) {
-                        CEU_Value args[] = { evt };
+                        CEU_Value args[] = { CEU_ISERR(ret) ? ret : evt };
                         ret = dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
+                        if (CEU_ISERR(ret)) {
+                            return ret;
+                        }
+                    } else {
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
