@@ -286,7 +286,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             }
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
-                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && $idc.Dyn->Any.hld.block->depth>1) {
                                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
                                                     CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                                 }
@@ -549,7 +549,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         continue;
                     }
                     ${this.blk.code()}
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && ceu_acc.Dyn->Any.hld.block->depth>1) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }

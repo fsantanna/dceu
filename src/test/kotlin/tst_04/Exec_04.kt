@@ -380,6 +380,16 @@ class Exec_04 {
         )
         assert(out == ":1\n10\n10\n:2\n20\n20\n:3\n30\n30\n") { out }
     }
+    @Test
+    fun dd_15_bcast() {
+        val out = test(
+            """
+            broadcast in :global, []
+            println(:ok)
+            """
+        )
+        assert(out == ":ok\n") { out }
+    }
 
     // THROW / CATCH
 
@@ -703,7 +713,30 @@ class Exec_04 {
     // DROP / MOVE / OUT
 
     @Test
-    fun jj_0X_task_nest() {
+    fun jj_01_bcast_move() {
+        val out = test(
+            """
+            var T = task () {
+                val evt = yield(nil) {it}
+                do {
+                    var v = evt
+                    println(v)
+                }
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            var e = []
+            broadcast in :global, drop(e)
+            println(e)
+            """
+        )
+        assert(out == "[]\nnil\n") { out }
+        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
+        //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun jj_02_task_nest() {
         val out = test("""
             spawn task (v1) {
                 spawn task (v2) {
@@ -862,5 +895,262 @@ class Exec_04 {
         """
         )
         assert(out == ":ok1\n:ok2\n:ok3\n") { out }
+    }
+    @Test
+    fun zz_10_bcast() {
+        val out = test("""
+            ;;println(:BLOCK0, `:pointer ceu_block`)
+            spawn (task () {
+                ;;println(:CORO1, `:pointer ceu_x`)
+                ;;println(:BLOCK1, `:pointer ceu_block`)
+                spawn (task () {
+                    ;;println(:CORO2, `:pointer ceu_x`)
+                    ;;println(:BLOCK2, `:pointer ceu_block`)
+                    yield(nil) { nil }
+                    ;;println(:1)
+                    broadcast in :global, nil
+                }) ()
+                yield(nil) { nil }
+                ;;println(:2)
+            }) ()
+            broadcast in :global, nil
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun zz_11_bcast() {
+        val out = test(
+            """
+            var tk
+            set tk = task () {
+                val v = yield(nil) {it}
+                println(v)
+                nil
+            }
+            var co
+            set co = spawn tk()
+            var f = func () {
+                var g = func () {
+                    broadcast in :global, []
+                }
+                g()
+            }
+            f()
+        """
+        )
+        //assert(out == "anon : (lin 16, col 13) : f()\n" +
+        //        "anon : (lin 14, col 17) : g()\n" +
+        //        "anon : (lin 12, col 21) : broadcast in :global, []\n" +
+        //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n")
+    }
+    @Test
+    fun zz_12_bcast() {
+        val out = test(
+            """
+            var tk
+            set tk = task () {
+                var v = yield(nil) { it }
+                println(v)
+                nil
+            }
+            var co
+            set co = spawn(tk)()
+            var f = func () {
+                broadcast in :global, []
+            }
+            f()
+        """
+        )
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun zz_13_bcast() {
+        val out = test(
+            """
+            var T = task () {
+                do {
+                    var v = yield(nil) { it }
+                    println(v)
+                }
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            broadcast in :global, []
+            ;;println(:2222)
+            """
+        )
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n:error\n") { out }
+    }
+    @Test
+    fun zz_14_bcast() {
+        val out = test(
+            """
+            var T = task () {
+                do {
+                    var v =
+                        yield(nil) { it }
+                    println(v)
+                }
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            var e = []
+            broadcast in :global, e
+            ;;println(:2222)
+            """
+        )
+        assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast in :global, e\n" +
+        //        " v  anon : (lin 5, col 25) : resume error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun zz_15_bcast_err() {
+        val out = test(
+            """
+            var T = task () {
+                var v = yield(nil) { it }
+                println(v)
+            }
+            var t = spawn T()
+            do {
+            var e = []
+            broadcast in :global, e
+            }
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
+                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun zz_16_bcast_err() {
+        val out = test(
+            """
+            var T = task () {
+                var v =
+                yield(nil) {it}
+                println(v)
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            do {
+                var e = []
+                broadcast in :global, e
+            }
+            ;;println(:2222)
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        assert(out == " |  anon : (lin 11, col 17) : broadcast in :global, e\n" +
+                " v  anon : (lin 4, col 17) : resume error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun zz_17_bcast() {
+        val out = test(
+            """
+            var T1 = task () {
+                yield(nil) {nil}
+                spawn task () {
+                    val evt = yield(nil) {it}
+                    println(:1)
+                    var v = evt
+                } ()
+                nil
+            }
+            var t1 = spawn T1()
+            var T2 = task () {
+                yield(nil) {nil}
+                val evt = yield(nil) {nil}
+                ;;println(:2)
+                do {
+                    var v = evt
+                    ;;println(:evt, v, evt)
+                }
+            }
+            var t2 = spawn T2()
+            broadcast in :global, []
+            println(`:number ceu_gc_count`)
+            """
+        )
+        assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
+        //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
+        //        ":2\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun zz_18_bcast_tuple_func_ok() {
+        val out = test("""
+            var fff = func (v) {
+                println(v)
+            }
+            var T = task () {
+                val evt = yield(nil) {it}
+                fff(evt)
+            }
+            spawn T()
+            broadcast in :global, [1]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun zz_19_bcast_tuple_func_no() {
+        val out = test("""
+            var f = func (v) {
+                var x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                println(x)      ;; x will be freed and v would contain dangling pointer
+            }
+            var T = task () {
+                val evt = yield(nil) {it}
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        //assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
+                " |  anon : (lin 8, col 17) : f(evt)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun zz_20_bcast_tuple_func_ok() {
+        val out = test("""
+            var f = func (v) {
+                val :tmp x = v[0]
+                println(x)
+            }
+            var T = task () {
+                val evt = yield(nil) { it }
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun xx_20_bcast_tuple_func_ok() {
+        val out = test("""
+            var f = func (v) {
+                val :tmp x = v[0]
+                println(x)
+            }
+            var g = func (v) {
+                val evt = v
+                f(evt)
+            }
+            g([[1]])
+        """)
+        assert(out == "[1]\n") { out }
     }
 }

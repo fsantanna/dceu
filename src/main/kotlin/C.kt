@@ -887,7 +887,7 @@ fun Coder.main (tags: Tags): String {
             // [x,[1]] <-- moves v=[1] to v
             if (
                 ceu_hold_chk_set(col->Any.hld.block, col->Any.hld.type, v) ||
-                (col->Any.hld.type == CEU_HOLD_FLEET)
+                (col->Any.hld.type == CEU_HOLD_FLEET) // must be second b/c chk_set above may modify v
             ) {
                 // ok
             } else {
