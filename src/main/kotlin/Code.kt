@@ -280,9 +280,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
                                             if (!ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc)) {
-                                                assert(0 && "TODO"); // restore code below on fail
-                                                //CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
-                                                //CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
+                                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                             }
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
