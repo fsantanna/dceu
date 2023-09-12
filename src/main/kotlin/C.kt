@@ -792,7 +792,7 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk);
         }
 
-        int ceu_hold_chk_set (CEU_Block* dst, CEU_HOLD hld_type, CEU_Value src) {
+        int ceu_hold_chk_set (CEU_Block* dst, CEU_HOLD dst_type, CEU_Value src) {
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return 1;
             } else if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
@@ -812,7 +812,7 @@ fun Coder.main (tags: Tags): String {
             int src_depth = src.Dyn->Any.hld.block->depth;
             int src_type  = src.Dyn->Any.hld.type;
 
-            src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,hld_type);
+            src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
             if (dst != src.Dyn->Any.hld.block) {
                 ceu_hold_chg(src.Dyn, dst);
             }
@@ -827,41 +827,41 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        if (!ceu_hold_chk_set(dst, hld_type, src.Dyn->Clo.upvs.buf[i])) {
+                        if (!ceu_hold_chk_set(dst, dst_type, src.Dyn->Clo.upvs.buf[i])) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        if (!ceu_hold_chk_set(dst, hld_type, src.Dyn->Tuple.buf[i])) {
+                        if (!ceu_hold_chk_set(dst, dst_type, src.Dyn->Tuple.buf[i])) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        if (!ceu_hold_chk_set(dst, hld_type, ceu_vector_get(&src.Dyn->Vector,i))) {
+                        if (!ceu_hold_chk_set(dst, dst_type, ceu_vector_get(&src.Dyn->Vector,i))) {
                             return 0;
                         }
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        if (!ceu_hold_chk_set(dst, hld_type, (*src.Dyn->Dict.buf)[i][0])) {
+                        if (!ceu_hold_chk_set(dst, dst_type, (*src.Dyn->Dict.buf)[i][0])) {
                             return 0;
                         }
-                        if (!ceu_hold_chk_set(dst, hld_type, (*src.Dyn->Dict.buf)[i][1])) {
+                        if (!ceu_hold_chk_set(dst, dst_type, (*src.Dyn->Dict.buf)[i][1])) {
                             return 0;
                         }
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    if (!ceu_hold_chk_set(dst, hld_type, src.Dyn->Throw.val)) {
+                    if (!ceu_hold_chk_set(dst, dst_type, src.Dyn->Throw.val)) {
                         return 0;
                     }
-                    if (!ceu_hold_chk_set(dst, hld_type, src.Dyn->Throw.stk)) {
+                    if (!ceu_hold_chk_set(dst, dst_type, src.Dyn->Throw.stk)) {
                         return 0;
                     }
                     break;
@@ -871,7 +871,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
         #endif
-                    if (!ceu_hold_chk_set(dst, hld_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo))) {
+                    if (!ceu_hold_chk_set(dst, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo))) {
                         return 0;
                     }
                     break;
