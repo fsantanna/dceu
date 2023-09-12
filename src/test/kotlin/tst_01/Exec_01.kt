@@ -1988,6 +1988,71 @@ class Exec_01 {
         assert(out == ":ok\n") { out }
     }
 
+    // SCOPE / INNER
+
+    @Test
+    fun ll_01_fleet_tuple_func() {
+        val out = test("""
+            val f = func (v) {
+                println(v[0])
+            }
+            f([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ll_02_fleet_tuple_func() {
+        val out = test("""
+            val g = func (v) {
+                println(v)
+            }
+            val f = func (v) {
+                println(v[0])
+            }
+            f([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ll_03_fleet_tuple_func_err() {
+        val out = test("""
+            var g = func (v) {
+                val v' = v
+                nil
+            }
+            g([[1]])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ll_04_fleet_tuple_func_err() {
+        val out = test("""
+            var f = func (v) {
+                val :tmp x = v[0]
+                println(x)
+            }
+            var g = func (v) {
+                val evt = v
+                f(evt)
+            }
+            g([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ll_05_nest() {
+        val out = test("""
+            var f = func (v) {
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                println(x)      ;; x will be freed and v would contain dangling pointer
+            }
+            f([[1]])
+        """)
+        //assert(out == "[1]\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : incompatible scopes\n") { out }
+    }
+
     // SCOPE / :TMP / :tmp
 
     @Test

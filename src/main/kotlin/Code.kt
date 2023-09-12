@@ -279,7 +279,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         $_idc_ = $blkc;
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
-                                            if (!ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc)) {
+                                            if (!ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 0)) {
                                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
                                                 CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                             }
@@ -319,7 +319,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        if (!ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc)) {
+                        if (!ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
                         #if CEU <= 1
                                 // free from this block
@@ -422,7 +422,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // DCL | ${this.dump()}
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + (!this.tmp).cond { """
-                        if (!ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc)) {
+                        if (!ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : incompatible scopes"} };
                             CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                         }
@@ -608,7 +608,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         assert(!dcl.tmp)    // removed support for "val :tmp x"
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set(${_idc_}, CEU_HOLD_MUTAB, $src)) {
+                            if (!ceu_hold_chk_set(${_idc_}, CEU_HOLD_MUTAB, $src, 0)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : incompatible scopes"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }

@@ -27,7 +27,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.Do     -> {
                 //if (ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }) {
-                //  ylds.add(this)
+                //    ylds.add(this)
                 //}
                 this.es.forEach { it.traverse() }
                 if (ylds.contains(this)) {

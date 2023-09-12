@@ -1107,20 +1107,35 @@ class Exec_04 {
     fun zz_19_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
-                var x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                val evt = yield(nil) {it}
-                f(evt)
+                f(yield(nil) {it})
             }
             spawn T()
             broadcast in :global, [[1]]
         """)
         //assert(out == "[1]\n") { out }
-        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
-                " |  anon : (lin 8, col 17) : f(evt)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast in :global, [[1]]\n" +
+                " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
                 " v  anon : (lin 3, col 17) : declaration error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun zz_19_bcast_tuple_func_ok_not_fleet() {
+        val out = test("""
+            var f = func (v) {
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                println(x)      ;; x will be freed and v would contain dangling pointer
+            }
+            var T = task () {
+                val evt = yield(nil) {it}   ;; NOT FLEETING (vs prv test)
+                f(evt)
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_ok() {
@@ -1139,7 +1154,7 @@ class Exec_04 {
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun xx_20_bcast_tuple_func_ok() {
+    fun zz_21_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
                 val :tmp x = v[0]
