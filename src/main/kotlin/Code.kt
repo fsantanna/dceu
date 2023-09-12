@@ -569,7 +569,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     $evtc = ceu_acc;
                     ${this.xin.code()}
                     assert(ceu_acc.type==CEU_VALUE_TAG && ceu_acc.Tag==CEU_TAG_global);
-                    ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
+                    //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
+                    ceu_acc = ceu_bcast_blocks(ceu_bcast_global_block($bupc), $evtc);
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 }
                 """

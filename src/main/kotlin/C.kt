@@ -1007,6 +1007,22 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BCAST
     #if CEU >= 4
+        CEU_Block* ceu_bcast_global_block (CEU_Block* blk) {
+            if (blk->istop) {
+                if (blk->up.frame->clo == NULL) {
+                    return blk;
+                } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
+                    return ceu_bcast_global_block(blk->up.frame->up_block);
+                } else {
+                    return blk;     // outermost block in coro/task
+                }
+            } else if (blk->up.block != NULL) {
+                return ceu_bcast_global_block(blk->up.block);
+            } else {
+                return blk;         // global scope
+            }
+        }
+        
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         CEU_Value ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
             while (dyn != NULL) {
