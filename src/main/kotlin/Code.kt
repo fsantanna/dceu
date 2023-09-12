@@ -815,7 +815,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Call -> {
                 val up = ups.pub[this]!!
-                val bupc = ups.first_block(this)!!.idc("block")
+                val bup = ups.first_block(this)!!
+                val bupc = bup.idc("block")
+                val ylds = sta.ylds.contains(bup)
+                val framec = this.idc("frame")
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
@@ -827,13 +830,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 { // CALL - open | ${this.dump()}
                     ${this.clo.code()}
+                    ${(!ylds).cond { """
+                        CEU_Frame ceu_frame_$n;
+                    """ }}
                     ${when (up) {
                         is Expr.Resume -> """
                             if (ceu_acc.type!=CEU_VALUE_EXE_CORO || (ceu_acc.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
                                 CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
                             }                            
-                            CEU_Frame ceu_frame_$n = ceu_acc.Dyn->Exe.frame;
+                            $framec = ceu_acc.Dyn->Exe.frame;
                         """
                         is Expr.Spawn -> """
                             if (ceu_acc.type != CEU_VALUE_CLO_TASK) {
@@ -842,14 +848,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                             CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
                             assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
-                            CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
+                            $framec = ceu_x_$n.Dyn->Exe_Task.frame;
                         """
                         else -> """
                             if (ceu_acc.type != CEU_VALUE_CLO_FUNC) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
-                            CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA NULL) };
+                            $framec = (CEU_Frame) { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA NULL) };
                         """
                     }}
 
@@ -871,8 +877,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """}}
 
-                    ceu_acc = ceu_frame_$n.clo->proto (
-                        &ceu_frame_$n,
+                    ceu_acc = $framec.clo->proto (
+                        &$framec,
                         ${this.args.let {
                             if (!has_dots) it.size.toString() else {
                                 "(" + (it.size-1) + " + ceu_dots_$n)"
