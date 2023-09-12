@@ -709,6 +709,68 @@ class Exec_04 {
         )
         assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
     }
+    @Test
+    fun gg_05_bcast_tuple_func_ok() {
+        val out = test("""
+            var f = func (v) {
+                val :tmp x = [0]
+                set x[0] = v[0]
+                println(x[0])
+            }
+            var T = task () {
+                f(yield(nil) { it })
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun gg_06_bcast_tuple_func_ok() {
+        val out = test("""
+            val f = func (v) {
+                println(v)
+            }
+            val T = task () {
+                f(yield(nil) { it })
+            }
+            spawn T()
+            do {
+                do {
+                    do {
+                        do {
+                            do {
+                                broadcast in :global, []
+                            }
+                        }
+                    }
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun gg_07_bcast_tuple_func_ok() {
+        val out = test("""
+            val f = func (v) {
+                println(v)
+            }
+            val T = task () {
+                do {
+                    f(yield(nil){it})
+                }
+            }
+            spawn T()
+            do {
+                do {
+                    do {
+                        broadcast in :global, []
+                    }
+                }
+            }
+        """)
+        assert(out == "[]\n") { out }
+    }
 
     // DROP / MOVE / OUT
 
@@ -1167,5 +1229,34 @@ class Exec_04 {
             g([[1]])
         """)
         assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun zz_22_pool_throw() {
+        val out = test(
+            """
+            println(1)
+            catch it==:ok {
+                println(2)
+                spawn task () {
+                    println(3)
+                    ${AWAIT()}
+                    println(6)
+                    throw(:ok)
+                } ()
+                spawn task () {
+                    catch :ok {
+                        println(4)
+                        ${AWAIT()}
+                    }
+                    println(999)
+                } ()
+                println(5)
+                broadcast in :global, nil
+                println(9999)
+            }
+            println(7)
+        """
+        )
+        assert(out == "1\n2\n3\n4\n5\n6\n7\n") { out }
     }
 }
