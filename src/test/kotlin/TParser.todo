@@ -262,30 +262,6 @@ class TParser {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 4, col 30) : expected \",\" : have \"{\"")
     }
-    @Test
-    fun tasks4_err() {
-        val l = lexer("""
-            spawn in nil, {}
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \"{\"")
-    }
-    @Test
-    fun tasks5_err() {
-        val l = lexer("""
-            spawn in ()
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected expression : have \")\"")
-    }
-    @Test
-    fun tasks6_err() {
-        val l = lexer("""
-            spawn in nil, f
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
-    }
 
     // ITER
 

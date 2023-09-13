@@ -68,7 +68,7 @@ val TAGS = listOf (
 )) + (if (CEU < 3) listOf() else listOf(
     ":x-coro",
 )) + (if (CEU < 4) listOf() else listOf(
-    ":x-task",
+    ":x-task", ":x-tasks",
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
@@ -82,10 +82,12 @@ val GLOBALS = setOf (
     "dump", "error", "next", "print", "println",
     "string-to-tag", "sup?", "tags",
     "tuple", "type", "{{#}}", "{{==}}", "{{/=}}", "..."
-) + (if (CEU <= 1) setOf() else setOf(
+) + (if (CEU < 2) setOf() else setOf(
     "pointer-to-string", "throw"
-)) + (if (CEU <= 2) setOf() else setOf(
+)) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
+)) + (if (CEU < 4) setOf() else setOf(
+    "tasks"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -119,7 +121,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Yield  (val tk_: Tk.Fix, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val call: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
