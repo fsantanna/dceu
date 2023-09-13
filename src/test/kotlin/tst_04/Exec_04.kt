@@ -815,6 +815,43 @@ class Exec_04 {
                 " v  anon : (lin 3, col 33) : block escape error : incompatible scopes\n") { out }
     }
 
+    // TASKS
+
+    @Test
+    fun kk_01_tasks() {
+        val out = test("""
+            println(tasks())
+        """)
+        assert(out.contains("tasks: 0x")) { out }
+    }
+    @Test
+    fun kk_02_tasks() {
+        val out = test("""
+            println(type(tasks()))
+        """)
+        assert(out.contains(":tasks")) { out }
+    }
+    @Test
+    fun kk_03_tasks() {
+        val out = test("""
+            val T = task () {
+                println(:in)
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            println(:out)
+        """)
+        assert(out == ":in\n:out\n") { out }
+    }
+    @Test
+    fun kk_04_tasks() {
+        val out = test("""
+            spawn in tasks(), (task () { println(:in) })()
+            println(:out)
+        """)
+        assert(out == ":in\n:out\n") { out }
+    }
+
     // ORIG
 
     @Test

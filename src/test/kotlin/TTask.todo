@@ -519,19 +519,6 @@ class TTask {
     // COROS ITERATOR
 
     @Test
-    fun ff_pool0() {
-        val out = ceu.all(
-            """
-            var T
-            set T = task () { nil }
-            var x
-            spawn in tasks(), T(x)
-            println(0)
-        """
-        )
-        assert(out == "0\n") { out }
-    }
-    @Test
     fun ff_pool0a() {
         val out = ceu.all(
             """
