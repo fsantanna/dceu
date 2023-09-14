@@ -112,6 +112,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Spawn  -> {
                 spws.add(ups.first_block(this)!!)
+                this.tasks?.traverse()
                 this.call.traverse()
             }
             is Expr.Bcast  -> {

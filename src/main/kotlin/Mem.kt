@@ -9,12 +9,12 @@ fun Expr.coexists (): Boolean {
         is Expr.If     -> this.cnd.coexists()
         is Expr.Drop   -> this.e.coexists()
 
-        is Expr.Catch  -> this.cnd?.coexists() ?: false
+        is Expr.Catch  -> this.cnd.coexists()
 
         is Expr.Yield  -> this.arg.coexists() || this.blk.coexists()
         is Expr.Resume -> this.call.coexists()
 
-        is Expr.Spawn  -> this.call.coexists()
+        is Expr.Spawn  -> (this.tasks?.coexists() ?: false) || this.call.coexists()
         is Expr.Bcast  -> this.xin.coexists() || this.evt.coexists()
 
         is Expr.Tuple  -> this.args.any { it.coexists() }

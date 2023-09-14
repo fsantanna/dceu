@@ -851,6 +851,33 @@ class Exec_04 {
         """)
         assert(out == ":in\n:out\n") { out }
     }
+    @Test
+    fun kk_05_tasks() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+                println(:in)
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            println(:out)
+            broadcast in :global, nil
+        """)
+        assert(out == ":out\n:in\n") { out }
+    }
+    @Test
+    fun kk_06_tasks() {
+        val out = test("""
+            val T = task () {
+                nil
+            }
+            val ts = tasks()
+            val ok1 = spawn in ts, T()
+            val ok2 = spawn in ts, T()
+            println(ok1, ok2)
+        """)
+        assert(out == ":out\n:in\n") { out }
+    }
 
     // ORIG
 
