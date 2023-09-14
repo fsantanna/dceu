@@ -816,7 +816,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Call -> {
                 val up = ups.pub[this]!!
-                val bupc = ups.first_block(this)!!.idc("block")
+                val bup = ups.first_block(this)!!
+                val bupc = bup.idc("block")
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
@@ -849,6 +850,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                     ${istasks.cond {
                         spawn!!.tasks!!.code() + """
+                            ${(!sta.ylds.contains(bup)).cond { "CEU_Value " }}
                             ${up.idc("tasks")} = ceu_acc;
                         """
                     }}
