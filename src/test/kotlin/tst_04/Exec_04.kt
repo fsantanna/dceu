@@ -871,12 +871,12 @@ class Exec_04 {
             val T = task () {
                 nil
             }
-            val ts = tasks()
+            val ts = tasks(1)
             val ok1 = spawn in ts, T()
             val ok2 = spawn in ts, T()
             println(ok1, ok2)
         """)
-        assert(out == ":out\n:in\n") { out }
+        assert(out == "true\nfalse\n") { out }
     }
 
     // ORIG

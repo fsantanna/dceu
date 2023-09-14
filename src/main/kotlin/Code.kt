@@ -825,8 +825,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     dcl.idc(0).first
                 }
 
-                val spawn = if (up is Expr.Spawn) up else null
-                val istasks = (spawn?.tasks != null)
+                val upspawn = if (up is Expr.Spawn && up.tasks?.n!=this.n) up else null
+                val istasks = (upspawn?.tasks != null)
 
                 """
                 { // CALL - open | ${this.dump()}
@@ -849,22 +849,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """}}
 
                     ${istasks.cond {
-                        spawn!!.tasks!!.code() + """
+                        upspawn!!.tasks!!.code() + """
                             ${(!sta.ylds.contains(bup)).cond { "CEU_Value " }}
                             ${up.idc("tasks")} = ceu_acc;
                         """
                     }}
                 
                     ${this.clo.code()}
-                    ${when (up) {
-                        is Expr.Resume -> """
+                    ${when {
+                        up is Expr.Resume -> """
                                 if (ceu_acc.type!=CEU_VALUE_EXE_CORO || (ceu_acc.Dyn->Exe.status!=CEU_EXE_STATUS_YIELDED)) {                
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : expected yielded coro"} };
                                     CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
                                 }                            
                                 CEU_Frame ceu_frame_$n = ceu_acc.Dyn->Exe.frame;
                             """
-                        is Expr.Spawn -> """
+                        (upspawn != null) -> """
                             if (ceu_acc.type != CEU_VALUE_CLO_TASK) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
                                 CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
@@ -874,12 +874,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
                         """
                         else -> """
-                                if (ceu_acc.type != CEU_VALUE_CLO_FUNC) {
-                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
-                                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                }
-                                CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA NULL) };
-                            """
+                            if (ceu_acc.type != CEU_VALUE_CLO_FUNC) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            }
+                            CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA NULL) };
+                        """
                     }}
 
                     ceu_acc = ceu_frame_$n.clo->proto (
@@ -892,7 +892,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ceu_args_$n
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    ${(up is Expr.Spawn).cond { """
+                    ${upspawn.cond { """
                         ceu_acc = ceu_x_$n;
                     """ }}
                 } // CALL - close
