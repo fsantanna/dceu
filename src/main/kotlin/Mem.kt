@@ -108,7 +108,15 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
         """
         is Expr.Resume -> this.call.mem(sta, defers)
 
-        is Expr.Spawn -> this.call.mem(sta, defers)
+        is Expr.Spawn -> """
+            struct {
+                ${this.tasks.cond { "CEU_Value tasks_${this.n};" }} 
+                union {
+                    ${this.tasks.cond { it.mem(sta, defers) }} 
+                    ${this.call.mem(sta, defers)}
+                };
+            };
+        """
         is Expr.Bcast -> """
             struct { // BCAST
                 CEU_Value evt_$n;

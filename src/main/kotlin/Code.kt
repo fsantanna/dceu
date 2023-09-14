@@ -823,7 +823,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
                     dcl.idc(0).first
                 }
-                //println(listOf(id_dots,has_dots,(dots!=null && dots is Expr.Acc && dots.tk.str=="..."),dots))
+
+                val spawn = if (up is Expr.Spawn) up else null
+                val istasks = (spawn?.tasks != null)
 
                 """
                 { // CALL - open | ${this.dump()}
@@ -845,6 +847,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     """}}
 
+                    ${istasks.cond {
+                        spawn!!.tasks!!.code() + """
+                            ${up.idc("tasks")} = ceu_acc;
+                        """
+                    }}
+                
                     ${this.clo.code()}
                     ${when (up) {
                         is Expr.Resume -> """
@@ -855,14 +863,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Frame ceu_frame_$n = ceu_acc.Dyn->Exe.frame;
                             """
                         is Expr.Spawn -> """
-                                if (ceu_acc.type != CEU_VALUE_CLO_TASK) {
-                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
-                                    CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
-                                }
-                                CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
-                                assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
-                                CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
-                            """
+                            if (ceu_acc.type != CEU_VALUE_CLO_TASK) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
+                                CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
+                            }
+                            CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
+                            assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
+                            CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
+                        """
                         else -> """
                                 if (ceu_acc.type != CEU_VALUE_CLO_FUNC) {
                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
