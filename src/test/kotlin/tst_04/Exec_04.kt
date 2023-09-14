@@ -602,6 +602,24 @@ class Exec_04 {
                 "444\n" +
                 ":END\n") { out }
     }
+    @Test
+    fun ee_15_throw() {
+        val out = test(
+            """
+            spawn task () {
+                catch false {
+                    yield(nil) { nil }
+                }
+                println(999)
+            } ()
+            catch true {
+                throw(nil)
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
 
     // TASK TERMINATION
 
@@ -1308,10 +1326,8 @@ class Exec_04 {
                     throw(:ok)
                 } ()
                 spawn task () {
-                    catch :ok {
-                        println(4)
-                        ${AWAIT()}
-                    }
+                    println(4)
+                    ${AWAIT()}
                     println(999)
                 } ()
                 println(5)

@@ -1043,13 +1043,9 @@ fun Coder.main (tags: Tags): String {
                     if (dyn->Exe_Task.status == CEU_EXE_STATUS_YIELDED) {
                         CEU_Value args[] = { CEU_ISERR(ret) ? ret : evt };
                         ret = dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
-                        if (CEU_ISERR(ret)) {
-                            return ret;
-                        }
-                    } else {
-                        if (CEU_ISERR(ret)) {
-                            return ret;
-                        }
+                    }
+                    if (CEU_ISERR(ret)) {
+                        return ret;
                     }
                 }
                 dyn = dyn->Any.hld.next;
