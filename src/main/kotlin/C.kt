@@ -275,7 +275,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_dec (CEU_Value v, int chk);
 
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk);
-        void ceu_hold_rem (CEU_Dyn* dyn);
+        void ceu_hold_rem (CEU_Dyn* dyn, CEU_Dyns* dyns);
 
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD hld_type, CEU_Dyn* src);
         
@@ -650,7 +650,7 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
             ceu_gc_count++;
-            ceu_hold_rem(dyn);
+            ceu_hold_rem(dyn, &dyn->Any.hld.block->dn.dyns);
             ceu_dyn_free(dyn);
         }
         
@@ -782,13 +782,12 @@ fun Coder.main (tags: Tags): String {
             }
             blk->dn.dyns.last = dyn;
         }
-        void ceu_hold_rem (CEU_Dyn* dyn) {
-            CEU_Block* blk = dyn->Any.hld.block;
-            if (blk->dn.dyns.first == dyn) {
-                blk->dn.dyns.first = dyn->Any.hld.next;
+        void ceu_hold_rem (CEU_Dyn* dyn, CEU_Dyns* dyns) {
+            if (dyns->first == dyn) {
+                dyns->first = dyn->Any.hld.next;
             }
-            if (blk->dn.dyns.last == dyn) {
-                blk->dn.dyns.last = dyn->Any.hld.prev;
+            if (dyns->last == dyn) {
+                dyns->last = dyn->Any.hld.prev;
             }
             if (dyn->Any.hld.prev != NULL) {
                 dyn->Any.hld.prev->Any.hld.next = dyn->Any.hld.next;
@@ -800,7 +799,7 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.next = NULL;
         }
         void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk) {
-            ceu_hold_rem(dyn);
+            ceu_hold_rem(dyn, &dyn->Any.hld.block->dn.dyns);
             ceu_hold_add(dyn, blk);
         }
 
@@ -1409,7 +1408,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_hold_rem(tup.Dyn);
+                ceu_hold_rem(tup.Dyn, &tup.Dyn->Any.hld.block->dn.dyns);
                 ceu_dyn_free(tup.Dyn);
             }
             switch (v.type) {
