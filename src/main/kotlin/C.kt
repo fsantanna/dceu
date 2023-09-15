@@ -463,6 +463,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_dump_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
             _ceu_dump_(args[0]);
+            return (CEU_Value) { CEU_VALUE_NIL };
         }
 
         int ceu_as_bool (CEU_Value v) {
@@ -544,7 +545,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     return ret;
                 }
-                case 3: {   // add/rem
+                default: {   // add/rem
                     assert(dyn.type > CEU_VALUE_DYNAMIC);
                     CEU_Value bool = args[2];
                     assert(bool.type == CEU_VALUE_BOOL);
@@ -1680,7 +1681,7 @@ fun Coder.main (tags: Tags): String {
         #endif
     """ +
     """ // GLOBALS
-        CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, { CEU4(NULL COMMA) NULL } };
+        CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
         CEU_Frame _ceu_frame_ = { &_ceu_block_, NULL CEU3(COMMA NULL) };
         CEU_Frame* ceu_frame = &_ceu_frame_;
 
