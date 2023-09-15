@@ -476,6 +476,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     do { // catch
                         ${this.body.code()}
                     } while (0); // catch
+                    // check free
+                    ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
+                        if (ceu_n == CEU_ARG_FREE) {
+                            continue;   // do not execute next statement, instead free up block
+                        }
+                    """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
                         CEU_Value ceu_it  = ceu_err.Dyn->Throw.val;

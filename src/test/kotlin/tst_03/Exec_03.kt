@@ -690,6 +690,26 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
+    @Test
+    fun hh_05_throw() {
+        val out = test(
+            """
+            val CO = coro () {
+                catch false {
+                    yield(nil) { nil }
+                }
+                println(999)
+            }
+            val co = coroutine(CO)
+            resume co()
+            catch true {
+                throw(nil)
+            }
+            println(:ok)
+        """
+        )
+        assert(out == ":ok\n") { out }
+    }
 
     // STATUS
 
