@@ -798,8 +798,8 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.prev = NULL;
             dyn->Any.hld.next = NULL;
         }
-        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk) {
-            ceu_hold_rem(dyn, &dyn->Any.hld.block->dn.dyns);
+        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk, CEU_Dyns* dyns) {
+            ceu_hold_rem(dyn, dyns);
             ceu_hold_add(dyn, blk);
         }
 
@@ -825,7 +825,7 @@ fun Coder.main (tags: Tags): String {
 
             src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
             if (dst != src.Dyn->Any.hld.block) {
-                ceu_hold_chg(src.Dyn, dst);
+                ceu_hold_chg(src.Dyn, dst, &src.Dyn->Any.hld.block->dn.dyns);
             }
             //printf(">>> %d -> %d\n", src_depth, src.Dyn->Any.hld.block->depth);
             if (src.Dyn->Any.hld.type==src_type && dst->depth>=src_depth) {
@@ -914,7 +914,7 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
                     if (v.Dyn->Any.hld.block->depth > col->Any.hld.block->depth) {
-                        ceu_hold_chg(col, v.Dyn->Any.hld.block);
+                        ceu_hold_chg(col, v.Dyn->Any.hld.block, &v.Dyn->Any.hld.block->dn.dyns);
                     }
                     return 1;
                 }
