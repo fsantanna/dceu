@@ -9,6 +9,7 @@ var CEU = 2
     // 2: defer, throw/catch
     // 3: coro
     // 4: task
+    // 5: tasks
     // X: export, copy, _
     // 99: XCEU
 
@@ -68,7 +69,9 @@ val TAGS = listOf (
 )) + (if (CEU < 3) listOf() else listOf(
     ":x-coro",
 )) + (if (CEU < 4) listOf() else listOf(
-    ":x-task", ":tasks",
+    ":x-task",
+)) + (if (CEU < 5) listOf() else listOf(
+    ":tasks",
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
@@ -86,7 +89,7 @@ val GLOBALS = setOf (
     "pointer-to-string", "throw"
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
-)) + (if (CEU < 4) setOf() else setOf(
+)) + (if (CEU < 5) setOf() else setOf(
     "tasks"
 ))
 

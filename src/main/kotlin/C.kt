@@ -31,6 +31,11 @@ fun Coder.main (tags: Tags): String {
         #else
         #define CEU4(x)
         #endif
+        #if CEU >= 5
+        #define CEU5(x) x
+        #else
+        #define CEU5(x)
+        #endif
 
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
@@ -73,6 +78,8 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
             CEU_VALUE_EXE_TASK,
+        #endif
+        #if CEU >= 5
             CEU_VALUE_TASKS,
         #endif
             CEU_VALUE_MAX
@@ -221,6 +228,8 @@ fun Coder.main (tags: Tags): String {
             _CEU_Exe_
             CEU_Block* dn_block;
         } CEU_Exe_Task;
+        #endif
+        #if CEU >= 5
         typedef struct CEU_Tasks {
             _CEU_Dyn_
             int max;
@@ -722,7 +731,7 @@ fun Coder.main (tags: Tags): String {
                     free(dyn->Exe.mem);
                     break;
         #endif
-        #if CEU >= 4
+        #if CEU >= 5
                 case CEU_VALUE_TASKS:
                     break;
         #endif
@@ -1357,7 +1366,9 @@ fun Coder.main (tags: Tags): String {
             exe.Dyn->Exe_Task.dn_block = NULL;
             return exe;
         }
+        #endif
 
+        #if CEU >= 5
         CEU_Value ceu_create_tasks (CEU_Block* blk, int max) {
             CEU_Tasks* ret = malloc(sizeof(CEU_Tasks));
             assert(ret != NULL);
@@ -1383,7 +1394,7 @@ fun Coder.main (tags: Tags): String {
             }
             return ceu_create_tasks(frame->up_block, max);
         }
-        #endif        
+        #endif
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Frame* _1, CEU_Value v) {
@@ -1519,6 +1530,8 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_EXE_TASK:
                     printf("x-task: %p", v.Dyn);
                     break;
+        #endif
+        #if CEU >= 5
                 case CEU_VALUE_TASKS:
                     printf("tasks: %p", v.Dyn);
                     break;
@@ -1755,7 +1768,7 @@ fun Coder.main (tags: Tags): String {
             &_ceu_frame_, ceu_status_f, {0,NULL}
         };
         #endif
-        #if CEU >= 4
+        #if CEU >= 5
         CEU_Clo ceu_tasks = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_tasks_f, {0,NULL}
@@ -1783,7 +1796,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value id_coroutine               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_coroutine}               };
         CEU_Value id_status                  = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_status}                  };
         #endif
-        #if CEU >= 4
+        #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
         #endif
     """ +
