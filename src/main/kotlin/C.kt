@@ -283,8 +283,8 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_inc (CEU_Value v);
         void ceu_gc_dec (CEU_Value v, int chk);
 
-        void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk, CEU_Dyns* dyns);
-        void ceu_hold_rem (CEU_Dyn* dyn, CEU_Dyns* dyns);
+        void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
+        void ceu_hold_rem (CEU_Dyn* dyn CEU5(COMMA CEU_Dyns* dyns));
 
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD hld_type, CEU_Dyn* src);
         
@@ -659,7 +659,7 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
             ceu_gc_count++;
-            ceu_hold_rem(dyn, &dyn->Any.hld.block->dn.dyns);
+            ceu_hold_rem(dyn CEU5(COMMA &dyn->Any.hld.block->dn.dyns));
             ceu_dyn_free(dyn);
         }
         
@@ -780,7 +780,10 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // HOLD / DROP
-        void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk, CEU_Dyns* dyns) {
+        void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
+        #if CEU < 5
+            CEU_Dyns* dyns = &blk->dn.dyns;
+        #endif
             dyn->Any.hld.block = blk;
             if (dyns->first == NULL) {
                 dyns->first = dyn;
@@ -791,7 +794,10 @@ fun Coder.main (tags: Tags): String {
             }
             dyns->last = dyn;
         }
-        void ceu_hold_rem (CEU_Dyn* dyn, CEU_Dyns* dyns) {
+        void ceu_hold_rem (CEU_Dyn* dyn CEU5(COMMA CEU_Dyns* dyns)) {
+        #if CEU < 5
+            CEU_Dyns* dyns = &dyn->Any.hld.block->dn.dyns;
+        #endif
             if (dyns->first == dyn) {
                 dyns->first = dyn->Any.hld.next;
             }
@@ -807,9 +813,12 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.prev = NULL;
             dyn->Any.hld.next = NULL;
         }
-        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk, CEU_Dyns* dyns) {
-            ceu_hold_rem(dyn, &dyn->Any.hld.block->dn.dyns);
-            ceu_hold_add(dyn, blk, dyns);
+        void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
+        #if CEU < 5
+            CEU_Dyns* dyns = &blk->dn.dyns;
+        #endif
+            ceu_hold_rem(dyn CEU5(COMMA &dyn->Any.hld.block->dn.dyns));
+            ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
         int ceu_hold_chk_set (CEU_Block* dst, CEU_HOLD dst_type, CEU_Value src, int nest) {
@@ -834,7 +843,7 @@ fun Coder.main (tags: Tags): String {
 
             src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
             if (dst != src.Dyn->Any.hld.block) {
-                ceu_hold_chg(src.Dyn, dst, &dst->dn.dyns);
+                ceu_hold_chg(src.Dyn, dst CEU5(COMMA &dst->dn.dyns));
             }
             //printf(">>> %d -> %d\n", src_depth, src.Dyn->Any.hld.block->depth);
             if (src.Dyn->Any.hld.type==src_type && dst->depth>=src_depth) {
@@ -923,7 +932,7 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
                     if (v.Dyn->Any.hld.block->depth > col->Any.hld.block->depth) {
-                        ceu_hold_chg(col, v.Dyn->Any.hld.block, &v.Dyn->Any.hld.block->dn.dyns);
+                        ceu_hold_chg(col, v.Dyn->Any.hld.block CEU5(COMMA &v.Dyn->Any.hld.block->dn.dyns));
                     }
                     return 1;
                 }
@@ -1276,7 +1285,7 @@ fun Coder.main (tags: Tags): String {
                 n, {}
             };
             memset(ret->buf, 0, n*sizeof(CEU_Value));
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_TUPLE, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1295,7 +1304,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_VALUE_VECTOR, 0,  NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 0, 0, CEU_VALUE_NIL, buf
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_VECTOR, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1306,7 +1315,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_VALUE_DICT, 0, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 0, NULL
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_DICT, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1322,7 +1331,7 @@ fun Coder.main (tags: Tags): String {
                 type, 0, NULL, { hld_type, blk, NULL, NULL },
                 frame, proto, { upvs, buf }
             };
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
         }
 
@@ -1355,7 +1364,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, ret }, 0, mem
             };
             
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { tag, {.Dyn=(CEU_Dyn*)ret } };
         }
         #endif
@@ -1378,7 +1387,7 @@ fun Coder.main (tags: Tags): String {
                 max, { NULL, NULL }
             };
             
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
         }
         
@@ -1419,7 +1428,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_hold_rem(tup.Dyn, &tup.Dyn->Any.hld.block->dn.dyns);
+                ceu_hold_rem(tup.Dyn CEU5(COMMA &tup.Dyn->Any.hld.block->dn.dyns));
                 ceu_dyn_free(tup.Dyn);
             }
             switch (v.type) {
@@ -1642,7 +1651,7 @@ fun Coder.main (tags: Tags): String {
                 val, stk
             };
             
-            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
             ceu_hold_chk_set_col((CEU_Dyn*)ret, val);
             ceu_hold_chk_set_col((CEU_Dyn*)ret, stk);
             
