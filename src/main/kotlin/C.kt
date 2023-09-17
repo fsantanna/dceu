@@ -255,6 +255,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 4
             struct CEU_Exe_Task Exe_Task;
         #endif
+        #if CEU >= 5
+            struct CEU_Tasks    Tasks;
+        #endif
         } CEU_Dyn;        
     """ +
     """ // CEU_Tags
@@ -1371,6 +1374,16 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 4
         CEU_Value ceu_create_exe_task (CEU_Block* blk, CEU_Value clo) {
+            if (clo.type != CEU_VALUE_CLO_TASK) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
+            }
+            CEU_Value exe = _ceu_create_exe_(sizeof(CEU_Exe_Task), blk, clo);
+            exe.Dyn->Exe_Task.dn_block = NULL;
+            return exe;
+        }
+        #endif
+        #if CEU >= 5
+        CEU_Value ceu_create_exe_task_in (CEU_Block* blk, CEU_Value clo, CEU_Tasks* tasks) {
             CEU_Value exe = _ceu_create_exe_(sizeof(CEU_Exe_Task), blk, clo);
             exe.Dyn->Exe_Task.dn_block = NULL;
             return exe;

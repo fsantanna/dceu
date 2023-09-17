@@ -871,11 +871,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Frame ceu_frame_$n = ceu_acc.Dyn->Exe.frame;
                             """
                         (upspawn != null) -> """
-                            if (ceu_acc.type != CEU_VALUE_CLO_TASK) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
-                                CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", err);
+                            ${istasks.cond2({"""
+                                CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, ceu_acc, &${up.idc("tasks")}.Dyn->Tasks);
+                                if (ceu_x_$n.type == CEU_VALUE_BOOL) {
+                                    ceu_acc = ceu_x_$n;
+                                } else {
+                                    // ... below ...
+                            """ }, { """
+                                CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
+                            """ })}
+                            if (ceu_acc.type == CEU_VALUE_ERROR) {
+                                CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", ceu_acc);
                             }
-                            CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
                             assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
                             CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
                         """
@@ -899,7 +906,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${upspawn.cond { """
-                        ceu_acc = ceu_x_$n;
+                        ${istasks.cond2({"""
+                                ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+                            }
+                        """ }, { """
+                            ceu_acc = ceu_x_$n;
+                        """ })}
                     """ }}
                 } // CALL - close
                 """
