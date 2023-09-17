@@ -830,7 +830,7 @@ class Exec_04 {
         assert(out == "1\t2\t3\n" +
                 " |  anon : (lin 2, col 19) : (task (v1) { spawn (task (v2) { spawn (task (...)\n" +
                 " |  anon : (lin 3, col 23) : (task (v2) { spawn (task (v3) { println(v1,v2...)\n" +
-                " v  anon : (lin 3, col 33) : block escape error : incompatible scopes\n") { out }
+                " v  anon : (lin 3, col 33) : block escape error : cannot copy reference to outer scope\n") { out }
     }
 
     // ORIG
@@ -1199,7 +1199,7 @@ class Exec_04 {
         //assert(out == "[1]\n") { out }
         assert(out == " |  anon : (lin 10, col 13) : broadcast in :global, [[1]]\n" +
                 " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
-                " v  anon : (lin 3, col 17) : declaration error : incompatible scopes\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {

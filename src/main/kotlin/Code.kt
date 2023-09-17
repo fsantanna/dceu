@@ -140,7 +140,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         {
                             CEU_Value ceu_up = ${dcl.idc(upv).first};
-                            assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up));
+                            assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$n*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
@@ -265,7 +265,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 id__dot__dot__dot_ = ceu_create_tuple($blkc, ceu_argc);
                                 for (int i=0; i<ceu_argc; i++) {
                                     CEU_Value vec = ceu_vector_from_c_string($blkc, ceu_argv[i]);
-                                    assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec));
+                                    assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec).type != CEU_VALUE_ERROR);
                                 }
                             """
                             (f_b is Expr.Proto) -> {
@@ -279,10 +279,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         $_idc_ = $blkc;
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
-                                            if (!ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 0)) {
-                                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="argument error : incompatible scopes"} };
-                                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                            }
+                                            CEU_ASSERT(
+                                                $blkc,
+                                                ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 0, "argument error"),
+                                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                                            );
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
                                                 if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && $idc.Dyn->Any.hld.block->depth>1) {
@@ -301,7 +302,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                         $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
                                         for (int i=0; i<ceu_tup_n_$n; i++) {
-                                            assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]));
+                                            assert(ceu_tuple_set(&$idc.Dyn->Tuple, i, ceu_args[$args_n+i]).type != CEU_VALUE_ERROR);
                                         }
                                         ceu_gc_inc($idc);
                                     """ }}
@@ -319,15 +320,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        if (!ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="block escape error : incompatible scopes"} };
+                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
+                        if (ceu_err_$n.type == CEU_VALUE_ERROR) {
                         #if CEU <= 1
-                                // free from this block
-                                CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            // free from this block
+                            CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
                         #else
                             do {
-                               // allocate throw on up
-                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                                // allocate throw on up
+                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
                             } while (0);    // catch continue in CEU_ERROR
                         #endif
                         }
@@ -422,10 +423,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 // DCL | ${this.dump()}
                 ${(this.init && this.src!=null && !unused).cond {
                     this.src!!.code() + (!this.tmp).cond { """
-                        if (!ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="declaration error : incompatible scopes"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                        }
+                        CEU_ASSERT(
+                            $bupc,
+                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                        );
                     """ }
                 }}
                 ${when {
@@ -615,10 +617,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         assert(!dcl.tmp)    // removed support for "val :tmp x"
                         """
                         { // ACC - SET
-                            if (!ceu_hold_chk_set(${_idc_}, CEU_HOLD_MUTAB, $src, 0)) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : incompatible scopes"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            }
+                            CEU_ASSERT(
+                                $bupc,
+                                ceu_hold_chk_set(${_idc_}, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                             ceu_gc_inc($src);
                             ceu_gc_dec($idc, 1);
                             $idc = $src;
@@ -655,10 +658,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_tup_$n = ceu_create_tuple(${ups.first_block(this)!!.idc("block")}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
-                        if (!ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="tuple error : incompatible scopes"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                        }
+                        CEU_ASSERT(
+                            $bupc,
+                            ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc),
+                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                        );
                         """
                 }.joinToString("")}
                     ceu_acc = ceu_tup_$n;
@@ -672,10 +676,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_vec_$n = ceu_create_vector(${ups.first_block(this)!!.idc("block")});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
-                        if (!ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="vector error : incompatible scopes"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                        }
+                        CEU_ASSERT(
+                            $bupc,
+                            ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc),
+                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                        );
                         """
                 }.joinToString("")}
                     ceu_acc = ceu_vec_$n;
@@ -693,10 +698,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_key_$n = ceu_acc;
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = ceu_acc;
-                            if (!ceu_dict_set(&ceu_dict_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n)) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="dict error : incompatible scopes"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            }
+                            CEU_ASSERT(
+                                $bupc,
+                                ceu_dict_set(&ceu_dict_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
                         }
                     """ }.joinToString("")}
                     ceu_acc = ceu_dict_$n;
@@ -726,7 +732,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.isdst() -> {
                         val src = this.asdst_src()
                         """
-                        int ok = 1;
+                        CEU_Value ok = { CEU_VALUE_NIL };
                         switch (ceu_acc.type) {
                             case CEU_VALUE_TUPLE:
                                 ok = ceu_tuple_set(&ceu_acc.Dyn->Tuple, ceu_idx_$n.Number, $src);
@@ -742,10 +748,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             default:
                                 assert(0 && "bug found");
                         }
-                        if (!ok) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="set error : incompatible scopes"} };
-                            CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                        }
+                        CEU_ASSERT($bupc, ok, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                         """
                     }
                     this.isdrop() -> {
@@ -891,7 +894,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="call error : expected function"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
-                            CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA NULL) };
+                            CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
                         """
                     }}
 

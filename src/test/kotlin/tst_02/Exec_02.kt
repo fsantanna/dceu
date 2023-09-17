@@ -226,7 +226,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " v  anon : (lin 2, col 26) : block escape error : incompatible scopes\n") { out }
+        assert(out == " v  anon : (lin 2, col 26) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun jj_12_catch() {

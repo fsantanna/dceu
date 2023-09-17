@@ -510,7 +510,7 @@ class Exec_03 {
                 set xxx = t ;; error
             }
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : incompatible scopes\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
 
     // SCOPE
