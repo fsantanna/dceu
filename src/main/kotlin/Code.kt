@@ -883,10 +883,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """ }, { """
                                 CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, ceu_acc);
                             """ })}
-                            if (ceu_acc.type == CEU_VALUE_ERROR) {
-                                CEU_ERROR($bupc, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})", ceu_acc);
-                            }
-                            assert(ceu_x_$n.type == CEU_VALUE_EXE_TASK);
+                            CEU_ASSERT($bupc, ceu_x_$n, "${up.tk.pos.file} : (lin ${up.tk.pos.lin}, col ${up.tk.pos.col})");
                             CEU_Frame ceu_frame_$n = ceu_x_$n.Dyn->Exe_Task.frame;
                         """
                         else -> """
