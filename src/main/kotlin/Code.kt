@@ -394,7 +394,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free
-                    ${(!isvoid).cond { "ceu_block_free($blkc);" }}
+                    ${(!isvoid).cond { "ceu_dyns_free(&$blkc->dn.dyns);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {
@@ -876,8 +876,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         (upspawn != null) -> """
                             ${istasks.cond2({"""
                                 CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, ceu_acc, &${up.idc("tasks")}.Dyn->Tasks);
-                                if (ceu_x_$n.type == CEU_VALUE_BOOL) {
-                                    ceu_acc = ceu_x_$n;
+                                if (ceu_x_$n.type == CEU_VALUE_NIL) {
+                                    ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
                                 } else {
                                     // ... below ...
                             """ }, { """

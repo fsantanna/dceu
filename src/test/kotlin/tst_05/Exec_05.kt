@@ -68,6 +68,6 @@ class Exec_05 {
             val ok2 = spawn in ts, T()
             println(ok1, ok2)
         """)
-        assert(out == "true\nfalse\n") { out }
+        assert(out == "true\tfalse\n") { out }
     }
 }
