@@ -728,7 +728,7 @@ class Exec_04 {
         assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
     }
     @Test
-    fun gg_05_bcast_tuple_func_ok() {
+    fun gg_05_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
                 val :tmp x = [0]
@@ -737,6 +737,36 @@ class Exec_04 {
             }
             var T = task () {
                 f(yield(nil) { it })
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun gg_05_bcast_tuple_func_xx() {
+        val out = test("""
+            var f = func (v) {
+                nil
+            }
+            var T = task () {
+                f(yield(nil) { it })
+            }
+            spawn T()
+            broadcast in :global, [[1]]
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun gg_05_bcast_tuple_func_ok() {
+        val out = test("""
+            var f = func (v) {
+                val :tmp x = [0]
+                set x[0] = v[0]
+                println(x[0])
+            }
+            var T = task () {
+                yield(nil) { f(it) }
             }
             spawn T()
             broadcast in :global, [[1]]

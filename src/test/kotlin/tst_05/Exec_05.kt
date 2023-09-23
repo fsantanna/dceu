@@ -10,21 +10,21 @@ class Exec_05 {
     // TASKS
 
     @Test
-    fun kk_01_tasks() {
+    fun aa_01_tasks() {
         val out = test("""
             println(tasks())
         """)
         assert(out.contains("tasks: 0x")) { out }
     }
     @Test
-    fun kk_02_tasks() {
+    fun aa_02_tasks() {
         val out = test("""
             println(type(tasks()))
         """)
         assert(out.contains(":tasks")) { out }
     }
     @Test
-    fun kk_03_tasks() {
+    fun aa_03_tasks() {
         val out = test("""
             val T = task () {
                 println(:in)
@@ -36,7 +36,7 @@ class Exec_05 {
         assert(out == ":in\n:out\n") { out }
     }
     @Test
-    fun kk_04_tasks() {
+    fun aa_04_tasks() {
         val out = test("""
             spawn in tasks(), (task () { println(:in) })()
             println(:out)
@@ -44,7 +44,7 @@ class Exec_05 {
         assert(out == ":in\n:out\n") { out }
     }
     @Test
-    fun kk_05_tasks() {
+    fun aa_05_tasks() {
         val out = test("""
             val T = task () {
                 yield(nil) { nil }
@@ -58,7 +58,7 @@ class Exec_05 {
         assert(out == ":out\n:in\n") { out }
     }
     @Test
-    fun kk_06_tasks() {
+    fun aa_06_tasks() {
         val out = test("""
             val T = task () {
                 nil
@@ -71,7 +71,7 @@ class Exec_05 {
         assert(out == "true\ttrue\n") { out }
     }
     @Test
-    fun kk_07_tasks() {
+    fun aa_07_tasks() {
         val out = test("""
             val T = task () {
                 yield(nil) { nil }
@@ -83,7 +83,7 @@ class Exec_05 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun kk_08_tasks() {
+    fun aa_08_tasks() {
         val out = test("""
             val T = task () {
                 yield(nil) { nil }

@@ -109,10 +109,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 """ }}
                             }
                         }
+                        #if CEU >= 5
                         if (ceu_frame->exe->type == CEU_VALUE_EXE_TASK_IN) {
                             ceu_hold_rem((CEU_Dyn*)ceu_frame->exe CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe->hld.block))->dyns));
                             ceu_dyn_free((CEU_Dyn*)ceu_frame->exe);
                         }
+                        #endif
                         """}}
                         return ceu_acc;
                     }
