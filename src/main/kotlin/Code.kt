@@ -340,10 +340,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // dcls gc-dec
                     ${dcls.map { """
-                            if (${it.first}.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec(${it.first}, (CEU_HLD_BLOCK(${it.first}.Dyn)->depth == $blkc->depth));
-                            }
-                        """ }.joinToString("")}
+                        if (${it.first}.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                            ceu_gc_dec(${it.first}, (CEU_HLD_BLOCK(${it.first}.Dyn)->depth == $blkc->depth));
+                        }
+                    """ }.joinToString("")}
                     // args gc-dec
                     ${(f_b is Expr.Proto).cond { """
                         ${(f_b as Expr.Proto).args.map {
@@ -539,7 +539,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_frame->exe->pc = $n;      // next resume
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : incompatible scopes"} };
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot receive assigned reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                     return ceu_acc;
@@ -561,7 +561,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     ${this.blk.code()}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK(ceu_acc.Dyn)->depth>1) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive assigned reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                 }

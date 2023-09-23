@@ -565,7 +565,7 @@ class Exec_03 {
             resume t()
         """)
         assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
-                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+                " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
     }
     @Test
     fun gg_04_scope() {
@@ -598,7 +598,7 @@ class Exec_03 {
             resume t()
         """)
         assert(out == " |  anon : (lin 9, col 32) : t()\n" +
-                " v  anon : (lin 4, col 17) : yield error : incompatible scopes\n") { out }
+                " v  anon : (lin 4, col 17) : yield error : cannot receive assigned reference\n") { out }
     }
     @Test
     fun gg_06_scope() {
