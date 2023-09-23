@@ -105,9 +105,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             if (!CEU_ISERR(ceu_acc)) {
                                 ${(this.tk.str == "task").cond { """
-                                    ceu_acc = ceu_bcast_blocks(ceu_frame->exe_task->hld.block, (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
+                                    ceu_acc = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
                                 """ }}
                             }
+                        }
+                        if (ceu_frame->exe->type == CEU_VALUE_EXE_TASK_IN) {
+                            ceu_hold_rem((CEU_Dyn*)ceu_frame->exe CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe->hld.block))->dyns));
+                            ceu_dyn_free((CEU_Dyn*)ceu_frame->exe);
                         }
                         """}}
                         return ceu_acc;
@@ -286,7 +290,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             );
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
-                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && $idc.Dyn->Any.hld.block->depth>1) {
+                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK($idc.Dyn)->depth>1) {
                                                     CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
                                                     CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                                                 }
@@ -337,7 +341,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // dcls gc-dec
                     ${dcls.map { """
                             if (${it.first}.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec(${it.first}, (${it.first}.Dyn->Any.hld.block->depth == $blkc->depth));
+                                ceu_gc_dec(${it.first}, (CEU_HLD_BLOCK(${it.first}.Dyn)->depth == $blkc->depth));
                             }
                         """ }.joinToString("")}
                     // args gc-dec
@@ -556,7 +560,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         continue;
                     }
                     ${this.blk.code()}
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && ceu_acc.Dyn->Any.hld.block->depth>1) {
+                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK(ceu_acc.Dyn)->depth>1) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : incompatible scopes"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }

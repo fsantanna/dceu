@@ -68,6 +68,31 @@ class Exec_05 {
             val ok2 = spawn in ts, T()
             println(ok1, ok2)
         """)
+        assert(out == "true\ttrue\n") { out }
+    }
+    @Test
+    fun kk_07_tasks() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            val ok = spawn in ts, T()
+            println(ok)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun kk_08_tasks() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks(1)
+            val ok1 = spawn in ts, T()
+            val ok2 = spawn in ts, T()
+            println(ok1, ok2)
+        """)
         assert(out == "true\tfalse\n") { out }
     }
 }
