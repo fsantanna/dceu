@@ -687,7 +687,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     it.code() + """
                         CEU_ASSERT(
                             $bupc,
-                            ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc),
+                            ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc CEU4(COMMA 1)),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                         """

@@ -538,7 +538,10 @@ class Exec_04 {
                 }()
             ;;}
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast in :global, [] })()\n" +
+                " |  anon : (lin 9, col 21) : broadcast in :global, []\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -548,13 +551,14 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch true {
+            catch (do { println(it) ; true }) {
                 func () {
                     broadcast in :global, []
                 }()
             }
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == "declaration error : cannot hold event reference\n") { out }
     }
     @Test
     fun ee_12_bcast() {
@@ -668,6 +672,24 @@ class Exec_04 {
                 broadcast in :global, []
             }()
         """)
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast in :global, [] })()\n" +
+                " |  anon : (lin 8, col 17) : broadcast in :global, []\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
+    }
+    @Test
+    fun gg_02_scope() {
+        val out = test("""
+            val T = task (v) {
+                yield(nil) {
+                    println(it)
+                }                                
+            }
+            spawn T(10)
+            func () {
+                broadcast in :global, []
+            }()
+        """)
         assert(out == "[]\n") { out }
     }
     @Test
@@ -682,9 +704,11 @@ class Exec_04 {
             spawn T()
             broadcast in :global, []
         """)
-        assert(out == "[]\n" +
-                " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
-                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+        //assert(out == "[]\n" +
+        //        " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
     fun gg_03_bcast() {
@@ -725,7 +749,12 @@ class Exec_04 {
             println(e)
         """
         )
-        assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
+        //assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
+        assert(out == ":1\n" +
+                "10\n" +
+                "10\n" +
+                ":2\n" +
+                "declaration error : cannot hold event reference\n") { out }
     }
     @Test
     fun gg_05_bcast_tuple_func_no() {
@@ -736,7 +765,7 @@ class Exec_04 {
                 println(x[0])
             }
             var T = task () {
-                f(yield(nil) { it })
+                yield(nil) { f(it) }
             }
             spawn T()
             broadcast in :global, [[1]]
@@ -747,10 +776,10 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_xx() {
         val out = test("""
             var f = func (v) {
-                nil
+                println(v[0])
             }
             var T = task () {
-                f(yield(nil) { it })
+                yield(nil) { f(it) }
             }
             spawn T()
             broadcast in :global, [[1]]
@@ -1034,8 +1063,7 @@ class Exec_04 {
             """
             var tk
             set tk = task () {
-                val v = yield(nil) {it}
-                println(v)
+                yield(nil) {println(it)}
                 nil
             }
             var co
@@ -1062,8 +1090,7 @@ class Exec_04 {
             """
             var tk
             set tk = task () {
-                var v = yield(nil) { it }
-                println(v)
+                yield(nil) { println(it) }
                 nil
             }
             var co
@@ -1082,8 +1109,7 @@ class Exec_04 {
             """
             var T = task () {
                 do {
-                    var v = yield(nil) { it }
-                    println(v)
+                    yield(nil) { println(it) }
                 }
             }
             var t = spawn T()
@@ -1128,16 +1154,34 @@ class Exec_04 {
             }
             var t = spawn T()
             do {
-            var e = []
-            broadcast in :global, e
+                var e = []
+                broadcast in :global, e
             }
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
         //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
-                " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+                " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+    }
+    @Test
+    fun zz_15_bcast_okr() {
+        val out = test(
+            """
+            var T = task () {
+                yield(nil) { println(it) }
+            }
+            var t = spawn T()
+            do {
+                var e = []
+                broadcast in :global, e
+            }
+            """
+        )
+        assert(out == "[]\n") { out }
     }
     @Test
     fun zz_16_bcast_err() {
@@ -1159,7 +1203,7 @@ class Exec_04 {
         )
         //assert(out == ":1\n:2\n1\n") { out }
         assert(out == " |  anon : (lin 11, col 17) : broadcast in :global, e\n" +
-                " v  anon : (lin 4, col 17) : resume error : incompatible scopes\n") { out }
+                " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
@@ -1191,8 +1235,8 @@ class Exec_04 {
             println(`:number ceu_gc_count`)
             """
         )
-        assert(out == "0\n") { out }
-        //assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +
@@ -1205,8 +1249,7 @@ class Exec_04 {
                 println(v)
             }
             var T = task () {
-                val evt = yield(nil) {it}
-                fff(evt)
+                yield(nil) {fff(it)}
             }
             spawn T()
             broadcast in :global, [1]
@@ -1226,10 +1269,10 @@ class Exec_04 {
             spawn T()
             broadcast in :global, [[1]]
         """)
-        //assert(out == "[1]\n") { out }
-        assert(out == " |  anon : (lin 10, col 13) : broadcast in :global, [[1]]\n" +
-                " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == " |  anon : (lin 10, col 13) : broadcast in :global, [[1]]\n" +
+        //        " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {
@@ -1245,7 +1288,9 @@ class Exec_04 {
             spawn T()
             broadcast in :global, [[1]]
         """)
-        assert(out == "[1]\n") { out }
+        //assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
+                " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_ok() {
@@ -1255,8 +1300,7 @@ class Exec_04 {
                 println(x)
             }
             var T = task () {
-                val evt = yield(nil) { it }
-                f(evt)
+                yield(nil) { f(it) }
             }
             spawn T()
             broadcast in :global, [[1]]

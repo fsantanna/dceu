@@ -874,7 +874,7 @@ fun Coder.main (tags: Tags): String {
                 if (src.Dyn->Any.refs-nest>0 && dst->depth>CEU_HLD_BLOCK(src.Dyn)->depth) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot move to deeper scope with pending references");
-                    return err;
+                    return err; // OK with CEU_HOLD_EVENT b/c never assigned
                 } else {
                     // continue below
                 }
