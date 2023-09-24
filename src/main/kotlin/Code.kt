@@ -279,6 +279,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                                 val args_n = f_b.args.size - 1
                                 """
+                                int ceu_gc_todo = 1;
                                 { // func args
                                     ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
                                         val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
@@ -286,11 +287,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         $_idc_ = $blkc;
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
+                                            ceu_gc_todo = 0;
                                             CEU_ASSERT(
                                                 $blkc,
                                                 ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 0, "argument error" CEU4(COMMA $yldsi)),
                                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                                             );
+                                            ceu_gc_todo = 1;
                                             ceu_gc_inc($idc);
                                             ${(f_b.tk.str != "func").cond {"""
                                                 if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK($idc.Dyn)->depth>1) {
@@ -352,8 +355,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(f_b as Expr.Proto).args.map {
                             val (idc,_) = vars.get(this, it.first.str).idc(0)
                             """
-                            if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                            if (ceu_gc_todo) {
+                                if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                                    ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                                }
                             }
                             """
                         }.joinToString("")}
