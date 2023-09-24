@@ -1164,7 +1164,7 @@ class Exec_04 {
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
+        assert(out == " |  anon : (lin 9, col 17) : broadcast in :global, e\n" +
                 " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
     }
     @Test

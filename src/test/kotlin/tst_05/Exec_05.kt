@@ -2,6 +2,7 @@ package tst_05
 
 import dceu.*
 import org.junit.FixMethodOrder
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runners.MethodSorters
 
@@ -94,5 +95,82 @@ class Exec_05 {
             println(ok1, ok2)
         """)
         assert(out == "true\tfalse\n") { out }
+    }
+
+    // TRACK
+
+    @Test
+    fun bb_01_track() {
+        val out = test("""
+            track(nil)
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : track(nil) : track error : expected task\n") { out }
+    }
+    @Test
+    fun bb_02_track() {
+        val out = test("""
+            val T = task () {
+                nil
+            }
+            val t = spawn T()
+            val x = track(t)
+            println(t, x)
+        """)
+        assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
+    }
+    @Test
+    fun bb_03_track() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            val x = track(t)
+            println(x)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+    @Test
+    fun bb_04_track() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T ()
+            val x = track(t)
+            val y = track(t)
+            var z = y
+            println(x==y, y==z)
+        """)
+        assert(out.contains("false\ttrue\n")) { out }
+    }
+
+    // NEXT
+
+    @Ignore
+    @Test
+    fun bb_01_next() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            spawn in ts, T()
+            
+            
+            println(ok1, ok2)
+
+            val t = @[]
+            set t[:x] = 1
+            set t[:y] = 2
+            var k
+            set k = next(t)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+            set k = next(t,k)
+            println(k, t[k])
+        """
+        )
+        assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
     }
 }

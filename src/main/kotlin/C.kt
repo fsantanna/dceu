@@ -91,6 +91,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
             CEU_VALUE_EXE_TASK_IN,
             CEU_VALUE_TASKS,
+            CEU_VALUE_TRACK,
         #endif
             CEU_VALUE_MAX
         } __attribute__ ((__packed__)) CEU_VALUE;
@@ -239,12 +240,17 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* dn_block;
         } CEU_Exe_Task;
         #endif
+        
         #if CEU >= 5
         typedef struct CEU_Tasks {
             _CEU_Dyn_
             int max;
             CEU_Dyns dyns;
         } CEU_Tasks;
+        typedef struct CEU_Track {
+            _CEU_Dyn_
+            CEU_Exe_Task* task;
+        } CEU_Track;
         #endif
 
         typedef union CEU_Dyn {                                                                 
@@ -267,6 +273,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 5
             struct CEU_Tasks    Tasks;
+            struct CEU_Track    Track;
         #endif
         } CEU_Dyn;        
     """ +
@@ -674,7 +681,18 @@ fun Coder.main (tags: Tags): String {
             #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_IN:
+        #endif
                     ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), 1);
+                    break;
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Track.task), 1);
                     break;
         #endif
                 default:
@@ -760,6 +778,8 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_TASKS:
                     ceu_dyns_free(&dyn->Tasks.dyns);
+                    break;
+                case CEU_VALUE_TRACK:
                     break;
         #endif
                 default:
@@ -1470,8 +1490,18 @@ fun Coder.main (tags: Tags): String {
                 max, { NULL, NULL }
             };
             
-            ceu_hold_add((CEU_Dyn*)ret, blk CEU5(COMMA &blk->dn.dyns));
+            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
             return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
+        }
+        CEU_Value ceu_create_track (CEU_Block* blk, CEU_Exe_Task* task) {
+            CEU_Track* ret = malloc(sizeof(CEU_Track));
+            assert(ret != NULL);
+            *ret = (CEU_Track) {
+                CEU_VALUE_TRACK, 0, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
+                task
+            };
+            ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
+            return (CEU_Value) { CEU_VALUE_TRACK, {.Dyn=(CEU_Dyn*)ret} };
         }
         
         CEU_Value ceu_tasks_f (CEU_Frame* frame, int n, CEU_Value args[]) {
@@ -1631,6 +1661,11 @@ fun Coder.main (tags: Tags): String {
                     printf("tasks: %p", v.Dyn);
                     break;
         #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    printf("track: %p", v.Dyn);
+                    break;
+        #endif
                 default:
                     assert(0 && "bug found");
             }
@@ -1698,6 +1733,7 @@ fun Coder.main (tags: Tags): String {
             #endif
             #if CEU >= 5
                     case CEU_VALUE_EXE_TASK_IN:
+                    case CEU_VALUE_TRACK:
             #endif
                         v = (e1.Dyn == e2.Dyn);
                         break;
@@ -1788,6 +1824,21 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Exe.status + CEU_TAG_yielded - 1} };
         }
         #endif
+    """ + """ // TRACK / DETRACK
+        #if CEU >= 5
+        CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value task = args[0];
+            if (task.type!=CEU_VALUE_EXE_TASK && task.type!=CEU_VALUE_EXE_TASK_IN) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
+            } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
+            }
+            //CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?
+            //    task->Dyn->up_dyns.dyns->up_block : frame->up_block;
+            return ceu_create_track(frame->up_block, (CEU_Exe_Task*)task.Dyn);
+        }
+        #endif
     """ +
     """ // GLOBALS
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
@@ -1871,6 +1922,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_tasks_f, {0,NULL}
         };
+        CEU_Clo ceu_track = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
+            &_ceu_frame_, ceu_track_f, {0,NULL}
+        };
         #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
@@ -1896,6 +1951,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
+        CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
         #endif
     """ +
     """ // MAIN

@@ -71,8 +71,7 @@ val TAGS = listOf (
 )) + (if (CEU < 4) listOf() else listOf(
     ":x-task",
 )) + (if (CEU < 5) listOf() else listOf(
-    ":x-task-in",
-    ":tasks",
+    ":x-task-in", ":tasks", ":track"
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
@@ -91,7 +90,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 5) setOf() else setOf(
-    "tasks"
+    "detrack", "tasks", "track"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
