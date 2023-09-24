@@ -1440,7 +1440,7 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
-            *ret = (CEU_Exe) {
+            *ret = (CEU_Exe) {  // refs=1 b/c of ref in block for defers
                 type, 1, NULL, { hld_type, blk, NULL, NULL },
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, {.exe=ret} }, 0, mem
             };
@@ -1455,9 +1455,9 @@ fun Coder.main (tags: Tags): String {
             if (clo.type != CEU_VALUE_CLO_TASK) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
             }
-            CEU_Value exe = _ceu_create_exe_(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA &blk->dn.dyns));
-            exe.Dyn->Exe_Task.dn_block = NULL;
-            return exe;
+            CEU_Value ret = _ceu_create_exe_(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA &blk->dn.dyns));
+            ret.Dyn->Exe_Task.dn_block = NULL;
+            return ret;
         }
         #endif
         

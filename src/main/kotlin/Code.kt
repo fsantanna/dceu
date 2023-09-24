@@ -585,8 +585,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     $evtc = ceu_acc;
                     ${this.xin.code()}
                     assert(ceu_acc.type==CEU_VALUE_TAG && ceu_acc.Tag==CEU_TAG_global);
+                    int ceu_isfleet_$n = ($evtc.type>CEU_VALUE_DYNAMIC && $evtc.Dyn->Any.hld.type==CEU_HOLD_FLEET);
+                    if (ceu_isfleet_$n) {
+                        assert(ceu_hold_chk_set($bupc, CEU_HOLD_EVENT, $evtc, 0, NULL CEU4(COMMA ${if (ylds) 1 else 0})).type != CEU_VALUE_ERROR);
+                    }
                     //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
+                    ceu_gc_inc($evtc);
                     ceu_acc = ceu_bcast_blocks(ceu_bcast_global_block($bupc), $evtc);
+                    if (ceu_isfleet_$n) {
+                        ceu_gc_chk($evtc.Dyn);
+                    }
+                    ceu_gc_dec($evtc, 1);
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 }
                 """
