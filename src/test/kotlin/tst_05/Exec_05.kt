@@ -157,30 +157,44 @@ class Exec_05 {
         val out = test("""
             val T = task () { nil }
             val t = spawn T()
+            val x = track(t)
             val v = detrack(t) { 10 }
             println(v)
         """)
-        assert(out.contains("nil\n")) { out }
+        assert(out.contains(" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
     }
     @Test
     fun cc_04_detrack() {
         val out = test("""
             val T = task () { yield(nil) { nil } }
             val t = spawn T()
-            val v = detrack(t) { 10 }
+            val x = track(t)
+            broadcast nil
+            val v = detrack(x) { 10 }
+            println(v)
+        """)
+        assert(out.contains("nil\n")) { out }
+    }
+    @Test
+    fun cc_05_detrack() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) { 10 }
             println(v)
         """)
         assert(out.contains("10\n")) { out }
     }
     @Test
-    fun cc_05_detrack_err() {
+    fun cc_06_detrack_err() {
         val out = test("""
             detrack(nil) { broadcast nil }
         """)
         assert(out.contains("anon : (lin 2, col 28) : broadcast error : unexpected enclosing detrack\n")) { out }
     }
     @Test
-    fun cc_06_detrack_err() {
+    fun cc_07_detrack_err() {
         val out = test("""
             task () {
                 detrack(nil) { yield(nil) { nil } }

@@ -700,7 +700,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 5
                 case CEU_VALUE_TRACK:
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Track.task), 1);
+                    // dyn->Track.task is a weak reference
                     break;
         #endif
                 default:
@@ -1150,6 +1150,11 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                     case CEU_VALUE_TASKS:
                         return ceu_bcast_dyns(dyn->Tasks.dyns.first, evt);
+                    case CEU_VALUE_TRACK:
+                        if (evt.type==CEU_VALUE_POINTER  && dyn->Track.task==(CEU_Exe_Task*)evt.Pointer) {
+                            dyn->Track.task = NULL; // tracked coro is terminating
+                        }
+                        break;
         #endif
                     default:
                         // not applicable

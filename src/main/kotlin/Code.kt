@@ -618,7 +618,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 { // DTRACK ${this.dump()}
                     ${this.trk.code()}
-                    if (!CEU_ISTASK(ceu_acc)) {                
+                    if (ceu_acc.type != CEU_VALUE_TRACK) {                
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
