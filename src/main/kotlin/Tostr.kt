@@ -23,7 +23,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             val args = this.args.map { (id,tag) ->
                 id.tostr() + tag.cond {" ${tag!!.str}"}
             }.joinToString(",")
-            "(" + this.tk.str + " (" + args + ") " + this.body.tostr(pre) + ")"
+            "(" + this.tk.str + " (" + args + ") " + this.blk.tostr(pre) + ")"
         }
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
@@ -31,7 +31,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
-        is Expr.XLoop  -> "xloop " + this.body.tostr(pre)
+        is Expr.XLoop  -> "xloop " + this.blk.tostr(pre)
         is Expr.XBreak -> "xbreak" + this.e?.cond { "("+it.tostr(pre)+")" } + " if " + this.cnd.tostr(pre)
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
@@ -41,14 +41,15 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.It     -> "it"
-        is Expr.Catch  -> "catch " + this.cnd.cond { it.tostr(pre)} + " " + this.body.tostr(pre)
-        is Expr.Defer  -> "defer " + this.body.tostr(pre)
+        is Expr.Catch  -> "catch " + this.cnd.cond { it.tostr(pre)} + " " + this.blk.tostr(pre)
+        is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ") " + this.blk.tostr(pre)
         is Expr.Resume -> "resume " + this.call.tostr(pre)
 
-        is Expr.Spawn  -> "spawn " + this.tasks.cond { "in ${this.tasks!!.tostr(pre)}, " } + this.call.tostr(pre)
+        is Expr.Spawn  -> "spawn " + this.tsks.cond { "in ${this.tsks!!.tostr(pre)}, " } + this.call.tostr(pre)
         is Expr.Bcast  -> "broadcast " + this.xin.cond { "in " + it.tostr(pre) + ", " } + this.evt.tostr(pre)
+        is Expr.Dtrack -> "detrack(" + this.trk.tostr(pre) + ") " + this.blk.tostr(pre)
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()

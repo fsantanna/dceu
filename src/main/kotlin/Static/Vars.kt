@@ -129,7 +129,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     }
                 }
 
-                this.body.traverse()
+                this.blk.traverse()
             }
             is Expr.Do     -> {
                 blk_to_dcls[this] = mutableListOf()
@@ -196,7 +196,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.XLoop  -> this.body.traverse()
+            is Expr.XLoop  -> this.blk.traverse()
             is Expr.XBreak -> { this.cnd?.traverse() ; this.e?.traverse() }
             is Expr.Enum   -> {}
             is Expr.Data   -> {
@@ -220,14 +220,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Drop   -> this.e.traverse()
 
             is Expr.It     -> {}
-            is Expr.Catch  -> { this.cnd?.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
+            is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> { this.arg.traverse() ; this.blk.traverse() }
             is Expr.Resume -> this.call.traverse()
 
-            is Expr.Spawn  -> { this.tasks?.traverse() ; this.call.traverse() }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.call.traverse() }
             is Expr.Bcast  -> { this.xin?.traverse() ; this.evt.traverse() }
+            is Expr.Dtrack -> { this.trk.traverse() ; this.blk.traverse() }
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {

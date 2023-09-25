@@ -56,7 +56,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
-                val code = this.body.code()
+                val code = this.blk.code()
 
                 val pre = """ // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
@@ -71,14 +71,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${isexe.cond { """
                         typedef struct {
                             ${this.args.map { (arg,_) ->
-                                val dcl = vars.get(this.body, arg.str)
+                                val dcl = vars.get(this.blk, arg.str)
                                 val idc = dcl.id.str.idc(dcl.n)
                                 """
                                 CEU_Value $idc;
                                 CEU_Block* _${idc}_;
                                 """
                             }.joinToString("")}
-                            ${this.body.mem(sta, defers)}
+                            ${this.blk.mem(sta, defers)}
                         } CEU_Clo_Mem_$n;                        
                     """ }}
                 """ + """ // FUNC | ${this.dump()}
@@ -472,7 +472,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.XLoop -> this.body.code()
+            is Expr.XLoop -> this.blk.code()
             is Expr.XBreak -> """ // XBREAK | ${this.dump()}
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
@@ -489,7 +489,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Catch -> """
                 { // CATCH ${this.dump()}
                     do { // catch
-                        ${this.body.code()}
+                        ${this.blk.code()}
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
@@ -526,7 +526,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val endx = """
                     if ($idc) {     // ??: execute only if activate
                         do {
-                            ${this.body.code()}
+                            ${this.blk.code()}
                         } while (0);    // catch throw
                         assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
                     }
@@ -610,6 +610,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     ceu_gc_dec($evtc, 1);
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
+                }
+                """
+            }
+            is Expr.Dtrack -> {
+                val bupc = ups.first_block(this)!!.idc("block")
+                """
+                { // DTRACK ${this.dump()}
+                    ${this.trk.code()}
+                    if (ceu_acc.type!=CEU_VALUE_EXE_TASK && ceu_acc.type!=CEU_VALUE_EXE_TASK_IN) {                
+                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
+                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                    }
+                    if (ceu_acc.Dyn->Track.task == NULL) {
+                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
+                    } else {
+                        CEU_Value ceu_it = ceu_acc;
+                        ${this.blk.code()}
+                    }
                 }
                 """
             }
@@ -867,8 +885,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     dcl.idc(0).first
                 }
 
-                val upspawn = if (up is Expr.Spawn && up.tasks?.n!=this.n) up else null
-                val istasks = (upspawn?.tasks != null)
+                val upspawn = if (up is Expr.Spawn && up.tsks?.n!=this.n) up else null
+                val istasks = (upspawn?.tsks != null)
 
                 """
                 { // CALL - open | ${this.dump()}
@@ -891,7 +909,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """}}
 
                     ${istasks.cond {
-                        upspawn!!.tasks!!.code() + """
+                        upspawn!!.tsks!!.code() + """
                             ${(!sta.ylds.contains(bup)).cond { "CEU_Value " }}
                             ${up.idc("tasks")} = ceu_acc;
                         """

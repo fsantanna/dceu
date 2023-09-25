@@ -48,6 +48,8 @@ val KEYWORDS: SortedSet<String> = (
         "coro", "resume",  "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "in", "spawn", "task",
+    )) + (if (CEU < 5) setOf() else setOf(
+        "detrack",
     ))
 ).toSortedSet()
 
@@ -87,7 +89,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 5) setOf() else setOf(
-    "detrack", "tasks", "track"
+    "tasks", "track"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -102,12 +104,12 @@ sealed class Tk (val str: String, val pos: Pos) {
 }
 
 sealed class Expr (val n: Int, val tk: Tk) {
-    data class Proto  (val tk_: Tk.Fix, val args: List<Pair<Tk.Id,Tk.Tag?>>, val body: Expr.Do): Expr(N++, tk_)
+    data class Proto  (val tk_: Tk.Fix, val args: List<Pair<Tk.Id,Tk.Tag?>>, val blk: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class XLoop  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class XLoop  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
     data class XBreak (val tk_: Tk.Fix, val cnd: Expr, val e: Expr?): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
@@ -115,14 +117,15 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
     data class It     (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val body: Expr.Do): Expr(N++, tk_)
-    data class Defer  (val tk_: Tk.Fix, val body: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
-    data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
+    data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr?, val evt: Expr): Expr(N++, tk_)
+    data class Dtrack (val tk_: Tk.Fix, val trk: Expr, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

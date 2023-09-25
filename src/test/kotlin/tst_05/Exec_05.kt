@@ -140,13 +140,59 @@ class Exec_05 {
             var z = y
             println(x==y, y==z)
         """)
-        assert(out.contains("false\ttrue\n")) { out }
+        assert(out == ("false\ttrue\n")) { out }
+    }
+
+    // DETRACK
+
+    @Test
+    fun cc_01_detrack() {
+        val out = test("""
+            detrack(nil) { nil }
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : detrack error : expected track value\n") { out }
+    }
+    @Test
+    fun cc_03_detrack() {
+        val out = test("""
+            val T = task () { nil }
+            val t = spawn T()
+            val v = detrack(t) { 10 }
+            println(v)
+        """)
+        assert(out.contains("nil\n")) { out }
+    }
+    @Test
+    fun cc_04_detrack() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val v = detrack(t) { 10 }
+            println(v)
+        """)
+        assert(out.contains("10\n")) { out }
+    }
+    @Test
+    fun cc_05_detrack_err() {
+        val out = test("""
+            detrack(nil) { broadcast nil }
+        """)
+        assert(out.contains("anon : (lin 2, col 28) : broadcast error : unexpected enclosing detrack\n")) { out }
+    }
+    @Test
+    fun cc_06_detrack_err() {
+        val out = test("""
+            task () {
+                detrack(nil) { yield(nil) { nil } }
+            }
+        """)
+        assert(out.contains("anon : (lin 3, col 32) : yield error : unexpected enclosing detrack\n")) { out }
     }
 
     // THROW
 
     @Test
-    fun cc_01_throw() {
+    fun dd_01_throw() {
         val out = test("""
             val T = task () {
                 spawn task () {

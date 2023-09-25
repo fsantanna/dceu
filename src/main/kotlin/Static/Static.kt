@@ -23,7 +23,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
         when (this) {
             is Expr.Proto  -> {
                 spws.add(ups.first_block(this)!!)
-                this.body.traverse()
+                this.blk.traverse()
             }
             is Expr.Do     -> {
                 //if (ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }) {
@@ -54,13 +54,13 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.XLoop  -> {
-                this.body.es.last().let {
+                this.blk.es.last().let {
                     if (it.is_innocuous()) {
                         //err(it.tk, "invalid expression : innocuous expression")
                         TODO("never reachable - checked in parser - remove in the future")
                     }
                 }
-                this.body.traverse()
+                this.blk.traverse()
             }
             is Expr.XBreak -> {
                 if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.XLoop) {
@@ -79,9 +79,9 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.It     -> {}
             is Expr.Catch  -> {
                 this.cnd.traverse()
-                this.body.traverse()
+                this.blk.traverse()
             }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> {
                 when {
@@ -99,6 +99,12 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         }
                     }
                         -> err(this.tk, "yield error : unexpected enclosing yield")
+                    ups.any(this) { blk ->
+                        ups.pub[blk].let { dtrk ->
+                            ((dtrk is Expr.Dtrack) && dtrk.blk==blk)
+                        }
+                    }
+                        -> err(this.tk, "yield error : unexpected enclosing detrack")
                 }
                 ups.all_until(this) { it is Expr.Proto }
                     .filter  { it is Expr.Do }              // all blocks up to proto
@@ -112,12 +118,27 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Spawn  -> {
                 spws.add(ups.first_block(this)!!)
-                this.tasks?.traverse()
+                this.tsks?.traverse()
                 this.call.traverse()
             }
             is Expr.Bcast  -> {
+                when {
+                    ups.any(this) { blk ->
+                        ups.pub[blk].let { dtrk ->
+                            ((dtrk is Expr.Dtrack) && dtrk.blk==blk)
+                        }
+                    }
+                    -> err(this.tk, "broadcast error : unexpected enclosing detrack")
+                }
                 this.xin?.traverse()
                 this.evt.traverse()
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do }              // all blocks up to proto
+                    .forEach { ylds.add(it as Expr.Do) }
+            }
+            is Expr.Dtrack-> {
+                this.trk.traverse()
+                this.blk.traverse()
             }
 
             is Expr.Nat    -> {}

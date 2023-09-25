@@ -25,7 +25,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto  -> this.body.traverse()
+            is Expr.Proto  -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> this.src?.traverse()
             is Expr.Set    -> {
@@ -33,7 +33,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.src.traverse()
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.XLoop  -> this.body.traverse()
+            is Expr.XLoop  -> this.blk.traverse()
             is Expr.XBreak -> { this.cnd.traverse() ; this.e?.traverse() }
             is Expr.Enum   -> {}
             is Expr.Data   -> {}
@@ -41,14 +41,15 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Drop   -> this.e.traverse()
 
             is Expr.It     -> {}
-            is Expr.Catch  -> { this.cnd?.traverse() ; this.body.traverse() }
-            is Expr.Defer  -> this.body.traverse()
+            is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
+            is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> { this.arg.traverse() ; this.blk.traverse() }
             is Expr.Resume -> this.call.traverse()
 
-            is Expr.Spawn  -> { this.tasks?.traverse() ; this.call.traverse() }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.call.traverse() }
             is Expr.Bcast  -> { this.xin?.traverse() ; this.evt.traverse() }
+            is Expr.Dtrack-> { this.trk.traverse() ; this.blk.traverse() }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {

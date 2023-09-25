@@ -14,8 +14,9 @@ fun Expr.coexists (): Boolean {
         is Expr.Yield  -> this.arg.coexists() || this.blk.coexists()
         is Expr.Resume -> this.call.coexists()
 
-        is Expr.Spawn  -> (this.tasks?.coexists() ?: false) || this.call.coexists()
+        is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.call.coexists()
         is Expr.Bcast  -> (this.xin?.coexists() ?: false) || this.evt.coexists()
+        is Expr.Dtrack -> this.trk.coexists() || this.blk.coexists()
 
         is Expr.Tuple  -> this.args.any { it.coexists() }
         is Expr.Vector -> this.args.any { it.coexists() }
@@ -88,17 +89,17 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 ${this.f.mem(sta, defers)}
             };
             """
-        is Expr.XLoop -> this.body.mem(sta, defers)
+        is Expr.XLoop -> this.blk.mem(sta, defers)
         is Expr.Pass -> this.e.mem(sta, defers)
         is Expr.Drop -> this.e.mem(sta, defers)
 
         is Expr.Catch -> """
             $union { // CATCH
                 ${this.cnd?.mem(sta, defers) ?: ""}
-                ${this.body.mem(sta, defers)}
+                ${this.blk.mem(sta, defers)}
             };
         """
-        is Expr.Defer -> this.body.mem(sta, defers)
+        is Expr.Defer -> this.blk.mem(sta, defers)
 
         is Expr.Yield -> """
             $union { // YIELD
@@ -110,9 +111,9 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
 
         is Expr.Spawn -> """
             struct {
-                ${this.tasks.cond { "CEU_Value tasks_${this.n};" }} 
+                ${this.tsks.cond { "CEU_Value tasks_${this.n};" }} 
                 union {
-                    ${this.tasks.cond { it.mem(sta, defers) }} 
+                    ${this.tsks.cond { it.mem(sta, defers) }} 
                     ${this.call.mem(sta, defers)}
                 };
             };
@@ -126,6 +127,12 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 };
             };
             """
+        is Expr.Dtrack -> """
+            $union { // DTRACK
+                ${this.trk.mem(sta, defers)}
+                ${this.blk.mem(sta, defers)}
+            };
+        """
 
         is Expr.Tuple -> """
             struct { // TUPLE

@@ -515,7 +515,7 @@ class Parser_01 {
         val l = lexer("xloop { pass nil }")
         val parser = Parser(l)
         val e1 = parser.expr() as Expr.XLoop
-        assert(e1.body.tostr() == "{\npass nil\n}") { e1.body.tostr() }
+        assert(e1.blk.tostr() == "{\npass nil\n}") { e1.blk.tostr() }
     }
     @Test
     fun qq_02_loop_err() {

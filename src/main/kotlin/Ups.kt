@@ -41,12 +41,12 @@ class Ups (outer: Expr.Do) {
             return l.map { it.traverse() }.fold(l.map { Pair(it,this) }.toMap(), { a, b->a+b})
         }
         return when (this) {
-            is Expr.Proto  -> this.map(listOf(this.body))
+            is Expr.Proto  -> this.map(listOf(this.blk))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
-            is Expr.XLoop  -> this.map(listOf(this.body))
+            is Expr.XLoop  -> this.map(listOf(this.blk))
             is Expr.XBreak -> this.map(listOf(this.cnd) + listOfNotNull(this.e))
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
@@ -54,14 +54,15 @@ class Ups (outer: Expr.Do) {
             is Expr.Drop   -> this.map(listOf(this.e))
 
             is Expr.It     -> emptyMap()
-            is Expr.Catch  -> this.map(listOf(this.cnd) + listOf(this.body))
-            is Expr.Defer  -> this.map(listOf(this.body))
+            is Expr.Catch  -> this.map(listOf(this.cnd) + listOf(this.blk))
+            is Expr.Defer  -> this.map(listOf(this.blk))
 
             is Expr.Yield  -> this.map(listOf(this.arg) + listOf(this.blk))
             is Expr.Resume -> this.map(listOf(this.call))
 
-            is Expr.Spawn  -> this.map(listOfNotNull(this.tasks) + listOf(this.call))
+            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks) + listOf(this.call))
             is Expr.Bcast  -> this.map(listOfNotNull(this.xin) + listOf(this.evt))
+            is Expr.Dtrack -> this.map(listOf(this.trk) + listOf(this.blk))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
