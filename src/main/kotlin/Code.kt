@@ -625,7 +625,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.Dyn->Track.task == NULL) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     } else {
-                        CEU_Value ceu_it = ceu_acc;
+                        CEU_Value ceu_it = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
                         ${this.blk.code()}
                     }
                 }

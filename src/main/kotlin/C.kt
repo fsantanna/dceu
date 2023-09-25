@@ -889,6 +889,16 @@ fun Coder.main (tags: Tags): String {
 
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
+        #if CEU >= 5
+            } else if (
+                src.Dyn->Any.type == CEU_VALUE_TRACK    &&
+                src.Dyn->Track.task != NULL             &&
+                CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task)->depth > dst->depth
+            ) {
+                strncpy(msg, pre, 256);
+                strcat(msg, " : cannot move track outside its task scope");
+                return err;
+        #endif
         #if CEU >= 4
             } else if (src.Dyn->Any.hld.type == CEU_HOLD_EVENT) {
                 if (ylds) {

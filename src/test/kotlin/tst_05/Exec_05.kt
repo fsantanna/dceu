@@ -203,10 +203,40 @@ class Exec_05 {
         assert(out.contains("anon : (lin 3, col 32) : yield error : unexpected enclosing detrack\n")) { out }
     }
 
+    // DETRACK / ACCESS
+
+    @Test
+    fun dd_01_detrack() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                println(it)
+                println(t)
+                println(it == t)
+            }
+            println(v)
+        """)
+        assert(out.contains("10\n")) { out }
+    }
+    @Test
+    fun dd_02_detrack() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                println(status(it))
+            }
+        """)
+        assert(out.contains(":yielded\n")) { out }
+    }
+
     // THROW
 
     @Test
-    fun dd_01_throw() {
+    fun ee_01_throw() {
         val out = test("""
             val T = task () {
                 spawn task () {
@@ -221,6 +251,21 @@ class Exec_05 {
         assert(out == " |  anon : (lin 10, col 13) : broadcast nil\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
+    }
+
+    // SCOPE
+
+    @Test
+    fun ff_01_scope() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            var x
+            do {
+                val t = spawn T()
+                set x = track(t)
+            }
+        """)
+        assert(out == " v  anon : (lin 6, col 21) : set error : cannot move track outside its task scope\n") { out }
     }
 
     // NEXT
