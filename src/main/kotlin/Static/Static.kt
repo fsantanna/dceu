@@ -132,9 +132,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.xin?.traverse()
                 this.evt.traverse()
-                ups.all_until(this) { it is Expr.Proto }
-                    .filter  { it is Expr.Do }              // all blocks up to proto
-                    .forEach { ylds.add(it as Expr.Do) }
             }
             is Expr.Dtrack-> {
                 this.trk.traverse()
