@@ -116,7 +116,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.call.traverse()
             }
             is Expr.Bcast  -> {
-                this.xin.traverse()
+                this.xin?.traverse()
                 this.evt.traverse()
             }
 

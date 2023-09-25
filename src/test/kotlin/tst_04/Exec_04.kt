@@ -169,7 +169,7 @@ class Exec_04 {
     @Test
     fun dd_01_bcast() {
         val out = test("""
-            println(broadcast in :global, 1)
+            println(broadcast 1)
         """)
         assert(out == "nil\n") { out }
     }
@@ -182,7 +182,7 @@ class Exec_04 {
                 yield(nil) { nil }
                 println(2)
             }()
-            broadcast in :global, nil
+            broadcast nil
         """
         )
         assert(out == "1\n2\n") { out }
@@ -197,9 +197,9 @@ class Exec_04 {
                 println(:2, e2)
             }
             spawn tk ()
-            broadcast in :global, 1
-            broadcast in :global, 2
-            broadcast in :global, 3
+            broadcast 1
+            broadcast 2
+            broadcast 3
         """)
         assert(out == ":1\t1\n:2\t2\n") { out }
     }
@@ -215,9 +215,9 @@ class Exec_04 {
             }
             var co1 = spawn tk(:1)
             var co2 = spawn tk(:2)
-            broadcast in :global, 1
-            broadcast in :global, 2
-            broadcast in :global, 3
+            broadcast 1
+            broadcast 2
+            broadcast 3
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
         assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\tpointer: 0x")) { out }
@@ -233,7 +233,7 @@ class Exec_04 {
                 yield(nil) { nil }      ;; awakes from co2 termination
                 println(1)
             }) ()
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out == "2\n1\n") { out }
     }
@@ -247,7 +247,7 @@ class Exec_04 {
                 println(e)
             }
             var co = spawn(tk)(1)
-            broadcast in :global, 2
+            broadcast 2
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -255,7 +255,7 @@ class Exec_04 {
     fun dd_07_bcast() {
         val out = test("""
             func () {
-                 broadcast in :global, 1
+                 broadcast 1
             }
             println(1)
         """)
@@ -270,7 +270,7 @@ class Exec_04 {
             }
             var t = spawn T()
             do {
-                broadcast in :global, 1
+                broadcast 1
             }
         """)
         assert(out.contains(":ok\n")) { out }
@@ -287,9 +287,9 @@ class Exec_04 {
             var co1 = spawn (tk) ()
             var co2 = spawn tk ()
             do {
-                 broadcast in :global, 1
-                 broadcast in :global, 2
-                 broadcast in :global, 3
+                 broadcast 1
+                 broadcast 2
+                 broadcast 3
             }
         """)
         //assert(out == "2\n2\n") { out }
@@ -314,10 +314,10 @@ class Exec_04 {
                 }
             }
             spawn tk ()
-            broadcast in :global, 1
-            broadcast in :global, 2
-            broadcast in :global, 3
-            broadcast in :global, 4
+            broadcast 1
+            broadcast 2
+            broadcast 3
+            broadcast 4
         """)
         assert(out == "1\n2\n2\n3\n") { out }
     }
@@ -330,7 +330,7 @@ class Exec_04 {
                 println(:2, e)                
             }
             spawn T()
-            broadcast in :global, 10
+            broadcast 10
         """)
         assert(out == ":1\n:2\t10\n") { out }
     }
@@ -346,9 +346,9 @@ class Exec_04 {
             var co1 = spawn tk ()
             var co2 = spawn tk ()
             func () {
-                 broadcast in :global, 1
-                 broadcast in :global, 2
-                 broadcast in :global, 3
+                 broadcast 1
+                 broadcast 2
+                 broadcast 3
             }()
         """)
         assert(out == "2\n2\n") { out }
@@ -371,9 +371,9 @@ class Exec_04 {
             ;;catch {
                 func () {
                     println(:2)
-                    broadcast in :global, 20
+                    broadcast 20
                     println(:3)
-                    broadcast in :global, 30
+                    broadcast 30
                 }()
             ;;}
         """
@@ -384,7 +384,7 @@ class Exec_04 {
     fun dd_15_bcast() {
         val out = test(
             """
-            broadcast in :global, []
+            broadcast []
             println(:ok)
             """
         )
@@ -426,9 +426,9 @@ class Exec_04 {
                 yield(nil) { nil }
                 throw(:err)
             }()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast nil\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -439,9 +439,9 @@ class Exec_04 {
                 yield(nil) { nil }
                 throw(:err)
             }()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast nil\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -455,9 +455,9 @@ class Exec_04 {
                 }()
                 yield(nil) { nil }
             }()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast nil\n" +
                 " |  anon : (lin 5, col 21) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -503,9 +503,9 @@ class Exec_04 {
                 yield(nil) { nil }
                 throw(:err)
             }()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast nil\n" +
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -518,9 +518,9 @@ class Exec_04 {
             }
             spawn T()
             spawn T()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 8, col 13) : broadcast nil\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -534,13 +534,13 @@ class Exec_04 {
             spawn T(10)
             ;;catch {
                 func () {
-                    broadcast in :global, []
+                    broadcast []
                 }()
             ;;}
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast in :global, [] })()\n" +
-                " |  anon : (lin 9, col 21) : broadcast in :global, []\n" +
+        assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
+                " |  anon : (lin 9, col 21) : broadcast []\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
@@ -553,7 +553,7 @@ class Exec_04 {
             spawn T(10)
             catch (do { println(it) ; true }) {
                 func () {
-                    broadcast in :global, []
+                    broadcast []
                 }()
             }
         """)
@@ -571,9 +571,9 @@ class Exec_04 {
                 ${AWAIT()}
                 println(1)
             })()
-            broadcast in :global, nil
+            broadcast nil
         """)
-        assert(out == " |  anon : (lin 30, col 13) : broadcast in :global, nil\n" +
+        assert(out == " |  anon : (lin 30, col 13) : broadcast nil\n" +
                 " |  anon : (lin 15, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -594,7 +594,7 @@ class Exec_04 {
             } ()
             catch true {                            ;; catch 2nd (no catch)
                 println(111)
-                broadcast in :global, nil
+                broadcast nil
                 println(444)
             }
             println(:END)
@@ -653,7 +653,7 @@ class Exec_04 {
                 yield(nil) { nil }
                 println(:2)
             }()
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out.contains(":1\n:2\n:ok\tpointer: 0x")) { out }
     }
@@ -669,12 +669,12 @@ class Exec_04 {
             }
             spawn T(10)
             func () {
-                broadcast in :global, []
+                broadcast []
             }()
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast in :global, [] })()\n" +
-                " |  anon : (lin 8, col 17) : broadcast in :global, []\n" +
+        assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
+                " |  anon : (lin 8, col 17) : broadcast []\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
@@ -687,7 +687,7 @@ class Exec_04 {
             }
             spawn T(10)
             func () {
-                broadcast in :global, []
+                broadcast []
             }()
         """)
         assert(out == "[]\n") { out }
@@ -702,12 +702,12 @@ class Exec_04 {
             }
             spawn T()
             spawn T()
-            broadcast in :global, []
+            broadcast []
         """)
         //assert(out == "[]\n" +
-        //        " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //        " |  anon : (lin 9, col 13) : broadcast []\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
@@ -718,7 +718,7 @@ class Exec_04 {
                 println(v)                
             }
             spawn T([])
-            broadcast in :global, nil
+            broadcast nil
         """)
         //assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
         assert(out == "[]\n") { out }
@@ -741,9 +741,9 @@ class Exec_04 {
             val e = catch true {
                 func () {
                     println(:2)
-                    broadcast in :global, [20]
+                    broadcast [20]
                     println(:3)
-                    broadcast in :global, @[(30,30)]
+                    broadcast @[(30,30)]
                 }()
             }
             println(e)
@@ -768,7 +768,7 @@ class Exec_04 {
                 yield(nil) { f(it) }
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         assert(out == "[1]\n") { out }
     }
@@ -782,7 +782,7 @@ class Exec_04 {
                 yield(nil) { f(it) }
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         assert(out == "[1]\n") { out }
     }
@@ -798,7 +798,7 @@ class Exec_04 {
                 yield(nil) { f(it) }
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         assert(out == "[1]\n") { out }
     }
@@ -817,7 +817,7 @@ class Exec_04 {
                     do {
                         do {
                             do {
-                                broadcast in :global, []
+                                broadcast []
                             }
                         }
                     }
@@ -841,7 +841,7 @@ class Exec_04 {
             do {
                 do {
                     do {
-                        broadcast in :global, []
+                        broadcast []
                     }
                 }
             }
@@ -865,12 +865,12 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast in :global, drop(e)
+            broadcast drop(e)
             println(e)
             """
         )
         assert(out == "[]\nnil\n") { out }
-        //assert(out == "anon : (lin 10, col 13) : broadcast in :global, move(e)\n" +
+        //assert(out == "anon : (lin 10, col 13) : broadcast move(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
@@ -932,11 +932,11 @@ class Exec_04 {
             catch it==:1 {
                 func () {
                     println(1)
-                    broadcast in :global, 1
+                    broadcast 1
                     println(2)
-                    broadcast in :global, 2
+                    broadcast 2
                     println(3)
-                    broadcast in :global, 3
+                    broadcast 3
                 }()
             }
             println(99)
@@ -951,7 +951,7 @@ class Exec_04 {
                     yield(nil) { nil }
                     println(:ok)
                 }) ()
-                broadcast in :global, :ok
+                broadcast :ok
             }
             spawn T(2)
         """)
@@ -963,11 +963,11 @@ class Exec_04 {
             spawn (task () {
                 spawn (task () {
                     yield(nil) { nil }
-                    broadcast in :global, nil
+                    broadcast nil
                 }) ()
                 yield(nil) { nil }
             }) ()
-            broadcast in :global, nil
+            broadcast nil
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -991,8 +991,8 @@ class Exec_04 {
                 throw(:e2)
             })()
             catch :e2 {
-                broadcast in :global, nil
-                broadcast in :global, nil
+                broadcast nil
+                broadcast nil
                 println(99)
             }
             println(:e2)
@@ -1027,7 +1027,7 @@ class Exec_04 {
                 println(:no)
             }) ()
             catch :e3 {
-                broadcast in :global, nil
+                broadcast nil
                 println(:no)
             }
             println(:ok3)
@@ -1047,12 +1047,12 @@ class Exec_04 {
                     ;;println(:BLOCK2, `:pointer ceu_block`)
                     yield(nil) { nil }
                     ;;println(:1)
-                    broadcast in :global, nil
+                    broadcast nil
                 }) ()
                 yield(nil) { nil }
                 ;;println(:2)
             }) ()
-            broadcast in :global, nil
+            broadcast nil
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -1070,7 +1070,7 @@ class Exec_04 {
             set co = spawn tk()
             var f = func () {
                 var g = func () {
-                    broadcast in :global, []
+                    broadcast []
                 }
                 g()
             }
@@ -1079,7 +1079,7 @@ class Exec_04 {
         )
         //assert(out == "anon : (lin 16, col 13) : f()\n" +
         //        "anon : (lin 14, col 17) : g()\n" +
-        //        "anon : (lin 12, col 21) : broadcast in :global, []\n" +
+        //        "anon : (lin 12, col 21) : broadcast []\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == "[]\n")
@@ -1096,7 +1096,7 @@ class Exec_04 {
             var co
             set co = spawn(tk)()
             var f = func () {
-                broadcast in :global, []
+                broadcast []
             }
             f()
         """
@@ -1114,12 +1114,12 @@ class Exec_04 {
             }
             var t = spawn T()
             ;;println(:1111)
-            broadcast in :global, []
+            broadcast []
             ;;println(:2222)
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == "anon : (lin 9, col 13) : broadcast in :global, []\n" +
+        //assert(out == "anon : (lin 9, col 13) : broadcast []\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n:error\n") { out }
     }
     @Test
@@ -1136,12 +1136,12 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast in :global, e
+            broadcast e
             ;;println(:2222)
             """
         )
         assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 12, col 13) : broadcast in :global, e\n" +
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
         //        " v  anon : (lin 5, col 25) : resume error : incompatible scopes\n") { out }
     }
     @Test
@@ -1155,16 +1155,16 @@ class Exec_04 {
             var t = spawn T()
             do {
                 var e = []
-                broadcast in :global, e
+                broadcast e
             }
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
         //assert(out == "anon : (lin 10, col 35) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
-        //assert(out == " |  anon : (lin 9, col 13) : broadcast in :global, e\n" +
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast in :global, e\n" +
+        assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
                 " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
     }
     @Test
@@ -1177,7 +1177,7 @@ class Exec_04 {
             var t = spawn T()
             do {
                 var e = []
-                broadcast in :global, e
+                broadcast e
             }
             """
         )
@@ -1196,13 +1196,13 @@ class Exec_04 {
             ;;println(:1111)
             do {
                 var e = []
-                broadcast in :global, e
+                broadcast e
             }
             ;;println(:2222)
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == " |  anon : (lin 11, col 17) : broadcast in :global, e\n" +
+        assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
                 " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1231,13 +1231,13 @@ class Exec_04 {
                 }
             }
             var t2 = spawn T2()
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
             """
         )
         //assert(out == "0\n") { out }
         assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 20, col 13) : broadcast in :global, []\n" +
+        //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +
         //        ":error\n") { out }
@@ -1252,7 +1252,7 @@ class Exec_04 {
                 yield(nil) {fff(it)}
             }
             spawn T()
-            broadcast in :global, [1]
+            broadcast [1]
         """)
         assert(out == "[1]\n") { out }
     }
@@ -1267,10 +1267,10 @@ class Exec_04 {
                 f(yield(nil) {it})
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         assert(out == "[1]\n") { out }
-        //assert(out == " |  anon : (lin 10, col 13) : broadcast in :global, [[1]]\n" +
+        //assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
         //        " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
@@ -1286,10 +1286,10 @@ class Exec_04 {
                 f(evt)
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         //assert(out == "[1]\n") { out }
-        assert(out == " |  anon : (lin 11, col 13) : broadcast in :global, [[1]]\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
                 " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
     }
     @Test
@@ -1303,7 +1303,7 @@ class Exec_04 {
                 yield(nil) { f(it) }
             }
             spawn T()
-            broadcast in :global, [[1]]
+            broadcast [[1]]
         """)
         assert(out == "[1]\n") { out }
     }
@@ -1341,7 +1341,7 @@ class Exec_04 {
                     println(999)
                 } ()
                 println(5)
-                broadcast in :global, nil
+                broadcast nil
                 println(9999)
             }
             println(7)

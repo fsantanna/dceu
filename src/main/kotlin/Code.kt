@@ -88,6 +88,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ceu_args[]
                     ) {
                         CEU_Value ceu_acc;
+                        int ceu_gc_todo = 1;
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
@@ -279,7 +280,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                                 val args_n = f_b.args.size - 1
                                 """
-                                int ceu_gc_todo = 1;
                                 { // func args
                                     ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
                                         val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)

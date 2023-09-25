@@ -558,7 +558,7 @@ class TExec {
     @Test
     fun gc13_bcast() {
         val out = all("""
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
         """)
         assert(out == "1\n") { out }
@@ -576,12 +576,12 @@ class TExec {
                 ;;println(:out)
             }
             var co = spawn tk ()
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
         """
         )
         assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
@@ -598,12 +598,12 @@ class TExec {
                 ;;println(:out)
             }
             var co = spawn tk ()
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
                 "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
                 ":error\n") { out }
     }   @Test
@@ -621,12 +621,12 @@ class TExec {
                 ;;println(:out)
             }
             var co = spawn tk ()
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
         """
         )
         assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 11, col 13) : broadcast in :global, []\n" +
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
@@ -646,12 +646,12 @@ class TExec {
                 ;;println(:out)
             }
             var co = spawn (tk) ()
-            broadcast in :global, []
+            broadcast []
             println(`:number ceu_gc_count`)
         """
         )
         assert(out == "1\n") { out }
-        //assert(out == "anon : (lin 12, col 13) : broadcast in :global, []\n" +
+        //assert(out == "anon : (lin 12, col 13) : broadcast []\n" +
         //        "anon : (lin 6, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }

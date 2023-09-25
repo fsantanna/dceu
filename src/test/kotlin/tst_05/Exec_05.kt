@@ -54,7 +54,7 @@ class Exec_05 {
             val ts = tasks()
             spawn in ts, T()
             println(:out)
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out == ":out\n:in\n") { out }
     }
@@ -141,6 +141,26 @@ class Exec_05 {
             println(x==y, y==z)
         """)
         assert(out.contains("false\ttrue\n")) { out }
+    }
+
+    // THROW
+
+    @Test
+    fun cc_01_throw() {
+        val out = test("""
+            val T = task () {
+                spawn task () {
+                    yield(nil) { nil }
+                    throw(:error)
+                }()
+                yield(nil) { nil }
+            }
+            spawn in tasks(), T()
+            broadcast nil
+        """)
+        assert(out == " |  anon : (lin 10, col 13) : broadcast nil\n" +
+                " |  anon : (lin 5, col 21) : throw(:error)\n" +
+                " v  throw error : :error\n") { out }
     }
 
     // NEXT

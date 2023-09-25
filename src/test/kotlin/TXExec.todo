@@ -555,7 +555,7 @@ class TXExec {
             val co1 = spawn(tk)()
             val co2 = spawn(tk)()
             broadcast 1
-            broadcast in :global, 2
+            broadcast 2
             broadcast 3
         """, true)
         assert(out == "1\n1\n2\n2\n") { out }
@@ -673,7 +673,7 @@ class TXExec {
                     println(3)
                 }
             } ()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "3\n2\n") { out }
     }
@@ -686,7 +686,7 @@ class TXExec {
                 println(3)
             }
             println(2)
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out == "1\n2\n3\n") { out }
     }
@@ -758,7 +758,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "1\n3\n999\n") { out }
     }
@@ -780,7 +780,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out == "1\n3\n999\n") { out }
     }
@@ -797,7 +797,7 @@ class TXExec {
                 }
                 println(:ok)
             } ()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "2\n3\n:ok\n") { out }
     }
@@ -821,7 +821,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "2\n1\n3\n999\n") { out }
     }
@@ -840,7 +840,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-             broadcast in :global, nil
+             broadcast nil
         """, true)
         assert(out == "2\n1\n3\n999\n") { out }
     }
@@ -864,7 +864,7 @@ class TXExec {
                 }
                 println(999)
             } ()
-             broadcast in :global, nil
+             broadcast nil
              broadcast nil
         """, true)
         assert(out == "2\n1\n1\n3\n3\n999\n") { out }
@@ -880,8 +880,8 @@ class TXExec {
                 }
                 println(999)
             } ()
-            broadcast in :global, nil
-            broadcast in :global, 1
+            broadcast nil
+            broadcast 1
         """, true)
         assert(out == "1\n2\n999\n") { out }
     }
@@ -928,7 +928,7 @@ class TXExec {
                 println(999)
             } ()
             println(0)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(1)
             broadcast tags([5000], :frame, true)
             println(2)
@@ -987,9 +987,9 @@ class TXExec {
                 }
             }            
             spawn in tasks(), T()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
-        assert(out == "anon : (lin 8, col 13) : broadcast in :global, nil\n" +
+        assert(out == "anon : (lin 8, col 13) : broadcast nil\n" +
                 "anon : (lin 3, col 24) : throw(:error)\n" +
                 "throw error : uncaught exception\n" +
                 ":error\n") { out }
@@ -1052,7 +1052,7 @@ class TXExec {
                     await spawn T()
                 }
             }
-            broadcast in :global, :x
+            broadcast :x
             println(1)
         """, true)
         assert(out == "1\n") { out }
@@ -1067,7 +1067,7 @@ class TXExec {
                     await true
                 }
             }
-            broadcast in :global, true
+            broadcast true
             println(1)
         """, true)
         assert(out == "1\n") { out }
@@ -1083,8 +1083,8 @@ class TXExec {
                 }
             }
             do {
-                broadcast in :global, tags([40], :frame, true)
-                broadcast in :global, tags([], :draw, true)
+                broadcast tags([40], :frame, true)
+                broadcast tags([], :draw, true)
             }
             println(1)
         """, true)
@@ -1103,9 +1103,9 @@ class TXExec {
             spawn {
                 awaiting :check-now x {
                     println(x.pub[0])
-                    broadcast in :global, nil
+                    broadcast nil
                     println(x.pub[0])
-                    broadcast in :global, :evt
+                    broadcast :evt
                     println(x.pub[0])   ;; never printed
                     await false
                 }
@@ -1126,7 +1126,7 @@ class TXExec {
             val x = track(t)
             spawn {
                 awaiting x {
-                    broadcast in :global, :evt
+                    broadcast :evt
                     println(x.pub)   ;; never printed
                     await false
                 }
@@ -1164,7 +1164,7 @@ class TXExec {
                     }
                 }
             }
-            broadcast in :global, nil
+            broadcast nil
             println(1)
         """, true)
         assert(out == "1\n") { out }
@@ -1679,7 +1679,7 @@ class TXExec {
                 println(1)
                 broadcast @[(:type,:y)]
                 println(2)
-                broadcast in :global, @[(:type,:x)]
+                broadcast @[(:type,:x)]
                 println(3)
             }
         """, true)
@@ -1695,9 +1695,9 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast in :global, tags([], :y, true)
+                broadcast tags([], :y, true)
                 println(2)
-                broadcast in :global, tags([], :x, true)
+                broadcast tags([], :x, true)
                 println(3)
             }
         """, true)
@@ -1713,9 +1713,9 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast in :global, tags([], :y, true)
+                broadcast tags([], :y, true)
                 println(2)
-                broadcast in :global, tags([], :x, true)
+                broadcast tags([], :x, true)
                 println(3)
             }
         """, true)
@@ -1739,7 +1739,7 @@ class TXExec {
                     println(evt)
                 }
             }()
-            broadcast in :global, @[]
+            broadcast @[]
         """, true)
         assert(out == "@[]\n") { out }
     }
@@ -1753,8 +1753,8 @@ class TXExec {
                 await true                    
                 println(evt)
             }()
-            broadcast in :global, :1
-            broadcast in :global, :2
+            broadcast :1
+            broadcast :2
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
@@ -1769,11 +1769,11 @@ class TXExec {
             }
             do {
                 println(1)
-                broadcast in :global, tags([10], :x, true)
+                broadcast tags([10], :x, true)
                 println(2)
-                broadcast in :global, tags([20], :y, true)
+                broadcast tags([20], :y, true)
                 println(3)
-                broadcast in :global, tags([30], :x, true)
+                broadcast tags([30], :x, true)
                 println(4)
             }
         """, true)
@@ -1789,9 +1789,9 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(1)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(2)
         """, true)
         assert(out == "0\n1\n999\n2\n") { out }
@@ -1805,11 +1805,11 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast in :global, tags([5000], :frame, true)
+            broadcast tags([5000], :frame, true)
             println(1)
             broadcast tags([5000], :frame, true)
             println(2)
-            broadcast in :global, tags([10000], :frame, true)
+            broadcast tags([10000], :frame, true)
             println(3)
         """, true)
         assert(out == "0\n1\n10\n2\n10\n3\n") { out }
@@ -1823,7 +1823,7 @@ class TXExec {
                 }
             }()
             println(0)
-            broadcast in :global, tags([20000], :frame, true)
+            broadcast tags([20000], :frame, true)
             println(1)
         """, true)
         assert(out == "0\n10\n10\n1") { out }
@@ -1850,7 +1850,7 @@ class TXExec {
                 yield ()
                 println(2)
             }
-            broadcast in :global, nil
+            broadcast nil
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -1861,13 +1861,13 @@ class TXExec {
                 spawn {
                     yield ()
                     println(1)
-                    broadcast in :global, nil
+                    broadcast nil
                     println(3)
                 }
                 yield ()
                 println(2)
             }
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "1\n2\n") { out }
     }
@@ -1881,7 +1881,7 @@ class TXExec {
                 }
                 println(y)
             }
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "[2]\n") { out }
     }
@@ -1924,7 +1924,7 @@ class TXExec {
                 var z = await spawn T()
                 println(x,y,z)
             }
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "1\t[2]\t3\n") { out }
     }
@@ -1962,7 +1962,7 @@ class TXExec {
                 await 10
                 println(2)
             }
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "1\n2\n") { out }
     }
@@ -2030,10 +2030,10 @@ class TXExec {
                     }
                 }
             }) ()
-             broadcast in :global, :b
+             broadcast :b
              broadcast :b
              broadcast :a
-             broadcast in :global, :b
+             broadcast :b
         """, true)
         assert(out == "1\n1\n") { out }
     }
@@ -2050,7 +2050,7 @@ class TXExec {
                 nil
             }
             spawn T()
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "10\n10\n") { out }
     }
@@ -2315,11 +2315,11 @@ class TXExec {
                 }
             }
             spawn T (0)
-            broadcast in :global, @[(:sub,:draw),(:v,1)]
-            broadcast in :global, :hide
-            broadcast in :global, @[(:sub,:draw),(:v,99)]
-            broadcast in :global, :show
-            broadcast in :global, @[(:sub,:draw),(:v,2)]
+            broadcast @[(:sub,:draw),(:v,1)]
+            broadcast :hide
+            broadcast @[(:sub,:draw),(:v,99)]
+            broadcast :show
+            broadcast @[(:sub,:draw),(:v,2)]
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -2336,11 +2336,11 @@ class TXExec {
                 }
             }
             spawn T (0)
-            broadcast in :global, tags([1], :draw, true)
-            broadcast in :global, tags([], :hide, true)
-            broadcast in :global, tags([99], :draw, true)
-            broadcast in :global, tags([], :show, true)
-            broadcast in :global, tags([2], :draw, true)
+            broadcast tags([1], :draw, true)
+            broadcast tags([], :hide, true)
+            broadcast tags([99], :draw, true)
+            broadcast tags([], :show, true)
+            broadcast tags([2], :draw, true)
         """, true)
         assert(out == "0\n1\n2\n") { out }
     }
@@ -3322,7 +3322,7 @@ class TXExec {
                 await :E
                 println(evt.x)
             }
-            broadcast in :global, :E [10,20]
+            broadcast :E [10,20]
         """, true)
         assert(out == "10\n") { out }
     }
@@ -3334,9 +3334,9 @@ class TXExec {
                 await :E, evt.y==20
                 println(evt.x)
             }
-            broadcast in :global, :E [10,10]
+            broadcast :E [10,10]
             println(:mid)
-            broadcast in :global, :E [10,20]
+            broadcast :E [10,20]
         """, true)
         assert(out == ":mid\n10\n") { out }
     }
@@ -3351,8 +3351,8 @@ class TXExec {
                 await :F, evt.i==10
                 println(evt.j)
             }
-            broadcast in :global, :E [10,20]
-            broadcast in :global, :F [10,20]
+            broadcast :E [10,20]
+            broadcast :F [10,20]
         """, true)
         assert(out == "10\n20\n") { out }
     }
@@ -3429,7 +3429,7 @@ class TXExec {
                 }
                 await false
             }
-            broadcast in :global, nil
+            broadcast nil
         """, true)
         assert(out == "[]\n") { out }
     }
@@ -3524,15 +3524,15 @@ class TXExec {
             spawn {
                 loop {
                     await evt==10
-                    broadcast in :global, tags([], :pause, true)
+                    broadcast tags([], :pause, true)
                     awaiting evt==10 {
                         await false
                     }
-                    broadcast in :global, tags([], :resume, true)
+                    broadcast tags([], :resume, true)
                 }
             }
-            broadcast in :global, 10
-            broadcast in :global, 10
+            broadcast 10
+            broadcast 10
             println(:ok)
         """, true)
         assert(out == ":ok\n") { out }
@@ -3543,17 +3543,17 @@ class TXExec {
             spawn {
                 loop {
                     await evt==10
-                    broadcast in :global, tags([], :pause, true)
+                    broadcast tags([], :pause, true)
                     awaiting evt==10 {
                         await false
                     }
-                    broadcast in :global, tags([], :resume, true)
+                    broadcast tags([], :resume, true)
                     await true
                 }
             }
-            broadcast in :global, 10
-            broadcast in :global, 10
-            broadcast in :global, 10
+            broadcast 10
+            broadcast 10
+            broadcast 10
             println(:ok)
         """, true)
         assert(out == ":ok\n") { out }
@@ -3571,8 +3571,8 @@ class TXExec {
                     println(:2)
                 }
             }
-            broadcast in :global, 10    ;; :1
-            broadcast in :global, 10    ;; :2 (not :1 again)
+            broadcast 10    ;; :1
+            broadcast 10    ;; :2 (not :1 again)
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
@@ -3600,7 +3600,7 @@ class TXExec {
                 }
             }
             ;;println(:bcast)
-            broadcast in :global, :e
+            broadcast :e
         """, true)
         assert(out == ":1\n:2\n") { out }
     }
@@ -3625,7 +3625,7 @@ class TXExec {
                         await evt==:E
                         do {
                             println(:b)
-                            broadcast in :global, :E
+                            broadcast :E
                             println(:c)
                         }
                         println(:d)
@@ -3636,9 +3636,9 @@ class TXExec {
                 }
             }
             println(:1)
-            broadcast in :global, nil
+            broadcast nil
             println(:2)
-            broadcast in :global, :E
+            broadcast :E
             println(:3)
         """)
         assert(out == ":10\n:a\n:20\n:1\n:2\n:b\n:30\n:10\n:a\n:20\n:3\n") { out }
@@ -3662,7 +3662,7 @@ class TXExec {
                     println(detrack(t1).pub, detrack(it).pub)
                 }
             }
-             broadcast in :global, 2
+             broadcast 2
         """)
         assert(out == ":x-tasks\n1\t1\n1\t2\n2\t1\n2\t2\n") { out }
     }

@@ -15,7 +15,7 @@ fun Expr.coexists (): Boolean {
         is Expr.Resume -> this.call.coexists()
 
         is Expr.Spawn  -> (this.tasks?.coexists() ?: false) || this.call.coexists()
-        is Expr.Bcast  -> this.xin.coexists() || this.evt.coexists()
+        is Expr.Bcast  -> (this.xin?.coexists() ?: false) || this.evt.coexists()
 
         is Expr.Tuple  -> this.args.any { it.coexists() }
         is Expr.Vector -> this.args.any { it.coexists() }
@@ -121,7 +121,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // BCAST
                 CEU_Value evt_$n;
                 $union {
-                    ${this.xin.mem(sta, defers)}
+                    ${this.xin?.mem(sta, defers) ?: ""}
                     ${this.evt.mem(sta, defers)}
                 };
             };

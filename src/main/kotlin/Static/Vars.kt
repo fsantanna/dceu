@@ -227,7 +227,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Resume -> this.call.traverse()
 
             is Expr.Spawn  -> { this.tasks?.traverse() ; this.call.traverse() }
-            is Expr.Bcast  -> { this.xin.traverse() ; this.evt.traverse() }
+            is Expr.Bcast  -> { this.xin?.traverse() ; this.evt.traverse() }
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {

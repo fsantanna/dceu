@@ -74,11 +74,8 @@ val TAGS = listOf (
     ":x-task-in", ":tasks", ":track"
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
-)) + (if (CEU < 4) listOf() else listOf(
-    ":global", ":local",
 )) + listOf(
-    ":ceu",
-    ":tmp",
+    ":ceu", ":tmp",
 )
 
 val GLOBALS = setOf (
@@ -125,7 +122,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tasks: Expr?, val call: Expr): Expr(N++, tk_)
-    data class Bcast  (val tk_: Tk.Fix, val xin: Expr, val evt: Expr): Expr(N++, tk_)
+    data class Bcast  (val tk_: Tk.Fix, val xin: Expr?, val evt: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
