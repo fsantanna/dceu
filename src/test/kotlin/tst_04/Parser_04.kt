@@ -80,7 +80,8 @@ class Parser_04 {
             broadcast
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"in\" : have end of file")
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"in\" : have end of file")
     }
     @Test
     fun cc_02_bcast_err() {
