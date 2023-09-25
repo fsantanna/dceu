@@ -1836,11 +1836,15 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value coro = args[0];
-            if (coro.type != CEU_VALUE_EXE_CORO /*&& coro->type!=CEU_VALUE_X_TASK*/) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected x-coro"} };
+            CEU_Value exe = args[0];
+            if (exe.type!=CEU_VALUE_EXE_CORO && !CEU_ISTASK(exe)) {
+        #if CEU < 4
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
+        #else
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine or task"} };
+        #endif
             }
-            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=coro.Dyn->Exe.status + CEU_TAG_yielded - 1} };
+            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
         }
         #endif
     """ + """ // TRACK / DETRACK

@@ -849,6 +849,39 @@ class Exec_04 {
         assert(out == "[]\n") { out }
     }
 
+    // STATUS
+
+    @Test
+    fun hh_01_status() {
+        val out = test("""
+            val t = spawn (task () {
+            }) ()
+            println(status(t))
+        """)
+        assert(out == ":terminated\n") { out }
+    }
+    @Test
+    fun hh_02_status() {
+        val out = test("""
+            val t = spawn (task () {
+                yield(nil) { nil }
+            }) ()
+            println(status(t))
+        """)
+        assert(out == ":yielded\n") { out }
+    }
+    @Test
+    fun hh_04_status() {
+        val out = test("""
+            val t = spawn (task () {
+                yield(nil) { nil }
+            }) ()
+            broadcast nil
+            println(status(t))
+        """)
+        assert(out == ":terminated\n") { out }
+    }
+
     // TASK / BCAST IN
 
     @Test
