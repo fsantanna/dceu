@@ -42,6 +42,14 @@ fun Coder.main (tags: Tags): String {
         #else
         #define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
         #endif
+        
+        #if CEU < 4
+        #define CEU_ISTASK(dyn) 0
+        #elif CEU < 5
+        #define CEU_ISTASK(dyn) ((dyn).type == CEU_VALUE_EXE_TASK)
+        #else
+        #define CEU_ISTASK(dyn) ((dyn).type==CEU_VALUE_EXE_TASK || (dyn).type==CEU_VALUE_EXE_TASK_IN)
+        #endif
 
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
@@ -803,7 +811,7 @@ fun Coder.main (tags: Tags): String {
             // first finalize EXE
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
-                if (dyn->Any.type == CEU_VALUE_EXE_CORO CEU4(|| dyn->Any.type==CEU_VALUE_EXE_TASK) CEU5(|| dyn->Any.type==CEU_VALUE_EXE_TASK_IN)) { 
+                if (dyn->Any.type==CEU_VALUE_EXE_CORO || CEU_ISTASK(dyn->Any)) { 
                     if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                         dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
                     }
@@ -1835,7 +1843,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value task = args[0];
-            if (task.type!=CEU_VALUE_EXE_TASK && task.type!=CEU_VALUE_EXE_TASK_IN) {
+            if (!CEU_ISTASK(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
             } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };

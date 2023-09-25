@@ -595,7 +595,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_gc_inc($evtc);
                     ${this.xin.cond2({
                         it.code() + """
-                            if (ceu_acc.type!=CEU_VALUE_EXE_TASK CEU5(&& ceu_acc.type!=CEU_VALUE_EXE_TASK_IN)) {
+                            if (!CEU_ISTASK(ceu_acc)) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="broadcast error : expected task"} };
                                 CEU_ERROR($bupc, "${this.xin!!.tk.pos.file} : (lin ${this.xin!!.tk.pos.lin}, col ${this.xin!!.tk.pos.col})", err);
                             }
@@ -618,7 +618,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 { // DTRACK ${this.dump()}
                     ${this.trk.code()}
-                    if (ceu_acc.type!=CEU_VALUE_EXE_TASK && ceu_acc.type!=CEU_VALUE_EXE_TASK_IN) {                
+                    if (!CEU_ISTASK(ceu_acc)) {                
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
