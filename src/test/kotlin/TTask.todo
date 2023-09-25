@@ -407,16 +407,6 @@ class TTask {
     // BCAST / SCOPE
 
     @Test
-    fun ee_bcast_in2_err() {
-        val out = ceu.all(" broadcast in nil, nil")
-        assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
-    }
-    @Test
-    fun ee_bcast_in3_err() {
-        val out = ceu.all(" broadcast in :xxx, nil")
-        assert(out == "anon : (lin 1, col 15) : broadcast error : invalid target\n:error\n") { out }
-    }
-    @Test
     fun ee_bcast_in4() {
         val out = ceu.all(
             """
