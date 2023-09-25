@@ -1097,23 +1097,33 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BCAST
     #if CEU >= 4
-        CEU_Block* ceu_bcast_global_block (CEU_Block* blk) {
+        CEU_Block* ceu_bcast_global (CEU_Block* blk) {
             if (blk->istop) {
                 if (blk->up.frame->clo == NULL) {
                     return blk;
                 } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
-                    return ceu_bcast_global_block(blk->up.frame->up_block);
+                    return ceu_bcast_global(blk->up.frame->up_block);
                 } else {
                     return blk;     // outermost block in coro/task
                 }
             } else if (blk->up.block != NULL) {
-                return ceu_bcast_global_block(blk->up.block);
+                return ceu_bcast_global(blk->up.block);
             } else {
                 return blk;         // global scope
             }
         }
         
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
+        
+        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
+            CEU_Value ret = ceu_bcast_blocks(task->dn_block, evt);
+            if (task->status == CEU_EXE_STATUS_YIELDED) {
+                CEU_Value args[] = { CEU_ISERR(ret) ? ret : evt };
+                ret = task->frame.clo->proto(&task->frame, 1, args);
+            }
+            return ret;
+        }
+
         CEU_Value ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
             while (dyn != NULL) {
                 CEU_Dyn* nxt = dyn->Any.hld.next;
@@ -1123,11 +1133,7 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_EXE_TASK_IN:
         #endif
                     {
-                        CEU_Value ret = ceu_bcast_blocks(dyn->Exe_Task.dn_block, evt);
-                        if (dyn->Exe_Task.status == CEU_EXE_STATUS_YIELDED) {
-                            CEU_Value args[] = { CEU_ISERR(ret) ? ret : evt };
-                            ret = dyn->Exe.frame.clo->proto(&dyn->Exe_Task.frame, 1, args);
-                        }
+                        CEU_Value ret = ceu_bcast_task(&dyn->Exe_Task, evt); 
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }

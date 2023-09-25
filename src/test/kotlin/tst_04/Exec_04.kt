@@ -849,6 +849,30 @@ class Exec_04 {
         assert(out == "[]\n") { out }
     }
 
+    // TASK / BCAST IN
+
+    @Test
+    fun jj_01_bcast_in_err() {
+        val out = test("""
+            broadcast in nil, nil
+        """)
+        assert(out == " v  anon : (lin 2, col 26) : broadcast error : expected task\n") { out }
+    }
+    @Test
+    fun jj_02_bcast_in() {
+        val out = test("""
+            val T = task (v) {
+                ${AWAIT()}
+                ;;yield(nil)
+                println(v)
+            }
+            val t1 = spawn T (1)
+            val t2 = spawn T (2)
+            broadcast in t1, nil
+        """)
+        assert(out == "1\n") { out }
+    }
+
     // DROP / MOVE / OUT
 
     @Test

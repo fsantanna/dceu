@@ -588,15 +588,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.evt.code()}
                     ${(!ylds).cond { "CEU_Value ceu_evt_$n;" }}
                     $evtc = ceu_acc;
-                    ${this.xin.code()}
-                    assert(ceu_acc.type==CEU_VALUE_TAG && ceu_acc.Tag==CEU_TAG_global);
                     int ceu_isfleet_$n = ($evtc.type>CEU_VALUE_DYNAMIC && $evtc.Dyn->Any.hld.type==CEU_HOLD_FLEET);
                     if (ceu_isfleet_$n) {
                         assert(ceu_hold_chk_set($bupc, CEU_HOLD_EVENT, $evtc, 0, NULL CEU4(COMMA ${if (ylds) 1 else 0})).type != CEU_VALUE_ERROR);
                     }
-                    //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
                     ceu_gc_inc($evtc);
-                    ceu_acc = ceu_bcast_blocks(ceu_bcast_global_block($bupc), $evtc);
+                    ${this.xin.cond2({
+                        it.code() + """
+                            if (ceu_acc.type!=CEU_VALUE_EXE_TASK CEU5(&& ceu_acc.type!=CEU_VALUE_EXE_TASK_IN)) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="broadcast error : expected task"} };
+                                CEU_ERROR($bupc, "${this.xin!!.tk.pos.file} : (lin ${this.xin!!.tk.pos.lin}, col ${this.xin!!.tk.pos.col})", err);
+                            }
+                            ceu_acc = ceu_bcast_task(&ceu_acc.Dyn->Exe_Task, $evtc);
+                        """
+                    }, { """
+                        //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
+                        ceu_acc = ceu_bcast_blocks(ceu_bcast_global($bupc), $evtc);
+                    """ })}
                     if (ceu_isfleet_$n) {
                         ceu_gc_chk($evtc.Dyn);
                     }
