@@ -186,11 +186,15 @@ fun AWAIT (v:String=""): String {
                 if type(it) == :pointer {
                     false
                 } else {
-                    if it { it } else { true }
+                    if $v {
+                        if it { it } else { true }
+                    } else {
+                        false
+                    }                    
                 }
             }
         }
-    """
+    """.replace("\n", "")
 }
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {

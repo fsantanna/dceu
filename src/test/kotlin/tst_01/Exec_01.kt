@@ -1030,6 +1030,13 @@ class Exec_01 {
         )
         assert(out == ":a\t10\n:b\t20\n:z\t3\n:c\t30\n") { out }
     }
+    @Test
+    fun de_04_next() {
+        val out = test("""
+            next(nil)
+        """)
+        assert(out == "anon : (lin 2, col 13) : next(nil) : next error : expected collection\n") { out }
+    }
 
 
     // VECTOR

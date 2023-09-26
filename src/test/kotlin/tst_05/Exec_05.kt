@@ -212,8 +212,9 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             val v = detrack(x) {
-                println(it)
+                println(x)
                 println(t)
+                println(it)
                 println(it == t)
             }
             println(v)
@@ -270,9 +271,62 @@ class Exec_05 {
 
     // NEXT
 
-    @Ignore
     @Test
-    fun bb_01_next() {
+    fun hh_01_next() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            println(next(ts))
+            println(next(ts, nil))
+            println(next(ts, :err))
+        """
+        )
+        assert(out == "nil\n" +
+                "nil\n" +
+                " v  anon : (lin 8, col 21) : next(ts,:err) : next error : expected task in pool track\n") { out }
+    }
+    @Test
+    fun hh_02_next() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            spawn in ts, T()
+            val x1 = next(ts)
+            val x2 = next(ts, x1)
+            val x3 = next(ts, x2)
+            println(x1 /= nil)
+            println(x2 /= nil)
+            println(x1 /= x2)
+            println(x3 == nil)
+            println(x2)
+        """
+        )
+        assert(out.contains("true\ntrue\ntrue\ntrue\ntrack: 0x")) { out }
+    }
+    @Test
+    fun hh_03_next() {
+        val out = test("""
+            val T = task (v) {
+                ${AWAIT("it == v")}
+            }
+            val ts = tasks()
+            spawn in ts, T(1)
+            spawn in ts, T(2)
+            val x1 = next(ts)
+            val x2 = next(ts, x1)
+            broadcast 1
+            next(ts, x1)
+        """
+        )
+        assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task in pool track\n") { out }
+    }
+    @Test
+    fun hh_04_next() {
         val out = test("""
             val T = task () {
                 yield(nil) { nil }

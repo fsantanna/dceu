@@ -320,6 +320,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_create_vector  (CEU_Block* hld);
         CEU_Value ceu_create_dict    (CEU_Block* hld);
         CEU_Value ceu_create_clo     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        CEU_Value ceu_create_track   (CEU_Block* blk, CEU_Exe_Task* task);
 
         CEU_Value ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v CEU4(COMMA int ylds));
 
@@ -1283,7 +1284,7 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_Value ceu_next_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+        CEU_Value ceu_next_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value col = args[0];
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
@@ -1304,10 +1305,29 @@ fun Coder.main (tags: Tags): String {
                 }
         #if CEU >= 5
                 case CEU_VALUE_TASKS: {
-                    if (ke
+                    CEU_Dyn* nxt = NULL;
+                    switch (key.type) {
+                        case CEU_VALUE_NIL:
+                            nxt = col.Dyn->Tasks.dyns.first;
+                            break;
+                        case CEU_VALUE_TRACK:
+                            if (key.Dyn->Track.task->type != CEU_VALUE_EXE_TASK_IN) {
+                                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task in pool track"} };
+                            }
+                            nxt = key.Dyn->Track.task->hld.next;
+                            break;
+                        default:
+                            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task in pool track"} };
+                    }
+                    if (nxt == NULL) {
+                        return (CEU_Value) { CEU_VALUE_NIL };
+                    } else {
+                        return ceu_create_track(frame->up_block, &nxt->Exe_Task);
+                    }
                 }
         #endif
                 default:
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected collection"} };
             }                    
         }        
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx) {
@@ -1869,7 +1889,8 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
         }
         #endif
-    """ + """ // TRACK / DETRACK
+    """ +
+    """ // TRACK / DETRACK
         #if CEU >= 5
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
