@@ -1287,18 +1287,28 @@ fun Coder.main (tags: Tags): String {
             assert(n==1 || n==2);
             CEU_Value col = args[0];
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
-            assert(col.type == CEU_VALUE_DICT);
-            for (int i=0; i<col.Dyn->Dict.max; i++) {
-                CEU_Value args[] = { key, (*col.Dyn->Dict.buf)[i][0] };
-                CEU_Value ret = ceu_op_equals_equals_f(NULL, 2, args);
-                assert(ret.type != CEU_VALUE_ERROR);
-                if (ret.Bool) {
-                    key = (CEU_Value) { CEU_VALUE_NIL };
-                } else if (key.type == CEU_VALUE_NIL) {
-                    return (*col.Dyn->Dict.buf)[i][0];
+            switch (col.type) {
+                case CEU_VALUE_DICT: {
+                    if (key.type == CEU_VALUE_NIL) {
+                        return (*col.Dyn->Dict.buf)[0][0];
+                    }
+                    for (int i=0; i<col.Dyn->Dict.max-1; i++) {     // -1: last element has no next
+                        CEU_Value args[] = { key, (*col.Dyn->Dict.buf)[i][0] };
+                        CEU_Value ret = ceu_op_equals_equals_f(NULL, 2, args);
+                        assert(ret.type != CEU_VALUE_ERROR);
+                        if (ret.Bool) {
+                            return (*col.Dyn->Dict.buf)[i+1][0];
+                        }
+                    }
+                    return (CEU_Value) { CEU_VALUE_NIL };
                 }
-            }
-            return (CEU_Value) { CEU_VALUE_NIL };
+        #if CEU >= 5
+                case CEU_VALUE_TASKS: {
+                    if (ke
+                }
+        #endif
+                default:
+            }                    
         }        
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx) {
             *idx = -1;
@@ -1328,7 +1338,9 @@ fun Coder.main (tags: Tags): String {
             }
         }        
         CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val CEU4(COMMA int ylds)) {
-            //assert(key.type != CEU_VALUE_NIL);     // TODO
+            if (key.type == CEU_VALUE_NIL) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="dict error : index cannot be nil"} };
+            }
             int old;
             ceu_dict_key_to_index(col, key, &old);
             if (old == -1) {
