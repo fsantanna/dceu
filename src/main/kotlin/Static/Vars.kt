@@ -178,6 +178,16 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         dcl_to_blk[dcl] = this
                         blk_to_dcls[this]!!.add(dcl)
                     }
+                    (up is Expr.Dtrack && up.blk == this) -> {
+                        val dcl = Expr.Dcl(
+                            Tk.Fix("val", this.tk.pos),
+                            Tk.Id("it", up.blk.tk.pos,0),
+                            /*false,*/ false, null, true, null
+                        )
+                        dcls.add(dcl)
+                        dcl_to_blk[dcl] = this
+                        blk_to_dcls[this]!!.add(dcl)
+                    }
                 }
 
                 // nest into expressions

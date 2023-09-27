@@ -359,13 +359,13 @@ class Parser (lexer_: Lexer)
                 val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
-
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 Expr.Dtrack(this.tk0 as Tk.Fix,
                     this.expr_in_parens(CEU<99, CEU>99)!!,
-                    this.block()
+                    Expr.Do(Tk.Fix("do",this.tk0.pos), listOf(this.block()))
                 )
             }
+
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
             this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)

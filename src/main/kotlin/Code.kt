@@ -266,6 +266,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ${it.first} = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
                                 ceu_gc_inc(${it.first});
                             """
+                            (up is Expr.Dtrack && up.blk == this) -> """
+                                ${it.first} = (CEU_Value) { CEU_VALUE_EXE_TASK_REF, {.Pointer=ceu_acc.Dyn->Track.task} };
+                            """
                             else -> "${it.first} = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
                         ${it.second} = $blkc;
@@ -630,7 +633,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.Dyn->Track.task == NULL) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     } else {
-                        CEU_Value ceu_it = { CEU_VALUE_EXE_TASK_REF, {.Pointer=ceu_acc.Dyn->Track.task} };
                         ${this.blk.code()}
                     }
                 }

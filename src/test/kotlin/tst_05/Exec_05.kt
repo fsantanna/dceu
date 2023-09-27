@@ -235,6 +235,63 @@ class Exec_05 {
         """)
         assert(out.contains(":yielded\n")) { out }
     }
+    @Test
+    fun dd_03_detrack_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            val f = func () {
+                broadcast nil
+            }
+            val x = next(ts)
+            detrack(x) {
+                f()                     ;; cannot broadcast
+                println(status(it))
+            }
+        """)
+        assert(out.contains("TODO: error")) { out }
+    }
+    @Test
+    fun dd_04_detrack_eq() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                println(it == it)
+                println(it == x)
+            }
+        """)
+        assert(out == ("true\nfalse\n")) { out }
+    }
+    @Test
+    fun dd_05_detrack_print() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                println(it)
+            }
+        """)
+        assert(out.contains("ref-task: 0x")) { out }
+    }
+    @Test
+    fun dd_06_detrack_drop_err() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                drop(it)
+            }
+            println(v)
+        """)
+        assert(out == "ERR") { out }
+    }
 
     // THROW
 
@@ -269,6 +326,35 @@ class Exec_05 {
             }
         """)
         assert(out == " v  anon : (lin 6, col 21) : set error : cannot move track outside its task scope\n") { out }
+    }
+    @Test
+    fun ff_02_detrack_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            val x = next(ts)
+            var t
+            detrack(x) {
+                set t = it
+            }
+            broadcast nil
+            println(status(t))
+        """)
+        assert(out == "ERROR") { out }
+    }
+    @Test
+    fun ff_03_detrack_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val t = spawn T()
+            println(detrack(t) { it })
+        """)
+        assert(out == "ERROR") { out }
     }
 
     // NEXT
