@@ -137,24 +137,36 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 // func (a,b,...) { ... }
                 val up = ups.pub[this]
-                if (up is Expr.Proto) {
-                    up.args.forEach { (id,tag) ->
-                        val dcl1 = Expr.Dcl (
+                when {
+                    (up is Expr.Proto) -> {
+                        up.args.forEach { (id, tag) ->
+                            val dcl1 = Expr.Dcl(
+                                Tk.Fix("val", this.tk.pos),
+                                id, /*false,*/ false, tag, true, null
+                            )
+                            val dcl2 = Expr.Dcl(
+                                Tk.Fix("val", this.tk.pos),
+                                Tk.Id("_${id.str}_", id.pos, id.upv),
+                                /*false,*/
+                                false, null, false, null
+                            )
+                            dcls.add(dcl1)
+                            dcls.add(dcl2)
+                            dcl_to_blk[dcl1] = this
+                            dcl_to_blk[dcl2] = this
+                            blk_to_dcls[this]!!.add(dcl1)
+                            blk_to_dcls[this]!!.add(dcl2)
+                        }
+                    }
+                    (up is Expr.Catch && up.cnd == this) -> {
+                        val dcl = Expr.Dcl(
                             Tk.Fix("val", this.tk.pos),
-                            id, /*false,*/ false, tag, true, null
+                            Tk.Id("it", up.cnd.tk.pos,0),
+                            /*false,*/ false, null, true, null
                         )
-                        val dcl2 = Expr.Dcl (
-                            Tk.Fix("val", this.tk.pos),
-                            Tk.Id("_${id.str}_",id.pos,id.upv),
-                            /*false,*/
-                            false, null, false, null
-                        )
-                        dcls.add(dcl1)
-                        dcls.add(dcl2)
-                        dcl_to_blk[dcl1] = this
-                        dcl_to_blk[dcl2] = this
-                        blk_to_dcls[this]!!.add(dcl1)
-                        blk_to_dcls[this]!!.add(dcl2)
+                        dcls.add(dcl)
+                        dcl_to_blk[dcl] = this
+                        blk_to_dcls[this]!!.add(dcl)
                     }
                 }
 
@@ -219,7 +231,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.It     -> {}
             is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 

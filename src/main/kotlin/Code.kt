@@ -257,7 +257,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // vars inits
                     ${dcls.map { """
-                        ${it.first} = (CEU_Value) { CEU_VALUE_NIL };
+                        ${it.first} = ${(up is Expr.Catch && up.cnd==this).cond2({
+                            "ceu_err.Dyn->Throw.val"
+                        }, {
+                            "(CEU_Value) { CEU_VALUE_NIL }"
+                        })};
                         ${it.second} = $blkc;
                     """ }.joinToString("")}
                     // defers init
@@ -485,7 +489,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
-            is Expr.It    -> "ceu_acc = ceu_it;\n"
             is Expr.Catch -> """
                 { // CATCH ${this.dump()}
                     do { // catch
@@ -499,7 +502,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
-                        CEU_Value ceu_it  = ceu_err.Dyn->Throw.val;
                         do {
                             ${this.cnd.code()}
                         } while (0);

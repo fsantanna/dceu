@@ -53,7 +53,6 @@ class Ups (outer: Expr.Do) {
             is Expr.Pass   -> this.map(listOf(this.e))
             is Expr.Drop   -> this.map(listOf(this.e))
 
-            is Expr.It     -> emptyMap()
             is Expr.Catch  -> this.map(listOf(this.cnd) + listOf(this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))
 

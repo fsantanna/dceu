@@ -40,8 +40,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pass   -> "pass " + this.e.tostr(pre)
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
-        is Expr.It     -> "it"
-        is Expr.Catch  -> "catch " + this.cnd.cond { it.tostr(pre)} + " " + this.blk.tostr(pre)
+        is Expr.Catch  -> "catch " + this.cnd.es[0].tostr(pre) + " " + this.blk.tostr(pre)
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ") " + this.blk.tostr(pre)

@@ -43,7 +43,7 @@ val KEYWORDS: SortedSet<String> = (
         "true", "val", "var",
         "xloop", "xbreak",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer", "it", /*"throw",*/
+        "catch", "defer",
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume",  "yield",
     )) + (if (CEU < 4) setOf() else setOf(
@@ -119,8 +119,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class It     (val tk_: Tk.Fix): Expr(N++, tk_)
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
