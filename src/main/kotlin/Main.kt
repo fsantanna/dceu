@@ -179,7 +179,7 @@ fun AND (v1:String, v2:String): String {
         }
     """
 }
-fun AWAIT (v:String=""): String {
+fun AWAIT (v:String="true"): String {
     return """
         xloop {
             xbreak if yield(nil) {

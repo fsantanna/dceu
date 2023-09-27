@@ -320,7 +320,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_create_vector  (CEU_Block* hld);
         CEU_Value ceu_create_dict    (CEU_Block* hld);
         CEU_Value ceu_create_clo     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        #if CEU >= 5
         CEU_Value ceu_create_track   (CEU_Block* blk, CEU_Exe_Task* task);
+        #endif
 
         CEU_Value ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v CEU4(COMMA int ylds));
 

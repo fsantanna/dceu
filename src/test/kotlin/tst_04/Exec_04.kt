@@ -573,8 +573,8 @@ class Exec_04 {
             })()
             broadcast nil
         """)
-        assert(out == " |  anon : (lin 30, col 13) : broadcast nil\n" +
-                " |  anon : (lin 15, col 21) : throw(:error)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast nil\n" +
+                " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
     @Test
@@ -855,6 +855,7 @@ class Exec_04 {
     fun hh_01_status() {
         val out = test("""
             val t = spawn (task () {
+                nil
             }) ()
             println(status(t))
         """)

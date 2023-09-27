@@ -719,7 +719,7 @@ class Exec_03 {
             val CO
             status(CO)
         """)
-        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
+        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status_err() {
@@ -727,7 +727,7 @@ class Exec_03 {
             val CO = coro () { nil }
             status(CO)
         """)
-        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected x-coro\n") { out }
+        assert(out == " v  anon : (lin 3, col 13) : status(CO) : status error : expected running coroutine\n") { out }
     }
     @Test
     fun ii_02_status() {
