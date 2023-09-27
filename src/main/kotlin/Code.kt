@@ -257,11 +257,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // vars inits
                     ${dcls.map { """
-                        ${it.first} = ${(up is Expr.Catch && up.cnd==this).cond2({
-                            "ceu_err.Dyn->Throw.val"
-                        }, {
-                            "(CEU_Value) { CEU_VALUE_NIL }"
-                        })};
+                        ${it.first} = ${when {
+                            (up is Expr.Catch && up.cnd == this) -> "ceu_err.Dyn->Throw.val"
+                            (up is Expr.Yield && up.blk == this) -> "((ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL } )"
+                            else -> "(CEU_Value) { CEU_VALUE_NIL }"
+                        }};
                         ${it.second} = $blkc;
                     """ }.joinToString("")}
                     // defers init
@@ -561,14 +561,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
                     CEU_Value ceu_it = (CEU_Value) { CEU_VALUE_NIL };
-                    if (ceu_n == 0) {
-                        // no argument
-                    } else {
-                        ceu_it = ceu_args[0];
-                    }
-                    if (CEU_ISERR(ceu_it)) {
-                        ceu_acc = ceu_it;
-                        continue;
+                    if (ceu_n == 1) {
+                        if (CEU_ISERR(ceu_args[0])) {
+                            ceu_acc = ceu_args[0];          // TODO: remove check?
+                            continue;
+                        }
                     }
                     ${this.blk.code()}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK(ceu_acc.Dyn)->depth>1 CEU4(&& ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_EVENT)) {
