@@ -61,7 +61,7 @@ class Exec_04 {
             val t = spawn T()
             println(t)
         """)
-        assert(out.contains("x-task: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun bb_02_resume_err() {

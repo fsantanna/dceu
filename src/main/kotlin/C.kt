@@ -44,11 +44,11 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU < 4
-        #define CEU_ISTASK(dyn) 0
+        #define CEU_ISTASK(val) 0
         #elif CEU < 5
-        #define CEU_ISTASK(dyn) ((dyn).type == CEU_VALUE_EXE_TASK)
+        #define CEU_ISTASK(val) ((val).type == CEU_VALUE_EXE_TASK)
         #else
-        #define CEU_ISTASK(dyn) ((dyn).type==CEU_VALUE_EXE_TASK || (dyn).type==CEU_VALUE_EXE_TASK_IN)
+        #define CEU_ISTASK(val) ((val).type==CEU_VALUE_EXE_TASK || (val).type==CEU_VALUE_EXE_TASK_IN || (val).type==CEU_VALUE_EXE_TASK_REF)
         #endif
 
         typedef enum CEU_HOLD {
@@ -76,6 +76,9 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CHAR,
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
+        #if CEU >= 5
+            CEU_VALUE_EXE_TASK_REF,
+        #endif
             CEU_VALUE_DYNAMIC,    // all below are dynamic
             CEU_VALUE_CLO_FUNC,
         #if CEU >= 3
@@ -501,6 +504,9 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_TASKS:
                         printf("    first  = %p\n", v.Dyn->Tasks.dyns.first);
                         printf("    last   = %p\n", v.Dyn->Tasks.dyns.last);
+                        break;
+                    case CEU_VALUE_TRACK:
+                        printf("    task   = %p\n", v.Dyn->Track.task);
                         break;
             #endif
                     default:
@@ -1024,6 +1030,11 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* dyn = src.Dyn;
             
             // do not drop non-dyn or globals
+            #if CEU >= 5
+            if (src.type == CEU_VALUE_EXE_TASK_REF) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
+            } else
+            #endif
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else if (CEU_HLD_BLOCK(dyn)->depth == 1) {
@@ -1706,7 +1717,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
-                    printf("x-coro: %p", v.Dyn);
+                    printf("exe-coro: %p", v.Dyn);
                     break;
         #endif
         #if CEU >= 4
@@ -1714,7 +1725,12 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    printf("x-task: %p", v.Dyn);
+                    printf("exe-task: %p", v.Dyn);
+                    break;
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_REF:
+                    printf("ref-task: %p", v.Pointer);
                     break;
         #endif
         #if CEU >= 5
@@ -1771,6 +1787,9 @@ fun Coder.main (tags: Tags): String {
                         v = (e1.Number == e2.Number);
                         break;
                     case CEU_VALUE_POINTER:
+            #if CEU >= 5            
+                    case CEU_VALUE_EXE_TASK_REF:
+            #endif
                         v = (e1.Pointer == e2.Pointer);
                         break;
                     case CEU_VALUE_TUPLE:

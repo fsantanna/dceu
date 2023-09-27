@@ -58,6 +58,9 @@ val XOPERATORS = if (CEU <= 2) setOf() else setOf("and", "not", "or")
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
+) + (if (CEU < 5) listOf() else listOf(
+    ":ref-task"
+)) + listOf(
     ":dynamic",
     ":func",
 ) + (if (CEU < 3) listOf() else listOf(
@@ -69,11 +72,11 @@ val TAGS = listOf (
 ) + (if (CEU < 2) listOf() else listOf(
     ":throw",
 )) + (if (CEU < 3) listOf() else listOf(
-    ":x-coro",
+    ":exe-coro",
 )) + (if (CEU < 4) listOf() else listOf(
-    ":x-task",
+    ":exe-task",
 )) + (if (CEU < 5) listOf() else listOf(
-    ":x-task-in", ":tasks", ":track"
+    ":exe-task-in", ":tasks", ":track"
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
 )) + listOf(

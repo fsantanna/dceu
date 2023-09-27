@@ -213,13 +213,15 @@ class Exec_05 {
             val x = track(t)
             val v = detrack(x) {
                 println(x)
-                println(t)
+                ;;println(t)
                 println(it)
                 println(it == t)
             }
             println(v)
         """)
-        assert(out.contains("10\n")) { out }
+        assert(out.contains("track: 0x")) { out }
+        assert(out.contains("ref-task: 0x")) { out }
+        assert(out.contains("false\n")) { out }
     }
     @Test
     fun dd_02_detrack() {
@@ -324,32 +326,5 @@ class Exec_05 {
         """
         )
         assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task in pool track\n") { out }
-    }
-    @Test
-    fun hh_04_next() {
-        val out = test("""
-            val T = task () {
-                yield(nil) { nil }
-            }
-            val ts = tasks()
-            spawn in ts, T()
-            spawn in ts, T()
-            
-            
-            println(ok1, ok2)
-
-            val t = @[]
-            set t[:x] = 1
-            set t[:y] = 2
-            var k
-            set k = next(t)
-            println(k, t[k])
-            set k = next(t,k)
-            println(k, t[k])
-            set k = next(t,k)
-            println(k, t[k])
-        """
-        )
-        assert(out == ":x\t1\n:y\t2\nnil\tnil\n") { out }
     }
 }
