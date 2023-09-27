@@ -257,10 +257,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // vars inits
                     ${dcls.map { """
-                        ${it.first} = ${when {
-                            (up is Expr.Catch && up.cnd == this) -> "ceu_err.Dyn->Throw.val"
-                            (up is Expr.Yield && up.blk == this) -> "((ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL } )"
-                            else -> "(CEU_Value) { CEU_VALUE_NIL }"
+                        ${when {
+                            (up is Expr.Catch && up.cnd == this) -> """
+                                ${it.first} = ceu_err.Dyn->Throw.val;
+                                ceu_gc_inc(${it.first});
+                            """
+                            (up is Expr.Yield && up.blk == this) -> """
+                                ${it.first} = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
+                                ceu_gc_inc(${it.first});
+                            """
+                            else -> "${it.first} = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
                         ${it.second} = $blkc;
                     """ }.joinToString("")}
