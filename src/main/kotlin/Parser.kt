@@ -325,7 +325,7 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 Expr.Yield(this.tk0 as Tk.Fix,
                     this.expr_in_parens(CEU<99, CEU>99)!!,
-                    this.block()
+                    Expr.Do(Tk.Fix("do",this.tk0.pos), listOf(this.block()))
                 )
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
