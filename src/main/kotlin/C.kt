@@ -886,8 +886,6 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_hold_chk_set (CEU_Block* dst, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre CEU4(COMMA int ylds)) {
             static char msg[256];
-            CEU_Value err = { CEU_VALUE_ERROR, {.Error=msg} };
-
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
         #if CEU >= 5
@@ -898,14 +896,14 @@ fun Coder.main (tags: Tags): String {
             ) {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot move track outside its task scope");
-                return err;
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
         #endif
         #if CEU >= 4
             } else if (src.Dyn->Any.hld.type == CEU_HOLD_EVENT) {
                 if (ylds) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot hold event reference");
-                    return err;
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
                 }
                 return (CEU_Value) { CEU_VALUE_NIL };
         #endif
@@ -913,7 +911,7 @@ fun Coder.main (tags: Tags): String {
                 if (src.Dyn->Any.refs-nest>0 && dst->depth>CEU_HLD_BLOCK(src.Dyn)->depth) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot move to deeper scope with pending references");
-                    return err; // OK with CEU_HOLD_EVENT b/c never assigned
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
                 } else {
                     // continue below
                 }
@@ -922,7 +920,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot copy reference to outer scope");
-                return err;
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
             };
             //printf(">>> %d %d -> %d\n", dst->depth, CEU_HLD_BLOCK(src.Dyn)->depth, src.Dyn->);
 
