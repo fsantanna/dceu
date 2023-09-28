@@ -1342,7 +1342,7 @@ fun Coder.main (tags: Tags): String {
                             nxt = col.Dyn->Tasks.dyns.first;
                             break;
                         case CEU_VALUE_TRACK:
-                            if (key.Dyn->Track.task->type != CEU_VALUE_EXE_TASK_IN) {
+                            if (key.Dyn->Track.task==NULL || key.Dyn->Track.task->type!=CEU_VALUE_EXE_TASK_IN) {
                                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task in pool track"} };
                             }
                             nxt = key.Dyn->Track.task->hld.next;

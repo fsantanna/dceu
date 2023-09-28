@@ -501,6 +501,21 @@ class Exec_05 {
     @Test
     fun hh_03_next() {
         val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            val x = next(ts)
+            broadcast nil
+            next(ts, x)
+        """
+        )
+        assert(out == " v  anon : (lin 9, col 13) : next(ts,x) : next error : expected task in pool track\n") { out }
+    }
+    @Test
+    fun hh_04_next() {
+        val out = test("""
             val T = task (v) {
                 ${AWAIT("it == v")}
             }
@@ -510,9 +525,6 @@ class Exec_05 {
             val x1 = next(ts)
             val x2 = next(ts, x1)
             broadcast 1
-            println(x1, x2)
-            dump(x1)
-            dump(x2)
             next(ts, x1)
         """
         )
