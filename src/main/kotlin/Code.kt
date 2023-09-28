@@ -569,13 +569,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         continue;
                     }
                     assert(ceu_n <= 1 && "TODO: multiple arguments to resume");
-                    CEU_Value ceu_it = (CEU_Value) { CEU_VALUE_NIL };
-                    if (ceu_n == 1) {
-                        if (CEU_ISERR(ceu_args[0])) {
-                            ceu_acc = ceu_args[0];          // TODO: remove check?
-                            continue;
-                        }
+                #if CEU >= 4
+                    if (ceu_n == CEU_ARG_ERROR) {
+                        ceu_acc = ceu_args[0];
+                        continue;
                     }
+                #endif
                     ${this.blk.code()}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK(ceu_acc.Dyn)->depth>1 CEU4(&& ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_EVENT)) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive assigned reference"} };

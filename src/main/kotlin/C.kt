@@ -63,7 +63,9 @@ fun Coder.main (tags: Tags): String {
         _Static_assert(sizeof(CEU_HOLD) == 1);
         
         typedef enum CEU_ARG {
-            //CEU_ARG_ERROR = -2,     // awake task to catch error from nested task
+        #if CEU >= 4
+            CEU_ARG_ERROR = -2,     // awake task to catch error from nested task
+        #endif
             CEU_ARG_FREE  = -1,     // awake task to finalize defers and release memory
             CEU_ARG_ARGS  =  0   // 1, 2, ...
         } CEU_ARG;
@@ -1148,8 +1150,13 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
             CEU_Value ret = ceu_bcast_blocks(task->dn_block, evt);
             if (task->status == CEU_EXE_STATUS_YIELDED) {
-                CEU_Value args[] = { CEU_ISERR(ret) ? ret : evt };
-                ret = task->frame.clo->proto(&task->frame, 1, args);
+                if (CEU_ISERR(ret)) {
+                    CEU_Value args[] = { ret };
+                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, args);
+                } else {
+                    CEU_Value args[] = {  evt };
+                    ret = task->frame.clo->proto(&task->frame, 1, args);
+                }
             }
             return ret;
         }
