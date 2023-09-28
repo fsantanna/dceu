@@ -213,6 +213,37 @@ class Exec_05 {
         """)
         assert(out.contains("anon : (lin 5, col 34) : invalid set : destination is immutable\n")) { out }
     }
+    @Test
+    fun cc_09_detrack() {
+        val out = test("""
+            val T = task (v) {
+                yield(nil) { nil }
+            }
+            val ts = tasks()
+            spawn in ts, T()
+            val x = next(ts)
+            ;;dump(x)
+            broadcast nil
+            println(detrack(x) { 99 })
+        """
+        )
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun cc_10_detrack() {
+        val out = test("""
+            val T = task (v) {
+                ${AWAIT("it == v")}
+            }
+            val t = spawn T()
+            val x = track(t)
+            broadcast nil
+            println(detrack(x) { 99 })
+            ;;dump(x)
+        """
+        )
+        assert(out == "nil\n") { out }
+    }
 
     // DETRACK / ACCESS
 
@@ -301,7 +332,7 @@ class Exec_05 {
             }
             println(v)
         """)
-        assert(out == "ERR") { out }
+        assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
     }
 
     // THROW
@@ -354,7 +385,7 @@ class Exec_05 {
             broadcast nil
             println(status(t))
         """)
-        assert(out == "ERROR") { out }
+        assert(out == " v  anon : (lin 9, col 22) : block escape error : cannot move task reference\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -363,9 +394,69 @@ class Exec_05 {
                 ${AWAIT()}
             }
             val t = spawn T()
-            println(detrack(t) { it })
+            val x = track(t)
+            println(detrack(x) { it })
         """)
-        assert(out == "ERROR") { out }
+        assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot move task reference\n") { out }
+    }
+    @Test
+    fun ff_04_detrack_ok() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val t = spawn T()
+            val x = track(t)
+            println(detrack(x) {
+                val z = it
+                10
+            })
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ff_05_track_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val x = do {
+                val t = spawn T()
+                track(t)
+            }
+        """)
+        assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n") { out }
+    }
+    @Test
+    fun ff_06_track_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val x = do {
+                val ts = tasks()
+                spawn in ts, T()
+                next(ts)
+            }
+        """)
+        assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n") { out }
+    }
+    @Test
+    fun ff_07_track_err() {
+        val out = test("""
+            val T = task () {
+                ${AWAIT()}
+            }
+            val ts = tasks()
+            val x = do {
+                spawn in ts, T()
+                next(ts)
+            }
+            detrack(x) {
+                println(it)
+            }            
+        """)
+        assert(out.contains("ref-task: 0x")) { out }
     }
 
     // NEXT
@@ -419,6 +510,9 @@ class Exec_05 {
             val x1 = next(ts)
             val x2 = next(ts, x1)
             broadcast 1
+            println(x1, x2)
+            dump(x1)
+            dump(x2)
             next(ts, x1)
         """
         )

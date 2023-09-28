@@ -1185,8 +1185,13 @@ fun Coder.main (tags: Tags): String {
                         break;
                     }
         #if CEU >= 5
-                    case CEU_VALUE_TASKS:
-                        return ceu_bcast_dyns(dyn->Tasks.dyns.first, evt);
+                    case CEU_VALUE_TASKS: {
+                        CEU_Value ret = ceu_bcast_dyns(dyn->Tasks.dyns.first, evt);
+                        if (CEU_ISERR(ret)) {
+                            return ret;
+                        }
+                        break;
+                    }
                     case CEU_VALUE_TRACK:
                         if (evt.type==CEU_VALUE_POINTER  && dyn->Track.task==(CEU_Exe_Task*)evt.Pointer) {
                             dyn->Track.task = NULL; // tracked coro is terminating
