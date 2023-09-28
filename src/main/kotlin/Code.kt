@@ -21,19 +21,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             "ceu_${pre}_${this.n}"
         }
     }
-    fun Expr.Dcl.idc (upv: Int): Pair<String,String> {
+    fun Expr.Dcl.idc (upv: Int): String {
         return when {
             (upv == 2) -> {
                 val idc = this.id.str.idc()
-                Pair("(ceu_upvs->$idc)", "(ceu_upvs->_${idc}_)")
+                "(ceu_upvs->$idc)"
             }
             sta.ylds.contains(vars.dcl_to_blk[this]) -> {
                 val idc = this.id.str.idc(this.n)
-                Pair("(ceu_mem->$idc)", "(ceu_mem->_${idc}_)")
+                "(ceu_mem->$idc)"
             }
             else -> {
-                val idc = this.id.str.idc()
-                Pair(idc, "_${idc}_")
+                this.id.str.idc()
             }
         }
     }
@@ -146,7 +145,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val upv = min(2, btw)
                         """
                         {
-                            CEU_Value ceu_up = ${dcl.idc(upv).first};
+                            CEU_Value ceu_up = ${dcl.idc(upv)};
                             assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up CEU4(COMMA ${if (sta.ylds.contains(blk)) 1 else 0})).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
                             ((CEU_Clo_Upvs_$n*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
@@ -251,27 +250,25 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // inline vars dcls
                     ${(!ylds).cond { """
                         ${dcls.map { """
-                            CEU_Value ${it.first};
-                            CEU_Block* ${it.second};
+                            CEU_Value $it;
                         """ }.joinToString("")}
                     """ }}
                     // vars inits
                     ${dcls.map { """
                         ${when {
                             (up is Expr.Catch && up.cnd == this) -> """
-                                ${it.first} = ceu_err.Dyn->Throw.val;
-                                ceu_gc_inc(${it.first});
+                                $it = ceu_err.Dyn->Throw.val;
+                                ceu_gc_inc($it);
                             """
                             (up is Expr.Yield && up.blk == this) -> """
-                                ${it.first} = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
-                                ceu_gc_inc(${it.first});
+                                $it = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
+                                ceu_gc_inc($it);
                             """
                             (up is Expr.Dtrack && up.blk == this) -> """
-                                ${it.first} = (CEU_Value) { CEU_VALUE_EXE_TASK_REF, {.Pointer=ceu_acc.Dyn->Track.task} };
+                                $it = (CEU_Value) { CEU_VALUE_EXE_TASK_REF, {.Pointer=ceu_acc.Dyn->Track.task} };
                             """
-                            else -> "${it.first} = (CEU_Value) { CEU_VALUE_NIL };"
+                            else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
-                        ${it.second} = $blkc;
                     """ }.joinToString("")}
                     // defers init
                     ${defers[this].cond { it.second }}
@@ -295,9 +292,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 """
                                 { // func args
                                     ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
-                                        val (idc,_idc_) = vars.get(this, arg.first.str).idc(0)
+                                        val idc = vars.get(this, arg.first.str).idc(0)
                                         """
-                                        $_idc_ = $blkc;
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
                                             ceu_gc_todo = 0;
@@ -359,14 +355,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // dcls gc-dec
                     ${dcls.map { """
-                        if (${it.first}.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                            ceu_gc_dec(${it.first}, (CEU_HLD_BLOCK(${it.first}.Dyn)->depth == $blkc->depth));
+                        if ($it.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                            ceu_gc_dec($it, (CEU_HLD_BLOCK($it.Dyn)->depth == $blkc->depth));
                         }
                     """ }.joinToString("")}
                     // args gc-dec
                     ${(f_b is Expr.Proto).cond { """
                         ${(f_b as Expr.Proto).args.map {
-                            val (idc,_) = vars.get(this, it.first.str).idc(0)
+                            val idc = vars.get(this, it.first.str).idc(0)
                             """
                             if (ceu_gc_todo) {
                                 if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
@@ -436,7 +432,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Dcl -> {
-                val (idc,_) = this.idc(0)
+                val idc = this.idc(0)
                 val blk = ups.first_block(this)!!
                 val bupc = blk.idc("block")
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
@@ -643,7 +639,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     var x = str
                     for (v in set) {
                         //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", v.idc(0).first)
+                        x = x.replaceFirst("XXX", v.idc(0))
                     }
                     x
                 }
@@ -659,12 +655,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Acc -> {
-                val (blk,dcl) = vars.get(this)
-                val (idc,_idc_) = dcl.idc(this.tk_.upv)
+                val (vblk,dcl) = vars.get(this)
+                val idc = dcl.idc(this.tk_.upv)
                 when {
                     this.isdst() -> {
-                        val blk = ups.first_block(this)!!
-                        val bupc = blk.idc("block")
+                        val ublk = ups.first_block(this)!!
+                        val bupc = ublk.idc("block")
                         val src = this.asdst_src()
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
@@ -674,7 +670,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(${_idc_}, CEU_HOLD_MUTAB, $src, 0, "set error" CEU4(COMMA ${if (sta.ylds.contains(blk)) 1 else 0})),
+                                ceu_hold_chk_set(${vblk.idc("block")}, CEU_HOLD_MUTAB, $src, 0, "set error" CEU4(COMMA ${if (sta.ylds.contains(ublk)) 1 else 0})),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -888,7 +884,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
-                    dcl.idc(0).first
+                    dcl.idc(0)
                 }
 
                 val upspawn = if (up is Expr.Spawn && up.tsks?.n!=this.n) up else null
