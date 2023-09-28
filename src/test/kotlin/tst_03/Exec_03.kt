@@ -45,6 +45,15 @@ class Exec_03 {
         """)
         assert(out == " v  anon : (lin 3, col 13) : resume error : expected yielded coro\n") { out }
     }
+    @Test
+    fun aa_05_yield_err() {
+        val out = test("""
+            resume (coro () {
+                yield(nil) { set it = nil }
+            }) ()
+        """)
+        assert(out == "anon : (lin 3, col 30) : invalid set : destination is immutable\n") { out }
+    }
 
     // COROUTINE
 

@@ -67,6 +67,15 @@ class Exec_02 {
     // THROW / CATCH
 
     @Test
+    fun jj_00_catch_err() {
+        val out = test("""
+            val err = catch do { set it=nil } {
+                throw(:x)
+            }
+        """)
+        assert(out == "anon : (lin 2, col 34) : invalid set : destination is immutable\n") { out }
+    }
+    @Test
     fun jj_01_catch() {
         val out = test("""
             val err = catch it==:x {

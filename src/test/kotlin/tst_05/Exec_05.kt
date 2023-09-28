@@ -202,6 +202,17 @@ class Exec_05 {
         """)
         assert(out.contains("anon : (lin 3, col 32) : yield error : unexpected enclosing detrack\n")) { out }
     }
+    @Test
+    fun cc_08_detrack() {
+        val out = test("""
+            val T = task () { yield(nil) { nil } }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) { set it = 10 }
+            println(v)
+        """)
+        assert(out.contains("anon : (lin 5, col 34) : invalid set : destination is immutable\n")) { out }
+    }
 
     // DETRACK / ACCESS
 
@@ -236,7 +247,7 @@ class Exec_05 {
         assert(out.contains(":yielded\n")) { out }
     }
     @Test
-    fun dd_03_detrack_err() {
+    fun todo_dd_03_detrack_err() {
         val out = test("""
             val T = task () {
                 ${AWAIT()}
