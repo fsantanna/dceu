@@ -905,7 +905,7 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
-        CEU_Value ceu_hold_chk_set (CEU5(int out COMMA) CEU_Block* dst, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre CEU4(COMMA int ylds)) {
+        CEU_Value ceu_hold_chk_set (CEU5(int out COMMA) CEU_Block* dst_blk, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre CEU4(COMMA int ylds)) {
             static char msg[256];
         #if CEU >= 5
             if (src.type==CEU_VALUE_EXE_TASK_REF && out) {
@@ -916,51 +916,57 @@ fun Coder.main (tags: Tags): String {
         #endif
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
+            }
+            
+            CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
+            
         #if CEU >= 5
-            } else if (
+            if (
                 src.Dyn->Any.type == CEU_VALUE_TRACK    &&
                 src.Dyn->Track.task != NULL             &&
-                CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task)->depth > dst->depth
+                CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task)->depth > dst_blk->depth
             ) {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot move track outside its task scope");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
+            } else 
         #endif
         #if CEU >= 4
-            } else if (src.Dyn->Any.hld.type == CEU_HOLD_EVENT) {
+            if (src.Dyn->Any.hld.type == CEU_HOLD_EVENT) {
                 if (ylds) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot hold event reference");
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
                 }
                 return (CEU_Value) { CEU_VALUE_NIL };
+            } else 
         #endif
-            } else if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                if (src.Dyn->Any.refs-nest>0 && dst->depth>CEU_HLD_BLOCK(src.Dyn)->depth) {
+            if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                if (src.Dyn->Any.refs-nest>0 && dst_blk->depth>src_blk->depth) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot move to deeper scope with pending references");
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
                 } else {
                     // continue below
                 }
-            } else if (dst->depth >= CEU_HLD_BLOCK(src.Dyn)->depth) {
+            } else if (dst_blk==src_blk || dst_blk->depth>src_blk->depth) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot copy reference to outer scope");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
             };
-            //printf(">>> %d %d -> %d\n", dst->depth, CEU_HLD_BLOCK(src.Dyn)->depth, src.Dyn->);
+            //printf(">>> %d %d -> %d\n", dst_blk->depth, src_blk->depth, src.Dyn->);
 
-            int src_depth = CEU_HLD_BLOCK(src.Dyn)->depth;
+            int src_depth = src_blk->depth;
             int src_type  = src.Dyn->Any.hld.type;
 
             src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
-            if (dst != CEU_HLD_BLOCK(src.Dyn)) {
-                ceu_hold_chg(src.Dyn, dst CEU5(COMMA &dst->dn.dyns));
+            if (dst_blk != CEU_HLD_BLOCK(src.Dyn)) {
+                ceu_hold_chg(src.Dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
             }
-            //printf(">>> %d -> %d\n", src_depth, CEU_HLD_BLOCK(src.Dyn)->depth);
-            if (src.Dyn->Any.hld.type==src_type && dst->depth>=src_depth) {
+            //printf(">>> %d -> %d\n", src_depth, src_blk->depth);
+            if (src.Dyn->Any.hld.type==src_type && dst_blk->depth>=src_depth) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
 
@@ -972,29 +978,29 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
                     break;
             #endif
         #if CEU >= 3
@@ -1005,7 +1011,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
                     break;
         #endif
                 default:

@@ -1020,7 +1020,8 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
-        assert(out == "10\n") { out }
+        assert(out == " |  anon : (lin 8, col 27) : T()\n" +
+                " v  anon : (lin 5, col 21) : pub(x) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -1033,8 +1034,9 @@ class Exec_04 {
                 val x = []
                 pub(t, x)
             }
+            println(pub(t))
         """)
-        assert(out == "10\n") { out }
+        assert(out == " v  anon : (lin 8, col 17) : pub(t,x) : set error : cannot copy reference to outer scope\n") { out }
     }
 
     // ORIG
