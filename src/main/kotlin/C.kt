@@ -902,9 +902,9 @@ fun Coder.main (tags: Tags): String {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot move task reference");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-            }
+            } else
         #endif
-            else if (src.type < CEU_VALUE_DYNAMIC) {
+            if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };
         #if CEU >= 5
             } else if (
@@ -962,29 +962,29 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
                     break;
             #endif
         #if CEU >= 3
@@ -995,7 +995,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(out, dst, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
                     break;
         #endif
                 default:
@@ -1752,13 +1752,9 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_EXE_TASK_REF:
                     printf("ref-task: %p", v.Pointer);
                     break;
-        #endif
-        #if CEU >= 5
                 case CEU_VALUE_TASKS:
                     printf("tasks: %p", v.Dyn);
                     break;
-        #endif
-        #if CEU >= 5
                 case CEU_VALUE_TRACK:
                     printf("track: %p", v.Dyn);
                     break;
