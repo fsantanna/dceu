@@ -969,6 +969,74 @@ class Exec_04 {
                 " v  anon : (lin 3, col 33) : block escape error : cannot copy reference to outer scope\n") { out }
     }
 
+    // PUB
+
+    @Test
+    fun kk_01_pub() {
+        val out = test("""
+            pub()
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
+    }
+    @Test
+    fun kk_02_pub() {
+        val out = test("""
+            pub(nil)
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
+    }
+    @Test
+    fun kk_03_pub() {
+        val out = test("""
+            val T = task () {
+                println(pub())
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            println(pub(t))
+        """)
+        assert(out == "nil\nnil\n") { out }
+    }
+    @Test
+    fun kk_04_pub() {
+        val out = test("""
+            val T = task () {
+                pub(10)
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            println(pub(t))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_05_pub_err() {
+        val out = test("""
+            val T = task () {
+                do {
+                    val x = []
+                    pub(x)
+                }
+            }
+            val t = spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_06_pub_err() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            do {
+                val x = []
+                pub(t, x)
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // ORIG
 
     @Test

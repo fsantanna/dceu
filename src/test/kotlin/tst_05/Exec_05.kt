@@ -335,6 +335,40 @@ class Exec_05 {
         assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
     }
 
+    // PUB
+
+    @Test
+    fun ee_01_pub() {
+        val out = test("""
+            val T = task () {
+                set pub = 10
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            println(pub(t))
+        """)
+        assert(out.contains("10\n")) { out }
+    }
+    @Test
+    fun ee_02_pub() {
+        val out = test("""
+            val T = task () {
+                set pub = 10
+                yield(nil) { nil }
+            }
+            val t = spawn T()
+            val x = track(t)
+            val v = detrack(x) {
+                println(pub(it))
+            }
+            println(v)
+        """)
+        assert(out.contains("track: 0x")) { out }
+        assert(out.contains("ref-task: 0x")) { out }
+        assert(out.contains("false\n")) { out }
+    }
+
+
     // THROW
 
     @Test

@@ -91,6 +91,8 @@ val GLOBALS = setOf (
     "pointer-to-string", "throw"
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
+)) + (if (CEU < 4) setOf() else setOf(
+    "pub"
 )) + (if (CEU < 5) setOf() else setOf(
     "tasks", "track"
 ))

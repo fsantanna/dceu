@@ -116,4 +116,34 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == "broadcast in nil, []\n") { e.tostr() }
     }
+    @Test
+    fun cc_06_bcast() {
+        val l = lexer("""
+            broadcast in t, nil
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "broadcast in t, nil\n") { e.tostr() }
+    }
+
+    // PUB
+
+    @Test
+    fun dd_01_pub() {
+        val l = lexer("""
+            set pub = 10
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "set pub = 10\n") { e.tostr() }
+    }
+    @Test
+    fun dd_02_pub() {
+        val l = lexer("""
+            pub(t)
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "pub(t)\n") { e.tostr() }
+    }
 }

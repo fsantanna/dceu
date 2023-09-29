@@ -251,6 +251,7 @@ fun Coder.main (tags: Tags): String {
         typedef struct CEU_Exe_Task {
             _CEU_Exe_
             CEU_Block* dn_block;
+            CEU_Value pub;
         } CEU_Exe_Task;
         #endif
         
@@ -503,6 +504,11 @@ fun Coder.main (tags: Tags): String {
                 printf("    next  = %p\n", v.Dyn->Any.hld.next);
                 printf("    ----\n");
                 switch (v.type) {
+            #if CEU >= 4
+                    case CEU_VALUE_EXE_TASK:
+                        printf("    pub   = %d\n", v.Dyn->Exe_Task.pub.type);
+                        break;
+            #endif
             #if CEU >= 5
                     case CEU_VALUE_TASKS:
                         printf("    first = %p\n", v.Dyn->Tasks.dyns.first);
@@ -756,6 +762,10 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // BLOCK / FREE
+        CEU_Frame* ceu_block_frame (CEU_Block* blk) {
+            return (blk->istop) ? blk->up.frame : ceu_block_frame(blk->up.block);
+        }
+        
         void ceu_dyn_free (CEU_Dyn* dyn) {
             while (dyn->Any.tags != NULL) {
                 CEU_Tags_List* tag = dyn->Any.tags;
@@ -1549,6 +1559,7 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Value ret = _ceu_create_exe_(CEU_VALUE_EXE_TASK, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA &blk->dn.dyns));
             ret.Dyn->Exe_Task.dn_block = NULL;
+            ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;
         }
         #endif
@@ -1567,7 +1578,9 @@ fun Coder.main (tags: Tags): String {
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_(CEU_VALUE_EXE_TASK_IN, sizeof(CEU_Exe_Task), blk, clo, &tasks->dyns);
                 //_ceu_dump_(ret);
-                ret.Dyn->Any.hld.block = (CEU_Block*) tasks;
+                ret.Dyn->Any.hld.block = (CEU_Block*) tasks; // point to tasks (vs enclosing block)
+                ret.Dyn->Exe_Task.dn_block = NULL;
+                ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
                 return ret;
             } else {
                 return (CEU_Value) { CEU_VALUE_NIL };
@@ -1925,7 +1938,36 @@ fun Coder.main (tags: Tags): String {
         }
         #endif
     """ +
-    """ // TRACK / DETRACK
+    """ // PUB
+        #if CEU >= 4
+        CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            int i = 0;
+            CEU_Exe_Task* tsk;
+            if (CEU_ISTASK(args[0])) {
+                tsk = &args[0].Dyn->Exe_Task;
+                i = 1;
+            } else {
+                tsk = ceu_block_frame(frame->up_block)->exe_task;
+                if (tsk == NULL) {
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
+                }
+            }
+            if (i == n) {   // GET
+                return tsk->pub;
+            } else {        // SET
+                CEU_Value ret = ceu_hold_chk_set(CEU5(1 COMMA) tsk->dn_block, CEU_HOLD_MUTAB, args[i], 0, "set error", 1);
+                if (ret.type == CEU_VALUE_ERROR) {
+                    return ret;
+                }
+                ceu_gc_inc(args[i]);
+                ceu_gc_dec(tsk->pub, 1);
+                tsk->pub = args[i];
+                return (CEU_Value) { CEU_VALUE_NIL };
+            }
+        }
+        #endif
+    """ +
+    """ // TRACK
         #if CEU >= 5
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
@@ -2018,6 +2060,12 @@ fun Coder.main (tags: Tags): String {
             &_ceu_frame_, ceu_status_f, {0,NULL}
         };
         #endif
+        #if CEU >= 4
+        CEU_Clo ceu_pub = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
+            &_ceu_frame_, ceu_pub_f, {0,NULL}
+        };
+        #endif
         #if CEU >= 5
         CEU_Clo ceu_tasks = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
@@ -2049,6 +2097,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
         CEU_Value id_coroutine               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_coroutine}               };
         CEU_Value id_status                  = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_status}                  };
+        #endif
+        #if CEU >= 4
+        CEU_Value id_pub                     = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pub}                     };
         #endif
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
