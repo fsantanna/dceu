@@ -43,14 +43,6 @@ fun Coder.main (tags: Tags): String {
         #define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
         #endif
         
-        #if CEU < 4
-        #define CEU_ISTASK(val) 0
-        #elif CEU < 5
-        #define CEU_ISTASK(val) ((val).type == CEU_VALUE_EXE_TASK)
-        #else
-        #define CEU_ISTASK(val) ((val).type==CEU_VALUE_EXE_TASK || (val).type==CEU_VALUE_EXE_TASK_IN || ((val).type==CEU_VALUE_REF && (CEU_ISTASK((val).Dyn))))
-        #endif
-
         typedef enum CEU_HOLD {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
@@ -347,6 +339,9 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 2
         CEU_Value ceu_pointer_dash_to_dash_string_f (CEU_Frame* frame, int n, CEU_Value args[]);
+        #endif
+        #if CEU >= 4
+        int ceu_istask (CEU_Value v);
         #endif
     """ +
     """ // GC_COUNT / TAGS
@@ -833,7 +828,7 @@ fun Coder.main (tags: Tags): String {
             // first finalize EXE
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
-                if (dyn->Any.type==CEU_VALUE_EXE_CORO || CEU_ISTASK(dyn->Any)) { 
+                if (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask(ceu_dyn_to_val(dyn)))) { 
                     if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                         dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
                     }
@@ -1937,7 +1932,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value exe = args[0];
-            if (exe.type!=CEU_VALUE_EXE_CORO && !CEU_ISTASK(exe)) {
+            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask(exe))) {
         #if CEU < 4
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
         #else
@@ -1948,12 +1943,17 @@ fun Coder.main (tags: Tags): String {
         }
         #endif
     """ +
-    """ // PUB
+    """ // ISTASK / PUB
         #if CEU >= 4
+        int ceu_istask (CEU_Value v) {
+            return v.type==CEU_VALUE_EXE_TASK CEU5(|| v.type==CEU_VALUE_EXE_TASK_IN) ||
+                    (v.type==CEU_VALUE_REF && ceu_istask(ceu_dyn_to_val(v.Dyn)));
+        }
+
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             int i = 0;
             CEU_Exe_Task* tsk;
-            if (CEU_ISTASK(args[0])) {
+            if (ceu_istask(args[0])) {
                 tsk = &args[0].Dyn->Exe_Task;
                 i = 1;
             } else {
@@ -1982,7 +1982,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value task = args[0];
-            if (!CEU_ISTASK(task)) {
+            if (!ceu_istask(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
             } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
