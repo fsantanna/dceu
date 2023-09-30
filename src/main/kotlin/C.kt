@@ -48,7 +48,7 @@ fun Coder.main (tags: Tags): String {
         #elif CEU < 5
         #define CEU_ISTASK(val) ((val).type == CEU_VALUE_EXE_TASK)
         #else
-        #define CEU_ISTASK(val) ((val).type==CEU_VALUE_EXE_TASK || (val).type==CEU_VALUE_EXE_TASK_IN || (val).type==CEU_VALUE_EXE_TASK_REF)
+        #define CEU_ISTASK(val) ((val).type==CEU_VALUE_EXE_TASK || (val).type==CEU_VALUE_EXE_TASK_IN || ((val).type==CEU_VALUE_REF && (CEU_ISTASK((val).Dyn))))
         #endif
 
         typedef enum CEU_HOLD {
@@ -78,8 +78,8 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CHAR,
             CEU_VALUE_NUMBER,
             CEU_VALUE_POINTER,
-        #if CEU >= 5
-            CEU_VALUE_EXE_TASK_REF,
+        #if CEU >= 4
+            CEU_VALUE_REF,
         #endif
             CEU_VALUE_DYNAMIC,    // all below are dynamic
             CEU_VALUE_CLO_FUNC,
@@ -905,12 +905,12 @@ fun Coder.main (tags: Tags): String {
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
-        CEU_Value ceu_hold_chk_set (CEU5(int out COMMA) CEU_Block* dst_blk, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre CEU4(COMMA int ylds)) {
+        CEU_Value ceu_hold_chk_set (CEU4(int out COMMA) CEU_Block* dst_blk, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre CEU4(COMMA int ylds)) {
             static char msg[256];
-        #if CEU >= 5
-            if (src.type==CEU_VALUE_EXE_TASK_REF && out) {
+        #if CEU >= 4
+            if (src.type==CEU_VALUE_REF && out) {   // out of non-yielding block
                 strncpy(msg, pre, 256);
-                strcat(msg, " : cannot move task reference");
+                strcat(msg, " : cannot copy reference out");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
             } else
         #endif
@@ -978,29 +978,29 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<src.Dyn->Clo.upvs.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, src.Dyn->Clo.upvs.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<src.Dyn->Tuple.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, src.Dyn->Tuple.buf[i], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<src.Dyn->Vector.its; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, ceu_vector_get(&src.Dyn->Vector,i), 1, pre CEU4(COMMA ylds)));
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre CEU4(COMMA ylds)));
+                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre CEU4(COMMA ylds)));
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, src.Dyn->Throw.val, 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, src.Dyn->Throw.stk, 1, pre CEU4(COMMA ylds)));
                     break;
             #endif
         #if CEU >= 3
@@ -1011,7 +1011,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU5(out COMMA) dst_blk, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
+                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(CEU4(out COMMA) dst_blk, dst_type, ceu_dyn_to_val((CEU_Dyn*)src.Dyn->Exe.frame.clo), 1, pre CEU4(COMMA ylds)));
                     break;
         #endif
                 default:
@@ -1028,7 +1028,7 @@ fun Coder.main (tags: Tags): String {
             // col affects v:
             // [x,[1]] <-- moves v=[1] to v
 
-            CEU_Value err = ceu_hold_chk_set(CEU5(1 COMMA) CEU_HLD_BLOCK(col), col->Any.hld.type, v, 0, "set error" CEU4(COMMA ylds));
+            CEU_Value err = ceu_hold_chk_set(CEU4(1 COMMA) CEU_HLD_BLOCK(col), col->Any.hld.type, v, 0, "set error" CEU4(COMMA ylds));
             if (err.type==CEU_VALUE_ERROR && col->Any.hld.type!=CEU_HOLD_FLEET) {
                 // must be second b/c chk_set above may modify v
                 return err;
@@ -1056,8 +1056,8 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* dyn = src.Dyn;
             
             // do not drop non-dyn or globals
-            #if CEU >= 5
-            if (src.type == CEU_VALUE_EXE_TASK_REF) {
+            #if CEU >= 4
+            if (src.type == CEU_VALUE_REF) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
             } else
             #endif
@@ -1681,6 +1681,11 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_POINTER:
                     printf("pointer: %p", v.Pointer);
                     break;
+        #if CEU >= 4
+                case CEU_VALUE_REF:
+                    printf("ref: %p", v.Dyn);
+                    break;
+        #endif
                 case CEU_VALUE_TUPLE:
                     printf("[");
                     for (int i=0; i<v.Dyn->Tuple.its; i++) {
@@ -1768,9 +1773,6 @@ fun Coder.main (tags: Tags): String {
                     break;
         #endif
         #if CEU >= 5
-                case CEU_VALUE_EXE_TASK_REF:
-                    printf("ref-task: %p", v.Pointer);
-                    break;
                 case CEU_VALUE_TASKS:
                     printf("tasks: %p", v.Dyn);
                     break;
@@ -1822,11 +1824,13 @@ fun Coder.main (tags: Tags): String {
                         v = (e1.Number == e2.Number);
                         break;
                     case CEU_VALUE_POINTER:
-            #if CEU >= 5            
-                    case CEU_VALUE_EXE_TASK_REF:
-            #endif
                         v = (e1.Pointer == e2.Pointer);
                         break;
+            #if CEU >= 4
+                    case CEU_VALUE_REF:
+                        v = (e1.Dyn == e2.Dyn);
+                        break;
+            #endif
                     case CEU_VALUE_TUPLE:
                     case CEU_VALUE_VECTOR:
                     case CEU_VALUE_DICT:
@@ -1961,7 +1965,7 @@ fun Coder.main (tags: Tags): String {
             if (i == n) {   // GET
                 return tsk->pub;
             } else {        // SET
-                CEU_Value ret = ceu_hold_chk_set(CEU5(1 COMMA) tsk->dn_block, CEU_HOLD_MUTAB, args[i], 0, "set error", 1);
+                CEU_Value ret = ceu_hold_chk_set(CEU4(1 COMMA) tsk->dn_block, CEU_HOLD_MUTAB, args[i], 0, "set error", 1);
                 if (ret.type == CEU_VALUE_ERROR) {
                     return ret;
                 }
