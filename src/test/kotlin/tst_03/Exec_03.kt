@@ -548,14 +548,22 @@ class Exec_03 {
                 println(v)                
             }
             val t = coroutine(T)
-            do { do { do {
-                val v = []
-                resume t(v)
-            } } }
+            do {
+                val a
+                do {
+                    val b
+                    do {
+                        val v = []
+                        resume t(v)
+                    }
+                }
+            }
             resume t()
         """)
-        assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
-                " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
+        //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
+        //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
+        assert(out == " |  anon : (lin 13, col 32) : t(v)\n" +
+                " v  anon : (lin 2, col 30) : argument error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -567,14 +575,20 @@ class Exec_03 {
             }
             val t = coroutine(T)
             resume t()
-            do { do { do {
-                val v = []
-                resume t(v)
-            } } }
+            do {
+                do {
+                    do {
+                        val v = []
+                        resume t(v)
+                    }
+                }
+            }
             resume t()
         """)
-        assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        assert(out == " |  anon : (lin 13, col 32) : t(v)\n" +
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun gg_04_scope() {
@@ -597,19 +611,29 @@ class Exec_03 {
     fun gg_05_scope() {
         val out = test("""
             val T = coro () {
-                val x = []
-                yield(x) { nil }    ;; err
-                println(:in, x)
+                do {
+                    val x = []
+                    yield(x) { nil }    ;; err
+                    println(:in, x)
+                }
+                yield(nil) { nil }
             }
             val t = coroutine(T)
             do {
-                val x = resume t()
-                println(:out, x)
+                val a
+                do {
+                    val b
+                    do {
+                        val x = resume t()
+                        resume t()
+                        println(:out, x)
+                    }
+                }
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 9, col 32) : t()\n" +
-                " v  anon : (lin 4, col 17) : yield error : cannot receive assigned reference\n") { out }
+        assert(out == " |  anon : (lin 16, col 40) : t()\n" +
+                " v  anon : (lin 5, col 21) : yield error : cannot receive assigned reference\n") { out }
     }
     @Test
     fun gg_06_scope() {

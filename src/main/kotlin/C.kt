@@ -331,7 +331,6 @@ fun Coder.main (tags: Tags): String {
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx);
         CEU_Value ceu_dict_get (CEU_Dict* col, CEU_Value key);
         CEU_Value ceu_dict_set (CEU_Dict* col, CEU_Value key, CEU_Value val CEU4(COMMA int ylds));
-        
         CEU_Value ceu_col_check (CEU_Value col, CEU_Value idx);
 
         void ceu_print1 (CEU_Frame* _1, CEU_Value v);

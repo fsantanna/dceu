@@ -1301,9 +1301,13 @@ class Exec_04 {
             }
             var t = spawn T()
             do {
+                val a
                 do {
-                    var e = []
-                    broadcast e
+                    val b
+                    do {
+                        var e = []
+                        broadcast e
+                    }
                 }
             }
             """
@@ -1313,8 +1317,10 @@ class Exec_04 {
         //        ":error\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
-                " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        assert(out == " |  anon : (lin 13, col 25) : broadcast e\n" +
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -1344,7 +1350,9 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             do {
+                val a
                 do {
+                    val b
                     var e = []
                     broadcast e
                 }
@@ -1353,10 +1361,12 @@ class Exec_04 {
             """
         )
         //assert(out == ":1\n:2\n1\n") { out }
-        assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
-                " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
+        //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 14, col 21) : broadcast e\n" +
+                " v  anon : (lin 4, col 28) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun zz_17_bcast() {
