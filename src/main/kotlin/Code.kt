@@ -265,7 +265,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_inc($it);
                             """
                             (up is Expr.Dtrack && up.blk == this) -> """
-                                $it = (CEU_Value) { CEU_VALUE_EXE_TASK_REF, {.Pointer=ceu_acc.Dyn->Track.task} };
+                                $it = (CEU_Value) { CEU_VALUE_REF, {.Dyn=(CEU_Dyn*)ceu_acc.Dyn->Track.task} };
                             """
                             else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
