@@ -548,10 +548,10 @@ class Exec_03 {
                 println(v)                
             }
             val t = coroutine(T)
-            do {
+            do { do { do {
                 val v = []
                 resume t(v)
-            }
+            } } }
             resume t()
         """)
         assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
@@ -567,10 +567,10 @@ class Exec_03 {
             }
             val t = coroutine(T)
             resume t()
-            do {
+            do { do { do {
                 val v = []
                 resume t(v)
-            }
+            } } }
             resume t()
         """)
         assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
@@ -585,8 +585,10 @@ class Exec_03 {
             }
             val t = coroutine(T)
             func () {
-                resume t([])
-                resume t([])
+                do { do {
+                    resume t([])
+                    resume t([])
+                } }
             }()
         """)
         assert(out == "[]\n") { out }

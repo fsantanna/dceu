@@ -1301,8 +1301,10 @@ class Exec_04 {
             }
             var t = spawn T()
             do {
-                var e = []
-                broadcast e
+                do {
+                    var e = []
+                    broadcast e
+                }
             }
             """
         )
@@ -1342,8 +1344,10 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             do {
-                var e = []
-                broadcast e
+                do {
+                    var e = []
+                    broadcast e
+                }
             }
             ;;println(:2222)
             """
