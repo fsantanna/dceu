@@ -265,7 +265,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_inc($it);
                             """
                             (up is Expr.Dtrack && up.blk == this) -> """
-                                $it = (CEU_Value) { CEU_VALUE_REF, {.Dyn=(CEU_Dyn*)ceu_acc.Dyn->Track.task} };
+                                $it = ceu_toref(ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task));
                             """
                             else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
@@ -602,11 +602,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="broadcast error : expected task"} };
                                 CEU_ERROR($bupc, "${this.xin!!.tk.pos.file} : (lin ${this.xin!!.tk.pos.lin}, col ${this.xin!!.tk.pos.col})", err);
                             }
-                            ceu_acc = ceu_bcast_task(&ceu_acc.Dyn->Exe_Task, $evtc);
+                            ceu_acc = ceu_bcast_task(&ceu_acc.Dyn->Exe_Task, ceu_toref($evtc));
                         """
                     }, { """
                         //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
-                        ceu_acc = ceu_bcast_blocks(ceu_bcast_global($bupc), $evtc);
+                        ceu_acc = ceu_bcast_blocks(ceu_bcast_global($bupc), ceu_toref($evtc));
                     """ })}
                     if (ceu_isfleet_$n) {
                         ceu_gc_chk($evtc.Dyn);

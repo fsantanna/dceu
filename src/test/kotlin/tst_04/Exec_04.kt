@@ -539,9 +539,12 @@ class Exec_04 {
             ;;}
         """)
         //assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
+        //        " |  anon : (lin 9, col 21) : broadcast []\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
         assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
                 " |  anon : (lin 9, col 21) : broadcast []\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -558,7 +561,8 @@ class Exec_04 {
             }
         """)
         //assert(out == "[]\n") { out }
-        assert(out == "declaration error : cannot hold event reference\n") { out }
+        //assert(out == "declaration error : cannot hold event reference\n") { out }
+        assert(out == "block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun ee_12_bcast() {
@@ -673,9 +677,12 @@ class Exec_04 {
             }()
         """)
         //assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
+        //        " |  anon : (lin 8, col 17) : broadcast []\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
         assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
                 " |  anon : (lin 8, col 17) : broadcast []\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_02_scope() {
@@ -707,8 +714,10 @@ class Exec_04 {
         //assert(out == "[]\n" +
         //        " |  anon : (lin 9, col 13) : broadcast []\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
         assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_03_bcast() {
@@ -750,11 +759,10 @@ class Exec_04 {
         """
         )
         //assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
-        assert(out == ":1\n" +
-                "10\n" +
-                "10\n" +
-                ":2\n" +
-                "declaration error : cannot hold event reference\n") { out }
+        //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
+        //        "declaration error : cannot hold event reference\n") { out }
+        assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
+                "block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_05_bcast_tuple_func_no() {
@@ -824,7 +832,9 @@ class Exec_04 {
                 }
             }
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 14, col 33) : broadcast []\n" +
+                " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_07_bcast_tuple_func_ok() {
@@ -846,7 +856,9 @@ class Exec_04 {
                 }
             }
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " |  anon : (lin 14, col 25) : broadcast []\n" +
+                " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
     // STATUS
@@ -946,10 +958,12 @@ class Exec_04 {
             println(e)
             """
         )
-        assert(out == "[]\nnil\n") { out }
+        //assert(out == "[]\nnil\n") { out }
         //assert(out == "anon : (lin 10, col 13) : broadcast move(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 12, col 13) : broadcast drop(e)\n" +
+                " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun jj_02_task_nest() {
@@ -1229,7 +1243,7 @@ class Exec_04 {
         //        "anon : (lin 12, col 21) : broadcast []\n" +
         //        "anon : (lin 5, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == "[]\n")
+        assert(out == "[]\n") { out }
     }
     @Test
     fun zz_12_bcast() {

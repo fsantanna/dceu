@@ -1944,6 +1944,10 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // ISTASK / PUB
         #if CEU >= 4
+        CEU_Value ceu_toref (CEU_Value v) {
+            return (v.type < CEU_VALUE_DYNAMIC) ? v : (CEU_Value) { CEU_VALUE_REF, {.Dyn=v.Dyn} };
+        }
+        
         int ceu_istask (CEU_Value v) {
             return v.type==CEU_VALUE_EXE_TASK CEU5(|| v.type==CEU_VALUE_EXE_TASK_IN) ||
                     (v.type==CEU_VALUE_REF && ceu_istask(ceu_dyn_to_val(v.Dyn)));
