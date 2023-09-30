@@ -262,7 +262,7 @@ class Exec_05 {
             println(v)
         """)
         assert(out.contains("track: 0x")) { out }
-        assert(out.contains("ref-task: 0x")) { out }
+        assert(out.contains("ref: 0x")) { out }
         assert(out.contains("false\n")) { out }
     }
     @Test
@@ -319,7 +319,7 @@ class Exec_05 {
                 println(it)
             }
         """)
-        assert(out.contains("ref-task: 0x")) { out }
+        assert(out.contains("ref: 0x")) { out }
     }
     @Test
     fun dd_06_detrack_drop_err() {
@@ -419,7 +419,7 @@ class Exec_05 {
             broadcast nil
             println(status(t))
         """)
-        assert(out == " v  anon : (lin 9, col 22) : block escape error : cannot move task reference\n") { out }
+        assert(out == " v  anon : (lin 9, col 22) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -431,7 +431,7 @@ class Exec_05 {
             val x = track(t)
             println(detrack(x) { it })
         """)
-        assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot move task reference\n") { out }
+        assert(out == " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun ff_04_detrack_ok() {
@@ -490,7 +490,7 @@ class Exec_05 {
                 println(it)
             }            
         """)
-        assert(out.contains("ref-task: 0x")) { out }
+        assert(out.contains("ref: 0x")) { out }
     }
 
     // NEXT
