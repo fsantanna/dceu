@@ -39,7 +39,7 @@ class TTask {
         val out = test("""
             val T1 = task (co) {
                 println(:3)
-                yield(nil) { nil }
+                yield(nil) { as it => nil }
                 println(:999)
             }
             var T2 = coro () {

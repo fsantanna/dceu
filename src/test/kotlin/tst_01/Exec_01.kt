@@ -4190,7 +4190,7 @@ class Exec_01 {
         assert(out == "3\n") { out }
     }
 
-    // TEMPLATE
+    // DATA / TEMPLATE
 
     @Test
     fun tplate01_err() {
@@ -4427,6 +4427,19 @@ class Exec_01 {
         """
         )
         assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+    }
+    @Test
+    fun pp_20_tplate_func() {
+        val out = test(
+            """
+            data :X = [s]
+            val f = func (x :X) {
+                println(x.s)
+            }
+            f([10])
+        """
+        )
+        assert(out == "10\n") { out }
     }
 
     // ALL

@@ -323,10 +323,29 @@ class Parser (lexer_: Lexer)
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 
             (CEU>=3 && this.acceptFix("yield")) -> {
-                Expr.Yield(this.tk0 as Tk.Fix,
-                    this.expr_in_parens(CEU<99, CEU>99)!!,
-                    Expr.Do(Tk.Fix("do",this.tk1.pos), listOf(this.block()))
+                val tk0 = this.tk0 as Tk.Fix
+                val out = this.expr_in_parens(CEU<99, CEU>99)!!
+                this.acceptFix_err("{")
+                val tk1 = this.tk0
+                val it = if (CEU<99 || this.checkFix("as")) {
+                    this.acceptFix_err("as")
+                    this.acceptEnu_err("Id")
+                    val v = this.tk0
+                    val tag = if (!this.acceptEnu("Tag")) null else {
+                        this.tk0 as Tk.Tag
+                    }
+                    this.acceptFix_err("=>")
+                    Pair(v as Tk.Id, tag)
+                } else {
+                    Pair(Tk.Id("it", this.tk0.pos, 0), null)
+                }
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                val inp = Expr.Do (
+                    Tk.Fix("do", tk1.pos),
+                    listOf(Expr.Do(Tk.Fix("do",tk1.pos), es))
                 )
+                Expr.Yield(tk0, it, out, inp)
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix

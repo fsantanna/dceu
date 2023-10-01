@@ -7,7 +7,7 @@ import java.util.*
 var CEU = 1
     // 1: dyn-lex
     // 2: defer, throw/catch
-    // 3: coro
+    // 3: coro, yield, resume, as, =>
     // 4: task, pub, bcast, ref
     // 5: tasks, track, detrack
     // X: export, copy, _
@@ -45,7 +45,7 @@ val KEYWORDS: SortedSet<String> = (
     ) + (if (CEU < 2) setOf() else setOf (
         "catch", "defer",
     )) + (if (CEU < 3) setOf() else setOf(
-        "coro", "resume",  "yield",
+        "as", "coro", "resume",  "yield",
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "in", "spawn", "task",
     )) + (if (CEU < 5) setOf() else setOf(
@@ -124,7 +124,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val call: Expr): Expr(N++, tk_)

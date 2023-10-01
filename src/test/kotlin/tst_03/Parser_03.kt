@@ -44,8 +44,8 @@ class Parser_03 {
     fun bb_02_coro() {
         val l = lexer("""
             set t = coro (v) {
-                set v = yield((1)) { it }
-                yield((2)) { nil }
+                set v = yield((1)) { as it:X => it }
+                yield((2)) { as it => nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -55,10 +55,10 @@ class Parser_03 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (coro (v) {
-            set v = yield(1) {
+            set v = yield(1) { as it :X =>
             it
             }
-            yield(2) {
+            yield(2) { as it =>
             nil
             }
             })
@@ -91,11 +91,35 @@ class Parser_03 {
         val l = lexer("""
             yield
             (1)
-            { nil }
+            { as it => nil }
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-        assert(e.tostr() == "yield(1) {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "yield(1) { as it =>\nnil\n}") { e.tostr() }
+    }
+
+    // AS
+
+    @Test
+    fun cc_01_yield_as() {
+        val out = test("""
+            yield(nil) { as 1 }
+        """)
+        assert(out == "anon : (lin 2, col 29) : expected identifier : have \"1\"\n") { out }
+    }
+    @Test
+    fun cc_02_yield_as() {
+        val out = test("""
+            yield(nil) { as x }
+        """)
+        assert(out == "anon : (lin 2, col 31) : expected \"=>\" : have \"}\"\n") { out }
+    }
+    @Test
+    fun cc_03_yield_as() {
+        val out = test("""
+            yield(nil) { as x => }
+        """)
+        assert(out == "anon : (lin 2, col 34) : expected expression : have \"}\"\n") { out }
     }
 }

@@ -15,7 +15,7 @@ let s:ft = matchstr(&ft, '^\([^.]\)\+')
 syn keyword Statement   data do drop else enum false func if
 syn keyword Statement   nil pass set true val var xloop xbreak
 syn keyword Statement   catch defer
-syn keyword Statement   coro resume yield
+syn keyword Statement   as coro resume yield
 syn keyword Statement   broadcast in spawn task
 syn keyword Statement   detrack
 
