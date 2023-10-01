@@ -280,6 +280,17 @@ class Exec_02 {
         """)
         assert(out == "anon : (lin 3, col 24) : declaration error : variable \"x\" is already declared\n") { out }
     }
+    @Test
+    fun jj_14_catch_data() {
+        val out = test("""
+            data :X = [x]
+            catch { as x:X => x.x==10 } in {
+                throw([10])
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // CALL STACK
 

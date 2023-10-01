@@ -2101,7 +2101,7 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 26) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
+        assert(out == "anon : (lin 4, col 21) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
