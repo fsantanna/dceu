@@ -292,12 +292,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             );
                                             ceu_gc_todo = 1;
                                             ceu_gc_inc($idc);
-                                            ${(f_b.tk.str != "func").cond {"""
-                                                if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK($idc.Dyn)->depth>1) {
-                                                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : TODO: incompatible scopes"} };
-                                                    CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                                                }
-                                            """ }}
                                         } else {
                                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                                         }
@@ -564,10 +558,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 #endif
                     ${this.blk.code()}
-                    if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET && CEU_HLD_BLOCK(ceu_acc.Dyn)->depth>1 CEU4(&& ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_EVENT)) {
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="resume error : cannot receive assigned reference"} };
-                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                    }
                 }
                 """
             }
@@ -583,11 +573,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.evt.code()}
                     ${(!ylds).cond { "CEU_Value ceu_evt_$n;" }}
                     $evtc = ceu_acc;
-                    int ceu_isfleet_$n = ($evtc.type>CEU_VALUE_DYNAMIC && $evtc.Dyn->Any.hld.type==CEU_HOLD_FLEET);
-                    if (ceu_isfleet_$n) {
-                        assert(ceu_hold_chk_set(CEU4(1 COMMA) $bupc, CEU_HOLD_EVENT, $evtc, 0, NULL CEU4(COMMA ${if (ylds) 1 else 0})).type != CEU_VALUE_ERROR);
-                    }
-                    ceu_gc_inc($evtc);
                     ${this.xin.cond2({
                         it.code() + """
                             if (!ceu_istask(ceu_acc)) {
@@ -600,10 +585,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
                         ceu_acc = ceu_bcast_blocks(ceu_bcast_global($bupc), ceu_toref($evtc));
                     """ })}
-                    if (ceu_isfleet_$n) {
-                        ceu_gc_chk($evtc.Dyn);
-                    }
-                    ceu_gc_dec($evtc, 1);
+                    ceu_gc_chk(ceu_deref($evtc));  // bcasts ref([...]) w/o assign
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 }
                 """
@@ -792,7 +774,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // COL
                     ${this.col.code()}
-                    CEU_ASSERT($bupc, ceu_col_check(ceu_acc, ceu_idx_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    CEU_Value ceu_col_$n = CEU4(ceu_deref)(ceu_acc);
+                    $idxc = CEU4(ceu_deref)($idxc);
+                    CEU_ASSERT($bupc, ceu_col_check(ceu_col_$n, $idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
                         val src = ups.pub[this]!!.idc("src")

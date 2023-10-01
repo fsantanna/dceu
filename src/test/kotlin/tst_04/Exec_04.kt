@@ -1301,9 +1301,11 @@ class Exec_04 {
             ;;println(:2222)
             """
         )
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
         //        " v  anon : (lin 5, col 25) : resume error : incompatible scopes\n") { out }
+        assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
+                " v  anon : (lin 5, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_15_bcast_err() {
@@ -1334,7 +1336,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : broadcast e\n" +
-                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -1380,7 +1382,7 @@ class Exec_04 {
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast e\n" +
-                " v  anon : (lin 4, col 28) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_17_bcast() {
@@ -1444,7 +1446,9 @@ class Exec_04 {
             spawn T()
             broadcast [[1]]
         """)
-        assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
+                " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
         //        " |  anon : (lin 7, col 17) : f(yield(nil) { it })\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
@@ -1464,8 +1468,10 @@ class Exec_04 {
             broadcast [[1]]
         """)
         //assert(out == "[1]\n") { out }
+        //assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
+        //        " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
         assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
-                " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
+                " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_ok() {

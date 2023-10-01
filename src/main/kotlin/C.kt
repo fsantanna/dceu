@@ -47,9 +47,6 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
-        #if CEU >= 4
-            CEU_HOLD_EVENT,         // can only be assigned in !ylds, never moved
-        #endif
             CEU_HOLD_MAX
         } __attribute__ ((__packed__)) CEU_HOLD;
         _Static_assert(sizeof(CEU_HOLD) == 1);
@@ -341,6 +338,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
         int ceu_istask (CEU_Value v);
+        CEU_Value ceu_deref (CEU_Value v);
         #endif
     """ +
     """ // GC_COUNT / TAGS
@@ -724,10 +722,11 @@ fun Coder.main (tags: Tags): String {
             ceu_dyn_free(dyn);
         }
         
-        void ceu_gc_chk (CEU_Dyn* dyn) {
-            assert(dyn->Any.type > CEU_VALUE_DYNAMIC);
-            if (dyn->Any.refs == 0) {
-                ceu_gc_free(dyn);
+        void ceu_gc_chk (CEU_Value v) {
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                if (v.Dyn->Any.refs == 0) {
+                    ceu_gc_free(v.Dyn);
+                }
             }
         }
 
@@ -750,7 +749,7 @@ fun Coder.main (tags: Tags): String {
             if (old.type > CEU_VALUE_DYNAMIC) {
                 old.Dyn->Any.refs--;
                 if (chk) {
-                    ceu_gc_chk(old.Dyn);
+                    ceu_gc_chk(old);
                 }
             }
         }
@@ -923,16 +922,6 @@ fun Coder.main (tags: Tags): String {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot move track outside its task scope");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-            } else 
-        #endif
-        #if CEU >= 4
-            if (src.Dyn->Any.hld.type == CEU_HOLD_EVENT) {
-                if (ylds) {
-                    strncpy(msg, pre, 256);
-                    strcat(msg, " : cannot hold event reference");
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-                }
-                return (CEU_Value) { CEU_VALUE_NIL };
             } else 
         #endif
             if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
@@ -1625,6 +1614,9 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // PRINT
         void ceu_print1 (CEU_Frame* _1, CEU_Value v) {
+        #if CEU >= 4
+            v = ceu_deref(v);
+        #endif
             // no tags when _1==NULL (ceu_error_list_print)
             if (_1!=NULL && v.type>CEU_VALUE_DYNAMIC) {  // TAGS
                 CEU_Value args[1] = { v };
@@ -1677,7 +1669,7 @@ fun Coder.main (tags: Tags): String {
                     break;
         #if CEU >= 4
                 case CEU_VALUE_REF:
-                    printf("ref: %p", v.Dyn);
+                    assert(0 && "bug found");
                     break;
         #endif
                 case CEU_VALUE_TUPLE:
@@ -1797,8 +1789,8 @@ fun Coder.main (tags: Tags): String {
         // EQ / NEQ / LEN
         CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
-            CEU_Value e1 = args[0];
-            CEU_Value e2 = args[1];
+            CEU_Value e1 = CEU4(ceu_deref)(args[0]);
+            CEU_Value e2 = CEU4(ceu_deref)(args[1]);
             int v = (e1.type == e2.type);
             if (v) {
                 switch (e1.type) {
@@ -1822,7 +1814,7 @@ fun Coder.main (tags: Tags): String {
                         break;
             #if CEU >= 4
                     case CEU_VALUE_REF:
-                        v = (e1.Dyn == e2.Dyn);
+                        assert(0 && "bug found");
                         break;
             #endif
                     case CEU_VALUE_TUPLE:
@@ -1947,10 +1939,15 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_toref (CEU_Value v) {
             return (v.type < CEU_VALUE_DYNAMIC) ? v : (CEU_Value) { CEU_VALUE_REF, {.Dyn=v.Dyn} };
         }
+        CEU_Value ceu_deref (CEU_Value v) {
+            return (v.type != CEU_VALUE_REF) ? v : ceu_dyn_to_val(v.Dyn);
+        }
         
         int ceu_istask (CEU_Value v) {
-            return v.type==CEU_VALUE_EXE_TASK CEU5(|| v.type==CEU_VALUE_EXE_TASK_IN) ||
-                    (v.type==CEU_VALUE_REF && ceu_istask(ceu_dyn_to_val(v.Dyn)));
+        #if CEU >= 4
+            v = ceu_deref(v);
+        #endif
+            return v.type==CEU_VALUE_EXE_TASK CEU5(|| v.type==CEU_VALUE_EXE_TASK_IN);
         }
 
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {

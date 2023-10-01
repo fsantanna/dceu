@@ -254,16 +254,20 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             val v = detrack(x) {
-                println(x)
-                ;;println(t)
-                println(it)
-                println(it == t)
+                println(:1, x)
+                println(:2, t)
+                println(:3, it)
+                println(:4, `:bool ${D}it.type == CEU_VALUE_REF`)
+                println(:5, it == t)
             }
-            println(v)
+            println(:6, v)
         """)
-        assert(out.contains("track: 0x")) { out }
-        assert(out.contains("ref: 0x")) { out }
-        assert(out.contains("false\n")) { out }
+        assert(out.contains(":1\ttrack: 0x")) { out }
+        assert(out.contains(":2\texe-task: 0x")) { out }
+        assert(out.contains(":3\texe-task: 0x")) { out }
+        assert(out.contains(":4\ttrue\n")) { out }
+        assert(out.contains(":5\ttrue\n")) { out }
+        assert(out.contains(":6\tnil\n")) { out }
     }
     @Test
     fun dd_02_detrack() {
@@ -319,7 +323,7 @@ class Exec_05 {
                 println(it)
             }
         """)
-        assert(out.contains("ref: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun dd_06_detrack_drop_err() {
@@ -490,7 +494,7 @@ class Exec_05 {
                 println(it)
             }            
         """)
-        assert(out.contains("ref: 0x")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
     }
 
     // NEXT

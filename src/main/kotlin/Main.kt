@@ -8,7 +8,7 @@ var CEU = 2
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: coro
-    // 4: task, pub
+    // 4: task, pub, bcast, ref
     // 5: tasks, track, detrack
     // X: export, copy, _
     // 99: XCEU

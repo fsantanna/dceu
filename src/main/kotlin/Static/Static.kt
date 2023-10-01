@@ -13,6 +13,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     // void: block is innocuous -> should be a proxy to up block
 
     fun void (blk: Expr.Do): Boolean {
+        //return false
         // has up block, no declarations, no spawns
         val dcls = vars.blk_to_dcls[blk]!!
         val f_b = ups.pub[blk]?.let { ups.first_proto_or_block(it) }
