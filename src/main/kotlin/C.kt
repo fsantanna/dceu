@@ -1953,7 +1953,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             int i = 0;
             CEU_Exe_Task* tsk;
-            if (ceu_istask(args[0])) {
+            if (n>0 && ceu_istask(args[0])) {
                 tsk = &args[0].Dyn->Exe_Task;
                 i = 1;
             } else {
