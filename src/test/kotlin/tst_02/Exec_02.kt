@@ -235,7 +235,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " v  anon : (lin 2, col 26) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 2, col 40) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun jj_12_catch() {
@@ -260,7 +260,7 @@ class Exec_02 {
     @Test
     fun jj_14_blocks() {
         val out = test("""
-            val v = catch true {
+            val v = catch {as it=>true} in {
                 do {
                     throw(:x)
                 }
@@ -317,7 +317,7 @@ class Exec_02 {
     @Test
     fun todo_pp_01_throw_defer() {
         val out = test("""
-            catch true {
+            catch {as it => true} in {
                 defer {
                     throw(nil)
                 }
