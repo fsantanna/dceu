@@ -195,23 +195,28 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun id_tag (): Pair<Tk.Id, Tk.Tag?> {
+        this.acceptEnu_err("Id")
+        val id = this.tk0 as Tk.Id
+        if (id.str == "...") {
+            err(this.tk0, "invalid declaration : unexpected ...")
+        }
+        val tag = if (!this.acceptEnu("Tag")) null else {
+            this.tk0 as Tk.Tag
+        }
+        return Pair(id, tag)
+    }
+
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tmp = this.acceptTag(":tmp")
-                this.acceptEnu_err("Id")
-                val id = this.tk0 as Tk.Id
-                if (id.str == "...") {
-                    err(this.tk0, "invalid declaration : unexpected ...")
-                }
                 if (tmp && tk0.str!="val") {
                     err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
                 }
-                val tag = if (!this.acceptEnu("Tag")) null else {
-                    this.tk0 as Tk.Tag
-                }
+                val (id,tag) = this.id_tag()
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
@@ -317,11 +322,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 this.acceptFix_err("{")
                 this.acceptFix_err("as")
-                this.acceptEnu_err("Id")
-                val it = this.tk0 as Tk.Id
-                val tag = if (!this.acceptEnu("Tag")) null else {
-                    this.tk0 as Tk.Tag
-                }
+                val (it,tag) = this.id_tag()
                 this.acceptFix_err("=>")
                 val cnd = this.exprs()
                 this.acceptFix_err("}")
@@ -341,13 +342,9 @@ class Parser (lexer_: Lexer)
                 val tk1 = this.tk0
                 val it = if (CEU<99 || this.checkFix("as")) {
                     this.acceptFix_err("as")
-                    this.acceptEnu_err("Id")
-                    val v = this.tk0
-                    val tag = if (!this.acceptEnu("Tag")) null else {
-                        this.tk0 as Tk.Tag
-                    }
+                    val (id,tag) = this.id_tag()
                     this.acceptFix_err("=>")
-                    Pair(v as Tk.Id, tag)
+                    Pair(id, tag)
                 } else {
                     Pair(Tk.Id("it", this.tk0.pos, 0), null)
                 }
