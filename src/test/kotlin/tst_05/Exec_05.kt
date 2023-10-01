@@ -298,7 +298,7 @@ class Exec_05 {
                 println(status(it))
             }
         """)
-        assert(out.contains("TODO: error")) { out }
+        assert(out == ("anon : (lin 8, col 17) : broadcast error : unexpected enclosing func\n")) { out }
     }
     @Test
     fun dd_04_detrack_eq() {

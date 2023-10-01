@@ -259,7 +259,8 @@ class Exec_04 {
             }
             println(1)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "anon : (lin 3, col 18) : broadcast error : unexpected enclosing func\n") { out }
     }
     @Test
     fun dd_08_bcast() {
@@ -345,11 +346,11 @@ class Exec_04 {
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
-            func () {
+            ;;func () {
                  broadcast 1
                  broadcast 2
                  broadcast 3
-            }()
+            ;;}()
         """)
         assert(out == "2\n2\n") { out }
     }
@@ -369,12 +370,12 @@ class Exec_04 {
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
             ;;catch {
-                func () {
+                ;;func () {
                     println(:2)
                     broadcast 20
                     println(:3)
                     broadcast 30
-                }()
+                ;;}()
             ;;}
         """
         )
@@ -533,17 +534,19 @@ class Exec_04 {
             }
             spawn T(10)
             ;;catch {
-                func () {
+                ;;func () {
                     broadcast []
-                }()
+                ;;}()
             ;;}
         """)
         //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 9, col 21) : broadcast []\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
-        assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
-                " |  anon : (lin 9, col 21) : broadcast []\n" +
+        //assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
+        //        " |  anon : (lin 9, col 21) : broadcast []\n" +
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 9, col 21) : broadcast []\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -555,9 +558,9 @@ class Exec_04 {
             }
             spawn T(10)
             catch (do { println(it) ; true }) {
-                func () {
+                ;;func () {
                     broadcast []
-                }()
+                ;;}()
             }
         """)
         //assert(out == "[]\n") { out }
@@ -672,16 +675,18 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            func () {
+            ;;func () {
                 broadcast []
-            }()
+            ;;}()
         """)
         //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 8, col 17) : broadcast []\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
-        assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
-                " |  anon : (lin 8, col 17) : broadcast []\n" +
+        //assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
+        //        " |  anon : (lin 8, col 17) : broadcast []\n" +
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 8, col 17) : broadcast []\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -693,9 +698,9 @@ class Exec_04 {
                 }                                
             }
             spawn T(10)
-            func () {
+            ;;func () {
                 broadcast []
-            }()
+            ;;}()
         """)
         assert(out == "[]\n") { out }
     }
@@ -748,12 +753,12 @@ class Exec_04 {
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
             val e = catch true {
-                func () {
+                ;;func () {
                     println(:2)
                     broadcast [20]
                     println(:3)
                     broadcast @[(30,30)]
-                }()
+                ;;}()
             }
             println(e)
         """
@@ -1091,14 +1096,14 @@ class Exec_04 {
             var co1 = spawn tk ()
             var co2 = spawn tk ()
             catch it==:1 {
-                func () {
+                ;;func () {
                     println(1)
                     broadcast 1
                     println(2)
                     broadcast 2
                     println(3)
                     broadcast 3
-                }()
+                ;;}()
             }
             println(99)
         """)
@@ -1229,13 +1234,13 @@ class Exec_04 {
             }
             var co
             set co = spawn tk()
-            var f = func () {
-                var g = func () {
+            ;;var f = func () {
+                ;;var g = func () {
                     broadcast []
-                }
-                g()
-            }
-            f()
+                ;;}
+                ;;g()
+            ;;}
+            ;;f()
         """
         )
         //assert(out == "anon : (lin 16, col 13) : f()\n" +
@@ -1256,10 +1261,10 @@ class Exec_04 {
             }
             var co
             set co = spawn(tk)()
-            var f = func () {
+            ;;var f = func () {
                 broadcast []
-            }
-            f()
+            ;;}
+            ;;f()
         """
         )
         assert(out == "[]\n") { out }
