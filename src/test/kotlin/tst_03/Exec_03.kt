@@ -809,6 +809,116 @@ class Exec_03 {
         assert(out == ":it\t[]\n") { out }
     }
 
+    // INDEX / TUPLE / VECTOR / DICT
+
+    @Test
+    fun kk_01_tup() {
+        val out = test("""
+            val CO = coro () {
+                val i = 1
+                do { yield(nil) {[99,10,99]} }[1]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_02_vec() {
+        val out = test("""
+            val CO = coro () {
+                val i = 1
+                do { yield(nil) {#[99,10,99]} }[1]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_03_dic() {
+        val out = test("""
+            val CO = coro () {
+                val i = 1
+                (yield(nil){@[(1,10)]})[1]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_04_tup() {
+        val out = test("""
+            val CO = coro () {
+                [yield(nil){[10]}]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "[[10]]\n") { out }
+    }
+    @Test
+    fun kk_05_vec() {
+        val out = test("""
+            val CO = coro () {
+                #[yield(nil){10}]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun kk_06_dic() {
+        val out = test("""
+            val CO = coro () {
+                @[(yield(nil){:x},yield(nil){10})]
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "@[(:x,10)]\n") { out }
+    }
+    @Test
+    fun kk_07_set() {
+        val out = test("""
+            val CO = coro () {
+                val t = [99,99,99]
+                set t[yield(nil){1}] = 10
+                t[1]
+            }
+            val co = coroutine(CO)
+            resume co()
+            println(resume co())
+        """,)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_08_call() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) { println }(
+                    yield(nil) { 1 },
+                    yield(nil) { 2 }
+                )
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co()
+            resume co()
+            resume co()
+        """,)
+        assert(out == "1\t2\n") { out }
+    }
+
     // YIELD / BLOCK
 
     @Test

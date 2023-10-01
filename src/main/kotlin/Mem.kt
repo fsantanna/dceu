@@ -52,9 +52,9 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 """
                 struct { // BLOCK
                     ${(!sta.void(this)).cond { """
-                        CEU_Block _ceu_block_$n;
+                        CEU_Block _block_$n;
                     """ }}
-                    CEU_Block* ceu_block_$n;
+                    CEU_Block* block_$n;
                     ${defers[this].cond { it.first.map { "int defer_${it};\n" }.joinToString("")} }
                     ${es.seq(sta, defers, 0)}
                 };
@@ -67,7 +67,6 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // DCL
                 struct {
                     CEU_Value ${id};
-                    CEU_Block* _${id}_;
                     ${this.src.cond { it.mem(sta, defers) } }
                 };
             };
@@ -75,7 +74,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
         }
         is Expr.Set -> """
             struct { // SET
-                CEU_Value set_$n;
+                CEU_Value src_$n;
                 $union {
                     ${this.dst.mem(sta, defers)}
                     ${this.src.mem(sta, defers)}
@@ -136,7 +135,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
 
         is Expr.Tuple -> """
             struct { // TUPLE
-                CEU_Dyn* tup_$n;
+                CEU_Value tup_$n;
                 $union {
                     ${this.args.map { it.mem(sta, defers) }.joinToString("")}
                 };
@@ -144,7 +143,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             """
         is Expr.Vector -> """
             struct { // VECTOR
-                CEU_Dyn* vec_$n;
+                CEU_Value vec_$n;
                 $union {
                     ${this.args.map { it.mem(sta, defers) }.joinToString("")}
                 };
@@ -152,7 +151,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             """
         is Expr.Dict -> """
             struct { // DICT
-                CEU_Dyn* dict_$n;
+                CEU_Value dic_$n;
                 CEU_Value key_$n;
                 $union {
                     ${this.args.map {
@@ -172,7 +171,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             """
         is Expr.Call -> """
             struct { // CALL
-                ${this.args.mapIndexed { i,_ -> "CEU_Value arg_${i}_$n;\n" }.joinToString("")}
+                CEU_Value args_$n[${this.args.size}];
                 $union {
                     ${this.clo.mem(sta, defers)}
                     ${this.args.map { it.mem(sta, defers) }.joinToString("")}

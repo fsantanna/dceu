@@ -14,13 +14,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             "ceu_${pre}_${this.n}"
         }
     }
-    fun Expr.Do.idc (pre: String): String {
-        return if (sta.ylds.contains(this)) {
-            "(ceu_mem->ceu_${pre}_${this.n})"
-        } else {
-            "ceu_${pre}_${this.n}"
-        }
-    }
     fun Expr.Dcl.idc (upv: Int): String {
         return when {
             (upv == 2) -> {
@@ -42,9 +35,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     }
     fun Expr.isdrop (): Boolean {
         return ups.pub[this].let { it is Expr.Drop && it.e==this }
-    }
-    fun Expr.asdst_src (): String {
-        return "(ceu_set_${(ups.pub[this] as Expr.Set).n})"
     }
 
     fun Expr.code(): String {
@@ -165,6 +155,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Do -> {
                 val isvoid = sta.void(this)
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
+                val _blkc = this.idc("_block")
                 val blkc = this.idc("block")
                 val up = ups.pub[this]
                 val ylds = sta.ylds.contains(this)
@@ -199,22 +190,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // CEU_Block ceu_block;
                     ${(!ylds).cond { """
                         ${(!isvoid).cond { """
-                            CEU_Block _ceu_block_$n;
+                            CEU_Block ceu__block_$n;
                         """ }}
                         CEU_Block* ceu_block_$n;
                     """}}
                     // ceu_block = ...;
-                    ${when {
-                        isvoid -> """
-                            $blkc = ${bupc};
+                    ${if (isvoid) {
                         """
-                        ylds -> """
-                            ceu_mem->_ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
-                            $blkc = &ceu_mem->_ceu_block_$n;                                 
+                        $blkc = ${bupc};
                         """
-                        else -> """
-                            _ceu_block_$n = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
-                            $blkc = &_ceu_block_$n;                                 
+                    } else {
+                        """
+                        $_blkc = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
+                        $blkc = &$_blkc;                                 
                         """
                     }}
                     // link task.dn_block = me
@@ -462,12 +450,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
             is Expr.Set -> {
+                val srcc = this.idc("src")
                 """
                 { // SET | ${this.dump()}
                     ${this.src.code()}
-                    CEU_Value ceu_set_$n = ceu_acc;
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_src_$n;\n"
+                    }}
+                    $srcc = ceu_acc;
                     ${this.dst.code()}
-                    ceu_acc = ceu_set_$n;
+                    ceu_acc = $srcc;
                 }
                 """
             }
@@ -661,7 +653,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.isdst() -> {
                         val ublk = ups.first_block(this)!!
                         val bupc = ublk.idc("block")
-                        val src = this.asdst_src()
+                        val src = ups.pub[this]!!.idc("src")
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
@@ -704,59 +696,75 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
             is Expr.Tuple -> {
                 val bupc = ups.first_block(this)!!.idc("block")
+                val tupc = this.idc("tup")
                 """
                 { // TUPLE | ${this.dump()}
-                    CEU_Value ceu_tup_$n = ceu_create_tuple(${ups.first_block(this)!!.idc("block")}, ${this.args.size});
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_tup_$n;\n"
+                    }}
+                    $tupc = ceu_create_tuple(${ups.first_block(this)!!.idc("block")}, ${this.args.size});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         CEU_ASSERT(
                             $bupc,
-                            ceu_tuple_set(&ceu_tup_$n.Dyn->Tuple, $i, ceu_acc CEU4(COMMA 1)),
+                            ceu_tuple_set(&$tupc.Dyn->Tuple, $i, ceu_acc CEU4(COMMA 1)),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                         """
                 }.joinToString("")}
-                    ceu_acc = ceu_tup_$n;
+                    ceu_acc = $tupc;
                 }
                 """
             }
             is Expr.Vector -> {
                 val bupc = ups.first_block(this)!!.idc("block")
+                val vecc = this.idc("vec")
                 """
                 { // VECTOR | ${this.dump()}
-                    CEU_Value ceu_vec_$n = ceu_create_vector(${ups.first_block(this)!!.idc("block")});
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_vec_$n;\n"
+                    }}
+                    $vecc = ceu_create_vector(${ups.first_block(this)!!.idc("block")});
                     ${this.args.mapIndexed { i, it ->
                     it.code() + """
                         CEU_ASSERT(
                             $bupc,
-                            ceu_vector_set(&ceu_vec_$n.Dyn->Vector, $i, ceu_acc CEU4(COMMA 1)),
+                            ceu_vector_set(&$vecc.Dyn->Vector, $i, ceu_acc CEU4(COMMA 1)),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                         """
                 }.joinToString("")}
-                    ceu_acc = ceu_vec_$n;
+                    ceu_acc = $vecc;
                 }
                 """
             }
             is Expr.Dict -> {
                 val bupc = ups.first_block(this)!!.idc("block")
+                val dicc = this.idc("dic")
+                val keyc = this.idc("key")
                 """
                 { // DICT | ${this.dump()}
-                    CEU_Value ceu_dict_$n = ceu_create_dict(${ups.first_block(this)!!.idc("block")});
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_dic_$n;\n"
+                    }}
+                    $dicc = ceu_create_dict(${ups.first_block(this)!!.idc("block")});
                     ${this.args.map { """
                         {
                             ${it.first.code()}
-                            CEU_Value ceu_key_$n = ceu_acc;
+                            ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                                "CEU_Value ceu_key_$n;\n"
+                            }}
+                            $keyc = ceu_acc;
                             ${it.second.code()}
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_dict_set(&ceu_dict_$n.Dyn->Dict, ceu_key_$n, ceu_val_$n CEU4(COMMA 1)),
+                                ceu_dict_set(&$dicc.Dyn->Dict, $keyc, ceu_val_$n CEU4(COMMA 1)),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                         }
                     """ }.joinToString("")}
-                    ceu_acc = ceu_dict_$n;
+                    ceu_acc = $dicc;
                 }
                 """
             }
@@ -765,17 +773,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = blk.idc("block")
                 val ylds = if (sta.ylds.contains(blk)) 1 else 0
                 val idx = vars.data(this).let { if (it == null) -1 else it.first!! }
+                val idxc = this.idc("idx")
                 """
                 { // INDEX | ${this.dump()}
                     // IDX
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_idx_$n;\n"
+                    }}
                     ${if (idx == -1) {
                         """
                         ${this.idx.code()}
-                        CEU_Value ceu_idx_$n = ceu_acc;
+                        $idxc = ceu_acc;
                         """
                     } else {
                         """
-                        CEU_Value ceu_idx_$n = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} };
+                        $idxc = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=$idx} };
                         """
                     }}
                     // COL
@@ -783,19 +795,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ASSERT($bupc, ceu_col_check(ceu_acc, ceu_idx_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
-                        val src = this.asdst_src()
+                        val src = ups.pub[this]!!.idc("src")
                         """
                         CEU_Value ok = { CEU_VALUE_NIL };
-                        switch (ceu_acc.type) {
+                        switch (ceu_col_$n.type) {
                             case CEU_VALUE_TUPLE:
-                                ok = ceu_tuple_set(&ceu_acc.Dyn->Tuple, ceu_idx_$n.Number, $src CEU4(COMMA $ylds));
+                                ok = ceu_tuple_set(&ceu_col_$n.Dyn->Tuple, $idxc.Number, $src CEU4(COMMA $ylds));
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ok = ceu_vector_set(&ceu_acc.Dyn->Vector, ceu_idx_$n.Number, $src CEU4(COMMA $ylds));
+                                ok = ceu_vector_set(&ceu_col_$n.Dyn->Vector, $idxc.Number, $src CEU4(COMMA $ylds));
                                 break;
                             case CEU_VALUE_DICT: {
-                                CEU_Value ceu_dict = ceu_acc;
-                                ok = ceu_dict_set(&ceu_dict.Dyn->Dict, ceu_idx_$n, $src CEU4(COMMA $ylds));
+                                CEU_Value ceu_dict = ceu_col_$n;
+                                ok = ceu_dict_set(&ceu_dict.Dyn->Dict, $idxc, $src CEU4(COMMA $ylds));
                                 break;
                             }
                             default:
@@ -808,17 +820,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val bupc = ups.first_block(this)!!.idc("block")
                         """
                         {   // INDEX - DROP
-                            CEU_Value ceu_col_$n = ceu_acc;
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
-                                    ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) ceu_idx_$n.Number];
+                                    ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) $idxc.Number];
                                     break;
                                 case CEU_VALUE_VECTOR:
-                                    ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                    ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                     break;
                                 case CEU_VALUE_DICT: {
                                     CEU_Value ceu_dict = ceu_col_$n;
-                                    ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n);
+                                    ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, $idxc);
                                     break;
                                 }
                                 default:
@@ -833,15 +844,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:
-                                    ceu_col_$n.Dyn->Tuple.buf[(int)ceu_idx_$n.Number] = (CEU_Value) {CEU_VALUE_NIL};
+                                    ceu_col_$n.Dyn->Tuple.buf[(int)$idxc.Number] = (CEU_Value) {CEU_VALUE_NIL};
                                     break;
                                 case CEU_VALUE_VECTOR:
-                                    assert(ceu_idx_$n.Number == ceu_col_$n.Dyn->Vector.its-1);
+                                    assert($idxc.Number == ceu_col_$n.Dyn->Vector.its-1);
                                     ceu_col_$n.Dyn->Vector.its--;
                                     break;
                                 case CEU_VALUE_DICT: {
                                     int ceu_old;
-                                    ceu_dict_key_to_index(&ceu_col_$n.Dyn->Dict, ceu_idx_$n, &ceu_old);
+                                    ceu_dict_key_to_index(&ceu_col_$n.Dyn->Dict, $idxc, &ceu_old);
                                     if (ceu_old != -1) {
                                         (*ceu_col_$n.Dyn->Dict.buf)[ceu_old][1] = (CEU_Value) { CEU_VALUE_NIL };
                                     }
@@ -856,18 +867,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }
                     else -> """
-                        switch (ceu_acc.type) {
+                        switch (ceu_col_$n.type) {
                             case CEU_VALUE_TUPLE:
-                                ceu_acc = ceu_acc.Dyn->Tuple.buf[(int) ceu_idx_$n.Number];
+                                ceu_acc = ceu_col_$n.Dyn->Tuple.buf[(int) $idxc.Number];
                                 break;
                             case CEU_VALUE_VECTOR:
-                                ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_acc.Dyn->Vector, ceu_idx_$n.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                                ceu_acc = CEU_ASSERT($bupc, ceu_vector_get(&ceu_col_$n.Dyn->Vector, $idxc.Number), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                                 break;
-                            case CEU_VALUE_DICT: {
-                                CEU_Value ceu_dict = ceu_acc;
-                                ceu_acc = ceu_dict_get(&ceu_dict.Dyn->Dict, ceu_idx_$n);
+                            case CEU_VALUE_DICT:
+                                ceu_acc = ceu_dict_get(&ceu_col_$n.Dyn->Dict, $idxc);
                                 break;
-                            }
                             default:
                                 assert(0 && "bug found");
                         }
@@ -880,6 +889,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val up = ups.pub[this]!!
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
+                val argsc = this.idc("args")
                 val dots = this.args.lastOrNull()
                 val has_dots = (dots!=null && dots is Expr.Acc && dots.tk.str=="...") && !this.clo.let { it is Expr.Acc && it.tk.str=="{{#}}" }
                 val id_dots = if (!has_dots) "" else {
@@ -892,24 +902,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 """
                 { // CALL - open | ${this.dump()}
-                    ${has_dots.cond { """
-                        int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
-                    """ }}
-                    CEU_Value ceu_args_$n[${when {
-                        !has_dots -> this.args.size
-                        else      -> "ceu_dots_$n + " + (this.args.size-1)
-                    }}];
-                    
+                    ${(!sta.ylds.contains(ups.first_block(this))).cond {
+                        "CEU_Value ceu_args_$n[${this.args.size}];\n"
+                    }}
                     ${this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e ->
-                        e.code() + "ceu_args_$n[$i] = ceu_acc;\n"
+                        e.code() + "$argsc[$i] = ceu_acc;\n"
                     }.joinToString("")}
                     
                     ${has_dots.cond { """
+                        int ceu_dots_$n = $id_dots.Dyn->Tuple.its;
+                        CEU_Value _ceu_args_$n[ceu_dots_$n + ${this.args.size-1}];
+                        memcpy(_ceu_args_$n, $argsc, ${this.args.size-1} * sizeof(CEU_Value));
                         for (int ceu_i_$n=0; ceu_i_$n<ceu_dots_$n; ceu_i_$n++) {
-                            ceu_args_$n[${this.args.size-1} + ceu_i_$n] = $id_dots.Dyn->Tuple.buf[ceu_i_$n];
+                            _ceu_args_$n[${this.args.size-1} + ceu_i_$n] = $id_dots.Dyn->Tuple.buf[ceu_i_$n];
                         }
-                    """}}
-
+                    """ }}
+                        
                     ${istasks.cond {
                         upspawn!!.tsks!!.code() + """
                             ${(!sta.ylds.contains(bup)).cond { "CEU_Value " }}
@@ -955,7 +963,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 "(" + (it.size-1) + " + ceu_dots_$n)"
                             }
                         }},
-                        ceu_args_$n
+                        ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${upspawn.cond { """

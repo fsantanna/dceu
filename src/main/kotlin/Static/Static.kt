@@ -148,9 +148,9 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Bool   -> {}
             is Expr.Char   -> {}
             is Expr.Num    -> {}
-            is Expr.Tuple  -> this.args.forEach{ it.traverse() }
-            is Expr.Vector -> this.args.forEach{ it.traverse() }
-            is Expr.Dict   -> spws.add(ups.first_block(this)!!)
+            is Expr.Tuple  -> this.args.forEach { it.traverse() }
+            is Expr.Vector -> this.args.forEach { it.traverse() }
+            is Expr.Dict   -> this.args.forEach { (k,v) -> k.traverse() ; v.traverse() }
             is Expr.Index  -> {
                 this.col.traverse()
                 this.idx.traverse()

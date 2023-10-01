@@ -2564,6 +2564,18 @@ class Exec_01 {
         assert(out == "0\t[]\n") { out }
     }
     @Test
+    fun nn_06_dots_tup_xx() {
+        val out = test(
+            """
+            var f = func (x, ...) {
+                println(1, ...)
+            }
+            f(nil)
+        """
+        )
+        assert(out == "1\n") { out }
+    }
+    @Test
     fun nn_07_dots_main() {
         val out = test(
             """
