@@ -129,7 +129,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val call: Expr): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val xin: Expr?, val evt: Expr): Expr(N++, tk_)
-    data class Dtrack (val tk_: Tk.Fix, val trk: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Dtrack (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val trk: Expr, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
     data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)

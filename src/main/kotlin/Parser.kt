@@ -389,9 +389,17 @@ class Parser (lexer_: Lexer)
                 Expr.Bcast(tk0, xin, evt)
             }
             (CEU>=5 && this.acceptFix("detrack")) -> {
-                Expr.Dtrack(this.tk0 as Tk.Fix,
-                    this.expr_in_parens(CEU<99, CEU>99)!!,
-                    Expr.Do(Tk.Fix("do",this.tk0.pos), listOf(this.block()))
+                val tk0 = this.tk0 as Tk.Fix
+                val trk = this.expr_in_parens(CEU<99, CEU>99)!!
+                this.acceptFix_err("{")
+                val tk1 = this.tk0 as Tk.Fix
+                this.acceptFix_err("as")
+                val it_tag = this.id_tag()
+                this.acceptFix_err("=>")
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                Expr.Dtrack(tk0, it_tag, trk,
+                    Expr.Do(Tk.Fix("do",tk1.pos), es)
                 )
             }
 

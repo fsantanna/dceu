@@ -56,13 +56,48 @@ class Parser_05 {
     fun bb_02_detrack_ok() {
         val l = tst_03.lexer(
             """
-            detrack(1) { nil }
+            detrack(1) { as it=> nil }
         """
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "detrack(1) {\n" +
+        assert(e.tostr() == "detrack(1) { as it =>\n" +
                 "nil\n" +
                 "}\n") { e.tostr() }
+    }
+    @Test
+    fun bb_03_as() {
+        val out = test("""
+            detrack(1) { as 1 }
+        """)
+        assert(out == "anon : (lin 2, col 29) : expected identifier : have \"1\"\n") { out }
+    }
+    @Test
+    fun bb_04_as() {
+        val out = test("""
+            detrack(1) { as x }
+        """)
+        assert(out == "anon : (lin 2, col 31) : expected \"=>\" : have \"}\"\n") { out }
+    }
+    @Test
+    fun bb_05_as() {
+        val out = test("""
+            detrack(1) { as x => }
+        """)
+        assert(out == "anon : (lin 2, col 34) : expected expression : have \"}\"\n") { out }
+    }
+    @Test
+    fun bb_06_as() {
+        val out = test("""
+            detrack(1) { as x => 1
+        """)
+        assert(out == "anon : (lin 3, col 9) : expected \"}\" : have end of file\n") { out }
+    }
+    @Test
+    fun bb_07_as() {
+        val out = test("""
+            catch { as x => 1 } {nil}
+        """)
+        assert(out == "anon : (lin 2, col 33) : expected \"in\" : have \"{\"\n") { out }
     }
 }
