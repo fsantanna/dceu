@@ -1,3 +1,29 @@
+;; is', is-not'
+
+val is? = func (v1,v2) {
+    if (v1 == v2) {
+        true
+    } else {
+        if (type(v2) /= :tag) {
+            false
+        } else {
+            if (type(v1) == v2) {
+                true
+            } else {
+                if tags(v1,v2) {
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+}
+
+func is-not' (v1,v2) {
+    not is'(v1,v2)
+}
+
 ;; LOGICAL
 
 val {{&&}} = func (v1, v2) {
