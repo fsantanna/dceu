@@ -200,6 +200,15 @@ class Exec_05 {
                 detrack(nil) { yield(nil) { as it => nil } }
             }
         """)
+        assert(out.contains("anon : (lin 3, col 48) : declaration error : variable \"it\" is already declared\n")) { out }
+    }
+    @Test
+    fun cc_07_detrack_err2() {
+        val out = test("""
+            task () {
+                detrack(nil) { yield(nil) { as xx => nil } }
+            }
+        """)
         assert(out.contains("anon : (lin 3, col 32) : yield error : unexpected enclosing detrack\n")) { out }
     }
     @Test

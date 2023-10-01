@@ -600,7 +600,7 @@ class Exec_04 {
                 }
                 println(333)
             } ()
-            catch true {                            ;; catch 2nd (no catch)
+            catch {as it => true} in {                            ;; catch 2nd (no catch)
                 println(111)
                 broadcast nil
                 println(444)
@@ -619,12 +619,12 @@ class Exec_04 {
         val out = test(
             """
             spawn task () {
-                catch false {
+                catch {as it=>false} in {
                     yield(nil) { as it => nil }
                 }
                 println(999)
             } ()
-            catch true {
+            catch {as it=>true} in {
                 throw(nil)
             }
             println(:ok)
@@ -694,7 +694,7 @@ class Exec_04 {
     fun gg_02_scope() {
         val out = test("""
             val T = task (v) {
-                yield(nil) {
+                yield(nil) { as it =>
                     println(it)
                 }                                
             }
@@ -753,7 +753,7 @@ class Exec_04 {
             println(:1)
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
-            val e = catch true {
+            val e = catch {as it=>true} in {
                 ;;func () {
                     println(:2)
                     broadcast [20]
@@ -779,7 +779,7 @@ class Exec_04 {
                 println(x[0])
             }
             var T = task () {
-                yield(nil) { f(it) }
+                yield(nil) { as it=>f(it) }
             }
             spawn T()
             broadcast [[1]]
@@ -793,7 +793,7 @@ class Exec_04 {
                 println(v[0])
             }
             var T = task () {
-                yield(nil) { f(it) }
+                yield(nil) { as it => f(it) }
             }
             spawn T()
             broadcast [[1]]
@@ -809,7 +809,7 @@ class Exec_04 {
                 println(x[0])
             }
             var T = task () {
-                yield(nil) { f(it) }
+                yield(nil) { as it => f(it) }
             }
             spawn T()
             broadcast [[1]]
@@ -850,7 +850,7 @@ class Exec_04 {
             }
             val T = task () {
                 do {
-                    f(yield(nil){it})
+                    f(yield(nil){as it => it})
                 }
             }
             spawn T()
@@ -951,7 +951,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                val evt = yield(nil) {it}
+                val evt = yield(nil) {as it => it}
                 do {
                     var v = evt
                     println(v)
@@ -1096,7 +1096,7 @@ class Exec_04 {
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
-            catch it==:1 {
+            catch { as it => it==:1 } in {
                 ;;func () {
                     println(1)
                     broadcast 1
@@ -1144,7 +1144,7 @@ class Exec_04 {
         val out = test("""
             var co
             set co = spawn (task () {
-                catch :e1 {
+                catch { as it => :e1 } in {
                     coroutine (coro () {
                         yield(nil) { as it => nil }
                         throw(:e1)
@@ -1157,7 +1157,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 throw(:e2)
             })()
-            catch :e2 {
+            catch { as it => :e2 } in {
                 broadcast nil
                 broadcast nil
                 println(99)
@@ -1172,7 +1172,7 @@ class Exec_04 {
             """
             var T
             set T = task () {
-                catch it==:e1 {
+                catch { as it => it==:e1 } in {
                     spawn task () {
                         yield(nil) { as it => nil }
                         throw(:e1)
@@ -1185,7 +1185,7 @@ class Exec_04 {
                 println(:no)
             }
             spawn (task () {
-                catch :e2 {
+                catch { as it => :e2 } in {
                     spawn T()
                     xloop { yield(nil) { as it => nil } }
                 }
@@ -1193,7 +1193,7 @@ class Exec_04 {
                 throw(:e3)
                 println(:no)
             }) ()
-            catch :e3 {
+            catch { as it => :e3 } in {
                 broadcast nil
                 println(:no)
             }
@@ -1257,7 +1257,7 @@ class Exec_04 {
             """
             var tk
             set tk = task () {
-                yield(nil) { println(it) }
+                yield(nil) { as it => println(it) }
                 nil
             }
             var co
@@ -1276,7 +1276,7 @@ class Exec_04 {
             """
             var T = task () {
                 do {
-                    yield(nil) { println(it) }
+                    yield(nil) { as it => println(it) }
                 }
             }
             var t = spawn T()
@@ -1349,7 +1349,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                yield(nil) { println(it) }
+                yield(nil) { as it => println(it) }
             }
             var t = spawn T()
             do {
@@ -1366,7 +1366,7 @@ class Exec_04 {
             """
             var T = task () {
                 var v =
-                yield(nil) {it}
+                yield(nil) {as it => it}
                 println(v)
             }
             var t = spawn T()
@@ -1395,9 +1395,9 @@ class Exec_04 {
         val out = test(
             """
             var T1 = task () {
-                yield(nil) {nil}
+                yield(nil) {as it => nil}
                 spawn task () {
-                    val evt = yield(nil) {it}
+                    val evt = yield(nil) {as it => it}
                     println(:1)
                     var v = evt
                 } ()
@@ -1405,8 +1405,8 @@ class Exec_04 {
             }
             var t1 = spawn T1()
             var T2 = task () {
-                yield(nil) {nil}
-                val evt = yield(nil) {nil}
+                yield(nil) {as it => nil}
+                val evt = yield(nil) {as it => nil}
                 ;;println(:2)
                 do {
                     var v = evt
@@ -1432,7 +1432,7 @@ class Exec_04 {
                 println(v)
             }
             var T = task () {
-                yield(nil) {fff(it)}
+                yield(nil) {as it => fff(it)}
             }
             spawn T()
             broadcast [1]
@@ -1447,7 +1447,7 @@ class Exec_04 {
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                f(yield(nil) {it})
+                f(yield(nil) {as it => it})
             }
             spawn T()
             broadcast [[1]]
@@ -1467,7 +1467,7 @@ class Exec_04 {
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                val evt = yield(nil) {it}   ;; NOT FLEETING (vs prv test)
+                val evt = yield(nil) {as it => it}   ;; NOT FLEETING (vs prv test)
                 f(evt)
             }
             spawn T()
@@ -1487,7 +1487,7 @@ class Exec_04 {
                 println(x)
             }
             var T = task () {
-                yield(nil) { f(it) }
+                yield(nil) { as it => f(it) }
             }
             spawn T()
             broadcast [[1]]
@@ -1514,7 +1514,7 @@ class Exec_04 {
         val out = test(
             """
             println(1)
-            catch it==:ok {
+            catch {as it => it==:ok} in {
                 println(2)
                 spawn task () {
                     println(3)
