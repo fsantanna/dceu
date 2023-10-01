@@ -23,7 +23,7 @@ rm -f  /tmp/ceu-$VER.zip
 mkdir -p $DIR
 
 cp ceu.sh $DIR/ceu
-cp xprelude.ceu $DIR/prelude.ceu
+cp prelude.ceu $DIR/prelude.ceu
 cp hello-world.ceu $DIR/
 cp ../out/artifacts/dceu_jar/dceu.jar $DIR/ceu.jar
 

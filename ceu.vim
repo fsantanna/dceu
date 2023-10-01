@@ -12,14 +12,27 @@ set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
 
-syn keyword Statement   nil set throw val var native copy drop data it export
-syn keyword Statement   break catch coro defer do else func in if ifs is is-not
-syn keyword Statement   detrack track task spawn resume yield toggle broadcast pub
-syn keyword Statement   coroutine tasks enum loop where until while pass thus
+syn keyword Statement   data do drop else enum false func if
+syn keyword Statement   nil pass set true val var xloop xbreak
+syn keyword Statement   catch defer
+syn keyword Statement   coro resume yield
+syn keyword Statement   broadcast in spawn task
+syn keyword Statement   detrack
+
+syn keyword Statement   dump error next print println
+syn keyword Statement   string-to-tag sup tags tuple type
+syn keyword Statement   pointer-to-string throw
+syn keyword Statement   coroutine status
+syn keyword Statement   pub
+syn keyword Statement   tasks track
+
+
+syn keyword Statement   native copy it export
+syn keyword Statement   break ifs is is-not
+syn keyword Statement   toggle
+syn keyword Statement   loop where until while thus
 syn keyword Statement   not and or
-syn keyword Statement   err evt
 syn keyword Statement   await every par par-and par-or awaiting with
-syn keyword Statement   print println
 
 syn keyword cTodo contained TODO FIXME XXX
 

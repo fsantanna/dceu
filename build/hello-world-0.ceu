@@ -1,0 +1,7 @@
+val t = ["hello","world"]
+var i = 0
+xloop {
+    xbreak if i == #t
+    println(t[i])
+    set i = i + 1
+}
