@@ -314,9 +314,21 @@ class Parser (lexer_: Lexer)
             this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                this.acceptFix_err("{")
+                this.acceptFix_err("as")
+                this.acceptEnu_err("Id")
+                val it = this.tk0 as Tk.Id
+                val tag = if (!this.acceptEnu("Tag")) null else {
+                    this.tk0 as Tk.Tag
+                }
+                this.acceptFix_err("=>")
+                val cnd = this.exprs()
+                this.acceptFix_err("}")
+                this.acceptFix_err("in")
                 Expr.Catch (
-                    this.tk0 as Tk.Fix,
-                    Expr.Do(Tk.Fix("do",this.tk0.pos), listOf(this.expr())),
+                    tk0, Pair(it,tag),
+                    Expr.Do(Tk.Fix("do",this.tk0.pos), cnd),
                     this.block()
                 )
             }

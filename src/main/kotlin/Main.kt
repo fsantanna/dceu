@@ -6,8 +6,8 @@ import java.util.*
 
 var CEU = 1
     // 1: dyn-lex
-    // 2: defer, throw/catch
-    // 3: coro, yield, resume, as, =>
+    // 2: defer, throw/catch, as, =>
+    // 3: coro, yield, resume
     // 4: task, pub, bcast, ref
     // 5: tasks, track, detrack
     // X: export, copy, _
@@ -43,11 +43,11 @@ val KEYWORDS: SortedSet<String> = (
         "true", "val", "var",
         "xloop", "xbreak",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer",
+        "as", "catch", "defer", "in",
     )) + (if (CEU < 3) setOf() else setOf(
-        "as", "coro", "resume",  "yield",
+        "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
-        "broadcast", "in", "spawn", "task",
+        "broadcast", "spawn", "task",
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
     ))
@@ -121,7 +121,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)

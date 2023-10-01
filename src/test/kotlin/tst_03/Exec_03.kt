@@ -679,7 +679,7 @@ class Exec_03 {
             set co = coroutine(coro (x,y) {
                 throw(:e2)
             })
-            catch :e2 {
+            catch {as it=>:e2} in {
                 resume co(1,2)
                 println(99)
             }
@@ -695,7 +695,7 @@ class Exec_03 {
                 yield(nil) { as it => nil }
                 throw(:e2)
             })
-            catch :e2 {
+            catch {as it=>:e2} in {
                 resume co(1,2)
                 println(1)
                 resume co()
@@ -710,7 +710,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch :e1 {
+                catch {as it => :e1} in {
                     yield(nil) { as it => nil }
                     throw(:e1)
                 }
@@ -718,7 +718,7 @@ class Exec_03 {
                 yield(nil) { as it => nil }
                 throw(:e2)
             })
-            catch :e2 {
+            catch {as it=>:e2} in {
                 resume co()
                 resume co()
                 resume co()
@@ -732,9 +732,9 @@ class Exec_03 {
     fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
-                catch do {
+                catch { as it => do {
                     yield(nil) { as it => nil }
-                }
+                } } in
                 {
                     throw(:e1)
                 }
@@ -746,9 +746,9 @@ class Exec_03 {
     fun hh_04_catch_yield_err_xx() {
         val out = test("""
             coro () {
-                catch do {
+                catch { as it => do {
                     yield(nil) { as x => nil }
-                }
+                } } in
                 {
                     throw(:e1)
                 }
@@ -761,14 +761,14 @@ class Exec_03 {
         val out = test(
             """
             val CO = coro () {
-                catch false {
+                catch { as it => false } in {
                     yield(nil) { as it => nil }
                 }
                 println(999)
             }
             val co = coroutine(CO)
             resume co()
-            catch true {
+            catch {as it=>true}in{
                 throw(nil)
             }
             println(:ok)

@@ -69,16 +69,16 @@ class Exec_02 {
     @Test
     fun jj_00_catch_err() {
         val out = test("""
-            val err = catch do { set it=nil } {
+            val err = catch { as it => set it=nil } in {
                 throw(:x)
             }
         """)
-        assert(out == "anon : (lin 2, col 34) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 2, col 40) : invalid set : destination is immutable\n") { out }
     }
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch it==:x {
+            val err = catch { as v => v==:x } in {
                 throw(:x)
                 println(9)
             }
@@ -89,7 +89,7 @@ class Exec_02 {
     @Test
     fun jj_02_catch_err() {
         val out = test("""
-            catch it==:x {
+            catch {as it=>it==:x} in {
                 throw(:y)
                 println(9)
             }
@@ -105,7 +105,7 @@ class Exec_02 {
                 throw(:y)
                 println(9)
             }
-            catch it==:x {
+            catch {as it=>it==:x} in {
                 f()
                 println(9)
             }
@@ -120,14 +120,14 @@ class Exec_02 {
         val out = test("""
             var f
             set f = func () {
-                catch it==:xxx {
+                catch {as it => it==:xxx} in {
                     throw(:yyy)
                     println(91)
                 }
                 println(9)
             }
-            catch it==:yyy {
-                catch it==:xxx {
+            catch {as it => it==:yyy} in {
+                catch {as it2 => it2==:xxx} in {
                     f()
                     println(92)
                 }
@@ -140,7 +140,7 @@ class Exec_02 {
     @Test
     fun jj_05_catch_valgrind() {
         val out = test("""
-            catch it==:x {
+            catch {as it=> it==:x} in {
                 throw([])
                 println(9)
             }
@@ -153,10 +153,10 @@ class Exec_02 {
     @Test
     fun jj_06_catch() {
         val out = test("""
-            catch it==:e1 {
-                catch it==:e2 {
-                    catch it==:e3 {
-                        catch it==:e4 {
+            catch {as it=>it==:e1} in {
+                catch {as it=>it==:e2} in {
+                    catch {as it=>it==:e3} in {
+                        catch {as it => it==:e4 } in {
                             println(1)
                             throw(:e3)
                             println(99)
@@ -176,7 +176,7 @@ class Exec_02 {
     @Test
     fun jj_07_catch_err() {
         val out = test("""
-            catch true {
+            catch { as it => true } in {
                 throw(:y)
                 println(9)
             }
@@ -189,9 +189,9 @@ class Exec_02 {
     fun jj_08_catch() {
         val out = test(
             """
-            catch it==do {
+            catch {as it => it==do {
                 :x
-            } {
+            } } in {
                 throw(:x)
                 println(9)
             }
@@ -204,7 +204,7 @@ class Exec_02 {
     fun jj_09_catch() {
         val out = test(
             """
-            catch false {
+            catch {as it => false} in {
                 throw(:xxx)
                 println(9)
             }
@@ -217,7 +217,7 @@ class Exec_02 {
     @Test
     fun jj_10_catch() {
         val out = test("""
-            catch it==[] {
+            catch { as it => it==[] } in {
                 throw([])
                 println(9)
             }
@@ -229,7 +229,7 @@ class Exec_02 {
     @Test
     fun jj_11_catch() {
         val out = test("""
-            catch it==[] {
+            catch {as it => it==[]} in {
                 val xxx = []
                 throw(xxx)
             }
@@ -240,7 +240,7 @@ class Exec_02 {
     @Test
     fun jj_12_catch() {
         val out = test("""
-            val t = catch true {
+            val t = catch {as it=>true} in {
                 val xxx = []
                 throw(drop(xxx))
             }
@@ -251,7 +251,7 @@ class Exec_02 {
     @Test
     fun todo_jj_13_throw_catch_condition() {
         val out = test("""
-            catch throw(2) {
+            catch {as it => throw(2)} in {
                 throw(1)
             }
         """)
@@ -269,6 +269,16 @@ class Exec_02 {
             println(v)
         """)
         assert(out == ":x\n") { out }
+    }
+    @Test
+    fun jj_13_catch_dcl_err() {
+        val out = test("""
+            val x
+            catch { as x => true} in {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 3, col 24) : declaration error : variable \"x\" is already declared\n") { out }
     }
 
     // CALL STACK

@@ -159,10 +159,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         }
                     }
                     (up is Expr.Catch && up.cnd == this) -> {
+                        if (dcls.any { up.it.first.str == it.id.str }) {
+                            err(up.it.first, "declaration error : variable \"${up.it.first.str}\" is already declared")
+                        }
                         val dcl = Expr.Dcl(
                             Tk.Fix("val", this.tk.pos),
-                            Tk.Id("it", up.cnd.tk.pos,0),
-                            /*false,*/ false, null, true, null
+                            up.it.first,
+                            /*false,*/ false, up.it.second, true, null
                         )
                         dcls.add(dcl)
                         dcl_to_blk[dcl] = this

@@ -398,7 +398,7 @@ class Exec_04 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            catch :xxx {
+            catch {as it=>:xxx}in{
                 spawn task () {
                     yield(nil) { as it => nil }
                 }()
@@ -558,7 +558,7 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch (do { println(it) ; true }) {
+            catch { as it => (do { println(it) ; true }) } in {
                 ;;func () {
                     broadcast []
                 ;;}()
@@ -590,7 +590,7 @@ class Exec_04 {
         val out = test(
             """
             spawn task () {
-                catch it==:e1 {                     ;; catch 1st (yes catch)
+                catch {as it=> it==:e1 }in {                     ;; catch 1st (yes catch)
                     spawn task () {
                         yield(nil) { as it => nil }
                         println(222)
