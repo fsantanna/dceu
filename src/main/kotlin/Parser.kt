@@ -338,6 +338,7 @@ class Parser (lexer_: Lexer)
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
+                val tk0 = this.tk0 as Tk.Fix
                 val tasks = if (!this.acceptFix("in")) null else {
                     val v = this.expr()
                     this.acceptFix_err(",")
@@ -347,7 +348,7 @@ class Parser (lexer_: Lexer)
                 if (call !is Expr.Call) {
                     err(this.tk1, "invalid spawn : expected call")
                 }
-                Expr.Spawn(this.tk0 as Tk.Fix, tasks, call)
+                Expr.Spawn(tk0, tasks, call)
             }
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix

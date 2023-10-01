@@ -84,6 +84,11 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> {
+                ups.all_until(this) { it is Expr.Proto }
+                    .filter  { it is Expr.Do }              // all blocks up to proto
+                    .forEach { ylds.add(it as Expr.Do) }
+                this.arg.traverse()
+                this.blk.traverse()
                 when {
                     !ups.inexe(this)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
@@ -106,11 +111,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     }
                         -> err(this.tk, "yield error : unexpected enclosing detrack")
                 }
-                ups.all_until(this) { it is Expr.Proto }
-                    .filter  { it is Expr.Do }              // all blocks up to proto
-                    .forEach { ylds.add(it as Expr.Do) }
-                this.arg.traverse()
-                this.blk.traverse()
             }
             is Expr.Resume -> {
                 this.call.traverse()
@@ -120,8 +120,14 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 spws.add(ups.first_block(this)!!)
                 this.tsks?.traverse()
                 this.call.traverse()
+                when {
+                    (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)
+                       -> err(this.tk, "spawn error : unexpected enclosing func")
+                }
             }
             is Expr.Bcast  -> {
+                this.xin?.traverse()
+                this.evt.traverse()
                 when {
                     ups.any(this) { blk ->
                         ups.pub[blk].let { dtrk ->
@@ -132,8 +138,6 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str=="func") } != null)
                         -> err(this.tk, "broadcast error : unexpected enclosing func")
                 }
-                this.xin?.traverse()
-                this.evt.traverse()
             }
             is Expr.Dtrack-> {
                 this.trk.traverse()

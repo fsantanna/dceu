@@ -86,7 +86,7 @@ class Exec_04 {
         val out = test("""
             spawn nil()
         """)
-        assert(out == " v  anon : (lin 2, col 23) : spawn error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : spawn error : expected task\n") { out }
     }
 
     // SCOPE
@@ -131,7 +131,8 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 8, col 13) : f()\n" +
         //        "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 6, col 17) : spawn error : unexpected enclosing func\n") { out }
     }
     @Test
     fun cc_04_scope() {
@@ -1076,7 +1077,7 @@ class Exec_04 {
         val out = test("""
             spawn (func () {nil}) ()
         """)
-        assert(out == " v  anon : (lin 2, col 36) : spawn error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : spawn error : expected task\n") { out }
     }
     @Test
     fun zz_03_spawn_err() {
