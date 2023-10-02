@@ -354,7 +354,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // dcls gc-dec
                     ${dcls.map { """
                         if ($it.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                            ceu_gc_dec($it, (CEU_HLD_BLOCK($it.Dyn)->depth == $blkc->depth));
+                            CEU_Block* ceu_blk = CEU_HLD_BLOCK($it.Dyn);
+                            if ($blkc != ceu_blk) {
+                                // if same block - free below w/ nested exes - b/c of pending refs defers
+                                ceu_gc_dec($it, (ceu_blk->depth == $blkc->depth));
+                            }
                         }
                     """ }.joinToString("")}
                     // args gc-dec

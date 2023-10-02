@@ -3973,13 +3973,14 @@ class Exec_01 {
         val out = test(
             """
             do {
-                val xxx = []
+                val xxx = []    ;; gc'd by block
                 nil
             }
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun gc1() {
@@ -4079,13 +4080,14 @@ class Exec_01 {
                 val out = do {
                     val ins = [1,2,3]
                     drop(ins)
-                }
+                }   ;; gc'd by block
                 println(`:number ceu_gc_count`)
             }
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "0\n1\n") { out }
+        //assert(out == "0\n1\n") { out }
+        assert(out == "0\n0\n") { out }
     }
     @Test
     fun gc9_err() {
