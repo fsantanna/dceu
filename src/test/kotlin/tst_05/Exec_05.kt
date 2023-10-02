@@ -153,6 +153,14 @@ class Exec_05 {
         assert(out == " v  anon : (lin 2, col 13) : detrack error : expected track value\n") { out }
     }
     @Test
+    fun cc_02_detrack() {
+        val out = test("""
+            val x
+            detrack(nil) { as x => nil }
+        """)
+        assert(out == "anon : (lin 3, col 31) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
     fun cc_03_detrack() {
         val out = test("""
             val T = task () { nil }
@@ -315,9 +323,9 @@ class Exec_05 {
             val T = task () { yield(nil) { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as it =>
-                println(it == it)
-                println(it == x)
+            val v = detrack(x) { as kkk =>
+                println(kkk == kkk)
+                println(kkk == x)
             }
         """)
         assert(out == ("true\nfalse\n")) { out }

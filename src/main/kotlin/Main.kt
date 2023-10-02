@@ -54,7 +54,7 @@ val KEYWORDS: SortedSet<String> = (
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
-val XOPERATORS = if (CEU <= 2) setOf() else setOf("and", "not", "or")
+val XOPERATORS = if (CEU < 99) setOf() else setOf("and", "not", "or")
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
