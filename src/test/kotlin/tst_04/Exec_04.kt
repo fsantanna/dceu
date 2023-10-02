@@ -1059,6 +1059,51 @@ class Exec_04 {
         assert(out == " v  anon : (lin 8, col 17) : pub(t,x) : set error : cannot copy reference to outer scope\n") { out }
     }
 
+    // NESTED
+
+    @Test
+    fun ll_01_nested() {
+        val out = test("""
+            spawn task () {
+                val v = 10
+                spawn task () {
+                    println(v)
+                } ()
+                yield(nil) { as it => nil }
+            } ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ll_02_nested() {
+        val out = test("""
+            val F = func () {
+                val v = 10
+                val f = func () {
+                    v
+                }
+                f()
+            }
+            println(F())
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ll_03_nested() {
+        val out = test("""
+            spawn task () {
+                var xxx = 1
+                yield(nil) { as it => nil }
+                spawn task () {
+                    set xxx = 10
+                } ()
+                println(xxx)
+            } ()
+            broadcast nil
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // ORIG
 
     @Test

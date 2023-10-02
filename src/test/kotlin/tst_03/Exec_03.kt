@@ -1027,4 +1027,49 @@ class Exec_03 {
         """)
         assert(out == "[]\n10\n") { out }
     }
+
+    // KILL
+
+    @Test
+    fun ll_01_kill() {
+        val out = test("""
+            coroutine(coro () {
+                println(:no)
+            })
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ll_02_kill() {
+        val out = test("""
+            val t = []
+            resume coroutine(coro () {
+                defer {
+                    println(t)
+                }
+                yield(nil) { as it => nil }
+                println(:no)
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n[]\n") { out }
+    }
+
+    // ALL
+
+    @Test
+    fun zz_01_valgrind() {
+        val out = test("""
+            val f = func () {
+                nil
+            }
+            coroutine(coro () {
+                println(:no)
+                f()
+            })
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }
