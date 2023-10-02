@@ -7,22 +7,33 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
 
-    fun Expr.idc (pre: String): String {
+    fun Expr.idc (pre: String, nst: Int=0): String {
         return if (sta.ylds.contains(ups.first_block(this)!!)) {
-            "(ceu_mem->${pre}_${this.n})"
+            if (nst == 0) {
+                "(ceu_mem->${pre}_${this.n})"
+            } else {
+                val fup = ups.first(this) { it is Expr.Proto }!!
+                "(((CEU_Clo_Mem_${fup.n}*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->${pre}_${this.n})"
+            }
         } else {
             "ceu_${pre}_${this.n}"
         }
     }
-    fun Expr.Dcl.idc (upv: Int): String {
+    fun Expr.Dcl.idc (upv: Int, nst: Int=0): String {
+        val blk = vars.dcl_to_blk[this]
         return when {
             (upv == 2) -> {
                 val idc = this.id.str.idc()
                 "(ceu_upvs->$idc)"
             }
-            sta.ylds.contains(vars.dcl_to_blk[this]) -> {
+            sta.ylds.contains(blk) -> {
                 val idc = this.id.str.idc(this.n)
-                "(ceu_mem->$idc)"
+                if (nst == 0) {
+                    "(ceu_mem->$idc)"
+                } else {
+                    val fup = ups.first(this) { it is Expr.Proto }!!
+                    "(((CEU_Clo_Mem_${fup.n}*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->$idc)"
+                }
             }
             else -> {
                 this.id.str.idc()
@@ -98,13 +109,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ceu_acc = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
                                 """ }}
                             }
-                        }
                         #if CEU >= 5
-                        if (ceu_frame->exe->type == CEU_VALUE_EXE_TASK_IN) {
-                            ceu_hold_rem((CEU_Dyn*)ceu_frame->exe CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe->hld.block))->dyns));
-                            ceu_dyn_free((CEU_Dyn*)ceu_frame->exe);
-                        }
+                            if (ceu_frame->exe->type == CEU_VALUE_EXE_TASK_IN) {
+                                ceu_hold_rem((CEU_Dyn*)ceu_frame->exe CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe->hld.block))->dyns));
+                                ceu_dyn_free((CEU_Dyn*)ceu_frame->exe);
+                            }
                         #endif
+                        }
                         """}}
                         return ceu_acc;
                     }
@@ -611,9 +622,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
-                    for (v in set) {
+                    for (dcl in set) {
+                        val nst = ups
+                            .all_until(this) { it==vars.dcl_to_blk[dcl]!! }  // go up until find dcl blk
+                            .count { it is Expr.Proto }          // count protos in between acc-dcl
+                        val idc = dcl.idc(0, nst)
                         //println(setOf(x, v))
-                        x = x.replaceFirst("XXX", v.idc(0))
+                        x = x.replaceFirst("XXX", idc)
                     }
                     x
                 }
@@ -630,7 +645,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             is Expr.Acc -> {
                 val (vblk,dcl) = vars.get(this)
-                val idc = dcl.idc(this.tk_.upv)
+                val nst = ups
+                    .all_until(this) { it==vblk }  // go up until find dcl blk
+                    .count { it is Expr.Proto }          // count protos in between acc-dcl
+                val idc = dcl.idc(this.tk_.upv, nst)
                 when {
                     this.isdst() -> {
                         val ublk = ups.first_block(this)!!
@@ -644,7 +662,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(CEU4(0 COMMA) ${vblk.idc("block")}, CEU_HOLD_MUTAB, $src, 0, "set error" CEU4(COMMA ${if (sta.ylds.contains(ublk)) 1 else 0})),
+                                ceu_hold_chk_set(CEU4(0 COMMA) ${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error" CEU4(COMMA ${if (sta.ylds.contains(ublk)) 1 else 0})),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
