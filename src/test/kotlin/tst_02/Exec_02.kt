@@ -377,7 +377,7 @@ class Exec_02 {
             throw(:error)
         """)
         assert(out == " |  anon : (lin 5, col 13) : throw(:error)\n" +
-                " v  throw error : :error") { out }
+                " v  throw error : :error\n") { out }
     }
     @Test
     fun pp_04_throw_defer_tofo() {

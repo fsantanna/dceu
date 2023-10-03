@@ -1,6 +1,7 @@
 package dceu
 
 val union = "union"
+//val union = "struct"
 
 fun Expr.coexists (): Boolean {
     return when (this) {

@@ -527,7 +527,8 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_type_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1 && "bug found");
-            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0].type} };
+            CEU_Value v = CEU4(ceu_deref)(args[0]);
+            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=v.type} };
         }
         CEU_Value ceu_sup_question__f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n >= 2);
@@ -558,7 +559,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_tags_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n >= 1);
-            CEU_Value dyn = args[0];
+            CEU_Value dyn = CEU4(ceu_deref)(args[0]);
             CEU_Tags_List* tags = (dyn.type < CEU_VALUE_DYNAMIC) ? NULL : dyn.Dyn->Any.tags;
             CEU_Value tag; // = (CEU_Value) { CEU_VALUE_NIL };
             if (n >= 2) {
@@ -647,7 +648,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_string_dash_to_dash_tag_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value str = args[0];
+            CEU_Value str = CEU4(ceu_deref)(args[0]);
             assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
             CEU_Tags_Names* cur = CEU_TAGS;
             while (cur != NULL) {
@@ -1316,8 +1317,8 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_next_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
-            CEU_Value col = args[0];
-            CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
+            CEU_Value col = CEU4(ceu_deref)(args[0]);
+            CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : CEU4(ceu_deref)(args[1]);
             switch (col.type) {
                 case CEU_VALUE_DICT: {
                     if (key.type == CEU_VALUE_NIL) {
@@ -1856,10 +1857,11 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
-            if (args[0].type == CEU_VALUE_VECTOR) {
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0].Dyn->Vector.its} };
-            } else if (args[0].type == CEU_VALUE_TUPLE) {
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=args[0].Dyn->Tuple.its} };
+            CEU_Value v = CEU4(ceu_deref)(args[0]);
+            if (v.type == CEU_VALUE_VECTOR) {
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
+            } else if (v.type == CEU_VALUE_TUPLE) {
+                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Tuple.its} };
             } else {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
@@ -1914,7 +1916,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
         CEU_Value ceu_coroutine_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value coro = args[0];
+            CEU_Value coro = CEU4(ceu_deref)(args[0]);
             if (coro.type != CEU_VALUE_CLO_CORO) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="coroutine error : expected coro"} };
             }
@@ -1922,7 +1924,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value exe = args[0];
+            CEU_Value exe = CEU4(ceu_deref)(args[0]);
             if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask(exe))) {
         #if CEU < 4
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
@@ -1940,7 +1942,7 @@ fun Coder.main (tags: Tags): String {
             return (v.type < CEU_VALUE_DYNAMIC) ? v : (CEU_Value) { CEU_VALUE_REF, {.Dyn=v.Dyn} };
         }
         CEU_Value ceu_deref (CEU_Value v) {
-            return (v.type != CEU_VALUE_REF) ? v : ceu_dyn_to_val(v.Dyn);
+            return (v.type == CEU_VALUE_REF) ? ceu_dyn_to_val(v.Dyn) : v;
         }
         
         int ceu_istask (CEU_Value v) {
@@ -1953,8 +1955,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             int i = 0;
             CEU_Exe_Task* tsk;
-            if (n>0 && ceu_istask(args[0])) {
-                tsk = &args[0].Dyn->Exe_Task;
+            CEU_Value v = CEU4(ceu_deref)(args[0]);
+            if (n>0 && ceu_istask(v)) {
+                tsk = &v.Dyn->Exe_Task;
                 i = 1;
             } else {
                 tsk = ceu_block_frame(frame->up_block)->exe_task;
@@ -1981,7 +1984,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
-            CEU_Value task = args[0];
+            CEU_Value task = CEU4(ceu_deref)(args[0]);
             if (!ceu_istask(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
             } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                

@@ -338,6 +338,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     // defers execute
                     CEU_Value ceu_acc_$n = ceu_acc;
+                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
                     if (ceu_acc_$n.type==CEU_VALUE_ERROR && ceu_acc.type==CEU_VALUE_ERROR) {
                         assert(0 && "TODO: double throw in defer");
@@ -705,7 +706,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         """
                     }
-                    else -> "ceu_acc = $idc;"
+                    else -> "ceu_acc = $idc;\n"
                 }
             }
             is Expr.Nil  -> "ceu_acc = ((CEU_Value) { CEU_VALUE_NIL });"

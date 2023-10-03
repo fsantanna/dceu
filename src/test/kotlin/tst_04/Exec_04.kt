@@ -392,6 +392,19 @@ class Exec_04 {
         )
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun dd_16_tags() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it =>
+                    println(tags(it,:X))
+                }
+            }
+            spawn T()
+            broadcast tags([],:X,true)
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // THROW / CATCH
 

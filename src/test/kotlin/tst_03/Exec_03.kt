@@ -289,6 +289,20 @@ class Exec_03 {
         """)
         assert(out == ":y\n") { out }
     }
+    @Test
+    fun cc_17_tags() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) { as it =>
+                    println(tags(it,:X))
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(tags([],:X,true))
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // AS
 
