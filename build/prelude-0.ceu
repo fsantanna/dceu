@@ -206,3 +206,35 @@ val to-tag = func (v) {
         v   ;; TODO
     }
 }
+
+;; COPY
+
+var copy
+set copy = func (v) {
+    if type(v) == :tuple {
+        val ret = tuple(#v)
+        var i=0
+        xloop {
+            xbreak if i == #v
+            set ret[i] = copy(v[i])
+        }
+        drop(ret)
+    } else {
+        v
+    }
+}
+
+;; AWAIT
+;;;
+val await = func (e) {
+    xloop {
+        xbreak if yield(nil) { as it =>
+            if type(e) == :func {
+                e(it)
+            } else {
+                is?(e, it)
+            }
+        }
+    }
+}
+;;;

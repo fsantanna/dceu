@@ -1581,4 +1581,19 @@ class Exec_04 {
         )
         assert(out == "1\n2\n3\n4\n5\n6\n7\n") { out }
     }
+    @Test
+    fun zz_23_valgrind() {
+        val out = test("""
+            spawn task () {
+                var t = []
+                spawn task () {
+                    yield(nil) { as it => nil }
+                    println(t)
+                } ()
+                yield(nil) { as it => nil }
+            } ()
+            broadcast []
+        """)
+        assert(out == "[]\n") { out }
+    }
 }

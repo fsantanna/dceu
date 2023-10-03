@@ -3,7 +3,7 @@ package dceu
 import java.lang.Integer.min
 
 class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static) {
-    val pres: MutableList<String> = mutableListOf()
+    val pres: MutableList<Pair<String,String>> = mutableListOf()
     val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>> = mutableMapOf()
     val code: String = outer.code()
 
@@ -58,7 +58,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
 
-                val pre = """ // UPVS | ${this.dump()}
+                val pres = Pair(""" // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
                         typedef struct {
                             ${clos.protos_refs[this]!!.map {
@@ -81,7 +81,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ${this.blk.mem(sta, defers)}
                         } CEU_Clo_Mem_$n;                        
                     """ }}
-                """ + """ // FUNC | ${this.dump()}
+                """, """ // FUNC | ${this.dump()}
                     CEU_Value ceu_clo_$n (
                         CEU_Frame* ceu_frame,
                         int ceu_n,
@@ -124,7 +124,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """}}
                         return ceu_acc;
                     }
-                """
+                """)
 
                 val pos = """ // CLO | ${this.dump()}
                 ceu_acc = ceu_create_clo${isexe.cond{"_exe"}} (
@@ -161,11 +161,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }}
                 """
 
-                if (!clos.protos_noclos.contains(this)) {
-                    pres.add(pre)
-                    pos
+                if (clos.protos_noclos.contains(this) && this.tk.str=="func") {
+                    pres.first + pres.second + pos
                 } else {
-                    pre + pos
+                    this@Coder.pres.add(pres)
+                    pos
                 }
             }
             is Expr.Do -> {
@@ -277,7 +277,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // defers init
                     ${defers[this].cond { it.second }}
                     // pres funcs
-                    ${(f_b == null).cond{ pres.joinToString("") }}
+                    ${(f_b == null).cond {
+                        pres.unzip().let {
+                            it.first.joinToString("") +
+                            it.second.joinToString("")
+                        }
+                    }}
                     
                     ${(CEU >= 2).cond { "do {" }}
                         // main args, func args

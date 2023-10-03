@@ -1056,6 +1056,72 @@ class Exec_03 {
         assert(out == ":ok\n[]\n") { out }
     }
 
+    // NESTED
+
+    @Test
+    fun mm_01_nested() {
+        val out = test("""
+            resume coroutine(coro () {
+                val v = 10
+                resume coroutine(coro () {
+                    println(v)
+                }) ()
+                yield(nil) { as it => nil }
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_02_nested() {
+        val out = test("""
+            val F = func () {
+                val v = 10
+                val f = func () {
+                    v
+                }
+                f()
+            }
+            println(F())
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_03_nested() {
+        val out = test("""
+            val co = coroutine(coro () {
+                var xxx = 1
+                yield(nil) { as it => nil }
+                resume coroutine(coro () {
+                    set xxx = 10
+                }) ()
+                println(xxx)
+            })
+            resume co()
+            resume co()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_04_nested() {
+        val out = test("""
+            val a = coroutine(coro () {
+                var t = []
+                val b = coroutine(coro () {
+                    val x = []
+                    yield(nil) { as it => nil }
+                    println(t,x)
+                })
+                resume b()
+                yield(nil) { as it => nil }
+                resume b()
+            })
+            resume a()
+            resume a()
+        """)
+        assert(out == "[]\t[]\n") { out }
+    }
+
+
     // ALL
 
     @Test
