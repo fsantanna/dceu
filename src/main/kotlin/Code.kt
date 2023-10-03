@@ -337,7 +337,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
                     // defers execute
+                    CEU_Value ceu_acc_$n = ceu_acc;
                     ${defers[this].cond { it.third }}
+                    if (ceu_acc_$n.type==CEU_VALUE_ERROR && ceu_acc.type==CEU_VALUE_ERROR) {
+                        assert(0 && "TODO: double throw in defer");
+                    }
+                    ceu_acc = ceu_acc_$n;
+                    
                     // move up dynamic ceu_acc (return or error)
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc

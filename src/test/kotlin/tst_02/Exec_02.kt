@@ -63,6 +63,17 @@ class Exec_02 {
         """)
         assert(out == "2\n4\n5\n111\n333\n222\n7\n6\n8\n10\n9\n3\n11\n13\n12\n1\n") { out }
     }
+    @Test
+    fun ee_03_defer() {
+        val out = test("""
+            val f = func () {
+                defer { 99 }
+                1
+            }
+            println(f())
+        """)
+        assert(out == "1\n") { out }
+    }
 
     // THROW / CATCH
 
@@ -354,6 +365,27 @@ class Exec_02 {
                 }
             }
             println(:ok, v)
+        """)
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
+    }
+    @Test
+    fun pp_03_throw_defer() {
+        val out = test("""
+            defer {
+                nil
+            }
+            throw(:error)
+        """)
+        assert(out == " |  anon : (lin 5, col 13) : throw(:error)\n" +
+                " v  throw error : :error") { out }
+    }
+    @Test
+    fun pp_04_throw_defer_tofo() {
+        val out = test("""
+            defer {
+                throw(:2)
+            }
+            throw(:1)
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }

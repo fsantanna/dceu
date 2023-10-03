@@ -3241,9 +3241,10 @@ class Exec_01 {
             println(t)
             println(type(t))
             println(type(type(t)))
+            println(type(:x))
         """
         )
-        assert(out == ":number\n:tag\n:tag\n") { out }
+        assert(out == ":number\n:tag\n:tag\n:tag\n") { out }
     }
 
     // TAGS
