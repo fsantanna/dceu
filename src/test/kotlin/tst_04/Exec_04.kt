@@ -1116,6 +1116,39 @@ class Exec_04 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun ll_04_nested() {
+        val out = test("""
+            spawn task () {
+                var xxx = 1
+                yield(nil) { as it => nil }
+                spawn task () {
+                    set xxx = 10
+                } ()
+                println(xxx)
+            } ()
+            do {
+                broadcast nil
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ll_05_nested() {
+        val out = test("""
+            spawn task () {
+                val t = []
+                spawn task () {
+                    yield(nil) { as it => nil }
+                    println(t)
+                } ()
+                yield(nil) { as it => nil }
+            } ()
+            resume (coroutine(coro () { nil })) ()
+            broadcast nil
+       """)
+        assert(out == "10\n") { out }
+    }
 
     // ORIG
 

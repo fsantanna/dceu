@@ -1134,6 +1134,26 @@ class Exec_03 {
         """)
         assert(out == "[]\t[]\n") { out }
     }
+    @Test
+    fun mm_05_nested() {
+        val out = test("""
+            val a = coroutine(coro () {
+                var t = []
+                val b = coroutine(coro () {
+                    val x = []
+                    yield(nil) { as it => nil }
+                    println(t,x)
+                })
+                resume b()
+                yield(nil) { as it => nil }
+                resume b()
+            })
+            resume a()
+            resume (coroutine(coro () { nil })) ()
+            resume a()
+        """)
+        assert(out == "[]\t[]\n") { out }
+    }
 
 
     // ALL
