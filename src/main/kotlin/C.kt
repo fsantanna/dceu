@@ -1955,9 +1955,8 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             int i = 0;
             CEU_Exe_Task* tsk;
-            CEU_Value v = CEU4(ceu_deref)(args[0]);
-            if (n>0 && ceu_istask(v)) {
-                tsk = &v.Dyn->Exe_Task;
+            if (n>0 && ceu_istask(CEU4(ceu_deref)(args[0]))) {
+                tsk = &CEU4(ceu_deref)(args[0]).Dyn->Exe_Task;
                 i = 1;
             } else {
                 tsk = ceu_block_frame(frame->up_block)->exe_task;
