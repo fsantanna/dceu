@@ -75,7 +75,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
             CEU_VALUE_CLO_CORO,
         #endif
-        #if CEU >= 3
+        #if CEU >= 4
             CEU_VALUE_CLO_TASK,
         #endif
             CEU_VALUE_TUPLE,
