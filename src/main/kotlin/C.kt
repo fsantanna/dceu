@@ -999,7 +999,7 @@ fun Coder.main (tags: Tags): String {
                     break;
         #endif
                 default:
-                    // not applicable
+                    break; // not applicable
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
@@ -1199,7 +1199,7 @@ fun Coder.main (tags: Tags): String {
                         break;
         #endif
                     default:
-                        // not applicable
+                        break; // not applicable
                 }
                 dyn = nxt;
             }

@@ -10,7 +10,7 @@ fun Expr.dump (): String {
         return "(${this.pos.file} : lin ${this.pos.lin} : col ${this.pos.col})"
     }
     return if (!DUMP) "" else {
-        this.tk.dump() + " | " + this.tostr().take(15).filter { it != '\n' }
+        this.tk.dump() + " | " + this.tostr().take(15).filter { it !in listOf('\n','{','}') }
     }
 }
 

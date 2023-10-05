@@ -1144,7 +1144,7 @@ class Exec_04 {
                 } ()
                 yield(nil) { as it => nil }
             } ()
-            resume (coroutine(coro () { nil })) ()
+            coroutine(coro () { nil })
             broadcast nil
        """)
         assert(out == "10\n") { out }
