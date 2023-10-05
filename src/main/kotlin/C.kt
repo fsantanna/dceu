@@ -1523,7 +1523,7 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 3
         CEU_Value _ceu_create_exe_ (int type, int sz, CEU_Block* blk, CEU_Value clo CEU5(COMMA CEU_Dyns* dyns)) {
-            assert(clo.type==CEU_VALUE_CLO_CORO || clo.type==CEU_VALUE_CLO_TASK);
+            assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
             ceu_gc_inc(clo);
             
             CEU_Exe* ret = malloc(sz);

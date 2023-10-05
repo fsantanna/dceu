@@ -985,7 +985,7 @@ class Exec_04 {
                 " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun jj_02_task_nest() {
+    fun todo_jj_02_task_nest() {
         val out = test("""
             spawn task (v1) {
                 spawn task (v2) {
