@@ -1147,7 +1147,7 @@ class Exec_04 {
             coroutine(coro () { nil })
             broadcast nil
        """)
-        assert(out == "10\n") { out }
+        assert(out == "[]\n") { out }
     }
 
     // ORIG

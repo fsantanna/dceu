@@ -131,7 +131,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_VALUE_CLO_${this.tk.str.uppercase()},
                     ${blk.idc("block")},
                     ${if (clos.protos_noclos.contains(this)) "CEU_HOLD_IMMUT" else "CEU_HOLD_FLEET"},
-                    ${if (blk == outer) "NULL" else "ceu_frame"},
+                    ${when {
+                        (blk == outer) -> "NULL"
+                        isexe -> "&ceu_frame->exe->frame"
+                        else -> "ceu_frame"
+                    }},
                     ceu_clo_$n,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
