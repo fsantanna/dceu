@@ -112,7 +112,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
         is Expr.Spawn -> """
             struct {
                 ${this.tsks.cond { "CEU_Value tasks_${this.n};" }} 
-                union {
+                $union {
                     ${this.tsks.cond { it.mem(sta, defers) }} 
                     ${this.call.mem(sta, defers)}
                 };

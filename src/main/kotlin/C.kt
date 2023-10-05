@@ -49,7 +49,7 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
             CEU_HOLD_MAX
         } __attribute__ ((__packed__)) CEU_HOLD;
-        _Static_assert(sizeof(CEU_HOLD) == 1);
+        _Static_assert(sizeof(CEU_HOLD) == 1, "bug found");
         
         typedef enum CEU_ARG {
         #if CEU >= 4
@@ -97,7 +97,7 @@ fun Coder.main (tags: Tags): String {
         #endif
             CEU_VALUE_MAX
         } __attribute__ ((__packed__)) CEU_VALUE;
-        _Static_assert(sizeof(CEU_VALUE) == 1);
+        _Static_assert(sizeof(CEU_VALUE) == 1, "bug found");
         
         #if CEU >= 3
         typedef enum CEU_EXE_STATUS {
