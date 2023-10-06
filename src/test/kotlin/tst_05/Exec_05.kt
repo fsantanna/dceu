@@ -54,7 +54,7 @@ class Exec_05 {
             val ts = tasks()
             spawn in ts, T()
             println(:out)
-            broadcast nil
+            broadcast(nil)
         """)
         assert(out == ":out\n:in\n") { out }
     }
@@ -177,7 +177,7 @@ class Exec_05 {
             val T = task () { yield(nil) { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            broadcast nil
+            broadcast(nil)
             val v = detrack(x) { as it => 10 }
             println(v)
         """)
@@ -197,7 +197,7 @@ class Exec_05 {
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
-            detrack(nil) { as it => broadcast nil }
+            detrack(nil) { as it => broadcast(nil) }
         """)
         assert(out.contains("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
     }
@@ -240,7 +240,7 @@ class Exec_05 {
             spawn in ts, T()
             val x = next(ts)
             ;;dump(x)
-            broadcast nil
+            broadcast(nil)
             println(detrack(x) { as it => 99 })
         """
         )
@@ -254,7 +254,7 @@ class Exec_05 {
             }
             val t = spawn T()
             val x = track(t)
-            broadcast nil
+            broadcast(nil)
             println(detrack(x) { as it => 99 })
             ;;dump(x)
         """
@@ -307,7 +307,7 @@ class Exec_05 {
             val ts = tasks()
             spawn in ts, T()
             val f = func () {
-                broadcast nil
+                broadcast(nil)
             }
             val x = next(ts)
             detrack(x) { as it =>
@@ -403,9 +403,9 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             spawn in tasks(), T()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -437,7 +437,7 @@ class Exec_05 {
             detrack(x) { as it =>
                 set t = it
             }
-            broadcast nil
+            broadcast(nil)
             println(status(t))
         """)
         assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
@@ -562,7 +562,7 @@ class Exec_05 {
             val ts = tasks()
             spawn in ts, T()
             val x = next(ts)
-            broadcast nil
+            broadcast(nil)
             next(ts, x)
         """
         )
@@ -579,7 +579,7 @@ class Exec_05 {
             spawn in ts, T(2)
             val x1 = next(ts)
             val x2 = next(ts, x1)
-            broadcast 1
+            broadcast(1)
             next(ts, x1)
         """
         )

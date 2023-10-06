@@ -138,23 +138,10 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun expr_in_parens (req: Boolean, nil: Boolean): Expr? {
+    fun expr_in_parens(): Expr {
         this.acceptFix_err("(")
-        val e = when {
-            (req || !this.checkFix(")")) -> {
-                val e = this.expr()
-                this.acceptFix_err(")")
-                e
-            }
-            nil -> {    // can be empty
-                this.acceptFix_err(")")
-                Expr.Nil(Tk.Fix("nil", this.tk0.pos))
-            }
-            else -> {
-                this.acceptFix_err(")")
-                null
-            }
-        }
+        val e = this.expr()
+        this.acceptFix_err(")")
         return e
     }
 
@@ -316,7 +303,7 @@ class Parser (lexer_: Lexer)
                 }
             }
             this.acceptFix("pass") -> Expr.Pass(this.tk0 as Tk.Fix, this.expr())
-            this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens(true, false)!!)
+            this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens())
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -337,7 +324,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val out = this.expr_in_parens(CEU<99, CEU>99)!!
+                val out = this.expr_in_parens()
                 this.acceptFix_err("{")
                 val tk1 = this.tk0
                 val it = if (CEU<99 || this.checkFix("as")) {
@@ -367,7 +354,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tasks = if (!this.acceptFix("in")) null else {
+                val tasks = if (CEU<5 || !this.acceptFix("in")) null else {
                     val v = this.expr()
                     this.acceptFix_err(",")
                     v
@@ -380,17 +367,15 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val evt = this.expr_in_parens()
                 val xin = if (!this.acceptFix("in")) null else {
-                    val v = this.expr()
-                    this.acceptFix_err(",")
-                    v
+                    this.expr()
                 }
-                val evt = this.expr()
                 Expr.Bcast(tk0, xin, evt)
             }
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val trk = this.expr_in_parens(CEU<99, CEU>99)!!
+                val trk = this.expr_in_parens()
                 this.acceptFix_err("{")
                 val tk1 = this.tk0 as Tk.Fix
                 this.acceptFix_err("as")
@@ -440,7 +425,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("]")
                 it
             }
-            this.checkFix("(")      -> this.expr_in_parens(true,false)!!
+            this.checkFix("(")      -> this.expr_in_parens()
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")

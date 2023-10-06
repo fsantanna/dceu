@@ -77,53 +77,65 @@ class Parser_04 {
     @Test
     fun cc_01_bcast_err() {
         val l = lexer("""
-            broadcast
+            broadcast 1
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"in\" : have end of file")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected \"(\" : have \"1\"")
     }
     @Test
     fun cc_02_bcast_err() {
         val l = lexer("""
-            broadcast in
+            broadcast
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"in\" : have end of file")
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"(\" : have end of file")
     }
     @Test
     fun cc_03_bcast_err() {
         val l = lexer("""
-            broadcast in nil
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \",\" : have end of file")
-    }
-    @Test
-    fun cc_04_bcast_err() {
-        val l = lexer("""
-            broadcast in nil,
+            broadcast (nil) in
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
     }
     @Test
+    fun cc_04_bcast_err() {
+        val l = lexer("""
+            broadcast in nil
+        """)
+        val parser = Parser(l)
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \",\" : have end of file")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected \"(\" : have \"in\"")
+    }
+    @Test
+    fun cc_0X_bcast_err() {
+        val l = lexer("""
+            broadcast (nil) in nil,
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 0) : expected expression : have \",\"")
+    }
+    @Test
     fun cc_05_bcast_err() {
         val l = lexer("""
-            broadcast in nil, []
+            broadcast ([]) in nil
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast in nil, []\n") { e.tostr() }
+        assert(e.tostr() == "broadcast([]) in nil\n") { e.tostr() }
     }
     @Test
     fun cc_06_bcast() {
         val l = lexer("""
-            broadcast in t, nil
+            broadcast(nil) in t
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "broadcast in t, nil\n") { e.tostr() }
+        assert(e.tostr() == "broadcast(nil) in t\n") { e.tostr() }
     }
 
     // PUB

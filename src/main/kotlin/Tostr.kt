@@ -47,7 +47,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Resume -> "resume " + this.call.tostr(pre)
 
         is Expr.Spawn  -> "spawn " + this.tsks.cond { "in ${this.tsks!!.tostr(pre)}, " } + this.call.tostr(pre)
-        is Expr.Bcast  -> "broadcast " + this.xin.cond { "in " + it.tostr(pre) + ", " } + this.evt.tostr(pre)
+        is Expr.Bcast  -> "broadcast(" + this.evt.tostr(pre) + ")" + this.xin.cond { " in " + it.tostr(pre) }
         is Expr.Dtrack -> "detrack(" + this.trk.tostr(pre) + ") { as " + this.it.first.str + this.it.second.cond { " "+it.str } + " =>\n" + this.blk.es[0].tostr(pre) + "\n}"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"

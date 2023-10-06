@@ -170,7 +170,7 @@ class Exec_04 {
     @Test
     fun dd_01_bcast() {
         val out = test("""
-            println(broadcast 1)
+            println(broadcast(1))
         """)
         assert(out == "nil\n") { out }
     }
@@ -183,7 +183,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 println(2)
             }()
-            broadcast nil
+            broadcast(nil)
         """
         )
         assert(out == "1\n2\n") { out }
@@ -198,9 +198,9 @@ class Exec_04 {
                 println(:2, e2)
             }
             spawn tk ()
-            broadcast 1
-            broadcast 2
-            broadcast 3
+            broadcast(1)
+            broadcast(2)
+            broadcast(3)
         """)
         assert(out == ":1\t1\n:2\t2\n") { out }
     }
@@ -216,9 +216,9 @@ class Exec_04 {
             }
             var co1 = spawn tk(:1)
             var co2 = spawn tk(:2)
-            broadcast 1
-            broadcast 2
-            broadcast 3
+            broadcast(1)
+            broadcast(2)
+            broadcast(3)
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
         assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
@@ -234,7 +234,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }      ;; awakes from co2 termination
                 println(1)
             }) ()
-            broadcast nil
+            broadcast(nil)
         """)
         assert(out == "2\n1\n") { out }
     }
@@ -248,7 +248,7 @@ class Exec_04 {
                 println(e)
             }
             var co = spawn(tk)(1)
-            broadcast 2
+            broadcast(2)
         """)
         assert(out == "1\n2\n") { out }
     }
@@ -256,7 +256,7 @@ class Exec_04 {
     fun dd_07_bcast() {
         val out = test("""
             func () {
-                 broadcast 1
+                 broadcast(1)
             }
             println(1)
         """)
@@ -272,7 +272,7 @@ class Exec_04 {
             }
             var t = spawn T()
             do {
-                broadcast 1
+                broadcast(1)
             }
         """)
         assert(out.contains(":ok\n")) { out }
@@ -289,9 +289,9 @@ class Exec_04 {
             var co1 = spawn (tk) ()
             var co2 = spawn tk ()
             do {
-                 broadcast 1
-                 broadcast 2
-                 broadcast 3
+                 broadcast(1)
+                 broadcast(2)
+                 broadcast(3)
             }
         """)
         //assert(out == "2\n2\n") { out }
@@ -316,10 +316,10 @@ class Exec_04 {
                 }
             }
             spawn tk ()
-            broadcast 1
-            broadcast 2
-            broadcast 3
-            broadcast 4
+            broadcast(1)
+            broadcast(2)
+            broadcast(3)
+            broadcast(4)
         """)
         assert(out == "1\n2\n2\n3\n") { out }
     }
@@ -332,7 +332,7 @@ class Exec_04 {
                 println(:2, e)                
             }
             spawn T()
-            broadcast 10
+            broadcast(10)
         """)
         assert(out == ":1\n:2\t10\n") { out }
     }
@@ -348,9 +348,9 @@ class Exec_04 {
             var co1 = spawn tk ()
             var co2 = spawn tk ()
             ;;func () {
-                 broadcast 1
-                 broadcast 2
-                 broadcast 3
+                 broadcast(1)
+                 broadcast(2)
+                 broadcast(3)
             ;;}()
         """)
         assert(out == "2\n2\n") { out }
@@ -373,9 +373,9 @@ class Exec_04 {
             ;;catch {
                 ;;func () {
                     println(:2)
-                    broadcast 20
+                    broadcast(20)
                     println(:3)
-                    broadcast 30
+                    broadcast(30)
                 ;;}()
             ;;}
         """
@@ -386,7 +386,7 @@ class Exec_04 {
     fun dd_15_bcast() {
         val out = test(
             """
-            broadcast []
+            broadcast ([])
             println(:ok)
             """
         )
@@ -401,7 +401,7 @@ class Exec_04 {
                 }
             }
             spawn T()
-            broadcast tags([],:X,true)
+            broadcast (tags([],:X,true))
         """)
         assert(out == "true\n") { out }
     }
@@ -441,9 +441,9 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 throw(:err)
             }()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -454,9 +454,9 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 throw(:err)
             }()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -470,9 +470,9 @@ class Exec_04 {
                 }()
                 yield(nil) { as it => nil }
             }()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -518,9 +518,9 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 throw(:err)
             }()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -533,9 +533,9 @@ class Exec_04 {
             }
             spawn T()
             spawn T()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 8, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -549,7 +549,7 @@ class Exec_04 {
             spawn T(10)
             ;;catch {
                 ;;func () {
-                    broadcast []
+                    broadcast ([])
                 ;;}()
             ;;}
         """)
@@ -560,7 +560,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 9, col 21) : broadcast []\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 9, col 21) : broadcast []\n" +
+        assert(out == " |  anon : (lin 9, col 21) : broadcast([])\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -573,7 +573,7 @@ class Exec_04 {
             spawn T(10)
             catch { as it => (do { println(it) ; true }) } in {
                 ;;func () {
-                    broadcast []
+                    broadcast ([])
                 ;;}()
             }
         """)
@@ -592,9 +592,9 @@ class Exec_04 {
                 ${AWAIT()}
                 println(1)
             })()
-            broadcast nil
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast nil\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -615,7 +615,7 @@ class Exec_04 {
             } ()
             catch {as it => true} in {                            ;; catch 2nd (no catch)
                 println(111)
-                broadcast nil
+                broadcast(nil)
                 println(444)
             }
             println(:END)
@@ -690,7 +690,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 println(:2)
             }()
-            broadcast nil
+            broadcast(nil)
         """)
         assert(out.contains(":1\n:2\n:ok\texe-task: 0x")) { out }
     }
@@ -712,8 +712,8 @@ class Exec_04 {
                     }
                 }
             } ()
-            broadcast :a
-            broadcast :b
+            broadcast(:a)
+            broadcast (:b)
         """)
         assert(out == ":0\n:1\t:a\n:2\ttrue\n") { out }
     }
@@ -729,7 +729,7 @@ class Exec_04 {
             }
             spawn T(10)
             ;;func () {
-                broadcast []
+                broadcast ([])
             ;;}()
         """)
         //assert(out == "[]\n") { out }
@@ -739,7 +739,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 8, col 17) : broadcast []\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 8, col 17) : broadcast []\n" +
+        assert(out == " |  anon : (lin 8, col 17) : broadcast([])\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -752,7 +752,7 @@ class Exec_04 {
             }
             spawn T(10)
             ;;func () {
-                broadcast []
+                broadcast ([])
             ;;}()
         """)
         assert(out == "[]\n") { out }
@@ -767,14 +767,14 @@ class Exec_04 {
             }
             spawn T()
             spawn T()
-            broadcast []
+            broadcast ([])
         """)
         //assert(out == "[]\n" +
         //        " |  anon : (lin 9, col 13) : broadcast []\n" +
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
-        assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast([])\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -785,7 +785,7 @@ class Exec_04 {
                 println(v)                
             }
             spawn T([])
-            broadcast nil
+            broadcast(nil)
         """)
         //assert(out == ":1\n10\n10\n:2\ndeclaration error : incompatible scopes\n") { out }
         assert(out == "[]\n") { out }
@@ -808,9 +808,9 @@ class Exec_04 {
             val e = catch {as it=>true} in {
                 ;;func () {
                     println(:2)
-                    broadcast [20]
+                    broadcast ([20])
                     println(:3)
-                    broadcast @[(30,30)]
+                    broadcast (@[(30,30)])
                 ;;}()
             }
             println(e)
@@ -834,7 +834,7 @@ class Exec_04 {
                 yield(nil) { as it=>f(it) }
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
         assert(out == "[1]\n") { out }
     }
@@ -848,7 +848,7 @@ class Exec_04 {
                 yield(nil) { as it => f(it) }
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
         assert(out == "[1]\n") { out }
     }
@@ -864,7 +864,7 @@ class Exec_04 {
                 yield(nil) { as it => f(it) }
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
         assert(out == "[1]\n") { out }
     }
@@ -883,7 +883,7 @@ class Exec_04 {
                     do {
                         do {
                             do {
-                                broadcast []
+                                broadcast ([])
                             }
                         }
                     }
@@ -891,7 +891,7 @@ class Exec_04 {
             }
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 14, col 33) : broadcast []\n" +
+        assert(out == " |  anon : (lin 14, col 33) : broadcast([])\n" +
                 " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -909,20 +909,20 @@ class Exec_04 {
             do {
                 do {
                     do {
-                        broadcast []
+                        broadcast ([])
                     }
                 }
             }
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 14, col 25) : broadcast []\n" +
+        assert(out == " |  anon : (lin 14, col 25) : broadcast([])\n" +
                 " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
     // SCOPE / TUPLE / NEST
 
     @Test
-    fun gh_01_set() {
+    fun todo_gh_01_set() {
         val out = test("""
             spawn task () {
                 var t = [1]
@@ -946,7 +946,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 println(t)
             } ()
-            broadcast nil
+            broadcast(nil)
         """)
         assert(out == "[2]\n") { out }
     }
@@ -976,7 +976,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 println(t)
             } ()
-            broadcast [1]
+            broadcast ([1])
         """, true)
         assert(out == "[1]\n") { out }
     }
@@ -993,7 +993,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
                 println(t)
             } ()
-            broadcast [1]
+            broadcast ([1])
         """, true)
         assert(out == "[1]\n") { out }
     }
@@ -1026,7 +1026,7 @@ class Exec_04 {
             val t = spawn (task () {
                 yield(nil) { as it => nil }
             }) ()
-            broadcast nil
+            broadcast(nil)
             println(status(t))
         """)
         assert(out == ":terminated\n") { out }
@@ -1037,9 +1037,9 @@ class Exec_04 {
     @Test
     fun jj_01_bcast_in_err() {
         val out = test("""
-            broadcast in nil, nil
+            broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 26) : broadcast error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 32) : broadcast error : expected task\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {
@@ -1051,7 +1051,7 @@ class Exec_04 {
             }
             val t1 = spawn T (1)
             val t2 = spawn T (2)
-            broadcast in t1, nil
+            broadcast (nil) in t1
         """)
         assert(out == "1\n") { out }
     }
@@ -1064,12 +1064,12 @@ class Exec_04 {
                 spawn task () {
                     println(${AWAIT()})
                 } ()
-                broadcast 10
+                broadcast(10)
             }
             val t1 = spawn T(1)
             val t2 = spawn T(2)
             do {
-                broadcast in t1, nil
+                broadcast (nil) in t1
             }
         """)
         assert(out == "1\n10\n") { out }
@@ -1091,7 +1091,7 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast drop(e)
+            broadcast (drop(e))
             println(e)
             """
         )
@@ -1099,7 +1099,7 @@ class Exec_04 {
         //assert(out == "anon : (lin 10, col 13) : broadcast move(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 12, col 13) : broadcast drop(e)\n" +
+        assert(out == " |  anon : (lin 12, col 13) : broadcast(drop(e))\n" +
                 " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1230,7 +1230,7 @@ class Exec_04 {
                 } ()
                 println(xxx)
             } ()
-            broadcast nil
+            broadcast(nil)
         """)
         assert(out == "10\n") { out }
     }
@@ -1246,7 +1246,7 @@ class Exec_04 {
                 println(xxx)
             } ()
             do {
-                broadcast nil
+                broadcast(nil)
             }
         """)
         assert(out == "10\n") { out }
@@ -1263,7 +1263,7 @@ class Exec_04 {
                 yield(nil) { as it => nil }
             } ()
             coroutine(coro () { nil })
-            broadcast nil
+            broadcast(nil)
        """)
         assert(out == "[]\n") { out }
     }
@@ -1308,11 +1308,11 @@ class Exec_04 {
             catch { as it => it==:1 } in {
                 ;;func () {
                     println(1)
-                    broadcast 1
+                    broadcast(1)
                     println(2)
-                    broadcast 2
+                    broadcast(2)
                     println(3)
-                    broadcast 3
+                    broadcast(3)
                 ;;}()
             }
             println(99)
@@ -1327,7 +1327,7 @@ class Exec_04 {
                     yield(nil) { as it => nil }
                     println(:ok)
                 }) ()
-                broadcast :ok
+                broadcast (:ok)
             }
             spawn T(2)
         """)
@@ -1339,11 +1339,11 @@ class Exec_04 {
             spawn (task () {
                 spawn (task () {
                     yield(nil) { as it => nil }
-                    broadcast nil
+                    broadcast(nil)
                 }) ()
                 yield(nil) { as it => nil }
             }) ()
-            broadcast nil
+            broadcast(nil)
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -1367,8 +1367,8 @@ class Exec_04 {
                 throw(:e2)
             })()
             catch { as it => :e2 } in {
-                broadcast nil
-                broadcast nil
+                broadcast(nil)
+                broadcast(nil)
                 println(99)
             }
             println(:e2)
@@ -1403,7 +1403,7 @@ class Exec_04 {
                 println(:no)
             }) ()
             catch { as it => :e3 } in {
-                broadcast nil
+                broadcast(nil)
                 println(:no)
             }
             println(:ok3)
@@ -1423,12 +1423,12 @@ class Exec_04 {
                     ;;println(:BLOCK2, `:pointer ceu_block`)
                     yield(nil) { as it => nil }
                     ;;println(:1)
-                    broadcast nil
+                    broadcast(nil)
                 }) ()
                 yield(nil) { as it => nil }
                 ;;println(:2)
             }) ()
-            broadcast nil
+            broadcast(nil)
             println(1)
         """)
         assert(out == "1\n") { out }
@@ -1446,7 +1446,7 @@ class Exec_04 {
             set co = spawn tk()
             ;;var f = func () {
                 ;;var g = func () {
-                    broadcast []
+                    broadcast ([])
                 ;;}
                 ;;g()
             ;;}
@@ -1472,7 +1472,7 @@ class Exec_04 {
             var co
             set co = spawn(tk)()
             ;;var f = func () {
-                broadcast []
+                broadcast ([])
             ;;}
             ;;f()
         """
@@ -1490,7 +1490,7 @@ class Exec_04 {
             }
             var t = spawn T()
             ;;println(:1111)
-            broadcast []
+            broadcast ([])
             ;;println(:2222)
             """
         )
@@ -1512,14 +1512,14 @@ class Exec_04 {
             var t = spawn T()
             ;;println(:1111)
             var e = []
-            broadcast e
+            broadcast (e)
             ;;println(:2222)
             """
         )
         //assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
         //        " v  anon : (lin 5, col 25) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
+        assert(out == " |  anon : (lin 12, col 13) : broadcast(e)\n" +
                 " v  anon : (lin 5, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1537,7 +1537,7 @@ class Exec_04 {
                     val b
                     do {
                         var e = []
-                        broadcast e
+                        broadcast (e)
                     }
                 }
             }
@@ -1550,7 +1550,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : broadcast e\n" +
+        assert(out == " |  anon : (lin 13, col 25) : broadcast(e)\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1563,7 +1563,7 @@ class Exec_04 {
             var t = spawn T()
             do {
                 var e = []
-                broadcast e
+                broadcast (e)
             }
             """
         )
@@ -1585,7 +1585,7 @@ class Exec_04 {
                 do {
                     val b
                     var e = []
-                    broadcast e
+                    broadcast (e)
                 }
             }
             ;;println(:2222)
@@ -1596,7 +1596,7 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 14, col 21) : broadcast e\n" +
+        assert(out == " |  anon : (lin 14, col 21) : broadcast(e)\n" +
                 " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1623,7 +1623,7 @@ class Exec_04 {
                 }
             }
             var t2 = spawn T2()
-            broadcast []
+            broadcast ([])
             println(`:number ceu_gc_count`)
             """
         )
@@ -1644,7 +1644,7 @@ class Exec_04 {
                 yield(nil) {as it => fff(it)}
             }
             spawn T()
-            broadcast [1]
+            broadcast ([1])
         """)
         assert(out == "[1]\n") { out }
     }
@@ -1659,9 +1659,9 @@ class Exec_04 {
                 f(yield(nil) {as it => it})
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
                 " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
@@ -1680,12 +1680,12 @@ class Exec_04 {
                 f(evt)
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
         //assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
         //        " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
-        assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
                 " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1699,7 +1699,7 @@ class Exec_04 {
                 yield(nil) { as it => f(it) }
             }
             spawn T()
-            broadcast [[1]]
+            broadcast ([[1]])
         """)
         assert(out == "[1]\n") { out }
     }
@@ -1737,7 +1737,7 @@ class Exec_04 {
                     println(999)
                 } ()
                 println(5)
-                broadcast nil
+                broadcast(nil)
                 println(9999)
             }
             println(7)
@@ -1756,7 +1756,7 @@ class Exec_04 {
                 } ()
                 yield(nil) { as it => nil }
             } ()
-            broadcast []
+            broadcast ([])
         """)
         assert(out == "[]\n") { out }
     }
