@@ -2017,6 +2017,7 @@ fun Coder.main (tags: Tags): String {
         #endif
     """ +
     """ // GLOBALS
+        int CEU_BREAK = 0;
         CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
         CEU_Frame _ceu_frame_ = { &_ceu_block_, NULL CEU3(COMMA {.exe=NULL}) };
         CEU_Frame* ceu_frame = &_ceu_frame_;

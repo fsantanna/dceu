@@ -1268,6 +1268,51 @@ class Exec_04 {
         assert(out == "[]\n") { out }
     }
 
+    // ABORTION
+
+    @Test
+    fun mm_01_nested() {
+        val out = test("""
+            spawn task () {
+                println(:1)
+                do {
+                    println(:2)
+                    spawn task () {
+                        defer {
+                            println(:defer)
+                        }
+                        yield(nil) { as it => nil }
+                    } ()
+                    println(:3)
+                }
+                println(:4)
+            } ()
+       """)
+        assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
+    }
+    @Test
+    fun mm_02_nested() {
+        val out = test("""
+            $PLUS
+            println(:1)
+            var x = 0
+            xloop {
+                xbreak if x == 2
+                set x = x + 1
+                println(:2)
+                spawn task () {
+                    defer {
+                        println(:defer)
+                    }
+                    yield(nil) { as it => nil }
+                } ()
+                println(:3)
+            }
+            println(:4)
+       """)
+        assert(out == ":1\n:2\n:3\n:defer\n:2\n:3\n:defer\n:4\n") { out }
+    }
+
     // ORIG
 
     @Test

@@ -208,14 +208,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
 
-                val loop_body = if (up !is Expr.XLoop) body else """
-                    // LOOP | ${up.dump()}
-                    CEU_LOOP_START_${up.n}:
-                        $body
-                        goto CEU_LOOP_START_${up.n};
-                    CEU_LOOP_STOP_${up.n}:
-                """
-
                 """
                 { // BLOCK | ${this.dump()}
                     // CEU_Block ceu_block;
@@ -348,7 +340,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                             else -> ""
                         }}
-                        $loop_body
+                        $body
+                        ${(up is Expr.XLoop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
                     // defers execute
@@ -514,11 +507,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.XLoop -> this.blk.code()
+            is Expr.XLoop -> """
+                // LOOP | ${this.dump()}
+                CEU_LOOP_START_${this.n}:
+                    ${this.blk.code()}
+                    if (CEU_BREAK) {
+                        CEU_BREAK = 0;
+                    } else {
+                        goto CEU_LOOP_START_${this.n};
+                    }
+            """
             is Expr.XBreak -> """ // XBREAK | ${this.dump()}
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
                     ${this.e.cond { it.code() }}
+                    CEU_BREAK = 1;
                     goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.XLoop }!!.n};
                 }
             """
