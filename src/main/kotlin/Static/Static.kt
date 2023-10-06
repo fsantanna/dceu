@@ -126,8 +126,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.Bcast  -> {
-                this.xin?.traverse()
-                this.evt.traverse()
+                this.call.traverse()
                 when {
                     ups.any(this) { blk ->
                         ups.pub[blk].let { dtrk ->

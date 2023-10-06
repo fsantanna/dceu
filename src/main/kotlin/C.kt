@@ -295,7 +295,7 @@ fun Coder.main (tags: Tags): String {
     """ // PROTOS
         CEU_Value ceu_type_f (CEU_Frame* _1, int n, CEU_Value args[]);
         int ceu_as_bool (CEU_Value v);
-        
+
         CEU_Value ceu_tags_f (CEU_Frame* _1, int n, CEU_Value args[]);
         char* ceu_tag_to_string (int tag);
         int ceu_tag_to_size (int type);
@@ -338,6 +338,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
         int ceu_istask (CEU_Value v);
+        CEU_Value ceu_toref (CEU_Value v);
         CEU_Value ceu_deref (CEU_Value v);
         #endif
     """ +
@@ -1215,6 +1216,20 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
+
+        CEU_Value ceu_broadcast_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n >= 1);
+            CEU_Value evt = args[0];
+            if (n == 1) {
+                return ceu_bcast_blocks(ceu_bcast_global(frame->up_block), ceu_toref(evt));
+            } else {
+                CEU_Value tsk = args[1];
+                if (!ceu_istask(tsk)) {
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
+                }
+                return ceu_bcast_task(&tsk.Dyn->Exe_Task, ceu_toref(evt));
+            }
+        }        
     #endif
     """ +
     """ // TUPLE / VECTOR / DICT
@@ -2073,6 +2088,10 @@ fun Coder.main (tags: Tags): String {
         };
         #endif
         #if CEU >= 4
+        CEU_Clo ceu_broadcast = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
+            &_ceu_frame_, ceu_broadcast_f, {0,NULL}
+        };
         CEU_Clo ceu_pub = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_pub_f, {0,NULL}
@@ -2111,6 +2130,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value id_status                  = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_status}                  };
         #endif
         #if CEU >= 4
+        CEU_Value id_broadcast               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_broadcast}               };
         CEU_Value id_pub                     = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pub}                     };
         #endif
         #if CEU >= 5

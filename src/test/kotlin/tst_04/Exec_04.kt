@@ -1039,7 +1039,7 @@ class Exec_04 {
         val out = test("""
             broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 32) : broadcast error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : broadcast(nil,nil) error : expected task\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {
@@ -1627,8 +1627,8 @@ class Exec_04 {
             println(`:number ceu_gc_count`)
             """
         )
-        //assert(out == "0\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +

@@ -607,33 +607,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
 
             is Expr.Spawn -> this.call.code()
-            is Expr.Bcast -> {
-                val bup = ups.first_block(this)!!
-                val bupc = bup.idc("block")
-                val ylds = sta.ylds.contains(bup)
-                val evtc = this.idc("evt")
-                """
-                { // BCAST ${this.dump()}
-                    ${this.evt.code()}
-                    ${(!ylds).cond { "CEU_Value ceu_evt_$n;" }}
-                    $evtc = ceu_acc;
-                    ${this.xin.cond2({
-                        it.code() + """
-                            if (!ceu_istask(ceu_acc)) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="broadcast error : expected task"} };
-                                CEU_ERROR($bupc, "${this.xin!!.tk.pos.file} : (lin ${this.xin!!.tk.pos.lin}, col ${this.xin!!.tk.pos.col})", err);
-                            }
-                            ceu_acc = ceu_bcast_task(&ceu_acc.Dyn->Exe_Task, ceu_toref($evtc));
-                        """
-                    }, { """
-                        //ceu_acc = ceu_bcast_blocks(&_ceu_block_, $evtc);
-                        ceu_acc = ceu_bcast_blocks(ceu_bcast_global($bupc), ceu_toref($evtc));
-                    """ })}
-                    ceu_gc_chk(ceu_deref($evtc));  // bcasts ref([...]) w/o assign
-                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                }
-                """
-            }
+            is Expr.Bcast -> this.call.code()
             is Expr.Dtrack -> {
                 val bupc = ups.first_block(this)!!.idc("block")
                 """

@@ -369,7 +369,12 @@ class Parser (lexer_: Lexer)
                 val xin = if (!this.acceptFix("in")) null else {
                     this.expr()
                 }
-                Expr.Bcast(tk0, xin, evt)
+                Expr.Bcast(tk0,
+                    Expr.Call(tk0,
+                        Expr.Acc(Tk.Id("broadcast", tk0.pos, 0)),
+                        listOf(evt) + listOfNotNull(xin)
+                    )
+                )
             }
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0 as Tk.Fix

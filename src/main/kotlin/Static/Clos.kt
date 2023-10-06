@@ -47,7 +47,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Resume -> this.call.traverse()
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.call.traverse() }
-            is Expr.Bcast  -> { this.xin?.traverse() ; this.evt.traverse() }
+            is Expr.Bcast  -> this.call.traverse()
             is Expr.Dtrack-> { this.trk.traverse() ; this.blk.traverse() }
 
             is Expr.Nat    -> {}

@@ -16,7 +16,7 @@ fun Expr.coexists (): Boolean {
         is Expr.Resume -> this.call.coexists()
 
         is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.call.coexists()
-        is Expr.Bcast  -> (this.xin?.coexists() ?: false) || this.evt.coexists()
+        is Expr.Bcast  -> this.call.coexists()
         is Expr.Dtrack -> this.trk.coexists() || this.blk.coexists()
 
         is Expr.Tuple  -> this.args.any { it.coexists() }
@@ -118,15 +118,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 };
             };
         """
-        is Expr.Bcast -> """
-            struct { // BCAST
-                CEU_Value evt_$n;
-                $union {
-                    ${this.xin?.mem(sta, defers) ?: ""}
-                    ${this.evt.mem(sta, defers)}
-                };
-            };
-            """
+        is Expr.Bcast -> this.call.mem(sta, defers)
         is Expr.Dtrack -> """
             $union { // DTRACK
                 ${this.trk.mem(sta, defers)}
