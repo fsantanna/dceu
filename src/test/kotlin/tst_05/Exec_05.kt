@@ -31,7 +31,7 @@ class Exec_05 {
                 println(:in)
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             println(:out)
         """)
         assert(out == ":in\n:out\n") { out }
@@ -39,7 +39,7 @@ class Exec_05 {
     @Test
     fun aa_04_tasks() {
         val out = test("""
-            spawn in tasks(), (task () { println(:in) })()
+            spawn (task () { println(:in) })() in tasks()
             println(:out)
         """)
         assert(out == ":in\n:out\n") { out }
@@ -52,7 +52,7 @@ class Exec_05 {
                 println(:in)
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             println(:out)
             broadcast(nil)
         """)
@@ -65,8 +65,8 @@ class Exec_05 {
                 nil
             }
             val ts = tasks(1)
-            val ok1 = spawn in ts, T()
-            val ok2 = spawn in ts, T()
+            val ok1 = spawn T() in ts 
+            val ok2 = spawn T() in ts
             println(ok1, ok2)
         """)
         assert(out == "true\ttrue\n") { out }
@@ -78,7 +78,7 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             val ts = tasks()
-            val ok = spawn in ts, T()
+            val ok = spawn T() in ts
             println(ok)
         """)
         assert(out == "true\n") { out }
@@ -90,8 +90,8 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             val ts = tasks(1)
-            val ok1 = spawn in ts, T()
-            val ok2 = spawn in ts, T()
+            val ok1 = spawn T() in ts
+            val ok2 = spawn T() in ts
             println(ok1, ok2)
         """)
         assert(out == "true\tfalse\n") { out }
@@ -237,7 +237,7 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             val x = next(ts)
             ;;dump(x)
             broadcast(nil)
@@ -305,7 +305,7 @@ class Exec_05 {
                 ${AWAIT()}
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             val f = func () {
                 broadcast(nil)
             }
@@ -402,7 +402,7 @@ class Exec_05 {
                 }()
                 yield(nil) { as it => nil }
             }
-            spawn in tasks(), T()
+            spawn T() in tasks()
             broadcast(nil)
         """)
         assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
@@ -431,7 +431,7 @@ class Exec_05 {
                 ${AWAIT()}
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             val x = next(ts)
             var t
             detrack(x) { as it =>
@@ -490,7 +490,7 @@ class Exec_05 {
             }
             val x = do {
                 val ts = tasks()
-                spawn in ts, T()
+                spawn T() in ts 
                 next(ts)
             }
         """)
@@ -504,7 +504,7 @@ class Exec_05 {
             }
             val ts = tasks()
             val x = do {
-                spawn in ts, T()
+                spawn T() in ts
                 next(ts)
             }
             detrack(x) { as it =>
@@ -539,8 +539,8 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             val ts = tasks()
-            spawn in ts, T()
-            spawn in ts, T()
+            spawn T() in ts
+            spawn T() in ts
             val x1 = next(ts)
             val x2 = next(ts, x1)
             val x3 = next(ts, x2)
@@ -560,7 +560,7 @@ class Exec_05 {
                 yield(nil) { as it => nil }
             }
             val ts = tasks()
-            spawn in ts, T()
+            spawn T() in ts
             val x = next(ts)
             broadcast(nil)
             next(ts, x)
@@ -575,8 +575,8 @@ class Exec_05 {
                 ${AWAIT("it == v")}
             }
             val ts = tasks()
-            spawn in ts, T(1)
-            spawn in ts, T(2)
+            spawn T(1) in ts
+            spawn T(2) in ts
             val x1 = next(ts)
             val x2 = next(ts, x1)
             broadcast(1)

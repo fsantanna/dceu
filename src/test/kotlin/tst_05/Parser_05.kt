@@ -9,35 +9,36 @@ class Parser_05 {
     @Test
     fun aa_01_tasks_err() {
         val l = lexer("""
-            spawn in nil, {}
+            spawn {} in nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \"{\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : expected expression : have \"{\"")
     }
     @Test
     fun aa_02_tasks_err() {
         val l = lexer("""
-            spawn in ()
+            spawn f() in ()
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 23) : expected expression : have \")\"")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 27) : expected expression : have \")\"")
     }
     @Test
     fun aa_03_tasks_err() {
         val l = lexer("""
-            spawn in nil, f
+            spawn f in nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : invalid spawn : expected call")
     }
     @Test
     fun aa_04_tasks() {
         val l = lexer("""
-            spawn in ts, T()
+            spawn T() in ts
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "spawn in ts, T()\n") { e.tostr() }
+        assert(e.tostr() == "spawn T() in ts\n") { e.tostr() }
     }
 
     // DETRACK
