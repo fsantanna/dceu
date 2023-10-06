@@ -112,12 +112,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             if (!CEU_ISERR(ceu_acc)) {
                                 ${(this.tk.str == "task").cond { """
                                     {
-                                        CEU_Block* ceu_block_$n = CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task);
-                                        CEU_Frame* ceu_frame_$n = ceu_block_frame(ceu_block_$n);
-                                        if (ceu_frame_$n->exe!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)ceu_frame_$n->exe))) {
+                                        CEU_Frame* ceu_frame_$n = ceu_block_frame(ceu_frame->up_block);
+                                        if (ceu_frame_$n!=NULL && ceu_frame_$n->exe!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)ceu_frame_$n->exe))) {
+                                            // enclosing coro of enclosing block
                                             ceu_acc = ceu_bcast_task(ceu_frame_$n->exe_task, ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
                                         } else { 
-                                            ceu_acc = ceu_bcast_blocks(ceu_block_$n, ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
+                                            // enclosing block
+                                            ceu_acc = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
                                         }                                        
                                      }
                                 """ }}
@@ -196,7 +197,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 val (depth,bf,ptr) = when {
                     (f_b == null) -> Triple("1", "1", "{.frame=&_ceu_frame_}")
-                    (f_b is Expr.Proto) -> Triple("ceu_frame->up_block->depth + 1", "1", "{.frame=ceu_frame}")
+                    (f_b is Expr.Proto) -> Triple (
+                        "(ceu_frame->up_block->depth + 1)", "1",
+                        "{.frame=${if (f_b.tk.str=="func") "ceu_frame" else "&ceu_frame->exe->frame"}}")
                     else -> Triple("($bupc->depth + 1)", "0", "{.block=$bupc}")
                 }
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()

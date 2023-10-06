@@ -1039,7 +1039,7 @@ class Exec_04 {
         val out = test("""
             broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast(nil,nil) error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : broadcast(nil,nil) : expected task\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {

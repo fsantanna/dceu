@@ -758,7 +758,13 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BLOCK / FREE
         CEU_Frame* ceu_block_frame (CEU_Block* blk) {
-            return (blk->istop) ? blk->up.frame : ceu_block_frame(blk->up.block);
+            if (blk->istop) {
+                return blk->up.frame;
+            } else if (blk->up.block == NULL) {
+                return NULL;
+            } else {
+                ceu_block_frame(blk->up.block);
+            }
         }
         
         void ceu_dyn_free (CEU_Dyn* dyn) {
