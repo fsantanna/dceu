@@ -1155,7 +1155,6 @@ class Exec_03 {
         assert(out == "[]\t[]\n") { out }
     }
 
-
     // ALL
 
     @Test

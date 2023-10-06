@@ -9,7 +9,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
         outer.traverse()
     }
 
-    // ylds: block yields -> vars must be in mem
+    // ylds: block yields -> vars must be in Mem (TODO: spawn also, see gh_01_set)
     // void: block is innocuous -> should be a proxy to up block
 
     fun void (blk: Expr.Do): Boolean {

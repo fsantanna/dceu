@@ -221,7 +221,7 @@ class Exec_04 {
             broadcast 3
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\tpointer: 0x")) { out }
+        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
     }
     @Test
     fun dd_05_bcast() {
@@ -295,7 +295,7 @@ class Exec_04 {
             }
         """)
         //assert(out == "2\n2\n") { out }
-        assert(out.contains("2\npointer: 0x")) { out }
+        assert(out.contains("2\nexe-task: 0x")) { out }
     }
     @Test
     fun dd_10_bcast() {
@@ -649,7 +649,7 @@ class Exec_04 {
     // TASK TERMINATION
 
     @Test
-    fun ff_01_term() {
+    fun ff_00_term() {
         val out = test("""
             spawn task () {
                 val e = yield(nil) { as it => it }
@@ -659,7 +659,22 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out.contains(":ok\tpointer: 0x")) { out }
+        assert(out.contains(" |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+                " v  anon : (lin 3, col 36) : block escape error : cannot move to deeper scope with pending references")) { out }
+    }
+    @Test
+    fun ff_01_term() {
+        val out = test("""
+            spawn task () {
+                yield(nil) { as it =>
+                    println(:ok, it)
+                }
+            }()
+            spawn task () {
+                nil
+            }()
+        """)
+        assert(out.contains(":ok\texe-task: 0x")) { out }
     }
     @Test
     fun ff_02_term() {
@@ -667,8 +682,9 @@ class Exec_04 {
             spawn task () {
                 yield(nil) { as it => nil }
                 println(:1)
-                val e = yield(nil) { as it => it }
-                println(:ok, e)
+                yield(nil) { as it =>
+                    println(:ok, it)
+                }
             }()
             spawn task () {
                 yield(nil) { as it => nil }
@@ -676,7 +692,30 @@ class Exec_04 {
             }()
             broadcast nil
         """)
-        assert(out.contains(":1\n:2\n:ok\tpointer: 0x")) { out }
+        assert(out.contains(":1\n:2\n:ok\texe-task: 0x")) { out }
+    }
+    @Test
+    fun ff_03_term() {
+        val out = test("""
+            spawn task () {
+                val t = spawn task () {
+                    yield(nil) { as it =>
+                        println(:1, it)
+                    }
+                }()
+                println(:0)
+                yield(nil) { as it =>
+                    if (type(it) == :exe-task) {
+                        println(:2, it == t)
+                    } else {
+                        nil
+                    }
+                }
+            } ()
+            broadcast :a
+            broadcast :b
+        """)
+        assert(out == ":0\n:1\t:a\n:2\ttrue\n") { out }
     }
 
     // SCOPE / BCAST
@@ -878,6 +917,85 @@ class Exec_04 {
         //assert(out == "[]\n") { out }
         assert(out == " |  anon : (lin 14, col 25) : broadcast []\n" +
                 " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
+    }
+
+    // SCOPE / TUPLE / NEST
+
+    @Test
+    fun gh_01_set() {
+        val out = test("""
+            spawn task () {
+                var t = [1]
+                spawn task () {
+                    set t = [2]
+                } ()
+                println(t)
+            } ()
+        """)
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun dh_02_set() {
+        val out = test("""
+            spawn task () {
+                var t = [1]
+                spawn task () {
+                    yield(nil) { as it => nil }
+                    set t = [2]
+                } ()
+                yield(nil) { as it => nil }
+                println(t)
+            } ()
+            broadcast nil
+        """)
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun gh_03_set() {
+        val out = test("""
+            spawn task () {
+                var t = [1]
+                func () {
+                    set t = [2]
+                } ()
+                println(t)
+            } ()
+        """)
+        assert(out == "[2]\n") { out }
+    }
+    @Test
+    fun dh_04_set() {
+        val out = test("""
+            spawn task () {
+                var t = [1]
+                spawn task () {
+                    yield(nil) { as it =>
+                        set t = copy(it)
+                    }
+                } ()
+                yield(nil) { as it => nil }
+                println(t)
+            } ()
+            broadcast [1]
+        """, true)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun dh_05_set() {
+        val out = test("""
+            spawn task () {
+                var t = [1]
+                spawn task () {
+                    set t = yield(nil) { as it =>
+                        copy(it)
+                    }
+                } ()
+                yield(nil) { as it => nil }
+                println(t)
+            } ()
+            broadcast [1]
+        """, true)
+        assert(out == "[1]\n") { out }
     }
 
     // STATUS

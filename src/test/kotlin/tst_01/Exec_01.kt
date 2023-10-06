@@ -4445,6 +4445,25 @@ class Exec_01 {
         assert(out == "10\n") { out }
     }
 
+    // COPY
+
+    @Test
+    fun qq_01_copy() {
+        val out = test("""
+            println(copy(10), copy([]))
+        """, true)
+        assert(out == "10\t[]\n") { out }
+    }
+    @Test
+    fun qq_02_copy() {
+        val out = test("""
+            val t = [1,2,3]
+            val u = copy(t)
+            println(u == t)
+        """, true)
+        assert(out == "false\n") { out }
+    }
+
     // ALL
 
     @Test

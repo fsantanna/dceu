@@ -111,7 +111,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                             if (!CEU_ISERR(ceu_acc)) {
                                 ${(this.tk.str == "task").cond { """
-                                    ceu_acc = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), (CEU_Value) { CEU_VALUE_POINTER, {.Pointer=(CEU_Dyn*)ceu_frame->exe_task} });                     
+                                    {
+                                        CEU_Block* ceu_block_$n = CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task);
+                                        CEU_Frame* ceu_frame_$n = ceu_block_frame(ceu_block_$n);
+                                        if (ceu_frame_$n->exe!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)ceu_frame_$n->exe))) {
+                                            ceu_acc = ceu_bcast_task(ceu_frame_$n->exe_task, ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
+                                        } else { 
+                                            ceu_acc = ceu_bcast_blocks(ceu_block_$n, ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
+                                        }                                        
+                                     }
                                 """ }}
                             }
                         #if CEU >= 5

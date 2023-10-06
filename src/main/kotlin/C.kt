@@ -1193,7 +1193,7 @@ fun Coder.main (tags: Tags): String {
                         break;
                     }
                     case CEU_VALUE_TRACK:
-                        if (evt.type==CEU_VALUE_POINTER  && dyn->Track.task==(CEU_Exe_Task*)evt.Pointer) {
+                        if (ceu_istask(evt) && dyn->Track.task==(CEU_Exe_Task*)evt.Dyn) {
                             dyn->Track.task = NULL; // tracked coro is terminating
                         }
                         break;

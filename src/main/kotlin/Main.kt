@@ -58,8 +58,8 @@ val XOPERATORS = if (CEU < 99) setOf() else setOf("and", "not", "or")
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
-) + (if (CEU < 5) listOf() else listOf(
-    ":ref-task"
+) + (if (CEU < 4) listOf() else listOf(
+    ":ref"
 )) + listOf(
     ":dynamic",
     ":func",
@@ -187,7 +187,7 @@ fun AWAIT (v:String="true"): String {
     return """
         xloop {
             xbreak if yield(nil) { as it =>
-                if type(it) == :pointer {
+                if type(it) == :exe-task {
                     false
                 } else {
                     if $v {
