@@ -1271,7 +1271,7 @@ class Exec_04 {
     // ABORTION
 
     @Test
-    fun mm_01_nested() {
+    fun mm_01_abortion() {
         val out = test("""
             spawn task () {
                 println(:1)
@@ -1291,7 +1291,7 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n:defer\n:4\n") { out }
     }
     @Test
-    fun mm_02_nested() {
+    fun mm_02_abortion() {
         val out = test("""
             $PLUS
             println(:1)
@@ -1311,6 +1311,38 @@ class Exec_04 {
             println(:4)
        """)
         assert(out == ":1\n:2\n:3\n:defer\n:2\n:3\n:defer\n:4\n") { out }
+    }
+    @Test
+    fun mm_03_self() {
+        val out = test("""
+            spawn task () {
+                val t = spawn task () {
+                    yield(nil) { as it => nil }
+                } ()
+                yield (nil) { as it => nil }
+            } ()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+
+    // RETURN
+
+    @Test
+    fun nn_01_term() {
+        val out = test("""
+            spawn task () {
+                val t = spawn task () {
+                    yield(nil) { as it => nil }
+                    10
+                } ()
+                yield (nil) { as it => println(it) }
+            } ()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == "10\n:ok\n") { out }
     }
 
     // ORIG

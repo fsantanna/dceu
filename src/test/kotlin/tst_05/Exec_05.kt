@@ -585,4 +585,36 @@ class Exec_05 {
         )
         assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task in pool track\n") { out }
     }
+
+    // ABORTION
+
+    @Test
+    fun ii_01_self() {
+        val out = test("""
+            spawn task () {
+                val t = spawn task () {
+                    yield(nil) { as it => nil }
+                } ()
+                yield (nil) { as it => nil }
+            } ()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ii_02_self() {
+        val out = test("""
+            spawn task () {
+                val t = spawn task () {
+                    yield(nil) { as it => nil }
+                } () in tasks()
+                yield (nil) { as it => nil }
+            } ()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+
 }

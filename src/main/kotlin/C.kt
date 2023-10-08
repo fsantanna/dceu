@@ -763,7 +763,7 @@ fun Coder.main (tags: Tags): String {
             } else if (blk->up.block == NULL) {
                 return NULL;
             } else {
-                ceu_block_frame(blk->up.block);
+                return ceu_block_frame(blk->up.block);
             }
         }
         
@@ -1176,7 +1176,8 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_bcast_dyns (CEU_Dyn* dyn, CEU_Value evt) {
+        CEU_Value ceu_bcast_dyns (CEU_Dyns* dyns, CEU_Value evt) {
+            CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
                 CEU_Dyn* nxt = dyn->Any.hld.next;
                 switch (dyn->Any.type) {
@@ -1189,11 +1190,17 @@ fun Coder.main (tags: Tags): String {
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
+        #if CEU >= 5
+                        if (dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
+                            ceu_hold_rem((CEU_Dyn*)&dyn->Exe_Task, dyns);
+                            ceu_dyn_free((CEU_Dyn*)&dyn->Exe_Task);
+                        }
+        #endif
                         break;
                     }
         #if CEU >= 5
                     case CEU_VALUE_TASKS: {
-                        CEU_Value ret = ceu_bcast_dyns(dyn->Tasks.dyns.first, evt);
+                        CEU_Value ret = ceu_bcast_dyns(&dyn->Tasks.dyns, evt);
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
@@ -1214,7 +1221,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                CEU_Value ret = ceu_bcast_dyns(blk->dn.dyns.first, evt);
+                CEU_Value ret = ceu_bcast_dyns(&blk->dn.dyns, evt);
                 if (CEU_ISERR(ret)) {
                     return ret;
                 }
