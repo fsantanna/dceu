@@ -109,22 +109,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         // terminated
                         ${isexe.cond{"""
                             ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                            if (!CEU_ISERR(ceu_acc)) {
-                                ${(this.tk.str == "task").cond { """
-                                    {
-                                        CEU_Frame* ceu_frame_$n = ceu_block_frame(ceu_frame->up_block);
-                                        if (ceu_frame_$n!=NULL && ceu_frame_$n->exe!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)ceu_frame_$n->exe))) {
-                                            // enclosing coro of enclosing block
-                                            ceu_acc = ceu_bcast_task(ceu_frame_$n->exe_task, ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
-                                        } else { 
-                                            // enclosing block
-                                            ceu_acc = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task));
-                                        }                                        
-                                     }
-                                """ }}
-                            }
                         #if CEU >= 5
-                            if (ceu_frame->exe->type == CEU_VALUE_EXE_TASK_IN) {
+                            if (ceu_frame->exe->pc==0 && ceu_frame->exe->type==CEU_VALUE_EXE_TASK_IN) {
+                                // only if terminates from start, otherwise, bcast releases
                                 ceu_hold_rem((CEU_Dyn*)ceu_frame->exe CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe->hld.block))->dyns));
                                 ceu_dyn_free((CEU_Dyn*)ceu_frame->exe);
                             }
