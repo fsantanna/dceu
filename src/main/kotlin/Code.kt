@@ -127,11 +127,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         ceu_acc = ceu_bcast_blocks(ceu_up_task, CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), ceu_evt);
                                     }
                                 }
-                                if ((ceu_n==CEU_ARG_FREE CEU5(|| ceu_frame->exe_task->type==CEU_VALUE_EXE_TASK_IN)) && ceu_frame->exe_task->bcast_n==0) {
+                        #if CEU >= 5
+                                if (ceu_frame->exe_task->type==CEU_VALUE_EXE_TASK_IN && ceu_frame->exe_task->bcast_n<=1) {
                                     ceu_frame->exe_task->status = CEU_EXE_STATUS_TOFREE;
                                     ceu_hold_rem((CEU_Dyn*)ceu_frame->exe_task CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe_task->hld.block))->dyns));
                                     ceu_dyn_free((CEU_Dyn*)ceu_frame->exe_task);
                                 }
+                        #endif
                             """ }}
                         }
                         """}}

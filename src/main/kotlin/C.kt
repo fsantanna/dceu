@@ -761,7 +761,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BLOCK / FREE
         void ceu_dyn_free (CEU_Dyn* dyn) {
-            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>1) {
+            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
             while (dyn->Any.tags != NULL) {
@@ -879,7 +879,7 @@ fun Coder.main (tags: Tags): String {
             dyns->last = dyn;
         }
         void ceu_hold_rem (CEU_Dyn* dyn CEU5(COMMA CEU_Dyns* dyns)) {
-            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>1) {
+            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
         #if CEU < 5
@@ -1168,10 +1168,12 @@ fun Coder.main (tags: Tags): String {
                 if (CEU_ISERR(ret)) {
                     CEU_Value args[] = { ret };
                     ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, args);
+                    task->bcast_n--;
                 } else {
                     CEU_Value args[] = {  evt };
                     ret = task->frame.clo->proto(&task->frame, 1, args);
-                    if (task->status==CEU_EXE_STATUS_TOFREE && task->bcast_n==1) {
+                    task->bcast_n--;
+                    if (task->status==CEU_EXE_STATUS_TOFREE && task->bcast_n==0) {
                         ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA
                             (task->type == CEU_VALUE_EXE_TASK_IN) ?
                                 &((CEU_Tasks*)(task->hld.block))->dyns :
@@ -1180,8 +1182,9 @@ fun Coder.main (tags: Tags): String {
                         ceu_dyn_free((CEU_Dyn*)task);
                     }
                 }
+            } else {
+                task->bcast_n--;
             }
-            task->bcast_n--;
             return ret;
         }
 
