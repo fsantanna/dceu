@@ -1326,11 +1326,38 @@ class Exec_04 {
        """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun mm_04_self() {
+        val out = test("""
+            do {
+                spawn task () {
+                    do {
+                        val t1 = spawn task () {
+                            val t2 = spawn task () {
+                                yield(nil) { as it => nil }
+                                println(:1)
+                            } ()
+                            ${AWAIT("t2")}
+                            println(:2)
+                        } ()
+                        ${AWAIT("t1")}
+                        println(:3)
+                    }
+                    ${AWAIT(":X")}
+                    println(:99)
+                } ()
+                println(:0)
+                broadcast(nil)
+                println(:4)
+            }
+       """)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
 
     // RETURN
 
     @Test
-    fun nn_01_term() {
+    fun todo_nn_01_term() {
         val out = test("""
             spawn task () {
                 val t = spawn task () {

@@ -169,7 +169,7 @@ class Exec_05 {
             val v = detrack(t) { as it => 10 }
             println(v)
         """)
-        assert(out.contains(" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
+        assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
     }
     @Test
     fun cc_04_detrack() {
@@ -181,7 +181,7 @@ class Exec_05 {
             val v = detrack(x) { as it => 10 }
             println(v)
         """)
-        assert(out.contains("nil\n")) { out }
+        assert(out == ("nil\n")) { out }
     }
     @Test
     fun cc_05_detrack() {
@@ -192,14 +192,14 @@ class Exec_05 {
             val v = detrack(x) { as it => 10 }
             println(v)
         """)
-        assert(out.contains("10\n")) { out }
+        assert(out == ("10\n")) { out }
     }
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
             detrack(nil) { as it => broadcast(nil) }
         """)
-        assert(out.contains("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
+        assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
     }
     @Test
     fun cc_07_detrack_err() {
@@ -208,7 +208,7 @@ class Exec_05 {
                 detrack(nil) { as it => yield(nil) { as it => nil } }
             }
         """)
-        assert(out.contains("anon : (lin 3, col 57) : declaration error : variable \"it\" is already declared\n")) { out }
+        assert(out == ("anon : (lin 3, col 57) : declaration error : variable \"it\" is already declared\n")) { out }
     }
     @Test
     fun cc_07_detrack_err2() {
@@ -217,7 +217,7 @@ class Exec_05 {
                 detrack(nil) { as yy => yield(nil) { as xx => nil } }
             }
         """)
-        assert(out.contains("anon : (lin 3, col 41) : yield error : unexpected enclosing detrack\n")) { out }
+        assert(out == ("anon : (lin 3, col 41) : yield error : unexpected enclosing detrack\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
@@ -228,7 +228,7 @@ class Exec_05 {
             val v = detrack(x) { as it => set it = 10 }
             println(v)
         """)
-        assert(out.contains("anon : (lin 5, col 43) : invalid set : destination is immutable\n")) { out }
+        assert(out == ("anon : (lin 5, col 43) : invalid set : destination is immutable\n")) { out }
     }
     @Test
     fun cc_09_detrack() {
