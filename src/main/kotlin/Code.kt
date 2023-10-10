@@ -107,8 +107,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """}}
                         $code
                         ${isexe.cond{"""
-                            ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                        }
+                                    ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                            }
                         """}}
                         return ceu_acc;
                     }
