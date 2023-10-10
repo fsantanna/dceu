@@ -249,6 +249,26 @@ class Exec_04 {
         assert(out == "2\n1\n") { out }
     }
     @Test
+    fun dd_05x_bcast() {
+        val out = test("""
+            var co1 = spawn (task () {
+                var co2 = spawn (task () {
+                    yield(nil) { as it => nil }  ;; awakes from outer bcast
+                    println(2)
+                }) ()
+                spawn (task () {
+                    xloop {
+                        yield(nil) { as it => nil }
+                    }
+                }) ()
+                yield(nil) { as it => nil }      ;; awakes from co2 termination
+                println(1)
+            }) ()                                ;; kill anon task which is pending on traverse
+            broadcast(nil)
+        """)
+        assert(out == "2\n1\n") { out }
+    }
+    @Test
     fun dd_06_bcast() {
         val out = test("""
             var tk
@@ -1032,7 +1052,7 @@ class Exec_04 {
         assert(out == ":yielded\n") { out }
     }
     @Test
-    fun hh_04_status() {
+    fun hh_04_status() {            // TODO: return track for both task task_in / awake with error?
         val out = test("""
             val t = spawn (task () {
                 yield(nil) { as it => nil }
