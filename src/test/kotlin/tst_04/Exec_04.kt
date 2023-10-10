@@ -440,7 +440,7 @@ class Exec_04 {
                 throw(:err)
             }()
         """)
-        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { throw(:err) })()\n" +
+        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { throw(:err) })(nil)\n" +
                 " |  anon : (lin 3, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -497,7 +497,7 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out == " |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+        assert(out == " |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -512,7 +512,7 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out == " |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+        assert(out == " |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -669,7 +669,7 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out.contains(" |  anon : (lin 6, col 19) : (task () { nil })()\n" +
+        assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot move to deeper scope with pending references")) { out }
     }
     @Test
@@ -1018,7 +1018,8 @@ class Exec_04 {
             }) ()
             println(status(t))
         """)
-        assert(out == ":terminated\n") { out }
+        //assert(out == ":terminated\n") { out }
+        assert(out == " v  anon : (lin 5, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
     }
     @Test
     fun hh_02_status() {
@@ -1181,7 +1182,7 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
-        assert(out == " |  anon : (lin 8, col 27) : T()\n" +
+        assert(out == " |  anon : (lin 8, col 21) : spawn T(nil)\n" +
                 " v  anon : (lin 5, col 21) : pub(x) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
@@ -1393,7 +1394,8 @@ class Exec_04 {
             }
             spawn T(1,2)
         """)
-        assert(out == "1\t2\n") { out }
+        //assert(out == "1\t2\n") { out }
+        assert(out == "anon : (lin 6, col 19) : invalid spawn : invalid number of arguments\n") { out }
     }
     @Test
     fun zz_02_spawn_err() {

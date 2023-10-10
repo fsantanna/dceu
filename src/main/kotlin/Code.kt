@@ -625,7 +625,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 CEU_Value ceu_arg_$n = ceu_acc;                
                 ${this.tsks.cond2({ """
                     ${it.code()}
-                    $tsksc = ceu_acc
+                    $tsksc = ceu_acc;
                     CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, $tskc, &$tsksc.Dyn->Tasks);
                     if (ceu_x_$n.type == CEU_VALUE_NIL) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };

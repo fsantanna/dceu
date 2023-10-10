@@ -1179,19 +1179,19 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     CEU_Value args[] = {  evt };
                     ret = task->frame.clo->proto(&task->frame, 1, args);
-                    task->bcast_n--;
                     if (task->status == CEU_EXE_STATUS_TERMINATED) {
                         if (!CEU_ISERR(ret)) {      // bcast
                             CEU_Exe_Task* up_task = ceu_task_up_task(task);
                             CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                             if (up_task != NULL) {
                                 // enclosing coro of enclosing block
-                                ret = ceu_bcast_task(task, evt2);
+                                ret = ceu_bcast_task(up_task, evt2);
                             } else { 
                                 // enclosing block
                                 ret = ceu_bcast_blocks(up_task, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                             }
                         }
+                        task->bcast_n--;
                         if (task->bcast_n == 0) {   // free
                             ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA
                                 (task->type == CEU_VALUE_EXE_TASK_IN) ?
@@ -1203,6 +1203,8 @@ fun Coder.main (tags: Tags): String {
                                 ret = (CEU_Value) { CEU_VALUE_TASK_TERMINATED };
                             }
                         }
+                    } else {
+                        task->bcast_n--;
                     }
                 }
             } else {
