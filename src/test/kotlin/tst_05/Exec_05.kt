@@ -116,7 +116,8 @@ class Exec_05 {
             val x = track(t)
             println(t, x)
         """)
-        assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
+        //assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected unterminated task\n") { out }
+        assert(out == " v  anon : (lin 6, col 21) : track(t) : track error : expected task\n") { out }
     }
     @Test
     fun bb_03_track() {
@@ -169,7 +170,8 @@ class Exec_05 {
             val v = detrack(t) { as it => 10 }
             println(v)
         """)
-        assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
+        //assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
+        assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected task\n")) { out }
     }
     @Test
     fun cc_04_detrack() {

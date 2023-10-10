@@ -821,8 +821,8 @@ fun Coder.main (tags: Tags): String {
             printf(">>> BLOCK: %p\n", blk);
             CEU_Dyn* cur = blk->dn.dyns.first;
             while (cur != NULL) {
-                CEU_Value args[] = { ceu_dyn_to_val(cur) };
-                ceu_dump_f(NULL, 1, args);
+                CEU_Value arg = ceu_dyn_to_val(cur);
+                ceu_dump_f(NULL, 1, &arg);
                 CEU_Dyn* old = cur;
                 cur = old->Any.hld.next;
             }
@@ -1079,8 +1079,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        CEU_Value args[1] = { dyn->Clo.upvs.buf[i] };
-                        CEU_Value ret = ceu_drop_f(frame, 1, args);
+                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Clo.upvs.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1088,8 +1087,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        CEU_Value args[1] = { dyn->Tuple.buf[i] };
-                        CEU_Value ret = ceu_drop_f(frame, 1, args);
+                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Tuple.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1100,8 +1098,7 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret1 = ceu_vector_get(&dyn->Vector, i);
                         assert(ret1.type != CEU_VALUE_ERROR);
-                        CEU_Value args[1] = { ret1 };
-                        CEU_Value ret2 = ceu_drop_f(frame, 1, args);
+                        CEU_Value ret2 = ceu_drop_f(frame, 1, &ret1);
                         if (ret2.type == CEU_VALUE_ERROR) {
                             return ret2;
                         }
@@ -1110,13 +1107,11 @@ fun Coder.main (tags: Tags): String {
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        CEU_Value args0[1] = { (*dyn->Dict.buf)[i][0] };
-                        CEU_Value ret0 = ceu_drop_f(frame, 1, args0);
+                        CEU_Value ret0 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][0]);
                         if (ret0.type == CEU_VALUE_ERROR) {
                             return ret0;
                         }
-                        CEU_Value args1[1] = { (*dyn->Dict.buf)[i][1] };
-                        CEU_Value ret1 = ceu_drop_f(frame, 1, args1);
+                        CEU_Value ret1 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][1]);
                         if (ret1.type == CEU_VALUE_ERROR) {
                             return ret1;
                         }
@@ -1132,8 +1127,8 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
                 {
-                    CEU_Value args[1] = { ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo) };
-                    CEU_Value ret = ceu_drop_f(frame, 1, args);
+                    CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo);
+                    CEU_Value ret = ceu_drop_f(frame, 1, &arg);
                     if (ret.type == CEU_VALUE_ERROR) {
                         return ret;
                     }
@@ -1173,12 +1168,10 @@ fun Coder.main (tags: Tags): String {
             }
             if (task->status == CEU_EXE_STATUS_YIELDED) {
                 if (CEU_ISERR(ret)) {
-                    CEU_Value args[] = { ret };
-                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, args);
+                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
                     task->bcast_n--;
                 } else {
-                    CEU_Value args[] = {  evt };
-                    ret = task->frame.clo->proto(&task->frame, 1, args);
+                    ret = task->frame.clo->proto(&task->frame, 1, &evt);
                     if (task->status == CEU_EXE_STATUS_TERMINATED) {
                         if (!CEU_ISERR(ret)) {      // bcast
                             CEU_Exe_Task* up_task = ceu_task_up_task(task);
@@ -1686,8 +1679,7 @@ fun Coder.main (tags: Tags): String {
         #endif
             // no tags when _1==NULL (ceu_error_list_print)
             if (_1!=NULL && v.type>CEU_VALUE_DYNAMIC) {  // TAGS
-                CEU_Value args[1] = { v };
-                CEU_Value tup = ceu_tags_f(_1, 1, args);
+                CEU_Value tup = ceu_tags_f(_1, 1, &v);
                 assert(tup.type != CEU_VALUE_ERROR);
                 int N = tup.Dyn->Tuple.its;
                 if (N > 0) {
@@ -2067,7 +2059,8 @@ fun Coder.main (tags: Tags): String {
             CEU_Value task = CEU4(ceu_deref)(args[0]);
             if (!ceu_istask(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
-            } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                
+            } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
+                assert(0 && "TODO: bug found");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
             }
             //CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?
