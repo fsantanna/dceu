@@ -101,40 +101,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             switch (ceu_frame->exe->pc) {
                                 case 0:
                                     if (ceu_n == CEU_ARG_FREE) {
-                                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                                        goto CEU_$n;
-                                        break;
+                                        ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                        return (CEU_Value) { CEU_VALUE_NIL };
                                     }
                         """}}
                         $code
-                    CEU_$n:
-                        // terminated
                         ${isexe.cond{"""
-                            if (ceu_n == CEU_ARG_FREE) {
-                                ceu_frame->exe->status = CEU_EXE_STATUS_TOFREE;
-                            } else {
-                                ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
-                            }
-                            ${istask.cond { """
-                                if (ceu_n!=CEU_ARG_FREE && !CEU_ISERR(ceu_acc)) {
-                                    CEU_Exe_Task* ceu_up_task = ceu_task_up_task(ceu_frame->exe_task);
-                                    CEU_Value ceu_evt = ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe_task);
-                                    if (ceu_up_task != NULL) {
-                                        // enclosing coro of enclosing block
-                                        ceu_acc = ceu_bcast_task(ceu_up_task, ceu_evt);
-                                    } else { 
-                                        // enclosing block
-                                        ceu_acc = ceu_bcast_blocks(ceu_up_task, CEU_HLD_BLOCK((CEU_Dyn*)ceu_frame->exe_task), ceu_evt);
-                                    }
-                                }
-                        #if CEU >= 5
-                                if (ceu_frame->exe_task->type==CEU_VALUE_EXE_TASK_IN && ceu_frame->exe_task->bcast_n<=1) {
-                                    ceu_frame->exe_task->status = CEU_EXE_STATUS_TOFREE;
-                                    ceu_hold_rem((CEU_Dyn*)ceu_frame->exe_task CEU5(COMMA &((CEU_Tasks*)(ceu_frame->exe_task->hld.block))->dyns));
-                                    ceu_dyn_free((CEU_Dyn*)ceu_frame->exe_task);
-                                }
-                        #endif
-                            """ }}
+                            ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                         }
                         """}}
                         return ceu_acc;

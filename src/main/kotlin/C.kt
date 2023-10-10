@@ -105,7 +105,6 @@ fun Coder.main (tags: Tags): String {
             //CEU_EXE_STATUS_TOGGLED,
             CEU_EXE_STATUS_RESUMED,
             CEU_EXE_STATUS_TERMINATED,
-            CEU_EXE_STATUS_TOFREE,
         } CEU_EXE_STATUS;
         #endif
     """ +
@@ -831,7 +830,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
                 if (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask(ceu_dyn_to_val(dyn)))) { 
-                    if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                    if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                         dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
                     }
                 }
@@ -840,7 +839,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Dyn* cur = dyn->Tasks.dyns.first;
                     while (cur != NULL) {
                         CEU_Dyn* nxt = cur->Any.hld.next;
-                        if (cur->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                        if (cur->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                             cur->Exe.frame.clo->proto(&cur->Exe.frame, CEU_ARG_FREE, NULL);
                         }
                         cur = nxt;
@@ -1173,13 +1172,26 @@ fun Coder.main (tags: Tags): String {
                     CEU_Value args[] = {  evt };
                     ret = task->frame.clo->proto(&task->frame, 1, args);
                     task->bcast_n--;
-                    if (task->status==CEU_EXE_STATUS_TOFREE && task->bcast_n==0) {
-                        ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA
-                            (task->type == CEU_VALUE_EXE_TASK_IN) ?
-                                &((CEU_Tasks*)(task->hld.block))->dyns :
-                                &task->hld.block->dn.dyns
-                        ));
-                        ceu_dyn_free((CEU_Dyn*)task);
+                    if (task->status == CEU_EXE_STATUS_TERMINATED) {
+                        if (!CEU_ISERR(ret)) {      // bcast
+                            CEU_Exe_Task* up_task = ceu_task_up_task(task);
+                            CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
+                            if (up_task != NULL) {
+                                // enclosing coro of enclosing block
+                                ret = ceu_bcast_task(task, evt2);
+                            } else { 
+                                // enclosing block
+                                ret = ceu_bcast_blocks(up_task, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                            }
+                        }
+                        if (task->bcast_n == 0) {   // free
+                            ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA
+                                (task->type == CEU_VALUE_EXE_TASK_IN) ?
+                                    &((CEU_Tasks*)(task->hld.block))->dyns :
+                                    &task->hld.block->dn.dyns
+                            ));
+                            ceu_dyn_free((CEU_Dyn*)task);
+                        }
                     }
                 }
             } else {
@@ -1190,7 +1202,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_bcast_dyns (CEU_Exe_Task* up_task, CEU_Dyns* dyns, CEU_Value evt) {
             CEU_Dyn* dyn = dyns->first;
-            while (dyn!=NULL && (up_task==NULL || up_task->status<CEU_EXE_STATUS_TERMINATED)) {
+            while (dyn!=NULL && (up_task==NULL || up_task->status!=CEU_EXE_STATUS_TERMINATED)) {
                 CEU_Dyn* nxt = dyn->Any.hld.next;
                 switch (dyn->Any.type) {
                     case CEU_VALUE_EXE_TASK:
@@ -1600,7 +1612,7 @@ fun Coder.main (tags: Tags): String {
                 int n = 0;
                 CEU_Dyn* dyn = tasks->dyns.first;
                 while (dyn != NULL) {
-                    if (dyn->Exe_Task.status < CEU_EXE_STATUS_TERMINATED) {
+                    if (dyn->Exe_Task.status != CEU_EXE_STATUS_TERMINATED) {
                         n++;
                     }
                     dyn = dyn->Any.hld.next;
@@ -2042,7 +2054,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value task = CEU4(ceu_deref)(args[0]);
             if (!ceu_istask(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
-            } else if (task.Dyn->Exe_Task.status >= CEU_EXE_STATUS_TERMINATED) {                
+            } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {                
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
             }
             //CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?
