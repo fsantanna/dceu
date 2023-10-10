@@ -39,8 +39,10 @@ fun Coder.main (tags: Tags): String {
         
         #if CEU >= 5
         #define CEU_HLD_BLOCK(dyn) ({ CEU_Block* blk=(dyn)->Any.hld.block; (dyn)->Any.type!=CEU_VALUE_EXE_TASK_IN ? blk : (((CEU_Tasks*)blk)->hld.block); }) 
+        #define CEU_HLD_DYNS(dyn) ((dyn)->Any.type == CEU_VALUE_EXE_TASK_IN ? (&((CEU_Tasks*)((dyn)->Any.hld.block))->dyns) : (&(dyn)->Any.hld.block->dn.dyns)) 
         #else
         #define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
+        #define CEU_HLD_DYNS(dyn) (&(dyn)->Any.hld.block->dn.dyns)
         #endif
         
         typedef enum CEU_HOLD {
@@ -723,7 +725,7 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
             ceu_gc_count++;
-            ceu_hold_rem(dyn CEU5(COMMA &CEU_HLD_BLOCK(dyn)->dn.dyns));
+            ceu_hold_rem(dyn CEU5(COMMA CEU_HLD_DYNS(dyn)));
             ceu_dyn_free(dyn);
         }
         
@@ -887,7 +889,7 @@ fun Coder.main (tags: Tags): String {
             }
         #endif
         #if CEU < 5
-            CEU_Dyns* dyns = &CEU_HLD_BLOCK(dyn)->dn.dyns;
+            CEU_Dyns* dyns = CEU_HLD_DYNS(dyn);
         #endif
             if (dyns->first == dyn) {
                 dyns->first = dyn->Any.hld.next;
@@ -905,7 +907,7 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.next = NULL;
         }
         void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
-            ceu_hold_rem(dyn CEU5(COMMA &CEU_HLD_BLOCK(dyn)->dn.dyns));
+            ceu_hold_rem(dyn CEU5(COMMA CEU_HLD_DYNS(dyn)));
             ceu_hold_add(dyn, blk CEU5(COMMA dyns));
         }
 
@@ -1035,7 +1037,7 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
                     if (CEU_HLD_BLOCK(v.Dyn)->depth > CEU_HLD_BLOCK(col)->depth) {
-                        ceu_hold_chg(col, CEU_HLD_BLOCK(v.Dyn) CEU5(COMMA &CEU_HLD_BLOCK(v.Dyn)->dn.dyns));
+                        ceu_hold_chg(col, CEU_HLD_BLOCK(v.Dyn) CEU5(COMMA CEU_HLD_DYNS(v.Dyn)));
                     }
                     return (CEU_Value) { CEU_VALUE_NIL };
                 }
@@ -1186,11 +1188,7 @@ fun Coder.main (tags: Tags): String {
                         }
                         task->bcast_n--;
                         if (task->bcast_n == 0) {   // free
-                            ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA
-                                (task->type == CEU_VALUE_EXE_TASK_IN) ?
-                                    &((CEU_Tasks*)(task->hld.block))->dyns :
-                                    &task->hld.block->dn.dyns
-                            ));
+                            ceu_hold_rem((CEU_Dyn*)task CEU5(COMMA CEU_HLD_DYNS((CEU_Dyn*)task)));
                             ceu_dyn_free((CEU_Dyn*)task);
                             if (!CEU_ISERR(ret)) {
                                 ret = (CEU_Value) { CEU_VALUE_TASK_TERMINATED };
@@ -1697,7 +1695,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_hold_rem(tup.Dyn CEU5(COMMA &CEU_HLD_BLOCK(tup.Dyn)->dn.dyns));
+                ceu_hold_rem(tup.Dyn CEU5(COMMA CEU_HLD_DYNS(tup.Dyn)));
                 ceu_dyn_free(tup.Dyn);
             }
             switch (v.type) {
