@@ -342,7 +342,8 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
-        int ceu_istask (CEU_Value v);
+        int ceu_istask_dyn (CEU_Dyn* dyn);
+        int ceu_istask_val (CEU_Value val);
         CEU_Value ceu_toref (CEU_Value v);
         CEU_Value ceu_deref (CEU_Value v);
         #endif
@@ -764,7 +765,7 @@ fun Coder.main (tags: Tags): String {
     """ // BLOCK / FREE
         void ceu_dyn_free (CEU_Dyn* dyn) {
         #if CEU >= 4
-            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
+            if (ceu_istask_dyn(dyn) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
         #endif
@@ -834,7 +835,7 @@ fun Coder.main (tags: Tags): String {
             // first finalize EXE
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
-                if (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask(ceu_dyn_to_val(dyn)))) { 
+                if (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn))) { 
                     if (dyn->Exe.status != CEU_EXE_STATUS_TERMINATED) {
                         dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_FREE, NULL);
                     }
@@ -884,7 +885,7 @@ fun Coder.main (tags: Tags): String {
         }
         void ceu_hold_rem (CEU_Dyn* dyn CEU5(COMMA CEU_Dyns* dyns)) {
         #if CEU >= 4
-            if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
+            if (ceu_istask_dyn(dyn) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
         #endif
@@ -1229,7 +1230,7 @@ fun Coder.main (tags: Tags): String {
                         break;
                     }
                     case CEU_VALUE_TRACK:
-                        if (ceu_istask(evt) && dyn->Track.task==(CEU_Exe_Task*)evt.Dyn) {
+                        if (ceu_istask_val(evt) && dyn->Track.task==(CEU_Exe_Task*)evt.Dyn) {
                             dyn->Track.task = NULL; // tracked coro is terminating
                         }
                         break;
@@ -1256,11 +1257,11 @@ fun Coder.main (tags: Tags): String {
             assert(n >= 1);
             CEU_Value evt = args[0];
             if (n == 1) {
-                CEU_Exe_Task* up_task = (frame->exe!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)frame->exe))) ? frame->exe_task : NULL;
+                CEU_Exe_Task* up_task = (frame->exe!=NULL && ceu_istask_dyn((CEU_Dyn*)frame->exe)) ? frame->exe_task : NULL;
                 return ceu_bcast_blocks(up_task, ceu_bcast_global(frame->up_block), ceu_toref(evt));
             } else {
                 CEU_Value tsk = args[1];
-                if (!ceu_istask(tsk)) {
+                if (!ceu_istask_val(tsk)) {
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
                 }
                 return ceu_bcast_task(&tsk.Dyn->Exe_Task, ceu_toref(evt));
@@ -1981,7 +1982,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value exe = CEU4(ceu_deref)(args[0]);
-            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask(exe))) {
+            if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
         #if CEU < 4
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
         #else
@@ -1997,7 +1998,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Exe_Task* ceu_block_up_task (CEU_Block* blk) {
             if (blk->istop) {
                 CEU_Exe_Task* up_task = blk->up.frame->exe_task;
-                return (up_task!=NULL && ceu_istask(ceu_dyn_to_val((CEU_Dyn*)up_task))) ? up_task : NULL;                
+                return (up_task!=NULL && ceu_istask_dyn((CEU_Dyn*)up_task)) ? up_task : NULL;                
             } else if (blk->up.block == NULL) {
                 return NULL;
             } else {
@@ -2016,17 +2017,21 @@ fun Coder.main (tags: Tags): String {
             return (v.type == CEU_VALUE_REF) ? ceu_dyn_to_val(v.Dyn) : v;
         }
         
-        int ceu_istask (CEU_Value v) {
+        int ceu_istask_dyn (CEU_Dyn* dyn) {
+            return dyn->Any.type==CEU_VALUE_EXE_TASK CEU5(|| dyn->Any.type==CEU_VALUE_EXE_TASK_IN);
+        }
+
+        int ceu_istask_val (CEU_Value val) {
         #if CEU >= 4
-            v = ceu_deref(v);
+            val = ceu_deref(val);
         #endif
-            return v.type==CEU_VALUE_EXE_TASK CEU5(|| v.type==CEU_VALUE_EXE_TASK_IN);
+            return (val.type>CEU_VALUE_DYNAMIC) && ceu_istask_dyn(val.Dyn);
         }
 
         CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             int i = 0;
             CEU_Exe_Task* tsk;
-            if (n>0 && ceu_istask(CEU4(ceu_deref)(args[0]))) {
+            if (n>0 && ceu_istask_val(CEU4(ceu_deref)(args[0]))) {
                 tsk = &CEU4(ceu_deref)(args[0]).Dyn->Exe_Task;
                 i = 1;
             } else {
@@ -2055,7 +2060,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_track_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value task = CEU4(ceu_deref)(args[0]);
-            if (!ceu_istask(task)) {
+            if (!ceu_istask_val(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
             } else if (task.Dyn->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
                 assert(0 && "TODO: bug found");
