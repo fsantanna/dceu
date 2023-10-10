@@ -72,9 +72,9 @@ class Parser_03 {
     fun bb_03_resume_err() {
         val l = lexer("""
             resume a
-        """.trimIndent())
+        """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : invalid resume : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 20) : invalid resume : expected call")
     }
     @Test
     fun bb_04_yield_err() {

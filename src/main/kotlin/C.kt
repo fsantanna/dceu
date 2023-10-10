@@ -69,6 +69,7 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_POINTER,
         #if CEU >= 4
             CEU_VALUE_REF,
+            CEU_VALUE_TASK_TERMINATED,
         #endif
             CEU_VALUE_DYNAMIC,    // all below are dynamic
             CEU_VALUE_CLO_FUNC,
@@ -760,9 +761,11 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // BLOCK / FREE
         void ceu_dyn_free (CEU_Dyn* dyn) {
+        #if CEU >= 4
             if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
+        #endif
             while (dyn->Any.tags != NULL) {
                 CEU_Tags_List* tag = dyn->Any.tags;
                 dyn->Any.tags = tag->next;
@@ -878,9 +881,11 @@ fun Coder.main (tags: Tags): String {
             dyns->last = dyn;
         }
         void ceu_hold_rem (CEU_Dyn* dyn CEU5(COMMA CEU_Dyns* dyns)) {
+        #if CEU >= 4
             if (ceu_istask(ceu_dyn_to_val(dyn)) && dyn->Exe_Task.bcast_n>0) {
                 return;
             }
+        #endif
         #if CEU < 5
             CEU_Dyns* dyns = &CEU_HLD_BLOCK(dyn)->dn.dyns;
         #endif
@@ -1162,7 +1167,10 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
             task->bcast_n++;
-            CEU_Value ret = ceu_bcast_blocks(task, task->dn_block, evt);
+            CEU_Value ret = { CEU_VALUE_NIL };
+            if (task->pc != 0) {    // not initial spawn
+                ret = ceu_bcast_blocks(task, task->dn_block, evt);
+            }
             if (task->status == CEU_EXE_STATUS_YIELDED) {
                 if (CEU_ISERR(ret)) {
                     CEU_Value args[] = { ret };
@@ -1191,6 +1199,9 @@ fun Coder.main (tags: Tags): String {
                                     &task->hld.block->dn.dyns
                             ));
                             ceu_dyn_free((CEU_Dyn*)task);
+                            if (!CEU_ISERR(ret)) {
+                                ret = (CEU_Value) { CEU_VALUE_TASK_TERMINATED };
+                            }
                         }
                     }
                 }

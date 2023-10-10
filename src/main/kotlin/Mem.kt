@@ -113,14 +113,14 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 $union {
                     ${this.co.mem(sta, defers)}
                     ${this.arg.mem(sta, defers)}
-                }
-            }            
+                };
+            };
         """
 
         is Expr.Spawn -> """
             struct {
-                ${this.tsks.cond { "CEU_Value tasks_${this.n};" }} 
-                CEU_Value task_${this.n}; 
+                ${this.tsks.cond { "CEU_Value tsks_${this.n};" }} 
+                CEU_Value tsk_${this.n}; 
                 $union {
                     ${this.tsks.cond { it.mem(sta, defers) }} 
                     ${this.tsk.mem(sta, defers)}

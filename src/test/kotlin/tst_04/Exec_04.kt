@@ -61,7 +61,8 @@ class Exec_04 {
             val t = spawn T()
             println(t)
         """)
-        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out.contains("exe-task: 0x")) { out }
+        assert(out == ("nil\n")) { out }
     }
     @Test
     fun bb_02_resume_err() {
@@ -87,6 +88,15 @@ class Exec_04 {
             spawn nil()
         """)
         assert(out == " v  anon : (lin 2, col 13) : spawn error : expected task\n") { out }
+    }
+    @Test
+    fun bb_05_spawn() {
+        val out = test("""
+            val T = task (v) { yield(nil) { as it=>nil } }
+            val t = spawn T()
+            println(t)
+        """)
+        assert(out.contains("exe-task: 0x")) { out }
     }
 
     // SCOPE
@@ -430,7 +440,7 @@ class Exec_04 {
                 throw(:err)
             }()
         """)
-        assert(out == " |  anon : (lin 2, col 19) : (task () { throw(:err) })()\n" +
+        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { throw(:err) })()\n" +
                 " |  anon : (lin 3, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
