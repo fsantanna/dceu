@@ -345,23 +345,34 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val tk1 = this.tk1
                 val call = this.expr_2_pre()
-                if (call !is Expr.Call) {
-                    err(tk1, "invalid resume : expected call")
+                when {
+                    (call !is Expr.Call) -> err(tk1, "invalid resume : expected call")
+                    (call.args.size > 1) -> err(tk1, "invalid resume : invalid number of arguments")
                 }
-                Expr.Resume(tk0, call as Expr.Call)
+                call as Expr.Call
+                val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
+                Expr.Resume(tk0, call.clo, arg)
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val tk1 = this.tk1
                 val call = this.expr()
                 if (call !is Expr.Call) {
                     err(this.tk1, "invalid spawn : expected call")
                 }
+                when {
+                    (call !is Expr.Call) -> err(tk1, "invalid spawn : expected call")
+                    (call.args.size > 1) -> err(tk1, "invalid spawn : invalid number of arguments")
+                }
                 val tasks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()
                 }
-                Expr.Spawn(tk0, tasks, call)
+                call as Expr.Call
+                val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
+                Expr.Spawn(tk0, tasks, call.clo, arg)
             }
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix

@@ -13,9 +13,9 @@ fun Expr.coexists (): Boolean {
         is Expr.Catch  -> this.cnd.coexists()
 
         is Expr.Yield  -> this.arg.coexists() || this.blk.coexists()
-        is Expr.Resume -> this.call.coexists()
+        is Expr.Resume -> this.co.coexists() || this.arg.coexists()
 
-        is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.call.coexists()
+        is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.arg.coexists()
         is Expr.Bcast  -> this.call.coexists()
         is Expr.Dtrack -> this.trk.coexists() || this.blk.coexists()
 
@@ -95,7 +95,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
 
         is Expr.Catch -> """
             $union { // CATCH
-                ${this.cnd?.mem(sta, defers) ?: ""}
+                ${this.cnd.mem(sta, defers)}
                 ${this.blk.mem(sta, defers)}
             };
         """
@@ -107,14 +107,24 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 ${this.blk.mem(sta, defers)}
             };
         """
-        is Expr.Resume -> this.call.mem(sta, defers)
+        is Expr.Resume -> """
+            struct {
+                CEU_Value co_${this.n};
+                $union {
+                    ${this.co.mem(sta, defers)}
+                    ${this.arg.mem(sta, defers)}
+                }
+            }            
+        """
 
         is Expr.Spawn -> """
             struct {
                 ${this.tsks.cond { "CEU_Value tasks_${this.n};" }} 
+                CEU_Value task_${this.n}; 
                 $union {
                     ${this.tsks.cond { it.mem(sta, defers) }} 
-                    ${this.call.mem(sta, defers)}
+                    ${this.tsk.mem(sta, defers)}
+                    ${this.arg.mem(sta, defers)}
                 };
             };
         """

@@ -561,7 +561,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
 
-            is Expr.Resume -> this.call.code()
+            is Expr.Resume -> TODO()
             is Expr.Yield -> {
                 val bupc = ups.first_block(this)!!.idc("block")
                 """
@@ -591,7 +591,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
             }
 
-            is Expr.Spawn -> this.call.code()
+            is Expr.Spawn -> TODO()
             is Expr.Bcast -> this.call.code()
             is Expr.Dtrack -> {
                 val bupc = ups.first_block(this)!!.idc("block")

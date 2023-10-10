@@ -58,9 +58,9 @@ class Tags (outer: Expr.Do) {
             is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> { this.arg.traverse() ; this.blk.traverse() }
-            is Expr.Resume -> this.call.traverse()
+            is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
-            is Expr.Spawn  -> { this.tsks?.traverse() ; this.call.traverse() }
+            is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.arg.traverse() }
             is Expr.Bcast  -> this.call.traverse()
             is Expr.Dtrack-> { this.trk.traverse() ; this.blk.traverse() }
 

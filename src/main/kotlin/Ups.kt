@@ -47,21 +47,21 @@ class Ups (outer: Expr.Do) {
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
             is Expr.XLoop  -> this.map(listOf(this.blk))
-            is Expr.XBreak -> this.map(listOf(this.cnd) + listOfNotNull(this.e))
+            is Expr.XBreak -> this.map(listOfNotNull(this.cnd, this.e))
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
             is Expr.Drop   -> this.map(listOf(this.e))
 
-            is Expr.Catch  -> this.map(listOf(this.cnd) + listOf(this.blk))
+            is Expr.Catch  -> this.map(listOf(this.cnd, this.blk))
             is Expr.Defer  -> this.map(listOf(this.blk))
 
-            is Expr.Yield  -> this.map(listOf(this.arg) + listOf(this.blk))
-            is Expr.Resume -> this.map(listOf(this.call))
+            is Expr.Yield  -> this.map(listOf(this.arg, this.blk))
+            is Expr.Resume -> this.map(listOf(this.co, this.arg))
 
-            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks) + listOf(this.call))
+            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.arg))
             is Expr.Bcast  -> this.map(listOf(this.call))
-            is Expr.Dtrack -> this.map(listOf(this.trk) + listOf(this.blk))
+            is Expr.Dtrack -> this.map(listOf(this.trk, this.blk))
 
             is Expr.Nat    -> emptyMap()
             is Expr.Acc    -> emptyMap()
@@ -74,7 +74,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Vector -> this.map(this.args)
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.clo)) + this.map(this.args)
+            is Expr.Call   -> this.map(listOf(this.clo)+ this.args)
         }
     }
 }
