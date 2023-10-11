@@ -1,6 +1,7 @@
 # TODO
 
 - remove ylds
+- coro/task accept exact 1 arg in decl resume
 
 # BUGS
 

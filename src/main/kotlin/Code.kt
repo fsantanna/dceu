@@ -826,7 +826,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 { // INDEX | ${this.dump()}
                     // IDX
-                    ${(!!blk.ismem(sta,clos)).cond {
+                    ${(!blk.ismem(sta,clos)).cond {
                         "CEU_Value ceu_idx_$n;\n"
                     }}
                     ${if (idx == -1) {
