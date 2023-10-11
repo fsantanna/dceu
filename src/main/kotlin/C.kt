@@ -322,7 +322,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_create_vector  (CEU_Block* hld);
         CEU_Value ceu_create_dict    (CEU_Block* hld);
         CEU_Value ceu_create_clo     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
-        #if CEU >= 5
+        #if CEU >= 4
         CEU_Value ceu_create_track   (CEU_Block* blk, CEU_Exe_Task* task);
         #endif
 
@@ -770,8 +770,8 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_dyn_rem_free_chk (CEU_Dyn* dyn) {
         #if CEU >= 4
-            if (ceu_istask_dyn(dyn) && ceu_tofree_n>0) {
-                dyn->tofree = ceu_tofree_dyn;
+            if ((ceu_istask_dyn(dyn) CEU5(|| dyn->Any.type==CEU_VALUE_TASKS))&& ceu_tofree_n>0) {
+                dyn->Any.tofree = ceu_tofree_dyn;
                 ceu_tofree_dyn = dyn;
             } else
         #endif
@@ -785,12 +785,14 @@ fun Coder.main (tags: Tags): String {
             ceu_dyn_free(dyn);
         }
 
-        void ceu_rem_free_glb (void) {
+        void ceu_dyn_rem_free_glb (void) {
             if (ceu_tofree_n > 0) {
                 return;
             }
             while (ceu_tofree_dyn != NULL) {
+                CEU_Dyn* nxt = ceu_tofree_dyn->Any.tofree;
                 ceu_dyn_rem_free(ceu_tofree_dyn);
+                ceu_tofree_dyn = nxt;
             }
         }
         
@@ -1188,7 +1190,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
             if (task->pc != 0) {    // not initial spawn
-                ret = ceu_bcast_blocks(task, task->dn_block, evt);
+                ret = ceu_bcast_blocks(task->dn_block, evt);
             }
             if (task->status == CEU_EXE_STATUS_YIELDED) {
                 if (CEU_ISERR(ret)) {
@@ -1204,13 +1206,17 @@ fun Coder.main (tags: Tags): String {
                                 ret = ceu_bcast_task(up_task, evt2);
                             } else { 
                                 // enclosing block
-                                ret = ceu_bcast_blocks(up_task, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                                ret = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                             }
                         }
-                        ceu_dyn_rem_free_chk((CEU_Dyn*)task);
-                        if (!CEU_ISERR(ret)) {
-                            ret = (CEU_Value) { CEU_VALUE_NIL };
+        #if CEU >= 5
+                        if (task->type == CEU_VALUE_EXE_TASK_IN) {
+                            ceu_dyn_rem_free_chk((CEU_Dyn*)task);
+                            if (!CEU_ISERR(ret)) {
+                                ret = (CEU_Value) { CEU_VALUE_NIL };
+                            }
                         }
+        #endif
                     }
                 }
             }
@@ -1231,7 +1237,7 @@ fun Coder.main (tags: Tags): String {
                             return ret;
                         }
                         if (dyn->Exe_Task.status == CEU_EXE_STATUS_ABORTED) {
-                            return { CEU_VALUE_BOOL, {.Bool=1} };
+                            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
                         }
                         break;
                     }
@@ -1252,10 +1258,9 @@ fun Coder.main (tags: Tags): String {
                     default:
                         break; // not applicable
                 }
-                dyn = nxt;
                 dyn = dyn->Any.hld.next;
             }
-            return { CEU_VALUE_BOOL, {.Bool=1} };
+            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
@@ -1265,7 +1270,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 blk = blk->dn.block;
             }
-            return { CEU_VALUE_BOOL, {.Bool=1} };
+            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
 
         CEU_Value ceu_broadcast_f (CEU_Frame* frame, int n, CEU_Value args[]) {
@@ -1954,7 +1959,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Throw* ret = malloc(sizeof(CEU_Throw));
             assert(ret != NULL);
             *ret = (CEU_Throw) {
-                CEU_VALUE_THROW, 0, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
+                CEU_VALUE_THROW, 0, NULL, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 val, stk
             };
             
@@ -2081,7 +2086,6 @@ fun Coder.main (tags: Tags): String {
             if (!ceu_istask_val(task)) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected task"} };
             } else if (task.Dyn->Exe_Task.status >= CEU_EXE_STATUS_TERMINATED) {
-                assert(0 && "TODO: bug found");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
             }
             //CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?

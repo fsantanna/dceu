@@ -61,8 +61,8 @@ class Exec_04 {
             val t = spawn T()
             println(t)
         """)
-        //assert(out.contains("exe-task: 0x")) { out }
-        assert(out == ("nil\n")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
+        //assert(out == ("nil\n")) { out }
     }
     @Test
     fun bb_02_resume_err() {
@@ -182,7 +182,8 @@ class Exec_04 {
         val out = test("""
             println(broadcast(1))
         """)
-        assert(out == "nil\n") { out }
+        //assert(out == "nil\n") { out }
+        assert(out == "true\n") { out }
     }
     @Test
     fun dd_02_bcast() {
@@ -1038,8 +1039,8 @@ class Exec_04 {
             }) ()
             println(status(t))
         """)
-        //assert(out == ":terminated\n") { out }
-        assert(out == " v  anon : (lin 5, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        assert(out == ":terminated\n") { out }
+        //assert(out == " v  anon : (lin 5, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
     }
     @Test
     fun hh_02_status() {
