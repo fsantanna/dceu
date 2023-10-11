@@ -1,20 +1,6 @@
 # TODO
 
-x free list
-x glb bcast_n
-x chg/rem/add not on bcast_n
-x cannot move resumed task
-x ceu_bcast_dyns
-    x no pre next dyn
-    x checar need de up_task
-    x up_task -> EXE_ABORTED
-x checar free_dyns ao chamar free_dyn
-x remove CEU_VALUE_TASK_TERMINATED
-x recolorar o free no termino da task
-
-x ceu_hold_rem nao precisa de arg, pode calcular dentro com CEU_HLD_DYNS
-- bcast :global
-x spawn (both in !in) should return TRACK
+- remove ylds
 
 # BUGS
 
@@ -35,6 +21,7 @@ x spawn (both in !in) should return TRACK
 
 # NEXT
 
+- bcast :global
 - await, bcast: obligatory parenthesis
 - xbreak(e) <-- return expression
 - share primitive?

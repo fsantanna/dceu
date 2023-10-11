@@ -35,21 +35,21 @@ fun Expr.union_or_struct (): String {
     return if (this.coexists()) "struct" else union
 }
 
-fun List<Expr>.seq (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>, i: Int): String {
+fun List<Expr>.seq (sta: Static, clos: Clos, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>, i: Int): String {
     return (i != this.size).cond {
         """
             ${this[i].union_or_struct()} { // SEQ
-                ${this[i].mem(sta, defers)}
-                ${this.seq(sta, defers, i+1)}
+                ${this[i].mem(sta, clos, defers)}
+                ${this.seq(sta, clos, defers, i+1)}
             };
         """
     }
 }
 
-fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>): String {
+fun Expr.mem (sta: Static, clos: Clos, defers: MutableMap<Expr.Do, Triple<MutableList<Int>, String, String>>): String {
     return when (this) {
         is Expr.Do -> {
-            if (!sta.ylds.contains(this)) "" else {
+            if (!this.ismem(sta,clos)) "" else {
                 """
                 struct { // BLOCK
                     ${(!sta.void(this)).cond { """
@@ -57,7 +57,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                     """ }}
                     CEU_Block* block_$n;
                     ${defers[this].cond { it.first.map { "int defer_${it};\n" }.joinToString("")} }
-                    ${es.seq(sta, defers, 0)}
+                    ${es.seq(sta, clos, defers, 0)}
                 };
                 """
             }
@@ -68,7 +68,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // DCL
                 struct {
                     CEU_Value ${id};
-                    ${this.src.cond { it.mem(sta, defers) } }
+                    ${this.src.cond { it.mem(sta, clos, defers) } }
                 };
             };
             """
@@ -77,42 +77,42 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // SET
                 CEU_Value src_$n;
                 $union {
-                    ${this.dst.mem(sta, defers)}
-                    ${this.src.mem(sta, defers)}
+                    ${this.dst.mem(sta, clos, defers)}
+                    ${this.src.mem(sta, clos, defers)}
                 };
             };
             """
         is Expr.If -> """
             $union { // IF
-                ${this.cnd.mem(sta, defers)}
-                ${this.t.mem(sta, defers)}
-                ${this.f.mem(sta, defers)}
+                ${this.cnd.mem(sta, clos, defers)}
+                ${this.t.mem(sta, clos, defers)}
+                ${this.f.mem(sta, clos, defers)}
             };
             """
-        is Expr.XLoop -> this.blk.mem(sta, defers)
-        is Expr.Pass -> this.e.mem(sta, defers)
-        is Expr.Drop -> this.e.mem(sta, defers)
+        is Expr.XLoop -> this.blk.mem(sta, clos, defers)
+        is Expr.Pass -> this.e.mem(sta, clos, defers)
+        is Expr.Drop -> this.e.mem(sta, clos, defers)
 
         is Expr.Catch -> """
             $union { // CATCH
-                ${this.cnd.mem(sta, defers)}
-                ${this.blk.mem(sta, defers)}
+                ${this.cnd.mem(sta, clos, defers)}
+                ${this.blk.mem(sta, clos, defers)}
             };
         """
-        is Expr.Defer -> this.blk.mem(sta, defers)
+        is Expr.Defer -> this.blk.mem(sta, clos, defers)
 
         is Expr.Yield -> """
             $union { // YIELD
-                ${this.arg.mem(sta, defers)}
-                ${this.blk.mem(sta, defers)}
+                ${this.arg.mem(sta, clos, defers)}
+                ${this.blk.mem(sta, clos, defers)}
             };
         """
         is Expr.Resume -> """
             struct {
                 CEU_Value co_${this.n};
                 $union {
-                    ${this.co.mem(sta, defers)}
-                    ${this.arg.mem(sta, defers)}
+                    ${this.co.mem(sta, clos, defers)}
+                    ${this.arg.mem(sta, clos, defers)}
                 };
             };
         """
@@ -122,17 +122,17 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 ${this.tsks.cond { "CEU_Value tsks_${this.n};" }} 
                 CEU_Value tsk_${this.n}; 
                 $union {
-                    ${this.tsks.cond { it.mem(sta, defers) }} 
-                    ${this.tsk.mem(sta, defers)}
-                    ${this.arg.mem(sta, defers)}
+                    ${this.tsks.cond { it.mem(sta, clos, defers) }} 
+                    ${this.tsk.mem(sta, clos, defers)}
+                    ${this.arg.mem(sta, clos, defers)}
                 };
             };
         """
-        is Expr.Bcast -> this.call.mem(sta, defers)
+        is Expr.Bcast -> this.call.mem(sta, clos, defers)
         is Expr.Dtrack -> """
             $union { // DTRACK
-                ${this.trk.mem(sta, defers)}
-                ${this.blk.mem(sta, defers)}
+                ${this.trk.mem(sta, clos, defers)}
+                ${this.blk.mem(sta, clos, defers)}
             };
         """
 
@@ -140,7 +140,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // TUPLE
                 CEU_Value tup_$n;
                 $union {
-                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
+                    ${this.args.map { it.mem(sta, clos, defers) }.joinToString("")}
                 };
             };
             """
@@ -148,7 +148,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // VECTOR
                 CEU_Value vec_$n;
                 $union {
-                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
+                    ${this.args.map { it.mem(sta, clos, defers) }.joinToString("")}
                 };
             };
             """
@@ -158,7 +158,7 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
                 CEU_Value key_$n;
                 $union {
                     ${this.args.map {
-                        listOf(it.first.mem(sta, defers),it.second.mem(sta, defers))
+                        listOf(it.first.mem(sta, clos, defers),it.second.mem(sta, clos, defers))
                     }.flatten().joinToString("")}
                 };
             };
@@ -167,8 +167,8 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // INDEX
                 CEU_Value idx_$n;
                 $union {
-                    ${this.col.mem(sta, defers)}
-                    ${this.idx.mem(sta, defers)}
+                    ${this.col.mem(sta, clos, defers)}
+                    ${this.idx.mem(sta, clos, defers)}
                 };
             };
             """
@@ -176,8 +176,8 @@ fun Expr.mem (sta: Static, defers: MutableMap<Expr.Do, Triple<MutableList<Int>,S
             struct { // CALL
                 CEU_Value args_$n[${this.args.size}];
                 $union {
-                    ${this.clo.mem(sta, defers)}
-                    ${this.args.map { it.mem(sta, defers) }.joinToString("")}
+                    ${this.clo.mem(sta, clos, defers)}
+                    ${this.args.map { it.mem(sta, clos, defers) }.joinToString("")}
                 };
             };
             """

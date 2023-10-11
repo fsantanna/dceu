@@ -3,7 +3,7 @@ package dceu
 class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
-    val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs)
+    val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
 
     init {
         outer.traverse()
@@ -138,6 +138,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         -> err(this.tk, "broadcast error : unexpected enclosing detrack")
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str=="func") } != null)
                         -> err(this.tk, "broadcast error : unexpected enclosing func")
+                            // dont know if call is inside detrack
                 }
             }
             is Expr.Dtrack-> {

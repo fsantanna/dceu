@@ -11,6 +11,13 @@ class Ups (outer: Expr.Do) {
             else -> this.all_until(up,cnd).let { if (it.isEmpty()) it else it+e }
         }
     }
+    fun all (e: Expr): List<Expr> {
+        val up = pub[e]
+        return listOf(e) + when {
+            (up == null) -> emptyList()
+            else -> this.all(up).let { if (it.isEmpty()) it else it+e }
+        }
+    }
     fun first (e: Expr, cnd: (Expr)->Boolean): Expr? {
         val up = pub[e]
         return when {

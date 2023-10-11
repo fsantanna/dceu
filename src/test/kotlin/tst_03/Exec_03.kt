@@ -1154,6 +1154,18 @@ class Exec_03 {
         """)
         assert(out == "[]\t[]\n") { out }
     }
+    @Test
+    fun mm_06_mem() {
+        val out = test("""
+            resume coroutine(coro () {
+                val xx = 2
+                resume coroutine(coro () {
+                    println(xx)
+                }) ()
+            }) ()
+        """)
+        assert(out == "2\n") { out }
+    }
 
     // ALL
 

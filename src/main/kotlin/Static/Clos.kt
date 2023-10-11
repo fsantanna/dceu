@@ -19,6 +19,10 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     //  - for each ^^ACC, we get the enclosing PROTOS and add ACC.ID to them
     val protos_refs = mutableMapOf<Expr.Proto,MutableSet<Expr.Dcl>>()
 
+    // Blocks with nested coro/task accessing a variable:
+    //  - declares a non-upval var that is accessed across coro/task
+    val blks_nested = mutableSetOf<Expr.Do>()
+
     init {
         this.outer.traverse()
     }
@@ -70,11 +74,17 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             }
                     }
                     // UPVS_PROTOS_NOCLOS
-                    (blk !=outer && dcl.id.upv==0 && this.tk_.upv==0) -> {
+                    (blk!=outer && dcl.id.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
-                        ups.all_until(this) { it == blk }       // stop at enclosing declaration block
-                            .filter { it is Expr.Proto }            // all crossing protos
-                            .forEach { protos_noclos.add(it as Expr.Proto) } // mark them as noclos
+                        ups.all_until(this) { it == blk }     // stop at enclosing declaration block
+                            .filter { it is Expr.Proto }         // all crossing protos
+                            .forEach {
+                                it as Expr.Proto
+                                protos_noclos.add(it)            // mark protos as noclos
+                                if (it.tk.str != "func") {
+                                    blks_nested.add(blk)         // mark dcl block with nested coro/task
+                                }
+                            }
                     }
                 }
             }
