@@ -769,6 +769,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Dyn* ceu_tofree_dyn = NULL;
         
         void ceu_dyn_rem_free_chk (CEU_Dyn* dyn) {
+            ceu_hold_rem(dyn);
         #if CEU >= 4
             if ((ceu_istask_dyn(dyn) CEU5(|| dyn->Any.type==CEU_VALUE_TASKS))&& ceu_tofree_n>0) {
                 dyn->Any.tofree = ceu_tofree_dyn;
@@ -791,7 +792,7 @@ fun Coder.main (tags: Tags): String {
             }
             while (ceu_tofree_dyn != NULL) {
                 CEU_Dyn* nxt = ceu_tofree_dyn->Any.tofree;
-                ceu_dyn_rem_free(ceu_tofree_dyn);
+                ceu_dyn_free(ceu_tofree_dyn);
                 ceu_tofree_dyn = nxt;
             }
         }
