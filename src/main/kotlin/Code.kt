@@ -100,14 +100,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
                             switch (ceu_frame->exe->pc) {
                                 case 0:
-                                    if (ceu_n == CEU_ARG_FREE) {
-                                        ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                    if (ceu_n == CEU_ARG_ABORT) {
+                                        ceu_frame->exe->status = CEU_EXE_STATUS_ABORTED;
                                         return (CEU_Value) { CEU_VALUE_NIL };
                                     }
                         """}}
                         $code
                         ${isexe.cond{"""
-                                    ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
+                                    ceu_frame->exe->status = (ceu_n == CEU_ARG_ABORT) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
                         return ceu_acc;
@@ -425,7 +425,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // check free
                     ${(CEU>=3 && (f_b is Expr.Do) && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (ceu_n == CEU_ARG_FREE) {
+                        if (ceu_n == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -516,7 +516,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } while (0); // catch
                     // check free
                     ${(CEU>=3 && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
-                        if (ceu_n == CEU_ARG_FREE) {
+                        if (ceu_n == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
@@ -593,7 +593,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
-                    if (ceu_n == CEU_ARG_FREE) {
+                    if (ceu_n == CEU_ARG_ABORT) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
                         continue;
                     }
@@ -637,12 +637,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 ceu_acc = ceu_bcast_task(&ceu_x_$n.Dyn->Exe_Task, ceu_arg_$n);
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
-                ${this.tsks.cond2({"""
-                    ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+                if (ceu_acc.type != CEU_VALUE_NIL) {
+                    ceu_acc = ceu_create_track($bupc, &ceu_x_$n.Dyn->Exe_Task);
                 }
-                """ }, { """
-                    ceu_acc = (ceu_acc.type == CEU_VALUE_TASK_TERMINATED) ? (CEU_Value) { CEU_VALUE_NIL } : ceu_x_$n;
-                """ })}
                 """
             }
             is Expr.Bcast -> this.call.code()
