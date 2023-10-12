@@ -5,11 +5,7 @@ val union = "union"
 
 class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
     fun pub (e: Expr.Do): String {
-        return """
-            typedef struct {
-                ${e.mem()}
-            } CEU_Clo_Mem_${e.n};                        
-        """
+        return e.mem()
     }
 
     fun Expr.coexists (): Boolean {

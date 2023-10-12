@@ -69,7 +69,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                 """ +
                 """ // MEM | ${this.dump()}
-                    ${isexe.cond { mem.pub(this.blk) } }
+                    ${isexe.cond { """
+                        typedef struct {
+                            ${mem.pub(this.blk)}
+                        } CEU_Clo_Mem_$n;                        
+                    """ }}
                 """, """ // FUNC | ${this.dump()}
                     CEU_Value ceu_clo_$n (
                         CEU_Frame* ceu_frame,

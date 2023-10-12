@@ -1910,6 +1910,6 @@ class Exec_04 {
             }) ()
             println(:ok)
         """)
-        assert(out == "[]\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }
