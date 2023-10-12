@@ -364,7 +364,7 @@ class Exec_05 {
     fun ee_01_pub() {
         val out = test("""
             val T = task () {
-                set pub = 10
+                pub(10)
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
@@ -376,21 +376,46 @@ class Exec_05 {
     fun ee_02_pub() {
         val out = test("""
             val T = task () {
-                set pub = 10
+                pub(10)
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
             val x = track(t)
             val v = detrack(x) { as it =>
-                println(pub(it))
+                pub(it)
             }
             println(v)
         """)
-        assert(out.contains("track: 0x")) { out }
-        assert(out.contains("ref-task: 0x")) { out }
-        assert(out.contains("false\n")) { out }
+        assert(out == ("10\n")) { out }
     }
-
+    @Test
+    fun ee_03_pub() {
+        val out = test("""
+            val T = task () {
+                pub([])
+                yield(nil) { as it => nil }
+            }
+            val t = spawn T()
+            println(pub(t))
+        """)
+        assert(out.contains("[]\n")) { out }
+    }
+    @Test
+    fun ee_04_pub() {
+        val out = test("""
+            val T = task () {
+                pub([10])
+                yield(nil) { as it => nil }
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val t = next(ts)
+            detrack(t) { as it =>
+                println(pub(it))
+            }
+        """)
+        assert(out.contains("[10]\n")) { out }
+    }
 
     // THROW
 

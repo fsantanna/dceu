@@ -1183,4 +1183,20 @@ class Exec_03 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_02_valgrind() {
+        val out = test("""
+            resume coroutine (coro () {
+                val x
+                do {
+                    yield(nil) { as it =>
+                        nil
+                    }
+                }
+                val y
+            }) ()
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 }

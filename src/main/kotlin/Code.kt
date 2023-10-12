@@ -56,8 +56,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
-                val istask = (this.tk.str == "task")
                 val code = this.blk.code()
+                val mem = Mem(vars, clos, sta, defers)
 
                 val pres = Pair(""" // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
@@ -69,19 +69,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                 """ +
                 """ // MEM | ${this.dump()}
-                    ${isexe.cond { """
-                        typedef struct {
-                            ${this.args.map { (arg,_) ->
-                                val dcl = vars.get(this.blk, arg.str)
-                                val idc = dcl.id.str.idc(dcl.n)
-                                """
-                                CEU_Value $idc;
-                                CEU_Block* _${idc}_;
-                                """
-                            }.joinToString("")}
-                            ${this.blk.mem(sta, clos, defers)}
-                        } CEU_Clo_Mem_$n;                        
-                    """ }}
+                    ${isexe.cond { mem.pub(this.blk) } }
                 """, """ // FUNC | ${this.dump()}
                     CEU_Value ceu_clo_$n (
                         CEU_Frame* ceu_frame,

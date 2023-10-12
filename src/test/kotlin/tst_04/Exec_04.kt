@@ -1897,4 +1897,19 @@ class Exec_04 {
         """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun zz_24_valgrind() {
+        val out = test("""
+            spawn (task () {
+                do {
+                    yield(nil) { as it =>
+                        nil
+                    }
+                }
+                val y
+            }) ()
+            println(:ok)
+        """)
+        assert(out == "[]\n") { out }
+    }
 }
