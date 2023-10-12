@@ -508,16 +508,17 @@ fun Coder.main (tags: Tags): String {
                 switch (v.type) {
             #if CEU >= 4
                     case CEU_VALUE_EXE_TASK:
-                        printf("    pub   = %d\n", v.Dyn->Exe_Task.pub.type);
+                        printf("    status = %d\n", v.Dyn->Exe_Task.status);
+                        printf("    pub    = %d\n", v.Dyn->Exe_Task.pub.type);
                         break;
             #endif
             #if CEU >= 5
                     case CEU_VALUE_TASKS:
-                        printf("    first = %p\n", v.Dyn->Tasks.dyns.first);
-                        printf("    last  = %p\n", v.Dyn->Tasks.dyns.last);
+                        printf("    first  = %p\n", v.Dyn->Tasks.dyns.first);
+                        printf("    last   = %p\n", v.Dyn->Tasks.dyns.last);
                         break;
                     case CEU_VALUE_TRACK:
-                        printf("    task  = %p\n", v.Dyn->Track.task);
+                        printf("    task   = %p\n", v.Dyn->Track.task);
                         break;
             #endif
                     default:
@@ -1199,6 +1200,7 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     ret = task->frame.clo->proto(&task->frame, 1, &evt);
                     if (task->status >= CEU_EXE_STATUS_TERMINATED) {
+                        task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                         if (!CEU_ISERR(ret)) {      // bcast
                             CEU_Exe_Task* up_task = ceu_task_up_task(task);
                             CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
@@ -1209,6 +1211,11 @@ fun Coder.main (tags: Tags): String {
                                 // enclosing block
                                 ret = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                             }
+                            /* TODO: stack trace for error on task termination
+                            do {
+                                CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
+                            } while (0);
+                            */
                         }
         #if CEU >= 5
                         if (task->type == CEU_VALUE_EXE_TASK_IN) {
@@ -1626,6 +1633,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="spawn error : expected task"} };
             }
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
+            //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;

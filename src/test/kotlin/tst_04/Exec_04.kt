@@ -102,11 +102,22 @@ class Exec_04 {
     // SCOPE
 
     @Test
-    fun cc_01_scope() {
+    fun cc_00_scope() {
         val out = test("""
             var x
             set x = do {
                 spawn (task() {nil}) ()
+            }
+            println(2)
+        """)
+        assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        //assert(out == "2\n") { out }
+    }
+    @Test
+    fun cc_01_scope() {
+        val out = test("""
+            val x = do {
+                spawn (task() { yield(nil) { as it=>nil } }) ()
             }
             println(2)
         """)
@@ -118,7 +129,7 @@ class Exec_04 {
         val out = test("""
             var t
             set t = task () {
-                nil
+                yield(nil) { as it=>nil }
             }
             var co
             set co = if true { spawn t() } else { nil }
@@ -161,7 +172,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task (v) {
-                nil ;;println(v)
+                yield(nil) { as it=>nil } ;;println(v)
             }
             var t
             set t = do {
@@ -690,8 +701,9 @@ class Exec_04 {
                 nil
             }()
         """)
-        assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
-                " v  anon : (lin 3, col 36) : block escape error : cannot move to deeper scope with pending references")) { out }
+        assert(out.contains(":ok\texe-task: 0x")) { out }
+        //assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot move to deeper scope with pending references")) { out }
     }
     @Test
     fun ff_01_term() {

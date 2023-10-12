@@ -2071,6 +2071,39 @@ class Exec_01 {
         //assert(out == "[1]\n") { out }
         assert(out == "anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
+    @Test
+    fun ll_06_xxx() {
+        val out = test("""
+            val g = func (v) {
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+                g(v)
+            }
+            f([1])
+        """)
+        assert(out == " |  anon : (lin 9, col 13) : f([1])\n" +
+                " |  anon : (lin 6, col 17) : g(v)\n" +
+                " v  anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+    }
+    @Test
+    fun ll_07_xxx() {
+        val out = test("""
+            val g = func (v) {
+                val k = v
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+                println(v)
+            }
+            f([1])
+        """)
+        assert(out == " |  anon : (lin 10, col 13) : f([1])\n" +
+                " |  anon : (lin 7, col 17) : g(v)\n" +
+                " v  anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+    }
 
     // SCOPE / :TMP / :tmp
 
