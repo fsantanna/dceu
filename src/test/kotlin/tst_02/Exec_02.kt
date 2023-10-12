@@ -77,6 +77,18 @@ class Exec_02 {
 
     // THROW / CATCH
 
+
+    @Test
+    fun jj_00_0_err() {
+        val out = test("""
+            catch { as it :T =>
+                it[0]
+            } in {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 2, col 27) : declaration error : data :T is not declared\n") { out }
+    }
     @Test
     fun jj_00_catch_err() {
         val out = test("""

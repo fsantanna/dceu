@@ -264,15 +264,36 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
+            is Expr.Catch  -> {
+                val tag = this.it.second
+                if (tag!=null && !datas.containsKey(tag.str)) {
+                    err(tag, "declaration error : data ${tag.str} is not declared")
+                }
+                this.cnd.traverse()
+                this.blk.traverse()
+            }
             is Expr.Defer  -> this.blk.traverse()
 
-            is Expr.Yield  -> { this.arg.traverse() ; this.blk.traverse() }
+            is Expr.Yield  -> {
+                val tag = this.it.second
+                if (tag!=null && !datas.containsKey(tag.str)) {
+                    err(tag, "declaration error : data ${tag.str} is not declared")
+                }
+                this.arg.traverse()
+                this.blk.traverse()
+            }
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.arg.traverse() }
             is Expr.Bcast  -> this.call.traverse()
-            is Expr.Dtrack -> { this.trk.traverse() ; this.blk.traverse() }
+            is Expr.Dtrack -> {
+                val tag = this.it.second
+                if (tag!=null && !datas.containsKey(tag.str)) {
+                    err(tag, "declaration error : data ${tag.str} is not declared")
+                }
+                this.trk.traverse()
+                this.blk.traverse()
+            }
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {

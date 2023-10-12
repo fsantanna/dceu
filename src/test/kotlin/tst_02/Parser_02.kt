@@ -24,6 +24,13 @@ class Parser_02 {
         val e = parser.exprs()
         assert(e.tostr() == "catch { as it => 1 } in {\nthrow(1)\n}\n") { e.tostr() }
     }
+    @Test
+    fun bb_02_throw_catch() {
+        val l = lexer("catch {as it :T=>it[0]} in { nil }")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "catch { as it :T => it[0] } in {\nnil\n}\n") { e.tostr() }
+    }
 
     // IT / AS
 

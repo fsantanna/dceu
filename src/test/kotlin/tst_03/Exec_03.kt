@@ -320,6 +320,17 @@ class Exec_03 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun cd_02_yield_as() {
+        val out = test("""
+            coro () {
+                yield(nil) { as it :T =>
+                    it[0]
+                }
+            }
+        """)
+        assert(out == "anon : (lin 3, col 36) : declaration error : data :T is not declared\n") { out }
+    }
 
     // MEM vs STACK
 

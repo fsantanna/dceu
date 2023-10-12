@@ -147,6 +147,15 @@ class Exec_05 {
     // DETRACK
 
     @Test
+    fun cc_00_detrack() {
+        val out = test("""
+            detrack(nil) { as it :X =>
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 2, col 34) : declaration error : data :X is not declared\n") { out }
+    }
+    @Test
     fun cc_01_detrack() {
         val out = test("""
             detrack(nil) { as it => nil }
