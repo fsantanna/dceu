@@ -373,7 +373,7 @@ class Exec_05 {
     fun ee_01_pub() {
         val out = test("""
             val T = task () {
-                pub(10)
+                set pub() = 10
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
@@ -385,7 +385,7 @@ class Exec_05 {
     fun ee_02_pub() {
         val out = test("""
             val T = task () {
-                pub(10)
+                set pub() = 10
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
@@ -401,7 +401,7 @@ class Exec_05 {
     fun ee_03_pub() {
         val out = test("""
             val T = task () {
-                pub([])
+                set pub() = []
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
@@ -413,7 +413,7 @@ class Exec_05 {
     fun ee_04_pub() {
         val out = test("""
             val T = task () {
-                pub([10])
+                set pub() = [10]
                 yield(nil) { as it => nil }
             }
             val ts = tasks()
