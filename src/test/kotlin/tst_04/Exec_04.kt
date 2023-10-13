@@ -1235,6 +1235,67 @@ class Exec_04 {
         """)
         assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
+    @Test
+    fun kk_07_pub_tag() {
+        val out = test("""
+            data :X = [x]
+            val T = task () :X {
+                set pub() = [10]
+                println(pub().x)
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_08_pub_tag() {
+        val out = test("""
+            data :Z = [z]
+            data :X = [x:Z]
+            val T = task () :X {
+                set pub() = [[10]]
+                println(pub().x.z)
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_09_pub_tag() {
+        val out = test("""
+            data :X = [x]
+            val T = task () :X {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            val t :X = spawn T()
+            println(pub(t).x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_10_pub_tag() {
+        val out = test("""
+            data :Z = [z]
+            data :X = [x:Z]
+            val T = task () :X {
+                set pub() = [[10]]
+                yield(nil) { as it => nil }
+            }
+            val t :X = spawn T()
+            println(pub(t).x.z)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun kk_11_task_tag_err() {
+        val out = test("""
+            val T = task () :X {
+                nil
+            }
+        """)
+        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+    }
 
     // NESTED
 

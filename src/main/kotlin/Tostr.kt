@@ -23,7 +23,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             val args = this.args.map { (id,tag) ->
                 id.tostr() + tag.cond {" ${tag!!.str}"}
             }.joinToString(",")
-            "(" + this.tk.str + " (" + args + ") " + this.blk.tostr(pre) + ")"
+            "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {

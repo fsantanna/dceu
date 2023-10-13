@@ -160,4 +160,15 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == "pub(t)\nset pub(t) = 10\n") { e.tostr() }
     }
+    @Test
+    fun dd_03_pub_tag() {
+        val l = lexer("""
+            task () :X {
+                nil
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "(task () :X {\nnil\n})\n") { e.tostr() }
+    }
 }

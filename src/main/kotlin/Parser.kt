@@ -254,8 +254,13 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("(")
                 val args = this.args(")")
                 this.acceptFix_err(")")
+                val tag = when {
+                    (tk0.str != "task") -> null
+                    !this.acceptEnu("Tag") -> null
+                    else -> this.tk0 as Tk.Tag
+                }
                 val blk = this.block(this.tk1)
-                Expr.Proto(tk0, args, blk)
+                Expr.Proto(tk0, tag, args, blk)
             }
             this.acceptFix("enum") -> {
                 val tk0 = this.tk0 as Tk.Fix

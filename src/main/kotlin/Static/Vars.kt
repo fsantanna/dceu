@@ -72,6 +72,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     Pair(null, this.datas[dcl.tag.str]!!)
                 }
             }
+            is Expr.Pub -> {
+                when {
+                    (e.tsk == null) -> {
+                        val task = ups.first(e) { it is Expr.Proto && it.tk.str=="task" }!! as Expr.Proto
+                        if (task.tag == null) null else {
+                            Pair(null, this.datas[task.tag.str]!!)
+                        }
+                    }
+                    (e.tsk != null) -> {
+                        this.data(e.tsk)
+                    }
+                    else -> error("impossible case")
+                }
+            }
             is Expr.Index -> {
                 val d = this.data(e.col)
                 val l = d?.second
@@ -127,6 +141,9 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
+                if (this.tag!=null && !datas.containsKey(this.tag.str)) {
+                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                }
                 this.args.forEach { (_,tag) ->
                     if (tag!=null && !datas.containsKey(tag.str)) {
                         err(tag, "declaration error : data ${tag.str} is not declared")
