@@ -14,6 +14,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
             is Expr.Set    -> this.dst.coexists() || this.src.coexists()
             is Expr.If     -> this.cnd.coexists()
             is Expr.Drop   -> this.e.coexists()
+            is Expr.XBreak -> this.cnd.coexists() || (this.e?.coexists() ?: false)
 
             is Expr.Catch  -> this.cnd.coexists()
 
@@ -31,7 +32,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
             is Expr.Index  -> this.col.coexists() || this.idx.coexists()
             is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
-            is Expr.Proto, is Expr.Do, is Expr.XLoop, is Expr.XBreak, is Expr.Enum, is Expr.Data, is Expr.Pass -> false
+            is Expr.Proto, is Expr.Do, is Expr.XLoop, is Expr.Enum, is Expr.Data, is Expr.Pass -> false
             is Expr.Defer -> false
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         }
@@ -91,6 +92,12 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
                 };
                 """
             is Expr.XLoop -> this.blk.mem()
+            is Expr.XBreak -> """
+                $union {
+                    ${this.cnd.mem()}
+                    ${this.e?.mem() ?: ""}
+                };
+            """
             is Expr.Pass -> this.e.mem()
             is Expr.Drop -> this.e.mem()
 
@@ -185,7 +192,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
                 """
 
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> ""
-            is Expr.Proto, is Expr.Enum, is Expr.Data, is Expr.XBreak -> ""
+            is Expr.Proto, is Expr.Enum, is Expr.Data -> ""
         }
     }
 }

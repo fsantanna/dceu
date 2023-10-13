@@ -2015,4 +2015,17 @@ class Exec_04 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_25_break() {
+        val out = test("""
+            spawn (task () {
+                println(xloop {
+                    val t = [10]
+                    xbreak if t[0]
+                    yield(nil) { as it => nil }
+                })
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
 }

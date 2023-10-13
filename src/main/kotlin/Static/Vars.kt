@@ -259,7 +259,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.XLoop  -> this.blk.traverse()
-            is Expr.XBreak -> { this.cnd?.traverse() ; this.e?.traverse() }
+            is Expr.XBreak -> { this.cnd.traverse() ; this.e?.traverse() }
             is Expr.Enum   -> {}
             is Expr.Data   -> {
                 val sup = this.tk.str.dropLastWhile { it != '.' }.dropLast(1)

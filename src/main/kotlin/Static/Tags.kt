@@ -31,7 +31,7 @@ class Tags (outer: Expr.Do) {
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
             is Expr.XLoop  -> this.blk.traverse()
-            is Expr.XBreak -> { this.cnd?.traverse() ; this.e?.traverse() }
+            is Expr.XBreak -> { this.cnd.traverse() ; this.e?.traverse() }
             is Expr.Enum   -> this.tags.forEach {
                 if (it.first.str.contains('.')) {
                     err(it.first, "enum error : enum tag cannot contain '.'")
