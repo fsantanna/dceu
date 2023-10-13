@@ -50,7 +50,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
     fun Expr.code(): String {
         if (this.isdst()) {
-            assert(this is Expr.Acc || this is Expr.Index)
+            assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
         }
         return when (this) {
             is Expr.Proto -> {
@@ -636,6 +636,39 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ceu_acc = ceu_x_$n;
                 """})}
                 """
+            }
+            is Expr.Pub -> {
+                val bupc = ups.first_block(this)!!.idc("block")
+                this.tsk.cond2({
+                    tsk as Expr
+                    it.code() + """
+                        if (!ceu_istask_val(ceu_acc)) {
+                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
+                            CEU_ERROR($bupc, "${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
+                        }
+                    """
+                },{ """
+                    ceu_acc = ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe);
+                """ }) +
+                when {
+                    this.isdst() -> {
+                        val src = ups.pub[this]!!.idc("src")
+                        """
+                        { // PUB - SET
+                            CEU_ASSERT(
+                                $bupc,
+                                ceu_hold_chk_set(CEU4(0 COMMA) CEU_HLD_BLOCK(ceu_acc.Dyn), CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
+                            ceu_gc_inc($src);
+                            ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                            ceu_acc.Dyn->Exe_Task.pub = $src;
+                        }                        
+                        """
+                    }
+                    this.isdrop() -> "assert(0 && \"TODO: drop pub\");"
+                    else -> "ceu_acc = ceu_acc.Dyn->Exe_Task.pub;\n"
+                }
             }
             is Expr.Bcast -> this.call.code()
             is Expr.Dtrack -> {

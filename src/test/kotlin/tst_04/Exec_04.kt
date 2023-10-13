@@ -1171,14 +1171,16 @@ class Exec_04 {
         val out = test("""
             pub()
         """)
-        assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
+        assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
     }
     @Test
     fun kk_02_pub() {
         val out = test("""
             pub(nil)
         """)
-        assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
+        //assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 17) : pub error : expected task\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -1196,7 +1198,7 @@ class Exec_04 {
     fun kk_04_pub() {
         val out = test("""
             val T = task () {
-                pub(10)
+                set pub() = 10
                 yield(nil) { as it => nil }
             }
             val t = spawn T()
@@ -1210,13 +1212,13 @@ class Exec_04 {
             val T = task () {
                 do {
                     val x = []
-                    pub(x)
+                    set pub() = x
                 }
             }
             val t = spawn T()
         """)
         assert(out == " |  anon : (lin 8, col 21) : spawn T(nil)\n" +
-                " v  anon : (lin 5, col 21) : pub(x) : set error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 5, col 25) : pub(x) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -1227,11 +1229,11 @@ class Exec_04 {
             val t = spawn T()
             do {
                 val x = []
-                pub(t, x)
+                set pub(t) = x
             }
             println(pub(t))
         """)
-        assert(out == " v  anon : (lin 8, col 17) : pub(t,x) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
 
     // NESTED

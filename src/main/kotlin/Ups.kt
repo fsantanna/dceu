@@ -29,6 +29,9 @@ class Ups (outer: Expr.Do) {
     fun any (e: Expr, cnd: (Expr)->Boolean): Boolean {
         return this.first(e,cnd) != null
     }
+    fun none (e: Expr, cnd: (Expr)->Boolean): Boolean {
+        return this.first(e,cnd) == null
+    }
     fun first_block (e: Expr): Expr.Do? {
         return this.first(e) { it is Expr.Do } as Expr.Do?
     }
@@ -67,6 +70,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Resume -> this.map(listOf(this.co, this.arg))
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.arg))
+            is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Bcast  -> this.map(listOf(this.call))
             is Expr.Dtrack -> this.map(listOf(this.trk, this.blk))
 

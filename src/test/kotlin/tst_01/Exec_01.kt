@@ -238,6 +238,16 @@ class Exec_01 {
         assert(out.contains("hold  = 1")) { out }
     }
 
+    // SET
+
+    @Test
+    fun bc_01_set_err() {
+        val out = test("""
+            set nil = nil
+        """)
+        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+    }
+
     // INDEX / TUPLE
 
     @Test

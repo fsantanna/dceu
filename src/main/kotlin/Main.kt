@@ -47,7 +47,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
-        "broadcast", "spawn", "task",
+        "broadcast", "pub", "spawn", "task",
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
     ))
@@ -92,7 +92,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 3) setOf() else setOf(
     "coroutine", "status"
 )) + (if (CEU < 4) setOf() else setOf(
-    "broadcast", "pub"
+    "broadcast"
 )) + (if (CEU < 5) setOf() else setOf(
     "tasks", "track"
 ))
@@ -128,6 +128,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val arg: Expr): Expr(N++, tk_)
+    data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
     data class Dtrack (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val trk: Expr, val blk: Expr.Do): Expr(N++, tk_)
 

@@ -21,6 +21,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
             is Expr.Resume -> this.co.coexists() || this.arg.coexists()
 
             is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.arg.coexists()
+            is Expr.Pub    -> this.tsk?.coexists() ?: false
             is Expr.Bcast  -> this.call.coexists()
             is Expr.Dtrack -> this.trk.coexists() || this.blk.coexists()
 
@@ -128,6 +129,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
                     };
                 };
             """
+            is Expr.Pub -> this.tsk?.mem() ?: ""
             is Expr.Bcast -> this.call.mem()
             is Expr.Dtrack -> """
                 $union { // DTRACK

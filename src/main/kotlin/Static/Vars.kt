@@ -285,6 +285,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.arg.traverse() }
+            is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Bcast  -> this.call.traverse()
             is Expr.Dtrack -> {
                 val tag = this.it.second

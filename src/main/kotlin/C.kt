@@ -2059,32 +2059,6 @@ fun Coder.main (tags: Tags): String {
         #endif
             return (val.type>CEU_VALUE_DYNAMIC) && ceu_istask_dyn(val.Dyn);
         }
-
-        CEU_Value ceu_pub_f (CEU_Frame* frame, int n, CEU_Value args[]) {
-            int i = 0;
-            CEU_Exe_Task* tsk;
-            if (n>0 && ceu_istask_val(CEU4(ceu_deref)(args[0]))) {
-                tsk = &CEU4(ceu_deref)(args[0]).Dyn->Exe_Task;
-                i = 1;
-            } else {
-                tsk = ceu_block_up_task(frame->up_block);
-                if (tsk == NULL) {
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
-                }
-            }
-            if (i == n) {   // GET
-                return tsk->pub;
-            } else {        // SET
-                CEU_Value ret = ceu_hold_chk_set(CEU4(1 COMMA) tsk->dn_block, CEU_HOLD_MUTAB, args[i], 0, "set error");
-                if (ret.type == CEU_VALUE_ERROR) {
-                    return ret;
-                }
-                ceu_gc_inc(args[i]);
-                ceu_gc_dec(tsk->pub, 1);
-                tsk->pub = args[i];
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-        }
         #endif
     """ +
     """ // TRACK
@@ -2186,10 +2160,6 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_broadcast_f, {0,NULL}
         };
-        CEU_Clo ceu_pub = { 
-            CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_pub_f, {0,NULL}
-        };
         #endif
         #if CEU >= 5
         CEU_Clo ceu_tasks = { 
@@ -2225,7 +2195,6 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 4
         CEU_Value id_broadcast               = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_broadcast}               };
-        CEU_Value id_pub                     = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pub}                     };
         #endif
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
