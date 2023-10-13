@@ -79,6 +79,8 @@ val TAGS = listOf (
     ":exe-task-in", ":tasks", ":track"
 )) + (if (CEU < 3) listOf() else listOf(
     ":yielded", ":resumed", ":terminated"
+)) + (if (CEU < 4) listOf() else listOf(
+    ":void",
 )) + listOf(
     ":ceu", ":tmp",
 )

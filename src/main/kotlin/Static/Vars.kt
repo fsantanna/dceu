@@ -75,7 +75,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pub -> {
                 when {
                     (e.tsk == null) -> {
-                        val task = ups.first(e) { it is Expr.Proto && it.tk.str=="task" }!! as Expr.Proto
+                        val task = ups.first_task_real(e)!!
                         if (task.tag == null) null else {
                             Pair(null, this.datas[task.tag.str]!!)
                         }
@@ -141,7 +141,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
     fun Expr.traverse () {
         when (this) {
             is Expr.Proto  -> {
-                if (this.tag!=null && !datas.containsKey(this.tag.str)) {
+                if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (_,tag) ->

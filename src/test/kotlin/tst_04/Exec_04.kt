@@ -1167,12 +1167,22 @@ class Exec_04 {
     // PUB
 
     @Test
-    fun kk_01_pub() {
+    fun kk_00_pub() {
         val out = test("""
             pub()
         """)
         //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun kk_01_pub() {
+        val out = test("""
+            task () :void {
+                pub()
+            }
+        """)
+        //assert(out == " v  anon : (lin 2, col 13) : pub() : pub error : expected task\n") { out }
+        assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
     }
     @Test
     fun kk_02_pub() {
@@ -1459,6 +1469,24 @@ class Exec_04 {
             }
        """)
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+
+    // TASK / VOID
+
+    @Test
+    fun nn_01_anon() {
+        val out = test("""
+            data :X = [x]
+            val T = task () :X {
+                set pub() = [10]
+                spawn (task () :void {
+                    println(pub().x)
+                }) ()
+                nil
+            }
+            spawn T()
+       """)
+        assert(out == "10\n") { out }
     }
 
     // RETURN

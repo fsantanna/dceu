@@ -48,6 +48,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
         return ups.pub[this].let { it is Expr.Drop && it.e==this }
     }
 
+    fun Expr.up_task_real_c (): String {
+        val n = ups.all_until(this) {
+                it is Expr.Proto && it.tk.str=="task" && it.tag?.str!=":void"
+            }
+            .filter { it is Expr.Proto } // but count all protos in between
+            .count()
+        return "(ceu_frame" + "->up_block->up.frame".repeat(n-1) + "->exe_task)"
+    }
+
     fun Expr.code(): String {
         if (this.isdst()) {
             assert(this is Expr.Acc || this is Expr.Index || this is Expr.Pub)
@@ -641,20 +650,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.idc("block")
                 this.tsk.cond2({
                     tsk as Expr
-                    it.code() + """
+                    it.code() + """ // PUB | ${this.dump()}
                         if (!ceu_istask_val(ceu_acc)) {
                             CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
                             CEU_ERROR($bupc, "${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
                         }
                     """
-                },{ """
-                    ceu_acc = ceu_dyn_to_val((CEU_Dyn*)ceu_frame->exe);
+                },{ """ // PUB | ${this.dump()}
+                    ceu_acc = ceu_dyn_to_val((CEU_Dyn*)${up_task_real_c()});
                 """ }) +
                 when {
                     this.isdst() -> {
                         val src = ups.pub[this]!!.idc("src")
                         """
-                        { // PUB - SET
+                        { // PUB - SET | ${this.dump()}
                             CEU_ASSERT(
                                 $bupc,
                                 ceu_hold_chk_set(CEU4(0 COMMA) CEU_HLD_BLOCK(ceu_acc.Dyn), CEU_HOLD_MUTAB, $src, 0, "set error"),

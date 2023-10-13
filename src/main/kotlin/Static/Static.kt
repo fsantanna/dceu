@@ -131,7 +131,7 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.tsk?.traverse()
                 when {
                     (this.tsk != null) -> {}
-                    ups.none(this) { it is Expr.Proto && it.tk.str=="task" } -> err(this.tk, "pub error : expected enclosing task")
+                    (ups.first_task_real(this) == null) -> err(this.tk, "pub error : expected enclosing task")
                     else -> {}
                 }
             }
