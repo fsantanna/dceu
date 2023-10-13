@@ -1290,6 +1290,11 @@ fun Coder.main (tags: Tags): String {
                 ret = ceu_bcast_blocks(ceu_bcast_global(frame->up_block), ceu_toref(evt));
             } else {
                 CEU_Value tsk = args[1];
+        #if CEU >= 5
+                if (tsk.type == CEU_VALUE_TRACK) {
+                    tsk = ceu_dyn_to_val((CEU_Dyn*)tsk.Dyn->Track.task);
+                }
+        #endif
                 if (ceu_istask_val(tsk)) {
                     ret = ceu_bcast_task(&tsk.Dyn->Exe_Task, ceu_toref(evt));
                 } else {
