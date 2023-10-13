@@ -143,19 +143,21 @@ class Parser_04 {
     @Test
     fun dd_01_pub() {
         val l = lexer("""
-            set pub = 10
+            pub()
+            set pub() = 10
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "set pub = 10\n") { e.tostr() }
+        assert(e.tostr() == "pub()\nset pub() = 10\n") { e.tostr() }
     }
     @Test
     fun dd_02_pub() {
         val l = lexer("""
             pub(t)
+            set pub(t) = 10
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "pub(t)\n") { e.tostr() }
+        assert(e.tostr() == "pub(t)\nset pub(t) = 10\n") { e.tostr() }
     }
 }

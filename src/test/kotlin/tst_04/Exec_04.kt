@@ -1218,7 +1218,7 @@ class Exec_04 {
             val t = spawn T()
         """)
         assert(out == " |  anon : (lin 8, col 21) : spawn T(nil)\n" +
-                " v  anon : (lin 5, col 25) : pub(x) : set error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 5, col 25) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
