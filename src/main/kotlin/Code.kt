@@ -756,7 +756,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
-                            CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA NULL) };
+                            CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA {.exe=NULL}) };
                             CEU_ASSERT($bupc, ceu_drop_f(&ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };

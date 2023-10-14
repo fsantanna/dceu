@@ -159,6 +159,86 @@ class Exec_05 {
         assert(out == "1\n") { out }
     }
 
+    // TRACK / DROP
+
+    @Test
+    fun bc_01_track_drop() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val t = spawn T ()
+            val y = do {
+                val x = track(t)
+                drop(x)
+            }
+            println(y)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+    @Test
+    fun bc_02_track_drop_err() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val y = do {
+                val t = spawn T ()
+                val x = track(t)
+                drop(x)
+            }
+            println(y)
+        """)
+        assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bc_03_track_drop() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val ts = tasks()
+            val y = do {
+                spawn T () in ts
+                println()
+                drop(next(ts))
+            }
+            println(y)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+    @Test
+    fun bc_04_track_drop() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val y = do {
+                val ts = tasks()
+                spawn T () in ts
+                drop(next(ts))
+            }
+            println(y)
+        """)
+        assert(out == (" v  anon : (lin 3, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun bc_05_track_drop() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val t = spawn T ()
+            val y = do {
+                track(t)
+            }
+            println(y)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+    @Test
+    fun bc_06_track_drop() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            val t = spawn T ()
+            val y = do {
+                drop(track(t))
+            }
+            println(y)
+        """)
+        assert(out.contains("track: 0x")) { out }
+    }
+
     // DETRACK
 
     @Test
@@ -564,6 +644,16 @@ class Exec_05 {
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
+    @Test
+    fun ff_08_tasks() {
+        val out = test("""
+            do {
+                val t = [tasks(), tasks()]
+                println(#t)
+            }
+        """)
+        assert(out == "2\n") { out }
+    }
 
     // NEXT
 
@@ -667,6 +757,56 @@ class Exec_05 {
        """)
         assert(out == ":ok\n") { out }
     }
+
+    // ORIGINAL
+
+    @Test
+    fun oo_01_tracks() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            do {
+                val ts = tasks()
+                spawn T() in ts
+                do {
+                    val vec = #[]
+                    var t = nil
+                    xloop {
+                        set t = next(ts,t)
+                        xbreak if t==nil
+                        set vec[#vec] = t
+                    }
+                    println(vec)
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("#[track: 0x")) { out }
+    }
+    @Test
+    fun oo_02_tracks() {
+        val out = test("""
+            val T = task () { yield(nil) { as it => nil } }
+            do {
+                val ts = tasks()
+                spawn T() in ts
+                do {
+                    val vec = #[]
+                    var t = nil
+                    xloop {
+                        set t = next(ts,t)
+                        xbreak if t==nil
+                        set vec[#vec] = drop(t)
+                    }
+                    println(#vec)
+                }
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+
+
+    // ZZ / ALL
 
     @Test
     fun zz_01_all() {

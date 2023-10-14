@@ -185,6 +185,22 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
         //assert(out == "anon : (lin 7, col 21) : block escape error : incompatible scopes\n:error\n") { out }
     }
+    @Test
+    fun cc_06_scope() {
+        val out = test("""
+            val T = task (t1) {
+                val t2 = []
+                pass [t1,[],t2]
+                yield(nil) { as it => nil }
+            }
+            do {
+                spawn T([])
+                nil
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // BROADCAST
 

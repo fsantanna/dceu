@@ -285,7 +285,6 @@ class Parser_01 {
     fun index6_err() {
         val l = lexer("x . 2")
         val parser = Parser(l)
-        parser.expr_4_suf()
         assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \"2\"")
     }
 

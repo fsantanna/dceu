@@ -305,7 +305,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_tags_f (CEU_Frame* _1, int n, CEU_Value args[]);
         char* ceu_tag_to_string (int tag);
-        int ceu_tag_to_size (int type);
+        int ceu_type_to_size (int type);
                 
         void ceu_dyn_rem_free (CEU_Dyn* dyn);
         void ceu_dyn_free (CEU_Dyn* dyn);
@@ -1091,29 +1091,22 @@ fun Coder.main (tags: Tags): String {
             CEU_Value src = args[0];
             CEU_Dyn* dyn = src.Dyn;
             
-            // do not drop non-dyn or globals
             #if CEU >= 4
             if (src.type == CEU_VALUE_REF) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
             } else
             #endif
             if (src.type < CEU_VALUE_DYNAMIC) {
-                return (CEU_Value) { CEU_VALUE_NIL };
+                return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
             } else if (CEU_HLD_BLOCK(dyn)->depth == 1) {
-                return (CEU_Value) { CEU_VALUE_NIL };
+                return (CEU_Value) { CEU_VALUE_NIL };       // do not drop non-dyns
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-            
-            //printf(">>> %d\n", dyn->Any.refs);
-            if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
+                return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
+            } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
             }
-            //if (dyn->Any.refs > 1) {
-            //    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : multiple references"} };
-            //}
+
             dyn->Any.hld.type = CEU_HOLD_FLEET;
-            //ceu_hold_chg(dyn, frame->up_block);
 
             switch (src.type) {
                 case CEU_VALUE_CLO_FUNC:
@@ -1176,10 +1169,16 @@ fun Coder.main (tags: Tags): String {
                     }
                 }
         #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    // do not drop task (and chk_set ensures that track>=task)
+                    break;
+        #endif
                 default:
+                    assert(0 && "TODO: drop");
                     break;
             }
-            return (CEU_Value) { CEU_VALUE_NIL };;
+            return (CEU_Value) { CEU_VALUE_NIL };
         }        
     """ +
     """ // BCAST
@@ -1322,10 +1321,12 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // TUPLE / VECTOR / DICT
         #define ceu_sizeof(type, member) sizeof(((type *)0)->member)
-        int ceu_tag_to_size (int type) {
+        int ceu_type_to_size (int type) {
             switch (type) {
                 case CEU_VALUE_NIL:
                     return 0;
+                case CEU_VALUE_ERROR:
+                    return ceu_sizeof(CEU_Value, Error);
                 case CEU_VALUE_TAG:
                     return ceu_sizeof(CEU_Value, Tag);
                 case CEU_VALUE_BOOL:
@@ -1336,19 +1337,8 @@ fun Coder.main (tags: Tags): String {
                     return ceu_sizeof(CEU_Value, Number);
                 case CEU_VALUE_POINTER:
                     return ceu_sizeof(CEU_Value, Pointer);
-                case CEU_VALUE_CLO_FUNC:
-        #if CEU >= 3
-                case CEU_VALUE_CLO_CORO:
-        #endif
-                case CEU_VALUE_TUPLE:
-                case CEU_VALUE_VECTOR:
-                case CEU_VALUE_DICT:
-        #if CEU >= 3
-                case CEU_VALUE_EXE_CORO:
-        #endif
-                    return ceu_sizeof(CEU_Value, Dyn);
                 default:
-                    assert(0 && "bug found");
+                    return ceu_sizeof(CEU_Value, Dyn);
             }
         }
         
@@ -1363,7 +1353,7 @@ fun Coder.main (tags: Tags): String {
             if (i<0 || i>=vec->its) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="index error : out of bounds"} };
             }
-            int sz = ceu_tag_to_size(vec->unit);
+            int sz = ceu_type_to_size(vec->unit);
             CEU_Value ret = (CEU_Value) { vec->unit };
             memcpy(&ret.Number, vec->buf+i*sz, sz);
             return ret;
@@ -1387,7 +1377,7 @@ fun Coder.main (tags: Tags): String {
                 } else {
                     assert(v.type == vec->unit);
                 }
-                int sz = ceu_tag_to_size(vec->unit);
+                int sz = ceu_type_to_size(vec->unit);
                 if (i == vec->its) {           // push
                     if (i == vec->max) {
                         vec->max = vec->max*2 + 1;    // +1 if max=0
