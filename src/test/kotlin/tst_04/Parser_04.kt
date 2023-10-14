@@ -141,6 +141,30 @@ class Parser_04 {
     // PUB
 
     @Test
+    fun dd_00_pub_a() {
+        val l = lexer("""
+            pub
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"(\" : have end of file")
+    }
+    @Test
+    fun dd_00_pub_b() {
+        val l = lexer("""
+            pub(
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected expression : have end of file")
+    }
+    @Test
+    fun dd_00_pub_c() {
+        val l = lexer("""
+            pub(1
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \")\" : have end of file")
+    }
+    @Test
     fun dd_01_pub() {
         val l = lexer("""
             pub()
@@ -170,5 +194,35 @@ class Parser_04 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "(task () :X {\nnil\n})\n") { e.tostr() }
+    }
+    @Test
+    fun dd_04_pub() {
+        val l = lexer("""
+            pub()()
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "pub()()\n") { e.tostr() }
+    }
+    @Test
+    fun dd_05_pub() {
+        val l = lexer("""
+            set pub()() = 10
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : invalid set : expected assignable destination")
+    }
+    @Test
+    fun dd_06_pub() {
+        val l = lexer("set pub = pub(x) + pub()")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 9) : expected \"(\" : have \"=\"")
+    }
+    @Test
+    fun dd_07_pub() {
+        val l = lexer("set pub() = pub(x) + pub()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "set pub() = pub(x) + pub()") { e.tostr() }
     }
 }

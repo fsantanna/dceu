@@ -275,6 +275,19 @@ class Parser_01 {
         assert(e.tostr() == "x[:a]") { e.tostr() }
         //assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected \"pub\" : have \"a\"")
     }
+    @Test
+    fun index5_err() {
+        val l = lexer("x . .")
+        val parser = Parser(l)
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \".\"")
+    }
+    @Test
+    fun index6_err() {
+        val l = lexer("x . 2")
+        val parser = Parser(l)
+        parser.expr_4_suf()
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected identifier : have \"2\"")
+    }
 
     // EXPRS
 
