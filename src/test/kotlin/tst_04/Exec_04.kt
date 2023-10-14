@@ -1488,6 +1488,23 @@ class Exec_04 {
        """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun nn_02_anon() {
+        val out = test("""
+            spawn (task () {
+                do {
+                    println(:xxx, pub())
+                    spawn (task () :void {
+                        println(:yyy, pub())
+                        yield(nil) { as it => nil }
+                    }) ()
+                    yield(nil) { as it => nil }
+                }
+                yield(nil) { as it => nil }
+            }) ()
+       """)
+        assert(out == ":xxx\tnil\n:yyy\tnil\n") { out }
+    }
 
     // RETURN
 

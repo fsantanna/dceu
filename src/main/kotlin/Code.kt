@@ -54,7 +54,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             }
             .filter { it is Expr.Proto } // but count all protos in between
             .count()
-        return "(ceu_frame" + "->up_block->up.frame".repeat(n-1) + "->exe_task)"
+        val (x,y) = Pair("ceu_frame_up_frame(".repeat(n-1), ")".repeat(n-1))
+        return "(($x ceu_frame $y)->exe_task)"
     }
 
     fun Expr.code(): String {
@@ -982,9 +983,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(!bup.ismem(sta,clos)).cond {
                         "CEU_Value ceu_args_$n[${this.args.size}];\n"
                     }}
-                    ${this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e ->
-                        e.code() + "$argsc[$i] = ceu_acc;\n"
-                    }.joinToString("")}
+                    ${this.args.filter{!(has_dots && it.tk.str=="...")}.mapIndexed { i,e -> """
+                        ${e.code()}
+                        $argsc[$i] = ceu_acc;
+                    """ }.joinToString("")}
                     
                     ${has_dots.cond { """
                         int ceu_dots_$n = $id_dots.Dyn->Tuple.its;

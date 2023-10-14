@@ -301,6 +301,7 @@ fun Coder.main (tags: Tags): String {
     """ // PROTOS
         CEU_Value ceu_type_f (CEU_Frame* _1, int n, CEU_Value args[]);
         int ceu_as_bool (CEU_Value v);
+        CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn);
 
         CEU_Value ceu_tags_f (CEU_Frame* _1, int n, CEU_Value args[]);
         char* ceu_tag_to_string (int tag);
@@ -488,12 +489,14 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
         }        
     """ +
-    """ // IMPLS
-        CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
-            return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
+    """ // DUMPS
+        void ceu_dump_frame (CEU_Frame* frame) {
+            printf(">>> FRAME: %p\n", frame);
+            printf("    up_block = %p\n", frame->up_block);
+            printf("    clo      = %p\n", frame->clo);
+            printf("    exe      = %p\n", frame->exe);
         }
-        
-        void _ceu_dump_ (CEU_Value v) {
+        void ceu_dump_value (CEU_Value v) {
             puts(">>>>>>>>>>>");
             ceu_print1(NULL, v);
             puts(" <<<");
@@ -526,10 +529,28 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             puts("<<<<<<<<<<<");
+        }        
+        void ceu_dump_block (CEU_Block* blk) {
+            printf(">>> BLOCK: %p\n", blk);
+            printf("    depth = %d\n", blk->depth);
+            printf("    istop = %d\n", blk->istop);
+            printf("    up    = %p\n", blk->up.frame);
+            CEU_Dyn* cur = blk->dn.dyns.first;
+            while (cur != NULL) {
+                ceu_dump_value(ceu_dyn_to_val(cur));
+                CEU_Dyn* old = cur;
+                cur = old->Any.hld.next;
+            }
         }
+    """ +
+    """ // IMPLS
+        CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
+            return (CEU_Value) { dyn->Any.type, {.Dyn=dyn} };
+        }
+        
         CEU_Value ceu_dump_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
-            _ceu_dump_(args[0]);
+            ceu_dump_value(args[0]);
             return (CEU_Value) { CEU_VALUE_NIL };
         }
 
@@ -850,16 +871,6 @@ fun Coder.main (tags: Tags): String {
             free(dyn);
         }
         
-        void ceu_block_dump (CEU_Block* blk) {
-            printf(">>> BLOCK: %p\n", blk);
-            CEU_Dyn* cur = blk->dn.dyns.first;
-            while (cur != NULL) {
-                CEU_Value arg = ceu_dyn_to_val(cur);
-                ceu_dump_f(NULL, 1, &arg);
-                CEU_Dyn* old = cur;
-                cur = old->Any.hld.next;
-            }
-        }
         void ceu_dyns_free (CEU_Dyns* dyns) {
             #if CEU >= 3
             // first finalize EXE
@@ -2032,14 +2043,27 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // ISTASK / PUB
         #if CEU >= 4
-        CEU_Exe_Task* ceu_block_up_task (CEU_Block* blk) {
+        CEU_Frame* ceu_block_up_frame (CEU_Block* blk) {
             if (blk->istop) {
-                CEU_Exe_Task* up_task = blk->up.frame->exe_task;
-                return (up_task!=NULL && ceu_istask_dyn((CEU_Dyn*)up_task)) ? up_task : NULL;                
+                return blk->up.frame;
             } else if (blk->up.block == NULL) {
                 return NULL;
             } else {
-                return ceu_block_up_task(blk->up.block);
+                return ceu_block_up_frame(blk->up.block);
+            }
+        }
+
+        CEU_Frame* ceu_frame_up_frame (CEU_Frame* frame) {
+            return ceu_block_up_frame(frame->up_block);
+        }
+
+        CEU_Exe_Task* ceu_block_up_task (CEU_Block* blk) {
+            CEU_Frame* frame = ceu_block_up_frame(blk);
+            if (frame == NULL) {
+                return NULL;
+            } else {
+                CEU_Exe_Task* up_task = frame->exe_task;
+                return (up_task!=NULL && ceu_istask_dyn((CEU_Dyn*)up_task)) ? up_task : NULL;                
             }
         }
 
