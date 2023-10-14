@@ -494,7 +494,9 @@ fun Coder.main (tags: Tags): String {
             printf(">>> FRAME: %p\n", frame);
             printf("    up_block = %p\n", frame->up_block);
             printf("    clo      = %p\n", frame->clo);
+        #if CEU >= 4
             printf("    exe      = %p\n", frame->exe);
+        #endif
         }
         void ceu_dump_value (CEU_Value v) {
             puts(">>>>>>>>>>>");
