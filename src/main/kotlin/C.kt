@@ -1676,7 +1676,7 @@ fun Coder.main (tags: Tags): String {
                 return n;
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
-                CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, blk, clo, &tasks->dyns);
+                CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
                 if (ret.type == CEU_VALUE_EXE_TASK_IN) {
                     ret.Dyn->Any.hld.block = (CEU_Block*) tasks; // point to tasks (vs enclosing block)
                 }
