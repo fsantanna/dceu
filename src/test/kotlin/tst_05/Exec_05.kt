@@ -685,6 +685,6 @@ class Exec_05 {
             }) ()
             broadcast(nil)
        """)
-        assert(out == ":ok\n") { out }
+        assert(out == "nil\n") { out }
     }
 }
