@@ -1,6 +1,6 @@
 package dceu
 
-class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
+class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
     val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
@@ -27,11 +27,11 @@ class Static (outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.blk.traverse()
             }
             is Expr.Do     -> {
-                //ylds.add(this)
                 //if (ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }) {
                 //    ylds.add(this)
                 //}
                 this.es.forEach { it.traverse() }
+                //if (this != outer) { ylds.add(this) }
                 if (ylds.contains(this)) {
                     vars.blk_to_dcls[this]?.forEach {
                         if (it.tmp) {

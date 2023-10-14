@@ -668,4 +668,23 @@ class Exec_05 {
         assert(out == ":ok\n") { out }
     }
 
+    @Test
+    fun zz_01_all() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+            }
+            spawn (task () {
+                val ts = tasks(5)
+                do {
+                    spawn T() in ts
+                }
+                yield(nil) { as it =>
+                    println(nil)
+                }
+            }) ()
+            broadcast(nil)
+       """)
+        assert(out == ":ok\n") { out }
+    }
 }
