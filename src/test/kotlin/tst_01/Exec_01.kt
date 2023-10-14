@@ -245,7 +245,8 @@ class Exec_01 {
         val out = test("""
             set nil = nil
         """)
-        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination\n") { out }
     }
 
     // INDEX / TUPLE
@@ -2093,9 +2094,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == " |  anon : (lin 9, col 13) : f([1])\n" +
-                " |  anon : (lin 6, col 17) : g(v)\n" +
-                " v  anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun ll_07_xxx() {
@@ -2110,9 +2109,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == " |  anon : (lin 10, col 13) : f([1])\n" +
-                " |  anon : (lin 7, col 17) : g(v)\n" +
-                " v  anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
 
     // SCOPE / :TMP / :tmp
