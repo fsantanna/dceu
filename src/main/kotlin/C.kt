@@ -895,13 +895,16 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+                    free(dyn->Exe.mem);
+                    break;
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
         #endif
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    free(dyn->Exe.mem);
+                    ceu_gc_dec(dyn->Exe_Task.pub, 1);
+                    free(dyn->Exe_Task.mem);
                     break;
         #endif
         #if CEU >= 5

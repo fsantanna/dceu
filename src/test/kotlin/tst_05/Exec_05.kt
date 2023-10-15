@@ -96,6 +96,37 @@ class Exec_05 {
         """)
         assert(out == "true\tfalse\n") { out }
     }
+    @Test
+    fun todo_debug_gc_aa_09_gc() {
+        val out = test("""
+            val T = task () {
+                set pub() = []
+                yield(nil) { as it=>nil }
+            }
+            val ts = tasks(1)
+            do {
+                spawn T() in ts
+                spawn T() in ts
+                spawn T() in ts
+                broadcast([])
+                spawn T() in ts
+                spawn T() in ts
+                spawn T() in ts
+                broadcast([])
+                spawn T() in ts
+                spawn T() in ts
+                spawn T() in ts
+                broadcast([])
+                spawn T() in ts
+                spawn T() in ts
+                spawn T() in ts
+                spawn T() in ts
+                broadcast([])
+                println(:ok)
+            }
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // TRACK
 

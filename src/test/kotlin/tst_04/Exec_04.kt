@@ -463,6 +463,21 @@ class Exec_04 {
         """)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun todo_debug_gc_dd_16_bcast() {
+        val out = test(
+            """
+            do {
+                broadcast([])
+                broadcast([])
+                broadcast([])
+                broadcast([])
+                println(:ok)
+            }
+            """
+        )
+        assert(out == ":ok\n") { out }
+    }
 
     // THROW / CATCH
 
