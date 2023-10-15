@@ -1,19 +1,4 @@
 class TParser {
-    // EXPR.SET
-
-    @Test
-    fun set_evt_err() {
-        val l = lexer("set evt = nil")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
-    }
-    @Test
-    fun set_err_err() {
-        val l = lexer("set err = nil")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
-    }
-
     // EXPORT
 
     @Test
@@ -79,60 +64,6 @@ class TParser {
         assert(e.tostr() == "do :unnest-hide {\npass x\npass y\nz\n}") { e.tostr() }
     }
 */
-
-    // TASK / YIELD / RESUME
-
-    @Test
-    fun func3_err() {
-        val l = lexer("""
-            func () :fake {}
-        """.trimIndent())
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"{\" : have \":fake\"")
-    }
-    @Test
-    fun task4_err() {
-        val l = lexer("""
-            task :xxx () {}
-        """.trimIndent())
-        val parser = Parser(l)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have \":xxx\"")
-    }
-    @Test
-    fun coro_err() {
-        val l = lexer("coro (a,b) :fake { 10 }")
-        val parser = Parser(l)
-        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":fake\"")
-    }
-
-    // BROADCAST
-
-    @Test
-    fun bcast_coro1_err() {
-        val l = lexer("broadcast in")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 13) : expected expression : have end of file")
-    }
-    @Test
-    fun bcast_coro2_err() {
-        val l = lexer("broadcast in x")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : expected \",\" : have end of file")
-    }
-    @Test
-    fun bcast_coro3_err() {
-        val l = lexer("broadcast in x,")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 16) : expected expression : have end of file")
-    }
-    @Test
-    fun bcast_coro4() {
-        val l = lexer("broadcast in x, 10")
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == "broadcast in x, 10\n") { e.tostr() }
-    }
 
     // TOGGLE
 
@@ -230,18 +161,6 @@ class TParser {
         """)
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 2, col 28) : expected expression : have \"{\"")
-    }
-
-    // TRACK
-
-    @Test
-    fun track1() {
-        val l = lexer("""
-            track(x)
-        """)
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == "track(x)\n") { e.tostr() }
     }
 
     // POLY

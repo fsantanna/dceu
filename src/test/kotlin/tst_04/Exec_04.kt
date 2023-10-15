@@ -1415,6 +1415,18 @@ class Exec_04 {
        """)
         assert(out == "[]\n") { out }
     }
+    @Test
+    fun ll_06_upv () {
+        val out = test("""
+            do {
+                val v = 10
+                 spawn (task () {
+                    println(v)
+                }) ()
+            }
+        """)
+        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
+    }
 
     // ABORTION
 
@@ -1514,7 +1526,6 @@ class Exec_04 {
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
     }
 
-
     // TASK / VOID
 
     @Test
@@ -1548,6 +1559,123 @@ class Exec_04 {
             }) ()
        """)
         assert(out == ":xxx\tnil\n:yyy\tnil\n") { out }
+    }
+    @Test
+    fun nn_03_anon() {
+        val out = test("""
+            var T
+            set T = task () {
+                spawn (task () :void {
+                    println(1)
+                    nil
+                }) ()
+                nil
+            }
+            spawn T()
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : set error : incompatible scopes\n:error\n") { out }
+        //assert(out == "anon : (lin 9, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n" +
+        //        "1\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun nn_04_anon() {
+        val out = test("""
+            var T
+            set T = task () {
+                spawn (task () :void {
+                    (999)
+                })()
+                nil
+            }
+            spawn T()
+            println(1)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 8, col 19) : T()\n" +
+        //        "anon : (lin 3, col 29) : block escape error : incompatible scopes\n:error\n") { out }
+    }
+
+    //  MEM-GC-REF-COUNT
+
+    @Test
+    fun oo_01_gc_bcast() {
+        val out = test("""
+            broadcast([])
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun oo_02_gc_bcast() {
+        val out = test("""
+            var tk = task () {
+                yield(nil) { as it =>
+                    do {
+                        val xxx = it
+                        nil
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast ([])
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun oo_03_gc_bcast() {
+        val out = test("""
+            var tk = task () {
+                do {
+                    yield(nil) { as it =>
+                        var v = it
+                        nil
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast( [])
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun oo_04_gc_bcast() {
+        val out = test("""
+            var tk = task () {
+                do {
+                    yield(nil) { as it =>
+                        do {
+                            var v = it
+                            nil
+                        }
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast ([] )
+            println(`:number ceu_gc_count`)
+        """)
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
     }
 
     // RETURN

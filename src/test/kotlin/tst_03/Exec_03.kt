@@ -573,6 +573,23 @@ class Exec_03 {
         """)
         assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
+    @Test
+    fun todo_ff_04_move_err () {
+        val out = test("""
+            val y = do {
+                val x = coroutine(coro () {
+                    yield(nil) {as it => nil}
+                    println(:ok)
+                })
+                resume x()
+                drop(x)
+            }
+            println(y)
+        """)
+        //assert(out == "anon : (lin 9, col 22) : move error : value is not movable\n" +
+        //        ":error\n") { out }
+        assert(out.contains("Assertion `0 && \"TODO: drop\"' failed."))
+    }
 
     // SCOPE
 
@@ -1161,6 +1178,52 @@ class Exec_03 {
             }) ()
         """)
         assert(out == "2\n") { out }
+    }
+    @Test
+    fun mm_07_upv () {
+        val out = test("""
+            val v = 10
+            resume coroutine(coro () {
+                println(v)
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_08_upv () {
+        val out = test("""
+            do {
+                val v = 10
+                resume coroutine(coro () {
+                    println(v)
+                }) ()
+            }
+        """)
+        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
+    }
+    @Test
+    fun mm_09_upv () {
+        val out = test("""
+            do {
+                val v = 10
+                (func () {
+                    println(v)
+                }) ()
+            }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_10_upv () {
+        val out = test("""
+            (func () {
+                val v = 10
+                resume coroutine(coro () {
+                    println(v)
+                }) ()
+            }) ()
+        """)
+        assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
     }
 
     // YIELD / ENCLOSING / ERROR

@@ -159,9 +159,18 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {
-                val (_,dcl) = vars.get(this)
+                val (blk,dcl) = vars.get(this)
                 unused.remove(dcl)
                 //err(this.tk, "access error : cannot access \"_\"")
+
+                if (blk!=outer && ups.none(blk) { it is Expr.Proto && it.tk.str!="func" }) {
+                    val coro = ups.first(this) { it is Expr.Proto && it.tk.str!="func" }
+                    if (coro != null) {
+                        if (ups.any(coro) { it==blk}) {
+                            err(this.tk, "access error : cannot access local across coro" + (CEU>=4).cond { " or task" })
+                        }
+                    }
+                }
             }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}

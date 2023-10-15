@@ -101,4 +101,16 @@ class Parser_05 {
         """)
         assert(out == "anon : (lin 2, col 33) : expected \"in\" : have \"{\"\n") { out }
     }
+
+    // TRACK
+
+    @Test
+    fun cc_01_track() {
+        val l = lexer("""
+            track(x)
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "track(x)\n") { e.tostr() }
+    }
 }

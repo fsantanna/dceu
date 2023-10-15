@@ -225,4 +225,37 @@ class Parser_04 {
         val e = parser.expr()
         assert(e.tostr() == "set pub() = {{+}}(pub(x),pub())") { e.tostr() }
     }
+
+    // VOID
+
+    @Test
+    fun ee_01_err() {
+        val l = lexer("""
+            func () :void {}
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 21) : expected \"{\" : have \":void\"")
+    }
+    @Test
+    fun ee_02_task_err() {
+        val l = lexer("""
+            task :xxx () {}
+        """.trimIndent())
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid task : unexpected \":xxx\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have \":xxx\"")
+    }
+    @Test
+    fun ee_03_coro_err() {
+        val l = lexer("coro (a,b) :void { 10 }")
+        val parser = Parser(l)
+        assert(trap { parser.expr_prim() } == "anon : (lin 1, col 12) : expected \"{\" : have \":void\"")
+    }
+    @Test
+    fun ee_04_task() {
+        val l = lexer("task (a,b) :void { 10 }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(task (a,b) :void {\n10\n})") { e.tostr() }
+    }
 }

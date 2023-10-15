@@ -10,7 +10,7 @@ var CEU = 1
     // 3: coro, yield, resume
     // 4: task, pub, bcast, ref
     // 5: tasks, track, detrack
-    // X: export, copy, _
+    // TODO: export, copy, underscore, self (coro/task)
     // 99: XCEU
 
 // search in tests output for

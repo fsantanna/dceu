@@ -700,8 +700,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val body = vars.nats[this]!!.let { (set, str) ->
                     var x = str
                     for (dcl in set) {
+                        val vblk = vars.dcl_to_blk[dcl]!!
                         val nst = ups
-                            .all_until(this) { it==vars.dcl_to_blk[dcl]!! }  // go up until find dcl blk
+                            .all_until(this) { it==vblk }  // go up until find dcl blk
                             .count { it is Expr.Proto }          // count protos in between acc-dcl
                         val idc = dcl.idc(0, nst)
                         //println(setOf(x, v))
