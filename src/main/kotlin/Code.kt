@@ -66,6 +66,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
+                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val mem = Mem(vars, clos, sta, defers)
 
@@ -108,6 +109,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """}}
                         $code
                         ${isexe.cond{"""
+                                    ${istsk.cond { "ceu_gc_dec(ceu_frame->exe_task->pub, 1);" }}
                                     ceu_frame->exe->status = (ceu_n == CEU_ARG_ABORT) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
