@@ -313,7 +313,8 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_inc (CEU_Value v);
         void ceu_gc_dec (CEU_Value v, int chk);
-
+        void ceu_gc_chk_args (int n, CEU_Value args[], CEU_Dyn* exc);
+        
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
 
@@ -553,6 +554,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_dump_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
             ceu_dump_value(args[0]);
+            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_NIL };
         }
 
@@ -562,6 +564,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_type_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1 && "bug found");
             CEU_Value v = CEU4(ceu_deref)(args[0]);
+            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=v.type} };
         }
         CEU_Value ceu_sup_question__f (CEU_Frame* _1, int n, CEU_Value args[]) {
@@ -581,6 +584,7 @@ fun Coder.main (tags: Tags): String {
             int sub2 = sub.Tag & 0x00FF0000;
             int sub3 = sub.Tag & 0xFF000000;
             
+            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_BOOL, { .Bool =
                 (sup0 == sub0) && ((sup1 == 0) || (
                     (sup1 == sub1) && ((sup2 == 0) || (
@@ -685,13 +689,16 @@ fun Coder.main (tags: Tags): String {
             CEU_Value str = CEU4(ceu_deref)(args[0]);
             assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
             CEU_Tags_Names* cur = CEU_TAGS;
+            CEU_Value ret = (CEU_Value) { CEU_VALUE_NIL };
             while (cur != NULL) {
                 if (!strcmp(cur->name,str.Dyn->Vector.buf)) {
-                    return (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                    ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=cur->tag} };
+                    break;
                 }
                 cur = cur->next;
             }
-            return (CEU_Value) { CEU_VALUE_NIL };
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
         }
     """ +
     """ // GC
@@ -802,13 +809,13 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        void ceu_gc_inc_args (int n, CEU_Value* args) {
+        void ceu_gc_inc_args (int n, CEU_Value args[]) {
             for (int i=0; i<n; i++) {
                 ceu_gc_inc(args[i]);
             }
         }
         /*
-        void ceu_gc_dec_args (int n, CEU_Value* args, CEU_Dyn* exc) {
+        void ceu_gc_dec_args (int n, CEU_Value args[], CEU_Dyn* exc) {
             for (int i=0; i<n; i++) {
                 if (args[i].type>CEU_VALUE_DYNAMIC && args[i].Dyn!=exc) {
                     ceu_gc_dec(args[i], 1);
@@ -816,7 +823,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         */
-        void ceu_gc_chk_args (int n, CEU_Value* args, CEU_Dyn* exc) {
+        void ceu_gc_chk_args (int n, CEU_Value args[], CEU_Dyn* exc) {
             for (int i=0; i<n; i++) {
                 if (args[i].type>CEU_VALUE_DYNAMIC && args[i].Dyn!=exc) {
                     ceu_gc_chk(args[i]);
@@ -1124,7 +1131,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        CEU_Value ceu_drop_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value _ceu_drop_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value src = args[0];
             CEU_Dyn* dyn = src.Dyn;
@@ -1152,7 +1159,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_CORO:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Clo.upvs.buf[i]);
+                        CEU_Value ret = _ceu_drop_f_(frame, 1, &dyn->Clo.upvs.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1160,7 +1167,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        CEU_Value ret = ceu_drop_f(frame, 1, &dyn->Tuple.buf[i]);
+                        CEU_Value ret = _ceu_drop_f_(frame, 1, &dyn->Tuple.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1171,7 +1178,7 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret1 = ceu_vector_get(&dyn->Vector, i);
                         assert(ret1.type != CEU_VALUE_ERROR);
-                        CEU_Value ret2 = ceu_drop_f(frame, 1, &ret1);
+                        CEU_Value ret2 = _ceu_drop_f_(frame, 1, &ret1);
                         if (ret2.type == CEU_VALUE_ERROR) {
                             return ret2;
                         }
@@ -1180,11 +1187,11 @@ fun Coder.main (tags: Tags): String {
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        CEU_Value ret0 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][0]);
+                        CEU_Value ret0 = _ceu_drop_f_(frame, 1, &(*dyn->Dict.buf)[i][0]);
                         if (ret0.type == CEU_VALUE_ERROR) {
                             return ret0;
                         }
-                        CEU_Value ret1 = ceu_drop_f(frame, 1, &(*dyn->Dict.buf)[i][1]);
+                        CEU_Value ret1 = _ceu_drop_f_(frame, 1, &(*dyn->Dict.buf)[i][1]);
                         if (ret1.type == CEU_VALUE_ERROR) {
                             return ret1;
                         }
@@ -1201,7 +1208,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo);
-                    CEU_Value ret = ceu_drop_f(frame, 1, &arg);
+                    CEU_Value ret = _ceu_drop_f_(frame, 1, &arg);
                     if (ret.type == CEU_VALUE_ERROR) {
                         return ret;
                     }
@@ -1217,7 +1224,12 @@ fun Coder.main (tags: Tags): String {
                     break;
             }
             return (CEU_Value) { CEU_VALUE_NIL };
-        }        
+        }
+        CEU_Value ceu_drop_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_drop_f_(frame, n, args);
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
+        }
     """ +
     """ // BCAST
     #if CEU >= 4
@@ -1353,6 +1365,7 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_tofree_n--;
             ceu_dyn_rem_free_glb();
+            ceu_gc_chk_args(n, args, NULL);
             return ret;
         }        
     #endif
@@ -1446,7 +1459,7 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_Value ceu_next_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value _ceu_next_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value col = CEU4(ceu_deref)(args[0]);
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : CEU4(ceu_deref)(args[1]);
@@ -1492,6 +1505,12 @@ fun Coder.main (tags: Tags): String {
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected collection"} };
             }                    
         }        
+        CEU_Value ceu_next_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_next_f_(frame, n, args);
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
+        }
+
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx) {
             *idx = -1;
             for (int i=0; i<col->max; i++) {
@@ -1920,6 +1939,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 ceu_print1(_1, args[i]);
             }
+            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_NIL };
         }
         CEU_Value ceu_println_f (CEU_Frame* _1, int n, CEU_Value args[]) {
@@ -1989,6 +2009,7 @@ fun Coder.main (tags: Tags): String {
                         assert(0 && "bug found");
                 }
             }
+            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
         }
         CEU_Value ceu_op_slash_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
@@ -2000,13 +2021,16 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_op_hash_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value v = CEU4(ceu_deref)(args[0]);
+            CEU_Value ret;
             if (v.type == CEU_VALUE_VECTOR) {
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
+                ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Vector.its} };
             } else if (v.type == CEU_VALUE_TUPLE) {
-                return (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Tuple.its} };
+                ret = (CEU_Value) { CEU_VALUE_NUMBER, {.Number=v.Dyn->Tuple.its} };
             } else {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
         }
     """ +
     """
@@ -2067,14 +2091,18 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_status_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value exe = CEU4(ceu_deref)(args[0]);
+            CEU_Value ret;
             if (exe.type!=CEU_VALUE_EXE_CORO CEU4(&& !ceu_istask_val(exe))) {
         #if CEU < 4
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine"} };
         #else
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine or task"} };
+                ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="status error : expected running coroutine or task"} };
         #endif
+            } else {
+                ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
             }
-            return (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
         }
         #endif
     """ +
