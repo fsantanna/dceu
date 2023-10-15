@@ -510,6 +510,16 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 3, col 17) : invalid declaration : \":tmp\" across yield\n") { out }
     }
+    @Test
+    fun ee_09_tags() {
+        val out = test("""
+            val co = coro () {
+                yield(:x) { as it => nil }
+            }
+            println(:y)
+        """)
+        assert(out == ":y\n") { out }
+    }
 
     // DROP / MOVE / OUT
 
@@ -768,20 +778,6 @@ class Exec_03 {
         assert(out == "anon : (lin 4, col 37) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
-    fun hh_04_catch_yield_err_xx() {
-        val out = test("""
-            coro () {
-                catch { as it => do {
-                    yield(nil) { as x => nil }
-                } } in
-                {
-                    throw(:e1)
-                }
-            }
-        """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
-    }
-    @Test
     fun hh_05_throw() {
         val out = test(
             """
@@ -1021,18 +1017,7 @@ class Exec_03 {
     // YIELD / BLOCK
 
     @Test
-    fun kk_01_yield_err() {
-        val out = test("""
-            coro () {
-                yield(nil) { as x =>
-                    yield(nil) { as y => nil }
-                }
-            }
-        """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") { out }
-    }
-    @Test
-    fun kk_02_scope() {
+    fun kk_01_scope() {
         val out = test("""
             val T = coro () {
                 val v = yield(nil) { as it => 
@@ -1177,6 +1162,47 @@ class Exec_03 {
         """)
         assert(out == "2\n") { out }
     }
+
+    // YIELD / ENCLOSING / ERROR
+
+    @Test
+    fun nn_01_yield() {
+        val out = test("""
+            coro () {
+                yield(nil) { as x =>
+                    yield(nil) { as y => nil }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") { out }
+    }
+    @Test
+    fun nn_02_catch() {
+        val out = test("""
+            coro () {
+                catch { as it => do {
+                    yield(nil) { as x => nil }
+                } } in
+                {
+                    throw(:e1)
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+    }
+    @Test
+    fun nn_03_defer() {
+        val out = test("""
+            task () {
+                defer {
+                    yield(nil) { as it => nil }   ;; no yield inside defer
+                }
+            }
+            println(1)
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
+    }
+
 
     // ALL
 

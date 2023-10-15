@@ -271,139 +271,6 @@ class TExec {
         assert(out == ":ok\n") { out }
     }
 
-    // LOOP
-
-    @Test
-    fun loop1() {
-        val out = all("""
-            var x
-            set x = false
-            loop until x {
-                set x = true
-            }
-            println(x)
-        """)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun loop2() {
-        val out = all("""
-            val f = func (t) {
-                if t[1] == 5 {
-                    nil
-                } else {
-                    set t[1] = t[1] + 1
-                    t[1]
-                }
-            }
-            do {
-                val it = [f, 0]
-                var i = it[0](it)
-                loop until i == nil {
-                    println(i)
-                    set i = it[0](it)
-                }
-            }
-        """, true)
-        assert(out == "1\n2\n3\n4\n5\n") { out }
-    }
-    @Test
-    fun loop3() {
-        val out = all("""
-            val v = loop until 10 {nil}
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-
-    // THROW / CATCH
-
-    @Test
-    fun catch8() {
-        val out = ceu.all(
-            """
-            var x
-            catch do {
-                set x = err
-                err[0]==:x
-            } {
-                throw([:x])
-                println(9)
-            }
-            println(x)
-        """
-        )
-        //assert(out == "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
-        //        "anon : (lin 7, col 17) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "[:x]\n") { out }
-    }
-    @Test
-    fun catch89_err() {
-        val out = ceu.all(
-            """
-            do {
-                catch do {  ;; err is binded to x and is being moved up
-                    var x
-                    set x = err
-                    println(err) `/* XXXX */`
-                    false
-                } {
-                    throw([:x])
-                    println(9)
-                }
-            }
-            println(:ok)
-            """
-        )
-        //assert(out == "anon : (lin 2, col 13) : set error : incompatible scopes\n" +
-        //        "anon : (lin 8, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        //assert(out == "anon : (lin 5, col 25) : set error : incompatible scopes\n" +
-        //        "anon : (lin 9, col 21) : throw([:x])\n" +
-        //        "throw error : uncaught exception\n" +
-        //        ":error\n") { out }
-        assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
-                "anon : (lin 9, col 21) : throw([:x])\n" +
-                "throw error : uncaught exception\n" +
-                "[:x]\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun catch10_err() {
-        val out = ceu.all(
-            """
-            catch err[0]==:x {
-                throw([:x])
-                println(9)
-            }
-            println(err)
-        """
-        )
-        //assert(out == "nil\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-    @Test
-    fun catch13() {
-        val out = ceu.all(
-            """
-            var x
-            set x = err
-            do {
-                set x = err
-            }
-            println(1)
-            """
-        )
-        //assert(out == "anon : (lin 4, col 25) : set error : incompatible scopes\n") { out }
-        //assert(out == "1\n") { out }
-        assert(out.contains("error: ‘ceu_err’ undeclared")) { out }
-    }
-
-    // OPERATORS
-
     @Test
     fun todo_op_id2() {
         val out = all("""
@@ -416,16 +283,6 @@ class TExec {
     // TYPE
 
     @Test
-    fun tags14() {
-        val out = all("""
-            val co = coro () {
-                yield(:x)
-            }
-            println(:y)
-        """)
-        assert(out == ":y\n") { out }
-    }
-    @Test
     fun tags15() {
         val out = all("""
             val t = tags([], :x, true)
@@ -437,18 +294,6 @@ class TExec {
 
     // DEFER
 
-    @Test
-    fun todo_defer2_err() {
-        val out = all("""
-            task () {
-                defer {
-                    yield(nil)   ;; no yield inside defer
-                }
-            }
-            println(1)
-        """)
-        assert(out == "TODO") { out }
-    }
     @Test
     fun defer4_err() {
         val out = all("""

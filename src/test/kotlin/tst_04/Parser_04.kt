@@ -223,6 +223,6 @@ class Parser_04 {
         val l = lexer("set pub() = pub(x) + pub()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "set pub() = pub(x) + pub()") { e.tostr() }
+        assert(e.tostr() == "set pub() = {{+}}(pub(x),pub())") { e.tostr() }
     }
 }

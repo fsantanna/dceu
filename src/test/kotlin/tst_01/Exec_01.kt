@@ -2790,6 +2790,30 @@ class Exec_01 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun oo_12_iter() {
+        val out = test("""
+            $PLUS
+            val f = func (t) {
+                if t[1] == 5 {
+                    nil
+                } else {
+                    set t[1] = t[1] + 1
+                    t[1]
+                }
+            }
+            do {
+                val it = [f, 0]
+                var i = it[0](it)
+                xloop {
+                    xbreak if i == nil
+                    println(i)
+                    set i = it[0](it)
+                }
+            }
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
 
     // NATIVE
 

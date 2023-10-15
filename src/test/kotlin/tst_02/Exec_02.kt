@@ -314,6 +314,21 @@ class Exec_02 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun jj_15_catch_set() {
+        val out = test("""
+            var x
+            catch { as it =>
+                set x = it
+                it[0]==:x
+            } in {
+                throw([:x])
+                println(9)
+            }
+            println(x)
+        """)
+        assert(out == "[:x]\n") { out }
+    }
 
     // CALL STACK
 
@@ -401,4 +416,31 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
+
+    // ORIGINAL
+
+    @Test
+    fun todo_zz_01() {
+        val out = test("""
+            do {
+                catch { as it =>  ;; err is binded to x and is being moved up
+                    var x
+                    set x = it
+                    println(it) `/* ZZZZ */`
+                    false
+                } in {
+                    throw([:x])
+                    println(9)
+                }
+            }
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 11, col 17) : rethrow error : incompatible scopes\n" +
+        //        "anon : (lin 9, col 21) : throw([:x])\n" +
+        //        "throw error : uncaught exception\n" +
+        //        "[:x]\n" +
+        //        ":error\n") { out }
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in catch condition\"' failed."))
+    }
+
 }

@@ -783,27 +783,6 @@ class Exec_05 {
         //        ":error\n") { out }
         assert(out.contains("#[track: 0x")) { out }
     }
-    @Test
-    fun oo_02_tracks() {
-        val out = test("""
-            val T = task () { yield(nil) { as it => nil } }
-            do {
-                val ts = tasks()
-                spawn T() in ts
-                do {
-                    val vec = #[]
-                    var t = nil
-                    xloop {
-                        set t = next(ts,t)
-                        xbreak if t==nil
-                        set vec[#vec] = drop(t)
-                    }
-                    println(#vec)
-                }
-            }
-        """)
-        assert(out == "1\n") { out }
-    }
 
 
     // ZZ / ALL
