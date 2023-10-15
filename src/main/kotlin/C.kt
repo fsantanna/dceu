@@ -695,6 +695,20 @@ fun Coder.main (tags: Tags): String {
         }
     """ +
     """ // GC
+    #if 0
+        int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        void ceu_debug_add (int type) {
+            CEU_DEBUG_TYPE[type]++;
+            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+        }
+        void ceu_debug_rem (int type) {
+            CEU_DEBUG_TYPE[type]--;
+            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+        }
+    #else
+        #define ceu_debug_add(x)
+        #define ceu_debug_rem(x)
+    #endif
         void ceu_gc_free (CEU_Dyn* dyn) {
             switch (dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
@@ -870,6 +884,7 @@ fun Coder.main (tags: Tags): String {
                 default:
                     assert(0 && "bug found");
             }
+            ceu_debug_rem(dyn->Any.type);
             free(dyn);
         }
         
@@ -1545,6 +1560,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // CREATES
         CEU_Value ceu_create_tuple (CEU_Block* blk, int n) {
+            ceu_debug_add(CEU_VALUE_TUPLE);
             CEU_Tuple* ret = malloc(sizeof(CEU_Tuple) + n*sizeof(CEU_Value));
             assert(ret != NULL);
             *ret = (CEU_Tuple) {
@@ -1562,6 +1578,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_Value ceu_create_vector (CEU_Block* blk) {
+            ceu_debug_add(CEU_VALUE_VECTOR);
             CEU_Vector* ret = malloc(sizeof(CEU_Vector));
             assert(ret != NULL);
             char* buf = malloc(1);  // because of '\0' in empty strings
@@ -1576,6 +1593,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_Value ceu_create_dict (CEU_Block* blk) {
+            ceu_debug_add(CEU_VALUE_DICT);
             CEU_Dict* ret = malloc(sizeof(CEU_Dict));
             assert(ret != NULL);
             *ret = (CEU_Dict) {
@@ -1587,6 +1605,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         CEU_Value _ceu_create_clo_ (int sz, int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            ceu_debug_add(type);
             CEU_Clo* ret = malloc(sz);
             assert(ret != NULL);
             CEU_Value* buf = malloc(upvs * sizeof(CEU_Value));
@@ -1616,6 +1635,7 @@ fun Coder.main (tags: Tags): String {
 
         #if CEU >= 3
         CEU_Value _ceu_create_exe_ (int type, int sz, CEU_Block* blk, CEU_Value clo CEU5(COMMA CEU_Dyns* dyns)) {
+            ceu_debug_add(type);
             assert(clo.type==CEU_VALUE_CLO_CORO CEU4(|| clo.type==CEU_VALUE_CLO_TASK));
             ceu_gc_inc(clo);
             
@@ -1676,6 +1696,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         CEU_Value ceu_create_tasks (CEU_Block* blk, int max) {
+            ceu_debug_add(CEU_VALUE_TASKS);
             CEU_Tasks* ret = malloc(sizeof(CEU_Tasks));
             assert(ret != NULL);
 
@@ -1688,6 +1709,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_TASKS, {.Dyn=(CEU_Dyn*)ret} };
         }
         CEU_Value ceu_create_track (CEU_Block* blk, CEU_Exe_Task* task) {
+            ceu_debug_add(CEU_VALUE_TRACK);
             CEU_Track* ret = malloc(sizeof(CEU_Track));
             assert(ret != NULL);
             *ret = (CEU_Track) {

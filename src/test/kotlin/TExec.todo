@@ -292,23 +292,6 @@ class TExec {
         assert(out == ":x []\n") { out }
     }
 
-    // DEFER
-
-    @Test
-    fun defer4_err() {
-        val out = all("""
-            do {
-                defer {
-                    throw(nil)
-                }
-            }
-            println(:ok)
-        """)
-        assert(out == "anon : (lin 4, col 21) : throw(nil)\n" +
-                "throw error : uncaught exception\n" +
-                "nil\n") { out }
-    }
-
     // CLOSURE / ESCAPE / FUNC / UPVALS
 
     @Ignore

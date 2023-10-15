@@ -407,7 +407,7 @@ class Exec_02 {
                 " v  throw error : :error\n") { out }
     }
     @Test
-    fun pp_04_throw_defer_tofo() {
+    fun todo_pp_04_throw_defer() {
         val out = test("""
             defer {
                 throw(:2)
@@ -416,6 +416,19 @@ class Exec_02 {
         """)
         assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
     }
+    @Test
+    fun todo_pp_05_throw_defer() {
+        val out = test("""
+            do {
+                defer {
+                    throw(nil)
+                }
+            }
+            println(:ok)
+        """)
+        assert(out.contains("main: Assertion `ceu_acc.type != CEU_VALUE_THROW && \"TODO: throw in defer\"' failed.")) { out }
+    }
+
 
     // ORIGINAL
 
