@@ -1190,19 +1190,6 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
-    @Test
-    fun nn_03_defer() {
-        val out = test("""
-            task () {
-                defer {
-                    yield(nil) { as it => nil }   ;; no yield inside defer
-                }
-            }
-            println(1)
-        """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
-    }
-
 
     // ALL
 

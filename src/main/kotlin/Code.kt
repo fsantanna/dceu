@@ -91,7 +91,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_Value ceu_args[]
                     ) {
                         CEU_Value ceu_acc;
-                        int ceu_gc_todo = 1;
                         ${clos.protos_refs[this].cond { """
                             CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
                         """ }}
@@ -287,19 +286,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 val args_n = f_b.args.size - 1
                                 """
                                 { // func args
+                                    ceu_gc_inc_args(ceu_n, ceu_args);
                                     ${f_b.args.filter { it.first.str!="..." }.mapIndexed { i,arg ->
                                         val idc = vars.get(this, arg.first.str).idc(0)
                                         """
                                         if ($i < ceu_n) {
                                             $idc = ceu_args[$i];
-                                            ceu_gc_todo = 0;
                                             CEU_ASSERT(
                                                 $blkc,
-                                                ceu_hold_chk_set(CEU4(0 COMMA) $blkc, CEU_HOLD_FLEET, $idc, 0, "argument error"),
+                                                ceu_hold_chk_set(CEU4(0 COMMA) $blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
                                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                                             );
-                                            ceu_gc_todo = 1;
-                                            ceu_gc_inc($idc);
                                         } else {
                                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                                         }
@@ -361,15 +358,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             }
                         }
                     """ }.joinToString("")}
-                    // args gc-dec
+                    // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond { """
                         ${(f_b as Expr.Proto).args.map {
                             val idc = vars.get(this, it.first.str).idc(0)
                             """
-                            if (ceu_gc_todo) {
-                                if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                                    ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
-                                }
+                            if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
                         }.joinToString("")}

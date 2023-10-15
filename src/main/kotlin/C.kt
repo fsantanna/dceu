@@ -801,6 +801,29 @@ fun Coder.main (tags: Tags): String {
                 }
             }
         }
+
+        void ceu_gc_inc_args (int n, CEU_Value* args) {
+            for (int i=0; i<n; i++) {
+                ceu_gc_inc(args[i]);
+            }
+        }
+        /*
+        void ceu_gc_dec_args (int n, CEU_Value* args, CEU_Dyn* exc) {
+            for (int i=0; i<n; i++) {
+                if (args[i].type>CEU_VALUE_DYNAMIC && args[i].Dyn!=exc) {
+                    ceu_gc_dec(args[i], 1);
+                }
+            }
+        }
+        */
+        void ceu_gc_chk_args (int n, CEU_Value* args, CEU_Dyn* exc) {
+            for (int i=0; i<n; i++) {
+                if (args[i].type>CEU_VALUE_DYNAMIC && args[i].Dyn!=exc) {
+                    ceu_gc_chk(args[i]);
+                }
+            }
+        }
+        
     """ +
     """ // BLOCK / FREE
         int ceu_tofree_n = 0;

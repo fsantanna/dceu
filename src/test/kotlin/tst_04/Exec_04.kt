@@ -1486,6 +1486,19 @@ class Exec_04 {
        """)
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
+    @Test
+    fun mm_05_defer() {
+        val out = test("""
+            task () {
+                defer {
+                    yield(nil) { as it => nil }   ;; no yield inside defer
+                }
+            }
+            println(1)
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
+    }
+
 
     // TASK / VOID
 
