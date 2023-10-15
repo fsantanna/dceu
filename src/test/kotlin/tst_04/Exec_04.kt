@@ -1928,8 +1928,8 @@ class Exec_04 {
             println(`:number ceu_gc_count`)
             """
         )
-        assert(out == "0\n") { out }
-        //assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +

@@ -340,7 +340,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_col_check (CEU_Value col, CEU_Value idx);
 
         void ceu_print1 (CEU_Frame* _1, CEU_Value v);
-        CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]);
+        CEU_Value _ceu_op_equals_equals_f_ (CEU_Frame* _1, int n, CEU_Value args[]);
 
         #if CEU >= 2
         CEU_Value ceu_pointer_dash_to_dash_string_f (CEU_Frame* frame, int n, CEU_Value args[]);
@@ -897,13 +897,12 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_EXE_CORO:
                     free(dyn->Exe.mem);
                     break;
+        #endif
         #if CEU >= 4
                 case CEU_VALUE_EXE_TASK:
-        #endif
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    ceu_gc_dec(dyn->Exe_Task.pub, 1);
                     free(dyn->Exe_Task.mem);
                     break;
         #endif
@@ -1473,7 +1472,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     for (int i=0; i<col.Dyn->Dict.max-1; i++) {     // -1: last element has no next
                         CEU_Value args[] = { key, (*col.Dyn->Dict.buf)[i][0] };
-                        CEU_Value ret = ceu_op_equals_equals_f(NULL, 2, args);
+                        CEU_Value ret = _ceu_op_equals_equals_f_(NULL, 2, args);
                         assert(ret.type != CEU_VALUE_ERROR);
                         if (ret.Bool) {
                             return (*col.Dyn->Dict.buf)[i+1][0];
@@ -1519,7 +1518,7 @@ fun Coder.main (tags: Tags): String {
             for (int i=0; i<col->max; i++) {
                 CEU_Value cur = (*col->buf)[i][0];
                 CEU_Value args[] = { key, cur };
-                CEU_Value ret = ceu_op_equals_equals_f(NULL, 2, args);
+                CEU_Value ret = _ceu_op_equals_equals_f_(NULL, 2, args);
                 assert(ret.type != CEU_VALUE_ERROR);
                 if (ret.Bool) {
                     *idx = i;
@@ -1953,7 +1952,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """
         // EQ / NEQ / LEN
-        CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+        CEU_Value _ceu_op_equals_equals_f_ (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 2);
             CEU_Value e1 = CEU4(ceu_deref)(args[0]);
             CEU_Value e2 = CEU4(ceu_deref)(args[1]);
@@ -2012,8 +2011,12 @@ fun Coder.main (tags: Tags): String {
                         assert(0 && "bug found");
                 }
             }
-            ceu_gc_chk_args(n, args, NULL);
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=v} };
+        }
+        CEU_Value ceu_op_equals_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_op_equals_equals_f_(_1, n, args);
+            ceu_gc_chk_args(n, args, NULL);
+            return ret;
         }
         CEU_Value ceu_op_slash_equals_f (CEU_Frame* _1, int n, CEU_Value args[]) {
             CEU_Value ret = ceu_op_equals_equals_f(_1, n, args);

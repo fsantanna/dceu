@@ -4134,8 +4134,8 @@ class Exec_01 {
             println(`:number ceu_gc_count`)
         """
         )
-        //assert(out == "2\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "2\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
     fun gc8() {
@@ -4208,11 +4208,11 @@ class Exec_01 {
     fun gc12() {
         val out = test(
             """
-            println([]) ;; println does not check
+            println([]) ;; println does ~not~ check
             println(`:number ceu_gc_count`)
         """
         )
-        assert(out == "[]\n0\n") { out }
+        assert(out == "[]\n1\n") { out }
     }
     @Test
     fun gc15_arg() {
