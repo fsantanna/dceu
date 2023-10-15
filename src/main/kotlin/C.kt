@@ -322,7 +322,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
         CEU_Value ceu_create_vector  (CEU_Block* hld);
         CEU_Value ceu_create_dict    (CEU_Block* hld);
-        CEU_Value ceu_create_clo     (int type, CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
+        CEU_Value ceu_create_clo     (CEU_Block* hld, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs);
         #if CEU >= 4
         CEU_Value ceu_create_track   (CEU_Block* blk, CEU_Exe_Task* task);
         #endif
@@ -1602,8 +1602,8 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { type, {.Dyn=(CEU_Dyn*)ret } };
         }
 
-        CEU_Value ceu_create_clo (int type, CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
-            return _ceu_create_clo_(sizeof(CEU_Clo), type, blk, hld_type, frame, proto, upvs);
+        CEU_Value ceu_create_clo (CEU_Block* blk, CEU_HOLD hld_type, CEU_Frame* frame, CEU_Proto proto, int upvs) {
+            return _ceu_create_clo_(sizeof(CEU_Clo), CEU_VALUE_CLO_FUNC, blk, hld_type, frame, proto, upvs);
         }
 
         #if CEU >= 3
