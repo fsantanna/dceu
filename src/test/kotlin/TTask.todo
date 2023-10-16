@@ -1804,21 +1804,6 @@ class TTask {
     // TOGGLE
 
     @Test
-    fun todo_jj_toggle1() { // should be rt error
-        val out = all("""
-            var T
-            set T = task () {
-                yield(nil)
-                println(10)
-            }
-            var t
-            set t = spawn T()
-            toggle t (false)
-            resume t ()
-        """)
-        assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_EXE_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
-    }
-    @Test
     fun jj_01_toggle_tasks() {
         val out = test("""
             val T = task () {

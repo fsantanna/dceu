@@ -1716,6 +1716,7 @@ class Exec_04 {
             toggle t (false)
             println(1)
             broadcast(nil)
+            broadcast(nil)
             toggle t (true)
             println(2)
             broadcast(nil)
@@ -1741,6 +1742,38 @@ class Exec_04 {
             println(2)
         """)
         assert(out == "1\n2\n10\n") { out }
+    }
+    @Test
+    fun pp_04_toggle_err() { // should be rt error
+        val out = test("""
+            val T = task () {
+                nil
+            }
+            val t = spawn T()
+            toggle t (false)
+        """)
+        assert(out == " v  anon : (lin 6, col 13) : toggle error : expected yielded task\n") { out }
+    }
+    @Test
+    fun pp_05_toggle_nest() {
+        val out = test("""
+            val T = task () {
+                spawn (task () {
+                    ${AWAIT()}
+                    println(3)
+                }) ()
+                ${AWAIT()}
+                println(4)
+            }
+            println(1)
+            val t = spawn T()
+            toggle t (false)
+            broadcast (nil)
+            println(2)
+            toggle t (true)
+            broadcast (nil)
+        """)
+        assert(out == "1\n2\n3\n4\n") { out }
     }
 
     // ORIG
