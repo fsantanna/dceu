@@ -695,6 +695,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 """
             }
+            is Expr.Toggle -> {
+                val bup = ups.first_block(this)!!
+                val bupc = bup.idc("block")
+                val tskc = this.idc("tsk")
+                """
+                ${this.tsk.code()}
+                ${(!bup.ismem(sta,clos)).cond {"""
+                    CEU_Value $tskc;
+                """ }}
+                $tskc = ceu_acc;
+                ${this.on.code()}
+                if (!ceu_istask_val($tskc) || $tskc.Dyn->Exe_Task.status>CEU_EXE_STATUS_TOGGLED) {                
+                    CEU_Value err = { CEU_VALUE_ERROR, {.Error="toggle error : expected yielded task"} };
+                    CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                }
+                $tskc.Dyn->Exe_Task.status = (ceu_as_bool(ceu_acc) ? CEU_EXE_STATUS_YIELDED : CEU_EXE_STATUS_TOGGLED);
+                """
+            }
 
             is Expr.Nat -> {
                 val body = vars.nats[this]!!.let { (set, str) ->

@@ -1696,6 +1696,53 @@ class Exec_04 {
         assert(out == "10\n:ok\n") { out }
     }
 
+    // TOGGLE
+
+    @Test
+    fun pp_01_toggle_err() {
+        val out = test("""
+            toggle 1(true)
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : toggle error : expected yielded task\n") { out }
+    }
+    @Test
+    fun pp_02_toggle() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+                println(10)
+            }
+            val t = spawn T()
+            toggle t (false)
+            println(1)
+            broadcast(nil)
+            toggle t (true)
+            println(2)
+            broadcast(nil)
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
+    @Test
+    fun pp_03_toggle_defer() {
+        val out = test("""
+            var T
+            set T = task () {
+                defer {
+                    println(10)
+                }
+                ${AWAIT()}
+                println(999)
+            }
+            var t
+            set t = spawn T()
+            toggle t (false)
+            println(1)
+            broadcast (nil)
+            println(2)
+        """)
+        assert(out == "1\n2\n10\n") { out }
+    }
+
     // ORIG
 
     @Test

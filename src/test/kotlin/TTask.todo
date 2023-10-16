@@ -1819,68 +1819,20 @@ class TTask {
         assert(out.contains("Assertion `ceu_x->Bcast.status==CEU_EXE_STATUS_YIELDED || ceu_evt==&CEU_EVT_CLEAR' failed")) { out }
     }
     @Test
-    fun jj_toggle2_err() {
-        val out = all("""
-            toggle 1 (true)
-        """)
-        assert(out == "anon : (lin 2, col 20) : toggle error : expected yielded/toggled coroutine\n:error\n") { out }
-    }
-    @Test
-    fun jj_toggle3_coro() {
-        val out = all("""
-            var T
-            set T = task () {
-                yield(nil)
+    fun jj_01_toggle_tasks() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
                 println(10)
             }
-            var t
-            set t = spawn T()
-            toggle t (false)
-            println(1)
-            broadcast nil
-            toggle t (true)
-            println(2)
-            broadcast nil
-        """)
-        assert(out == "1\n2\n10\n") { out }
-    }
-    @Test
-    fun jj_toggle4_tasks() {
-        val out = all("""
-            var T
-            set T = task () {
-                yield(nil)
-                println(10)
-            }
-            var ts
-            set ts = tasks()
-            spawn in ts, T()
+            val ts = tasks()
+            spawn T() in ts
             toggle ts (false)
             println(1)
-            broadcast nil
+            broadcast( nil)
             toggle ts (true)
             println(2)
-            broadcast nil
-        """)
-        assert(out == "1\n2\n10\n") { out }
-    }
-    @Test
-    fun jj_toggle5_defer() {
-        val out = all("""
-            var T
-            set T = task () {
-                defer {
-                    println(10)
-                }
-                ${yield()}
-                println(999)
-            }
-            var t
-            set t = spawn T()
-            toggle t (false)
-            println(1)
-            broadcast nil
-            println(2)
+            broadcast (nil)
         """)
         assert(out == "1\n2\n10\n") { out }
     }
