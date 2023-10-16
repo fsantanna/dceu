@@ -258,4 +258,42 @@ class Parser_04 {
         val e = parser.expr()
         assert(e.tostr() == "(task (a,b) :void {\n10\n})") { e.tostr() }
     }
+
+    // TOGGLE
+
+    @Test
+    fun ee_01_toggle() {
+        val l = lexer("toggle t(true)")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "toggle t(true)\n") { e.tostr() }
+    }
+    @Test
+    fun ee_02_toggle_err() {
+        val l = lexer("toggle x")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected argument")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"(\" : have end of file")
+    }
+    @Test
+    fun ee_03_toggle_err() {
+        val l = lexer("toggle")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have end of file")
+    }
+    @Test
+    fun ee_04_toggle_err() {
+        val l = lexer("toggle x(1,2)")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected single argument")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \")\" : have \",\"")
+    }
+    @Test
+    fun ee_05_toggle_err() {
+        val l = lexer("toggle f()")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 8) : invalid toggle : expected single argument")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 10) : expected expression : have \")\"")
+    }
 }

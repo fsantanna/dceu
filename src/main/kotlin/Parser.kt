@@ -397,6 +397,12 @@ class Parser (lexer_: Lexer)
                     )
                 )
             }
+            (CEU>=4 && this.acceptFix("toggle")) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val tsk = this.expr_prim()
+                val on = this.expr_in_parens()!!
+                Expr.Toggle(tk0, tsk, on)
+            }
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val trk = this.expr_in_parens()!!

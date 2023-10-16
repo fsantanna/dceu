@@ -50,6 +50,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
         is Expr.Bcast  -> "broadcast(" + this.call.args[0].tostr(pre) + ")" + (if (this.call.args.size==1) "" else " in " + this.call.args[1].tostr(pre))
         is Expr.Dtrack -> "detrack(" + this.trk.tostr(pre) + ") { as " + this.it.first.str + this.it.second.cond { " "+it.str } + " =>\n" + this.blk.es[0].tostr(pre) + "\n}"
+        is Expr.Toggle -> "toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)})"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
         is Expr.Acc    -> this.tk_.tostr()

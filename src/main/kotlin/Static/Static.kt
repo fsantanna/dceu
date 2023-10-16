@@ -152,10 +152,11 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                             // dont know if call is inside detrack
                 }
             }
-            is Expr.Dtrack-> {
+            is Expr.Dtrack -> {
                 this.trk.traverse()
                 this.blk.traverse()
             }
+            is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}
             is Expr.Acc    -> {

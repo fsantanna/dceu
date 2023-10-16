@@ -312,6 +312,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.trk.traverse()
                 this.blk.traverse()
             }
+            is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {
                 nats[this] = this.tk.str.let {
