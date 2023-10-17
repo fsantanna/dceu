@@ -1337,6 +1337,13 @@ class Exec_04 {
         """)
         assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
     }
+    @Test
+    fun kk_12_pub() {
+        val out = test("""
+            pub().x
+        """)
+        assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
+    }
 
     // NESTED
 
@@ -1776,7 +1783,7 @@ class Exec_04 {
         assert(out == "1\n2\n3\n4\n") { out }
     }
 
-    // ORIG
+    // ORIGINAL
 
     @Test
     fun zz_00_spawn() {
@@ -2296,5 +2303,77 @@ class Exec_04 {
             }) ()
         """)
         assert(out == "10\n") { out }
+    }
+
+    // ORIGINAL / DATA / EVT
+
+    @Test
+    fun z1_01_data_await() {
+        val out = test("""
+            data :E = [x,y]
+            spawn task () {
+                yield(nil) { as it :E =>
+                    println(it.x)
+                }
+            } ()
+            broadcast (tags([10,20], :E, true))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun z1_02_data_await() {
+        val out = test("""
+            data :E = [x,y]
+            data :F = [i,j]
+            spawn task () {
+                yield(nil) { as it :E =>
+                    println(it.x)
+                }
+                yield(nil) { as it :F =>
+                    println(it.j)
+                }
+            } ()
+            broadcast (tags([10,20], :E, true))
+            broadcast (tags([10,20], :F, true))
+        """)
+        assert(out == "10\n20\n") { out }
+    }
+    @Test
+    fun z1_03_data_pub_err() {
+        val out = test("""
+            task () :T { nil }
+        """, )
+        assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared\n") { out }
+    }
+    @Test
+    fun z1_04_data_pub() {
+        val out = test("""
+            data :T = [x,y]
+            spawn task () :T {
+                set pub() = [10,20]
+                println(pub().x)
+            } ()
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun z1_05_data_pub_err() {
+        val out = test("""
+            var t = spawn task () { nil } ()
+            println(pub(t).y)
+        """)
+        assert(out == " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
+    }
+    @Test
+    fun z1_06_data_pub() {
+        val out = test("""
+            data :T = [x,y]
+            var t :T = spawn task () {
+                set pub() = [10,20]
+                yield(nil) { as it => nil }
+            } ()
+            println(pub(t).y)
+        """, true)
+        assert(out == "20\n") { out }
     }
 }

@@ -1257,11 +1257,14 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
-            if (task->status != CEU_EXE_STATUS_YIELDED) {
+            if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
             }
             if (task->pc != 0) {    // not initial spawn
                 ret = ceu_bcast_blocks(task->dn_block, evt);
+            }
+            if (task->status != CEU_EXE_STATUS_YIELDED) {
+                return ret;
             }
             if (CEU_ISERR(ret)) {
                 ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);

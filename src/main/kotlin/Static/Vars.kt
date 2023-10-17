@@ -75,8 +75,8 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pub -> {
                 when {
                     (e.tsk == null) -> {
-                        val task = ups.first_task_real(e)!!
-                        if (task.tag == null) null else {
+                        val task = ups.first_task_real(e)
+                        if (task?.tag == null) null else {
                             Pair(null, this.datas[task.tag.str]!!)
                         }
                     }

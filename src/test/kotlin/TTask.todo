@@ -1846,123 +1846,11 @@ class TTask {
     // TRACK / DETRACK
 
     @Test
-    fun ll_track4() {
-        val out = all("""
-            var T
-            set T = task () {
-                yield(nil)
-                set task.pub = 10
-                yield(nil)
-            }
-            var t = spawn T()
-            var x = track(t)
-            println(detrack(x).pub) 
-            broadcast nil ;;resume t()
-            println(detrack(x).pub) 
-        """)
-        assert(out == "nil\n10\n") { out }
-    }
-    @Test
-    fun ll_track5_err() {
-        val out = all("""
-            var x
-            set x = nil
-            println(x.pub)  ;; not coro/track()
-        """)
-        assert(out == "anon : (lin 4, col 23) : pub error : expected task\n:error\n") { out }
-    }
-    @Test
-    fun ll_track5_err2() {
-        val out = all("""
-            var T
-            set T = task () {
-                set task.pub = [10]
-                yield(nil)
-            }
-            var t = spawn T()
-            var x = track(t)
-            println(detrack(x).pub)      ;; expose (ok, global func)
-        """)
-        //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
-        assert(out == "[10]\n") { out }
-    }
-    @Test
-    fun ll_track6_err() {
-        val out = all("""
-            var T
-            set T = task () { yield(nil) }
-            var x
-            do {
-                var t = spawn (T) ()
-                set x = track(t)         ;; error scope
-            }
-            println(status(detrack(x)))
-            println(x)
-        """)
-        //assert(out.contains("terminated\nx-track: 0x")) { out }
-        assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ll_track7() {
-        val out = all("""
-            var T
-            set T = task () {
-                set task.pub = [10]
-                yield(nil)
-            }
-            var t = spawn T ()
-            var x = track(t)
-            println(detrack(x).pub[0])
-            broadcast nil
-            println(detrack(x))
-        """)
-        assert(out == "10\nnil\n") { out }
-    }
-    @Test
-    fun ll_track8_err() {
-        val out = all("""
-            var T
-            set T = task () {
-                set task.pub = [10]
-                yield(nil)
-            }
-            var x
-            do {
-                var t = spawn (T) ()
-                set x = track(t)         ;; scope x < t
-                println(detrack(x).pub[0])
-            }
-            println(status(detrack(x)))
-            println(x)
-        """)
-        //assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
-        assert(out == "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ll_track09_err() {
-        val out = all("""
+    fun oo_06_track() {
+        val out = test("""
             var T = task (v) {
-                yield(nil)
-            }
-            var x
-            var ts = tasks()
-            spawn in ts, T(1)
-            loop in :tasks ts, t {
-                set x = track(t)
-            }
-        """)
-        assert(out == "anon : (lin 9, col 25) : track(t)\n" +
-                "track error : expected task\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ll_track09() {
-        val out = all("""
-            var T = task (v) {
-                set task.pub = [v]
-                yield(nil)
+                set pub() = [v]
+                yield(nil) { as it => nil }
             }
             var x
             var ts = tasks()
@@ -2001,27 +1889,6 @@ class TTask {
         """)
         assert(out == "2\nnil\n") { out }
         //assert(out == "anon : (lin 14, col 25) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun ll_track11_err() {
-        val out = all("""
-            var T
-            set T = task (v) {
-                set task.pub = [v]
-                yield(nil)
-            }
-            var x
-            do {
-                var ts
-                set ts = tasks()
-                spawn in ts, T(1)
-                loop in :tasks ts, t {
-                    set x = t       ;; err: escope 
-                }
-            }
-        """)
-        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
     }
     @Test
     fun ll_track12_throw() {
@@ -2070,34 +1937,6 @@ class TTask {
         assert(out == "1\n:yielded\nnil\n") { out }
     }
     @Test
-    fun ll_track14() {
-        val out = all("""
-            var T = task () {
-                set task.pub = [10]
-                ${await("evt==:evt")}
-            }
-            var t = spawn T()
-            var x = track(t)
-            spawn task () {
-                catch :par-or {
-                    spawn task () {
-                        ${await("if status(detrack(x))==:terminated { true } else { if detrack(x)==nil { true } else { false } }")}
-                        throw(:par-or)
-                    } ()
-                    println(detrack(x).pub[0])
-                    broadcast nil
-                    println(detrack(x).pub[0])
-                    broadcast :evt
-                    println(detrack(x).pub[0]) ;; never printed
-                    ${await("false")}
-                }
-                println(detrack(x))
-            }()
-            println(:ok)
-        """)
-        assert(out == "10\n10\nnil\n:ok\n") { out }
-    }
-    @Test
     fun ll_track15_simplify() {
         val out = all("""
             var T = task (v) {
@@ -2115,161 +1954,9 @@ class TTask {
         """)
         assert(out == "nil\n") { out }
     }
-    @Test
-    fun ll_track16_hold_err() {
-        val out = all("""
-            var T = task (v) {
-                yield(nil)
-            }
-            var ts = tasks()
-            spawn in ts, T(1)
-            loop in :tasks ts, t {
-                var x = detrack(t)
-                println(x)
-            }
-        """)
-        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out.contains("x-task: 0x")) { out }
-    }
-    @Test
-    fun ll_17_detrack_err() {
-        val out = all("""
-            val T = task () {
-                yield(nil)
-            }
-            val t1 = spawn T()
-            val r1 = track(t1)
-            val x1 = detrack(r1)
-            ;;println(t1, r1, x1, status(t1))
-            broadcast nil
-            ;;println(t1, r1, x1, status(t1))
-            println(status(t1))
-        """)
-        //assert(out == ":terminated\n") { out }
-        assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ll_18_track_scope() {
-        val out = all("""
-            val T = task () {
-                yield(nil)
-            }
-            val t = spawn T()
-            val y = do {
-                val x = track(t)
-                x
-            }
-            println(y)
-        """)
-        assert(out == "anon : (lin 6, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun ll_19_track_scope() {
-        val out = all("""
-            val T = task () {
-                set task.pub = 1
-                yield(nil)
-            }
-            val t = spawn T()
-            val y = do {
-                track(t)
-            }
-            println(detrack(y).pub)
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
-    fun ll_20_track_scope() {
-        val out = all("""
-            val T = task () {
-                set task.pub = 1
-                yield(nil)
-            }
-            val y = do {
-                val t = spawn T()
-                track(t)
-            }
-            println(detrack(y).pub)
-        """)
-        assert(out == "anon : (lin 6, col 21) : block escape error : incompatible scopes\n" +
-                ":error\n") { out }
-    }
 
     // EVT / DATA
 
-    @Test
-    fun mm_01_data_await() {
-        val out = all("""
-            data :E = [x,y]
-            spawn task () {
-                var evt :E
-                yield(nil)
-                println(evt.x)
-            } ()
-            broadcast tags([10,20], :E, true)
-        """, true)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun mm_02_data_await() {
-        val out = all("""
-            data :E = [x,y]
-            data :F = [i,j]
-            spawn task () {
-                var evt :E
-                yield(nil)
-                println(evt.x)
-                var evt :F
-                yield(nil)
-                println(evt.j)
-            } ()
-            broadcast tags([10,20], :E, true)
-            broadcast tags([10,20], :F, true)
-        """, true)
-        assert(out == "10\n20\n") { out }
-    }
-    @Test
-    fun mm_03_data_pub_err() {
-        val out = all("""
-            task () :T { nil }
-        """, true)
-        assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared") { out }
-    }
-    @Test
-    fun mm_04_data_pub() {
-        val out = all("""
-            data :T = [x,y]
-            spawn task () :T {
-                set task.pub = [10,20]
-                println(task.pub.x)
-            } ()
-        """, true)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun mm_05_data_pub_err() {
-        val out = all("""
-            var t = spawn task () { nil } ()
-            println(t.pub.y)
-        """, true)
-        assert(out == "anon : (lin 3, col 23) : index error : expected collection\n" +
-                ":error\n") { out }
-    }
-    @Test
-    fun mm_06_data_pub() {
-        val out = all("""
-            data :T = [x,y]
-            var t :T = spawn task () {
-                set task.pub = [10,20]
-                yield(nil)
-            } ()
-            println(t.pub.y)
-        """, true)
-        assert(out == "20\n") { out }
-    }
     @Test
     fun todo_mm_07_data_pub() {
         val out = all("""

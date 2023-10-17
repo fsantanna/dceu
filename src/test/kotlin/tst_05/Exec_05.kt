@@ -131,14 +131,14 @@ class Exec_05 {
     // TRACK
 
     @Test
-    fun bb_01_track() {
+    fun bb_01_track_err() {
         val out = test("""
             track(nil)
         """)
         assert(out == " v  anon : (lin 2, col 13) : track(nil) : track error : expected task\n") { out }
     }
     @Test
-    fun bb_02_track() {
+    fun bb_02_track_err() {
         val out = test("""
             val T = task () {
                 nil
@@ -188,6 +188,24 @@ class Exec_05 {
             broadcast (nil) in x1
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun bb_06_track_err() {
+        val out = test("""
+            var T
+            set T = task () { yield(nil) {as it=>nil} }
+            var x
+            do {
+                var t = spawn (T) ()
+                set x = track(t)         ;; error scope
+            }
+            ;;println(status(detrack(x)))
+            println(x)
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
     }
 
     // TRACK / DROP
@@ -686,6 +704,53 @@ class Exec_05 {
         assert(out == "2\n") { out }
     }
 
+    // DETRACK / PUB / SCOPE
+
+    @Test
+    fun fg_01_detrack_pub() {
+        val out = test("""
+            val T = task () {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            var t = spawn T()
+            var x = track(t)
+            println(detrack(x) { as it => pub(it) })      ;; expose (ok, global func)
+        """)
+        //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun fg_02_detrack_pub() {
+        val out = test("""
+            val T = task () {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            var t = spawn T()
+            var x = track(t)
+            broadcast(nil)
+            println(detrack(x) { as it => pub(it) })      ;; expose (ok, global func)
+        """)
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun fg_03_detrack_pub() {
+        val out = test("""
+            val T = task () {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            var t = spawn T()
+            var x = track(t)
+            val v = detrack(x) { as it => pub(it) }
+            broadcast(nil)
+            println(v)
+        """)
+        assert(out == " |  anon : (lin 8, col 13) : broadcast(nil)\n" +
+                " v  anon : (lin 4, col 43) : pub error : expected task\n") { out }
+    }
+
     // NEXT
 
     @Test
@@ -813,6 +878,215 @@ class Exec_05 {
         //assert(out == "anon : (lin 9, col 29) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out.contains("#[track: 0x")) { out }
+    }
+    @Test
+    fun oo_02_track_err() {
+        val out = test("""
+            var T = task (v) {
+                yield(nil) { as it => nil }
+            }
+            var x
+            var ts = tasks()
+            spawn T(1) in ts
+            do {
+                val t = next(ts)
+                set x = track(t)
+            }
+        """)
+        assert(out == " v  anon : (lin 10, col 25) : track(t) : track error : expected task\n") { out }
+    }
+    @Test
+    fun oo_03_track_err() {
+        val out = test("""
+            var T
+            set T = task (v) {
+                set pub() = [v]
+                yield(nil) { as it => nil }
+            }
+            var x
+            do {
+                var ts
+                set ts = tasks()
+                spawn T(1) in ts
+                do {
+                    val t = next(ts)
+                    set x = t       ;; err: escope 
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
+        assert(out == " v  anon : (lin 14, col 25) : set error : cannot move track outside its task scope\n") { out }
+    }
+    @Test
+    fun oo_04_track() {
+        val out = test("""
+            var T = task (v) {
+                yield(nil) { as it => nil }
+            }
+            var ts = tasks()
+            spawn T(1) in ts
+            do {
+                val t = next(ts)
+                detrack(t) { as x =>
+                    println(x)
+                }
+            }
+        """)
+        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out.contains("exe-task: 0x")) { out }
+    }
+
+    // ORIGINAL / TRACK / DETRACK
+
+    @Test
+    fun op_01_track() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+                set pub() = 10
+                yield(nil) { as it => nil }
+            }
+            var t = spawn T()
+            var x = track(t)
+            println(detrack(x) { as it => pub(it) }) 
+            broadcast(nil)
+            println(detrack(x) { as it => pub(it) }) 
+        """)
+        assert(out == "nil\n10\n") { out }
+    }
+    @Test
+    fun op_02_track() {
+        val out = test("""
+            var T
+            set T = task () {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            var t = spawn T ()
+            var x = track(t)
+            println(detrack(x) { as it => pub(it)[0] })
+            broadcast( nil )
+            println(detrack(x) { as it => it })
+        """)
+        assert(out == "10\nnil\n") { out }
+    }
+    @Test
+    fun op_03_track_err() {
+        val out = test("""
+            var T
+            set T = task () {
+                set pub() = [10]
+                yield(nil) { as it => nil }
+            }
+            var x
+            do {
+                var t = spawn (T) ()
+                set x = track(t)         ;; scope x < t
+                ;;println(detrack(x).pub[0])
+            }
+            ;;println(status(detrack(x)))
+            ;;println(x)
+        """)
+        //assert(out.contains("10\n:terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 10, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 10, col 21) : set error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun op_04_track() {
+        val out = test("""
+            var T = task () {
+                set pub() = [10]
+                ${AWAIT("it == :evt")}
+        println(:B)
+            }
+            var t = spawn T()
+            var x = track(t)
+            spawn task () {
+                catch { as err=>err==:par-or } in {
+                    spawn task () {
+                        ${AWAIT("do { println(:X,it) ; it==t }")}
+                        println(:xxx)
+                        throw(:par-or)
+                    } ()
+                    println(detrack(x) { as it => pub(it)[0] })
+                    broadcast(nil) in t
+                    println(detrack(x) { as it => pub(it)[0] })
+        println(:A)
+                    broadcast(:evt) in t
+                    println(999)
+                }
+                println(detrack(x) { as it => 999 })
+            }()
+            println(:ok)
+        """)
+        assert(out == "10\n10\nnil\n:ok\n") { out }
+    }
+    @Test
+    fun op_05_detrack_err() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+            }
+            val t1 = spawn T()
+            val r1 = track(t1)
+            val x1 = detrack(r1) { as it => it }
+            ;;println(t1, r1, x1, status(t1))
+            broadcast( nil )
+            ;;println(t1, r1, x1, status(t1))
+            println(status(t1))
+        """)
+        //assert(out == ":terminated\n") { out }
+        //assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == " v  anon : (lin 7, col 34) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun op_06_track_scope() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+            }
+            val t = spawn T()
+            val y = do {
+                val x = track(t)
+                x
+            }
+            println(y)
+        """)
+        assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+    }
+    @Test
+    fun op_07_track_scope() {
+        val out = test("""
+            val T = task () {
+                set pub() = 1
+                yield(nil) { as it => nil }
+            }
+            val t = spawn T()
+            val y = do {
+                track(t)
+            }
+            println(detrack(y) { as it => pub(it) })
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun op_08_track_scope() {
+        val out = test("""
+            val T = task () {
+                set pub() = 1
+                yield(nil) { as it => nil }
+            }
+            val y = do {
+                val t = spawn T()
+                track(t)
+            }
+            println(detrack(y) { as it => pub(it) })
+        """)
+        assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot move track outside its task scope\n") { out }
     }
 
     // ZZ / ALL
