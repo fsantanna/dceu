@@ -199,9 +199,9 @@ class Parser (lexer_: Lexer)
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tmp = this.acceptTag(":tmp")
+                val tmp = this.acceptTag(":fleet")
                 if (tmp && tk0.str!="val") {
-                    err(this.tk0, "invalid declaration : expected \"val\" for \":tmp\"")
+                    err(this.tk0, "invalid declaration : expected \"val\" for \":fleet\"")
                 }
                 val (id,tag) = this.id_tag()
                 val src = if (!this.acceptFix("=")) null else {

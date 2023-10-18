@@ -35,7 +35,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 if (ylds.contains(this)) {
                     vars.blk_to_dcls[this]?.forEach {
                         if (it.tmp) {
-                            err(it.tk, "invalid declaration : \":tmp\" across yield")
+                            err(it.tk, "invalid declaration : \":fleet\" across yield")
                         }
                     }
                 }

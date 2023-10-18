@@ -900,7 +900,7 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
-                val :tmp x = [0]
+                val :fleet x = [0]
                 set x[0] = v[0]
                 println(x[0])
             }
@@ -930,7 +930,7 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :tmp x = [0]
+                val :fleet x = [0]
                 set x[0] = v[0]
                 println(x[0])
             }
@@ -1198,7 +1198,7 @@ class Exec_04 {
     // PUB
 
     @Test
-    fun kk_00_pub() {
+    fun kk_00_pub_err() {
         val out = test("""
             pub()
         """)
@@ -1206,7 +1206,7 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
     }
     @Test
-    fun kk_01_pub() {
+    fun kk_01_pub_err() {
         val out = test("""
             task () :void {
                 pub()
@@ -1216,7 +1216,7 @@ class Exec_04 {
         assert(out == "anon : (lin 3, col 17) : pub error : expected enclosing task\n") { out }
     }
     @Test
-    fun kk_02_pub() {
+    fun kk_02_pub_err() {
         val out = test("""
             pub(nil)
         """)
@@ -2208,7 +2208,7 @@ class Exec_04 {
     fun zz_20_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :tmp x = v[0]
+                val :fleet x = v[0]
                 println(x)
             }
             var T = task () {
@@ -2223,7 +2223,7 @@ class Exec_04 {
     fun zz_21_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :tmp x = v[0]
+                val :fleet x = v[0]
                 println(x)
             }
             var g = func (v) {
@@ -2359,10 +2359,12 @@ class Exec_04 {
     @Test
     fun z1_05_data_pub_err() {
         val out = test("""
-            var t = spawn task () { nil } ()
+            var t = spawn task () {
+                yield(nil) { as it => nil }
+            } ()
             println(pub(t).y)
         """)
-        assert(out == " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
+        assert(out == " v  anon : (lin 5, col 21) : index error : expected collection\n") { out }
     }
     @Test
     fun z1_06_data_pub() {

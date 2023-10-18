@@ -2059,7 +2059,7 @@ class Exec_01 {
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
             var f = func (v) {
-                val :tmp x = v[0]
+                val :fleet x = v[0]
                 println(x)
             }
             var g = func (v) {
@@ -2112,7 +2112,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
 
-    // SCOPE / :TMP / :tmp
+    // SCOPE / :FLEET / :fleet
 
     @Test
     fun mm_01_tmp() {
@@ -2120,7 +2120,7 @@ class Exec_01 {
             """
             var x
             do {
-                val :tmp a = [1,2,3]
+                val :fleet a = [1,2,3]
                 set x = a
             }
             println(x)
@@ -2135,13 +2135,13 @@ class Exec_01 {
             """
             var x
             do {
-                var :tmp a = [1,2,3]
+                var :fleet a = [1,2,3]
                 set x = a
             }
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 21) : invalid declaration : expected \"val\" for \":tmp\"\n") { out }
+        assert(out == "anon : (lin 4, col 21) : invalid declaration : expected \"val\" for \":fleet\"\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -2150,7 +2150,7 @@ class Exec_01 {
             """
             var x
             do {
-                val :tmp a
+                val :fleet a
                 set a = [1,2,3]
                 set x = a
             }
@@ -2164,7 +2164,7 @@ class Exec_01 {
     fun mm_04_tmp() {
         val out = test(
             """
-            val :tmp x = [0]
+            val :fleet x = [0]
             set x[0] = []
             println(x)
         """
@@ -2175,7 +2175,7 @@ class Exec_01 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                val :tmp x = []
+                val :fleet x = []
                 if x { x } else { [] }
             }
             println(v)
@@ -3779,7 +3779,7 @@ class Exec_01 {
             """
             var f
             set f = func (^x) {
-                ;;;val :tmp z =;;; func (y) {
+                ;;;val :fleet z =;;; func (y) {
                     [^^x,y]
                 }
                 ;;dump(z)

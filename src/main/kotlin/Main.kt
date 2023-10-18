@@ -82,7 +82,7 @@ val TAGS = listOf (
 )) + (if (CEU < 4) listOf() else listOf(
     ":void",
 )) + listOf(
-    ":ceu", ":tmp",
+    ":ceu", ":fleet",
 )
 
 val GLOBALS = setOf (
@@ -174,7 +174,7 @@ val PLUS = """
 fun OR (v1:String, v2:String): String {
     return """
         do {
-            val :tmp v1 = $v1 
+            val :fleet v1 = $v1 
             if v1 { v1 } else { $v2 }
         }
     """
@@ -182,7 +182,7 @@ fun OR (v1:String, v2:String): String {
 fun AND (v1:String, v2:String): String {
     return """
         do {
-            val :tmp v1 = $v1 
+            val :fleet v1 = $v1 
             if v1 { $v2 } else { v1 }
         }
     """

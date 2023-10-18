@@ -504,11 +504,11 @@ class Exec_03 {
     fun ee_08_yield_tmp() {
         val out = test("""
             val F = coro () {
-                val :tmp x
+                val :fleet x
                 yield(nil) { as it => nil }
             }
         """)
-        assert(out == "anon : (lin 3, col 17) : invalid declaration : \":tmp\" across yield\n") { out }
+        assert(out == "anon : (lin 3, col 17) : invalid declaration : \":fleet\" across yield\n") { out }
     }
     @Test
     fun ee_09_tags() {
