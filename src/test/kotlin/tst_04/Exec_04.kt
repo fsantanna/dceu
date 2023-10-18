@@ -1221,7 +1221,19 @@ class Exec_04 {
             pub(nil)
         """)
         //assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
-        assert(out == " v  anon : (lin 2, col 17) : pub error : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 17) : pub error : expected active task\n") { out }
+    }
+    @Test
+    fun kk_02_pub_err_x() {
+        val out = test("""
+            val t = task () {
+                set pub() = []
+            }
+            val a = spawn (t) ()
+            val x = pub(a)
+            println(x)
+        """)
+        assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -1343,6 +1355,170 @@ class Exec_04 {
             pub().x
         """)
         assert(out == "anon : (lin 2, col 13) : pub error : expected enclosing task\n") { out }
+    }
+    @Test
+    fun kk_13_pub() {
+        val out = test("""
+            spawn (task () {
+                set pub().x = 10
+                nil
+            }) ()
+        """)
+        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { set pub()[:x] = 10 nil })(ni...)\n" +
+                " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
+    }
+
+    // ORIGINAL / PUB / EXPOSE
+
+    @Test
+    fun kj_01_expose() {
+        val out = test("""
+            var t = task () {
+                set pub() = []
+                yield(nil) { as it => nil }
+                nil
+            }
+            var a = spawn (t) ()
+            var x = pub(a)
+            println(x)
+        """)
+        //assert(out == "anon : (lin 8, col 13) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun kj_02_expose_err() {
+        val out = test("""
+            val x = do {
+                var t = task () {
+                    set pub() = []
+                    yield(nil) { as it => nil }
+                    nil
+                }
+                var a = spawn (t) ()
+                pub(a)
+            }
+            println(x)
+        """)
+        assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+    }
+    @Test
+    fun kj_03_expose_err() {
+        val out = test("""
+            var f = func (t) {
+                var p = pub(t)   ;; ok
+                set p = pub(t)   ;; ok
+                set p = p       ;; ok
+                println(p)      ;; ok
+                p               ;; ok
+            }
+            var t = task () {
+                set pub() = []
+                yield(nil) { as it => nil }
+                nil
+            }
+            var a = spawn (t) ()
+            f(a)
+            nil
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
+        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+        //        "[]\n" +
+        //        ":error\n") { out }
+        //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
+        //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun kj_05_expose_err() {
+        val out = test("""
+            var f = func (t) {
+                var p = pub(t)   ;; ok
+                p               ;; ok
+            }
+            var t = task () {
+                set pub() = []
+                yield(nil) { as it => nil }
+                nil
+            }
+            var a = spawn (t) ()
+            var x = f(a)        ;; no
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
+        //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
+        //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun kj_06_expose_err() {
+        val out = test("""
+            var p
+            var f = func (t) {
+                set p = pub(t)   ;; no
+            }
+            var t = task () {
+                set pub() = []
+                yield(nil) { as it => nil }
+                nil
+            }
+            var a = spawn (t) ()
+            val x = f(a)
+            println(x)
+        """)
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 12, col 13) : f(a)\n" +
+        //        "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun kj_07_pub_func() {
+        val out = test("""
+            var t
+            set t = task (v) {
+                set pub() = v
+                var f
+                set f = func () {
+                    pub()
+                }
+                println(f())
+            }
+            var a = spawn (t)(1)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun kj_08_pub_func_expose() {
+        val out = test("""
+            var t = task (v) {
+                set pub() = v
+                var f = func () {
+                    pub()
+                }
+                println(f())
+            }
+            var a = spawn (t) ([1])
+        """)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 13, col 20) : a([1])\n" +
+        //        "anon : (lin 9, col 25) : f()\n" +
+        //        "anon : (lin 7, col 26) : invalid pub : cannot expose dynamic \"pub\" field\n:error\n") { out }
+    }
+    @Test
+    fun kj_09_pub() {
+        val out = test("""
+            var t = task (v) {
+                set pub() = @[]
+                nil
+            }
+            var a = spawn (t) ()
+            println(status(a))
+        """, true)
+        assert(out == ":terminated\n") { out }
     }
 
     // NESTED

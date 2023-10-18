@@ -649,8 +649,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 this.tsk.cond2({
                     tsk as Expr
                     it.code() + """ // PUB | ${this.dump()}
-                        if (!ceu_istask_val(ceu_acc)) {
-                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected task"} };
+                        if (!ceu_istask_val(ceu_acc) || ceu_acc.Dyn->Exe_Task.status==CEU_EXE_STATUS_TERMINATED) {
+                            CEU_Value err = { CEU_VALUE_ERROR, {.Error="pub error : expected active task"} };
                             CEU_ERROR($bupc, "${this.tsk.tk.pos.file} : (lin ${this.tsk.tk.pos.lin}, col ${this.tsk.tk.pos.col})", err);
                         }
                     """

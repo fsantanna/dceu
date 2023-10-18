@@ -747,8 +747,134 @@ class Exec_05 {
             broadcast(nil)
             println(v)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast(nil)\n" +
-                " v  anon : (lin 4, col 43) : pub error : expected task\n") { out }
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun fg_04_expose_err() {
+        val out = test("""
+            val x = do {
+                val ts = tasks()
+                var T = task () {
+                    set pub() = []
+                    yield(nil) { as it => nil }
+                    nil
+                }
+                spawn (T) () in ts
+                val trk = next(ts)
+                val p = detrack(trk) { as it => pub(it) }
+                println(:pub, p)
+                p
+            }
+            println(x)
+        """)
+        assert(out == ":pub\t[]\n" +
+                " v  anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+    }
+    @Test
+    fun fg_05_expose() {
+        val out = test("""
+            var T = task (t) {
+                set pub() = []
+                if t {
+                    val p = detrack(t) { as it => pub(it) }
+                } else {
+                    nil
+                }
+                yield(nil) { as it => nil }
+                nil
+            }
+            val t = spawn T ()
+            spawn T (track(t))
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun fg_06_expose() {
+        val out = test("""
+            val f = func (t) { false }
+            val T = task () {
+                set pub() = []
+                yield(nil) { as it => nil }
+            }
+            val ts = tasks()
+            do {
+                do {
+                    do {
+                        do {
+                            spawn T() in ts
+                        }
+                    }
+                }
+            }
+            do {
+                val xx1 = next(ts)
+                f(detrack(xx1) { as it => pub(it) } )
+            }
+            println(:ok)
+        """, true)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun fg_07_throw_track() {
+        val out = test("""
+            val T = task () {
+                set pub() = 10
+                yield(nil) {as it => nil}
+            }
+            val ts = tasks()
+            val t = catch { as it=>true} in {
+                spawn T() in ts
+                do {
+                    val t = next(ts)
+                    throw(drop(t))
+                }
+            }
+            println(detrack(t) { as it => pub(it) })
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun fg_08_throw_track() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it=>nil }
+            }
+            val t = do {
+                val ts = tasks()
+                spawn T() in ts
+                do {
+                    val t = next(ts)
+                    throw(drop(t))
+                    nil
+                }
+            }
+            println(t)
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out.contains(" v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+    }
+    @Test
+    fun fg_09_throw_track() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+            }
+            val ts = tasks()
+            catch {as it=>true} in {
+                spawn T() in ts
+                do {
+                    val t = next(ts)
+                    throw(drop(t))
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
     }
 
     // NEXT
