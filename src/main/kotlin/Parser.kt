@@ -562,7 +562,11 @@ class Parser (lexer_: Lexer)
             ret.add(this.expr())
         }
         if (ret.size == 0) {
-            err_expected(this.tk1, "expression")
+            if (CEU >= 99) {
+                ret.add(Expr.Nil(Tk.Fix("nil", this.tk0.pos.copy())))
+            } else {
+                err_expected(this.tk1, "expression")
+            }
         }
         ret.forEachIndexed { i,e ->
             val ok = (i == ret.size-1) || !e.is_innocuous()

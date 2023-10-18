@@ -26,42 +26,6 @@ class TXParser {
         assert(e.tostr() == "do {\nvar x = 1\n}") { e.tostr() }
     }
 
-    // EMPTY BLOCKS
-
-    @Test
-    fun empty1_if() {
-        val l = lexer("if true { 1 }")
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.If)
-        assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
-    }
-    @Test
-    fun empty2_do() {  // set whole tuple?
-        val l = lexer("do{}")
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.Do && e.es.size==1)
-        assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
-    }
-    @Test
-    fun empty3_func() {
-        val l = lexer("func () {}")
-        val parser = Parser(l)
-        val e = parser.exprPrim()
-        assert(e is Expr.Proto && e.args.size==0)
-        assert(e.tostr() == "(func () {\nnil\n})") { e.tostr() }
-    }
-    @Test
-    fun empty4_loop() {
-        val l = lexer("loop until false { }")
-        val parser = Parser(l)
-        val x = parser.exprPrim() as Expr.Do
-        val e = x.es.last() as Expr.Loop
-        assert(e.body.es.last() is Expr.Nil)
-        //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
-    }
-
     // IFS
 
     @Test
@@ -151,14 +115,6 @@ class TXParser {
 
     // BIN AND OR
 
-    @Test
-    fun bin1_or() {
-        N = 1
-        val l = lexer("1 or 2")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "do {\nval :xtmp ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
-    }
     @Test
     fun bin2_and() {
         N = 1
