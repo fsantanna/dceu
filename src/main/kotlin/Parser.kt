@@ -606,18 +606,19 @@ class Parser (lexer_: Lexer)
                     call.args[0]
                 }
                 this.nest("""
-                    do {
-                        val :fleet ceu_co_$N = ${call.tostr(true)}
+                    ${call.tostr(true)} thus { as ceu_co_$N => 
                         var ceu_arg_$N = ${arg.tostr(true)}
                         loop {
-                            val :fleet ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
-                            if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
-                                set ceu_arg_$N = yield(ceu_v_$N)
-                            }
-                            break if (status(ceu_co_$N) == :terminated)
+                            break if (
+                                resume ceu_co_$N(ceu_arg_$N) thus { as ceu_v_$N =>
+                                    if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
+                                        set ceu_arg_$N = yield(ceu_v_$N)
+                                    }
+                                    (status(ceu_co_$N) == :terminated)
+                                }
+                            )                                
                         }
                         ceu_arg_$N
-                    }
                 """)
             }
 
