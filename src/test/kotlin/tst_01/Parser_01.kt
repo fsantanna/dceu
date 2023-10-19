@@ -584,6 +584,13 @@ class Parser_01 {
         val e = parser.expr() as Expr.Break
         assert(e.tostr() == "break(1) if true") { e.tostr() }
     }
+    @Test
+    fun rr_06_break() {
+        val l = lexer("break if nil")
+        val parser = Parser(l)
+        val e = parser.expr() as Expr.Break
+        assert(e.tostr() == "break if nil") { e.tostr() }
+    }
 
     // NATIVE
 
