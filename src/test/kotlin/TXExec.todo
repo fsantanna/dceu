@@ -50,31 +50,8 @@ class TXExec {
     // IFS
 
     @Test
-    fun bb_ifs5() {
-        val out = all("""
-            val x = ifs it=20 {
-                it == 10 => false
-                else     => true
-            }
-            println(x)
-        """)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun todo_bb_ifs6_nocnd() {
-        val out = all("""
-            val x = ifs 20 {
-                true => ifs {
-                    == 20 => true   ;; err: no ifs expr
-                }
-            }
-            println(x)
-        """)
-        assert(out == "ERROR\n") { out }
-    }
-    @Test
-    fun bb_ifs7() {
-        val out = all("""
+    fun ff_07_ifs() {
+        val out = test("""
             var x = ifs it=20 {
                 it is? 10 => false
                 true  => true
@@ -86,8 +63,8 @@ class TXExec {
         assert(out == "true\n") { out }
     }
     @Test
-    fun bb_ifs8() {
-        val out = all("""
+    fun ff_08_ifs() {
+        val out = test("""
             data :T = []
             val x = ifs 10 {
                 true => :T []
@@ -203,71 +180,8 @@ class TXExec {
         assert(out == "true\n") { out }
     }
 
-    // OPS: not, and, or
-
-    @Test
-    fun op_or_and() {
-        val out = all("""
-            println(true or println(1))
-            println(false and println(1))
-        """)
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun op_not() {
-        val out = all("""
-            println(not nil and not false)
-        """)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun op2_or_and() {
-        val out = all("""
-            println(1 or throw(5))
-            println(1 and 2)
-            println(nil and 2)
-            println(nil or 2)
-        """)
-        assert(out == "1\n2\nnil\n2\n") { out }
-    }
-    @Test
-    fun op3_or_and() {
-        val out = all("""
-            println(true and ([] or []))
-        """)
-        assert(out == "[]\n") { out }
-    }
-    @Test
-    fun op4_and_and() {
-        val out = all("""
-            val v = true and
-                true and 10
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun op5_plus_plus() {
-        val out = all("""
-            val v = 5 +
-                5 + 10
-            println(v)
-        """, true)
-        assert(out == "20\n") { out }
-    }
-
     // is, is-not?, in?
 
-    @Test
-    fun is1() {
-        val out = all("""
-            println([] is? :bool)
-            println([] is? :tuple)
-            println(1 is-not? :tuple)
-            println(1 is-not? :number)
-        """, true)
-        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
-    }
     @Test
     fun is2() {
         val out = all("""
@@ -280,39 +194,6 @@ class TXExec {
             println(t is-not? :x)
         """, true)
         assert(out == "true\nfalse\ntrue\n") { out }
-    }
-    @Test
-    fun in3() {
-        val out = all("""
-            val t = [1,2,3]
-            println(2 in? t)
-            println(4 in? t)
-        """, true)
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun in4() {
-        val out = all("""
-            val t = [1,2,3]
-            println(2 in-not? t)
-            println(4 in-not? t)
-        """, true)
-        assert(out == "false\ntrue\n") { out }
-    }
-    @Test
-    fun ops_05() {
-        val out = all("""
-            println({{or}}(false, true))
-            println({{not}}(true))
-        """)
-        assert(out == "true\nfalse\n") { out }
-    }
-    @Test
-    fun ops_06() {
-        val out = all("""
-            println({{not}}())
-        """)
-        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments") { out }
     }
     @Test
     fun ops_07() {

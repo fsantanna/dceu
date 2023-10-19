@@ -121,14 +121,43 @@ class Parser_99 {
         assert(e.tostr() == "val f = (func () {\nnil\n})\n") { e.tostr() }
     }
 
-    // IF
+    // IF / ID-TAG
 
     @Test
     fun dd_01_if() {
         val l = lexer("if x:X { :ok }")
         val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected \"=\" : have \"{\"")
+    }
+    @Test
+    fun dd_02_if() {
+        val l = lexer("if x=1 { x }")
+        val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "ERR") { e.tostr() }
+        assert(e.tostr() == "do {\n" +
+                "val :fleet ceu_17 = 1\n" +
+                "if ceu_17 {\n" +
+                "val :fleet x = ceu_17\n" +
+                "x\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}\n") { e.tostr() }
+    }
+    @Test
+    fun dd_03_if() {
+        val l = lexer("if x:X=1 { x }")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "do {\n" +
+                "val :fleet ceu_18 :X = 1\n" +
+                "if ceu_18 {\n" +
+                "val :fleet x :X = ceu_18\n" +
+                "x\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}\n") { e.tostr() }
     }
 
     // IFS

@@ -120,6 +120,21 @@ class Exec_99 {
         """)
         assert(out == "20\n") { out }
     }
+    @Test
+    fun bb_07_ops() {
+        val out = test("""
+            println({{or}}(false, true))
+            println({{not}}(true))
+        """)
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun bb_08_ops() {
+        val out = test("""
+            println({{not}}())
+        """)
+        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments") { out }
+    }
 
     // is, is-not?, in?, in-not?
 
@@ -129,7 +144,6 @@ class Exec_99 {
             func to-bool (v) {
                 not (not v)
             }
-            
             func is' (v1,v2) {
                 ifs {
                     (v1 == v2)         => true
@@ -139,17 +153,41 @@ class Exec_99 {
                     else => false
                 }
             }
-            
             func is-not' (v1,v2) {
                 not is'(v1,v2)
             }
-
             println([] is? :bool)
             println([] is? :tuple)
             println(1 is-not? :tuple)
             println(1 is-not? :number)
         """)
         assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+    @Test
+    fun bc_03_in() {
+        val out = test("""
+            $PLUS
+            func to-bool (v) {
+                not (not v)
+            }
+            func in' (v, xs) {
+                var i = 0
+                xloop {
+                    xbreak(false) if i == #xs
+                    xbreak(true) if v == xs[i]
+                    set i = i + 1
+                }
+            }            
+            func in-not' (v, xs) {
+                not in'(v,xs)
+            }
+            val t = [1,2,3]
+            println(2 in? t)
+            println(4 in? t)
+            println(2 in-not? t)
+            println(4 in-not? t)
+        """)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
 
     // FUNC / DCL
@@ -163,6 +201,26 @@ class Exec_99 {
             println(f(10))
         """)
         assert(out == "10\n") { out }
+    }
+
+    // IF / ID-TAG
+
+    @Test
+    fun cj_01_if() {
+        val out = test("""
+            val v = if x=1 { x }
+            println(v)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun cj_02_if() {
+        val out = test("""
+            data :X = [x]
+            val i = if v:X=[1] { v.x }
+            println(i)
+        """)
+        assert(out == "1\n") { out }
     }
 
     // IFS
@@ -213,5 +271,28 @@ class Exec_99 {
             println(x)
         """)
         assert(out == "true\n") { out }
+    }
+    @Test
+    fun ff_05_ifs() {
+        val out = test("""
+            val x = ifs it=20 {
+                it == 10 => false
+                else     => true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun todo_ff_06_ifs_nocnd() {
+        val out = test("""
+            val x = ifs 20 {
+                true => ifs {
+                    == 20 => true   ;; err: no ifs expr
+                }
+            }
+            println(x)
+        """)
+        assert(out == "ERROR\n") { out }
     }
 }
