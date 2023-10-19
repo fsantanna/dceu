@@ -589,6 +589,34 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
+            (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
+                val tkx = this.tk1
+                val call = this.expr_2_pre()
+                when {
+                    (call !is Expr.Call) -> err(tkx, "resume-yield-call error : expected call")
+                    (call.args.size > 1) -> err(tkx, "resume-yield-call error : invalid number of arguments")
+                }
+                call as Expr.Call
+                val arg = if (call.args.size == 0) {
+                    Expr.Nil(Tk.Fix("nil", call.tk.pos.copy()))
+                } else {
+                    call.args[0]
+                }
+                this.nest("""
+                    -=-=- TODO -=-=-
+                    do {
+                        val :fleet ceu_co_$N = ${call.tostr(true)}
+                        var ceu_arg_$N = ${arg.tostr(true)}
+                        loop {
+                            val :fleet ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
+                                set ceu_arg_$N = yield(ceu_v_$N)
+                            }
+                        } until (status(ceu_co_$N) == :terminated) ;; or (ceu_v_$N == nil)
+                        ceu_arg_$N
+                    }
+                """)
+            }
 
             else -> {
                 err_expected(this.tk1, "expression")
