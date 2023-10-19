@@ -28,10 +28,14 @@ class TXLexer {
 
     @Test
     fun arrow1() {
-        val l = lexer("->")
+        val l = lexer("-> => --> <- <--")
         val tks = l.lex().iterator()
         //println(tks.next())
-        assert(tks.next().let { it is Tk.Fix && it.str == "->" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "->"  })
+        assert(tks.next().let { it is Tk.Fix && it.str == "=>"  })
+        assert(tks.next().let { it is Tk.Fix && it.str == "-->" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "<-"  })
+        assert(tks.next().let { it is Tk.Fix && it.str == "<--" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }

@@ -12,7 +12,7 @@ class TXParser {
     fun dcl1() {
         val l = lexer("var x = 1")
         val parser = Parser(l)
-        val e = parser.exprPrim()
+        val e = parser.expr_prim()
         //println(e)
         //assert(e is Expr.Group && e.es[1] is Expr.Set)
         assert(e is Expr.Dcl && e.src is Expr.Num)
@@ -26,11 +26,47 @@ class TXParser {
         assert(e.tostr() == "do {\nvar x = 1\n}") { e.tostr() }
     }
 
+    // EMPTY BLOCKS
+
+    @Test
+    fun empty1_if() {
+        val l = lexer("if true { 1 }")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.If)
+        assert(e.tostr() == "if true {\n1\n} else {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun empty2_do() {  // set whole tuple?
+        val l = lexer("do{}")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Do && e.es.size==1)
+        assert(e.tostr() == "do {\nnil\n}") { e.tostr() }
+    }
+    @Test
+    fun empty3_func() {
+        val l = lexer("func () {}")
+        val parser = Parser(l)
+        val e = parser.expr_prim()
+        assert(e is Expr.Proto && e.args.size==0)
+        assert(e.tostr() == "(func () {\nnil\n})") { e.tostr() }
+    }
+    @Test
+    fun empty4_loop() {
+        val l = lexer("loop until false { }")
+        val parser = Parser(l)
+        //println(parser.expr_prim().tostr())
+        val e = parser.expr_prim() as Expr.XLoop
+        assert(e.body.es.last() is Expr.Nil)
+        //assert(e.tostr() == "loop until false {\npass nil\n}") { e.tostr() }
+    }
+
     // IFS
 
     @Test
     fun ifs1() {
-        val l = lexer("ifs { a->1 else{0} }")
+        val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -57,7 +93,7 @@ class TXParser {
     }
     @Test
     fun ifs3_err() {
-        val l = lexer("ifs it=nil { else -> it }")
+        val l = lexer("ifs it=nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -78,7 +114,7 @@ class TXParser {
     }
     @Test
     fun ifs5() {
-        val l = lexer("ifs it=v { a -> it }")
+        val l = lexer("ifs it=v { a => it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -92,7 +128,7 @@ class TXParser {
     }
     @Test
     fun ifs6() {
-        val l = lexer("ifs it=v { a{1} b->it else{0} }")
+        val l = lexer("ifs it=v { a{1} b=>it else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
@@ -116,6 +152,14 @@ class TXParser {
     // BIN AND OR
 
     @Test
+    fun bin1_or() {
+        N = 1
+        val l = lexer("1 or 2")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\nval :xtmp ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
+    }
+    @Test
     fun bin2_and() {
         N = 1
         val l = lexer("1 and 2")
@@ -131,20 +175,20 @@ class TXParser {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val :xtmp ceu_73 = do {
-            val :xtmp ceu_26 = if true {
+            val :xtmp ceu_67 = do {
+            val :xtmp ceu_23 = if true {
             false
             } else {
             true
             }
-            if ceu_26 {
+            if ceu_23 {
             false
             } else {
-            ceu_26
+            ceu_23
             }
             }
-            if ceu_73 {
-            ceu_73
+            if ceu_67 {
+            ceu_67
             } else {
             true
             }
@@ -182,7 +226,17 @@ class TXParser {
     fun index3_err() {
         val l = lexer("x . .")
         val parser = Parser(l)
-        assert(trap { parser.exprSufs() } == "anon : (lin 1, col 5) : expected field : have \".\"")
+        assert(trap { parser.expr_4_suf() } == "anon : (lin 1, col 5) : expected field : have \".\"")
+    }
+
+    // METHOD
+
+    @Test
+    fun jj_01_method_err() {
+        val out = ceu.all("""
+            10->10
+        """)
+        assert(out == "anon : (lin 2, col 17) : call error : expected function\n:error\n") { out }
     }
 
     // SPAWN, PAR, RESUME-YIELD-ALL
@@ -217,7 +271,7 @@ class TXParser {
     @Test
     fun loop01_n() {
         val l = lexer("""
-            loop in [0 -> n), :step +1, i {
+            loop i in [0 -> n), :step +1 {
             }
         """)
         val parser = Parser(l)
