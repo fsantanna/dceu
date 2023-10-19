@@ -135,9 +135,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_17 = 1\n" +
-                "if ceu_17 {\n" +
-                "val :fleet x = ceu_17\n" +
+                "val :fleet ceu_18 = 1\n" +
+                "if ceu_18 {\n" +
+                "val :fleet x = ceu_18\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
@@ -150,14 +150,21 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_18 :X = 1\n" +
-                "if ceu_18 {\n" +
-                "val :fleet x :X = ceu_18\n" +
+                "val :fleet ceu_19 :X = 1\n" +
+                "if ceu_19 {\n" +
+                "val :fleet x :X = ceu_19\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
                 "}\n") { e.tostr() }
+    }
+    @Test
+    fun dd_04_if() {
+        val out = test("""
+            if f() {}
+        """)
+        assert(out == "anon : (lin 2, col 16) : access error : variable \"f\" is not declared\n") { out }
     }
 
     // IFS

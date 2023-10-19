@@ -133,7 +133,7 @@ class Exec_99 {
         val out = test("""
             println({{not}}())
         """)
-        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments") { out }
+        assert(out == "anon : (lin 2, col 21) : operation error : invalid number of arguments\n") { out }
     }
 
     // is, is-not?, in?, in-not?

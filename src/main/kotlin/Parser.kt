@@ -195,16 +195,24 @@ class Parser (lexer_: Lexer)
     }
 
     fun id_tag__cnd (): Pair<Pair<Tk.Id,Tk.Tag?>?,Expr> {
-        return if (!this.checkEnu("Id")) {
-            Pair(null, this.expr())
-        } else {
-            val (id, tag) = id_tag()
-            val eq = if (tag == null) this.acceptFix("=") else this.acceptFix_err("=")
-            if (eq) {
-                Pair(Pair(id, tag), this.expr())
-            } else {
-                Pair(null, this.expr_1_bin(null, Expr.Acc(id)))
+        val e = this.expr()
+        return when {
+            (e !is Expr.Acc) -> Pair(null, e)
+            this.acceptFix("=") -> {
+                if (e.tk.str == "...") {
+                    err(this.tk0, "invalid declaration : unexpected ...")
+                }
+                Pair(Pair(e.tk_,null), this.expr())
             }
+            this.acceptEnu("Tag") -> {
+                if (e.tk.str == "...") {
+                    err(this.tk0, "invalid declaration : unexpected ...")
+                }
+                val tag = this.tk0 as Tk.Tag
+                this.acceptFix_err("=")
+                Pair(Pair(e.tk_,tag), this.expr())
+            }
+            else -> Pair(null, e)
         }
     }
 

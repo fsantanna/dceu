@@ -445,6 +445,13 @@ class Parser_01 {
         //assert(e is Expr.If)
         assert(trap { parser.expr_prim() } == "anon : (lin 1, col 14) : expected \"else\" : have end of file")
     }
+    @Test
+    fun if3() {
+        val out = test("""
+            if f() {nil} else {nil}
+        """)
+        assert(out == "anon : (lin 2, col 16) : access error : variable \"f\" is not declared\n") { out }
+    }
 
     // DO
 

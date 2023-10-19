@@ -2257,7 +2257,7 @@ class Exec_01 {
         assert(out == "nil\n") { out }
     }
     @Test
-    fun if_hld() {
+    fun if5_hld() {
         val out = test(
             """
             if [] {nil} else {nil}
