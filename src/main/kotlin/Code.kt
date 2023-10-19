@@ -443,13 +443,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
-                    this.src!!.code() + (!this.tmp).cond { """
+                    this.src!!.code() + """
                         CEU_ASSERT(
                             $bupc,
                             ceu_hold_chk_set(CEU4(0 COMMA) $bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
-                    """ }
+                    """
                 }}
                 ${when {
                     !this.init -> ""
@@ -753,7 +753,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (dcl.id.upv > 0) {
                             err(tk, "set error : cannot reassign an upval")
                         }
-                        assert(!dcl.tmp)    // removed support for "val :tmp x"
                         """
                         { // ACC - SET
                             CEU_ASSERT(

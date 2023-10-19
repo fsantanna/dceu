@@ -2059,8 +2059,9 @@ class Exec_01 {
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
             var f = func (v) {
-                val :fleet x = v[0]
-                println(x)
+                v[0] thus { as it =>
+                    println(it)
+                }
             }
             var g = func (v) {
                 val evt = v
@@ -2120,8 +2121,9 @@ class Exec_01 {
             """
             var x
             do {
-                val :fleet a = [1,2,3]
-                set x = a
+                [1,2,3] thus { as a =>
+                    set x = a
+                }
             }
             println(x)
         """
@@ -2130,43 +2132,13 @@ class Exec_01 {
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
-    fun mm_02_tmp() {
-        val out = test(
-            """
-            var x
-            do {
-                var :fleet a = [1,2,3]
-                set x = a
-            }
-            println(x)
-        """
-        )
-        assert(out == "anon : (lin 4, col 21) : declaration error : expected \"val\" for \":fleet\"\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
-    fun mm_03_tmp() {
-        val out = test(
-            """
-            var x
-            do {
-                val :fleet a
-                set a = [1,2,3]
-                set x = a
-            }
-            println(x)
-        """
-        )
-        assert(out == "anon : (lin 5, col 17) : invalid set : destination is immutable\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-    }
-    @Test
     fun mm_04_tmp() {
         val out = test(
             """
-            val :fleet x = [0]
-            set x[0] = []
-            println(x)
+            [0] thus { as x =>
+                set x[0] = []
+                println(x)
+            }
         """
         )
         assert(out == "[[]]\n") { out }
@@ -2175,8 +2147,9 @@ class Exec_01 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                val :fleet x = []
-                if x { x } else { [] }
+                [] thus { as x =>
+                    if x { x } else { [] }
+                }
             }
             println(v)
         """)
@@ -3476,7 +3449,7 @@ class Exec_01 {
             println(tags(s,:T), tags(s,:T.S))
         """, true
         )
-        assert(out == "15\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "14\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
@@ -3555,7 +3528,7 @@ class Exec_01 {
             )
         """, true
         )
-        assert(out == "15\t1000\t1001\t1002\t10\t11\t12\t16\t100\t101\t17\n") { out }
+        assert(out == "14\t1000\t1001\t1002\t10\t11\t12\t15\t100\t101\t16\n") { out }
     }
     @Test
     fun enum02() {
