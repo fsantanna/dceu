@@ -248,7 +248,12 @@ class Parser (lexer_: Lexer)
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val (id_tag,cnd) = if (CEU >= 99) id_tag__cnd() else Pair(null,this.expr())
-                val t = this.block()
+                val arr = (CEU>=99) && this.acceptFix("=>")
+                val t = if (arr) {
+                    Expr.Do(this.tk0, listOf(this.expr_1_bin()))
+                } else {
+                    this.block()
+                }
                 val f = when {
                     (CEU < 99) -> {
                         this.acceptFix_err("else")
@@ -256,7 +261,11 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix("else") -> {
                         this.block()
-                    } else -> {
+                    }
+                    arr && this.acceptFix_err("=>") -> {
+                        Expr.Do(this.tk0, listOf(this.expr_1_bin()))
+                    }
+                    else -> {
                         Expr.Do(tk0, listOf(Expr.Nil(Tk.Fix("nil", tk0.pos.copy()))))
                     }
                 }

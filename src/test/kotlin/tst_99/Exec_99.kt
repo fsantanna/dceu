@@ -223,6 +223,37 @@ class Exec_99 {
         assert(out == "1\n") { out }
     }
 
+    // IF cnd => t => f
+
+    @Test
+    fun dd_01_if() {
+        val out = test("""
+            println(if false => 1 => 2)
+        """)
+        assert(out == "2\n") { out }
+    }
+    @Test
+    fun dd_02_if() {
+        val out = test("""
+            println(if true => 1 => 2)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun dd_03_if() {
+        val out = test("""
+            println(if true => if true => 1 => 99 => 99)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun dd_04_if() {
+        val out = test("""
+            println(if x=10 => x => 99)
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // IFS
 
     @Test

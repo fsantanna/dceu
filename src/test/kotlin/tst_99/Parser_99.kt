@@ -161,10 +161,54 @@ class Parser_99 {
     }
     @Test
     fun dd_04_if() {
-        val out = test("""
-            if f() {}
-        """)
-        assert(out == "anon : (lin 2, col 16) : access error : variable \"f\" is not declared\n") { out }
+        val l = lexer("if f() {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "if f() {\n" +
+                "nil\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}") { e.tostr() }
+    }
+
+    // IF / =>
+
+    @Test
+    fun de_01_if() {
+        val l = lexer("if false => 1 => 2")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "if false {\n" +
+                "1\n" +
+                "} else {\n" +
+                "2\n" +
+                "}\n") { e.tostr() }
+    }
+    @Test
+    fun de_02_if() {
+        val l = lexer("if false { 1 } => 2")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 16) : expected expression : have \"=>\"")
+    }
+    @Test
+    fun de_03_if_err() {
+        val l = lexer("(if true => 1)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"=>\" : have \")\"")
+    }
+    @Test
+    fun de_0x_if_err() {
+        val l = lexer("if false => 1 --> nil => 2")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "ERR") { e.tostr() }
+    }
+    @Test
+    fun de_0x_if() {
+        val l = lexer("if false => 1 --> nil nil")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "OK") { e.tostr() }
     }
 
     // IFS
