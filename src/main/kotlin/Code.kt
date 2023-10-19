@@ -435,6 +435,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val blk = ups.first_block(this)!!
                 val bupc = blk.idc("block")
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
+                val isthus = ups.pub[this].let { it is Expr.Do && it.tk.str=="thus" && it.es[0]==this }
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -446,7 +447,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.src!!.code() + """
                         CEU_ASSERT(
                             $bupc,
-                            ceu_hold_chk_set(CEU4(0 COMMA) $bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk_set(CEU4(0 COMMA) $bupc, ${if (isthus) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """
