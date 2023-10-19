@@ -187,7 +187,7 @@ class Parser (lexer_: Lexer)
         this.acceptEnu_err("Id")
         val id = this.tk0 as Tk.Id
         if (id.str == "...") {
-            err(this.tk0, "invalid declaration : unexpected ...")
+            err(this.tk0, "declaration error : unexpected ...")
         }
         val tag = if (!this.acceptEnu("Tag")) null else {
             this.tk0 as Tk.Tag
@@ -201,13 +201,13 @@ class Parser (lexer_: Lexer)
             (e !is Expr.Acc) -> Pair(null, e)
             this.acceptFix("=") -> {
                 if (e.tk.str == "...") {
-                    err(this.tk0, "invalid declaration : unexpected ...")
+                    err(this.tk0, "declaration error : unexpected ...")
                 }
                 Pair(Pair(e.tk_,null), this.expr())
             }
             this.acceptEnu("Tag") -> {
                 if (e.tk.str == "...") {
-                    err(this.tk0, "invalid declaration : unexpected ...")
+                    err(this.tk0, "declaration error : unexpected ...")
                 }
                 val tag = this.tk0 as Tk.Tag
                 this.acceptFix_err("=")
@@ -224,7 +224,7 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val tmp = this.acceptTag(":fleet")
                 if (tmp && tk0.str!="val") {
-                    err(this.tk0, "invalid declaration : expected \"val\" for \":fleet\"")
+                    err(this.tk0, "declaration error : expected \"val\" for \":fleet\"")
                 }
                 val (id,tag) = this.id_tag()
                 val src = if (!this.acceptFix("=")) null else {
@@ -236,12 +236,12 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val dst = this.expr()
                 if (dst is Expr.Acc && dst.tk.str == "...") {
-                    err(this.tk0, "invalid set : unexpected ...")
+                    err(this.tk0, "set error : unexpected ...")
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
                 if (!dst.is_lval()) {
-                    err(tk0, "invalid set : expected assignable destination")
+                    err(tk0, "set error : expected assignable destination")
                 }
                 Expr.Set(tk0, dst, /*null,*/ src)
             }
@@ -425,8 +425,8 @@ class Parser (lexer_: Lexer)
                 val tkx = this.tk1
                 val call = this.expr_2_pre()
                 when {
-                    (call !is Expr.Call) -> err(tkx, "invalid resume : expected call")
-                    (call.args.size > 1) -> err(tkx, "invalid resume : invalid number of arguments")
+                    (call !is Expr.Call) -> err(tkx, "resume error : expected call")
+                    (call.args.size > 1) -> err(tkx, "resume error : invalid number of arguments")
                 }
                 call as Expr.Call
                 val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
@@ -438,11 +438,11 @@ class Parser (lexer_: Lexer)
                 val tk1 = this.tk1
                 val call = this.expr()
                 if (call !is Expr.Call) {
-                    err(this.tk1, "invalid spawn : expected call")
+                    err(this.tk1, "spawn error : expected call")
                 }
                 when {
-                    (call !is Expr.Call) -> err(tk1, "invalid spawn : expected call")
-                    (call.args.size > 1) -> err(tk1, "invalid spawn : invalid number of arguments")
+                    (call !is Expr.Call) -> err(tk1, "spawn error : expected call")
+                    (call.args.size > 1) -> err(tk1, "spawn error : invalid number of arguments")
                 }
                 val tasks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()

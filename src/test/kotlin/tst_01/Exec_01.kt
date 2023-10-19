@@ -246,7 +246,7 @@ class Exec_01 {
             set nil = nil
         """)
         //assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
-        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination\n") { out }
+        assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination\n") { out }
     }
 
     // INDEX / TUPLE
@@ -1157,7 +1157,7 @@ class Exec_01 {
             set #v = 0
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid set : expected assignable destination\n") { out }
+        assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination\n") { out }
     }
     @Test
     fun vector13_add() {
@@ -1309,7 +1309,7 @@ class Exec_01 {
             set 1 = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination\n") { out }
+        assert(out == "anon : (lin 1, col 1) : set error : expected assignable destination\n") { out }
     }
     @Test
     fun set_err2() {
@@ -1318,7 +1318,7 @@ class Exec_01 {
             set [1] = 1
         """.trimIndent()
         )
-        assert(out == "anon : (lin 1, col 1) : invalid set : expected assignable destination\n") { out }
+        assert(out == "anon : (lin 1, col 1) : set error : expected assignable destination\n") { out }
     }
     @Test
     fun set_index() {
@@ -2141,7 +2141,7 @@ class Exec_01 {
             println(x)
         """
         )
-        assert(out == "anon : (lin 4, col 21) : invalid declaration : expected \"val\" for \":fleet\"\n") { out }
+        assert(out == "anon : (lin 4, col 21) : declaration error : expected \"val\" for \":fleet\"\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
     }
     @Test
@@ -2636,7 +2636,7 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 21) : invalid set : unexpected ...\n") { out }
+        assert(out == "anon : (lin 3, col 21) : set error : unexpected ...\n") { out }
     }
 
     // LOOP

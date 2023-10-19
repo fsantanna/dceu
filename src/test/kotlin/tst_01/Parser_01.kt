@@ -390,7 +390,7 @@ class Parser_01 {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set 1 = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun expr_err2() {  // set whole tuple?
@@ -398,19 +398,19 @@ class Parser_01 {
         val parser = Parser(l)
         //val e = parser.exprN()
         //assert(e.tostr() == "set [1] = 1")
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_nil_err() {
         val l = lexer("set nil = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_if_err() {
         val l = lexer("set (if true {nil} else {nil}) = nil")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_evt_err() {
@@ -516,7 +516,7 @@ class Parser_01 {
     fun pp_10_func_args_err() {
         val l = lexer("var ...")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid declaration : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : declaration error : unexpected ...")
     }
     @Test
     fun pp_11_func_args_err() {
@@ -524,7 +524,7 @@ class Parser_01 {
         val parser = Parser(l)
         //val e = parser.expr()
         //assert(e.tostr() == "set ... = 10") { e.tostr() }
-        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : invalid set : unexpected ...")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 5) : set error : unexpected ...")
     }
 
     // LOOP
