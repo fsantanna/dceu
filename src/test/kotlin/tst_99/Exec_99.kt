@@ -417,4 +417,31 @@ class Exec_99 {
 
     // RESUME-YIELD-ALL
 
+    @Test
+    fun hh_01_yieldall() {
+        val out = test("""
+            $PLUS
+            func to-vector (col, tp) {
+                val ret = #[]
+                var i = 0
+                loop {
+                    break if (i == #col)
+                    set ret[#ret] = col[i]
+                    set i = i + 1
+                }
+                drop(ret)
+            }
+            coro foo () {
+                yield('a')
+                yield('b')
+            }
+            coro bar () {
+                yield('x')
+                resume-yield-all coroutine(foo) ()
+                yield('y')
+            }
+            println(to-vector(coroutine(bar)))
+        """)
+        assert(out == "xaby\n") { out }
+    }
 }
