@@ -32,9 +32,11 @@ class Parser_04 {
             set t = (task (v) {
             set v = yield(1) { as it =>
             nil
+            
             }
             yield(2) { as it =>
             nil
+            
             }
             })
             coroutine(t)

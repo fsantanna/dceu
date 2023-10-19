@@ -310,4 +310,24 @@ class Parser_99 {
                 "}\n" +
                 "}") { e.tostr() }
     }
+
+    // YIELD
+
+    @Test
+    fun ff_01_yield() {
+        val l = lexer("yield()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "if true {\n" +
+                "0\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 }

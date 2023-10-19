@@ -400,11 +400,7 @@ class Parser (lexer_: Lexer)
                 }
                 val es = this.exprs()
                 this.acceptFix_err("}")
-                val inp = Expr.Do (
-                    Tk.Fix("do", tk1.pos),
-                    listOf(Expr.Do(Tk.Fix("do",tk1.pos), es))
-                )
-                Expr.Yield(tk0, it, out, inp)
+                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do",tk1.pos), es))
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
