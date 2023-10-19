@@ -359,6 +359,61 @@ class Exec_99 {
         """)
         assert(out == "1\n2\n") { out }
     }
+    @Test
+    fun gg_03_yield() {
+        val out = test("""
+            val CO = coro () {
+                val x = yield()
+                println(x)
+            }
+            val co1 = coroutine(CO)
+            val co2 = coroutine(CO)
+            resume co1()
+            resume co2()
+            resume co1(1)
+            resume co2(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun gg_04_yield() {
+        val out = test("""
+            val CO = coro () {
+                nil
+                yield() ;;{ as it => it }
+                nil
+                nil
+            }
+            val co1 = coroutine(CO)
+            val co2 = coroutine(CO)
+            ;;do { do { do {
+            resume co1()
+            resume co2()
+            resume co1([])
+            resume co2([])
+            ;;}}}
+        """)
+        assert(out == " |  anon : (lin 13, col 13) : resume co1([])\n" +
+                " v  anon : (lin 5, col 17) : block escape error : cannot move to deeper scope with pending references\n") { out }
+    }
+    @Test
+    fun gg_05_yield() {
+        val out = test("""
+            val CO = coro () {
+                nil
+                yield() {}
+                nil
+            }
+            val co1 = coroutine(CO)
+            val co2 = coroutine(CO)
+            resume co1()
+            resume co2()
+            resume co1([])
+            resume co2([])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // RESUME-YIELD-ALL
 

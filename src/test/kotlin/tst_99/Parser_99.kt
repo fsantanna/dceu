@@ -318,8 +318,8 @@ class Parser_99 {
         val l = lexer("yield()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "yield(nil) { as ceu_9 =>\n" +
-                "nil\n" +
+        assert(e.tostr() == "yield(nil) { as ceu_7 =>\n" +
+                "ceu_7\n" +
                 "\n" +
                 "}") { e.tostr() }
     }

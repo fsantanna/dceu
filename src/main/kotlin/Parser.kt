@@ -388,6 +388,7 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
+                val tkx = this.tk1 as Tk.Fix
                 val (xblk,xit) = when {
                     (CEU < 99) -> {
                         this.acceptFix_err("{")
@@ -413,12 +414,14 @@ class Parser (lexer_: Lexer)
                         Pair(es, Pair(Tk.Id("it", this.tk0.pos, 0), null))
                     }
                     (!xblk && !xit) -> {
-                        val es = listOf(Expr.Nil(Tk.Fix("nil",this.tk0.pos)))
-                        Pair(es, Pair(Tk.Id("ceu_$N", this.tk0.pos, 0), null))
+                        val n = N
+                        val tk = this.tk0.pos
+                        val es = listOf(Expr.Acc(Tk.Id("ceu_$n", tk,0)))
+                        Pair(es, Pair(Tk.Id("ceu_$n", tk, 0), null))
                     }
                     else -> error("impossible case")
                 }
-                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do", tk1.pos), es))
+                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do", tkx.pos), es))
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
