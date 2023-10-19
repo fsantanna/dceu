@@ -10,7 +10,7 @@ val D = "\$"
 class TXLexer {
     @Test
     fun ids2() {
-        val l = lexer("and or where not with ifs every break await par")
+        val l = lexer("where with ifs every break await par")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Op  && it.str == "and" })
         assert(tks.next().let { it is Tk.Op  && it.str == "or" })

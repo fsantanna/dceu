@@ -70,11 +70,98 @@ class Exec_99 {
     // OPS: not, and, or
 
     @Test
-    fun bb_op_or_and() {
+    fun bb_01_op_or_and() {
         val out = test("""
             println(true or println(1))
             println(false and println(1))
         """)
         assert(out == "true\nfalse\n") { out }
+    }
+    @Test
+    fun bb_02_op_not() {
+        val out = test("""
+            println(not nil and not false)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun bb_03_or_and() {
+        val out = test("""
+            println(1 or throw(5))
+            println(1 and 2)
+            println(nil and 2)
+            println(nil or 2)
+        """)
+        assert(out == "1\n2\nnil\n2\n") { out }
+    }
+    @Test
+    fun bb_04_or_and() {
+        val out = test("""
+            println(true and ([] or []))
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun bb_05_and_and() {
+        val out = test("""
+            val v = true and
+                true and 10
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun bb_06_op_plus_plus() {
+        val out = test("""
+            $PLUS
+            val v = 5 +
+                5 + 10
+            println(v)
+        """)
+        assert(out == "20\n") { out }
+    }
+
+    // is, is-not?, in?, in-not?
+
+    @Test
+    fun bc_01_is() {
+        val out = test("""
+            func to-bool (v) {
+                not (not v)
+            }
+            
+            func is' (v1,v2) {
+                ifs {
+                    (v1 == v2)         => true
+                    (type(v2) /= :tag) => false
+                    (type(v1) == v2)   => true
+                    tags(v1,v2)        => true
+                    else => false
+                }
+            }
+            
+            func is-not' (v1,v2) {
+                not is'(v1,v2)
+            }
+
+            println([] is? :bool)
+            println([] is? :tuple)
+            println(1 is-not? :tuple)
+            println(1 is-not? :number)
+        """)
+        assert(out == "false\ntrue\ntrue\nfalse\n") { out }
+    }
+
+    // FUNC / DCL
+
+    @Test
+    fun cc_01_func() {
+        val out = test("""
+            func f (v) {
+                v
+            }
+            println(f(10))
+        """)
+        assert(out == "10\n") { out }
     }
 }

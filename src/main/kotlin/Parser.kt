@@ -543,9 +543,38 @@ class Parser (lexer_: Lexer)
         }
         val op = this.tk0
         val e2 = this.expr_2_pre()
-        val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
-        val e = Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))
-        return this.expr_1_bin(op.str, e)
+        return this.expr_1_bin(op.str,
+            when (op.str) {
+                "and" -> this.nest("""
+                    ${op.pos.pre()}do {
+                        val :fleet ceu_${e1.n} = ${e1.tostr(true)} 
+                        if ceu_${e1.n} {
+                            ${e2.tostr(true)}
+                        } else {
+                            ceu_${e1.n}
+                        }
+                    }
+                """)
+                "or" -> this.nest("""
+                    ${op.pos.pre()}do {
+                        val :fleet ceu_${e1.n} = ${e1.tostr(true)} 
+                        if ceu_${e1.n} {
+                            ceu_${e1.n}
+                        } else {
+                            ${e2.tostr(true)}
+                        }
+                    }
+                """)
+                "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "in?" -> this.nest("in'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                "in-not?" -> this.nest("in-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
+                else -> {
+                    val id = if (op.str[0] in OPERATORS) "{{${op.str}}}" else op.str
+                    Expr.Call(op, Expr.Acc(Tk.Id(id,op.pos,0)), listOf(e1,e2))
+                }
+            }
+        )
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()

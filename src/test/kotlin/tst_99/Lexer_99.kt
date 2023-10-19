@@ -9,7 +9,7 @@ fun lexer (str: String): Lexer {
 
 class Lexer_99 {
     @Test
-    fun aa_01_ids() {
+    fun aa_01_ops() {
         val l =
             lexer("and or not in? is? in-not? is-not?")
         val tks = l.lex().iterator()
