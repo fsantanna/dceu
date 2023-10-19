@@ -175,10 +175,10 @@ val PLUS = """
     }    
 """
 fun OR (v1:String, v2:String): String {
-    return "($v1 thus { as it => if it { it } else { $v2 })"
+    return "($v1 thus { as it => if it { it } else { $v2 } })"
 }
 fun AND (v1:String, v2:String): String {
-    return "($v1 thus { as it => if it { $v2 } else { $v1 })"
+    return "($v1 thus { as it => if it { $v2 } else { $v1 } })"
 }
 fun AWAIT (v:String="true"): String {
     return """

@@ -3449,7 +3449,7 @@ class Exec_01 {
             println(tags(s,:T), tags(s,:T.S))
         """, true
         )
-        assert(out == "14\t271\ntrue\tfalse\ntrue\ttrue\n") { out }
+        assert(out == "14\t270\ntrue\tfalse\ntrue\ttrue\n") { out }
     }
     @Test
     fun tags12() {
