@@ -172,9 +172,9 @@ class Exec_99 {
             }
             func in' (v, xs) {
                 var i = 0
-                xloop {
-                    xbreak(false) if i == #xs
-                    xbreak(true) if v == xs[i]
+                loop {
+                    break(false) if i == #xs
+                    break(true) if v == xs[i]
                     set i = i + 1
                 }
             }            

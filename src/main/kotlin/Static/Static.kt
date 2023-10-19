@@ -55,7 +55,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
             }
             is Expr.If     -> { this.cnd.traverse() ; this.t.traverse() ; this.f.traverse() }
-            is Expr.XLoop  -> {
+            is Expr.Loop  -> {
                 this.blk.es.last().let {
                     if (it.is_innocuous()) {
                         //err(it.tk, "invalid expression : innocuous expression")
@@ -64,11 +64,11 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                 this.blk.traverse()
             }
-            is Expr.XBreak -> {
-                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.XLoop) {
+            is Expr.Break -> {
+                if (ups.pub[this] is Expr.Do && ups.pub[ups.pub[this]] is Expr.Loop) {
                     // ok
                 } else {
-                    err(this.tk, "xbreak error : expected parent loop")
+                    err(this.tk, "break error : expected parent loop")
                 }
                 this.cnd.traverse()
                 this.e?.traverse()

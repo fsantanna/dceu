@@ -44,7 +44,7 @@ class Lexer_01 {
     @Test
     fun bb_01_ids() {
         val l =
-            lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn xloop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
+            lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
@@ -68,7 +68,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Fix && it.str == "set" })
         assert(tks.next().let { it is Tk.Id  && it.str == "coroutine" })
         assert(tks.next().let { it is Tk.Id  && it.str == "spawn" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "xloop" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "loop" })
         assert(tks.next().let { it is Tk.Id  && it.str == "yield" })
         assert(tks.next().let { it is Tk.Id  && it.str == "while" })
         assert(tks.next().let { it is Tk.Id  && it.str == "vary10" })

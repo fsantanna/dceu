@@ -160,8 +160,8 @@ set to-string = func (v) {
         var i = 0
         val n = `:number strlen($v.Pointer)`
         var str = #[]
-        xloop {
-            xbreak if (i == n)
+        loop {
+            break if (i == n)
             set str[#str] = `:char ((char*)$v.Pointer)[(int)$i.Number]`
             set i = i + 1
         }
@@ -214,8 +214,8 @@ set copy = func (v) {
     if type(v) == :tuple {
         val ret = tuple(#v)
         var i=0
-        xloop {
-            xbreak if i == #v
+        loop {
+            break if i == #v
             set ret[i] = copy(v[i])
             set i = i + 1
         }
@@ -228,8 +228,8 @@ set copy = func (v) {
 ;; AWAIT
 ;;;
 val await = func (e) {
-    xloop {
-        xbreak if yield(nil) { as it =>
+    loop {
+        break if yield(nil) { as it =>
             if type(e) == :func {
                 e(it)
             } else {

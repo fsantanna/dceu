@@ -2321,7 +2321,7 @@ class TXExec {
     fun mm_03_loop() {
         val out = all("""
             loop {
-                xbreak
+                break
             }
             println(:ok)
         """)

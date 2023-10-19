@@ -357,7 +357,7 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil) { as it => nil }
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_137.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_135.Number, ceu_mem->id_v2_15.Number);
                 ```
             }
             val co = coroutine(CO)

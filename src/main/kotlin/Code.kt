@@ -320,7 +320,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             else -> ""
                         }}
                         $body
-                        ${(up is Expr.XLoop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
+                        ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
                     // defers execute
@@ -484,7 +484,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
-            is Expr.XLoop -> """
+            is Expr.Loop -> """
                 // LOOP | ${this.dump()}
                 CEU_LOOP_START_${this.n}:
                     ${this.blk.code()}
@@ -494,12 +494,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         goto CEU_LOOP_START_${this.n};
                     }
             """
-            is Expr.XBreak -> """ // XBREAK | ${this.dump()}
+            is Expr.Break -> """ // XBREAK | ${this.dump()}
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
                     ${this.e.cond { it.code() }}
                     CEU_BREAK = 1;
-                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.XLoop }!!.n};
+                    goto CEU_LOOP_STOP_${ups.first(this) { it is Expr.Loop }!!.n};
                 }
             """
             is Expr.Enum -> ""

@@ -37,11 +37,10 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "data", "do", "drop", "else",
+        "break", "data", "do", "drop", "else",
         "enum", "false", "func", "if",
-        "nil", "pass", "set",
+        "loop", "nil", "pass", "set",
         "true", "val", "var",
-        "xloop", "xbreak",
     ) + (if (CEU < 2) setOf() else setOf (
         "as", "catch", "defer", "in",
     )) + (if (CEU < 3) setOf() else setOf(
@@ -81,8 +80,8 @@ val TAGS = listOf (
     ":exe-task",
 )) + (if (CEU < 5) listOf() else listOf(
     ":exe-task-in", ":tasks", ":track"
-)) + (if (CEU < 3) listOf() else listOf(
-    ":yielded", (if (CEU<4) "" else ":toggled"), ":resumed", ":terminated"
+)) + (if (CEU < 3) listOf() else listOfNotNull(
+    ":yielded", (if (CEU<4) null else ":toggled"), ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
     ":void",
 )) + listOf(
@@ -120,8 +119,8 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
-    data class XLoop  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
-    data class XBreak (val tk_: Tk.Fix, val cnd: Expr, val e: Expr?): Expr(N++, tk_)
+    data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
+    data class Break  (val tk_: Tk.Fix, val cnd: Expr, val e: Expr?): Expr(N++, tk_)
     data class Enum   (val tk_: Tk.Fix, val tags: List<Pair<Tk.Tag,Tk.Nat?>>): Expr(N++, tk_)
     data class Data   (val tk_: Tk.Tag, val ids: List<Pair<Tk.Id,Tk.Tag?>>): Expr(N++, tk_)
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
@@ -193,8 +192,8 @@ fun AND (v1:String, v2:String): String {
 }
 fun AWAIT (v:String="true"): String {
     return """
-        xloop {
-            xbreak if yield(nil) { as it =>
+        loop {
+            break if yield(nil) { as it =>
                 if type(it) == :exe-task {
                     false
                 } else {

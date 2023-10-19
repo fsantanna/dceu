@@ -1032,8 +1032,8 @@ class Exec_01 {
             set t[:b] = 20
             set t[:c] = 30
             var k = next(t)
-            xloop {
-                xbreak if (k == nil)
+            loop {
+                break if (k == nil)
                 println(k, t[k])
                 set k = next(t,k)
             }
@@ -2644,23 +2644,23 @@ class Exec_01 {
     @Test
     fun oo_01_loop_err() {
         val out = test("""
-            xloop {
+            loop {
                 do {
-                    xbreak if true
+                    break if true
                 }
             }
             println(:out)
         """)
-        assert(out == "anon : (lin 4, col 21) : xbreak error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
     }
     @Test
     fun oo_02_loop() {
         val out = test(
             """
             do {
-                xloop {
+                loop {
                     println(:in)
-                    xbreak if true
+                    break if true
                 }
             }
             println(:out)
@@ -2674,8 +2674,8 @@ class Exec_01 {
             """
             var x
             set x = false
-            xloop {
-                xbreak if x
+            loop {
+                break if x
                 set x = true
             }
             println(x)
@@ -2698,8 +2698,8 @@ class Exec_01 {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                xloop {
-                    xbreak if (i == nil)
+                loop {
+                    break if (i == nil)
                     println(i)
                     set i = it[0](it)
                 }
@@ -2726,7 +2726,7 @@ class Exec_01 {
     fun oo_06_loop() {
         val out = test(
             """
-            val v = xloop {xbreak if (10)}
+            val v = loop {break if (10)}
             println(v)
         """
         )
@@ -2736,11 +2736,11 @@ class Exec_01 {
     fun oo_07_loop() {
         val out = test(
             """
-            val v1 = xloop {
-                xbreak if (10)
+            val v1 = loop {
+                break if (10)
             }
-            val v2 = xloop {
-                xbreak(nil) if true
+            val v2 = loop {
+                break(nil) if true
             }
             println(v1, v2)
         """
@@ -2751,40 +2751,40 @@ class Exec_01 {
     fun oo_08_loop() {
         val out = test("""
             val x = 10
-            println(xloop { xbreak if (x) })
+            println(loop { break if (x) })
         """)
         assert(out == "10\n") { out }
     }
     @Test
     fun oo_09_loop_break() {
         val out = test("""
-            xloop {
+            loop {
                 func () {
-                    xbreak if true
+                    break if true
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : xbreak error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 4, col 21) : break error : expected parent loop\n") { out }
     }
     @Test
     fun oo_10_loop() {
         val out = test("""
-            xloop {
+            loop {
                 do {
                     val t = []
-                    xbreak if true
+                    break if true
                 }
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : xbreak error : expected parent loop\n") { out }
+        assert(out == "anon : (lin 5, col 21) : break error : expected parent loop\n") { out }
     }
     @Test
     fun oo_11_loop() {
         val out = test("""
-            xloop {
+            loop {
                 val t = []
-                xbreak if true
+                break if true
             }
             println(:ok)
         """)
@@ -2805,8 +2805,8 @@ class Exec_01 {
             do {
                 val it = [f, 0]
                 var i = it[0](it)
-                xloop {
-                    xbreak if i == nil
+                loop {
+                    break if i == nil
                     println(i)
                     set i = it[0](it)
                 }
@@ -4536,8 +4536,8 @@ class Exec_01 {
             var sum = func (n) {                                                            
                 var i = n                                                                   
                 var s = 0                                                                   
-                xloop {                                                                      
-                    xbreak(s) if i == 0
+                loop {                                                                      
+                    break(s) if i == 0
                     set s = s + i                                                           
                     set i = i - 1                                                           
                 }                                                                           

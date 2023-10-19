@@ -286,16 +286,16 @@ class Parser (lexer_: Lexer)
                     """)
                 }
             }
-            this.acceptFix("xbreak") -> {
+            this.acceptFix("break") -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val e = if (!this.checkFix("(")) null else {
                     this.expr()
                 }
                 this.acceptFix_err("if")
                 val cnd = this.expr()
-                Expr.XBreak(tk0, cnd, e)
+                Expr.Break(tk0, cnd, e)
             }
-            this.acceptFix("xloop") -> Expr.XLoop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
+            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dcl = if (CEU>=99 && this.acceptEnu("Id")) {

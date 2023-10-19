@@ -992,9 +992,9 @@ class Exec_05 {
                 do {
                     val vec = #[]
                     var t = nil
-                    xloop {
+                    loop {
                         set t = next(ts,t)
-                        xbreak if t==nil
+                        break if t==nil
                         set vec[#vec] = t
                     }
                     println(vec)

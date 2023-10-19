@@ -32,10 +32,10 @@ class Parser_99 {
     }
     @Test
     fun aa_04_empty_loop() {
-        val l = lexer("xloop { }")
+        val l = lexer("loop { }")
         val parser = Parser(l)
         val e = parser.expr_prim()
-        assert(e.tostr() == "xloop {\nnil\n}") { e.tostr() }
+        assert(e.tostr() == "loop {\nnil\n}") { e.tostr() }
     }
 
     // OPS: not, and, or

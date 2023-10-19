@@ -285,7 +285,7 @@ class Exec_04 {
                     println(2)
                 }) ()
                 spawn (task () {
-                    xloop {
+                    loop {
                         yield(nil) { as it => nil }
                     }
                 }) ()
@@ -682,7 +682,7 @@ class Exec_04 {
                         println(222)
                         throw(:e1)                  ;; throw
                     } ()
-                    xloop { yield(nil) { as it => nil } }
+                    loop { yield(nil) { as it => nil } }
                 }
                 println(333)
             } ()
@@ -1639,8 +1639,8 @@ class Exec_04 {
             $PLUS
             println(:1)
             var x = 0
-            xloop {
-                xbreak if x == 2
+            loop {
+                break if x == 2
                 set x = x + 1
                 println(:2)
                 spawn task () {
@@ -2050,7 +2050,7 @@ class Exec_04 {
                         yield(nil) { as it => nil }
                         throw(:e1)
                     })()
-                    xloop {
+                    loop {
                         yield(nil) { as it => nil }
                     }
                 }
@@ -2079,7 +2079,7 @@ class Exec_04 {
                         throw(:e1)
                         println(:no)
                     } ()
-                    xloop { yield(nil) { as it => nil } }
+                    loop { yield(nil) { as it => nil } }
                 }
                 println(:ok1)
                 throw(:e2)
@@ -2088,7 +2088,7 @@ class Exec_04 {
             spawn (task () {
                 catch { as it => :e2 } in {
                     spawn T()
-                    xloop { yield(nil) { as it => nil } }
+                    loop { yield(nil) { as it => nil } }
                 }
                 println(:ok2)
                 throw(:e3)
@@ -2471,9 +2471,9 @@ class Exec_04 {
     fun zz_25_break() {
         val out = test("""
             spawn (task () {
-                println(xloop {
+                println(loop {
                     val t = [10]
-                    xbreak if t[0]
+                    break if t[0]
                     yield(nil) { as it => nil }
                 })
             }) ()
