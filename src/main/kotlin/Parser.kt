@@ -8,6 +8,7 @@ class Parser (lexer_: Lexer)
     val tks: Iterator<Tk>
 
     init {
+        N = 1
         this.tks = this.lexer.lex().iterator()
         this.lex()
     }

@@ -46,7 +46,7 @@ class Parser_99 {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :fleet ceu_5 = 1\nif ceu_5 {\nceu_5\n} else {\n2\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nval :fleet ceu_3 = 1\nif ceu_3 {\nceu_3\n} else {\n2\n}\n}") { e.tostr() }
     }
     @Test
     fun bb_02_bin_and() {
@@ -54,7 +54,7 @@ class Parser_99 {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :fleet ceu_5 = 1\nif ceu_5 {\n2\n} else {\nceu_5\n}\n}") { e.tostr() }
+        assert(e.tostr() == "do {\nval :fleet ceu_3 = 1\nif ceu_3 {\n2\n} else {\nceu_3\n}\n}") { e.tostr() }
     }
     @Test
     fun bb_03_not() {
@@ -72,20 +72,20 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == """
             do {
-            val :fleet ceu_73 = do {
-            val :fleet ceu_26 = if true {
+            val :fleet ceu_41 = do {
+            val :fleet ceu_16 = if true {
             false
             } else {
             true
             }
-            if ceu_26 {
+            if ceu_16 {
             false
             } else {
-            ceu_26
+            ceu_16
             }
             }
-            if ceu_73 {
-            ceu_73
+            if ceu_41 {
+            ceu_41
             } else {
             true
             }
@@ -135,9 +135,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_18 = 1\n" +
-                "if ceu_18 {\n" +
-                "val :fleet x = ceu_18\n" +
+                "val :fleet ceu_16 = 1\n" +
+                "if ceu_16 {\n" +
+                "val :fleet x = ceu_16\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
@@ -150,9 +150,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_19 :X = 1\n" +
-                "if ceu_19 {\n" +
-                "val :fleet x :X = ceu_19\n" +
+                "val :fleet ceu_17 :X = 1\n" +
+                "if ceu_17 {\n" +
+                "val :fleet x :X = ceu_17\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
