@@ -341,24 +341,6 @@ class TXExec {
     // YIELD
 
     @Test
-    fun bcast1() {
-        val out = all("""
-            val tk = task () {
-                yield()
-                println(evt)
-                do { var ok; set ok=true; loop until not ok { yield(nil); if (evt is-not? :x-task) { set ok=false } else { nil } } }
-                ;;yield()
-                println(evt)                
-            }
-            val co1 = spawn(tk)()
-            val co2 = spawn(tk)()
-            broadcast 1
-            broadcast in :global, 2
-            broadcast 3
-        """, true)
-        assert(out == "1\n1\n2\n2\n") { out }
-    }
-    @Test
     fun bcast2() {
         val out = all("""
             task T () {

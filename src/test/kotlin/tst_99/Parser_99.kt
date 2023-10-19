@@ -318,16 +318,41 @@ class Parser_99 {
         val l = lexer("yield()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "if a {\n" +
-                "1\n" +
-                "} else {\n" +
-                "if true {\n" +
-                "0\n" +
-                "} else {\n" +
+        assert(e.tostr() == "yield(nil) { as ceu_9 =>\n" +
                 "nil\n" +
-                "}\n" +
-                "}\n" +
+                "\n" +
                 "}") { e.tostr() }
+    }
+    @Test
+    fun ff_02_yield() {
+        val l = lexer("yield() { }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "yield(nil) { as it =>\n" +
+                "nil\n" +
+                "\n" +
+                "}") { e.tostr() }
+    }
+
+    // RESUME-YIELD-ALL
+
+    @Test
+    fun gg_01_resume_yield_all_err() {
+        val l = lexer("resume-yield-all f")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-call error : expected call")
+    }
+    @Test
+    fun gg_02_resume_yield_all_err() {
+        val l = lexer("resume-yield-all f(1,2)")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-call error : invalid number of arguments")
+    }
+    @Test
+    fun gg_03_resume_yield_all() {
+        val l = lexer("resume-yield-all f()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "TODO") { e.tostr() }
     }
 }

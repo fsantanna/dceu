@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 99
     // 1: dyn-lex
     // 2: defer, throw/catch, as, =>
     // 3: coro, yield, resume
@@ -50,7 +50,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
     )) + (if (CEU < 99) setOf() else setOf(
-        "ifs",
+        "ifs", "resume-yield-all"
     ))
 ).toSortedSet()
 

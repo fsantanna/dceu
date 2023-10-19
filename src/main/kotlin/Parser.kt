@@ -387,28 +387,46 @@ class Parser (lexer_: Lexer)
 
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val out = this.expr_in_parens()!!
-                this.acceptFix_err("{")
-                val tk1 = this.tk0
-                val it = if (CEU<99 || this.checkFix("as")) {
-                    this.acceptFix_err("as")
-                    val (id,tag) = this.id_tag()
-                    this.acceptFix_err("=>")
-                    Pair(id, tag)
-                } else {
-                    Pair(Tk.Id("it", this.tk0.pos, 0), null)
+                val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
+                val (xblk,xit) = when {
+                    (CEU < 99) -> {
+                        this.acceptFix_err("{")
+                        this.acceptFix_err("as")
+                        Pair(true, true)
+                    }
+                    this.acceptFix("{") -> {
+                        Pair(true, this.acceptFix("as"))
+                    }
+                    else -> Pair(false, false)
                 }
-                val es = this.exprs()
-                this.acceptFix_err("}")
-                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do",tk1.pos), es))
+                val (es,it) = when {
+                    (xblk && xit) -> {
+                        val id_tag = this.id_tag()
+                        this.acceptFix_err("=>")
+                        val es = this.exprs()
+                        this.acceptFix_err("}")
+                        Pair(es, id_tag)
+                    }
+                    (xblk && !xit) -> {
+                        val es = this.exprs()
+                        this.acceptFix_err("}")
+                        Pair(es, Pair(Tk.Id("it", this.tk0.pos, 0), null))
+                    }
+                    (!xblk && !xit) -> {
+                        val es = listOf(Expr.Nil(Tk.Fix("nil",this.tk0.pos)))
+                        Pair(es, Pair(Tk.Id("ceu_$N", this.tk0.pos, 0), null))
+                    }
+                    else -> error("impossible case")
+                }
+                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do", tk1.pos), es))
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tk1 = this.tk1
+                val tkx = this.tk1
                 val call = this.expr_2_pre()
                 when {
-                    (call !is Expr.Call) -> err(tk1, "invalid resume : expected call")
-                    (call.args.size > 1) -> err(tk1, "invalid resume : invalid number of arguments")
+                    (call !is Expr.Call) -> err(tkx, "invalid resume : expected call")
+                    (call.args.size > 1) -> err(tkx, "invalid resume : invalid number of arguments")
                 }
                 call as Expr.Call
                 val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))

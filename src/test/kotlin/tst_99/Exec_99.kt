@@ -326,4 +326,40 @@ class Exec_99 {
         """)
         assert(out == "ERROR\n") { out }
     }
+
+    // YIELD
+
+    @Test
+    fun gg_01_yield() {
+        val out = test("""
+            val CO = coro () {
+                yield() {
+                    println(it)
+                }
+            }
+            val co1 = coroutine(CO)
+            val co2 = coroutine(CO)
+            resume co1()
+            resume co2()
+            resume co1(1)
+            resume co2(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun gg_02_yield() {
+        val out = test("""
+            val T = task (v) {
+                yield()
+                println(v)
+            }
+            val t1 = spawn T(1)
+            val t2 = spawn T(2)
+            broadcast(nil)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+
+    // RESUME-YIELD-ALL
+
 }
