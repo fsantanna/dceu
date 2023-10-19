@@ -26,20 +26,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 spws.add(ups.first_block(this)!!)
                 this.blk.traverse()
             }
-            is Expr.Do     -> {
-                //if (ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }) {
-                //    ylds.add(this)
-                //}
-                this.es.forEach { it.traverse() }
-                //if (this != outer) { ylds.add(this) }
-                if (ylds.contains(this)) {
-                    vars.blk_to_dcls[this]?.forEach {
-                        if (it.tmp) {
-                            err(it.tk, "invalid declaration : \":fleet\" across yield")
-                        }
-                    }
-                }
-            }
+            is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> {
                 unused.add(this)
                 this.src?.traverse()

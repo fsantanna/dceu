@@ -40,7 +40,7 @@ val KEYWORDS: SortedSet<String> = (
         "break", "data", "do", "drop", "else",
         "enum", "false", "func", "if",
         "loop", "nil", "pass", "set",
-        "true", "val", "var",
+        "thus", "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
         "as", "catch", "defer", "in",
     )) + (if (CEU < 3) setOf() else setOf(
@@ -85,7 +85,7 @@ val TAGS = listOf (
 )) + (if (CEU < 4) listOf() else listOf(
     ":void",
 )) + listOf(
-    ":ceu", ":fleet",
+    ":ceu",
 )
 
 val GLOBALS = setOf (
@@ -116,7 +116,8 @@ sealed class Tk (val str: String, val pos: Pos) {
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val tag: Tk.Tag?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val blk: Expr.Do): Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/ val tmp: Boolean, val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
+    data class Thus   (val tk_: Tk, val bef: Expr, val afts: List<Expr>) : Expr(N++, tk_)
+    data class Dcl(val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
@@ -175,20 +176,10 @@ val PLUS = """
     }    
 """
 fun OR (v1:String, v2:String): String {
-    return """
-        do {
-            val :fleet v1 = $v1 
-            if v1 { v1 } else { $v2 }
-        }
-    """
+    return "($v1 thus { as it => if it { it } else { $v2 })"
 }
 fun AND (v1:String, v2:String): String {
-    return """
-        do {
-            val :fleet v1 = $v1 
-            if v1 { $v2 } else { v1 }
-        }
-    """
+    return "($v1 thus { as it => if it { $v2 } else { $v1 })"
 }
 fun AWAIT (v:String="true"): String {
     return """

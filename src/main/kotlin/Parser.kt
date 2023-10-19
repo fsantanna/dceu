@@ -222,15 +222,11 @@ class Parser (lexer_: Lexer)
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
             this.acceptFix("val") || this.acceptFix("var") -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tmp = this.acceptTag(":fleet")
-                if (tmp && tk0.str!="val") {
-                    err(this.tk0, "declaration error : expected \"val\" for \":fleet\"")
-                }
                 val (id,tag) = this.id_tag()
                 val src = if (!this.acceptFix("=")) null else {
                     this.expr()
                 }
-                Expr.Dcl(tk0, id, tmp, tag, true, src)
+                Expr.Dcl(tk0, id, tag, true, src)
             }
             this.acceptFix("set") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -274,15 +270,13 @@ class Parser (lexer_: Lexer)
                 } else {
                     val (id,tag) = id_tag
                     this.nest("""
-                        ${tk0.pos.pre()}do {
-                            val :fleet ceu_$N ${tag.cond{it.str}} = ${cnd.tostr(true)}
-                            if ceu_$N {
-                                val :fleet ${id.str} ${tag.cond{it.str}} = ceu_$N
+                        (${cnd.tostr(true)} thus { as ${id.str} ${tag.cond{it.str}} =>
+                            if ${id.str} {
                                 ${t.es.tostr(true)}
                             } else {
                                 ${f.es.tostr(true)}
                             }
-                        }
+                        })
                     """)
                 }
             }
@@ -629,7 +623,7 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    // expr_0_out : v --> f     f <-- v    v where {...}
+    // expr_0_out : v thus {...}    v --> f     f <-- v    v where {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f    f<-v
@@ -742,8 +736,30 @@ class Parser (lexer_: Lexer)
             }
         )
     }
-    fun expr_0_out (): Expr {
-        return this.expr_1_bin()
+    fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
+        val e = if (xe != null) xe else this.expr_1_bin()
+        val ok = this.acceptFix("thus")
+        val tk0 = this.tk0 as Tk.Fix
+        if (!ok) {
+            return e
+        }
+        if (xop!=null && xop!=this.tk0.str) {
+            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+        }
+        val op = this.tk0
+        return when (op.str) {
+            "thus" -> {
+                this.acceptFix_err("{")
+                val tkx = this.tk0 as Tk.Fix
+                this.acceptFix_err("as")
+                val it_tag = this.id_tag()
+                this.acceptFix_err("=>")
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                Expr.Thus(tk0, e, es)
+            }
+            else -> error("impossible case")
+        }
     }
 
     fun expr (): Expr {

@@ -442,7 +442,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 """
                 // DCL | ${this.dump()}
-                ${(this.init && this.src!=null && !unused).cond {
+                ${(this.init && this.src !=null && !unused).cond {
                     this.src!!.code() + (!this.tmp).cond { """
                         CEU_ASSERT(
                             $bupc,

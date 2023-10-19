@@ -27,7 +27,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
         is Expr.Dcl    -> {
-            this.tk_.str + this.tmp.cond { " :fleet" } + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
+            this.tk_.str + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         }
         is Expr.Set    -> "set " + this.dst.tostr(pre) + " = " + this.src.tostr(pre)
         is Expr.If     -> "if " + this.cnd.tostr(pre) + " " + this.t.tostr(pre) + " else " + this.f.tostr(pre)
