@@ -134,7 +134,7 @@ class Parser_99 {
     // IFS
 
     @Test
-    fun ifs1() {
+    fun ee_01_ifs() {
         val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -147,6 +147,86 @@ class Parser_99 {
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ee_02_ifs() {
+        val l = lexer("ifs { }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "nil\n" +
+                "}") { e.tostr() }
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
+    }
+    @Test
+    fun ee_03_ifs() {
+        val l = lexer("ifs it=nil { else => it }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val :fleet it = nil\n" +
+                "if true {\n" +
+                "it\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ee_04_ifs_err() {
+        val l = lexer("ifs { nil }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"{\" : have \"}\"")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"->\" : have \"}\"")
+    }
+    @Test
+    fun ee_05_ifs() {
+        val l = lexer("ifs it=v { a => it }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val :fleet it = v\n" +
+                "if a {\n" +
+                "it\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ee_06_ifs() {
+        val l = lexer("ifs it=v { a{1} b=>it else{0} }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val :fleet it = v\n" +
+                "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "if b {\n" +
+                "it\n" +
+                "} else {\n" +
+                "if true {\n" +
+                "0\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ee_07_ifs() {
+        val l = lexer("ifs { f() => nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "if f() {\n" +
+                "nil\n" +
+                "} else {\n" +
+                "nil\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }

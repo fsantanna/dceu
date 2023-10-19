@@ -164,4 +164,54 @@ class Exec_99 {
         """)
         assert(out == "10\n") { out }
     }
+
+    // IFS
+
+    @Test
+    fun ff_01_ifs() {
+        val out = test("""
+            $PLUS
+            func {{<}} () {}
+            val x = ifs {
+                10 < 1 => 99
+                (5+5)==0 { 99 }
+                else => 10
+            }
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ff_02_ifs() {
+        val out = test("""
+            val x = ifs { true=> `:number 1` }
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun ff_03_ifs() {
+        val out = test("""
+            val x = ifs 20 {
+                == 10 => false
+                == 20 => true
+                else  => false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun ff_04_ifs() {
+        val out = test("""
+            var x = ifs it=20 {
+                it == 10 => false
+                true     => true
+                it == 20 => false
+                else     => false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
 }

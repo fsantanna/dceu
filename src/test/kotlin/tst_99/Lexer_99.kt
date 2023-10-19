@@ -23,4 +23,13 @@ class Lexer_99 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
+    @Test
+    fun aa_02_cmds() {
+        val l =
+            lexer("ifs")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
 }

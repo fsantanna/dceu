@@ -50,11 +50,15 @@ val KEYWORDS: SortedSet<String> = (
         "broadcast", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
+    )) + (if (CEU < 99) setOf() else setOf(
+        "ifs",
     ))
 ).toSortedSet()
 
 val OPERATORS = setOf('+', '-', '*', '/', '>', '<', '=', '!', '|', '&', '~', '%', '#', '@')
-val XOPERATORS = if (CEU < 99) setOf() else setOf("and", "not", "or")
+val XOPERATORS = if (CEU < 99) setOf() else {
+    setOf("and", "in?", "in-not?", "is?", "is-not?", "not", "or")
+}
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",

@@ -194,6 +194,20 @@ class Parser (lexer_: Lexer)
         return Pair(id, tag)
     }
 
+    fun id_tag__cnd (): Pair<Pair<Tk.Id,Tk.Tag?>?,Expr> {
+        return if (!this.checkEnu("Id")) {
+            Pair(null, this.expr())
+        } else {
+            val (id, tag) = id_tag()
+            val eq = if (tag == null) this.acceptFix("=") else this.acceptFix_err("=")
+            if (eq) {
+                Pair(Pair(id, tag), this.expr())
+            } else {
+                Pair(null, this.expr_4_suf(Expr.Acc(id)))
+            }
+        }
+    }
+
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -251,6 +265,11 @@ class Parser (lexer_: Lexer)
             this.acceptFix("xloop") -> Expr.XLoop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
+                val dcl = if (CEU>=99 && this.acceptEnu("Id")) {
+                    this.tk0
+                } else {
+                    null
+                }
                 this.acceptFix_err("(")
                 val args = this.args(")")
                 this.acceptFix_err(")")
@@ -260,7 +279,13 @@ class Parser (lexer_: Lexer)
                     else -> this.tk0 as Tk.Tag
                 }
                 val blk = this.block(this.tk1)
-                Expr.Proto(tk0, tag, args, blk)
+                val proto = Expr.Proto(tk0, tag, args, blk)
+                when {
+                    (dcl == null) -> proto
+                    else -> this.nest("""
+                        ${tk0.pos.pre()}val ${dcl.str} = ${proto.tostr(true)}
+                    """)
+                }
             }
             this.acceptFix("enum") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -456,6 +481,68 @@ class Parser (lexer_: Lexer)
                 it
             }
             this.checkFix("(")      -> this.expr_in_parens()!!
+
+            (CEU>=99 && this.acceptFix("ifs")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val (x,v) = if (this.checkFix("{")) {
+                    Pair("ceu_$N", null)
+                } else {
+                    val e = this.expr()
+                    if (e is Expr.Acc && this.acceptFix("=")) {
+                        Pair(e.tk.str, this.expr())
+                    } else {
+                        Pair("ceu_$N", e)
+                    }
+                }
+                this.acceptFix_err("{")
+
+                val ifs = list0("}",null) {
+                    val (id_tag,cnd) = when {
+                        this.acceptFix("else") -> {
+                            Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
+                        }
+                        (v!=null) && this.acceptEnu("Op") -> {
+                            val op = this.tk0.str.let {
+                                if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
+                            }
+                            val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
+                            val call = if (e == null) {
+                                "$op($x)"
+                            } else {
+                                "$op($x, ${e.tostr(true)})"
+                            }
+                            Pair(null, this.nest(call))
+                        }
+                        else -> {
+                            id_tag__cnd()
+                        }
+                    }
+                    val blk = if (this.acceptFix("=>")) {
+                        Expr.Do(this.tk0, listOf(this.expr()))
+                    } else {
+                        this.block()
+                    }
+                    Pair(Pair(id_tag,cnd),blk)
+                }
+                //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
+                this.acceptFix_err("}")
+                this.nest("""
+                    ${pre0}do {
+                        ${v.cond { "val :fleet $x = ${v!!.tostr(true)}" }}
+                        ${ifs.map { (xxx,blk) ->
+                            val (id_tag,cnd) = xxx
+                            """
+                             if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
+                                ${blk.es.tostr(true)}
+                             } else {
+                            """}.joinToString("")}
+                         ${ifs.map { """
+                             }
+                         """}.joinToString("")}
+                    }
+                """)
+            }
+
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")
