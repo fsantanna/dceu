@@ -859,8 +859,6 @@ class Exec_99 {
         assert(out == "1\n2\n") { out }
     }
 
-    // AWAIT
-
     // WATCHING
 
     @Test

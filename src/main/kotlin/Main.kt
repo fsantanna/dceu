@@ -12,7 +12,9 @@ var CEU = 1
     // 5: tasks, track, detrack
     // TODO: export, copy, underscore, self (coro/task)
     // 99: empty blocks, not/and/or, is/is-not?/in?/in-not?, func dcl
-    //     if id-tag, if => =>, ifs, yield empty arg/block, resume-yield-all
+    //     if id-tag, if => =>, ifs
+    //     yield/catch/detrack empty arg/block,
+    //     resume-yield-all, await
     //     spawn coro/task, par/par-and/par-or
 
 // search in tests output for
@@ -52,7 +54,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
     )) + (if (CEU < 99) setOf() else setOf(
-        "ifs", "par", "par-and", "par-or", "resume-yield-all", "with"
+        "await", "ifs", "par", "par-and", "par-or", "resume-yield-all", "with"
     ))
 ).toSortedSet()
 

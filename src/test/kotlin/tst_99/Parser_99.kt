@@ -525,4 +525,17 @@ class Parser_99 {
                 "}\n" +
                 "}") { e.tostr() }
     }
+
+    @Test
+    fun jj_01_await() {
+        val l = lexer("await()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "break if yield(nil) { as ceu_7 =>\n" +
+                "ceu_7\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 }

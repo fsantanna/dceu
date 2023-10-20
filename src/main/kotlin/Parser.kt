@@ -621,6 +621,27 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
+            (CEU>=99 && this.acceptFix("await")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val evt = if (!this.checkFix("(")) null else {
+                    this.expr_in_parens(true)
+                }
+                val has = this.checkFix("{")
+                val (es,id_tag) = xas()
+                val (id, tag) = id_tag
+                val cnd = when {
+                    (evt == null) -> es.tostr()
+                    !has -> "$id is? evt.tostr()"
+                    else -> "($id is? evt.tostr()) and ${es.tostr()}"
+                }
+                this.nest("""
+                    ${pre0}loop {
+                        ${pre0}break if yield() { as ${id.str} ${tag.cond{it.str}} =>
+                            ${pre0}$cnd
+                        }
+                    }
+                """)
+            }
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
