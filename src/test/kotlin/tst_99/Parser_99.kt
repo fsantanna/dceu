@@ -617,4 +617,26 @@ class Parser_99 {
                 "}\n" +
                 "}") { e.tostr() }
     }
+    @Test
+    fun jj_05_task_err() {
+        val l = lexer("await spawn T() in ts")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await error : expected non-pool spawn")
+    }
+    @Test
+    fun jj_06_task() {
+        val l = lexer("await spawn T()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val ceu_14 = spawn T(nil)\n" +
+                "loop {\n" +
+                "break(pub(ceu_14)) if {{==}}(status(ceu_14),:terminated)\n" +
+                "yield(nil) { as ceu_65 =>\n" +
+                "ceu_65\n" +
+                "\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 }

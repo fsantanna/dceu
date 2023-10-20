@@ -970,6 +970,39 @@ class Exec_99 {
         assert(out == ":1\n:2\n") { out }
     }
 
+    // AWAIT / TASK
+
+    @Test
+    fun kl_01_await_task() {
+        val out = test("""
+            task T (v) {
+                [v]
+            }
+            spawn task {
+                val v = await spawn T(1)
+                println(v)
+            }
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun kl_02_await_task() {
+        val out = test("""
+            spawn task {
+                task T () {
+                    val v = await()
+                    [v]
+                }
+                spawn task {
+                    val v = await spawn T(1)
+                    println(v)
+                }
+                broadcast(2)
+            }
+        """)
+        assert(out == "[2]\n") { out }
+    }
+
     // WATCHING
 
     @Test

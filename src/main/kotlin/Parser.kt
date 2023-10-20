@@ -622,7 +622,24 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
-                val pre0 = this.tk0.pos.pre()
+                val tk0 = this.tk0
+                val pre0 = tk0.pos.pre()
+                if (this.checkFix("spawn")) {
+                    val spw = this.expr()
+                    spw as Expr.Spawn
+                    if (spw.tsks != null) {
+                        err(tk0, "await error : expected non-pool spawn")
+                    }
+                    return this.nest("""
+                        do {
+                            val ceu_$N = ${spw.tostr(true)}
+                            loop {
+                                break (pub(ceu_$N)) if (status(ceu_$N) == :terminated)
+                                yield()
+                            }
+                        }
+                    """)
+                }
                 val evt = if (!this.checkFix("(")) null else {
                     this.expr_in_parens(true)
                 }
