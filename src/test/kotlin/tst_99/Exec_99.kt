@@ -569,12 +569,25 @@ class Exec_99 {
     // PAR / PAR-AND / PAR-OR
 
     @Test
-    fun jj_01_par() {
+    fun jj_01_par_err() {
         val out = test("""
             par {
                 println(1)
             } with {
                 println(2)
+            }
+        """)
+        assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
+    }
+    @Test
+    fun jj_02_par() {
+        val out = test("""
+            spawn task {
+                par {
+                    println(1)
+                } with {
+                    println(2)
+                }
             }
         """)
         assert(out == "1\n2\n") { out }

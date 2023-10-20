@@ -405,4 +405,27 @@ class Parser_99 {
                 "nil\n" +
                 "})(nil)") { e.tostr() }
     }
+
+    // PAR
+
+    @Test
+    fun ii_01_par() {
+        val l = lexer("par {} with {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "loop {\n" +
+                "yield(nil) { as ceu_90 =>\n" +
+                "ceu_90\n" +
+                "\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
 }

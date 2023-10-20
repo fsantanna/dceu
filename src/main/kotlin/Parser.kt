@@ -628,6 +628,29 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
+            (CEU>=99 && this.acceptFix("par")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val pars = mutableListOf(this.block())
+                this.acceptFix_err("with")
+                pars.add(this.block())
+                while (this.acceptFix("with")) {
+                    pars.add(this.block())
+                }
+                val spws = pars.map { """
+                    ${it.tk.pos.pre()}spawn task {
+                        ${it.es.tostr(true)}
+                    }
+                """}.joinToString("")
+                //println(spws)
+                this.nest("""
+                    ${pre0}do {
+                        $spws
+                        ${pre0}loop {
+                            ${pre0}yield()
+                        }
+                    }
+                """)
+            }
 
             else -> {
                 err_expected(this.tk1, "expression")
