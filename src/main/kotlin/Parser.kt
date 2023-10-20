@@ -430,6 +430,27 @@ class Parser (lexer_: Lexer)
             }
 
             (CEU>=4 && this.acceptFix("spawn")) -> {
+                when {
+                    (CEU < 99) -> {}
+                    this.acceptFix("coro") -> {
+                        return this.nest("""
+                            ${tk0.pos.pre()}(spawn (coro () {
+                                ${this.block().es.tostr(true)}
+                            }) ())
+                        """)
+                    }
+                    this.acceptFix("task") -> {
+                        return this.nest("""
+                            ${tk0.pos.pre()}(spawn (task () :void {
+                                ${this.block().es.tostr(true)}
+                            }) ())
+                        """)
+                    }
+                }
+                if (this.acceptFix("task")) {
+                    err(this.tk0, "spawn error : unexpected \"task\"")
+                }
+
                 val tk0 = this.tk0 as Tk.Fix
                 val tk1 = this.tk1
                 val call = this.expr()

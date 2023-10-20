@@ -505,11 +505,11 @@ class Exec_99 {
     @Test
     fun ii_01_spawn() {
         val out = test("""
-            spawn (task {
+            spawn task {
                 println(1)
                 yield()
                 println(3)
-            })
+            }
             println(2)
             broadcast(nil)
         """)
