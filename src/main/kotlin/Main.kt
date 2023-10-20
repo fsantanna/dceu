@@ -186,14 +186,18 @@ fun AWAIT (v:String="true"): String {
     return """
         loop {
             break if yield(nil) { as it =>
-                if type(it) == :exe-task {
-                    false
+                if it == $v {
+                    true
                 } else {
-                    if $v {
-                        if it { it } else { true }
-                    } else {
+                    if type(it) == :exe-task {
                         false
-                    }                    
+                    } else {
+                        if $v {
+                            if it { it } else { true }
+                        } else {
+                            false
+                        }                    
+                    }
                 }
             }
         }

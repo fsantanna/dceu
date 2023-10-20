@@ -565,6 +565,28 @@ class Exec_99 {
         """)
         assert(out == "1\n10\n") { out }
     }
+    @Test
+    fun ii_06_spawn_defer() {
+        val out = test("""
+            spawn task {
+                do {
+                    val t1 = spawn task {
+                        ${AWAIT()}
+                        println(1)
+                    }
+                    spawn task {
+                        defer { println(3) }
+                        ${AWAIT()}
+                        println(2)
+                    }
+                    ${AWAIT("t1")}
+                }
+                println(:ok)
+            }
+            broadcast( nil)
+        """)
+        assert(out == "1\n3\n:ok\n") { out }
+    }
 
     // PAR / PAR-AND / PAR-OR
 
@@ -664,6 +686,7 @@ class Exec_99 {
                 par-or {
                     yield()
                     yield()
+                    yield()
                     println(1)
                 } with {
                     yield()
@@ -683,7 +706,7 @@ class Exec_99 {
     fun jj_08_parand() {
         val out = test("""
             spawn task {
-                par-or {
+                par-and {
                     yield()
                     yield()
                     yield()
@@ -705,14 +728,14 @@ class Exec_99 {
         assert(out == "2\n3\n1\n:ok\n") { out }
     }
     @Test
-    fun jj_xx_paror() {
+    fun jj_09_paror_defer() {
         val out = test("""
             spawn task {
                 par-or {
                     ${AWAIT()}
                     println(1)
                 } with {
-                    ;;defer { println(3) }
+                    defer { println(3) }
                     ${AWAIT()}
                     println(2)
                 }
@@ -721,5 +744,127 @@ class Exec_99 {
             broadcast(nil)
         """)
         assert(out == "1\n3\n:ok\n") { out }
+    }
+    @Test
+    fun jj_10_paror_defer() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    defer { println(3) }
+                    ${AWAIT()}
+                    println(999)
+                } with {
+                    println(2)
+                }
+                println(:ok)
+            }
+            broadcast (nil)
+        """)
+        assert(out == "2\n3\n:ok\n") { out }
+    }
+    @Test
+    fun jj_11_paror_defer() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    defer { println(1) }
+                    ${AWAIT("true")}
+                    ${AWAIT("true")}
+                    println(999)
+                } with {
+                    ${AWAIT()}
+                    println(2)
+                } with {
+                    defer { println(3) }
+                    ${AWAIT("true")}
+                    ${AWAIT("true")}
+                    println(999)
+                }
+                println(999)
+            }
+            broadcast (nil)
+        """)
+        assert(out == "2\n1\n3\n999\n") { out }
+    }
+    @Test
+    fun jj_11_parand_defer() {
+        val out = test("""
+            spawn task {
+                par-and {
+                    yield()
+                    println(1)
+                } with {
+                    println(2)
+                } with {
+                    yield()
+                    println(3)
+                }
+                println(:ok)
+            }
+            broadcast (nil)
+        """)
+        assert(out == "2\n1\n3\n:ok\n") { out }
+    }
+    @Test
+    fun jj_12_parand_defer() {
+        val out = test("""
+            spawn task {
+                par-and {
+                    defer { println(1) }
+                    ${AWAIT("true")}
+                    ${AWAIT("true")}
+                    println(1)
+                } with {
+                    ${AWAIT()}
+                    println(2)
+                } with {
+                    defer { println(3) }
+                    ${AWAIT("true")}
+                    ${AWAIT("true")}
+                    println(3)
+                }
+                println(:ok)
+            }
+            broadcast (nil)
+            broadcast (nil)
+        """)
+        assert(out == "2\n1\n1\n3\n3\n:ok\n") { out }
+    }
+
+    // AWAIT
+
+    @Test
+    fun kk_01_await() {
+        val out = test("""
+            task T () {
+                await evt is? :x
+                println(1)
+            }
+            spawn T()
+            broadcast tags([],:x,true)
+            println(2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+
+    // AWAIT
+
+    // WATCHING
+
+    @Test
+    fun xx_01_watching() {
+        val out = test("""
+            spawn task () {
+                awaiting evt==1 {
+                    defer { println(2) }
+                    yield()
+                    println(1)
+                }
+                println(:ok)
+            } ()
+            broadcast in :global, nil
+            broadcast in :global, 1
+        """, true)
+        assert(out == "1\n2\n:ok\n") { out }
     }
 }
