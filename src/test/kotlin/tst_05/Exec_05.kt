@@ -576,10 +576,10 @@ class Exec_05 {
     fun ee_01_throw() {
         val out = test("""
             val T = task () {
-                spawn task () {
+                spawn( task () {
                     yield(nil) { as it => nil }
                     throw(:error)
-                }()
+                })()
                 yield(nil) { as it => nil }
             }
             spawn T() in tasks()
@@ -954,12 +954,12 @@ class Exec_05 {
     @Test
     fun ii_01_self() {
         val out = test("""
-            spawn task () {
-                val t = spawn task () {
+            spawn( task () {
+                val t = spawn (task () {
                     yield(nil) { as it => nil }
-                } ()
+                } )()
                 yield (nil) { as it => nil }
-            } ()
+            }) ()
             broadcast(nil)
             println(:ok)
        """)
@@ -968,12 +968,12 @@ class Exec_05 {
     @Test
     fun ii_02_self() {
         val out = test("""
-            spawn task () {
-                val t = spawn task () {
+            spawn (task () {
+                val t = spawn( task () {
                     yield(nil) { as it => nil }
-                } () in tasks()
+                }) () in tasks()
                 yield (nil) { as it => nil }
-            } ()
+            } )()
             broadcast(nil)
             println(:ok)
        """)
@@ -1129,12 +1129,12 @@ class Exec_05 {
             }
             var t = spawn T()
             var x = track(t)
-            spawn task () {
+            spawn( task () {
                 catch { as err=>err==:par-or } in {
-                    spawn task () {
+                    spawn( task () {
                         yield(nil) { as it => it==t }
                         throw(:par-or)
-                    } ()
+                    }) ()
                     println(detrack(x) { as it => pub(it)[0] })
                     broadcast(nil) in t
                     println(detrack(x) { as it => pub(it)[0] })
@@ -1142,7 +1142,7 @@ class Exec_05 {
                     println(999)
                 }
                 println(detrack(x) { as it => 999 })
-            }()
+            })()
             println(:ok)
         """)
         assert(out == "10\n10\nnil\n:ok\n") { out }

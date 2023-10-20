@@ -73,6 +73,25 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == "spawn T(2)\n") { e.tostr() }
     }
+    @Test
+    fun bb_04_spawn_err() {
+        val l = lexer("""
+            spawn task () { nil } ()
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : unexpected \"task\"")
+    }
+    @Test
+    fun bb_05_spawn() {
+        val l = lexer("""
+            spawn (task () { nil }) ()
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "spawn (task () {\n" +
+                "nil\n" +
+                "})(nil)\n") { e.tostr() }
+    }
 
     // BCAST
 

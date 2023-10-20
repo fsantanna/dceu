@@ -353,69 +353,6 @@ class TXExec {
         """, true)
         assert(out == "1\n2\n") { out }
     }
-    @Test
-    fun bcast3() {
-        val out = all("""
-            do {
-                val e = []
-                broadcast e
-            }
-            do {
-                val e = []
-                broadcast e
-            }
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun bcast4() {
-        val out = all("""
-            do {
-                val :tmp e = []
-                broadcast e
-            }
-            do {
-                val e = []
-                broadcast e
-            }
-            println(:ok)
-        """)
-        assert(out == "anon : (lin 3, col 17) : invalid declaration : unsafe \":tmp\"") { out }
-    }
-
-    // YIELD ALL
-
-    @Test
-    fun kk_02_yieldall() {
-        val out = all("""
-            coro foo (x4) {
-                val x6 = yield(x4+1)
-                val x8 = yield(x6+1)
-                nil
-            }
-            coro bar (x1) {
-                val x3 = yield(x1+1)
-                val x8 = resume-yield-all coroutine(foo) (x3+1)
-                val x10 = yield(x8+1)
-                nil
-            }
-            val co = coroutine(bar)
-            val x2 = resume co(1)
-            ;;println(:x2, x2)
-            val x5 = resume co(x2+1)
-            ;;println(:x5, x5)
-            val x7 = resume co(x5+1)
-            ;;println(:x7, x7)
-            val x9 = resume co(x7+1)
-            ;;println(:x9, x9)
-            val xN = resume co(x9+1)
-            ;;println(:xN, xN)
-            println(x2, x5, x7, x9, xN)
-        """, true)
-        assert(out == "2\t5\t7\t9\tnil\n") { out }
-    }
-
 
     // SPAWN, PAR
 
@@ -440,19 +377,6 @@ class TXExec {
             broadcast in :global, nil
         """, true)
         assert(out == "3\n2\n") { out }
-    }
-    @Test
-    fun spawn2() {
-        val out = all("""
-            spawn {
-                println(1)
-                yield()
-                println(3)
-            }
-            println(2)
-            broadcast in :global, nil
-        """)
-        assert(out == "1\n2\n3\n") { out }
     }
     @Test
     fun spawn3() {
