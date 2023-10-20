@@ -384,4 +384,25 @@ class Parser_99 {
                 "ceu_arg_10\n" +
                 "})\n") { e.tostr() }
     }
+
+    // SPAWN
+
+    @Test
+    fun hh_01_spawn_task() {
+        val l = lexer("spawn task {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)") { e.tostr() }
+    }
+    @Test
+    fun hh_02_spawn_coro() {
+        val l = lexer("spawn coro {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "spawn (coro () {\n" +
+                "nil\n" +
+                "})(nil)") { e.tostr() }
+    }
 }

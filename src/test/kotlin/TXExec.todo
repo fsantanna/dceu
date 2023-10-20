@@ -379,18 +379,6 @@ class TXExec {
         assert(out == "3\n2\n") { out }
     }
     @Test
-    fun spawn3() {
-        val out = all("""
-            spawn {
-                spawn {
-                    println(1)
-                }
-                nil
-            }
-        """)
-        assert(out == "1\n") { out }
-    }
-    @Test
     fun spawn4() {
         val out = all("""
             task T () {}
@@ -398,18 +386,6 @@ class TXExec {
             }
         """)
         assert(out == "anon : (lin 3, col 23) : access error : variable \"ts\" is not declared") { out }
-    }
-    @Test
-    fun spawn5_coro() {
-        val out = all("""
-            val co = spawn coro {
-                println(1)
-                val v = yield()
-                println(v)
-            }
-            resume co(10)
-        """)
-        assert(out == "1\n10\n") { out }
     }
 
     // PARAND / PAROR / WATCHING

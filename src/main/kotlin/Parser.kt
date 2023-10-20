@@ -434,9 +434,7 @@ class Parser (lexer_: Lexer)
                     (CEU < 99) -> {}
                     this.acceptFix("coro") -> {
                         return this.nest("""
-                            ${tk0.pos.pre()}(spawn (coro () {
-                                ${this.block().es.tostr(true)}
-                            }) ())
+                            TODO
                         """)
                     }
                     this.acceptFix("task") -> {

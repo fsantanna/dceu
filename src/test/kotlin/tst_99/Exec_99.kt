@@ -503,7 +503,7 @@ class Exec_99 {
     // SPAWN
 
     @Test
-    fun ii_01_spawn() {
+    fun ii_01_spawn_task() {
         val out = test("""
             spawn task {
                 println(1)
@@ -514,5 +514,69 @@ class Exec_99 {
             broadcast(nil)
         """)
         assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun todo_ii_02_spawn_coro() {
+        val out = test("""
+            val co = spawn (coro () {
+                println(1)
+                yield()
+                println(3)
+            }) ()
+            println(2)
+            resume co()
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun todo_ii_03_spawn_coro() {
+        val out = test("""
+            val co = spawn coro {
+                println(1)
+                yield()
+                println(3)
+            }
+            println(2)
+            resume co()
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
+    @Test
+    fun ii_04_spawn() {
+        val out = test("""
+            spawn task {
+                spawn task {
+                    println(1)
+                }
+                nil
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun todo_ii_05_coro() {
+        val out = test("""
+            val co = spawn coro {
+                println(1)
+                val v = yield()
+                println(v)
+            }
+            resume co(10)
+        """)
+        assert(out == "1\n10\n") { out }
+    }
+
+    // PAR / PAR-AND / PAR-OR
+
+    @Test
+    fun jj_01_par() {
+        val out = test("""
+            par {
+                println(1)
+            } with {
+                println(2)
+            }
+        """)
+        assert(out == "1\n2\n") { out }
     }
 }
