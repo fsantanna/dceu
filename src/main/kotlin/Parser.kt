@@ -382,7 +382,7 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
-                val tkx = this.tk1 as Tk.Fix
+                val tkx = this.tk1
                 val (xblk,xit) = when {
                     (CEU < 99) -> {
                         this.acceptFix_err("{")
@@ -571,19 +571,18 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ${pre0}do {
-                        ${v.cond { "val :fleet $x = ${v!!.tostr(true)}" }}
-                        ${ifs.map { (xxx,blk) ->
-                            val (id_tag,cnd) = xxx
-                            """
-                             if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
-                                ${blk.es.tostr(true)}
-                             } else {
-                            """}.joinToString("")}
-                         ${ifs.map { """
-                             }
-                         """}.joinToString("")}
-                    }
+                    ${v.cond { "(${v!!.tostr(true)} thus { as $x =>" }}
+                    ${ifs.map { (xxx,blk) ->
+                        val (id_tag,cnd) = xxx
+                        """
+                         if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
+                            ${blk.es.tostr(true)}
+                         } else {
+                        """}.joinToString("")}
+                     ${ifs.map { """
+                         }
+                     """}.joinToString("")}
+                    ${v.cond { "})" }}
                 """)
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {
@@ -684,7 +683,7 @@ class Parser (lexer_: Lexer)
                 val e = this.expr_2_pre()
                 //println(listOf(op,e))
                 when {
-                    (op.str == "not") -> this.nest("${op.pos.pre()}if ${e.tostr(true)} { false } else { true }\n")
+                    (op.str == "not") -> this.nest("${op.pos.pre()}(if ${e.tostr(true)} { false } else { true })\n")
                     else -> Expr.Call(op, Expr.Acc(Tk.Id("{{${op.str}}}", op.pos, 0)), listOf(e))
                 }
             }
@@ -706,24 +705,22 @@ class Parser (lexer_: Lexer)
         return this.expr_1_bin(op.str,
             when (op.str) {
                 "and" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :fleet ceu_${e1.n} = ${e1.tostr(true)} 
+                    (${e1.tostr(true)} thus { as ceu_${e1.n} =>
                         if ceu_${e1.n} {
                             ${e2.tostr(true)}
                         } else {
                             ceu_${e1.n}
                         }
-                    }
+                    })
                 """)
                 "or" -> this.nest("""
-                    ${op.pos.pre()}do {
-                        val :fleet ceu_${e1.n} = ${e1.tostr(true)} 
+                    (${e1.tostr(true)} thus { as ceu_${e1.n} =>  
                         if ceu_${e1.n} {
                             ceu_${e1.n}
                         } else {
                             ${e2.tostr(true)}
                         }
-                    }
+                    })
                 """)
                 "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")

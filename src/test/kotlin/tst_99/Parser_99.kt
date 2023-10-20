@@ -46,7 +46,13 @@ class Parser_99 {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :fleet ceu_3 = 1\nif ceu_3 {\nceu_3\n} else {\n2\n}\n}") { e.tostr() }
+        assert(e.tostr() == "(1 thus { as ceu_3 =>\n" +
+                "if ceu_3 {\n" +
+                "ceu_3\n" +
+                "} else {\n" +
+                "2\n" +
+                "}\n" +
+                "})\n") { e.tostr() }
     }
     @Test
     fun bb_02_bin_and() {
@@ -54,7 +60,13 @@ class Parser_99 {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\nval :fleet ceu_3 = 1\nif ceu_3 {\n2\n} else {\nceu_3\n}\n}") { e.tostr() }
+        assert(e.tostr() == "(1 thus { as ceu_3 =>\n" +
+                "if ceu_3 {\n" +
+                "2\n" +
+                "} else {\n" +
+                "ceu_3\n" +
+                "}\n" +
+                "})\n") { e.tostr() }
     }
     @Test
     fun bb_03_not() {
@@ -71,25 +83,24 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == """
-            do {
-            val :fleet ceu_41 = do {
-            val :fleet ceu_16 = if true {
+            ((if true {
             false
             } else {
             true
-            }
-            if ceu_16 {
+            } thus { as ceu_17 =>
+            if ceu_17 {
             false
             } else {
-            ceu_16
+            ceu_17
             }
-            }
+            })
+             thus { as ceu_41 =>
             if ceu_41 {
             ceu_41
             } else {
             true
             }
-            }
+            })
         """.trimIndent()) { e.tostr() }
     }
     @Test
@@ -134,30 +145,26 @@ class Parser_99 {
         val l = lexer("if x=1 { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_16 = 1\n" +
-                "if ceu_16 {\n" +
-                "val :fleet x = ceu_16\n" +
+        assert(e.tostr() == "(1 thus { as x =>\n" +
+                "if x {\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}\n") { e.tostr() }
+                "})") { e.tostr() }
     }
     @Test
     fun dd_03_if() {
         val l = lexer("if x:X=1 { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "do {\n" +
-                "val :fleet ceu_17 :X = 1\n" +
-                "if ceu_17 {\n" +
-                "val :fleet x :X = ceu_17\n" +
+        assert(e.tostr() == "(1 thus { as x :X =>\n" +
+                "if x {\n" +
                 "x\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}\n") { e.tostr() }
+                "})") { e.tostr() }
     }
     @Test
     fun dd_04_if() {
@@ -218,15 +225,13 @@ class Parser_99 {
         val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "if a {\n" +
+        assert(e.tostr() == "if a {\n" +
                 "1\n" +
                 "} else {\n" +
                 "if true {\n" +
                 "0\n" +
                 "} else {\n" +
                 "nil\n" +
-                "}\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -245,14 +250,13 @@ class Parser_99 {
         val l = lexer("ifs it=nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "val :fleet it = nil\n" +
+        assert(e.tostr() == "(nil thus { as it =>\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}") { e.tostr() }
+                "})\n") { e.tostr() }
     }
     @Test
     fun ee_04_ifs_err() {
@@ -266,48 +270,36 @@ class Parser_99 {
         val l = lexer("ifs it=v { a => it }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "val :fleet it = v\n" +
+        assert(e.tostr() == "(v thus { as it =>\n" +
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}") { e.tostr() }
+                "})") { e.tostr() }
     }
     @Test
     fun ee_06_ifs() {
         val l = lexer("ifs it=v { a{1} b=>it else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "val :fleet it = v\n" +
+        assert(e.tostr() == "(v thus { as it =>\n" +
                 "if a {\n" +
-                "1\n" +
-                "} else {\n" +
-                "if b {\n" +
                 "it\n" +
-                "} else {\n" +
-                "if true {\n" +
-                "0\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}\n" +
-                "}\n" +
-                "}") { e.tostr() }
+                "})") { e.tostr() }
     }
     @Test
     fun ee_07_ifs() {
         val l = lexer("ifs { f() => nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
-                "if f() {\n" +
+        assert(e.tostr() == "if f() {\n" +
                 "nil\n" +
                 "} else {\n" +
                 "nil\n" +
-                "}\n" +
                 "}") { e.tostr() }
     }
 

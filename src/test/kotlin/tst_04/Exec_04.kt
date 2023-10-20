@@ -900,9 +900,10 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
-                val :fleet x = [0]
-                set x[0] = v[0]
-                println(x[0])
+                [0] thus { as x =>
+                    set x[0] = v[0]
+                    println(x[0])
+                }
             }
             var T = task () {
                 yield(nil) { as it=>f(it) }
@@ -930,9 +931,10 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :fleet x = [0]
-                set x[0] = v[0]
-                println(x[0])
+                [0] thus { as x =>
+                    set x[0] = v[0]
+                    println(x[0])
+                }
             }
             var T = task () {
                 yield(nil) { as it => f(it) }
@@ -1971,7 +1973,7 @@ class Exec_04 {
             spawn T(1,2)
         """)
         //assert(out == "1\t2\n") { out }
-        assert(out == "anon : (lin 6, col 19) : invalid spawn : invalid number of arguments\n") { out }
+        assert(out == "anon : (lin 6, col 19) : spawn error : invalid number of arguments\n") { out }
     }
     @Test
     fun zz_02_spawn_err() {
@@ -1985,7 +1987,7 @@ class Exec_04 {
         val out = test("""
             spawn (func () {nil})
         """)
-        assert(out == "anon : (lin 3, col 9) : invalid spawn : expected call\n") { out }
+        assert(out == "anon : (lin 3, col 9) : spawn error : expected call\n") { out }
     }
     @Test
     fun zz_04_bcast() {
@@ -2384,8 +2386,9 @@ class Exec_04 {
     fun zz_20_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :fleet x = v[0]
-                println(x)
+                v[0] thus { as x =>
+                    println(x)
+                }
             }
             var T = task () {
                 yield(nil) { as it => f(it) }
@@ -2399,7 +2402,7 @@ class Exec_04 {
     fun zz_21_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                val :fleet x = v[0]
+                val x = v[0]
                 println(x)
             }
             var g = func (v) {

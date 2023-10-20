@@ -29,7 +29,7 @@ class Parser_05 {
         """)
         val parser = Parser(l)
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : invalid spawn : expected call")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 21) : spawn error : expected call")
     }
     @Test
     fun aa_04_tasks() {

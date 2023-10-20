@@ -25,7 +25,18 @@ fun Expr.tostr (pre: Boolean = false): String {
             }.joinToString(",")
             "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
-        is Expr.Do     -> (this.tk.str=="do").cond{"do "} + "{\n" + this.es.tostr(pre) + "}"
+        is Expr.Do     -> {
+            when {
+                (this.tk.str == "do") -> "do {\n" + this.es.tostr(pre) + "}"
+                (this.tk.str == "thus") -> {
+                    val dcl = this.es[0] as Expr.Dcl
+                    val id_tag = dcl.id.tostr() + dcl.tag.cond{" "+it.str}
+                    "(${dcl.src!!.tostr(pre)} thus { as $id_tag =>\n${this.es.drop(1).tostr(pre)}})\n"
+                }
+
+                else -> "{\n" + this.es.tostr(pre) + "}"
+            }
+        }
         is Expr.Dcl    -> {
             this.tk_.str + " " + this.id.tostr() + this.tag.cond{" "+it.str} + this.src.cond { " = ${it.tostr(pre)}" }
         }

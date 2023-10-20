@@ -62,7 +62,7 @@ class Parser_04 {
             spawn nil
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : invalid spawn : expected call")
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : spawn error : expected call")
     }
     @Test
     fun bb_03_spawn() {
@@ -212,7 +212,7 @@ class Parser_04 {
             set pub()() = 10
         """)
         val parser = Parser(l)
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : invalid set : expected assignable destination")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 13) : set error : expected assignable destination")
     }
     @Test
     fun dd_06_pub() {

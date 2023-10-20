@@ -76,7 +76,7 @@ class Parser_03 {
             resume a
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 20) : invalid resume : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 2, col 20) : resume error : expected call")
     }
     @Test
     fun bb_04_yield_err() {

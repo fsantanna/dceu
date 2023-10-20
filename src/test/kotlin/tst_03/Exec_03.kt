@@ -501,16 +501,6 @@ class Exec_03 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun ee_08_yield_tmp() {
-        val out = test("""
-            val F = coro () {
-                val :fleet x
-                yield(nil) { as it => nil }
-            }
-        """)
-        assert(out == "anon : (lin 3, col 17) : invalid declaration : \":fleet\" across yield\n") { out }
-    }
-    @Test
     fun ee_09_tags() {
         val out = test("""
             val co = coro () {
