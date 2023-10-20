@@ -1906,14 +1906,29 @@ class Exec_04 {
     // RETURN
 
     @Test
-    fun todo_nn_01_term() {
+    fun nn_01_term() {
+        val out = test("""
+            val t = spawn (task () {
+                set pub() = [1]
+                yield(nil) { as it => nil }
+                [2]
+            } )()
+            println(status(t), pub(t))
+            broadcast(nil)
+            println(status(t), pub(t))
+       """)
+        assert(out == ":yielded\t[1]\n" +
+                ":terminated\t[2]") { out }
+    }
+    @Test
+    fun nn_02_term() {
         val out = test("""
             spawn( task () {
                 val t = spawn (task () {
                     yield(nil) { as it => nil }
                     10
                 } )()
-                yield (nil) { as it => println(it) }
+                yield (nil) { as it => println(pub(it)) }
             } )()
             broadcast(nil)
             println(:ok)
