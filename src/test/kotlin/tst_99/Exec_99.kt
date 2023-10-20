@@ -663,7 +663,7 @@ class Exec_99 {
         assert(out == "2\n:ok\n") { out }
     }
     @Test
-    fun todo_jj_04_paror() {
+    fun jj_04_paror() {
         val out = test("""
             spawn task {
                 val v =
@@ -692,7 +692,7 @@ class Exec_99 {
         assert(out == "1\n2\n:ok\n") { out }
     }
     @Test
-    fun todo_jj_06_parand() {
+    fun jj_06_parand() {
         val out = test("""
             spawn task {
                 val v =
@@ -704,7 +704,7 @@ class Exec_99 {
                 println(v)
             }
         """)
-        assert(out == "1\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun jj_07_paror() {

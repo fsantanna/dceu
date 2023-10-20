@@ -363,7 +363,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "(f() thus { as it =>\n" +
                 "it\n" +
-                "})") { e.tostr() }
+                "})\n") { e.tostr() }
     }
 
     // RESUME-YIELD-ALL
@@ -468,13 +468,41 @@ class Parser_99 {
                 "nil\n" +
                 "})(nil)\n" +
                 "loop {\n" +
-                "break if ({{==}}(status(ceu_0_9),:terminated) thus { as ceu_110 =>\n" +
-                "if ceu_110 {\n" +
-                "ceu_110\n" +
+                "break if (({{==}}(status(ceu_0_9),:terminated) thus { as ceu_111 =>\n" +
+                "if ceu_111 {\n" +
+                "(pub(ceu_0_9) thus { as ceu_120 =>\n" +
+                "if ceu_120 {\n" +
+                "ceu_120\n" +
                 "} else {\n" +
-                "({{==}}(status(ceu_1_9),:terminated) thus { as ceu_127 =>\n" +
-                "if ceu_127 {\n" +
-                "ceu_127\n" +
+                "true\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "} else {\n" +
+                "ceu_111\n" +
+                "}\n" +
+                "})\n" +
+                " thus { as ceu_232 =>\n" +
+                "if ceu_232 {\n" +
+                "ceu_232\n" +
+                "} else {\n" +
+                "(({{==}}(status(ceu_1_9),:terminated) thus { as ceu_251 =>\n" +
+                "if ceu_251 {\n" +
+                "(pub(ceu_1_9) thus { as ceu_260 =>\n" +
+                "if ceu_260 {\n" +
+                "ceu_260\n" +
+                "} else {\n" +
+                "true\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "} else {\n" +
+                "ceu_251\n" +
+                "}\n" +
+                "})\n" +
+                " thus { as ceu_372 =>\n" +
+                "if ceu_372 {\n" +
+                "ceu_372\n" +
                 "} else {\n" +
                 "false\n" +
                 "}\n" +
@@ -483,8 +511,8 @@ class Parser_99 {
                 "}\n" +
                 "})\n" +
                 "\n" +
-                "yield(nil) { as ceu_268 =>\n" +
-                "ceu_268\n" +
+                "yield(nil) { as ceu_682 =>\n" +
+                "ceu_682\n" +
                 "\n" +
                 "}\n" +
                 "}\n" +
@@ -503,23 +531,23 @@ class Parser_99 {
                 "nil\n" +
                 "})(nil)\n" +
                 "loop {\n" +
-                "break if ({{==}}(status(ceu_0_9),:terminated) thus { as ceu_110 =>\n" +
-                "if ceu_110 {\n" +
-                "({{==}}(status(ceu_1_9),:terminated) thus { as ceu_127 =>\n" +
-                "if ceu_127 {\n" +
+                "break(nil) if ({{==}}(status(ceu_0_9),:terminated) thus { as ceu_114 =>\n" +
+                "if ceu_114 {\n" +
+                "({{==}}(status(ceu_1_9),:terminated) thus { as ceu_131 =>\n" +
+                "if ceu_131 {\n" +
                 "true\n" +
                 "} else {\n" +
-                "ceu_127\n" +
+                "ceu_131\n" +
                 "}\n" +
                 "})\n" +
                 "\n" +
                 "} else {\n" +
-                "ceu_110\n" +
+                "ceu_114\n" +
                 "}\n" +
                 "})\n" +
                 "\n" +
-                "yield(nil) { as ceu_268 =>\n" +
-                "ceu_268\n" +
+                "yield(nil) { as ceu_272 =>\n" +
+                "ceu_272\n" +
                 "\n" +
                 "}\n" +
                 "}\n" +

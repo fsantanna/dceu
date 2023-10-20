@@ -684,7 +684,7 @@ class Parser (lexer_: Lexer)
                         loop {
                             break if (
                                 ${pars.mapIndexed { i,_ -> """
-                                    ((status(ceu_${i}_$n) == :terminated) or
+                                    (((status(ceu_${i}_$n) == :terminated) and (pub(ceu_${i}_$n) or true)) or
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
@@ -710,7 +710,7 @@ class Parser (lexer_: Lexer)
                             }
                         """}.joinToString("")}
                         loop {
-                            break if (
+                            break(nil) if (
                                 ${pars.mapIndexed { i,_ -> """
                                     ((status(ceu_${i}_$n) == :terminated) and
                                 """}.joinToString("")} true ${")".repeat(pars.size)}
