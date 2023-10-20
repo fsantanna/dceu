@@ -1126,21 +1126,18 @@ class Exec_05 {
             var T = task () {
                 set pub() = [10]
                 ${AWAIT("it == :evt")}
-        println(:B)
             }
             var t = spawn T()
             var x = track(t)
             spawn task () {
                 catch { as err=>err==:par-or } in {
                     spawn task () {
-                        ${AWAIT("do { println(:X,it) ; it==t }")}
-                        println(:xxx)
+                        yield(nil) { as it => it==t }
                         throw(:par-or)
                     } ()
                     println(detrack(x) { as it => pub(it)[0] })
                     broadcast(nil) in t
                     println(detrack(x) { as it => pub(it)[0] })
-        println(:A)
                     broadcast(:evt) in t
                     println(999)
                 }

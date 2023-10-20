@@ -1710,6 +1710,46 @@ class Exec_04 {
         """)
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing defer\n") { out }
     }
+    @Test
+    fun mm_06_bcast_term() {
+        val out = test("""
+            spawn task () {
+                val T = task () {
+                    yield(nil) { as it => nil }
+                    yield(nil) { as it => nil }
+                }
+                var t = spawn T()
+                spawn task () {
+                    yield(nil) { as it => nil }
+                    broadcast(nil) in t
+                    println(999)
+                } ()
+                yield(nil) { as it => nil }
+                println(:ok)
+            }()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun mm_07_bcast_term() {
+        val out = test("""
+            val T = task () {
+                yield(nil) { as it => nil }
+            }
+            val t = spawn T()
+            spawn task () {
+                spawn task () {
+                    println(:A)
+                    yield(nil) { as it => it==t }
+                    println(:C)
+                } ()
+                broadcast(nil) in t
+            }()
+            println(:ok)
+        """)
+        assert(out == ":A\n:C\n:ok\n") { out }
+    }
 
     // TASK / VOID
 

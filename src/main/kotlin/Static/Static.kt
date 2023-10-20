@@ -136,7 +136,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         -> err(this.tk, "broadcast error : unexpected enclosing detrack")
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str=="func") } != null)
                         -> err(this.tk, "broadcast error : unexpected enclosing func")
-                            // dont know if call is inside detrack
+                            // dont know if call is inside detrack / dont know if bcast killed call
                 }
             }
             is Expr.Dtrack -> {

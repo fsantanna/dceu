@@ -1260,7 +1260,7 @@ fun Coder.main (tags: Tags): String {
             if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
             }
-            if (task->pc != 0) {    // not initial spawn
+            if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 ret = ceu_bcast_blocks(task->dn_block, evt);
             }
             if (task->status != CEU_EXE_STATUS_YIELDED) {
@@ -1270,7 +1270,7 @@ fun Coder.main (tags: Tags): String {
                 ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
             } else {
                 ret = task->frame.clo->proto(&task->frame, 1, &evt);
-                if (task->status >= CEU_EXE_STATUS_TERMINATED) {
+                if (task->status == CEU_EXE_STATUS_TERMINATED) {
                     task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                     if (!CEU_ISERR(ret)) {      // bcast
                         CEU_Exe_Task* up_task = ceu_task_up_task(task);
