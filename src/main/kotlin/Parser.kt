@@ -19,7 +19,6 @@ class Parser (lexer_: Lexer)
     }
 
     fun nest (inp: String): Expr {
-        //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
         val lexer = Lexer(inps)
@@ -571,7 +570,7 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ${v.cond { "(${v!!.tostr(true)} thus { as $x =>" }}
+                    (${v.cond2({it.tostr(true)},{"nil"})} thus { as $x =>
                     ${ifs.map { (xxx,blk) ->
                         val (id_tag,cnd) = xxx
                         """
@@ -582,7 +581,7 @@ class Parser (lexer_: Lexer)
                      ${ifs.map { """
                          }
                      """}.joinToString("")}
-                    ${v.cond { "})" }}
+                    })
                 """)
             }
             (CEU>=99 && this.acceptFix("resume-yield-all")) -> {

@@ -101,6 +101,7 @@ class Parser_99 {
             true
             }
             })
+            
         """.trimIndent()) { e.tostr() }
     }
     @Test
@@ -151,7 +152,7 @@ class Parser_99 {
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "})") { e.tostr() }
+                "})\n\n") { e.tostr() }
     }
     @Test
     fun dd_03_if() {
@@ -164,7 +165,7 @@ class Parser_99 {
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "})") { e.tostr() }
+                "})\n\n") { e.tostr() }
     }
     @Test
     fun dd_04_if() {
@@ -240,9 +241,9 @@ class Parser_99 {
         val l = lexer("ifs { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "do {\n" +
+        assert(e.tostr() == "(nil thus { as ceu_3 =>\n" +
                 "nil\n" +
-                "}") { e.tostr() }
+                "})\n") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
     }
     @Test
@@ -276,7 +277,7 @@ class Parser_99 {
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "})") { e.tostr() }
+                "})\n") { e.tostr() }
     }
     @Test
     fun ee_06_ifs() {
@@ -285,11 +286,19 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "(v thus { as it =>\n" +
                 "if a {\n" +
+                "1\n" +
+                "} else {\n" +
+                "if b {\n" +
                 "it\n" +
+                "} else {\n" +
+                "if true {\n" +
+                "0\n" +
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "})") { e.tostr() }
+                "}\n" +
+                "}\n" +
+                "})\n") { e.tostr() }
     }
     @Test
     fun ee_07_ifs() {
