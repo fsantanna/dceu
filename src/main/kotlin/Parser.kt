@@ -651,7 +651,61 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-
+            (CEU>=99 && this.acceptFix("par-or")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val pars = mutableListOf(this.block())
+                val n = pars[0].n
+                this.acceptFix_err("with")
+                pars.add(this.block())
+                while (this.acceptFix("with")) {
+                    pars.add(this.block())
+                }
+                this.nest("""
+                    ${pre0}do {
+                        ${pars.mapIndexed { i,body -> """
+                            val ceu_${i}_$n = spawn task {
+                                ${body.es.tostr(true)}
+                            }
+                        """}.joinToString("")}
+                        loop {
+                            break if (
+                                ${pars.mapIndexed { i,_ -> """
+                                    ((status(ceu_${i}_$n) == :terminated) or
+                                """}.joinToString("")} false ${")".repeat(pars.size)}
+                            )
+                            yield()
+                        }
+                    }
+                """)
+            }
+            (CEU>=99 && this.acceptFix("par-and")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val pars = mutableListOf(this.block())
+                val n = pars[0].n
+                this.acceptFix_err("with")
+                pars.add(this.block())
+                while (this.acceptFix("with")) {
+                    pars.add(this.block())
+                }
+                //println(spws)
+                this.nest("""
+                    ${pre0}do {
+                        ${pars.mapIndexed { i,body -> """
+                            val ceu_${i}_$n = spawn task {
+                                ${body.es.tostr(true)}
+                            }
+                        """}.joinToString("")}
+                        loop {
+                            break if (
+                                ${pars.mapIndexed { i,_ -> """
+                                    ((status(ceu_${i}_$n) == :terminated) and
+                                """}.joinToString("")} true ${")".repeat(pars.size)}
+                            )
+                            yield()
+                        }
+                    }
+                """)
+            }
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")

@@ -588,8 +588,138 @@ class Exec_99 {
                 } with {
                     println(2)
                 }
+                println(999)
             }
         """)
         assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun jj_03_paror() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                    yield()
+                    println(1)
+                } with {
+                    println(2)
+                } with {
+                    yield()
+                    yield()
+                    println(3)
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == "2\n:ok\n") { out }
+    }
+    @Test
+    fun todo_jj_04_paror() {
+        val out = test("""
+            spawn task {
+                val v =
+                    par-or {
+                        1
+                    } with {
+                        2
+                    }
+                println(v)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_05_parand() {
+        val out = test("""
+            spawn task {
+                par-and {
+                    println(1)
+                } with {
+                    println(2)
+                }
+                println(:ok)
+            }
+        """)
+        assert(out == "1\n2\n:ok\n") { out }
+    }
+    @Test
+    fun todo_jj_06_parand() {
+        val out = test("""
+            spawn task {
+                val v =
+                    par-and {
+                        1
+                    } with {
+                        2
+                    }
+                println(v)
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun jj_07_paror() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                    yield()
+                    println(1)
+                } with {
+                    yield()
+                    println(2)
+                } with {
+                    yield()
+                    yield()
+                    println(3)
+                }
+                println(:ok)
+            }
+            broadcast(nil)
+        """)
+        assert(out == "2\n:ok\n") { out }
+    }
+    @Test
+    fun jj_08_parand() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                    yield()
+                    yield()
+                    println(1)
+                } with {
+                    yield()
+                    println(2)
+                } with {
+                    yield()
+                    yield()
+                    println(3)
+                }
+                println(:ok)
+            }
+            broadcast(nil)
+            broadcast(nil)
+            broadcast(nil)
+        """)
+        assert(out == "2\n3\n1\n:ok\n") { out }
+    }
+    @Test
+    fun jj_xx_paror() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    ${AWAIT()}
+                    println(1)
+                } with {
+                    ;;defer { println(3) }
+                    ${AWAIT()}
+                    println(2)
+                }
+                println(:ok)
+            }
+            broadcast(nil)
+        """)
+        assert(out == "1\n3\n:ok\n") { out }
     }
 }

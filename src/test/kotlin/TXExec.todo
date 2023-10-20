@@ -391,42 +391,6 @@ class TXExec {
     // PARAND / PAROR / WATCHING
 
     @Test
-    fun paror1() {
-        val out = all("""
-            spawn task () {
-                par-or {
-                    ${yield()}
-                    println(1)
-                } with {
-                    println(2)
-                } with {
-                    ${yield()}
-                    println(3)
-                }
-                println(999)
-            } ()
-        """, true)
-        assert(out == "2\n999\n") { out }
-    }
-    @Test
-    fun paror1a() {
-        val out = all("""
-            spawn task () {
-                par-or {
-                    ${yield()}
-                    println(1)
-                } with {
-                    defer { println(3) }
-                    ${yield()}
-                    println(2)
-                }
-                println(999)
-            } ()
-            broadcast in :global, nil
-        """, true)
-        assert(out == "1\n3\n999\n") { out }
-    }
-    @Test
     fun paror1a_01() {
         val out = all("""
             spawn task () {

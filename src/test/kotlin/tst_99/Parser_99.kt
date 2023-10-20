@@ -406,7 +406,7 @@ class Parser_99 {
                 "})(nil)") { e.tostr() }
     }
 
-    // PAR
+    // PAR / PAR-OR
 
     @Test
     fun ii_01_par() {
@@ -423,6 +423,76 @@ class Parser_99 {
                 "loop {\n" +
                 "yield(nil) { as ceu_90 =>\n" +
                 "ceu_90\n" +
+                "\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ii_02_paror() {
+        val l = lexer("par-or {} with {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val ceu_0_9 = spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "val ceu_1_9 = spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "loop {\n" +
+                "break if ({{==}}(status(ceu_0_9),:terminated) thus { as ceu_110 =>\n" +
+                "if ceu_110 {\n" +
+                "ceu_110\n" +
+                "} else {\n" +
+                "({{==}}(status(ceu_1_9),:terminated) thus { as ceu_127 =>\n" +
+                "if ceu_127 {\n" +
+                "ceu_127\n" +
+                "} else {\n" +
+                "false\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "yield(nil) { as ceu_268 =>\n" +
+                "ceu_268\n" +
+                "\n" +
+                "}\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ii_03_parand() {
+        val l = lexer("par-and {} with {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "val ceu_0_9 = spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "val ceu_1_9 = spawn (task () :void {\n" +
+                "nil\n" +
+                "})(nil)\n" +
+                "loop {\n" +
+                "break if ({{==}}(status(ceu_0_9),:terminated) thus { as ceu_110 =>\n" +
+                "if ceu_110 {\n" +
+                "({{==}}(status(ceu_1_9),:terminated) thus { as ceu_127 =>\n" +
+                "if ceu_127 {\n" +
+                "true\n" +
+                "} else {\n" +
+                "ceu_127\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "} else {\n" +
+                "ceu_110\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
+                "yield(nil) { as ceu_268 =>\n" +
+                "ceu_268\n" +
                 "\n" +
                 "}\n" +
                 "}\n" +
