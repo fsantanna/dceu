@@ -95,6 +95,36 @@ class Exec_99 {
         assert(out == "1\n2\nnil\n2\n") { out }
     }
     @Test
+    fun bb_03_or_and_no() {
+        val out = test("""
+            println(1 or throw(5))
+            println(nil or 2)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun bb_03_or_and_ok() {
+        val out = test("""
+^[2,13]^[2,13]println(^[2,23](^[2,21]1 thus { as ceu_6 =>
+^[3,25](if ^[3,28]ceu_6 ^[3,34]{
+^[4,29]ceu_6
+} else ^[5,32]{
+^[2,26]^[2,26]throw(^[2,32]5)
+})
+})
+)
+^[3,13]^[3,13]println(^[3,25](^[3,21]nil thus { as ceu_41 =>
+^[4,25](if ^[4,28]ceu_41 ^[4,35]{
+^[5,29]ceu_41
+} else ^[6,32]{
+^[3,28]2
+})
+})
+)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
+    @Test
     fun bb_04_or_and() {
         val out = test("""
             println(true and ([] or []))

@@ -226,7 +226,8 @@ class Parser_99 {
         val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if a {\n" +
+        assert(e.tostr() == "(nil thus { as ceu_3 =>\n" +
+                "if a {\n" +
                 "1\n" +
                 "} else {\n" +
                 "if true {\n" +
@@ -234,7 +235,8 @@ class Parser_99 {
                 "} else {\n" +
                 "nil\n" +
                 "}\n" +
-                "}") { e.tostr() }
+                "}\n" +
+                "})\n") { e.tostr() }
     }
     @Test
     fun ee_02_ifs() {
@@ -305,11 +307,13 @@ class Parser_99 {
         val l = lexer("ifs { f() => nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "if f() {\n" +
+        assert(e.tostr() == "(nil thus { as ceu_3 =>\n" +
+                "if f() {\n" +
                 "nil\n" +
                 "} else {\n" +
                 "nil\n" +
-                "}") { e.tostr() }
+                "}\n" +
+                "})\n") { e.tostr() }
     }
 
     // YIELD

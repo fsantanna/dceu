@@ -213,7 +213,8 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         }
         return e.message!! + "\n"
     }
-    //println(es.map { it.tostr()+"\n" }.joinToString(""))
+    //println(es.tostr(true))
+    //println(es)
     val c = try {
         if (verbose) {
             System.err.println("... analysing ...")
@@ -253,6 +254,8 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
 }
 
 fun test (inp: String, pre: Boolean=false): String {
+    N = 1
+    //println(inp)
     val prelude = if (CEU == 99) "build/prelude-x.ceu" else "build/prelude-0.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {
         listOf(Pair(Triple(prelude,1,1), File(prelude).reader()))

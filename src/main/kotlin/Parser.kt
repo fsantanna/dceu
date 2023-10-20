@@ -8,7 +8,6 @@ class Parser (lexer_: Lexer)
     val tks: Iterator<Tk>
 
     init {
-        N = 1
         this.tks = this.lexer.lex().iterator()
         this.lex()
     }
@@ -19,6 +18,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun nest (inp: String): Expr {
+        //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
         val lexer = Lexer(inps)
@@ -574,9 +574,9 @@ class Parser (lexer_: Lexer)
                     ${ifs.map { (xxx,blk) ->
                         val (id_tag,cnd) = xxx
                         """
-                         if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
+                        if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
                             ${blk.es.tostr(true)}
-                         } else {
+                        } else {
                         """}.joinToString("")}
                      ${ifs.map { """
                          }
