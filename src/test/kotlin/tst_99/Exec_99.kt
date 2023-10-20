@@ -67,6 +67,17 @@ class Exec_99 {
         assert(out == "nil\n") { out }
     }
 
+    // AS
+
+    @Test
+    fun ab_01_yield() {
+        val out = test("""
+            val x = if (true) { 1 }
+            println(x)
+        """)
+        assert(out == "1\n") { out }
+    }
+
     // OPS: not, and, or
 
     @Test
@@ -357,7 +368,7 @@ class Exec_99 {
         assert(out == "ERROR\n") { out }
     }
 
-    // YIELD
+    // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test
     fun gg_01_yield() {
@@ -580,6 +591,7 @@ class Exec_99 {
                         println(2)
                     }
                     ${AWAIT("it==t1")}
+                    nil
                 }
                 println(:ok)
             }
@@ -837,7 +849,7 @@ class Exec_99 {
     fun kk_01_await() {
         val out = test("""
             task T () {
-                await evt is? :x
+                await() { as it => it is? :x }
                 println(1)
             }
             spawn T()

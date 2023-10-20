@@ -145,6 +145,41 @@ class Parser (lexer_: Lexer)
         return e
     }
 
+    fun xas(): Pair<List<Expr>,Pair<Tk.Id,Tk.Tag?>> {
+        val (xblk,xit) = when {
+            (CEU < 99) -> {
+                this.acceptFix_err("{")
+                this.acceptFix_err("as")
+                Pair(true, true)
+            }
+            this.acceptFix("{") -> {
+                Pair(true, this.acceptFix("as"))
+            }
+            else -> Pair(false, false)
+        }
+        return when {
+            (xblk && xit) -> {
+                val id_tag = this.id_tag()
+                this.acceptFix_err("=>")
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                Pair(es, id_tag)
+            }
+            (xblk && !xit) -> {
+                val es = this.exprs()
+                this.acceptFix_err("}")
+                Pair(es, Pair(Tk.Id("it", this.tk0.pos, 0), null))
+            }
+            (!xblk && !xit) -> {
+                val n = N
+                val tk = this.tk0.pos
+                val es = listOf(Expr.Acc(Tk.Id("ceu_$n", tk,0)))
+                Pair(es, Pair(Tk.Id("ceu_$n", tk, 0), null))
+            }
+            else -> error("impossible case")
+        }
+    }
+
     fun <T> list0 (close: String, sep: String?, func: ()->T): List<T> {
         val l = mutableListOf<T>()
         while (!this.checkFix(close)) {
@@ -363,15 +398,10 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                this.acceptFix_err("{")
-                this.acceptFix_err("as")
-                val (it,tag) = this.id_tag()
-                this.acceptFix_err("=>")
-                val cnd = this.exprs()
-                this.acceptFix_err("}")
+                val (cnd, id_tag) = xas()
                 this.acceptFix_err("in")
                 Expr.Catch (
-                    tk0, Pair(it,tag),
+                    tk0, id_tag,
                     Expr.Do(Tk.Fix("do",this.tk0.pos), cnd),
                     this.block()
                 )
@@ -382,39 +412,8 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
                 val tkx = this.tk1
-                val (xblk,xit) = when {
-                    (CEU < 99) -> {
-                        this.acceptFix_err("{")
-                        this.acceptFix_err("as")
-                        Pair(true, true)
-                    }
-                    this.acceptFix("{") -> {
-                        Pair(true, this.acceptFix("as"))
-                    }
-                    else -> Pair(false, false)
-                }
-                val (es,it) = when {
-                    (xblk && xit) -> {
-                        val id_tag = this.id_tag()
-                        this.acceptFix_err("=>")
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
-                        Pair(es, id_tag)
-                    }
-                    (xblk && !xit) -> {
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
-                        Pair(es, Pair(Tk.Id("it", this.tk0.pos, 0), null))
-                    }
-                    (!xblk && !xit) -> {
-                        val n = N
-                        val tk = this.tk0.pos
-                        val es = listOf(Expr.Acc(Tk.Id("ceu_$n", tk,0)))
-                        Pair(es, Pair(Tk.Id("ceu_$n", tk, 0), null))
-                    }
-                    else -> error("impossible case")
-                }
-                Expr.Yield(tk0, it, out, Expr.Do(Tk.Fix("do", tkx.pos), es))
+                val (inp,id_tag) = xas()
+                Expr.Yield(tk0, id_tag, out, Expr.Do(Tk.Fix("do", tkx.pos), inp))
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -493,14 +492,8 @@ class Parser (lexer_: Lexer)
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val trk = this.expr_in_parens()!!
-                this.acceptFix_err("{")
-                val tk1 = this.tk0 as Tk.Fix
-                this.acceptFix_err("as")
-                val it_tag = this.id_tag()
-                this.acceptFix_err("=>")
-                val es = this.exprs()
-                this.acceptFix_err("}")
-                Expr.Dtrack(tk0, it_tag, trk,
+                val (es,id_tag) = xas()
+                Expr.Dtrack(tk0, id_tag, trk,
                     Expr.Do(Tk.Fix("do",tk1.pos), es)
                 )
             }
@@ -837,13 +830,9 @@ class Parser (lexer_: Lexer)
         val op = this.tk0
         return when (op.str) {
             "thus" -> {
-                this.acceptFix_err("{")
-                val tkx = this.tk0 as Tk.Fix
-                this.acceptFix_err("as")
-                val (id,tag) = this.id_tag()
-                this.acceptFix_err("=>")
-                val es = this.exprs()
-                this.acceptFix_err("}")
+                val tkx = this.tk1 as Tk.Fix
+                val (es, id_tag) = xas()
+                val (id,tag) = id_tag
                 val dcl = Expr.Dcl(Tk.Fix("val",tkx.pos), id, tag, true, e)
                 Expr.Do(tk0, listOf(dcl) + es)
             }

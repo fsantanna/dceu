@@ -316,7 +316,7 @@ class Parser_99 {
                 "})\n") { e.tostr() }
     }
 
-    // YIELD
+    // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test
     fun ff_01_yield() {
@@ -337,6 +337,33 @@ class Parser_99 {
                 "nil\n" +
                 "\n" +
                 "}") { e.tostr() }
+    }
+    @Test
+    fun ff_03_catch() {
+        val l = lexer("catch {} in {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "catch { as it => nil } in {\n" +
+                "nil\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ff_04_detrack() {
+        val l = lexer("detrack(nil) { x }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "detrack(nil) { as it =>\n" +
+                "x\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ff_05_thus() {
+        val l = lexer("f() thus { it }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(f() thus { as it =>\n" +
+                "it\n" +
+                "})") { e.tostr() }
     }
 
     // RESUME-YIELD-ALL
