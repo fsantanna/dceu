@@ -199,7 +199,6 @@ fun AWAIT (v:String="true"): String {
 }
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
-    N = 1
     if (verbose) {
         System.err.println("... parsing ...")
     }
@@ -254,7 +253,6 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
 }
 
 fun test (inp: String, pre: Boolean=false): String {
-    N = 1
     //println(inp)
     val prelude = if (CEU == 99) "build/prelude-x.ceu" else "build/prelude-0.ceu"
     val inps = listOf(Pair(Triple("anon",1,1), inp.reader())) + if (!pre) emptyList() else {

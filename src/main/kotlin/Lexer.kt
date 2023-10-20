@@ -20,11 +20,14 @@ fun FileX (path: String): File {
     return File(xpath)
 }
 
-class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>) {
+class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=true) {
     val stack = ArrayDeque<Lex>()
     val comms = ArrayDeque<String>()
 
     init {
+        if (reset) {
+            N = 1
+        }
         for (inp in inps) {
             stack.addFirst(Lex(inp.first.first, inp.first.second, inp.first.third, PushbackReader(inp.second,2)))
         }

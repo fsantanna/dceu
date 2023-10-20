@@ -2383,7 +2383,7 @@ class Exec_04 {
                 " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun zz_20_bcast_tuple_func_ok() {
+    fun zz_20_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
                 v[0] thus { as x =>
@@ -2396,7 +2396,29 @@ class Exec_04 {
             spawn T()
             broadcast ([[1]])
         """)
-        assert(out == "[1]\n") { out }
+        assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
+                " |  anon : (lin 8, col 39) : f(it)\n" +
+                " v  anon : (lin 3, col 27) : declaration error : cannot move to deeper scope with pending references\n") { out }
+    }
+    @Test
+    fun zz_20_bcast_tuple_func_nox() {
+        val out = test("""
+            var f = func (v) {
+                val g = func (x) {
+                    x
+                }
+                g(v[0])
+            }
+            var T = task () {
+                yield(nil) { as it => f(it) }
+            }
+            spawn T()
+            broadcast ([[1]])
+        """)
+        assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+                " |  anon : (lin 9, col 39) : f(it)\n" +
+                " |  anon : (lin 6, col 17) : g(v[0])\n" +
+                " v  anon : (lin 3, col 34) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun zz_21_bcast_tuple_func_ok() {

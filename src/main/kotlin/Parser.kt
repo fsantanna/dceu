@@ -21,7 +21,7 @@ class Parser (lexer_: Lexer)
         //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
-        val lexer = Lexer(inps)
+        val lexer = Lexer(inps, false)
         val parser = Parser(lexer)
         return parser.expr()
     }
