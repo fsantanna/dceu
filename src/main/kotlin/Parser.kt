@@ -631,12 +631,12 @@ class Parser (lexer_: Lexer)
                 val (id, tag) = id_tag
                 val cnd = when {
                     (evt == null) -> es.tostr()
-                    !has -> "$id is? evt.tostr()"
-                    else -> "($id is? evt.tostr()) and ${es.tostr()}"
+                    !has -> "${id.str} is? ${evt.tostr()}"
+                    else -> "(${id.str} is? ${evt.tostr()}) and ${es.tostr()}"
                 }
                 this.nest("""
                     ${pre0}loop {
-                        ${pre0}break if yield() { as ${id.str} ${tag.cond{it.str}} =>
+                        ${pre0}break if ${pre0}yield() { as ${id.str} ${tag.cond{it.str}} =>
                             ${pre0}$cnd
                         }
                     }

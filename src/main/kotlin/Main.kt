@@ -197,6 +197,17 @@ fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
         }
     """.replace("\n", "")
 }
+val IS = """
+    func is' (v1,v2) {
+        ifs {
+            (v1 == v2)         => true
+            (type(v2) /= :tag) => false
+            (type(v1) == v2)   => true
+            tags(v1,v2)        => true
+            else => false
+        }
+    }
+"""
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {

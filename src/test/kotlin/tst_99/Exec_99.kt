@@ -599,6 +599,21 @@ class Exec_99 {
         """)
         assert(out == "1\n3\n:ok\n") { out }
     }
+    @Test
+    fun ii_07_spawn() {
+        val out = test("""
+            spawn task {
+                spawn task {
+                    yield ()
+                    println(1)
+                }
+                yield ()
+                println(2)
+            }
+            broadcast (nil)
+        """)
+        assert(out == "1\n2\n") { out }
+    }
 
     // PAR / PAR-AND / PAR-OR
 
@@ -848,15 +863,111 @@ class Exec_99 {
     @Test
     fun kk_01_await() {
         val out = test("""
+            $IS
             task T () {
                 await() { as it => it is? :x }
                 println(1)
             }
             spawn T()
-            broadcast tags([],:x,true)
+            broadcast (tags([],:x,true))
             println(2)
         """)
         assert(out == "1\n2\n") { out }
+    }
+    @Test
+    fun kk_02_await() {
+        val out = test("""
+            $IS
+            spawn task {
+                println(0)
+                await { (it/=nil) and (it[:type]==:x) }
+                println(99)
+            }
+            do {
+                println(1)
+                broadcast (@[(:type,:y)])
+                println(2)
+                broadcast (@[(:type,:x)])
+                println(3)
+            }
+        """)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun kk_03_await() {
+        val out = test("""
+            $IS
+            spawn task {
+                println(0)
+                await(:x)
+                println(99)
+            }
+            do {
+                println(1)
+                broadcast (tags([], :y, true))
+                println(2)
+                broadcast (tags([], :x, true))
+                println(3)
+            }
+        """)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun kk_04_await() {
+        val out = test("""
+            $IS
+            spawn task {
+                println(0)
+                await(:x)
+                println(99)
+            }
+            do {
+                println(1)
+                broadcast (tags([], :y, true))
+                println(2)
+                broadcast (tags([], :x, true))
+                println(3)
+            }
+        """)
+        assert(out == "0\n1\n2\n99\n3\n") { out }
+    }
+    @Test
+    fun kk_05_await() {
+        val out = test("""
+            val f
+            await()
+        """)
+        assert(out == "anon : (lin 3, col 13) : yield error : expected enclosing coro or task\n") { out }
+    }
+    @Test
+    fun kk_06_await() {
+        val out = test("""
+            spawn task {
+                loop {
+                    await {
+                        println(it)
+                    }
+                }
+            }
+            broadcast (@[])
+        """)
+        assert(out == "@[]\n") { out }
+    }
+    @Test
+    fun kk_07_await() {
+        val out = test("""
+            spawn task {
+                await {
+                    println(it)
+                }
+                await {                    
+                    println(it)
+                }
+            }
+            broadcast (:1)
+            broadcast (:2)
+        """)
+        assert(out == ":1\n:2\n") { out }
     }
 
     // WATCHING

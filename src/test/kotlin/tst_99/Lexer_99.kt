@@ -23,13 +23,28 @@ class Lexer_99 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
+
     @Test
-    fun aa_02_cmds() {
+    fun aa_02_ops() {
+        val l = lexer("{{not}} not")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Id && it.str == "not" })
+        assert(tks.next().let { it is Tk.Op && it.str == "not" })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
+    @Test
+    fun aa_03_cmds() {
         val l =
-            lexer("ifs resume-yield-all")
+            lexer("ifs resume-yield-all await par par-and par-or with")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "resume-yield-all" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "await" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "par" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "par-and" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "par-or" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "with" })
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }

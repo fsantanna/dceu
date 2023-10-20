@@ -42,26 +42,6 @@ class TXParser {
         assert(out == "anon : (lin 2, col 17) : call error : expected function\n:error\n") { out }
     }
 
-    // SPAWN, PAR, RESUME-YIELD-ALL
-
-    @Test
-    fun par2_err() {
-        val l = lexer("par {}")
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"with\" : have end of file")
-    }
-    @Test
-    fun spawn3() {
-        val l = lexer("""
-            spawn {
-                1
-            }
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "spawn (task () :fake {\n1\n})()") { e.tostr() }
-    }
-
     // ITER
 
     @Ignore // N ids vary

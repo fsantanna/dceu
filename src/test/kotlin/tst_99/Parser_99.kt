@@ -525,6 +525,14 @@ class Parser_99 {
                 "}\n" +
                 "}") { e.tostr() }
     }
+    @Test
+    fun ii_04_par_err() {
+        val l = lexer("par {}")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected \"with\" : have end of file")
+    }
+
+    // AWAIT
 
     @Test
     fun jj_01_await() {
@@ -534,6 +542,49 @@ class Parser_99 {
         assert(e.tostr() == "loop {\n" +
                 "break if yield(nil) { as ceu_7 =>\n" +
                 "ceu_7\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun jj_02_await() {
+        val l = lexer("await(x)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "break if yield(nil) { as ceu_9 =>\n" +
+                "is'(ceu_9,x)\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun jj_03_await() {
+        val l = lexer("await { it }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "break if yield(nil) { as it =>\n" +
+                "it\n" +
+                "\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun jj_04_await() {
+        val l = lexer("await(:X) { as x:X => x.x>2 }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "break if yield(nil) { as x :X =>\n" +
+                "(is'(x,:X) thus { as ceu_63 =>\n" +
+                "if ceu_63 {\n" +
+                "{{>}}(x[:x],2)\n" +
+                "} else {\n" +
+                "ceu_63\n" +
+                "}\n" +
+                "})\n" +
+                "\n" +
                 "\n" +
                 "}\n" +
                 "}") { e.tostr() }
