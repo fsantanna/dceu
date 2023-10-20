@@ -423,7 +423,7 @@ class Exec_99 {
             resume co2([])
             ;;}}}
         """)
-        assert(out == " |  anon : (lin 13, col 13) : resume co1([])\n" +
+        assert(out == " |  anon : (lin 13, col 13) : resume (co1)([])\n" +
                 " v  anon : (lin 5, col 17) : block escape error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
@@ -450,27 +450,22 @@ class Exec_99 {
     @Test
     fun hh_01_yieldall() {
         val out = test("""
-            $PLUS
-            func to-vector (col, tp) {
-                val ret = #[]
-                var i = 0
-                loop {
-                    break if (i == #col)
-                    set ret[#ret] = col[i]
-                    set i = i + 1
-                }
-                drop(ret)
-            }
             coro foo () {
                 yield('a')
                 yield('b')
             }
             coro bar () {
                 yield('x')
-                resume-yield-all coroutine(foo) ()
+                resume-yield-all (coroutine(foo)) ()
                 yield('y')
             }
-            println(to-vector(coroutine(bar)))
+            val co = coroutine(bar)
+            loop {
+                val v = resume co()
+                break if status(co) == :terminated
+                print(v)
+            }
+            println()
         """)
         assert(out == "xaby\n") { out }
     }

@@ -345,19 +345,43 @@ class Parser_99 {
     fun gg_01_resume_yield_all_err() {
         val l = lexer("resume-yield-all f")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-call error : expected call")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all error : expected call")
     }
     @Test
     fun gg_02_resume_yield_all_err() {
         val l = lexer("resume-yield-all f(1,2)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-call error : invalid number of arguments")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 18) : resume-yield-all error : invalid number of arguments")
     }
     @Test
     fun gg_03_resume_yield_all() {
         val l = lexer("resume-yield-all f()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "TODO") { e.tostr() }
+        assert(e.tostr() == "(f thus { as ceu_co_10 =>\n" +
+                "var ceu_arg_10 = nil\n" +
+                "loop {\n" +
+                "break if (resume (ceu_co_10)(ceu_arg_10) thus { as ceu_v_10 =>\n" +
+                "if ({{/=}}(status(ceu_co_10),:terminated) thus { as ceu_59 =>\n" +
+                "if ceu_59 {\n" +
+                "ceu_59\n" +
+                "} else {\n" +
+                "{{/=}}(ceu_v_10,nil)\n" +
+                "}\n" +
+                "})\n" +
+                " {\n" +
+                "set ceu_arg_10 = yield(ceu_v_10) { as ceu_134 =>\n" +
+                "ceu_134\n" +
+                "\n" +
+                "}\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "{{==}}(status(ceu_co_10),:terminated)\n" +
+                "})\n" +
+                "\n" +
+                "}\n" +
+                "ceu_arg_10\n" +
+                "})\n") { e.tostr() }
     }
 }

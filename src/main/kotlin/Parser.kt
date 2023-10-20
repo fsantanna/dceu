@@ -588,18 +588,13 @@ class Parser (lexer_: Lexer)
                 val tkx = this.tk1
                 val call = this.expr_2_pre()
                 when {
-                    (call !is Expr.Call) -> err(tkx, "resume-yield-call error : expected call")
-                    (call.args.size > 1) -> err(tkx, "resume-yield-call error : invalid number of arguments")
+                    (call !is Expr.Call) -> err(tkx, "resume-yield-all error : expected call")
+                    (call.args.size > 1) -> err(tkx, "resume-yield-all error : invalid number of arguments")
                 }
                 call as Expr.Call
-                val arg = if (call.args.size == 0) {
-                    Expr.Nil(Tk.Fix("nil", call.tk.pos.copy()))
-                } else {
-                    call.args[0]
-                }
                 this.nest("""
-                    ${call.tostr(true)} thus { as ceu_co_$N => 
-                        var ceu_arg_$N = ${arg.tostr(true)}
+                    ${call.clo.tostr(true)} thus { as ceu_co_$N => 
+                        var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
                         loop {
                             break if (
                                 resume ceu_co_$N(ceu_arg_$N) thus { as ceu_v_$N =>
@@ -608,9 +603,10 @@ class Parser (lexer_: Lexer)
                                     }
                                     (status(ceu_co_$N) == :terminated)
                                 }
-                            )                                
+                            )
                         }
                         ceu_arg_$N
+                    }
                 """)
             }
 

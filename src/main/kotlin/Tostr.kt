@@ -55,7 +55,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ") { as " + this.it.first.str + this.it.second.cond { " "+it.str } + " =>\n" + this.blk.es.tostr(pre) + "\n}"
-        is Expr.Resume -> "resume " + this.co.tostr(pre) + "(" + this.arg.tostr(pre) + ")"
+        is Expr.Resume -> "resume (" + this.co.tostr(pre) + ")(" + this.arg.tostr(pre) + ")"
 
         is Expr.Spawn  -> "spawn " + this.tsk.tostr(pre) + "(" + this.arg.tostr(pre) + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" }
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"

@@ -357,7 +357,7 @@ class Exec_03 {
                 println(v1, v2)
                 yield(nil) { as it => nil }
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_133.Number, ceu_mem->id_v2_15.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_135.Number, ceu_mem->id_v2_17.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -621,7 +621,7 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : resume t(v)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
                 " v  anon : (lin 2, col 30) : argument error : cannot copy reference to outer scope\n") { out }
     }
     @Test
@@ -646,7 +646,7 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : resume t(v)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
@@ -691,7 +691,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 16, col 33) : resume t(nil)\n" +
+        assert(out == " |  anon : (lin 16, col 33) : resume (t)(nil)\n" +
                 " v  anon : (lin 5, col 21) : yield error : cannot receive assigned reference\n") { out }
     }
     @Test
@@ -710,6 +710,34 @@ class Exec_03 {
             resume t()
         """)
         assert(out == ":out\t[]\n:in\tnil\n") { out }
+    }
+    @Test
+    fun gg_07_scope() {
+        val out = test("""
+            val f = func (x, y) {
+                nil
+            }
+            val C = coro () {
+                nil
+            }
+            println(f(coroutine(C)))
+        """)
+        assert(out == " |  anon : (lin 8, col 21) : f(coroutine(C))\n" +
+                " v  anon : (lin 2, col 33) : argument error : cannot move to deeper scope with pending references\n") { out }
+    }
+    @Test
+    fun gg_08_scope() {
+        val out = test("""
+            val f = func (x, y) {
+                nil
+            }
+            val C = coro () {
+                nil
+            }
+            val c = coroutine(C)
+            println(f(c))
+        """)
+        assert(out == "nil\n") { out }
     }
 
     // CATCH / THROW

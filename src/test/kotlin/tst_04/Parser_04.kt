@@ -40,8 +40,8 @@ class Parser_04 {
             }
             })
             coroutine(t)
-            set v = resume a(1)
-            resume a(2)
+            set v = resume (a)(1)
+            resume (a)(2)
             
         """.trimIndent()) { e.tostr() }
     }

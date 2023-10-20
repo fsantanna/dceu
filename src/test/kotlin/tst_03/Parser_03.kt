@@ -65,8 +65,8 @@ class Parser_03 {
             }
             })
             coroutine(t)
-            set v = resume a(1)
-            resume a(2)
+            set v = resume (a)(1)
+            resume (a)(2)
             
         """.trimIndent()) { e.tostr() }
     }
@@ -99,6 +99,15 @@ class Parser_03 {
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
         assert(e.tostr() == "yield(1) { as it =>\nnil\n\n}") { e.tostr() }
+    }
+    @Test
+    fun bb_06_resume_() {
+        val l = lexer("""
+            resume (f()) ()
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "resume (f())(nil)") { e.tostr() }
     }
 
     // AS
