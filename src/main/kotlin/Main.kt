@@ -182,23 +182,15 @@ fun OR (v1:String, v2:String): String {
 fun AND (v1:String, v2:String): String {
     return "($v1 thus { as it => if it { $v2 } else { $v1 } })"
 }
-fun AWAIT (v:String="true"): String {
+fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
             break if yield(nil) { as it =>
-                if it == $v {
-                    true
+                if $v {
+                    if it { it } else { true }
                 } else {
-                    if type(it) == :exe-task {
-                        false
-                    } else {
-                        if $v {
-                            if it { it } else { true }
-                        } else {
-                            false
-                        }                    
-                    }
-                }
+                    false
+                }                    
             }
         }
     """.replace("\n", "")

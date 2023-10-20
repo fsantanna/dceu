@@ -579,7 +579,7 @@ class Exec_99 {
                         ${AWAIT()}
                         println(2)
                     }
-                    ${AWAIT("t1")}
+                    ${AWAIT("it==t1")}
                 }
                 println(:ok)
             }
@@ -768,16 +768,16 @@ class Exec_99 {
             spawn task {
                 par-or {
                     defer { println(1) }
-                    ${AWAIT("true")}
-                    ${AWAIT("true")}
+                    ${AWAIT()}
+                    ${AWAIT()}
                     println(999)
                 } with {
                     ${AWAIT()}
                     println(2)
                 } with {
                     defer { println(3) }
-                    ${AWAIT("true")}
-                    ${AWAIT("true")}
+                    ${AWAIT()}
+                    ${AWAIT()}
                     println(999)
                 }
                 println(999)
@@ -811,16 +811,16 @@ class Exec_99 {
             spawn task {
                 par-and {
                     defer { println(1) }
-                    ${AWAIT("true")}
-                    ${AWAIT("true")}
+                    ${AWAIT()}
+                    ${AWAIT()}
                     println(1)
                 } with {
                     ${AWAIT()}
                     println(2)
                 } with {
                     defer { println(3) }
-                    ${AWAIT("true")}
-                    ${AWAIT("true")}
+                    ${AWAIT()}
+                    ${AWAIT()}
                     println(3)
                 }
                 println(:ok)

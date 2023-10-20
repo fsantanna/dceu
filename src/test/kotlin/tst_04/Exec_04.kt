@@ -1682,13 +1682,13 @@ class Exec_04 {
                                 yield(nil) { as it => nil }
                                 println(:1)
                             }) ()
-                            ${AWAIT("t2")}
+                            ${AWAIT("it==t2")}
                             println(:2)
                         }) ()
-                        ${AWAIT("t1")}
+                        ${AWAIT("it==t1")}
                         println(:3)
                     }
-                    ${AWAIT(":X")}
+                    ${AWAIT("it==:X")}
                     println(:99)
                 }) ()
                 println(:0)
