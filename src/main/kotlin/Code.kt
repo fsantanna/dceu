@@ -182,12 +182,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     (f_b is Expr.Proto) -> "NULL"
                     else                -> ups.first_block(up)!!.idc("block")
                 }
-                val (depth,bf,ptr) = when {
-                    (f_b == null) -> Triple("1", "1", "{.frame=&_ceu_frame_}")
-                    (f_b is Expr.Proto) -> Triple (
-                        "(ceu_frame->up_block->depth + 1)", "1",
-                        "{.frame=${if (f_b.tk.str=="func") "ceu_frame" else "&ceu_frame->exe->frame"}}")
-                    else -> Triple("($bupc->depth + 1)", "0", "{.block=$bupc}")
+                val (bf,ptr) = when {
+                    (f_b == null) -> Pair("1", "{.frame=&_ceu_frame_}")
+                    (f_b is Expr.Proto) -> Pair("1", "{.frame=${if (f_b.tk.str=="func") "ceu_frame" else "&ceu_frame->exe->frame"}}")
+                    else -> Pair("0", "{.block=$bupc}")
                 }
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
@@ -211,7 +209,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     } else {
                         """
-                        $_blkc = (CEU_Block) { $depth, $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
+                        $_blkc = (CEU_Block) { $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
                         $blkc = &$_blkc;                                 
                         """
                     }}
@@ -343,7 +341,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
                         ${(this.tk.str == "thus").cond { """ 
-                            if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.block->depth>1 && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                            if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_block_up_block(CEU_HLD_BLOCK(ceu_acc.Dyn))!=NULL && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
                                 CEU_Value err = { CEU_VALUE_ERROR, {.Error="thus escape error : cannot copy reference to outer scope"} };
                                 CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                             }
@@ -368,7 +366,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Block* ceu_blk = CEU_HLD_BLOCK($it.Dyn);
                             if ($blkc != ceu_blk) {
                                 // if same block - free below w/ nested exes - b/c of pending refs defers
-                                ceu_gc_dec($it, (ceu_blk->depth == $blkc->depth));
+                                ceu_gc_dec($it, (ceu_blk == $blkc));
                             }
                         }
                     """ }.joinToString("")}

@@ -133,7 +133,6 @@ fun Coder.main (tags: Tags): String {
         } CEU_Dyns;
 
         typedef struct CEU_Block {
-            uint16_t depth;
             uint8_t  istop;
             union {
                 struct CEU_Frame* frame;    // istop = 1
@@ -319,7 +318,6 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
-        int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD hld_type, CEU_Dyn* src);
         
         CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
         CEU_Value ceu_create_vector  (CEU_Block* hld);
@@ -509,7 +507,6 @@ fun Coder.main (tags: Tags): String {
                 printf("    refs  = %d\n", v.Dyn->Any.refs);
                 printf("    hold  = %d\n", v.Dyn->Any.hld.type);
                 printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
-                printf("    depth = %d\n", CEU_HLD_BLOCK(v.Dyn)->depth);
                 printf("    next  = %p\n", v.Dyn->Any.hld.next);
                 printf("    ----\n");
                 switch (v.type) {
@@ -536,7 +533,6 @@ fun Coder.main (tags: Tags): String {
         }        
         void ceu_dump_block (CEU_Block* blk) {
             printf(">>> BLOCK: %p\n", blk);
-            printf("    depth = %d\n", blk->depth);
             printf("    istop = %d\n", blk->istop);
             printf("    up    = %p\n", blk->up.frame);
             CEU_Dyn* cur = blk->dn.dyns.first;
@@ -1085,9 +1081,7 @@ fun Coder.main (tags: Tags): String {
                 strcat(msg, " : cannot copy reference to outer scope");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
             };
-            //printf(">>> %d %d -> %d\n", dst_blk->depth, src_blk->depth, src.Dyn->);
 
-            int src_depth = src_blk->depth;
             int src_type  = src.Dyn->Any.hld.type;
 
             src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
@@ -1097,8 +1091,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 ceu_hold_chg(src.Dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
             }
-            //printf(">>> %d -> %d\n", src_depth, src_blk->depth);
-            if (src.Dyn->Any.hld.type==src_type && dst_blk->depth>=src_depth) {
+            if (src.Dyn->Any.hld.type==src_type && ceu_block_is_up_dn(src_blk,dst_blk)) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             }
 
@@ -1168,7 +1161,7 @@ fun Coder.main (tags: Tags): String {
 
             // v affects fleeting col with innermost scope
             if (col->Any.hld.type == CEU_HOLD_FLEET) {
-                if (CEU_HLD_BLOCK(v.Dyn)->depth < CEU_HLD_BLOCK(col)->depth) {
+                if (ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn), CEU_HLD_BLOCK(col))) {
                     return (CEU_Value) { CEU_VALUE_NIL };
                 } else {
                     col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
@@ -2204,7 +2197,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         int CEU_BREAK = 0;
-        CEU_Block _ceu_block_ = { 0, 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
+        CEU_Block _ceu_block_ = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
         CEU_Frame _ceu_frame_ = { &_ceu_block_, NULL CEU3(COMMA {.exe=NULL}) };
         CEU_Frame* ceu_frame = &_ceu_frame_;
 

@@ -177,7 +177,7 @@ val PLUS = """
     val {{+}} = func (v1, v2) {
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
-"""
+""".replace("\n", "")
 fun OR (v1:String, v2:String): String {
     return "($v1 thus { as it_$N => if it_$N { it_$N } else { $v2 } })"
 }
@@ -211,7 +211,7 @@ val IS = """
             else => false
         }
     }
-"""
+""".replace("\n", "")
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
