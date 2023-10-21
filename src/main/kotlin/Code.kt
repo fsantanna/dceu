@@ -340,11 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        ${(this.tk.str == "thus").cond { """ 
-                            if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_block_up_block(CEU_HLD_BLOCK(ceu_acc.Dyn))!=NULL && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
-                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="thus escape error : cannot copy reference to outer scope"} };
-                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                            }
+                        ${(this.tk.str == "thus").cond { """
                         """}}
                         CEU_Value ceu_err_$n = ceu_hold_chk_set(CEU4(1 COMMA) $up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
                         if (ceu_err_$n.type == CEU_VALUE_ERROR) {

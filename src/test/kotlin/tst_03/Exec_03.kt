@@ -658,7 +658,7 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-                " v  anon : (lin 3, col 36) : thus escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun gg_04_scope() {

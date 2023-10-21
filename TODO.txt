@@ -1,6 +1,5 @@
 # TODO
 
-- block is parent on assign
 - THUS
     - no yields, bcasts, spawns, set outs
     - only plain or fleet returns
