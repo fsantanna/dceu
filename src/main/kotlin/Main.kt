@@ -176,24 +176,18 @@ val PLUS = """
     }    
 """.replace("\n", "")
 fun OR (v1:String, v2:String): String {
+    N++
     return "($v1 thus { as it_$N => if it_$N { it_$N } else { $v2 } })"
 }
 fun AND (v1:String, v2:String): String {
+    N++
     return "($v1 thus { as it_$N => if it_$N { $v2 } else { $v1 } })"
 }
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
             break if yield(nil) thus { as it =>
-                if $v {
-                    if ${AND("it", "`:bool (${D}it.type < CEU_VALUE_DYNAMIC)`")} {
-                        it
-                    } else {
-                        true
-                    }
-                } else {
-                    false
-                }                    
+                ${AND(v, OR("it","true"))}
             }
         }
     """.replace("\n", "")
