@@ -44,7 +44,7 @@ class Parser_03 {
     fun bb_02_coro() {
         val l = lexer("""
             set t = coro (v) {
-                set v = yield((1)) thus { as it:X => it }
+                set v = yield((1)) ;;thus { as it:X => it }
                 yield((2)) thus { as it => nil }
             }
             coroutine(t)
@@ -55,10 +55,7 @@ class Parser_03 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (coro (v) {
-            set v = (yield(1) thus { as it :X =>
-            it
-            })
-            
+            set v = yield(1)
             (yield(2) thus { as it =>
             nil
             })
@@ -115,6 +112,8 @@ class Parser_03 {
             yield(1)
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"thus\" : have end of file")
+        val e = parser.expr()
+        assert(e.tostr() == "yield(1)")
+        //assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"thus\" : have end of file")
     }
 }

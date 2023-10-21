@@ -2,6 +2,9 @@
 
 - remover obrigacao do thus
     - somente detrack/pub de task_in
+        - se o ceu_block_up_task for TASK_IN
+            - o dst deve ser igual ou filho de ceu_block_up_task_dn_block
+            - exceto track que pode ser ceu_block_up_task->up.block
 - passar em todos os testes
 - fazer os testes do pico ceu o quanto antes
     - all, drag, bird-01, bird-11
