@@ -65,9 +65,6 @@ val XOPERATORS = if (CEU < 99) setOf() else {
 
 val TAGS = listOf (
     ":nil", ":error", ":tag", ":bool", ":char", ":number", ":pointer",
-) + (if (CEU < 4) listOf() else listOf(
-    ":ref",
-)) + listOf(
     ":dynamic",
     ":func",
 ) + (if (CEU < 3) listOf() else listOf(

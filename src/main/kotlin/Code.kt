@@ -257,7 +257,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_inc($it);
                             """
                             (up is Expr.Dtrack && up.blk == this) -> """
-                                $it = ceu_toref(ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task));
+                                $it = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
                             """
                             else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
@@ -912,8 +912,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // COL
                     ${this.col.code()}
-                    CEU_Value ceu_col_$n = CEU4(ceu_deref)(ceu_acc);
-                    $idxc = CEU4(ceu_deref)($idxc);
+                    CEU_Value ceu_col_$n = ceu_acc;
                     CEU_ASSERT($bupc, ceu_col_check(ceu_col_$n, $idxc), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 """ + when {
                     this.isdst() -> {
