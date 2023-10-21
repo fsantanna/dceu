@@ -34,12 +34,14 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Set    -> {
                 this.dst.traverse()
                 this.src.traverse()
+                /*
                 val thus = ups.first(this) { it is Expr.Do && it.tk.str=="thus"}
                 if (thus != null) {
                     if (ups.any(this.dst.base(ups)) { it==thus }) {
                         err(this.tk, "invalid set : destination across thus")
                     }
                 }
+                 */
                 if (this.dst is Expr.Acc) {
                     val (_,dcl) = vars.get(this.dst)
                     if (dcl.tk.str == "val") {

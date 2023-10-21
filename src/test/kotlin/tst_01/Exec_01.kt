@@ -2130,6 +2130,7 @@ class Exec_01 {
         )
         assert(out == "[1,2,3]\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : invalid set : destination across thus\n") { out }
     }
     @Test
     fun mm_02_thus_err() {
@@ -2140,7 +2141,8 @@ class Exec_01 {
             }
             println(x)
         """)
-        assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        assert(out == "10\n") { out }
     }
     @Test
     fun mm_03_thus_err() {
@@ -2148,9 +2150,11 @@ class Exec_01 {
             var x
             nil thus { as it =>
                 set x = it  ;; err
+                println(x)
             }
         """)
-        assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun mm_04_tmp() {

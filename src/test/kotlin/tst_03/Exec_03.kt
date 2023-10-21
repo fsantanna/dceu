@@ -229,7 +229,7 @@ class Exec_03 {
         assert(out == "13\n") { out }
     }
     @Test
-    fun cc_11_mult() {
+    fun todo_cc_11_mult() {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
@@ -757,11 +757,11 @@ class Exec_03 {
     fun hh_01_throw() {
         val out = test("""
             var co
-            set co = coroutine(coro (x,y) {
+            set co = coroutine(coro (x) {
                 throw(:e2)
             })
             catch {as it=>:e2} in {
-                resume co(1,2)
+                resume co(1)
                 println(99)
             }
             println(1)
@@ -772,12 +772,12 @@ class Exec_03 {
     fun hh_02_throw() {
         val out = test("""
             var co
-            set co = coroutine(coro (x,y) {
+            set co = coroutine(coro () {
                 yield(nil) thus { as it => nil }
                 throw(:e2)
             })
             catch {as it=>:e2} in {
-                resume co(1,2)
+                resume co()
                 println(1)
                 resume co()
                 println(2)

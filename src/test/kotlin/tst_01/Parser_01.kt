@@ -525,7 +525,7 @@ class Parser_01 {
                 "})\n" +
                 " thus { as it =>\n" +
                 "3\n" +
-                "})") { e.tostr() }
+                "})\n\n") { e.tostr() }
     }
 
     // FUNC

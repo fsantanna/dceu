@@ -1053,7 +1053,7 @@ class Exec_04 {
                 println(t)
             }) ()
             broadcast ([1])
-        """, true)
+        """)
         assert(out == "[1]\n") { out }
     }
     @Test
@@ -1454,13 +1454,15 @@ class Exec_04 {
             var x = f(a)        ;; no
             println(x)
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
         //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
         //        ":error\n") { out }
         //assert(out == "anon : (lin 12, col 21) : f(a)\n" +
         //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kj_06_expose_err() {
@@ -1478,10 +1480,12 @@ class Exec_04 {
             val x = f(a)
             println(x)
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 12, col 13) : f(a)\n" +
         //        "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
+                " v  anon : (lin 4, col 21) : set error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kj_07_pub_func() {
