@@ -11,7 +11,7 @@ fun lexer (str: String): Lexer {
 class Lexer_01 {
     @Test
     fun aa_01_syms() {
-        val l = lexer("{ } ( ; ( = ) ) - , ][ / * + .")
+        val l = lexer("{ } ( ; ( = ) ) - , ][ / * + . =>")
         val tks = l.lex().iterator()
         assert(tks.next().str == "{")
         assert(tks.next().str == "}")
@@ -28,6 +28,7 @@ class Lexer_01 {
         assert(tks.next().str == "*")
         assert(tks.next().str == "+")
         assert(tks.next().str == ".")
+        assert(tks.next().str == "=>")
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
@@ -44,15 +45,17 @@ class Lexer_01 {
     @Test
     fun bb_01_ids() {
         val l =
-            lexer("status if aaa throw tasks evt export nil pub task poly group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
+            lexer("status if aaa thus throw tasks evt export as nil pub task poly group track enum XXX coro defer err set coroutine spawn loop yield while vary10 catch resume else var do native _do_ broadcast true data func b10 in false")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "thus" })
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Id  && it.str == "evt" })
         assert(tks.next().let { it is Tk.Id  && it.str == "export" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "as" })
         assert(tks.next().let { it is Tk.Fix && it.str == "nil" })
         assert(tks.next().let { it is Tk.Id  && it.str == "pub" })
         assert(tks.next().let { it is Tk.Id  && it.str == "task" })

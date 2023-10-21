@@ -411,9 +411,8 @@ class Parser (lexer_: Lexer)
             (CEU>=3 && this.acceptFix("yield")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val out = this.expr_in_parens(CEU>=99) ?: Expr.Nil(Tk.Fix("nil",this.tk0.pos))
-                val tkx = this.tk1
-                val (inp,id_tag) = xas()
-                Expr.Yield(tk0, id_tag, out, Expr.Do(Tk.Fix("do", tkx.pos), inp))
+                this.checkFix_err("thus")
+                Expr.Yield(tk0, out)
             }
             (CEU>=3 && this.acceptFix("resume")) -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -744,18 +743,19 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    // expr_0_out : v thus {...}    v --> f     f <-- v    v where {...}
+    // expr_0_out : v --> f     f <-- v    v where {...}
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f    f<-v
-    // expr_4_suf : v[0]    v.x    v.(:T).x    f()    f \{...}
+    // expr_4_suf : v[0]    v.x    v.(:T).x    f()    f \{...}    v thus {...}
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
-                    this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
+                    this.acceptFix("thus") || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
+        val op = this.tk0
         if (!ok) {
             return e
         }
@@ -789,6 +789,13 @@ class Parser (lexer_: Lexer)
                         }
                         else -> Expr.Call(e.tk, e, args)
                     }
+                }
+                "thus" -> {
+                    val tkx = this.tk1
+                    val (es, id_tag) = xas()
+                    val (id,tag) = id_tag
+                    val dcl = Expr.Dcl(Tk.Fix("val",tkx.pos), id, tag, true, e)
+                    Expr.Do(op, listOf(dcl) + es)
                 }
                 else -> error("impossible case")
             }
@@ -856,6 +863,8 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
+        return this.expr_1_bin()
+        /*
         val e = if (xe != null) xe else this.expr_1_bin()
         val ok = this.acceptFix("thus")
         if (!ok) {
@@ -867,15 +876,9 @@ class Parser (lexer_: Lexer)
         }
         val op = this.tk0
         return when (op.str) {
-            "thus" -> {
-                val tkx = this.tk1 as Tk.Fix
-                val (es, id_tag) = xas()
-                val (id,tag) = id_tag
-                val dcl = Expr.Dcl(Tk.Fix("val",tkx.pos), id, tag, true, e)
-                Expr.Do(tk0, listOf(dcl) + es)
-            }
             else -> error("impossible case")
         }
+         */
     }
 
     fun expr (): Expr {

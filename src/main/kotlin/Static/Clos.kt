@@ -47,7 +47,7 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Catch  -> { this.cnd?.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 
-            is Expr.Yield  -> { this.arg.traverse() ; this.blk.traverse() }
+            is Expr.Yield  -> this.arg.traverse()
             is Expr.Resume -> { this.co.traverse() ; this.arg.traverse() }
 
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.arg.traverse() }

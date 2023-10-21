@@ -258,10 +258,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 $it = ceu_err.Dyn->Throw.val;
                                 ceu_gc_inc($it);
                             """
-                            (up is Expr.Yield && up.blk == this) -> """
-                                $it = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
-                                ceu_gc_inc($it);
-                            """
                             (up is Expr.Dtrack && up.blk == this) -> """
                                 $it = ceu_toref(ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task));
                             """
@@ -346,6 +342,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
+                        ${(this.tk.str == "thus").cond { """ 
+                            if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.block->depth>1 && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
+                                CEU_Value err = { CEU_VALUE_ERROR, {.Error="thus escape error : cannot copy reference to outer scope"} };
+                                CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
+                            }
+                        """}}
                         CEU_Value ceu_err_$n = ceu_hold_chk_set(CEU4(1 COMMA) $up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
                         if (ceu_err_$n.type == CEU_VALUE_ERROR) {
                         #if CEU <= 1
@@ -506,7 +508,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         goto CEU_LOOP_START_${this.n};
                     }
             """
-            is Expr.Break -> """ // XBREAK | ${this.dump()}
+            is Expr.Break -> """ // BREAK | ${this.dump()}
                 ${this.cnd.code()}
                 if (ceu_as_bool(ceu_acc)) {
                     ${this.e.cond { it.code() }}
@@ -615,7 +617,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         continue;
                     }
                 #endif
-                    ${this.blk.code()}
+                    ceu_acc = (ceu_n == 1) ? ceu_args[0] : (CEU_Value) { CEU_VALUE_NIL };
                 }
                 """
             }

@@ -33,7 +33,7 @@ class Parser_03 {
     @Test
     fun bb_01_yield_err() {
         val l = lexer("""
-            yield(1)
+            yield(1) thus
         """)
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
@@ -44,8 +44,8 @@ class Parser_03 {
     fun bb_02_coro() {
         val l = lexer("""
             set t = coro (v) {
-                set v = yield((1)) { as it:X => it }
-                yield((2)) { as it => nil }
+                set v = yield((1)) thus { as it:X => it }
+                yield((2)) thus { as it => nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -55,14 +55,14 @@ class Parser_03 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (coro (v) {
-            set v = yield(1) { as it :X =>
+            set v = (yield(1) thus { as it :X =>
             it
+            })
             
-            }
-            yield(2) { as it =>
+            (yield(2) thus { as it =>
             nil
+            })
             
-            }
             })
             coroutine(t)
             set v = resume (a)(1)
@@ -92,13 +92,13 @@ class Parser_03 {
     fun bb_05_yield() {
         val l = lexer("""
             yield
-            (1)
+            (1) thus
             { as it => nil }
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-        assert(e.tostr() == "yield(1) { as it =>\nnil\n\n}") { e.tostr() }
+        assert(e.tostr() == "(yield(1) thus { as it =>\nnil\n})\n") { e.tostr() }
     }
     @Test
     fun bb_06_resume_() {
@@ -109,51 +109,12 @@ class Parser_03 {
         val e = parser.expr()
         assert(e.tostr() == "resume (f())(nil)") { e.tostr() }
     }
-
-    // AS
-
     @Test
-    fun cc_01_yield_as_err() {
+    fun bb_07_yield_err() {
         val l = lexer("""
-            yield(nil) { as 1 }
+            yield(1)
         """)
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 29) : expected identifier : have \"1\"")
-    }
-    @Test
-    fun cc_02_yield_as_err() {
-        val l = lexer("""
-            yield(nil) { as x }
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 31) : expected \"=>\" : have \"}\"")
-    }
-    @Test
-    fun cc_03_yield_as_err() {
-        val l = lexer("""
-            yield(nil) { as x => }
-        """)
-        val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 2, col 34) : expected expression : have \"}\"")
-    }
-    @Test
-    fun cc_04_yield_as() {
-        val l = tst_04.lexer("""
-            coro () {
-                yield(nil) { as it => nil }
-            }
-        """
-        )
-        val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == """
-            (coro () {
-            yield(nil) { as it =>
-            nil
-            
-            }
-            })
-            
-        """.trimIndent()) { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"thus\" : have end of file")
     }
 }

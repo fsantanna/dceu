@@ -2113,7 +2113,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
 
-    // SCOPE / :FLEET / :fleet
+    // THUS / SCOPE / :FLEET / :fleet
 
     @Test
     fun mm_01_tmp() {
@@ -2130,6 +2130,27 @@ class Exec_01 {
         )
         assert(out == "[1,2,3]\n") { out }
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun mm_02_thus_err() {
+        val out = test("""
+            var x
+            nil thus { as it =>
+                set x = 10  ;; err
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+    }
+    @Test
+    fun mm_03_thus_err() {
+        val out = test("""
+            var x
+            nil thus { as it =>
+                set x = it  ;; err
+            }
+        """)
+        assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
     }
     @Test
     fun mm_04_tmp() {
@@ -2167,7 +2188,7 @@ class Exec_01 {
         assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
-    fun mm_06_and_or() {
+    fun mm_07_and_or() {
         val out = test("""
             val t = func () { println(:t) ; true  }
             val f = func () { println(:f) ; false }

@@ -18,7 +18,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
 
             is Expr.Catch  -> this.cnd.coexists()
 
-            is Expr.Yield  -> this.arg.coexists() || this.blk.coexists()
+            is Expr.Yield  -> this.arg.coexists()
             is Expr.Resume -> this.co.coexists() || this.arg.coexists()
 
             is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.arg.coexists()
@@ -110,12 +110,7 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
             """
             is Expr.Defer -> this.blk.mem()
 
-            is Expr.Yield -> """
-                $union { // YIELD
-                    ${this.arg.mem()}
-                    ${this.blk.mem()}
-                };
-            """
+            is Expr.Yield -> this.arg.mem()
             is Expr.Resume -> """
                 struct {
                     CEU_Value co_${this.n};

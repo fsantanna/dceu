@@ -24,7 +24,7 @@ class Exec_03 {
     fun aa_02_coro() {
         val out = test("""
             val t = coro (v) {
-                yield(v) { as it => nil }
+                yield(v) thus { as it => nil }
             }
             println(t)
         """)
@@ -33,7 +33,7 @@ class Exec_03 {
     @Test
     fun aa_03_yield_err() {
         val out = test("""
-            yield(nil) { as it => nil }
+            yield(nil) thus { as it => nil }
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro\n") { out }
     }
@@ -49,10 +49,19 @@ class Exec_03 {
     fun aa_05_yield_err() {
         val out = test("""
             resume (coro () {
-                yield(nil) { as it => set it = nil }
+                yield(nil) thus { as it => set it = nil }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 39) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 44) : invalid set : destination is immutable\n") { out }
+    }
+    @Test
+    fun aa_06_yield_err() {
+        val out = test("""
+            resume (coro () {
+                yield(nil) thus { as it => yield(nil) thus { as x => nil } }
+            }) ()
+        """)
+        assert(out == "anon : (lin 3, col 44) : thus error : unexpected enclosing yield\n") { out }
     }
 
     // COROUTINE
@@ -127,9 +136,9 @@ class Exec_03 {
         val out = test("""
             val t = coro () {
                 println(1)
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(2)
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(3)
             }
             val a = coroutine(t)
@@ -154,7 +163,7 @@ class Exec_03 {
     fun cc_06_yield_ret() {
         val out = test("""
             val CO = coro () {
-                yield(10) { as it => nil }
+                yield(10) thus { as it => nil }
             }
             val co = coroutine(CO)
             val v = resume co()
@@ -167,7 +176,7 @@ class Exec_03 {
         val out = test("""
             $PLUS
             val CO = coro () {
-                yield(nil) {as it => 
+                yield(nil) thus {as it => 
                     println(it)
                 }
             }
@@ -182,7 +191,7 @@ class Exec_03 {
         val out = test("""
             $PLUS
             val CO = coro () {
-                yield(10) { as it => nil }
+                yield(10) thus { as it => nil }
             }
             val co = coroutine(CO)
             val v = resume co()
@@ -194,7 +203,7 @@ class Exec_03 {
     fun cc_09_resume_yield() {
         val out = test("""
             val CO = coro (v1) {
-                yield(v1) { as x => x }
+                yield(v1) thus { as x => x }
             }
             val co = coroutine(CO)
             val v1 = resume co(10)
@@ -208,7 +217,7 @@ class Exec_03 {
         val out = test("""
             $PLUS
             val CO = coro (v1) {    ;; 10
-                yield(v1+1) { as it =>      ;; 12
+                yield(v1+1) thus { as it =>      ;; 12
                     it + 1
                 }
             }
@@ -235,7 +244,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine(coro () {
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
             })
             resume co()
             resume co(1,2)
@@ -247,7 +256,7 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 pass [1,2,3]
-                yield(nil) { as it =>nil }
+                yield(nil) thus { as it =>nil }
             }
             resume (coroutine(T)) ()
             println(1)
@@ -261,7 +270,7 @@ class Exec_03 {
                 defer {
                     println(:ok)
                 }
-                yield(nil)  { as it =>nil }  ;; never awakes
+                yield(nil)  thus { as it =>nil }  ;; never awakes
             }
             resume (coroutine(T)) ()
             println(:end)
@@ -273,7 +282,7 @@ class Exec_03 {
         val out = test("""
             coro () {
                 func () {
-                    yield(nil) { as it =>nil }
+                    yield(nil) thus { as it =>nil }
                 }
             }
         """)
@@ -283,7 +292,7 @@ class Exec_03 {
     fun cc_16_tags() {
         val out = test("""
             val co = coro () {
-                yield(:x) { as it =>nil }
+                yield(:x) thus { as it =>nil }
             }
             println(:y)
         """)
@@ -293,8 +302,8 @@ class Exec_03 {
     fun cc_17_tags() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as it =>
-                    println(tags(it,:X))
+                yield(nil) thus { as it =>
+                    println(tags(it,:X)) ; it
                 }
             }
             val co = coroutine(CO)
@@ -310,7 +319,7 @@ class Exec_03 {
     fun cd_01_yield_as() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as v =>
+                yield(nil) thus { as v =>
                     println(v)
                 }
             }
@@ -324,12 +333,12 @@ class Exec_03 {
     fun cd_02_yield_as() {
         val out = test("""
             coro () {
-                yield(nil) { as it :T =>
+                yield(nil) thus { as it :T =>
                     it[0]
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 36) : declaration error : data :T is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 41) : declaration error : data :T is not declared\n") { out }
     }
 
     // MEM vs STACK
@@ -355,9 +364,9 @@ class Exec_03 {
             val CO = coro (v1) {
                 val v2 = 2
                 println(v1, v2)
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 ```
-                printf("%f\t%f\n", ceu_mem->id_v1_135.Number, ceu_mem->id_v2_17.Number);
+                printf("%f\t%f\n", ceu_mem->id_v1_137.Number, ceu_mem->id_v2_17.Number);
                 ```
             }
             val co = coroutine(CO)
@@ -377,9 +386,9 @@ class Exec_03 {
             set t = coro (v) {
                 var v' = v
                 println(v')          ;; 1
-                set v' = yield((v'+1)) { as it => it } 
+                set v' = yield((v'+1)) thus { as it => it } 
                 println(v')          ;; 3
-                set v' = yield(v'+1) { as it => it }
+                set v' = yield(v'+1) thus { as it => it }
                 println(v')          ;; 5
                 v'+1
             }
@@ -402,7 +411,7 @@ class Exec_03 {
                     println(3)
                 }
                 println(1)
-                yield(nil) { as it => nil }   ;; never awakes
+                yield(nil) thus { as it => nil }   ;; never awakes
                 println(2)
             }
             println(0)
@@ -420,7 +429,7 @@ class Exec_03 {
                     println(3)
                 }
                 println(1)
-                yield(nil) { as it => nil }   ;; never awakes
+                yield(nil) thus { as it => nil }   ;; never awakes
                 println(2)
             }
             val t = coroutine(T)
@@ -435,7 +444,7 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 println(1)
-                yield(nil) { as it => nil }   ;; never awakes
+                yield(nil) thus { as it => nil }   ;; never awakes
                 defer {
                     println(999)
                 }
@@ -454,7 +463,7 @@ class Exec_03 {
                     println(3)
                 }
                 println(1)
-                yield(nil) { as it => nil }   ;; never awakes
+                yield(nil) thus { as it => nil }   ;; never awakes
                 defer {
                     println(999)
                 }
@@ -473,11 +482,11 @@ class Exec_03 {
                 defer {
                     println(:xxx)
                 }
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 defer {
                     println(:yyy)
                 }
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
             }
             do {
                 val f = coroutine(F)
@@ -504,7 +513,7 @@ class Exec_03 {
     fun ee_09_tags() {
         val out = test("""
             val co = coro () {
-                yield(:x) { as it => nil }
+                yield(:x) thus { as it => nil }
             }
             println(:y)
         """)
@@ -521,7 +530,7 @@ class Exec_03 {
         }
         val C = coro () {
             var t = []
-            yield(drop(t)) { as it => nil }
+            yield(drop(t)) thus { as it => nil }
             println(:in, t)
         }
         do {
@@ -568,7 +577,7 @@ class Exec_03 {
         val out = test("""
             val y = do {
                 val x = coroutine(coro () {
-                    yield(nil) {as it => nil}
+                    yield(nil) thus {as it => nil}
                     println(:ok)
                 })
                 resume x()
@@ -587,7 +596,7 @@ class Exec_03 {
     fun gg_01_scope() {
         val out = test("""
             val T = coro (v) {
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -603,7 +612,7 @@ class Exec_03 {
     fun gg_02_scope() {
         val out = test("""
             val T = coro (v) {
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -628,8 +637,8 @@ class Exec_03 {
     fun gg_03_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) { as x => x }
-                yield(nil) { as it => nil }
+                val v = yield(nil) thus { as x => x }
+                yield(nil) thus { as it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -646,14 +655,16 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 36) : thus escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun gg_04_scope() {
         val out = test("""
             val T = coro (v) {
-                val e = yield(nil) { as it => it }
+                val e = yield(nil) thus { as it => it }
                 println(e)                
             }
             val t = coroutine(T)
@@ -672,10 +683,10 @@ class Exec_03 {
             val T = coro () {
                 do {
                     val x = []
-                    yield(x) { as it => nil }    ;; err
+                    yield(x) thus { as it => nil }    ;; err
                     println(:in, x)
                 }
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
             }
             val t = coroutine(T)
             do {
@@ -699,7 +710,7 @@ class Exec_03 {
         val out = test("""
             val T = coro () {
                 val x = []
-                yield(drop(x)) { as it => nil }    ;; err
+                yield(drop(x)) thus { as it => nil }    ;; err
                 println(:in, x)
             }
             val t = coroutine(T)
@@ -762,7 +773,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine(coro (x,y) {
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 throw(:e2)
             })
             catch {as it=>:e2} in {
@@ -781,11 +792,11 @@ class Exec_03 {
             var co
             set co = coroutine (coro () {
                 catch {as it => :e1} in {
-                    yield(nil) { as it => nil }
+                    yield(nil) thus { as it => nil }
                     throw(:e1)
                 }
                 println(:e1)
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 throw(:e2)
             })
             catch {as it=>:e2} in {
@@ -803,7 +814,7 @@ class Exec_03 {
         val out = test("""
             coro () {
                 catch { as it => do {
-                    yield(nil) { as it => nil }
+                    yield(nil) thus { as it => nil }
                 } } in
                 {
                     throw(:e1)
@@ -818,7 +829,7 @@ class Exec_03 {
             """
             val CO = coro () {
                 catch { as it => false } in {
-                    yield(nil) { as it => nil }
+                    yield(nil) thus { as it => nil }
                 }
                 println(999)
             }
@@ -854,7 +865,7 @@ class Exec_03 {
     @Test
     fun ii_02_status() {
         val out = test("""
-            val CO = coro () { yield(nil) { as it => nil } }
+            val CO = coro () { yield(nil) thus { as it => nil } }
             val co = coroutine(CO)
             println(status(co))
             resume co()
@@ -871,7 +882,7 @@ class Exec_03 {
     fun jj_01_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as it =>
+                yield(nil) thus { as it =>
                     println(:it, it)
                 }
             }
@@ -885,7 +896,7 @@ class Exec_03 {
     fun jj_02_it() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as x =>
+                yield(nil) thus { as x =>
                     println(:it, x)
                 }
             }
@@ -899,7 +910,7 @@ class Exec_03 {
     fun jj_03_it_err() {
         val out = test("""
             val CO = coro (x) {
-                yield(nil) { as x =>
+                yield(nil) thus { as x =>
                     println(:it, x)
                 }
             }
@@ -914,7 +925,7 @@ class Exec_03 {
         val out = test("""
             data :X = [x]
             val CO = coro () {
-                yield(nil) { as x :X =>
+                yield(nil) thus { as x :X =>
                     println(:it, x.x)
                 }
             }
@@ -928,14 +939,14 @@ class Exec_03 {
     fun jj_04_it_it_err() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as x =>
-                    yield(nil) { as x =>
+                yield(nil) thus { as x =>
+                    yield(nil) thus { as x =>
                         x
                     }
                 }
             }
         """,)
-        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
         assert(out == "anon : (lin 4, col 37) : declaration error : variable \"x\" is already declared\n") { out }
     }
 
@@ -946,7 +957,7 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 val i = 1
-                do { yield(nil) {as it => [99,10,99]} }[1]
+                do { yield(nil) thus {as it => [99,10,99]} }[1]
             }
             val co = coroutine(CO)
             resume co()
@@ -959,7 +970,7 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 val i = 1
-                do { yield(nil) {as it => #[99,10,99]} }[1]
+                do { yield(nil) thus {as it => #[99,10,99]} }[1]
             }
             val co = coroutine(CO)
             resume co()
@@ -972,7 +983,7 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 val i = 1
-                (yield(nil){as it => @[(1,10)]})[1]
+                (yield(nil)thus {as it => @[(1,10)]})[1]
             }
             val co = coroutine(CO)
             resume co()
@@ -984,7 +995,7 @@ class Exec_03 {
     fun kk_04_tup() {
         val out = test("""
             val CO = coro () {
-                [yield(nil){as it => [10]}]
+                [yield(nil)thus {as it => [10]}]
             }
             val co = coroutine(CO)
             resume co()
@@ -996,7 +1007,7 @@ class Exec_03 {
     fun kk_05_vec() {
         val out = test("""
             val CO = coro () {
-                #[yield(nil){as it => 10}]
+                #[yield(nil)thus {as it => 10}]
             }
             val co = coroutine(CO)
             resume co()
@@ -1008,7 +1019,7 @@ class Exec_03 {
     fun kk_06_dic() {
         val out = test("""
             val CO = coro () {
-                @[(yield(nil){as it => :x},yield(nil){as it => 10})]
+                @[(yield(nil)thus{as it => :x},yield(nil)thus {as it => 10})]
             }
             val co = coroutine(CO)
             resume co()
@@ -1022,7 +1033,7 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 val t = [99,99,99]
-                set t[yield(nil){as it => 1}] = 10
+                set t[yield(nil)thus {as it => 1}] = 10
                 t[1]
             }
             val co = coroutine(CO)
@@ -1035,9 +1046,9 @@ class Exec_03 {
     fun kk_08_call() {
         val out = test("""
             val CO = coro () {
-                yield(nil) { as x => println }(
-                    yield(nil) { as it => 1 },
-                    yield(nil) { as it => 2 }
+                yield(nil) thus { as x => println } (
+                    yield(nil) thus { as it => 1 },
+                    yield(nil) thus { as it => 2 }
                 )
             }
             val co = coroutine(CO)
@@ -1055,11 +1066,11 @@ class Exec_03 {
     fun kk_01_scope() {
         val out = test("""
             val T = coro () {
-                val v = yield(nil) { as it => 
+                val v = yield(nil) thus { as it => 
                     println(it)
                     10
                 }
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(v)                
             }
             val t = coroutine(T)
@@ -1093,7 +1104,7 @@ class Exec_03 {
                 defer {
                     println(t)
                 }
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 println(:no)
             }) ()
             println(:ok)
@@ -1111,7 +1122,7 @@ class Exec_03 {
                 resume coroutine(coro () {
                     println(v)
                 }) ()
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
             }) ()
         """)
         assert(out == "10\n") { out }
@@ -1135,7 +1146,7 @@ class Exec_03 {
         val out = test("""
             val co = coroutine(coro () {
                 var xxx = 1
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 resume coroutine(coro () {
                     set xxx = 10
                 }) ()
@@ -1153,11 +1164,11 @@ class Exec_03 {
                 var t = []
                 val b = coroutine(coro () {
                     val x = []
-                    yield(nil) { as it => nil }
+                    yield(nil) thus { as it => nil }
                     println(t,x)
                 })
                 resume b()
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 resume b()
             })
             resume a()
@@ -1172,11 +1183,11 @@ class Exec_03 {
                 var t = []
                 val b = coroutine(coro () {
                     val x = []
-                    yield(nil) { as it => nil }
+                    yield(nil) thus { as it => nil }
                     println(t,x)
                 })
                 resume b()
-                yield(nil) { as it => nil }
+                yield(nil) thus { as it => nil }
                 resume b()
             })
             resume a()
@@ -1250,19 +1261,19 @@ class Exec_03 {
     fun nn_01_yield() {
         val out = test("""
             coro () {
-                yield(nil) { as x =>
-                    yield(nil) { as y => nil }
+                yield(nil) thus { as x =>
+                    yield(nil) thus { as y => nil }
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") { out }
+        assert(out == "anon : (lin 4, col 21) : thus error : unexpected enclosing yield\n") { out }
     }
     @Test
     fun nn_02_catch() {
         val out = test("""
             coro () {
                 catch { as it => do {
-                    yield(nil) { as x => nil }
+                    yield(nil) thus { as x => nil }
                 } } in
                 {
                     throw(:e1)
@@ -1294,7 +1305,7 @@ class Exec_03 {
             resume coroutine (coro () {
                 val x
                 do {
-                    yield(nil) { as it =>
+                    yield(nil) thus { as it =>
                         nil
                     }
                 }

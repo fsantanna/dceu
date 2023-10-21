@@ -41,6 +41,17 @@ fun Expr.is_lval (): Boolean {
     }
 }
 
+fun Expr.base (ups: Ups): Expr {
+    return when (this) {
+        is Expr.Acc   -> this
+        is Expr.Index -> this.col.base(ups)
+        is Expr.Pub   -> TODO() //this.tsk?.base(ups) ?: ups.first(this) { it is Expr.Proto }!!
+        else -> {
+            println(this)
+            TODO()
+        }
+    }
+}
 fun String.tag2c (): String {
     return this
         .drop(1)

@@ -19,8 +19,8 @@ class Parser_04 {
     fun aa_02_task() {
         val l = lexer("""
             set t = task (v) {
-                set v = yield((1)) { as it => nil }
-                yield((2)) { as it => nil }
+                set v = yield((1)) thus { as it => nil }
+                yield((2)) thus { as it => nil }
             }
             coroutine(t)
             set v = resume a(1)

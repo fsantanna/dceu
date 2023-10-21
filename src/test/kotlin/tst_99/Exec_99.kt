@@ -374,7 +374,7 @@ class Exec_99 {
     fun gg_01_yield() {
         val out = test("""
             val CO = coro () {
-                yield() {
+                yield() thus {
                     println(it)
                 }
             }
@@ -421,7 +421,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 nil
-                yield() ;;{ as it => it }
+                yield() ;;thus { as it => it }
                 nil
                 nil
             }
@@ -442,7 +442,7 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 nil
-                yield() {}
+                yield() thus {}
                 nil
             }
             val co1 = coroutine(CO)

@@ -5,8 +5,8 @@ import java.io.Reader
 import java.util.*
 
 var CEU = 1
-    // 1: dyn-lex
-    // 2: defer, throw/catch, as, =>
+    // 1: dyn-lex, thus, as, =>
+    // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref
     // 5: tasks, track, detrack
@@ -133,7 +133,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Catch  (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
-    data class Yield  (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val arg: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
     data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val arg: Expr): Expr(N++, tk_)
@@ -187,7 +187,7 @@ fun AND (v1:String, v2:String): String {
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
-            break if yield(nil) { as it =>
+            break if yield(nil) thus { as it =>
                 if $v {
                     if it { it } else { true }
                 } else {
