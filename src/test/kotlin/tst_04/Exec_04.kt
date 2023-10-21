@@ -1223,7 +1223,7 @@ class Exec_04 {
             pub(nil)
         """)
         //assert(out == " v  anon : (lin 2, col 13) : pub(nil) : pub error : expected task\n") { out }
-        assert(out == " v  anon : (lin 2, col 17) : pub error : expected active task\n") { out }
+        assert(out == " v  anon : (lin 2, col 17) : pub error : expected task\n") { out }
     }
     @Test
     fun kk_02_pub_err_x() {
@@ -1235,7 +1235,9 @@ class Exec_04 {
             val x = pub(a)
             println(x)
         """)
-        assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
+        //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
+        assert(out == " |  anon : (lin 5, col 21) : spawn t(nil)\n" +
+                " v  anon : (lin 2, col 29) : block escape error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -1386,7 +1388,8 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 8, col 13) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun kj_02_expose_err() {
@@ -1918,7 +1921,7 @@ class Exec_04 {
             println(status(t), pub(t))
        """)
         assert(out == ":yielded\t[1]\n" +
-                ":terminated\t[2]") { out }
+                ":terminated\t[2]\n") { out }
     }
     @Test
     fun nn_02_term() {

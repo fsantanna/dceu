@@ -2129,6 +2129,15 @@ fun Coder.main (tags: Tags): String {
                 return ceu_block_up_frame(blk->up.block);
             }
         }
+        CEU_Block* ceu_block_up_block (CEU_Block* blk) {
+            if (blk->istop) {
+                return blk;
+            } else if (blk->up.block == NULL) {
+                return blk;
+            } else {
+                return ceu_block_up_block(blk->up.block);
+            }
+        }
 
         CEU_Frame* ceu_frame_up_frame (CEU_Frame* frame) {
             return ceu_block_up_frame(frame->up_block);

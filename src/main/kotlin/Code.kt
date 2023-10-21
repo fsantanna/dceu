@@ -110,7 +110,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $code
                         ${isexe.cond{"""
                                     ${istsk.cond { """
-                                        ceu_gc_dec(ceu_frame->exe_task->pub, 1);
+                                        if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
+                                            // do not check if it is returned back (this is not the case with locals created here)
+                                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
+                                        }
                                         ceu_frame->exe_task->pub = ceu_acc;
                                     """ }}
                                     ceu_frame->exe->status = (ceu_n == CEU_ARG_ABORT) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
@@ -373,6 +376,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             val idc = vars.get(this, it.first.str).idc(0)
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                                // do not check if they are returned back (this is not the case with locals created here)
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
@@ -672,7 +676,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // PUB - SET | ${this.dump()}
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(CEU4(0 COMMA) CEU_HLD_BLOCK(ceu_acc.Dyn), CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set(CEU4(0 COMMA) ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
