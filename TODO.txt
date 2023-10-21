@@ -1,5 +1,27 @@
 # TODO
 
+- remover obrigacao do thus
+    - somente detrack/pub de task_in
+- passar em todos os testes
+- fazer os testes do pico ceu o quanto antes
+    - all, drag, bird-01, bird-11
+
+O `thus` atribui um valor de fora diretamente ao `ceu_acc`, como uma nova
+variável simples, sem nenhuma verificação. Isso permite que o escopo
+interno acesse o valor de fora como uma local temporária.
+Esse mecanismo é fundamental em 4 cenários:
+    - or, and:
+        - não recalcular expressão
+    - yield:
+    O valor de fora pode vir de um `resume` em um escopo muito aninhado,
+    que não sobreviveria a outro acesso que cruze um novo `yield`. Também
+    pode vir de um broadcast com a mesma característica. Por essa razão,
+    é importante que o corpo do `thus` não tenha `yield`s.
+    - detrack:
+        - task pode morrer entre yields
+    - pub
+        - task pode morrer entre yields
+
 - THUS
     - no yields, bcasts, spawns, set outs
     - only plain or fleet returns

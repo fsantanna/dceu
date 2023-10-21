@@ -1742,6 +1742,27 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun xxx() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    yield(nil) thus { as it => nil }
+                    yield(nil) thus { as it => nil }
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil) thus { as it => nil }
+                    broadcast(nil) in t
+                    println(999)
+                } )()
+                yield(nil) thus { as it => nil }
+                println(:ok)
+            })()
+            broadcast(nil)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
     fun mm_07_bcast_term() {
         val out = test("""
             val T = task () {
@@ -2448,7 +2469,7 @@ class Exec_04 {
                 " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun zz_20_bcast_tuple_func_no() {
+    fun zz_20_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
                 v[0] thus { as x =>
@@ -2461,9 +2482,29 @@ class Exec_04 {
             spawn T()
             broadcast ([[1]])
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 8, col 44) : f(it)\n" +
-                " v  anon : (lin 3, col 27) : declaration error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
+        //        " |  anon : (lin 8, col 44) : f(it)\n" +
+        //        " v  anon : (lin 3, col 27) : declaration error : cannot move to deeper scope with pending references\n") { out }
+    }
+    @Test
+    fun zz_20_bcast_tuple_func_no() {
+        val out = test("""
+            var f = func (v) {
+                v[0] thus { as x =>
+                    val y = x
+                    println(y)
+                }
+            }
+            var T = task () {
+                yield(nil) thus { as it => f(it) }
+            }
+            spawn T()
+            broadcast ([[1]])
+        """)
+        assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+                " |  anon : (lin 9, col 44) : f(it)\n" +
+                " v  anon : (lin 4, col 21) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_nox() {
