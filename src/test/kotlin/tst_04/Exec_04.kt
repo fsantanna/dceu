@@ -1053,7 +1053,7 @@ class Exec_04 {
                 println(t)
             }) ()
             broadcast ([1])
-        """)
+        """, true)
         assert(out == "[1]\n") { out }
     }
     @Test
@@ -2462,7 +2462,7 @@ class Exec_04 {
             broadcast ([[1]])
         """)
         assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 8, col 39) : f(it)\n" +
+                " |  anon : (lin 8, col 44) : f(it)\n" +
                 " v  anon : (lin 3, col 27) : declaration error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
@@ -2481,7 +2481,7 @@ class Exec_04 {
             broadcast ([[1]])
         """)
         assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 9, col 39) : f(it)\n" +
+                " |  anon : (lin 9, col 44) : f(it)\n" +
                 " |  anon : (lin 6, col 17) : g(v[0])\n" +
                 " v  anon : (lin 3, col 34) : argument error : cannot move to deeper scope with pending references\n") { out }
     }

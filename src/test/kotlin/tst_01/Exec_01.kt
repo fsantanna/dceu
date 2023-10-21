@@ -2095,7 +2095,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun ll_07_xxx() {
@@ -2110,7 +2110,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
@@ -2520,7 +2520,7 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 30) : argument error : cannot move to deeper scope with pending references\n1\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n1\n") { out }
     }
 
 

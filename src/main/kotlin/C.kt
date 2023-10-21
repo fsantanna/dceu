@@ -319,7 +319,6 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
-
         int ceu_hold_set (CEU_Dyn** dst, int depth, CEU_HOLD hld_type, CEU_Dyn* src);
         
         CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
@@ -703,6 +702,55 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
     """ +
+    """ // BLOCK - TASK - UP
+        CEU_Block* ceu_block_up_block (CEU_Block* blk) {
+            if (blk->istop) {
+                return blk;
+            } else if (blk->up.block == NULL) {
+                return blk;
+            } else {
+                return ceu_block_up_block(blk->up.block);
+            }
+        }
+        int ceu_block_is_up_dn (CEU_Block* up, CEU_Block* dn) {
+            if (up == dn) {
+                return 1;
+            } else if (dn->istop) {
+                return ceu_block_is_up_dn(up, dn->up.frame->up_block);
+            } else if (dn->up.block == NULL) {
+                return 0;
+            } else {
+                return ceu_block_is_up_dn(up, dn->up.block);
+            }
+        }
+
+    #if CEU >= 4
+        CEU_Frame* ceu_block_up_frame (CEU_Block* blk) {
+            if (blk->istop) {
+                return blk->up.frame;
+            } else if (blk->up.block == NULL) {
+                return NULL;
+            } else {
+                return ceu_block_up_frame(blk->up.block);
+            }
+        }
+        CEU_Frame* ceu_frame_up_frame (CEU_Frame* frame) {
+            return ceu_block_up_frame(frame->up_block);
+        }
+        CEU_Exe_Task* ceu_block_up_task (CEU_Block* blk) {
+            CEU_Frame* frame = ceu_block_up_frame(blk);
+            if (frame == NULL) {
+                return NULL;
+            } else {
+                CEU_Exe_Task* up_task = frame->exe_task;
+                return (up_task!=NULL && ceu_istask_dyn((CEU_Dyn*)up_task)) ? up_task : NULL;                
+            }
+        }
+        CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task) {
+            return ceu_block_up_task(task->frame.up_block);
+        }        
+    #endif
+    """ +
     """ // GC
     #if 0
         int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -1011,12 +1059,11 @@ fun Coder.main (tags: Tags): String {
             }
             
             CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
-            
         #if CEU >= 5
             if (
                 src.Dyn->Any.type == CEU_VALUE_TRACK    &&
                 src.Dyn->Track.task != NULL             &&
-                CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task)->depth > dst_blk->depth
+                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), dst_blk)
             ) {
                 strncpy(msg, pre, 256);
                 strcat(msg, " : cannot move track outside its task scope");
@@ -1024,14 +1071,14 @@ fun Coder.main (tags: Tags): String {
             } else 
         #endif
             if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                if (src.Dyn->Any.refs-nest>0 && dst_blk->depth>src_blk->depth) {
+                if (src.Dyn->Any.refs-nest>0 && !ceu_block_is_up_dn(dst_blk,src_blk)) {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot move to deeper scope with pending references");
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
                 } else {
                     // continue below
                 }
-            } else if (dst_blk==src_blk || dst_blk->depth>src_blk->depth) {
+            } else if (ceu_block_is_up_dn(src_blk,dst_blk)) {
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
                 strncpy(msg, pre, 256);
@@ -1125,7 +1172,7 @@ fun Coder.main (tags: Tags): String {
                     return (CEU_Value) { CEU_VALUE_NIL };
                 } else {
                     col->Any.hld.type = MAX(col->Any.hld.type, MIN(CEU_HOLD_FLEET,v.Dyn->Any.hld.type));
-                    if (CEU_HLD_BLOCK(v.Dyn)->depth > CEU_HLD_BLOCK(col)->depth) {
+                    if (!ceu_block_is_up_dn(CEU_HLD_BLOCK(v.Dyn),CEU_HLD_BLOCK(col))) {
                         ceu_hold_chg(col, CEU_HLD_BLOCK(v.Dyn) CEU5(COMMA CEU_HLD_DYNS(v.Dyn)));
                     }
                     return (CEU_Value) { CEU_VALUE_NIL };
@@ -1146,9 +1193,9 @@ fun Coder.main (tags: Tags): String {
             } else
             #endif
             if (src.type < CEU_VALUE_DYNAMIC) {
-                return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
-            } else if (CEU_HLD_BLOCK(dyn)->depth == 1) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // do not drop non-dyns
+            } else if (ceu_block_up_block(CEU_HLD_BLOCK(dyn)) == NULL) {
+                return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
@@ -2120,43 +2167,6 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // ISTASK / PUB
         #if CEU >= 4
-        CEU_Frame* ceu_block_up_frame (CEU_Block* blk) {
-            if (blk->istop) {
-                return blk->up.frame;
-            } else if (blk->up.block == NULL) {
-                return NULL;
-            } else {
-                return ceu_block_up_frame(blk->up.block);
-            }
-        }
-        CEU_Block* ceu_block_up_block (CEU_Block* blk) {
-            if (blk->istop) {
-                return blk;
-            } else if (blk->up.block == NULL) {
-                return blk;
-            } else {
-                return ceu_block_up_block(blk->up.block);
-            }
-        }
-
-        CEU_Frame* ceu_frame_up_frame (CEU_Frame* frame) {
-            return ceu_block_up_frame(frame->up_block);
-        }
-
-        CEU_Exe_Task* ceu_block_up_task (CEU_Block* blk) {
-            CEU_Frame* frame = ceu_block_up_frame(blk);
-            if (frame == NULL) {
-                return NULL;
-            } else {
-                CEU_Exe_Task* up_task = frame->exe_task;
-                return (up_task!=NULL && ceu_istask_dyn((CEU_Dyn*)up_task)) ? up_task : NULL;                
-            }
-        }
-
-        CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task) {
-            return ceu_block_up_task(task->frame.up_block);
-        }
-        
         CEU_Value ceu_toref (CEU_Value v) {
             return (v.type < CEU_VALUE_DYNAMIC) ? v : (CEU_Value) { CEU_VALUE_REF, {.Dyn=v.Dyn} };
         }

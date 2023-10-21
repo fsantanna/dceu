@@ -305,7 +305,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             CEU_ASSERT(
                                                 $blkc,
                                                 ceu_hold_chk_set(CEU4(0 COMMA) $blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
-                                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                                                "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
                                             );
                                         }
                                         """
@@ -457,20 +457,22 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
-                    this.src!!.code() + """
+                    this.src!!.code() + (!isthus).cond { """
                         CEU_ASSERT(
                             $bupc,
                             ceu_hold_chk_set(CEU4(0 COMMA) $bupc, ${if (isthus) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
-                    """
+                    """ }
                 }}
                 ${when {
                     !this.init -> ""
                     (this.src == null) -> ""
                     else -> "$idc = ceu_acc;"
                 }}
-                ceu_gc_inc($idc);
+                ${(!isthus).cond{
+                    "ceu_gc_inc($idc);"
+                }}
                 ceu_acc = $idc;
                 """
             }

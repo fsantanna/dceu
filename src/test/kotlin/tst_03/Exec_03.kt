@@ -631,7 +631,7 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-                " v  anon : (lin 2, col 30) : argument error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot copy reference to outer scope\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -734,7 +734,7 @@ class Exec_03 {
             println(f(coroutine(C)))
         """)
         assert(out == " |  anon : (lin 8, col 21) : f(coroutine(C))\n" +
-                " v  anon : (lin 2, col 33) : argument error : cannot move to deeper scope with pending references\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
     }
     @Test
     fun gg_08_scope() {

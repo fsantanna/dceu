@@ -30,14 +30,14 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == """
             set t = (task (v) {
-            set v = yield(1) { as it =>
+            set v = (yield(1) thus { as it =>
             nil
+            })
             
-            }
-            yield(2) { as it =>
+            (yield(2) thus { as it =>
             nil
+            })
             
-            }
             })
             coroutine(t)
             set v = resume (a)(1)
