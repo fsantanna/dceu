@@ -1,5 +1,7 @@
 # TODO
 
+- remover thus: detrack/await
+
 - remover obrigacao do thus
     - somente detrack/pub de task_in
         - se o ceu_block_up_task for TASK_IN

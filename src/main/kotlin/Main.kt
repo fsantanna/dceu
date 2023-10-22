@@ -136,7 +136,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val arg: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
     data class Bcast  (val tk_: Tk.Fix, val call: Expr.Call): Expr(N++, tk_)
-    data class Dtrack (val tk_: Tk.Fix, val it: Pair<Tk.Id,Tk.Tag?>, val trk: Expr, val blk: Expr.Do): Expr(N++, tk_)
+    data class Dtrack (val tk_: Tk.Fix, val tsk: Expr): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)

@@ -488,14 +488,7 @@ class Parser (lexer_: Lexer)
                 val on = this.expr_in_parens()!!
                 Expr.Toggle(tk0, tsk, on)
             }
-            (CEU>=5 && this.acceptFix("detrack")) -> {
-                val tk0 = this.tk0 as Tk.Fix
-                val trk = this.expr_in_parens()!!
-                val (es,id_tag) = xas()
-                Expr.Dtrack(tk0, id_tag, trk,
-                    Expr.Do(Tk.Fix("do",tk1.pos), es)
-                )
-            }
+            (CEU>=5 && this.acceptFix("detrack")) -> Expr.Dtrack(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
@@ -791,10 +784,9 @@ class Parser (lexer_: Lexer)
                     }
                 }
                 "thus" -> {
-                    val tkx = this.tk1
                     val (es, id_tag) = xas()
                     val (id,tag) = id_tag
-                    val dcl = Expr.Dcl(Tk.Fix("val",tkx.pos), id, tag, true, e)
+                    val dcl = Expr.Dcl(Tk.Fix("val",id.pos), id, tag, true, e)
                     Expr.Do(op, listOf(dcl) + es)
                 }
                 else -> error("impossible case")

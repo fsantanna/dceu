@@ -256,9 +256,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 $it = ceu_err.Dyn->Throw.val;
                                 ceu_gc_inc($it);
                             """
-                            (up is Expr.Dtrack && up.blk == this) -> """
-                                $it = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
-                            """
                             else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
                         }};
                     """ }.joinToString("")}
@@ -705,7 +702,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // DTRACK ${this.dump()}
-                    ${this.trk.code()}
+                    ${this.tsk.code()}
                     if (ceu_acc.type != CEU_VALUE_TRACK) {                
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -713,7 +710,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     if (ceu_acc.Dyn->Track.task == NULL) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     } else {
-                        ${this.blk.code()}
+                        ceu_acc = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
                     }
                 }
                 """

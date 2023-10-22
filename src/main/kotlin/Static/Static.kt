@@ -97,12 +97,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         -> err(this.tk, "yield error : unexpected enclosing catch")
                     ups.any(this) { blk -> blk is Expr.Do && blk.tk.str=="thus" && !blk.es[0].let { it is Expr.Dcl && it.src==this } }
                         -> err(this.tk, "thus error : unexpected enclosing yield")
-                    ups.any(this) { blk ->
-                        ups.pub[blk].let { dtrk ->
-                            ((dtrk is Expr.Dtrack) && dtrk.blk==blk)
-                        }
-                    }
-                        -> err(this.tk, "yield error : unexpected enclosing detrack")
                 }
             }
             is Expr.Resume -> {
@@ -131,21 +125,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Bcast  -> {
                 this.call.traverse()
                 when {
-                    ups.any(this) { blk ->
-                        ups.pub[blk].let { dtrk ->
-                            ((dtrk is Expr.Dtrack) && dtrk.blk==blk)
-                        }
-                    }
-                        -> err(this.tk, "broadcast error : unexpected enclosing detrack")
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str=="func") } != null)
                         -> err(this.tk, "broadcast error : unexpected enclosing func")
                             // dont know if call is inside detrack / dont know if bcast killed call
                 }
             }
-            is Expr.Dtrack -> {
-                this.trk.traverse()
-                this.blk.traverse()
-            }
+            is Expr.Dtrack -> this.tsk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {}

@@ -291,18 +291,9 @@ class Exec_05 {
     // DETRACK
 
     @Test
-    fun cc_00_detrack() {
-        val out = test("""
-            detrack(nil) { as it :X =>
-                nil
-            }
-        """)
-        assert(out == "anon : (lin 2, col 34) : declaration error : data :X is not declared\n") { out }
-    }
-    @Test
     fun cc_01_detrack() {
         val out = test("""
-            detrack(nil) { as it => nil }
+            detrack(nil)
         """)
         assert(out == " v  anon : (lin 2, col 13) : detrack error : expected track value\n") { out }
     }
@@ -310,9 +301,9 @@ class Exec_05 {
     fun cc_02_detrack() {
         val out = test("""
             val x
-            detrack(nil) { as x => nil }
+            detrack(nil) thus { as x => nil }
         """)
-        assert(out == "anon : (lin 3, col 31) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 36) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun cc_03_detrack() {
@@ -320,7 +311,7 @@ class Exec_05 {
             val T = task () { nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(t) { as it => 10 }
+            val v = detrack(t) thus { as it => 10 }
             println(v)
         """)
         assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
@@ -333,7 +324,7 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            val v = detrack(x) { as it => 10 }
+            val v = detrack(x) ;;thus { as it => 10 }
             println(v)
         """)
         assert(out == ("nil\n")) { out }
@@ -344,7 +335,7 @@ class Exec_05 {
             val T = task () { yield(nil) thus { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as it => 10 }
+            val v = detrack(x) thus { as it => 10 }
             println(v)
         """)
         assert(out == ("10\n")) { out }
@@ -352,27 +343,28 @@ class Exec_05 {
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
-            detrack(nil) { as it => broadcast(nil) }
+            detrack(nil) thus { as it => broadcast(nil) }
         """)
-        assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
+        //assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
+        assert(out == (" v  anon : (lin 2, col 13) : detrack error : expected track value\n")) { out }
     }
     @Test
     fun cc_07_detrack_err() {
         val out = test("""
             task () {
-                detrack(nil) { as it => yield(nil) thus { as it => nil } }
+                detrack(nil) thus { as it => yield(nil) thus { as it => nil } }
             }
         """)
-        assert(out == ("anon : (lin 3, col 57) : declaration error : variable \"it\" is already declared\n")) { out }
+        assert(out == ("anon : (lin 3, col 67) : declaration error : variable \"it\" is already declared\n")) { out }
     }
     @Test
     fun cc_07_detrack_err2() {
         val out = test("""
             task () {
-                detrack(nil) { as yy => yield(nil) thus { as xx => nil } }
+                detrack(nil) thus { as yy => yield(nil) thus { as xx => nil } }
             }
         """)
-        assert(out == ("anon : (lin 3, col 41) : yield error : unexpected enclosing detrack\n")) { out }
+        assert(out == ("anon : (lin 3, col 46) : thus error : unexpected enclosing yield\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
@@ -380,10 +372,10 @@ class Exec_05 {
             val T = task () { yield(nil) thus { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as it => set it = 10 }
+            val v = detrack(x) thus { as it => set it = 10 }
             println(v)
         """)
-        assert(out == ("anon : (lin 5, col 43) : invalid set : destination is immutable\n")) { out }
+        assert(out == ("anon : (lin 5, col 48) : invalid set : destination is immutable\n")) { out }
     }
     @Test
     fun cc_09_detrack() {
@@ -396,7 +388,7 @@ class Exec_05 {
             val x = next(ts)
             ;;dump(x)
             broadcast(nil)
-            println(detrack(x) { as it => 99 })
+            println(detrack(x) ;;;thus { as it => 99 };;;)
         """
         )
         assert(out == "nil\n") { out }
@@ -410,7 +402,7 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            println(detrack(x) { as it => 99 })
+            println(detrack(x) ;;;thus { as it => 99 };;;)
             ;;dump(x)
         """
         )
@@ -425,7 +417,7 @@ class Exec_05 {
             val T = task () { yield(nil) thus { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as it =>
+            val v = detrack(x) thus { as it =>
                 println(:1, x)
                 println(:2, t)
                 println(:3, it)
@@ -447,7 +439,7 @@ class Exec_05 {
             val T = task () { yield(nil) thus { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as it =>
+            val v = detrack(x) thus { as it =>
                 println(status(it))
             }
         """)
@@ -465,7 +457,7 @@ class Exec_05 {
                 broadcast(nil)
             }
             val x = next(ts)
-            detrack(x) { as it =>
+            detrack(x) thus { as it =>
                 f()                     ;; cannot broadcast
                 println(status(it))
             }
@@ -478,7 +470,7 @@ class Exec_05 {
             val T = task () { yield(nil) thus { as it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) { as kkk =>
+            val v = detrack(x) thus { as kkk =>
                 println(kkk == kkk)
                 println(kkk == x)
             }

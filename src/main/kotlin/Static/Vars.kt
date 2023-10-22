@@ -192,19 +192,6 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         dcl_to_blk[dcl] = this
                         blk_to_dcls[this]!!.add(dcl)
                     }
-                    (up is Expr.Dtrack && up.blk == this) -> {
-                        if (dcls.any { up.it.first.str == it.id.str }) {
-                            err(up.it.first, "declaration error : variable \"${up.it.first.str}\" is already declared")
-                        }
-                        val dcl = Expr.Dcl(
-                            Tk.Fix("val", this.tk.pos),
-                            up.it.first,
-                            /*false,*/  up.it.second, true, null
-                        )
-                        dcls.add(dcl)
-                        dcl_to_blk[dcl] = this
-                        blk_to_dcls[this]!!.add(dcl)
-                    }
                 }
 
                 // nest into expressions
@@ -284,14 +271,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Spawn  -> { this.tsks?.traverse() ; this.tsk.traverse() ; this.arg.traverse() }
             is Expr.Pub    -> this.tsk?.traverse()
             is Expr.Bcast  -> this.call.traverse()
-            is Expr.Dtrack -> {
-                val tag = this.it.second
-                if (tag!=null && !datas.containsKey(tag.str)) {
-                    err(tag, "declaration error : data ${tag.str} is not declared")
-                }
-                this.trk.traverse()
-                this.blk.traverse()
-            }
+            is Expr.Dtrack -> this.tsk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 
             is Expr.Nat    -> {
