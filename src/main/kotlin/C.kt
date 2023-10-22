@@ -1032,52 +1032,63 @@ fun Coder.main (tags: Tags): String {
         }
 
         CEU_Value ceu_hold_chk_set (CEU_Block* dst_blk, CEU_HOLD dst_type, CEU_Value src, int nest, char* pre) {
-            static char msg[256];
             if (src.type < CEU_VALUE_DYNAMIC) {
+                // nothing to do
                 return (CEU_Value) { CEU_VALUE_NIL };
+            }
+                        
+        #if CEU >= 4
+            assert((!ceu_istask_val(src) || src.Dyn->Exe.status!=CEU_EXE_STATUS_RESUMED) && "TODO: moving running task?");
+        #endif
+
+            static char msg[256];
+            CEU_Block* src_blk  = CEU_HLD_BLOCK(src.Dyn);
+            CEU_HOLD   src_type = src.Dyn->Any.hld.type;
+            
+            // dst <- src
+            if (dst_blk == src_blk) {
+                if (dst_type==src_type) {
+                    // nothing is supposed to change
+                    return (CEU_Value) { CEU_VALUE_NIL };
+                }
+            } else if (ceu_block_is_up_dn(src_blk, dst_blk)) {
+                // src is parent of dst | assigning to nested scope | "safe"
+                if (src_type == CEU_HOLD_FLEET) {
+                    if (src.Dyn->Any.refs-nest > 0) {
+                        // unsafe if passing dropped reference to inner scope:
+                        // can be reassigned -> reclaimed -> dangling outer reference
+                        strncpy(msg, pre, 256);
+                        strcat(msg, " : cannot move in with pending references");
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
+                    } else {
+                        // safe
+                    }
+                } else {
+                    // nothing is supposed to change
+                    // assigning non-fleeting reference to nested scope
+                    return (CEU_Value) { CEU_VALUE_NIL };
+                }
+            } else {
+                // dst is parent of src | assigning to outer scope | "unsafe"
+                // dst and src are par  | assigning to alien scope | "unsafe"
+                if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                    // safe if dropped or unassigned reference
+                    // can move out and be reassigned by outer scope
+                } else {
+                    strncpy(msg, pre, 256);
+                    strcat(msg, " : cannot copy reference out");
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
+                }
             }
             
-            CEU_Block* src_blk = CEU_HLD_BLOCK(src.Dyn);
-        #if CEU >= 5
-            if (
-                src.Dyn->Any.type == CEU_VALUE_TRACK    &&
-                src.Dyn->Track.task != NULL             &&
-                !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), dst_blk)
-            ) {
-                strncpy(msg, pre, 256);
-                strcat(msg, " : cannot move track outside its task scope");
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-            } else 
-        #endif
-            if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                if (src.Dyn->Any.refs-nest>0 && !ceu_block_is_up_dn(dst_blk,src_blk)) {
-                    strncpy(msg, pre, 256);
-                    strcat(msg, " : cannot move in with pending references");
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
-                } else {
-                    // continue below
-                }
-            } else if (ceu_block_is_up_dn(src_blk,dst_blk)) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            } else {
-                strncpy(msg, pre, 256);
-                strcat(msg, " : cannot copy reference out");
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
-            };
-
-            int src_type  = src.Dyn->Any.hld.type;
-
-            src.Dyn->Any.hld.type = MAX(src.Dyn->Any.hld.type,dst_type);
-            if (dst_blk != CEU_HLD_BLOCK(src.Dyn)) {
-        #if CEU >= 4
-                assert((!ceu_istask_val(src) || src.Dyn->Exe.status!=CEU_EXE_STATUS_RESUMED) && "TODO: cannot move running task");
-        #endif
+            // change type
+            src.Dyn->Any.hld.type = MAX(src_type,dst_type);
+            
+            // change block
+            if (dst_blk != src_blk) {
                 ceu_hold_chg(src.Dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
             }
-            if (src.Dyn->Any.hld.type==src_type && ceu_block_is_up_dn(src_blk,dst_blk)) {
-                return (CEU_Value) { CEU_VALUE_NIL };
-            }
-
+            
             #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (ret.type==CEU_VALUE_ERROR) { return ret; } }
 
             switch (src.Dyn->Any.type) {

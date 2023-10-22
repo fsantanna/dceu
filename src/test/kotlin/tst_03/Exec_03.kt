@@ -838,7 +838,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 37) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 42) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun hh_05_throw() {
@@ -935,7 +935,7 @@ class Exec_03 {
             resume co()
             resume co([])
         """,)
-        assert(out == "anon : (lin 3, col 33) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 38) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun jj_04_it_data() {
@@ -964,7 +964,7 @@ class Exec_03 {
             }
         """,)
         //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
-        assert(out == "anon : (lin 4, col 37) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 42) : declaration error : variable \"x\" is already declared\n") { out }
     }
 
     // INDEX / TUPLE / VECTOR / DICT

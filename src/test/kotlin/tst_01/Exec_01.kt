@@ -2074,14 +2074,26 @@ class Exec_01 {
     @Test
     fun ll_05_nest() {
         val out = test("""
-            var f = func (v) {
+            var f = func (v) {  ;; (but they are in the same block)
                 val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             f([[1]])
         """)
-        //assert(out == "[1]\n") { out }
-        assert(out == "anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
+    }
+    @Test
+    fun ll_05_nest_err() {
+        val out = test("""
+            var f = func (v) {
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                ;;println(x)      ;; x will be freed and v would contain dangling pointer
+                v
+            }
+            f([[1]])
+        """)
+        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun ll_06_xxx() {
