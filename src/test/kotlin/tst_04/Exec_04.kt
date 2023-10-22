@@ -110,7 +110,7 @@ class Exec_04 {
             }
             println(2)
         """)
-        assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 3, col 21) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "2\n") { out }
     }
     @Test
@@ -657,7 +657,7 @@ class Exec_04 {
         //assert(out == "[]\n") { out }
         assert(out == "10\t[]\n" +
                 " |  anon : (lin 13, col 21) : broadcast([])\n" +
-                " v  anon : (lin 6, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 6, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun ee_10_bcast_err2() {
@@ -674,7 +674,7 @@ class Exec_04 {
         """)
         //assert(out == "[]\n") { out }
         assert(out == " |  anon : (lin 9, col 17) : broadcast(e)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun ee_11_bcast() {
@@ -774,7 +774,7 @@ class Exec_04 {
         """)
         assert(out.contains(":ok\texe-task: 0x")) { out }
         //assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot move to deeper scope with pending references")) { out }
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot move in with pending references")) { out }
     }
     @Test
     fun ff_01_term() {
@@ -892,7 +892,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[]\n" +
                 " |  anon : (lin 9, col 13) : broadcast([])\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_03_bcast() {
@@ -936,8 +936,10 @@ class Exec_04 {
         //assert(out == ":1\n10\n10\n:2\n[20]\nresume error : incompatible scopes\n") { out }
         //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
         //        "declaration error : cannot hold event reference\n") { out }
+        //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
+        //        "block escape error : cannot copy reference out\n") { out }
         assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
-                "block escape error : cannot copy reference out\n") { out }
+                "block escape error : cannot move in with pending references\n") { out }
     }
     @Test
     fun gg_05_bcast_tuple_func_no() {
@@ -1009,9 +1011,9 @@ class Exec_04 {
                 }
             }
         """)
-        //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 14, col 33) : broadcast([])\n" +
-                " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == " |  anon : (lin 14, col 33) : broadcast([])\n" +
+        //        " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_07_bcast_tuple_func_ok() {
@@ -1237,7 +1239,7 @@ class Exec_04 {
         assert(out == "1\t2\t3\n" +
                 " |  anon : (lin 2, col 19) : (task (v1) { spawn (task (v2) { spawn (task (...)\n" +
                 " |  anon : (lin 3, col 23) : (task (v2) { spawn (task (v3) { println(v1,v2...)\n" +
-                " v  anon : (lin 3, col 33) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
     // PUB
@@ -1280,7 +1282,7 @@ class Exec_04 {
         """)
         //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
         assert(out == " |  anon : (lin 5, col 21) : spawn t(nil)\n" +
-                " v  anon : (lin 2, col 29) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun kk_03_pub() {
@@ -1318,7 +1320,7 @@ class Exec_04 {
             val t = spawn T()
         """)
         assert(out == " |  anon : (lin 8, col 21) : spawn T(nil)\n" +
-                " v  anon : (lin 5, col 25) : set error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun kk_06_pub_err() {
@@ -1333,7 +1335,7 @@ class Exec_04 {
             }
             println(pub(t))
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun kk_07_pub_tag() {
@@ -1432,7 +1434,7 @@ class Exec_04 {
         //assert(out == "anon : (lin 8, col 13) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
         //assert(out == "[]\n") { out }
-        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_02_expose_err() {
@@ -1448,7 +1450,7 @@ class Exec_04 {
             }
             println(x)
         """)
-        assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_03_expose_err() {
@@ -1480,6 +1482,8 @@ class Exec_04 {
         //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
         //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
+        assert(out == " |  anon : (lin 18, col 13) : f(a)\n" +
+                " v  anon : (lin 4, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_05_expose_err() {
@@ -1505,7 +1509,7 @@ class Exec_04 {
         //        "anon : (lin 3, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_06_expose_err() {
@@ -1528,7 +1532,7 @@ class Exec_04 {
         //        "anon : (lin 4, col 21) : set error : incompatible scopes\n" +
         //        ":error\n") { out }
         assert(out == " |  anon : (lin 12, col 21) : f(a)\n" +
-                " v  anon : (lin 4, col 21) : set error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 4, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun kj_07_pub_func() {
@@ -1906,7 +1910,8 @@ class Exec_04 {
             broadcast([])
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
     }
     @Test
     fun oo_02_gc_bcast() {
@@ -1925,7 +1930,8 @@ class Exec_04 {
             broadcast ([])
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1947,7 +1953,8 @@ class Exec_04 {
             broadcast( [])
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1971,7 +1978,8 @@ class Exec_04 {
             broadcast ([] )
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -2210,7 +2218,7 @@ class Exec_04 {
                         throw(:e1)
                         println(:no)
                     }) ()
-                    loop { yield(nil) ;;thus { as it => nil } }
+                    loop { yield(nil) } ;;thus { as it => nil }
                 }
                 println(:ok1)
                 throw(:e2)
@@ -2219,7 +2227,7 @@ class Exec_04 {
             spawn (task () {
                 catch { as it => :e2 } in {
                     spawn T()
-                    loop { yield(nil) } thus { as it => nil }
+                    loop { yield(nil) } ;;thus { as it => nil }
                 }
                 println(:ok2)
                 throw(:e3)
@@ -2248,7 +2256,7 @@ class Exec_04 {
                     ;;println(:1)
                     broadcast(nil)
                 }) ()
-                yield(nil) ;;thus { as it => nil }
+                yield(nil) thus { as it => nil }
                 ;;println(:2)
             }) ()
             broadcast(nil)
@@ -2376,7 +2384,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 13, col 25) : broadcast(e)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : broadcast(e)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_15_bcast_okr() {
@@ -2452,8 +2460,8 @@ class Exec_04 {
             println(`:number ceu_gc_count`)
             """
         )
-        //assert(out == "0\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "0\n") { out }
+        //assert(out == "1\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +
@@ -2490,8 +2498,8 @@ class Exec_04 {
         //        " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
         assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
-                " |  anon : (lin 7, col 17) : f(yield(nil) thus { it })\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
+                " |  anon : (lin 7, col 17) : f((yield(nil) thus { it }))\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {
@@ -2530,7 +2538,7 @@ class Exec_04 {
         assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
         //        " |  anon : (lin 8, col 44) : f(it)\n" +
-        //        " v  anon : (lin 3, col 27) : declaration error : cannot move to deeper scope with pending references\n") { out }
+        //        " v  anon : (lin 3, col 27) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_no() {
@@ -2549,7 +2557,7 @@ class Exec_04 {
         """)
         assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
                 " |  anon : (lin 9, col 44) : f(it)\n" +
-                " v  anon : (lin 4, col 21) : declaration error : cannot move to deeper scope with pending references\n") { out }
+                " v  anon : (lin 4, col 21) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_nox() {
@@ -2569,7 +2577,7 @@ class Exec_04 {
         assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
                 " |  anon : (lin 9, col 44) : f(it)\n" +
                 " |  anon : (lin 6, col 17) : g(v[0])\n" +
-                " v  anon : (lin 3, col 31) : argument error : cannot move to deeper scope with pending references\n") { out }
+                " v  anon : (lin 3, col 31) : argument error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_21_bcast_tuple_func_ok() {
@@ -2622,7 +2630,7 @@ class Exec_04 {
                     yield(nil) ;;thus { as it => nil }
                     println(t)
                 }) ()
-                yield(nil) ;;thus { as it => nil }
+                yield(nil) thus { as it => nil }
             }) ()
             broadcast ([])
         """)

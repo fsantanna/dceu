@@ -28,9 +28,7 @@ Esse mecanismo é fundamental em 4 cenários:
 
 - THUS
     - no yields, bcasts, spawns, set outs
-    - only plain or fleet returns
     - yield, detrack, pub
-- rever ref/deref
 - remove ylds
 - coro/task accept exact 1 arg in decl resume
 

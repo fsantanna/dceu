@@ -570,7 +570,7 @@ class Exec_03 {
                 set xxx = t ;; error
             }
         """)
-        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 8, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun todo_ff_04_move_err () {
@@ -631,7 +631,7 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_03_scope() {
@@ -656,9 +656,9 @@ class Exec_03 {
         //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
-                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun gg_04_scope() {
@@ -734,7 +734,7 @@ class Exec_03 {
             println(f(coroutine(C)))
         """)
         assert(out == " |  anon : (lin 8, col 21) : f(coroutine(C))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
+                " v  anon : (lin 2, col 27) : argument error : cannot move in with pending references\n") { out }
     }
     @Test
     fun gg_08_scope() {
@@ -765,7 +765,7 @@ class Exec_03 {
             }
         """)
         assert(out == " |  anon : (lin 10, col 17) : resume (co)(e)\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
 
     // CATCH / THROW

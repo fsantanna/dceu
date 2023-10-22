@@ -451,7 +451,7 @@ class Exec_01 {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_tuple8_hold_err() {
@@ -469,7 +469,7 @@ class Exec_01 {
             println(f(3))
         """, true
         )
-        assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 4, col 26) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_tuple9_hold_err() {
@@ -484,7 +484,7 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_tuple10_hold_err() {
@@ -500,7 +500,7 @@ class Exec_01 {
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 5, col 17) : return error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 2, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun cc_tuple14_drop_out() {
@@ -811,7 +811,7 @@ class Exec_01 {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -942,7 +942,7 @@ class Exec_01 {
             println(v)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -1461,7 +1461,7 @@ class Exec_01 {
         )
         //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 6, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope4() {
@@ -1511,7 +1511,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n") { out }
-        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope6() {
@@ -1554,7 +1554,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope10_err() {
@@ -1569,7 +1569,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope11_err() {
@@ -1584,7 +1584,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope12_err() {
@@ -1599,7 +1599,7 @@ class Exec_01 {
             println(1)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope13_tuple_err() {
@@ -1612,7 +1612,7 @@ class Exec_01 {
             println(v)
         """
         )
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -1716,7 +1716,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 4, col 17) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 4, col 17) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope19_leak() {
@@ -1777,7 +1777,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22b_vec() {
@@ -1791,7 +1791,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22c_dic() {
@@ -1805,7 +1805,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22d_dic() {
@@ -1819,7 +1819,7 @@ class Exec_01 {
             }
         """
         )
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22x_dict() {
@@ -1837,7 +1837,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 7, col 25) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 7, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22y_dict() {
@@ -1853,7 +1853,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 6, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope22z_dict() {
@@ -1939,7 +1939,7 @@ class Exec_01 {
             println(y)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope27_glb_vs_tup_err() {
@@ -1955,7 +1955,7 @@ class Exec_01 {
             println(f([nil]))
         """
         )
-        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope28_err() {
@@ -1971,7 +1971,7 @@ class Exec_01 {
             println(g)
         """
         )
-        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 5, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun scope29() {
@@ -2081,7 +2081,7 @@ class Exec_01 {
             f([[1]])
         """)
         //assert(out == "[1]\n") { out }
-        assert(out == "anon : (lin 3, col 17) : declaration error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun ll_06_xxx() {
@@ -2095,7 +2095,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n") { out }
     }
     @Test
     fun ll_07_xxx() {
@@ -2110,7 +2110,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
@@ -2189,7 +2189,7 @@ class Exec_01 {
             }
             println(v)
         """)
-        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_07_and_or() {
@@ -2520,7 +2520,7 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move to deeper scope with pending references\n1\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n1\n") { out }
     }
 
 
@@ -3719,7 +3719,7 @@ class Exec_01 {
             println(f(10))
         """
         )
-        assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 3, col 21) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -3735,7 +3735,7 @@ class Exec_01 {
             println(f(10)())
         """
         )
-        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == "anon : (lin 3, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun clo13_err() {
@@ -3894,7 +3894,7 @@ class Exec_01 {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -3908,7 +3908,7 @@ class Exec_01 {
             println(:ok)
         """
         )
-        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 2, col 13) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -3927,7 +3927,7 @@ class Exec_01 {
             println(g())
         """
         )
-        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 7, col 21) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test
@@ -4165,7 +4165,7 @@ class Exec_01 {
             println(out)
         """
         )
-        assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference to outer scope\n" +
+        assert(out == "anon : (lin 3, col 23) : block escape error : cannot copy reference out\n" +
                 "") { out }
     }
     @Test

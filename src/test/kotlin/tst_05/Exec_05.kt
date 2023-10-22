@@ -768,7 +768,7 @@ class Exec_05 {
             println(x)
         """)
         assert(out == ":pub\t[]\n" +
-                " v  anon : (lin 2, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+                " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun fg_05_expose() {
@@ -1179,7 +1179,7 @@ class Exec_05 {
             }
             println(y)
         """)
-        assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference to outer scope\n") { out }
+        assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun op_07_track_scope() {

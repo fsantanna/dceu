@@ -435,7 +435,7 @@ class Exec_99 {
             ;;}}}
         """)
         assert(out == " |  anon : (lin 13, col 13) : resume (co1)([])\n" +
-                " v  anon : (lin 5, col 17) : block escape error : cannot move to deeper scope with pending references\n") { out }
+                " v  anon : (lin 5, col 17) : block escape error : cannot move in with pending references\n") { out }
     }
     @Test
     fun gg_05_yield() {
