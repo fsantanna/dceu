@@ -359,17 +359,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // dcls gc-dec
-                    ${dcls.mapIndexed { i,it->
-                        (this.tk.str!="thus" || i!=0).cond { _ -> """
-                            if ($it.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                                CEU_Block* ceu_blk = CEU_HLD_BLOCK($it.Dyn);
-                                if ($blkc != ceu_blk) {
-                                    // if same block - free below w/ nested exes - b/c of pending refs defers
-                                    ceu_gc_dec($it, (ceu_blk == $blkc));
-                                }
+                    ${dcls.map { """
+                        if ($it.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                            CEU_Block* ceu_blk = CEU_HLD_BLOCK($it.Dyn);
+                            if ($blkc != ceu_blk) {
+                                // if same block - free below w/ nested exes - b/c of pending refs defers
+                                ceu_gc_dec($it, (ceu_blk == $blkc));
                             }
-                        """ }
-                    }.joinToString("")}
+                        }
+                    """ }.joinToString("")}
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond {
                         f_b as Expr.Proto
@@ -456,12 +454,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
-                    this.src!!.code() + (!isthus).cond { """
-                        CEU_ASSERT(
-                            $bupc,
-                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
-                            "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
-                        );
+                    this.src!!.code() + """
+                        ${isthus.cond {
+                            "if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_FLEET)"
+                        }}
+                        {
+                            CEU_ASSERT(
+                                $bupc,
+                                ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                                "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
+                            );
+                        }
                     """ }
                 }}
                 ${when {
@@ -469,9 +472,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     (this.src == null) -> ""
                     else -> "$idc = ceu_acc;"
                 }}
-                ${(!isthus).cond{
-                    "ceu_gc_inc($idc);"
-                }}
+                ceu_gc_inc($idc);
                 ceu_acc = $idc;
                 """
             }

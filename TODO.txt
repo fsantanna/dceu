@@ -1,5 +1,7 @@
 # TODO
 
+- fazer o mesmo para thus a respeito dos args
+
 - drop exe clo, task, in?
 - remover thus await
 - detrack de task_in continua com problemas,
