@@ -787,7 +787,9 @@ class Exec_05 {
     @Test
     fun fg_06_expose() {
         val out = test("""
-            val f = func (t) { false }
+            val f = func (t) {
+                println(t)
+            }
             val T = task () {
                 set pub() = []
                 yield(nil) thus { as it => nil }
@@ -807,7 +809,25 @@ class Exec_05 {
                 detrack(xx1) thus { as it => f(pub(it)) }
             }
             println(:ok)
-        """, true)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun todo_xxx() {
+        val out = test("""
+            val f = func (t) {
+                println(t)
+            }
+            val T = task () {
+                set pub() = []
+                yield(nil) thus { as it => nil }
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = next(ts)
+            detrack(x) thus { as t => f(pub(t)) }
+            println(:ok)
+        """)
         assert(out == ":ok\n") { out }
     }
     @Test

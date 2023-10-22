@@ -170,12 +170,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Do -> {
-                val isvoid = sta.void(this)
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val _blkc = this.idc("_block")
                 val blkc = this.idc("block")
                 val up = ups.pub[this]
-                val ismem = this.ismem(sta,clos)
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val bupc = when {
                     (up == null)        -> "(&_ceu_block_)"
@@ -192,6 +190,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     .filter { !GLOBALS.contains(it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
+
+                val ismem  = this.ismem(sta,clos)
+                val isvoid = sta.void(this)
+                val isexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
 
                 """
                 { // BLOCK | ${this.dump()}
@@ -426,7 +428,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }                        
                     """ }}
                     // check free
-                    ${(CEU>=3 && (f_b is Expr.Do) && ups.any(this) { it is Expr.Proto && it.tk.str!="func" }).cond { """
+                    ${(CEU>=3 && (f_b is Expr.Do) && isexe).cond { """
                         if (ceu_n == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
@@ -451,7 +453,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     this.src!!.code() + (!isthus).cond { """
                         CEU_ASSERT(
                             $bupc,
-                            ceu_hold_chk_set($bupc, ${if (isthus) "CEU_HOLD_FLEET" else "CEU_HOLD_MUTAB"}, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """ }

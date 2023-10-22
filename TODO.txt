@@ -1,21 +1,11 @@
 # TODO
 
-- precisa desse teste?
-    - cannot move track outside its task scope
 - drop exe clo, task, in?
-- remover thus: detrack/await
+- remover thus await
+- detrack de task_in continua com problemas,
+  uma vez que pode ser atribuido a var em bloco a que pertence,
+  terminar, ser reclamado, e gerar um dangling pointer
 
-- ao pasar ref para dentro:
-    - ou fleet sem refs
-    - ou immut
-    - bcast obrigado hold, usar chk no final
-    - adicionar hold(t)
-
-- remover obrigacao do thus
-    - somente detrack/pub de task_in
-        - se o ceu_block_up_task for TASK_IN
-            - o dst deve ser igual ou filho de ceu_block_up_task_dn_block
-            - exceto track que pode ser ceu_block_up_task->up.block
 - passar em todos os testes
 - fazer os testes do pico ceu o quanto antes
     - all, drag, bird-01, bird-11
@@ -42,6 +32,12 @@ Esse mecanismo é fundamental em 4 cenários:
     - yield, detrack, pub
 - remove ylds
 - coro/task accept exact 1 arg in decl resume
+
+- SOBRE valores passados como argumentos (e, em seguida, armazenado em locais)
+  de funções e thus:
+    - como eles vão executar do início ao fim, sem interrupções, o ideal é que não
+      mudem o hold state deles. e que os fleetings sejam gc_chk ao final, sem a necessidade
+      de um gc_inc no inicio e gc_dec no final
 
 # BUGS
 

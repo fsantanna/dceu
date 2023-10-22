@@ -930,6 +930,27 @@ class Exec_04 {
         assert(out == "[]\n") { out }
     }
     @Test
+    fun gg_04_bcast_ok() {
+        val out = test(
+            """
+            val T = task () {
+                val e =
+                    yield(nil) thus { as it =>
+                        type(it)
+                        it
+                    }
+                println(e)                
+            }
+            spawn T()
+            do {
+                broadcast ([20])
+            }
+            println(:ok)
+        """
+        )
+        assert(out == "[20]\n:ok\n") { out }
+    }
+    @Test
     fun gg_04_bcast() {
         val out = test(
             """
@@ -960,8 +981,18 @@ class Exec_04 {
         //        "declaration error : cannot hold event reference\n") { out }
         //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
         //        "block escape error : cannot copy reference out\n") { out }
-        assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
-                "block escape error : cannot move in with pending references\n") { out }
+        //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
+        //        "block escape error : cannot move in with pending references\n") { out }
+        assert(out == ":1\n" +
+                "10\n" +
+                "10\n" +
+                ":2\n" +
+                "[20]\n" +
+                "[20]\n" +
+                ":3\n" +
+                "@[(30,30)]\n" +
+                "@[(30,30)]\n" +
+                "true\n") { out }
     }
     @Test
     fun gg_05_bcast_tuple_func_no() {
@@ -1601,6 +1632,22 @@ class Exec_04 {
         """, true)
         assert(out == ":terminated\n") { out }
     }
+    @Test
+    fun kj_10_pub_expose() {
+        val out = test("""
+            val f = func (t) {
+                println(t)
+            }
+            val T = task () {
+                set pub() = []
+                yield(nil) thus { as it => nil }
+            }
+            val t = spawn T()
+            f(pub(t))
+            println(:ok)
+        """)
+        assert(out == "[]\n:ok\n") { out }
+    }
 
     // NESTED
 
@@ -1975,8 +2022,8 @@ class Exec_04 {
             broadcast( [])
             println(`:number ceu_gc_count`)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -2000,8 +2047,8 @@ class Exec_04 {
             broadcast ([] )
             println(`:number ceu_gc_count`)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -2482,8 +2529,8 @@ class Exec_04 {
             println(`:number ceu_gc_count`)
             """
         )
-        assert(out == "0\n") { out }
-        //assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +
@@ -2506,7 +2553,7 @@ class Exec_04 {
     @Test
     fun zz_19_bcast_tuple_func_no() {
         val out = test("""
-            var f = func (v) {
+            var f = func (v) {  ;; *** v is no longer fleeting ***
                 val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
@@ -2518,10 +2565,10 @@ class Exec_04 {
         """)
         //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
         //        " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == "[1]\n") { out }
-        assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 7, col 17) : f((yield(nil) thus { as it => it }) )\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
+        assert(out == "[1]\n") { out }
+        //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
+        //        " |  anon : (lin 7, col 17) : f((yield(nil) thus { as it => it }) )\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {
@@ -2577,15 +2624,17 @@ class Exec_04 {
             spawn T()
             broadcast ([[1]])
         """)
-        assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 9, col 44) : f(it)\n" +
-                " v  anon : (lin 4, col 21) : declaration error : cannot move in with pending references\n") { out }
+        assert(out == "[1]\n");
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+        //        " |  anon : (lin 9, col 44) : f(it)\n" +
+        //        " v  anon : (lin 4, col 21) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_nox() {
         val out = test("""
             var f = func (v) {
                 val g = func (x) {
+                    println(x)
                     x
                 }
                 g(v[0])
@@ -2596,10 +2645,11 @@ class Exec_04 {
             spawn T()
             broadcast ([[1]])
         """)
-        assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
-                " |  anon : (lin 9, col 44) : f(it)\n" +
-                " |  anon : (lin 6, col 17) : g(v[0])\n" +
-                " v  anon : (lin 3, col 31) : argument error : cannot move in with pending references\n") { out }
+        assert(out == "[1]\n")
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+        //        " |  anon : (lin 9, col 44) : f(it)\n" +
+        //        " |  anon : (lin 6, col 17) : g(v[0])\n" +
+        //        " v  anon : (lin 3, col 31) : argument error : cannot move in with pending references\n") { out }
     }
     @Test
     fun zz_21_bcast_tuple_func_ok() {

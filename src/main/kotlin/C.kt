@@ -1072,8 +1072,20 @@ fun Coder.main (tags: Tags): String {
                 // dst is parent of src | assigning to outer scope | "unsafe"
                 // dst and src are par  | assigning to alien scope | "unsafe"
                 if (src.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
-                    // safe if dropped or unassigned reference
+                    // SAFE if dropped or unassigned reference
                     // can move out and be reassigned by outer scope
+                    // EXCEPT if TRACK leaving its TASK scope
+        #if CEU >= 5
+                    if (
+                        src.Dyn->Any.type   == CEU_VALUE_TRACK  &&
+                        src.Dyn->Track.task != NULL             &&
+                        !ceu_block_is_up_dn(CEU_HLD_BLOCK((CEU_Dyn*)src.Dyn->Track.task), dst_blk)
+                    ) {
+                        strncpy(msg, pre, 256);
+                        strcat(msg, " : cannot move track outside its task scope");
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
+                    } 
+        #endif
                 } else {
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot copy reference out");
@@ -1388,6 +1400,7 @@ fun Coder.main (tags: Tags): String {
             assert(n >= 1);
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
+                ceu_gc_inc(evt); // save from nested gc_chk
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // do not permit that tasks drop/capture object
                     // b/c they are passed to other tasks regardless
@@ -1414,7 +1427,9 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_tofree_n--;
             ceu_dyn_rem_free_glb();
-            ceu_gc_chk_args(n, args);
+            if (evt.type > CEU_VALUE_DYNAMIC) {
+                ceu_gc_dec(evt, 1);
+            }
             return ret;
         }        
     #endif
