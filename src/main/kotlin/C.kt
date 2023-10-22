@@ -1180,6 +1180,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 3
                 case CEU_VALUE_CLO_CORO:
         #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
                         CEU_Value ret = _ceu_drop_f_(frame, 1, &dyn->Clo.upvs.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
@@ -1242,6 +1245,7 @@ fun Coder.main (tags: Tags): String {
                     break;
         #endif
                 default:
+                    //printf(">>> %d\n", src.type);
                     assert(0 && "TODO: drop");
                     break;
             }

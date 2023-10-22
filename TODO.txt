@@ -1,5 +1,7 @@
 # TODO
 
+- chamada nao precisa chk_set por conta de depth
+- drop exe clo, task, in?
 - remover thus: detrack/await
 
 - remover obrigacao do thus
