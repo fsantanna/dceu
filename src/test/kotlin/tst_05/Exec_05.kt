@@ -429,7 +429,7 @@ class Exec_05 {
                 println(:1, x)
                 println(:2, t)
                 println(:3, it)
-                println(:4, `:bool ${D}it.type == CEU_VALUE_REF`)
+                println(:4, `:bool ${D}it.type == CEU_VALUE_EXE_TASK`)
                 println(:5, it == t)
             }
             println(:6, v)

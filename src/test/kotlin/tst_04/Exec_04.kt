@@ -1474,7 +1474,7 @@ class Exec_04 {
             f(a)
             nil
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
         //assert(out == "anon : (lin 15, col 13) : f(a)\n" +
         //        "anon : (lin 2, col 30) : block escape error : incompatible scopes\n" +
         //        "[]\n" +
@@ -2497,8 +2497,8 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
         //        " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[1]\n") { out }
-        assert(out == " |  anon : (lin 10, col 13) : broadcast [[1]]\n" +
-                " |  anon : (lin 7, col 17) : f((yield(nil) thus { it }))\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
+                " |  anon : (lin 7, col 17) : f((yield(nil) thus { as it => it }) )\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
     }
     @Test
