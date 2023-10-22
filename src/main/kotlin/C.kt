@@ -854,13 +854,13 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_inc(args[i]);
             }
         }
-        /*
+        #if 0
         void ceu_gc_dec_args (int n, CEU_Value args[]) {
             for (int i=0; i<n; i++) {
                 ceu_gc_dec(args[i], 1);
             }
         }
-        */
+        #endif
         void ceu_gc_chk_args (int n, CEU_Value args[]) {
             for (int i=0; i<n; i++) {
                 ceu_gc_chk(args[i]);
@@ -1386,8 +1386,15 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_broadcast_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n >= 1);
-            //ceu_gc_inc_args(n, args);
             CEU_Value evt = args[0];
+            if (evt.type > CEU_VALUE_DYNAMIC) {
+                if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
+                    // do not permit that tasks drop/capture object
+                    // b/c they are passed to other tasks regardless
+                    CEU_Value ret = ceu_hold_chk_set(evt.Dyn->Any.hld.block, CEU_HOLD_IMMUT, evt, 0, "TODO");
+                    assert(ret.type == CEU_VALUE_NIL && "TODO");
+                }
+            }
             CEU_Value ret;
             ceu_tofree_n++;
             if (n == 1) {
@@ -1407,7 +1414,7 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_tofree_n--;
             ceu_dyn_rem_free_glb();
-            //ceu_gc_dec_args(n, args);
+            ceu_gc_chk_args(n, args);
             return ret;
         }        
     #endif

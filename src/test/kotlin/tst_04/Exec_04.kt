@@ -654,10 +654,30 @@ class Exec_04 {
                 ;;}()
             ;;}
         """)
-        //assert(out == "[]\n") { out }
         assert(out == "10\t[]\n" +
-                " |  anon : (lin 13, col 21) : broadcast([])\n" +
-                " v  anon : (lin 6, col 17) : declaration error : cannot copy reference out\n") { out }
+                "11\t[]\n") { out }
+        //assert(out == "[]\n") { out }
+        //assert(out == "10\t[]\n" +
+        //        " |  anon : (lin 13, col 21) : broadcast([])\n" +
+        //        " v  anon : (lin 6, col 17) : declaration error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun ee_10_bcast_err_xx() {
+        val out = test("""
+            val T = task (v) {
+                val e = yield(nil)
+                yield(nil)
+                println(v,e)                
+            }
+            spawn T(10)
+            do {
+                val x
+                broadcast ([])
+            }
+            broadcast(nil)
+        """)
+        assert(out == " |  anon : (lin 10, col 17) : broadcast([])\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
     fun ee_10_bcast_err2() {
@@ -890,9 +910,11 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "[]\n" +
+        //        " |  anon : (lin 9, col 13) : broadcast([])\n" +
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == "[]\n" +
-                " |  anon : (lin 9, col 13) : broadcast([])\n" +
-                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+                "[]\n") { out }
     }
     @Test
     fun gg_03_bcast() {
@@ -1910,8 +1932,8 @@ class Exec_04 {
             broadcast([])
             println(`:number ceu_gc_count`)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
     fun oo_02_gc_bcast() {
@@ -1930,8 +1952,8 @@ class Exec_04 {
             broadcast ([])
             println(`:number ceu_gc_count`)
         """)
-        assert(out == "0\n") { out }
-        //assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
         //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
