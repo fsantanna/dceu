@@ -810,7 +810,7 @@ class Exec_05 {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "[]\n:ok\n") { out }
     }
     @Test
     fun todo_xxx() {
@@ -1054,7 +1054,7 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n") { out }
         //assert(out == "anon : (lin 13, col 25) : set error : incompatible scopes\n:error\n") { out }
-        assert(out == " v  anon : (lin 14, col 25) : set error : cannot move track outside its task scope\n") { out }
+        assert(out == " v  anon : (lin 14, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun oo_04_track() {
