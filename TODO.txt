@@ -33,11 +33,14 @@ Esse mecanismo é fundamental em 4 cenários:
 - remove ylds
 - coro/task accept exact 1 arg in decl resume
 
-- SOBRE valores passados como argumentos (e, em seguida, armazenado em locais)
-  de funções e thus:
-    - como eles vão executar do início ao fim, sem interrupções, o ideal é que não
-      mudem o hold state deles. e que os fleetings sejam gc_chk ao final, sem a necessidade
-      de um gc_inc no inicio e gc_dec no final
+- SOBRE valores passados como argumentos para funções e thus:
+    - sempre inc, dec
+        - chk_set no inicio somente se FLEETING
+        - caso contrário, eu sei que é correto, mas poderia falhar no caso de assign paralelo
+- SOBRE valores passados como argumentos para broadcast:
+    - precisam virar HLD_IMMUT para que não sejam dropados, uma
+      vez que são passados para escopos alienigenas
+    - são gc_inc/dec para não serem coletados por chks em fcs chamadas
 
 # BUGS
 

@@ -1404,7 +1404,7 @@ fun Coder.main (tags: Tags): String {
                 if (evt.Dyn->Any.hld.type == CEU_HOLD_FLEET) {
                     // do not permit that tasks drop/capture object
                     // b/c they are passed to other tasks regardless
-                    CEU_Value ret = ceu_hold_chk_set(evt.Dyn->Any.hld.block, CEU_HOLD_IMMUT, evt, 0, "TODO");
+                    CEU_Value ret = ceu_hold_chk_set(CEU_HLD_BLOCK(evt.Dyn), CEU_HOLD_IMMUT, evt, 0, "TODO");
                     assert(ret.type == CEU_VALUE_NIL && "TODO");
                 }
             }

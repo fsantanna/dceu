@@ -299,11 +299,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            CEU_ASSERT(
-                                                $blkc,
-                                                ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
-                                                "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                            );
+                                            ${(!isexe).cond {
+                                                "if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type==CEU_HOLD_FLEET)"
+                                            }}
+                                            {
+                                                CEU_ASSERT(
+                                                    $blkc,
+                                                    ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
+                                                    "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                                );
+                                            }
                                         }
                                         """
                                     }.joinToString("")}
@@ -366,8 +371,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """ }
                     }.joinToString("")}
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
-                    ${(f_b is Expr.Proto).cond { """
-                        ${(f_b as Expr.Proto).args.map {
+                    ${(f_b is Expr.Proto).cond {
+                        f_b as Expr.Proto
+                        f_b.args.map {
                             val idc = vars.get(this, it.first.str).idc(0)
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
@@ -375,8 +381,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
-                        }.joinToString("")}
-                    """}}
+                        }.joinToString("")
+                    }}
                     // unlink task.dn_block = me
                     // unlink up.dn.block = me
                     ${when {
