@@ -1,8 +1,17 @@
 # TODO
 
+- remover arg out de chk_set
+- precisa desse teste?
+    - cannot move track outside its task scope
 - chamada nao precisa chk_set por conta de depth
 - drop exe clo, task, in?
 - remover thus: detrack/await
+
+- ao pasar ref para dentro:
+    - ou fleet sem refs
+    - ou immut
+    - bcast obrigado immut, usar chk no final
+    - adicionar hold(t)
 
 - remover obrigacao do thus
     - somente detrack/pub de task_in
