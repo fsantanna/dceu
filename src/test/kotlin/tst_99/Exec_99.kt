@@ -511,6 +511,28 @@ class Exec_99 {
         """)
         assert(out == "2\t5\t7\t9\tnil\n") { out }
     }
+    @Test
+    fun hh_03_yieldall() {
+        val out = test("""
+            coro foo () {
+                yield("a")
+                yield("b")
+            }
+            coro bar () {
+                yield("x")
+                resume-yield-all (coroutine(foo)) ()
+                yield("y")
+            }
+            val co = coroutine(bar)
+            loop {
+                val v = resume co()
+                break if status(co) == :terminated
+                print(v)
+            }
+            println()
+        """)
+        assert(out == "xaby\n") { out }
+    }
 
     // SPAWN
 

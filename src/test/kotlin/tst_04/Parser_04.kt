@@ -31,7 +31,7 @@ class Parser_04 {
         assert(e.tostr() == """
             (set t = (task (v) {
             (set v = yield(1))
-            (yield(2) thus { as it =>
+            ((yield(2)) thus { as it =>
             nil
             })
             

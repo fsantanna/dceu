@@ -413,28 +413,29 @@ class Parser_99 {
         val l = lexer("resume-yield-all f()")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((f) thus { as ceu_co_10 =>\n" +
-                "(var ceu_arg_10 = nil)\n" +
-                "loop {\n" +
-                "(break if (((resume (ceu_co_10)(ceu_arg_10))) thus { as ceu_v_10 =>\n" +
-                "if (({{/=}}(status(ceu_co_10),:terminated)) thus { as ceu_63 =>\n" +
-                "if ceu_63 {\n" +
-                "ceu_63\n" +
-                "} else {\n" +
-                "{{/=}}(ceu_v_10,nil)\n" +
-                "}\n" +
-                "})\n" +
-                " {\n" +
-                "(set ceu_arg_10 = yield(ceu_v_10))\n" +
-                "} else {\n" +
-                "nil\n" +
-                "}\n" +
-                "{{==}}(status(ceu_co_10),:terminated)\n" +
-                "})\n" +
-                ")\n" +
-                "}\n" +
-                "ceu_arg_10\n" +
-                "})\n") { e.tostr() }
+        assert(e.tostr() == """
+            do {
+            (val ceu_co_10 = f)
+            (var ceu_arg_10 = nil)
+            loop {
+            (val ceu_v_10 = (resume (ceu_co_10)(ceu_arg_10)))
+            if (({{/=}}(status(ceu_co_10),:terminated)) thus { as ceu_56 =>
+            if ceu_56 {
+            ceu_56
+            } else {
+            {{/=}}(ceu_v_10,nil)
+            }
+            })
+             {
+            (set ceu_arg_10 = yield(drop(ceu_v_10)))
+            } else {
+            nil
+            }
+            (break if {{==}}(status(ceu_co_10),:terminated))
+            }
+            ceu_arg_10
+            }
+        """.trimIndent())
     }
 
     // SPAWN

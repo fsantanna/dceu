@@ -597,17 +597,16 @@ class Parser (lexer_: Lexer)
                 }
                 call as Expr.Call
                 this.nest("""
-                    (${call.clo.tostr(true)}) thus { as ceu_co_$N => 
+                    ;; TODO: use thus with yield as last statement
+                    do {
+                        val ceu_co_$N = ${call.clo.tostr(true)}
                         var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
                         loop {
-                            break if (
-                                (resume ceu_co_$N(ceu_arg_$N)) thus { as ceu_v_$N =>
-                                    if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
-                                        set ceu_arg_$N = yield(ceu_v_$N)
-                                    }
-                                    (status(ceu_co_$N) == :terminated)
-                                }
-                            )
+                            val ceu_v_$N = resume ceu_co_$N(ceu_arg_$N)
+                            if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
+                                set ceu_arg_$N = yield(drop(ceu_v_$N))
+                            }
+                            break if (status(ceu_co_$N) == :terminated)
                         }
                         ceu_arg_$N
                     }
