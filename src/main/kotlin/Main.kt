@@ -174,7 +174,7 @@ val PLUS = """
     val {{+}} = func (v1, v2) {
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
-""".replace("\n", "")
+""".replace("\n", " ")
 fun OR (v1:String, v2:String): String {
     N++
     return "($v1 thus { as it_$N => if it_$N { it_$N } else { $v2 } })"
@@ -190,19 +190,19 @@ fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
                 ${AND(v, OR("it","true"))}
             }
         }
-    """.replace("\n", "")
+    """.replace("\n", " ")
 }
 val IS = """
     func is' (v1,v2) {
         ifs {
-            (v1 == v2)         => true
-            (type(v2) /= :tag) => false
-            (type(v1) == v2)   => true
-            tags(v1,v2)        => true
+            (v1 == v2)         { true  }
+            (type(v2) /= :tag) { false }
+            (type(v1) == v2)   { true  }
+            tags(v1,v2)        { true  }
             else => false
         }
     }
-""".replace("\n", "")
+""".replace("\n", " ")
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {

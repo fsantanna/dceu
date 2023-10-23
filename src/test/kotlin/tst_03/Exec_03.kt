@@ -61,7 +61,7 @@ class Exec_03 {
                 yield(nil) thus { as it => yield(nil) thus { as x => nil } }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 44) : thus error : unexpected enclosing yield\n") { out }
+        assert(out == "anon : (lin 3, col 44) : yield error : unexpected enclosing thus\n") { out }
     }
 
     // COROUTINE
@@ -1283,7 +1283,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : thus error : unexpected enclosing yield\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
     @Test
     fun nn_02_catch() {

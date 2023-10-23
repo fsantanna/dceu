@@ -645,7 +645,7 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     ${pre0}loop {
-                        ${pre0}break if ${pre0} (yield() thus { as ${id.str} ${tag.cond{it.str}} =>
+                        ${pre0}break if (${pre0}yield() thus { as ${id.str} ${tag.cond{it.str}} =>
                             ${pre0}$cnd
                         })
                     }

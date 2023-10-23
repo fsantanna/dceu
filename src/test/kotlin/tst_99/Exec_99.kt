@@ -421,21 +421,22 @@ class Exec_99 {
         val out = test("""
             val CO = coro () {
                 nil
-                yield() ;;thus { as it => it }
+                yield() thus { as it => println(it);it }
                 nil
                 nil
             }
             val co1 = coroutine(CO)
             val co2 = coroutine(CO)
-            ;;do { do { do {
+            do { do { do {
             resume co1()
             resume co2()
             resume co1([])
             resume co2([])
-            ;;}}}
+            }}}
         """)
-        assert(out == " |  anon : (lin 13, col 13) : resume (co1)([])\n" +
-                " v  anon : (lin 5, col 17) : block escape error : cannot move in with pending references\n") { out }
+        //assert(out == " |  anon : (lin 13, col 13) : resume (co1)([])\n" +
+        //        " v  anon : (lin 5, col 17) : block escape error : cannot move in with pending references\n") { out }
+        assert(out == "[]\n[]\n")
     }
     @Test
     fun gg_05_yield() {

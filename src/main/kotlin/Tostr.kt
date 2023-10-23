@@ -31,7 +31,7 @@ fun Expr.tostr (pre: Boolean = false): String {
                 (this.tk.str == "thus") -> {
                     val dcl = this.es[0] as Expr.Dcl
                     val id_tag = dcl.id.tostr() + dcl.tag.cond{" "+it.str}
-                    "(${dcl.src!!.tostr(pre)} thus { as $id_tag =>\n${this.es.drop(1).tostr(pre)}})\n"
+                    "((${dcl.src!!.tostr(pre)}) thus { as $id_tag =>\n${this.es.drop(1).tostr(pre)}})\n"
                 }
 
                 else -> "{\n" + this.es.tostr(pre) + "}"

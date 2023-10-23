@@ -364,7 +364,7 @@ class Exec_05 {
                 detrack(nil) thus { as yy => yield(nil) thus { as xx => nil } }
             }
         """)
-        assert(out == ("anon : (lin 3, col 46) : thus error : unexpected enclosing yield\n")) { out }
+        assert(out == ("anon : (lin 3, col 46) : yield error : unexpected enclosing thus\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
