@@ -605,7 +605,8 @@ class Exec_05 {
             println(status(t))
         """)
         //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        //assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        assert(out == " v  anon : (lin 8, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -754,8 +755,9 @@ class Exec_05 {
             }
             println(x)
         """)
-        assert(out == ":pub\t[]\n" +
-                " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == ":pub\t[]\n" +
+        //        " v  anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 11, col 17) : declaration error : cannot expose task-in-pool reference\n") { out }
     }
     @Test
     fun fg_05_expose() {
@@ -902,7 +904,7 @@ class Exec_05 {
         )
         assert(out == "nil\n" +
                 "nil\n" +
-                " v  anon : (lin 8, col 21) : next(ts,:err) : next error : expected task in pool track\n") { out }
+                " v  anon : (lin 8, col 21) : next(ts,:err) : next error : expected task-in-pool track\n") { out }
     }
     @Test
     fun hh_02_next() {
@@ -938,7 +940,7 @@ class Exec_05 {
             next(ts, x)
         """
         )
-        assert(out == " v  anon : (lin 9, col 13) : next(ts,x) : next error : expected task in pool track\n") { out }
+        assert(out == " v  anon : (lin 9, col 13) : next(ts,x) : next error : expected task-in-pool track\n") { out }
     }
     @Test
     fun hh_04_next() {
@@ -955,7 +957,7 @@ class Exec_05 {
             next(ts, x1)
         """
         )
-        assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task in pool track\n") { out }
+        assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task-in-pool track\n") { out }
     }
 
     // ABORTION
@@ -1067,9 +1069,8 @@ class Exec_05 {
             }
             println(x)
         """)
-        //assert(out == "anon : (lin 8, col 17) : declaration error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out.contains("exe-task: 0x")) { out }
+        assert(out == " v  anon : (lin 7, col 13) : declaration error : cannot expose task-in-pool reference\n") { out }
+        //assert(out.contains("exe-task: 0x")) { out }
     }
 
     // ORIGINAL / TRACK / DETRACK

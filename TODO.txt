@@ -12,8 +12,11 @@
 - preciso de um THUS que os args nao sejam chk_set para FLEET
     - faz sentido na ideia de que é um pipe que nao vai consumir a entrada
     - no entando, se esse pipe chamar uma funcao, vai dar problema
-    - eu poderia checar se é FLEET, guardar essa info, mover para uma local,
+    - eu poderia checar se é FLEET, guardar essa info, mover como IMMUT para a local,
       deixar o codigo do usuario trabalhar, no fim verificar flag e dar um drop
+    - o immut nao permitiria a variavel ser movida ou coletada, garantindo que o drop
+      ao final funcione
+  - thus entao nunca é chk_set
 
 - drop exe clo, task, in?
 - remover thus await

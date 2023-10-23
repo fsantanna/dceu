@@ -1045,6 +1045,18 @@ fun Coder.main (tags: Tags): String {
             CEU_Block* src_blk  = CEU_HLD_BLOCK(src.Dyn);
             CEU_HOLD   src_type = src.Dyn->Any.hld.type;
             
+        #if CEU >= 5
+            if (src.type==CEU_VALUE_EXE_TASK_IN && dst_type!=CEU_HOLD_FLEET) {
+                // unsafe to assign task-in to any variable of any scope
+                // (unless nested scope as FLEET in func/thus)
+                // b/c it is self-reclaimed which would generate dangling pointers:
+                // set "safe" x -> self-reclaim -> x is dangling
+                strncpy(msg, pre, 256);
+                strcat(msg, " : cannot expose task-in-pool reference");
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
+            }
+        #endif
+
             // dst <- src
             if (dst_blk == src_blk) {
                 if (dst_type==src_type) {
@@ -1551,12 +1563,12 @@ fun Coder.main (tags: Tags): String {
                             break;
                         case CEU_VALUE_TRACK:
                             if (key.Dyn->Track.task==NULL || key.Dyn->Track.task->type!=CEU_VALUE_EXE_TASK_IN) {
-                                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task in pool track"} };
+                                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task-in-pool track"} };
                             }
                             nxt = key.Dyn->Track.task->hld.next;
                             break;
                         default:
-                            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task in pool track"} };
+                            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task-in-pool track"} };
                     }
                     if (nxt == NULL) {
                         return (CEU_Value) { CEU_VALUE_NIL };
