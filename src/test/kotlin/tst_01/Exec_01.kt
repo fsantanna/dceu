@@ -2140,9 +2140,24 @@ class Exec_01 {
             println(x)
         """
         )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_x() {
+        val out = test(
+            """
+            var x
+            do {
+                [1,2,3] thus { as a =>
+                    set x = drop(a)
+                }
+            }
+            println(x)
+        """
+        )
         assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 3, col 13) : set error : incompatible scopes\n") { out }
-        //assert(out == "anon : (lin 5, col 21) : invalid set : destination across thus\n") { out }
+        //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_02_thus_err() {
@@ -2186,6 +2201,18 @@ class Exec_01 {
             val v = do {
                 [] thus { as x =>
                     if x { x } else { [] }
+                }
+            }
+            println(v)
+        """)
+        assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_05_tmp_x() {
+        val out = test("""
+            val v = do {
+                [] thus { as x =>
+                    if x { drop(x) } else { [] }
                 }
             }
             println(v)

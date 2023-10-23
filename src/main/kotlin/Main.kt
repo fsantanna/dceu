@@ -181,7 +181,7 @@ fun OR (v1:String, v2:String): String {
 }
 fun AND (v1:String, v2:String): String {
     N++
-    return "($v1 thus { as it_$N => if it_$N { $v2 } else { $v1 } })"
+    return "(($v1) thus { as it_$N => if it_$N { $v2 } else { $v1 } })"
 }
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """

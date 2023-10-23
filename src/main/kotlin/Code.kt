@@ -66,7 +66,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
-                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val mem = Mem(vars, clos, sta, defers)
 
@@ -109,13 +108,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """}}
                         $code
                         ${isexe.cond{"""
-                                    ${istsk.cond { """
-                                        if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
-                                            // do not check if it is returned back (this is not the case with locals created here)
-                                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
-                                        }
-                                        ceu_frame->exe_task->pub = ceu_acc;
-                                    """ }}
                                     ceu_frame->exe->status = (ceu_n == CEU_ARG_ABORT) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
@@ -193,7 +185,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 val ismem  = this.ismem(sta,clos)
                 val isvoid = sta.void(this)
-                val isexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+                val inexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+                val istsk  = (f_b?.tk?.str == "task")
 
                 """
                 { // BLOCK | ${this.dump()}
@@ -299,7 +292,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            ${(!isexe).cond {
+                                            ${(!inexe).cond {
                                                 "if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type==CEU_HOLD_FLEET)"
                                             }}
                                             {
@@ -381,6 +374,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }.joinToString("")
                     }}
+                    // pub gc-dec
+                    ${istsk.cond { """
+                        if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
+                            // do not check if it is returned back (this is not the case with locals created here)
+                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
+                        }
+                        ceu_frame->exe_task->pub = ceu_acc;
+                    """ }}
                     // unlink task.dn_block = me
                     // unlink up.dn.block = me
                     ${when {
@@ -432,7 +433,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }                        
                     """ }}
                     // check free
-                    ${(CEU>=3 && (f_b is Expr.Do) && isexe).cond { """
+                    ${(CEU>=3 && (f_b is Expr.Do) && inexe).cond { """
                         if (ceu_n == CEU_ARG_ABORT) {
                             continue;   // do not execute next statement, instead free up block
                         }
@@ -466,7 +467,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             );
                         }
                     """ }
-                }}
+                }
                 ${when {
                     !this.init -> ""
                     (this.src == null) -> ""

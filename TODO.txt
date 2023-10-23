@@ -1,12 +1,22 @@
 # TODO
 
-- fazer o mesmo para thus a respeito dos args
+- novo refactor de chk_set para dlex
+
+- detrack/pub de task_in continua com problemas,
+  uma vez que pode ser atribuido a var em bloco a que pertence,
+  terminar, ser reclamado, e gerar um dangling pointer
+  - deve pegar escopo do bloco interno da task
+    - no caso do track, isso nao é suficiente, uma vez que o thus vai
+      receber um FLEET com ref pendente e gerar erro
+
+- preciso de um THUS que os args nao sejam chk_set para FLEET
+    - faz sentido na ideia de que é um pipe que nao vai consumir a entrada
+    - no entando, se esse pipe chamar uma funcao, vai dar problema
+    - eu poderia checar se é FLEET, guardar essa info, mover para uma local,
+      deixar o codigo do usuario trabalhar, no fim verificar flag e dar um drop
 
 - drop exe clo, task, in?
 - remover thus await
-- detrack de task_in continua com problemas,
-  uma vez que pode ser atribuido a var em bloco a que pertence,
-  terminar, ser reclamado, e gerar um dangling pointer
 
 - passar em todos os testes
 - fazer os testes do pico ceu o quanto antes

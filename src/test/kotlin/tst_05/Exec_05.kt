@@ -600,15 +600,12 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             val x = next(ts)
-            var t
-            detrack(x) thus { as it =>
-                set t = it
-            }
+            val t = detrack(x)
             broadcast(nil)
             println(status(t))
         """)
         //assert(out == " v  anon : (lin 9, col 24) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " v  anon : (lin 13, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
+        assert(out == " v  anon : (lin 10, col 21) : status(t) : status error : expected running coroutine or task\n") { out }
     }
     @Test
     fun ff_03_detrack_err() {
@@ -806,14 +803,14 @@ class Exec_05 {
             }
             do {
                 val xx1 = next(ts)
-                detrack(xx1) thus { as it => f(pub(it)) }
+                f(pub(detrack(xx1))) ;;thus { as it => f(pub(it)) }
             }
             println(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
     }
     @Test
-    fun todo_xxx() {
+    fun fg_06_expose_xxx() {
         val out = test("""
             val f = func (t) {
                 println(t)
@@ -825,10 +822,10 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             val x = next(ts)
-            detrack(x) thus { as t => f(pub(t)) }
+            f(pub(detrack(x))) ;; thus { as t => f(pub(t)) }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "[]\n:ok\n") { out }
     }
     @Test
     fun fg_07_throw_track() {
