@@ -630,7 +630,7 @@ class Exec_03 {
         """)
         //assert(out == " |  anon : (lin 9, col 24) : t(v)\n" +
         //        " v  anon : (lin 2, col 30) : resume error : incompatible scopes\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
                 " v  anon : (lin 2, col 27) : argument error : cannot copy reference out\n") { out }
     }
     @Test
@@ -657,7 +657,7 @@ class Exec_03 {
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
                 " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -702,7 +702,7 @@ class Exec_03 {
             }
             resume t()
         """)
-        assert(out == " |  anon : (lin 16, col 33) : resume (t)(nil)\n" +
+        assert(out == " |  anon : (lin 16, col 33) : (resume (t)(nil))\n" +
                 " v  anon : (lin 5, col 21) : yield error : cannot receive assigned reference\n") { out }
     }
     @Test
@@ -764,7 +764,7 @@ class Exec_03 {
                 resume co (e)
             }
         """)
-        assert(out == " |  anon : (lin 10, col 17) : resume (co)(e)\n" +
+        assert(out == " |  anon : (lin 10, col 17) : (resume (co)(e))\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
 

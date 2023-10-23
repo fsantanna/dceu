@@ -329,7 +329,7 @@ class Parser_01 {
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "f()\npass 1\nh()\ni()\n") { es.tostr() }
+        assert(es.tostr() == "f()\n(pass 1)\nh()\ni()\n") { es.tostr() }
         //assert(ceu.trap { parser.exprs() } == "anon : (lin 2, col 3) : call error : \"(\" in the next line")
     }
     @Test
@@ -338,7 +338,7 @@ class Parser_01 {
         val parser = Parser(l)
         // TODO: ambiguous
         val es = parser.exprs()
-        assert(es.tostr() == "var v2\n[tp,v1,v2]\n") { es.tostr() }
+        assert(es.tostr() == "(var v2)\n[tp,v1,v2]\n") { es.tostr() }
     }
 
     // DCL
@@ -349,7 +349,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="var" && e.id.str=="x")
-        assert(e.tostr() == "var x")
+        assert(e.tostr() == "(var x)")
     }
     @Test
     fun expr_dcl_val() {
@@ -357,7 +357,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.tk.str=="val" && e.id.str=="x")
-        assert(e.tostr() == "val x")
+        assert(e.tostr() == "(val x)")
     }
     @Test
     fun expr_dcl_err() {
@@ -371,7 +371,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Dcl && e.id.str == "x" && e.src is Expr.Num)
-        assert(e.tostr() == "var x = 1")
+        assert(e.tostr() == "(var x = 1)")
     }
 
     // SET
@@ -382,7 +382,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e is Expr.Set && e.tk.str == "set")
-        assert(e.tostr() == "set x = [10]")
+        assert(e.tostr() == "(set x = [10])")
     }
     @Test
     fun expr_err1() {  // set number?
@@ -467,7 +467,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Do && e.es.size==3)
-        assert(e.tostr() == "do {\nvar a\nset a = 1\nprint(a)\n}") { e.tostr() }
+        assert(e.tostr() == "do {\n(var a)\n(set a = 1)\nprint(a)\n}") { e.tostr() }
     }
 
     // THUS AS
@@ -592,7 +592,7 @@ class Parser_01 {
         val l = lexer("loop { pass nil }")
         val parser = Parser(l)
         val e1 = parser.expr() as Expr.Loop
-        assert(e1.blk.tostr() == "{\npass nil\n}") { e1.blk.tostr() }
+        assert(e1.blk.tostr() == "{\n(pass nil)\n}") { e1.blk.tostr() }
     }
     @Test
     fun qq_02_loop_err() {
@@ -640,14 +640,14 @@ class Parser_01 {
         val l = lexer("break (1) if true")
         val parser = Parser(l)
         val e = parser.expr() as Expr.Break
-        assert(e.tostr() == "break(1) if true") { e.tostr() }
+        assert(e.tostr() == "(break(1) if true)") { e.tostr() }
     }
     @Test
     fun rr_06_break() {
         val l = lexer("break if nil")
         val parser = Parser(l)
         val e = parser.expr() as Expr.Break
-        assert(e.tostr() == "break if nil") { e.tostr() }
+        assert(e.tostr() == "(break if nil)") { e.tostr() }
     }
 
     // NATIVE
@@ -810,7 +810,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "data :T = [x,y]\n") { e.tostr() }
+        assert(e.tostr() == "(data :T = [x,y])\n") { e.tostr() }
     }
     @Test
     fun tplate01() {
@@ -821,7 +821,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "var t :T = [1,2]\n") { e.tostr() }
+        assert(e.tostr() == "(var t :T = [1,2])\n") { e.tostr() }
     }
     @Test
     fun tplate02_err() {
@@ -872,6 +872,6 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "data :U = [t:T]\n") { e.tostr() }
+        assert(e.tostr() == "(data :U = [t:T])\n") { e.tostr() }
     }
 }

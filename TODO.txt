@@ -18,8 +18,7 @@
       ao final funcione
   - thus entao nunca é chk_set
 
-- drop exe clo, task, in?
-- remover thus await
+- can be dropped: exe clo, task, in?
 
 - passar em todos os testes
 - fazer os testes do pico ceu o quanto antes

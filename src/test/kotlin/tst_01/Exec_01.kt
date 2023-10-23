@@ -4629,7 +4629,6 @@ class Exec_01 {
         """)
         assert(out == "1\n") { out }
     }
-
     @Test
     fun zz_04_arthur() {
         val out = test("""

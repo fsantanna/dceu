@@ -54,16 +54,16 @@ class Parser_03 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == """
-            set t = (coro (v) {
-            set v = yield(1)
+            (set t = (coro (v) {
+            (set v = yield(1))
             (yield(2) thus { as it =>
             nil
             })
             
-            })
+            }))
             coroutine(t)
-            set v = resume (a)(1)
-            resume (a)(2)
+            (set v = (resume (a)(1)))
+            (resume (a)(2))
             
         """.trimIndent()) { e.tostr() }
     }
@@ -104,7 +104,7 @@ class Parser_03 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "resume (f())(nil)") { e.tostr() }
+        assert(e.tostr() == "(resume (f())(nil))") { e.tostr() }
     }
     @Test
     fun bb_07_yield_err() {

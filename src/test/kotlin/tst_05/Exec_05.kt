@@ -777,7 +777,7 @@ class Exec_05 {
             println(:ok)
         """)
         //assert(out == ":ok\n") { out }
-        assert(out == " |  anon : (lin 13, col 13) : spawn T(track(t))\n" +
+        assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
                 " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +

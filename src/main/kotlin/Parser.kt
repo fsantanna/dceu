@@ -304,7 +304,7 @@ class Parser (lexer_: Lexer)
                 } else {
                     val (id,tag) = id_tag
                     this.nest("""
-                        (${cnd.tostr(true)} thus { as ${id.str} ${tag.cond{it.str}} =>
+                        ((${cnd.tostr(true)}) thus { as ${id.str} ${tag.cond{it.str}} =>
                             if ${id.str} {
                                 ${t.es.tostr(true)}
                             } else {
@@ -574,7 +574,7 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    (${v.cond2({it.tostr(true)},{"nil"})} thus { as $x =>
+                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { as $x =>
                     ${ifs.map { (xxx,blk) ->
                         val (id_tag,cnd) = xxx
                         """
@@ -597,11 +597,11 @@ class Parser (lexer_: Lexer)
                 }
                 call as Expr.Call
                 this.nest("""
-                    ${call.clo.tostr(true)} thus { as ceu_co_$N => 
+                    (${call.clo.tostr(true)}) thus { as ceu_co_$N => 
                         var ceu_arg_$N = ${if (call.args.size==0) "nil" else call.args[0].tostr(true)}
                         loop {
                             break if (
-                                resume ceu_co_$N(ceu_arg_$N) thus { as ceu_v_$N =>
+                                (resume ceu_co_$N(ceu_arg_$N)) thus { as ceu_v_$N =>
                                     if (status(ceu_co_$N) /= :terminated) or (ceu_v_$N /= nil) {
                                         set ceu_arg_$N = yield(ceu_v_$N)
                                     }
@@ -645,9 +645,9 @@ class Parser (lexer_: Lexer)
                 }
                 this.nest("""
                     ${pre0}loop {
-                        ${pre0}break if ${pre0}yield() { as ${id.str} ${tag.cond{it.str}} =>
+                        ${pre0}break if ${pre0} (yield() thus { as ${id.str} ${tag.cond{it.str}} =>
                             ${pre0}$cnd
-                        }
+                        })
                     }
                 """)
             }
@@ -826,7 +826,7 @@ class Parser (lexer_: Lexer)
         return this.expr_1_bin(op.str,
             when (op.str) {
                 "and" -> this.nest("""
-                    (${e1.tostr(true)} thus { as ceu_${e1.n} =>
+                    ((${e1.tostr(true)}) thus { as ceu_${e1.n} =>
                         if ceu_${e1.n} {
                             ${e2.tostr(true)}
                         } else {
@@ -835,7 +835,7 @@ class Parser (lexer_: Lexer)
                     })
                 """)
                 "or" -> this.nest("""
-                    (${e1.tostr(true)} thus { as ceu_${e1.n} =>  
+                    ((${e1.tostr(true)}) thus { as ceu_${e1.n} =>  
                         if ceu_${e1.n} {
                             ceu_${e1.n}
                         } else {

@@ -503,7 +503,7 @@ class Exec_04 {
                 throw(:err)
             })()
         """)
-        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { throw(:err) })(nil)\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { throw(:err) })(nil))\n" +
                 " |  anon : (lin 3, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -560,7 +560,7 @@ class Exec_04 {
                 nil
             })()
         """)
-        assert(out == " |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -575,7 +575,7 @@ class Exec_04 {
                 nil
             })()
         """)
-        assert(out == " |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -1334,7 +1334,7 @@ class Exec_04 {
             println(x)
         """)
         //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
-        assert(out == " |  anon : (lin 5, col 21) : spawn t(nil)\n" +
+        assert(out == " |  anon : (lin 5, col 21) : (spawn t(nil))\n" +
                 " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1372,7 +1372,7 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
-        assert(out == " |  anon : (lin 8, col 21) : spawn T(nil)\n" +
+        assert(out == " |  anon : (lin 8, col 21) : (spawn T(nil))\n" +
                 " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1466,7 +1466,7 @@ class Exec_04 {
                 nil
             }) ()
         """)
-        assert(out == " |  anon : (lin 2, col 13) : spawn (task () { set pub()[:x] = 10 nil })(ni...)\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { (set pub()[:x] = 10) nil })...)\n" +
                 " v  anon : (lin 3, col 21) : index error : expected collection\n") { out }
     }
 
