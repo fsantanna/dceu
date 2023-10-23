@@ -2144,13 +2144,28 @@ class Exec_01 {
         assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
-    fun mm_01_tmp_x() {
+    fun mm_01_tmp_err() {
         val out = test(
             """
             var x
             do {
                 [1,2,3] thus { as a =>
                     set x = drop(a)
+                }
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_ok() {
+        val out = test(
+            """
+            val x = do {
+                [1,2,3] thus { as a =>
+                    a
                 }
             }
             println(x)
@@ -2205,7 +2220,8 @@ class Exec_01 {
             }
             println(v)
         """)
-        assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
     }
     @Test
     fun mm_05_tmp_x() {
@@ -2217,7 +2233,8 @@ class Exec_01 {
             }
             println(v)
         """)
-        assert(out == "[]\n") { out }
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
     }
     @Test
     fun mm_06_tmp_err() {

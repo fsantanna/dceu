@@ -303,7 +303,7 @@ class Exec_03 {
         val out = test("""
             val CO = coro () {
                 yield(nil) thus { as it =>
-                    println(tags(it,:X)) ; drop(it)
+                    println(tags(it,:X)) ;; drop(it)
                 }
             }
             val co = coroutine(CO)

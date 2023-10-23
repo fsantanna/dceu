@@ -1193,11 +1193,9 @@ fun Coder.main (tags: Tags): String {
             }
         }
 
-        CEU_Value _ceu_drop_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
-            assert(n == 1);
-            CEU_Value src = args[0];
+        CEU_Value _ceu_drop_ (CEU_Value src) {
             CEU_Dyn* dyn = src.Dyn;
-            
+
             if (src.type < CEU_VALUE_DYNAMIC) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // do not drop non-dyns
             } else if (ceu_block_up_block(CEU_HLD_BLOCK(dyn)) == NULL) {
@@ -1205,7 +1203,7 @@ fun Coder.main (tags: Tags): String {
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
+                // only need to test at top-level ceu_drop_f
             }
 
             dyn->Any.hld.type = CEU_HOLD_FLEET;
@@ -1219,7 +1217,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        CEU_Value ret = _ceu_drop_f_(frame, 1, &dyn->Clo.upvs.buf[i]);
+                        CEU_Value ret = _ceu_drop_(dyn->Clo.upvs.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1227,7 +1225,7 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_TUPLE: {
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        CEU_Value ret = _ceu_drop_f_(frame, 1, &dyn->Tuple.buf[i]);
+                        CEU_Value ret = _ceu_drop_(dyn->Tuple.buf[i]);
                         if (ret.type == CEU_VALUE_ERROR) {
                             return ret;
                         }
@@ -1238,7 +1236,7 @@ fun Coder.main (tags: Tags): String {
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret1 = ceu_vector_get(&dyn->Vector, i);
                         assert(ret1.type != CEU_VALUE_ERROR);
-                        CEU_Value ret2 = _ceu_drop_f_(frame, 1, &ret1);
+                        CEU_Value ret2 = _ceu_drop_(ret1);
                         if (ret2.type == CEU_VALUE_ERROR) {
                             return ret2;
                         }
@@ -1247,11 +1245,11 @@ fun Coder.main (tags: Tags): String {
                 }
                 case CEU_VALUE_DICT: {
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        CEU_Value ret0 = _ceu_drop_f_(frame, 1, &(*dyn->Dict.buf)[i][0]);
+                        CEU_Value ret0 = _ceu_drop_((*dyn->Dict.buf)[i][0]);
                         if (ret0.type == CEU_VALUE_ERROR) {
                             return ret0;
                         }
-                        CEU_Value ret1 = _ceu_drop_f_(frame, 1, &(*dyn->Dict.buf)[i][1]);
+                        CEU_Value ret1 = _ceu_drop_((*dyn->Dict.buf)[i][1]);
                         if (ret1.type == CEU_VALUE_ERROR) {
                             return ret1;
                         }
@@ -1268,7 +1266,7 @@ fun Coder.main (tags: Tags): String {
         #endif
                 {
                     CEU_Value arg = ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo);
-                    CEU_Value ret = _ceu_drop_f_(frame, 1, &arg);
+                    CEU_Value ret = _ceu_drop_(arg);
                     if (ret.type == CEU_VALUE_ERROR) {
                         return ret;
                     }
@@ -1286,8 +1284,13 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value ceu_drop_f (CEU_Frame* frame, int n, CEU_Value args[]) {
-            CEU_Value ret = _ceu_drop_f_(frame, n, args);
+        CEU_Value ceu_drop_f (CEU_Frame* _1, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value src = args[0];
+            if (src.type>CEU_VALUE_DYNAMIC && src.Dyn->Any.hld.type==CEU_HOLD_IMMUT) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
+            }
+            CEU_Value ret = _ceu_drop_(src);
             ceu_gc_chk_args(n, args);
             return ret;
         }
