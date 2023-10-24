@@ -53,7 +53,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Loop  -> {
                 this.blk.es.last().let {
                     if (it.is_innocuous()) {
-                        //err(it.tk, "invalid expression : innocuous expression")
+                        //err(it.tk, "expression error : innocuous expression")
                         TODO("never reachable - checked in parser - remove in the future")
                     }
                 }

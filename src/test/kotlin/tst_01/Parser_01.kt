@@ -321,7 +321,7 @@ class Parser_01 {
         val parser = Parser(l)
         //println(parser.exprs().tostr())
         //assert(es.tostr() == "f()\n1\nh()\ni()\n") { es.tostr() }
-        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : invalid expression : innocuous expression")
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 3) : expression error : innocuous expression")
     }
     @Test
     fun exprs_seq2a() {

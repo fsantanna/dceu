@@ -275,13 +275,13 @@ fun main (args: Array<String>) {
         val xccs = (when {
             !ys.containsKey("--cc") -> emptyList()
             (ys["--cc"] == null) -> {
-                throw Exception("invalid argument : --cc : expected \"=\"")
+                throw Exception("argument error : --cc : expected \"=\"")
             }
             else -> ys["--cc"]!!.split(" ")
         }) + (when {
             !ys.containsKey("--lib") -> emptyList()
             (ys["--lib"] == null) -> {
-                throw Exception("invalid argument : --lib : expected \"=\"")
+                throw Exception("argument error : --lib : expected \"=\"")
             }
             else -> {
                 File(PATH + "/" + ys["--lib"] + "/ceu.lib")

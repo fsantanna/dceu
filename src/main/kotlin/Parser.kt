@@ -907,7 +907,7 @@ class Parser (lexer_: Lexer)
         ret.forEachIndexed { i,e ->
             val ok = (i == ret.size-1) || !e.is_innocuous()
             if (!ok) {
-                err(e.tk, "invalid expression : innocuous expression")
+                err(e.tk, "expression error : innocuous expression")
             }
         }
         return ret

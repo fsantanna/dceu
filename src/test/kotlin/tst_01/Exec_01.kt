@@ -245,7 +245,7 @@ class Exec_01 {
         val out = test("""
             set nil = nil
         """)
-        //assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+        //assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
         assert(out == "anon : (lin 2, col 13) : set error : expected assignable destination\n") { out }
     }
 
@@ -259,7 +259,7 @@ class Exec_01 {
             nil
         """
         )
-        assert(out == "anon : (lin 2, col 13) : invalid expression : innocuous expression\n") { out }
+        assert(out == "anon : (lin 2, col 13) : expression error : innocuous expression\n") { out }
     }
     @Test
     fun cc_index01() {

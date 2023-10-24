@@ -529,7 +529,7 @@ class TTask {
                 10
             }
         """)
-        assert(out == "anon : (lin 3, col 17) : invalid expression : innocuous expression") { out }
+        assert(out == "anon : (lin 3, col 17) : expression error : innocuous expression") { out }
     }
     @Test
     fun ff_pool8a_err() {
