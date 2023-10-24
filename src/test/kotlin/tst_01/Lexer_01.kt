@@ -359,49 +359,49 @@ class Lexer_01 {
     fun hh_02_inc_err() {
         val l = lexer("^[")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token")
     }
     @Test
     fun hh_03_inc_err() {
         val l = lexer("^[]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token")
     }
     @Test
     fun hh_04_inc_err() {
         val l = lexer("^[jkj]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token")
     }
     @Test
     fun hh_05_inc_err() {
         val l = lexer("^[1,]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected number")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected number")
     }
     @Test
     fun hh_06_inc_err() {
         val l = lexer("^[1,1,1]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"]\"")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected \"]\"")
     }
     @Test
     fun hh_07_inc_err() {
         val l = lexer("^[\"")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : unterminated \"")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : unterminated \"")
     }
     @Test
     fun hh_08_inc_err() {
         val l = lexer("^[\"xxx\"]")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : file not found : xxx")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : file not found : xxx")
     }
     @Test
     fun hh_09_inc_err() {
         val l = lexer("^")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : token ^ error : expected \"[\"")
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : invalid ^ token : expected \"[\"")
     }
     @Test
     fun hh_10_inc() {
@@ -423,14 +423,14 @@ class Lexer_01 {
         val l = lexer("^id ^if")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.upv==1 && it.str=="id" && it.pos.lin==1 && it.pos.col==1 })
-        assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : unexpected keyword")
+        assert(trap { tks.next() } == "anon : (lin 1, col 5) : invalid ^ token : unexpected keyword")
     }
     @Test
     fun ii_02_up() {
         val l = lexer("^^x ^^^z")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id && it.upv==2 && it.str=="x" && it.pos.lin==1 && it.pos.col==1 })
-        assert(trap { tks.next() } == "anon : (lin 1, col 5) : token ^ error : expected \"[\"")
+        assert(trap { tks.next() } == "anon : (lin 1, col 5) : invalid ^ token : expected \"[\"")
     }
 
     // TAGS

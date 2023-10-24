@@ -417,14 +417,14 @@ class Parser_01 {
         val l = lexer("set evt = nil")
         val parser = Parser(l)
         assert(parser.expr() is Expr.Set)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
     @Test
     fun set_err_err() {
         val l = lexer("set err = nil")
         val parser = Parser(l)
         assert(parser.expr() is Expr.Set)
-        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : invalid set : expected assignable destination")
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
     }
 
     // IF

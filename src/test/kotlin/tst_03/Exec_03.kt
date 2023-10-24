@@ -52,7 +52,7 @@ class Exec_03 {
                 yield(nil) thus { as it => set it = nil }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 44) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 44) : set error : destination is immutable\n") { out }
     }
     @Test
     fun aa_06_yield_err() {

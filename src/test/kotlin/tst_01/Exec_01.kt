@@ -167,7 +167,7 @@ class Exec_01 {
             set v = 10
         """
         )
-        assert(out == "anon : (lin 3, col 13) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 13) : set error : destination is immutable\n") { out }
     }
     @Test
     fun bb_07_und() {
@@ -443,7 +443,7 @@ class Exec_01 {
                 var x
                 if v > 0 {
                     set x = f(v - 1)
-                    [x]     ;; invalid set: cannot return "var x" from this scope
+                    [x]     ;; set error: cannot return "var x" from this scope
                 } else {
                     0
                 }
@@ -2183,7 +2183,7 @@ class Exec_01 {
             }
             println(x)
         """)
-        //assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
         assert(out == "10\n") { out }
     }
     @Test
@@ -2195,7 +2195,7 @@ class Exec_01 {
                 println(x)
             }
         """)
-        //assert(out == "anon : (lin 4, col 17) : invalid set : destination across thus\n") { out }
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
         assert(out == "nil\n") { out }
     }
     @Test
@@ -3692,7 +3692,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 6, col 21) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 6, col 17) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 6, col 17) : set error : destination is immutable\n") { out }
     }
     @Test
     fun clo6_err() {
@@ -3711,7 +3711,7 @@ class Exec_01 {
         """
         )
         //assert(out == "anon : (lin 7, col 25) : set error : cannot reassign an upval") { out }
-        assert(out == "anon : (lin 7, col 21) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 7, col 21) : set error : destination is immutable\n") { out }
     }
     @Test
     fun clo7_err() {

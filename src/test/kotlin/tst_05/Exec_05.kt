@@ -375,7 +375,7 @@ class Exec_05 {
             val v = detrack(x) thus { as it => set it = 10 }
             println(v)
         """)
-        assert(out == ("anon : (lin 5, col 48) : invalid set : destination is immutable\n")) { out }
+        assert(out == ("anon : (lin 5, col 48) : set error : destination is immutable\n")) { out }
     }
     @Test
     fun cc_09_detrack() {

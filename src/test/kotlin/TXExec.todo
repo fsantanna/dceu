@@ -1713,7 +1713,7 @@ class TXExec {
             } --> \{ drop(it) }
             resume co()
         """)
-        //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
+        //assert(out == "anon : (lin 5, col 27) : set error : destination is immutable") { out }
         assert(out == ":ok\n") { out }
     }
 
@@ -1749,7 +1749,7 @@ class TXExec {
             }
             resume co()
         """)
-        //assert(out == "anon : (lin 5, col 27) : invalid set : destination is immutable") { out }
+        //assert(out == "anon : (lin 5, col 27) : set error : destination is immutable") { out }
         assert(out == ":ok\n") { out }
     }
     @Test

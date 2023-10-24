@@ -96,7 +96,7 @@ class Exec_02 {
                 throw(:x)
             }
         """)
-        assert(out == "anon : (lin 2, col 40) : invalid set : destination is immutable\n") { out }
+        assert(out == "anon : (lin 2, col 40) : set error : destination is immutable\n") { out }
     }
     @Test
     fun jj_01_catch() {

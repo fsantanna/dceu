@@ -1766,7 +1766,7 @@ class TTask {
                 set status(task) = nil     ;; error: cannot assign to status
             }
         """, true)
-        assert(out == "anon : (lin 4, col 17) : invalid set : expected assignable destination") { out }
+        assert(out == "anon : (lin 4, col 17) : set error : expected assignable destination") { out }
     }
     @Test
     fun todo_ii_status5() {

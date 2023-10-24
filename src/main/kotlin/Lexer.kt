@@ -303,21 +303,21 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                         (x3.isLetter() || x3 == '_') -> {
                             val id = x3 + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
                             if (KEYWORDS.contains(id)) {
-                                err(pos, "token ^ error : unexpected keyword")
+                                err(pos, "invalid ^ token : unexpected keyword")
                                 yield(Tk.Fix(id, pos))
                             } else {
                                 yield(Tk.Id(id, pos, upv))
                             }
                         }
                         (x3 != '[') -> {
-                            err(pos, "token ^ error : expected \"[\"")
+                            err(pos, "invalid ^ token : expected \"[\"")
                         }
                         else -> {
                             val (n3, x3) = read2()
                             val file: String? = if (x3 == '"') {
                                 val f = read2Until('"')
                                 if (f == null) {
-                                    err(pos, "token ^ error : unterminated \"")
+                                    err(pos, "invalid ^ token : unterminated \"")
                                 }
                                 f
                             } else {
@@ -332,7 +332,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                                 if (x4 == ',') {
                                     read2While { it.isDigit() }.let {
                                         if (it.isEmpty()) {
-                                            err(pos, "token ^ error : expected number")
+                                            err(pos, "invalid ^ token : expected number")
                                         }
                                         it.toInt()
                                     }
@@ -348,7 +348,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                                 if (x5 == ',') {
                                     read2While { it.isDigit() }.let {
                                         if (it.isEmpty()) {
-                                            err(pos, "token ^ error : expected number")
+                                            err(pos, "invalid ^ token : expected number")
                                         }
                                         it.toInt()
                                     }
@@ -359,25 +359,25 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                             }
 
                             if (file == null && lin == null) {
-                                err(pos, "token ^ error")
+                                err(pos, "invalid ^ token")
                             }
 
                             val (_, x6) = read2()
                             if (x6 != ']') {
-                                err(pos, "token ^ error : expected \"]\"")
+                                err(pos, "invalid ^ token : expected \"]\"")
                             }
                             val (n7, x7) = read2()
                             when {
                                 iseof(n7) -> unread2(n7)
                                 (x7 == '\n') -> {}  // skip leading \n
-                                else -> unread2(n7) //err(pos, "token ^ error : expected end of line")
+                                else -> unread2(n7) //err(pos, "invalid ^ token : expected end of line")
                             }
 
                             when {
                                 (file != null && lin == null && col == null) -> {
                                     val f = FileX(file)
                                     if (!f.exists()) {
-                                        err(pos, "token ^ error : file not found : $file")
+                                        err(pos, "invalid ^ token : file not found : $file")
                                     }
                                     stack.addFirst(Lex(file, 1, 1, PushbackReader(StringReader(f.readText()), 2)))
                                 }
