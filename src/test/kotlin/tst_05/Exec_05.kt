@@ -959,6 +959,23 @@ class Exec_05 {
         )
         assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task-in-pool track\n") { out }
     }
+    @Test
+    fun hh_05_next() {
+        val out = test("""
+            val T = task (v) {
+                set pub() = [v]
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn T(10) in ts
+            val x1 = next(ts)
+            val v = detrack(x1) thus { as it => println(pub(it)) ; pub(it) }
+            println(v)
+        """
+        )
+        assert(out == "[10]\n" +
+                " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
+    }
 
     // ABORTION
 

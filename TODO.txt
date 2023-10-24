@@ -22,7 +22,7 @@
 
 - passar em todos os testes
 - fazer os testes do pico ceu o quanto antes
-    - all, drag, bird-01, bird-11
+    - bird-01, bird-11
 - bcast inside func
 
 O `thus` atribui um valor de fora diretamente ao `ceu_acc`, como uma nova
