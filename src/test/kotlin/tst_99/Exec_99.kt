@@ -456,6 +456,22 @@ class Exec_99 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun gg_06_detrack() {
+        val out = test("""
+            val T = task () {
+                set pub() = [10]
+                yield(nil)
+            }
+            var t = spawn T ()
+            var x = track(t)
+            detrack(x) { println(:1) }
+            broadcast( nil )
+            detrack(x) { println(999) }
+            println(:2)
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
 
     // RESUME-YIELD-ALL
 

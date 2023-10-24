@@ -437,7 +437,7 @@ class Parser (lexer_: Lexer)
                     }
                     this.acceptFix("task") -> {
                         return this.nest("""
-                            ${tk0.pos.pre()}(spawn (task () :void {
+                            ${this.tk0.pos.pre()}(spawn (task () :void {
                                 ${this.block().es.tostr(true)}
                             }) ())
                         """)
@@ -488,7 +488,23 @@ class Parser (lexer_: Lexer)
                 val on = this.expr_in_parens()!!
                 Expr.Toggle(tk0, tsk, on)
             }
-            (CEU>=5 && this.acceptFix("detrack")) -> Expr.Dtrack(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
+            (CEU>=5 && this.acceptFix("detrack")) -> {
+                val tk0 = this.tk0
+                val ret = Expr.Dtrack(tk0 as Tk.Fix, this.expr_in_parens()!!)
+                if (CEU<99 || !this.checkFix("{")) {
+                    ret
+                } else {
+                    val (es,id_tag) = xas()
+                    val (id,tag) = id_tag
+                    this.nest("""
+                        ${tk0.pos.pre()}${ret.tostr(true)} thus { as ${id.str} ${tag.cond{it.str}} =>
+                            if it {
+                                ${es.tostr(true)}
+                            }
+                        }
+                    """)
+                }
+            }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
             this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)

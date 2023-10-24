@@ -377,11 +377,15 @@ class Parser_99 {
     }
     @Test
     fun ff_04_detrack() {
-        val l = lexer("detrack(nil) thus { x }")
+        val l = lexer("detrack(nil) { x }")
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "((detrack(nil)) thus { as it =>\n" +
+                "if it {\n" +
                 "x\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
                 "})\n\n") { e.tostr() }
     }
     @Test
