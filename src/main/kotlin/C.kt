@@ -1070,7 +1070,7 @@ fun Coder.main (tags: Tags): String {
                         // unsafe if passing dropped reference to inner scope:
                         // can be reassigned -> reclaimed -> dangling outer reference
                         strncpy(msg, pre, 256);
-                        strcat(msg, " : cannot move in with pending references");
+                        strcat(msg, " : cannot move pending reference in");
                         return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} }; // OK with CEU_HOLD_EVENT b/c never assigned
                     } else {
                         // safe

@@ -811,7 +811,7 @@ class Exec_01 {
                 println(t1)
             }
         """)
-        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move in with pending references\n") { out }
+        assert(out == "anon : (lin 6, col 21) : declaration error : cannot move pending reference in\n") { out }
     }
     @Test
     fun cc_13_drop_cycle() {
@@ -2081,7 +2081,7 @@ class Exec_01 {
             f([[1]])
         """)
         assert(out == "[1]\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
     }
     @Test
     fun ll_05_nest_err() {
@@ -2107,7 +2107,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
     }
     @Test
     fun ll_07_xxx() {
@@ -2122,7 +2122,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet
@@ -2576,7 +2576,7 @@ class Exec_01 {
             println(f(t[0]))        ;; 1
             println(f([[nil]][0]))  ;; err
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move in with pending references\n1\n") { out }
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
     }
 
 

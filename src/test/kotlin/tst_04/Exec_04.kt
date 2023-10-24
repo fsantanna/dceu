@@ -794,7 +794,7 @@ class Exec_04 {
         """)
         assert(out.contains(":ok\texe-task: 0x")) { out }
         //assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot move in with pending references")) { out }
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot move pending reference in")) { out }
     }
     @Test
     fun ff_01_term() {
@@ -982,7 +982,7 @@ class Exec_04 {
         //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
         //        "block escape error : cannot copy reference out\n") { out }
         //assert(out == ":1\n" + "10\n" + "10\n" + ":2\n" +
-        //        "block escape error : cannot move in with pending references\n") { out }
+        //        "block escape error : cannot move pending reference in\n") { out }
         assert(out == ":1\n" +
                 "10\n" +
                 "10\n" +
@@ -2568,7 +2568,7 @@ class Exec_04 {
         assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
         //        " |  anon : (lin 7, col 17) : f((yield(nil) thus { as it => it }) )\n" +
-        //        " v  anon : (lin 3, col 17) : declaration error : cannot move in with pending references\n") { out }
+        //        " v  anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
     }
     @Test
     fun zz_19_bcast_tuple_func_ok_not_fleet() {
@@ -2607,7 +2607,7 @@ class Exec_04 {
         assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
         //        " |  anon : (lin 8, col 44) : f(it)\n" +
-        //        " v  anon : (lin 3, col 27) : declaration error : cannot move in with pending references\n") { out }
+        //        " v  anon : (lin 3, col 27) : declaration error : cannot move pending reference in\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_no() {
@@ -2627,7 +2627,7 @@ class Exec_04 {
         assert(out == "[1]\n");
         //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
-        //        " v  anon : (lin 4, col 21) : declaration error : cannot move in with pending references\n") { out }
+        //        " v  anon : (lin 4, col 21) : declaration error : cannot move pending reference in\n") { out }
     }
     @Test
     fun zz_20_bcast_tuple_func_nox() {
@@ -2649,7 +2649,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
         //        " |  anon : (lin 6, col 17) : g(v[0])\n" +
-        //        " v  anon : (lin 3, col 31) : argument error : cannot move in with pending references\n") { out }
+        //        " v  anon : (lin 3, col 31) : argument error : cannot move pending reference in\n") { out }
     }
     @Test
     fun zz_21_bcast_tuple_func_ok() {
