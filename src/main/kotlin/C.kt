@@ -1059,7 +1059,7 @@ fun Coder.main (tags: Tags): String {
 
             // dst <- src
             if (dst_blk == src_blk) {
-                if (dst_type==src_type) {
+                if (dst_type == src_type) {
                     // nothing is supposed to change
                     return (CEU_Value) { CEU_VALUE_NIL };
                 }
