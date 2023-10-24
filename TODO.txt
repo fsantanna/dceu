@@ -1,6 +1,9 @@
 # TODO
 
-- novo refactor de chk_set para dlex
+- DLEX
+    - novo refactor de chk_set
+    - func vs thus
+    - remove :tmp
 
 - detrack/pub de task_in continua com problemas,
   uma vez que pode ser atribuido a var em bloco a que pertence,
@@ -20,9 +23,6 @@
 
 - can be dropped: exe clo, task, in?
 
-- passar em todos os testes
-- fazer os testes do pico ceu o quanto antes
-    - bird-01, bird-11
 - bcast inside func
 
 O `thus` atribui um valor de fora diretamente ao `ceu_acc`, como uma nova
