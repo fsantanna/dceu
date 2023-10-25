@@ -777,8 +777,8 @@ class Exec_01 {
             val x = do {
                 val t1 = [1,2,3]
                 val t2 = t1
-                drop(t1)            ;; ERR: `t1` has multiple references
-            }
+                drop(t1)        ;; ~ERR~: `t1` has multiple references
+            }                   ;; not a problem b/c gc_dec does not chk current block
             println(x)
         """)
         //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
