@@ -54,7 +54,8 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 5) setOf() else setOf(
         "detrack",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "ifs", "par", "par-and", "par-or", "resume-yield-all", "with"
+        "await", "ifs", "par", "par-and", "par-or",
+        "resume-yield-all", "watching", "with"
     ))
 ).toSortedSet()
 

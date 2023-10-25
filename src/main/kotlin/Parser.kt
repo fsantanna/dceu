@@ -251,6 +251,31 @@ class Parser (lexer_: Lexer)
         }
     }
 
+    fun await (tk0: Tk): Expr.Loop {
+        val pre0 = tk0.pos.pre()
+        val evt = if (!this.checkFix("(")) null else {
+            this.expr_in_parens(true)
+        }
+        val has = this.checkFix("{")
+        if (evt==null && !has) {
+            err_expected(this.tk1, "\")\"")
+        }
+        val (es,id_tag) = xas()
+        val (id, tag) = id_tag
+        val cnd = when {
+            (evt == null) -> es.tostr()
+            !has -> "${id.str} is? ${evt.tostr()}"
+            else -> "(${id.str} is? ${evt.tostr()}) and ${es.tostr()}"
+        }
+        return this.nest("""
+            ${pre0}loop {
+                ${pre0}break if (${pre0}yield() thus { as ${id.str} ${tag.cond{it.str}} =>
+                    ${pre0}$cnd
+                })
+            }
+        """) as Expr.Loop
+    }
+
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -649,24 +674,7 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 }
-                val evt = if (!this.checkFix("(")) null else {
-                    this.expr_in_parens(true)
-                }
-                val has = this.checkFix("{")
-                val (es,id_tag) = xas()
-                val (id, tag) = id_tag
-                val cnd = when {
-                    (evt == null) -> es.tostr()
-                    !has -> "${id.str} is? ${evt.tostr()}"
-                    else -> "(${id.str} is? ${evt.tostr()}) and ${es.tostr()}"
-                }
-                this.nest("""
-                    ${pre0}loop {
-                        ${pre0}break if (${pre0}yield() thus { as ${id.str} ${tag.cond{it.str}} =>
-                            ${pre0}$cnd
-                        })
-                    }
-                """)
+                return await(tk0)
             }
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
@@ -745,6 +753,19 @@ class Parser (lexer_: Lexer)
                         }
                     }
                 """)
+            }
+            (CEU>=99 && this.acceptFix("watching")) -> {
+                val tk0 = this.tk0
+                val pre0 = tk0.pos.pre()
+                val awt = await(tk0)
+                val body = this.block()
+                this.nest("""
+                    ${pre0}par-or {
+                        ${pre0}${awt.tostr()}
+                    } with {
+                        ${body.es.tostr(true)}
+                    }
+                """)//.let { println(it.tostr()); it }
             }
             else -> {
                 err_expected(this.tk1, "expression")

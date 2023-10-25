@@ -1033,19 +1033,20 @@ class Exec_99 {
     // WATCHING
 
     @Test
-    fun xx_01_watching() {
+    fun ll_01_watching() {
         val out = test("""
-            spawn task () {
-                awaiting evt==1 {
+            spawn task {
+                watching 1 {
                     defer { println(2) }
                     yield()
                     println(1)
                 }
                 println(:ok)
-            } ()
-            broadcast in :global, nil
-            broadcast in :global, 1
-        """, true)
-        assert(out == "1\n2\n:ok\n") { out }
+            }
+            broadcast (nil)
+            println(0)
+            broadcast (1)
+        """)
+        assert(out == "0\n1\n2\n:ok\n") { out }
     }
 }
