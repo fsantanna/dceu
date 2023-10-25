@@ -48,7 +48,7 @@ class Exec_05 {
     fun aa_05_tasks() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
                 println(:in)
             }
             val ts = tasks()
@@ -75,7 +75,7 @@ class Exec_05 {
     fun aa_07_tasks() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             val ok = spawn T() in ts
@@ -87,7 +87,7 @@ class Exec_05 {
     fun aa_08_tasks() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks(1)
             val ok1 = spawn T() in ts
@@ -101,7 +101,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = []
-                yield(nil) thus { as it=>nil }
+                yield(nil) thus { it=>nil }
             }
             val ts = tasks(1)
             do {
@@ -154,7 +154,7 @@ class Exec_05 {
     fun bb_03_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             val x = track(t)
@@ -165,7 +165,7 @@ class Exec_05 {
     @Test
     fun bb_04_track() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T ()
             val x = track(t)
             val y = track(t)
@@ -193,7 +193,7 @@ class Exec_05 {
     fun bb_06_track_err() {
         val out = test("""
             var T
-            set T = task () { yield(nil) thus {as it=>nil} }
+            set T = task () { yield(nil) thus { it=>nil} }
             var x
             do {
                 var t = spawn (T) ()
@@ -213,7 +213,7 @@ class Exec_05 {
     @Test
     fun bc_01_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T ()
             val y = do {
                 val x = track(t)
@@ -226,7 +226,7 @@ class Exec_05 {
     @Test
     fun bc_02_track_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val y = do {
                 val t = spawn T ()
                 val x = track(t)
@@ -239,7 +239,7 @@ class Exec_05 {
     @Test
     fun bc_03_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val ts = tasks()
             val y = do {
                 spawn T () in ts
@@ -253,7 +253,7 @@ class Exec_05 {
     @Test
     fun bc_04_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
@@ -266,7 +266,7 @@ class Exec_05 {
     @Test
     fun bc_05_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T ()
             val y = do {
                 track(t)
@@ -278,7 +278,7 @@ class Exec_05 {
     @Test
     fun bc_06_track_drop() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T ()
             val y = do {
                 drop(track(t))
@@ -301,7 +301,7 @@ class Exec_05 {
     fun cc_02_detrack() {
         val out = test("""
             val x
-            detrack(nil) thus { as x => nil }
+            detrack(nil) thus { x => nil }
         """)
         assert(out == "anon : (lin 3, col 36) : declaration error : variable \"x\" is already declared\n") { out }
     }
@@ -311,7 +311,7 @@ class Exec_05 {
             val T = task () { nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(t) thus { as it => 10 }
+            val v = detrack(t) thus { it => 10 }
             println(v)
         """)
         assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
@@ -320,11 +320,11 @@ class Exec_05 {
     @Test
     fun cc_04_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            val v = detrack(x) ;;thus { as it => 10 }
+            val v = detrack(x) ;;thus { it => 10 }
             println(v)
         """)
         assert(out == ("nil\n")) { out }
@@ -332,10 +332,10 @@ class Exec_05 {
     @Test
     fun cc_05_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { as it => 10 }
+            val v = detrack(x) thus { it => 10 }
             println(v)
         """)
         assert(out == ("10\n")) { out }
@@ -343,7 +343,7 @@ class Exec_05 {
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
-            detrack(nil) thus { as it => broadcast(nil) }
+            detrack(nil) thus { it => broadcast(nil) }
         """)
         //assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
         assert(out == (" v  anon : (lin 2, col 13) : detrack error : expected track value\n")) { out }
@@ -352,7 +352,7 @@ class Exec_05 {
     fun cc_07_detrack_err() {
         val out = test("""
             task () {
-                detrack(nil) thus { as it => yield(nil) thus { as it => nil } }
+                detrack(nil) thus { it => yield(nil) thus { it => nil } }
             }
         """)
         assert(out == ("anon : (lin 3, col 67) : declaration error : variable \"it\" is already declared\n")) { out }
@@ -361,7 +361,7 @@ class Exec_05 {
     fun cc_07_detrack_err2() {
         val out = test("""
             task () {
-                detrack(nil) thus { as yy => yield(nil) thus { as xx => nil } }
+                detrack(nil) thus { yy => yield(nil) thus { xx => nil } }
             }
         """)
         assert(out == ("anon : (lin 3, col 46) : yield error : unexpected enclosing thus\n")) { out }
@@ -369,10 +369,10 @@ class Exec_05 {
     @Test
     fun cc_08_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { as it => set it = 10 }
+            val v = detrack(x) thus { it => set it = 10 }
             println(v)
         """)
         assert(out == ("anon : (lin 5, col 48) : set error : destination is immutable\n")) { out }
@@ -381,14 +381,14 @@ class Exec_05 {
     fun cc_09_detrack() {
         val out = test("""
             val T = task (v) {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
             val x = next(ts)
             ;;dump(x)
             broadcast(nil)
-            println(detrack(x) ;;;thus { as it => 99 };;;)
+            println(detrack(x) ;;;thus { it => 99 };;;)
         """
         )
         assert(out == "nil\n") { out }
@@ -402,7 +402,7 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            println(detrack(x) ;;;thus { as it => 99 };;;)
+            println(detrack(x) ;;;thus { it => 99 };;;)
             ;;dump(x)
         """
         )
@@ -414,10 +414,10 @@ class Exec_05 {
     @Test
     fun dd_01_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { as it =>
+            val v = detrack(x) thus { it =>
                 println(:1, x)
                 println(:2, t)
                 println(:3, it)
@@ -436,7 +436,7 @@ class Exec_05 {
     @Test
     fun dd_02_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
             val v = detrack(x)
@@ -456,7 +456,7 @@ class Exec_05 {
                 broadcast(nil)
             }
             val x = next(ts)
-            detrack(x) thus { as it =>
+            detrack(x) thus { it =>
                 f()                     ;; cannot broadcast
                 println(status(it))
             }
@@ -466,7 +466,7 @@ class Exec_05 {
     @Test
     fun dd_04_detrack_eq() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
             val v = detrack(x)
@@ -478,7 +478,7 @@ class Exec_05 {
     @Test
     fun dd_05_detrack_print() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
             val v = detrack(x)
@@ -489,10 +489,10 @@ class Exec_05 {
     @Test
     fun dd_06_detrack_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { as it =>
+            val v = detrack(x) thus { it =>
                 drop(it)
             }
             println(v)
@@ -508,7 +508,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 10
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             println(pub(t))
@@ -520,7 +520,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 10
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             val x = track(t)
@@ -535,7 +535,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = []
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             println(pub(t))
@@ -547,7 +547,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
@@ -564,10 +564,10 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 spawn( task () {
-                    yield(nil) thus { as it => nil }
+                    yield(nil) thus { it => nil }
                     throw(:error)
                 })()
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             spawn T() in tasks()
             broadcast(nil)
@@ -582,7 +582,7 @@ class Exec_05 {
     @Test
     fun ff_01_scope() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             var x
             do {
                 val t = spawn T()
@@ -629,7 +629,7 @@ class Exec_05 {
             }
             val t = spawn T()
             val x = track(t)
-            println(detrack(x) thus { as it =>
+            println(detrack(x) thus { it =>
                 val z = it
                 10
             })
@@ -696,11 +696,11 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var t = spawn T()
             var x = track(t)
-            println(detrack(x) thus { as it => pub(it) })
+            println(detrack(x) thus { it => pub(it) })
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         //assert(out == "[10]\n") { out }
@@ -711,12 +711,12 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var t = spawn T()
             var x = track(t)
             broadcast(nil)
-            println(detrack(x) thus { as it => pub(it) })      ;; expose (ok, global func)
+            println(detrack(x) thus { it => pub(it) })      ;; expose (ok, global func)
         """)
         //assert(out == "nil\n") { out }
         assert(out == " v  anon : (lin 9, col 52) : pub error : expected task\n") { out }
@@ -726,11 +726,11 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var t = spawn T()
             var x = track(t)
-            val v = detrack(x) thus { as it => pub(it) }
+            val v = detrack(x) thus { it => pub(it) }
             broadcast(nil)
             println(v)
         """)
@@ -744,7 +744,7 @@ class Exec_05 {
                 val ts = tasks()
                 var T = task () {
                     set pub() = []
-                    yield(nil) thus { as it => nil }
+                    yield(nil) thus { it => nil }
                     nil
                 }
                 spawn (T) () in ts
@@ -765,11 +765,11 @@ class Exec_05 {
             var T = task (t) {
                 set pub() = []
                 if t {
-                    val p = detrack(t) thus { as it => pub(it) }
+                    val p = detrack(t) thus { it => pub(it) }
                 } else {
                     nil
                 }
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
                 nil
             }
             val t = spawn T ()
@@ -791,7 +791,7 @@ class Exec_05 {
             }
             val T = task () {
                 set pub() = []
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             do {
@@ -805,7 +805,7 @@ class Exec_05 {
             }
             do {
                 val xx1 = next(ts)
-                f(pub(detrack(xx1))) ;;thus { as it => f(pub(it)) }
+                f(pub(detrack(xx1))) ;;thus { it => f(pub(it)) }
             }
             println(:ok)
         """)
@@ -819,12 +819,12 @@ class Exec_05 {
             }
             val T = task () {
                 set pub() = []
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
             val x = next(ts)
-            f(pub(detrack(x))) ;; thus { as t => f(pub(t)) }
+            f(pub(detrack(x))) ;; thus { t => f(pub(t)) }
             println(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
@@ -834,7 +834,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 10
-                yield(nil) thus {as it => nil}
+                yield(nil) thus { it => nil}
             }
             val ts = tasks()
             val t = catch { as it=>true} in {
@@ -853,7 +853,7 @@ class Exec_05 {
     fun fg_08_throw_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it=>nil }
+                yield(nil) thus { it=>nil }
             }
             val t = do {
                 val ts = tasks()
@@ -873,7 +873,7 @@ class Exec_05 {
     fun fg_09_throw_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             catch {as it=>true} in {
@@ -894,7 +894,7 @@ class Exec_05 {
     fun hh_01_next() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             println(next(ts))
@@ -910,7 +910,7 @@ class Exec_05 {
     fun hh_02_next() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
@@ -931,7 +931,7 @@ class Exec_05 {
     fun hh_03_next() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val ts = tasks()
             spawn T() in ts
@@ -969,7 +969,7 @@ class Exec_05 {
             val ts = tasks()
             spawn T(10) in ts
             val x1 = next(ts)
-            val v = detrack(x1) thus { as it => println(pub(it)) ; pub(it) }
+            val v = detrack(x1) thus { it => println(pub(it)) ; pub(it) }
             println(v)
         """
         )
@@ -984,9 +984,9 @@ class Exec_05 {
         val out = test("""
             spawn( task () {
                 val t = spawn (task () {
-                    yield(nil) thus { as it => nil }
+                    yield(nil) thus { it => nil }
                 } )()
-                yield (nil) thus { as it => nil }
+                yield (nil) thus { it => nil }
             }) ()
             broadcast(nil)
             println(:ok)
@@ -998,9 +998,9 @@ class Exec_05 {
         val out = test("""
             spawn (task () {
                 val t = spawn( task () {
-                    yield(nil) thus { as it => nil }
+                    yield(nil) thus { it => nil }
                 }) () in tasks()
-                yield (nil) thus { as it => nil }
+                yield (nil) thus { it => nil }
             } )()
             broadcast(nil)
             println(:ok)
@@ -1013,7 +1013,7 @@ class Exec_05 {
     @Test
     fun oo_01_tracks() {
         val out = test("""
-            val T = task () { yield(nil) thus { as it => nil } }
+            val T = task () { yield(nil) thus { it => nil } }
             do {
                 val ts = tasks()
                 spawn T() in ts
@@ -1037,7 +1037,7 @@ class Exec_05 {
     fun oo_02_track_err() {
         val out = test("""
             var T = task (v) {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var x
             var ts = tasks()
@@ -1055,7 +1055,7 @@ class Exec_05 {
             var T
             set T = task (v) {
                 set pub() = [v]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var x
             do {
@@ -1076,7 +1076,7 @@ class Exec_05 {
     fun oo_04_track() {
         val out = test("""
             var T = task (v) {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var ts = tasks()
             spawn T(1) in ts
@@ -1096,9 +1096,9 @@ class Exec_05 {
     fun op_01_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
                 set pub() = 10
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var t = spawn T()
             var x = track(t)
@@ -1114,7 +1114,7 @@ class Exec_05 {
             var T
             set T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var t = spawn T ()
             var x = track(t)
@@ -1130,7 +1130,7 @@ class Exec_05 {
             var T
             set T = task () {
                 set pub() = [10]
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             var x
             do {
@@ -1158,7 +1158,7 @@ class Exec_05 {
             spawn( task () {
                 catch { as err=>err==:par-or } in {
                     spawn( task () {
-                        yield(nil) thus { as it => it==t }
+                        yield(nil) thus { it => it==t }
                         throw(:par-or)
                     }) ()
                     println(pub(detrack(x))[0])
@@ -1167,7 +1167,7 @@ class Exec_05 {
                     broadcast(:evt) in t
                     println(999)
                 }
-                println(detrack(x) thus { as it => if it {999} else {nil} })
+                println(detrack(x) thus { it => if it {999} else {nil} })
             })()
             println(:ok)
         """)
@@ -1177,7 +1177,7 @@ class Exec_05 {
     fun op_05_detrack_err() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t1 = spawn T()
             val r1 = track(t1)
@@ -1196,7 +1196,7 @@ class Exec_05 {
     fun op_06_track_scope() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             val y = do {
@@ -1212,7 +1212,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 1
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val t = spawn T()
             val y = do {
@@ -1227,7 +1227,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 1
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             val y = do {
                 val t = spawn T()
@@ -1244,14 +1244,14 @@ class Exec_05 {
     fun zz_01_all() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { as it => nil }
+                yield(nil) thus { it => nil }
             }
             spawn (task () {
                 val ts = tasks(5)
                 do {
                     spawn T() in ts
                 }
-                yield(nil) thus { as it =>
+                yield(nil) thus { it =>
                     println(nil)
                 }
             }) ()

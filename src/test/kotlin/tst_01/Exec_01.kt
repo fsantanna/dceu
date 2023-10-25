@@ -2059,7 +2059,7 @@ class Exec_01 {
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
             var f = func (v) {
-                v[0] thus { as it =>
+                v[0] thus { it =>
                     println(it)
                 }
             }
@@ -2133,7 +2133,7 @@ class Exec_01 {
             """
             var x
             do {
-                [1,2,3] thus { as a =>
+                [1,2,3] thus { a =>
                     set x = a
                 }
             }
@@ -2149,7 +2149,7 @@ class Exec_01 {
             """
             var x
             do {
-                [1,2,3] thus { as a =>
+                [1,2,3] thus { a =>
                     set x = drop(a)
                 }
             }
@@ -2164,7 +2164,7 @@ class Exec_01 {
         val out = test(
             """
             val x = do {
-                [1,2,3] thus { as a =>
+                [1,2,3] thus { a =>
                     a
                 }
             }
@@ -2178,7 +2178,7 @@ class Exec_01 {
     fun mm_02_thus_err() {
         val out = test("""
             var x
-            nil thus { as it =>
+            nil thus { it =>
                 set x = 10  ;; err
             }
             println(x)
@@ -2190,7 +2190,7 @@ class Exec_01 {
     fun mm_03_thus_err() {
         val out = test("""
             var x
-            nil thus { as it =>
+            nil thus { it =>
                 set x = it  ;; err
                 println(x)
             }
@@ -2202,7 +2202,7 @@ class Exec_01 {
     fun mm_04_tmp() {
         val out = test(
             """
-            [0] thus { as x =>
+            [0] thus { x =>
                 set x[0] = []
                 println(x)
             }
@@ -2214,7 +2214,7 @@ class Exec_01 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                [] thus { as x =>
+                [] thus { x =>
                     if x { x } else { [] }
                 }
             }
@@ -2227,7 +2227,7 @@ class Exec_01 {
     fun mm_05_tmp_x() {
         val out = test("""
             val v = do {
-                [] thus { as x =>
+                [] thus { x =>
                     if x { drop(x) } else { [] }
                 }
             }

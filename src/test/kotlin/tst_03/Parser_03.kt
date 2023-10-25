@@ -44,8 +44,8 @@ class Parser_03 {
     fun bb_02_coro() {
         val l = lexer("""
             set t = coro (v) {
-                set v = yield((1)) ;;thus { as it:X => it }
-                yield((2)) thus { as it => nil }
+                set v = yield((1)) ;;thus { it:X => it }
+                yield((2)) thus { it => nil }
             }
             coroutine(t)
             set v = resume a(1)
@@ -56,7 +56,7 @@ class Parser_03 {
         assert(e.tostr() == """
             (set t = (coro (v) {
             (set v = yield(1))
-            ((yield(2)) thus { as it =>
+            ((yield(2)) thus { it =>
             nil
             })
             
@@ -95,7 +95,7 @@ class Parser_03 {
         val parser = Parser(l)
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-        assert(e.tostr() == "((yield(1)) thus { as it =>\nnil\n})\n") { e.tostr() }
+        assert(e.tostr() == "((yield(1)) thus { it =>\nnil\n})\n") { e.tostr() }
     }
     @Test
     fun bb_06_resume_() {

@@ -41,7 +41,7 @@ val PATH = File(File(System.getProperty("java.class.path")).absolutePath).parent
 
 val KEYWORDS: SortedSet<String> = (
     setOf (
-        "as", "break", "data", "do", "drop", "else",
+        "break", "data", "do", "drop", "else",
         "enum", "false", "func", "if",
         "loop", "nil", "pass", "set",
         "thus", "true", "val", "var",
@@ -52,7 +52,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 4) setOf() else setOf(
         "broadcast", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
-        "detrack",
+        "as", "detrack",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "ifs", "par", "par-and", "par-or",
         "resume-yield-all", "watching", "with"
@@ -178,16 +178,16 @@ val PLUS = """
 """.replace("\n", " ")
 fun OR (v1:String, v2:String): String {
     N++
-    return "($v1 thus { as it_$N => if it_$N { it_$N } else { $v2 } })"
+    return "($v1 thus { it_$N => if it_$N { it_$N } else { $v2 } })"
 }
 fun AND (v1:String, v2:String): String {
     N++
-    return "(($v1) thus { as it_$N => if it_$N { $v2 } else { $v1 } })"
+    return "(($v1) thus { it_$N => if it_$N { $v2 } else { $v1 } })"
 }
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
     return """
         loop {
-            break if yield(nil) thus { as it =>
+            break if yield(nil) thus { it =>
                 ${AND(v, OR("it","true"))}
             }
         }

@@ -46,7 +46,7 @@ class Parser_99 {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((1) thus { as ceu_5 =>\n" +
+        assert(e.tostr() == "((1) thus { ceu_5 =>\n" +
                 "if ceu_5 {\n" +
                 "ceu_5\n" +
                 "} else {\n" +
@@ -60,7 +60,7 @@ class Parser_99 {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((1) thus { as ceu_5 =>\n" +
+        assert(e.tostr() == "((1) thus { ceu_5 =>\n" +
                 "if ceu_5 {\n" +
                 "2\n" +
                 "} else {\n" +
@@ -87,14 +87,14 @@ class Parser_99 {
             false
             } else {
             true
-            }) thus { as ceu_27 =>
+            }) thus { ceu_27 =>
             if ceu_27 {
             false
             } else {
             ceu_27
             }
             })
-            ) thus { as ceu_77 =>
+            ) thus { ceu_77 =>
             if ceu_77 {
             ceu_77
             } else {
@@ -120,18 +120,18 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == """
-            ((a) thus { as ceu_5 =>
+            ((a) thus { ceu_5 =>
             if ceu_5 {
             ceu_5
             } else {
-            ((((b) thus { as ceu_10 =>
+            ((((b) thus { ceu_10 =>
             if ceu_10 {
             ceu_10
             } else {
             c
             }
             })
-            ) thus { as ceu_45 =>
+            ) thus { ceu_45 =>
             if ceu_45 {
             ceu_45
             } else {
@@ -178,7 +178,7 @@ class Parser_99 {
         val l = lexer("if x=1 { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "((1) thus { as x =>\n" +
+        assert(e.tostr() == "((1) thus { x =>\n" +
                 "if x {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -191,7 +191,7 @@ class Parser_99 {
         val l = lexer("if x:X=1 { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "((1) thus { as x :X =>\n" +
+        assert(e.tostr() == "((1) thus { x :X =>\n" +
                 "if x {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -258,7 +258,7 @@ class Parser_99 {
         val l = lexer("ifs { a=>1 else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((nil) thus { as ceu_5 =>\n" +
+        assert(e.tostr() == "((nil) thus { ceu_5 =>\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -275,7 +275,7 @@ class Parser_99 {
         val l = lexer("ifs { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((nil) thus { as ceu_5 =>\n" +
+        assert(e.tostr() == "((nil) thus { ceu_5 =>\n" +
                 "nil\n" +
                 "})\n") { e.tostr() }
         //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : expected expression : have \"}\"")
@@ -285,7 +285,7 @@ class Parser_99 {
         val l = lexer("ifs it=nil { else => it }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((nil) thus { as it =>\n" +
+        assert(e.tostr() == "((nil) thus { it =>\n" +
                 "if true {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -305,7 +305,7 @@ class Parser_99 {
         val l = lexer("ifs it=v { a => it }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((v) thus { as it =>\n" +
+        assert(e.tostr() == "((v) thus { it =>\n" +
                 "if a {\n" +
                 "it\n" +
                 "} else {\n" +
@@ -318,7 +318,7 @@ class Parser_99 {
         val l = lexer("ifs it=v { a{1} b=>it else{0} }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((v) thus { as it =>\n" +
+        assert(e.tostr() == "((v) thus { it =>\n" +
                 "if a {\n" +
                 "1\n" +
                 "} else {\n" +
@@ -339,7 +339,7 @@ class Parser_99 {
         val l = lexer("ifs { f() => nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((nil) thus { as ceu_5 =>\n" +
+        assert(e.tostr() == "((nil) thus { ceu_5 =>\n" +
                 "if f() {\n" +
                 "nil\n" +
                 "} else {\n" +
@@ -385,7 +385,7 @@ class Parser_99 {
         val l = lexer("yield() thus { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((yield(nil)) thus { as it =>\n" +
+        assert(e.tostr() == "((yield(nil)) thus { it =>\n" +
                 "nil\n" +
                 "})\n") { e.tostr() }
     }
@@ -403,7 +403,7 @@ class Parser_99 {
         val l = lexer("detrack(nil) { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "((detrack(nil)) thus { as it =>\n" +
+        assert(e.tostr() == "((detrack(nil)) thus { it =>\n" +
                 "if it {\n" +
                 "x\n" +
                 "} else {\n" +
@@ -416,7 +416,7 @@ class Parser_99 {
         val l = lexer("f() thus { it }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((f()) thus { as it =>\n" +
+        assert(e.tostr() == "((f()) thus { it =>\n" +
                 "it\n" +
                 "})\n") { e.tostr() }
     }
@@ -446,7 +446,7 @@ class Parser_99 {
             (var ceu_arg_10 = nil)
             loop {
             (val ceu_v_10 = (resume (ceu_co_10)(ceu_arg_10)))
-            if (({{/=}}(status(ceu_co_10),:terminated)) thus { as ceu_56 =>
+            if (({{/=}}(status(ceu_co_10),:terminated)) thus { ceu_56 =>
             if ceu_56 {
             ceu_56
             } else {
@@ -519,9 +519,9 @@ class Parser_99 {
             nil
             })(nil)))
             loop {
-            (break if (((({{==}}(status(ceu_0_9),:terminated)) thus { as ceu_111 =>
+            (break if (((({{==}}(status(ceu_0_9),:terminated)) thus { ceu_111 =>
             if ceu_111 {
-            ((pub(ceu_0_9)) thus { as ceu_120 =>
+            ((pub(ceu_0_9)) thus { ceu_120 =>
             if ceu_120 {
             ceu_120
             } else {
@@ -533,13 +533,13 @@ class Parser_99 {
             ceu_111
             }
             })
-            ) thus { as ceu_238 =>
+            ) thus { ceu_238 =>
             if ceu_238 {
             ceu_238
             } else {
-            (((({{==}}(status(ceu_1_9),:terminated)) thus { as ceu_257 =>
+            (((({{==}}(status(ceu_1_9),:terminated)) thus { ceu_257 =>
             if ceu_257 {
-            ((pub(ceu_1_9)) thus { as ceu_266 =>
+            ((pub(ceu_1_9)) thus { ceu_266 =>
             if ceu_266 {
             ceu_266
             } else {
@@ -551,7 +551,7 @@ class Parser_99 {
             ceu_257
             }
             })
-            ) thus { as ceu_384 =>
+            ) thus { ceu_384 =>
             if ceu_384 {
             ceu_384
             } else {
@@ -580,9 +580,9 @@ class Parser_99 {
                 "nil\n" +
                 "})(nil)))\n" +
                 "loop {\n" +
-                "(break(nil) if (({{==}}(status(ceu_0_9),:terminated)) thus { as ceu_114 =>\n" +
+                "(break(nil) if (({{==}}(status(ceu_0_9),:terminated)) thus { ceu_114 =>\n" +
                 "if ceu_114 {\n" +
-                "(({{==}}(status(ceu_1_9),:terminated)) thus { as ceu_131 =>\n" +
+                "(({{==}}(status(ceu_1_9),:terminated)) thus { ceu_131 =>\n" +
                 "if ceu_131 {\n" +
                 "true\n" +
                 "} else {\n" +
@@ -620,7 +620,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as ceu_7 =>\n" +
+                "(break if ((yield(nil)) thus { ceu_7 =>\n" +
                 "ceu_7\n" +
                 "})\n" +
                 ")\n" +
@@ -632,7 +632,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as ceu_9 =>\n" +
+                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
                 "is'(ceu_9,x)\n" +
                 "})\n" +
                 ")\n" +
@@ -644,7 +644,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as it =>\n" +
+                "(break if ((yield(nil)) thus { it =>\n" +
                 "it\n" +
                 "})\n" +
                 ")\n" +
@@ -656,8 +656,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as x :X =>\n" +
-                "((is'(x,:X)) thus { as ceu_66 =>\n" +
+                "(break if ((yield(nil)) thus { x :X =>\n" +
+                "((is'(x,:X)) thus { ceu_66 =>\n" +
                 "if ceu_66 {\n" +
                 "{{>}}(x[:x],2)\n" +
                 "} else {\n" +
@@ -709,7 +709,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as ceu_9 =>\n" +
+                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
                 "is'(ceu_9,x)\n" +
                 "})\n" +
                 ")\n" +
@@ -721,7 +721,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { as ceu_9 =>\n" +
+                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
                 "is'(ceu_9,x)\n" +
                 "})\n" +
                 ")\n" +
