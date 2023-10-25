@@ -347,6 +347,29 @@ class Parser_99 {
                 "}\n" +
                 "})\n") { e.tostr() }
     }
+    @Test
+    fun ee_08_ifs_nocnd() {
+        val l = lexer("""
+            ifs {
+                == 20 => nil   ;; err: no ifs expr
+            }
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 3, col 17) : case error : expected ifs condition")
+    }
+    @Test
+    fun ee_09_ifs_nocnd() {
+        val l = lexer("""
+            val x = ifs 20 {
+                true => ifs {
+                    == 20 => true   ;; err: no ifs expr
+                }
+            }
+            println(x)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
+    }
 
     // AS / YIELD / CATCH / DETRACK / THUS
 

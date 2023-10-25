@@ -355,18 +355,6 @@ class Exec_99 {
         """)
         assert(out == "true\n") { out }
     }
-    @Test
-    fun todo_ff_06_ifs_nocnd() {
-        val out = test("""
-            val x = ifs 20 {
-                true => ifs {
-                    == 20 => true   ;; err: no ifs expr
-                }
-            }
-            println(x)
-        """)
-        assert(out == "ERROR\n") { out }
-    }
 
     // AS / YIELD / CATCH / DETRACK / THUS
 

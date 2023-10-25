@@ -546,7 +546,6 @@ class Parser (lexer_: Lexer)
             this.checkFix("(")      -> this.expr_in_parens()!!
 
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val pre0 = this.tk0.pos.pre()
                 val (x,v) = if (this.checkFix("{")) {
                     Pair("ceu_$N", null)
                 } else {
@@ -564,7 +563,10 @@ class Parser (lexer_: Lexer)
                         this.acceptFix("else") -> {
                             Pair(null, Expr.Bool(Tk.Fix("true",this.tk0.pos)))
                         }
-                        (v!=null) && this.acceptEnu("Op") -> {
+                        this.acceptEnu("Op") -> {
+                            if (v == null) {
+                                err(this.tk0, "case error : expected ifs condition")
+                            }
                             val op = this.tk0.str.let {
                                 if (it[0] in OPERATORS || it in XOPERATORS) "{{$it}}" else it
                             }
