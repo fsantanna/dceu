@@ -68,6 +68,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
                 val mem = Mem(vars, clos, sta, defers)
+                val id = ups.pub[this].let {
+                    when {
+                        (it !is Expr.Dcl) -> this.n
+                        (it.src != this) -> error("bug found")
+                        else -> it.id.str.idc()
+                    }
+                }
 
                 val pres = Pair(""" // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """
@@ -75,27 +82,27 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ${clos.protos_refs[this]!!.map {
                                 "CEU_Value ${it.id.str.idc()};"
                             }.joinToString("")}
-                        } CEU_Clo_Upvs_$n;                    
+                        } CEU_Clo_Upvs_$id;                    
                     """ }}
                 """ +
                 """ // MEM | ${this.dump()}
                     ${isexe.cond { """
                         typedef struct {
                             ${mem.pub(this.blk)}
-                        } CEU_Clo_Mem_$n;                        
+                        } CEU_Clo_Mem_$id;                        
                     """ }}
                 """, """ // FUNC | ${this.dump()}
-                    CEU_Value ceu_clo_$n (
+                    CEU_Value ceu_clo_$id (
                         CEU_Frame* ceu_frame,
                         int ceu_n,
                         CEU_Value ceu_args[]
                     ) {
                         CEU_Value ceu_acc;
                         ${clos.protos_refs[this].cond { """
-                            CEU_Clo_Upvs_$n* ceu_upvs = (CEU_Clo_Upvs_$n*) ceu_frame->clo->upvs.buf;                    
+                            CEU_Clo_Upvs_$id* ceu_upvs = (CEU_Clo_Upvs_$id*) ceu_frame->clo->upvs.buf;                    
                         """ }}
                         ${isexe.cond { """
-                            CEU_Clo_Mem_$n* ceu_mem = (CEU_Clo_Mem_$n*) ceu_frame->exe->mem;                    
+                            CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
                         ${isexe.cond{"""
                             ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
@@ -125,11 +132,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         isexe -> "&ceu_frame->exe->frame"
                         else -> "ceu_frame"
                     }},
-                    ceu_clo_$n,
+                    ceu_clo_$id,
                     ${clos.protos_refs[this]?.size ?: 0}
                 );
                 ${isexe.cond { """
-                    ceu_acc.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$n);                    
+                    ceu_acc.Dyn->Clo_Exe.mem_n = sizeof(CEU_Clo_Mem_$id);                    
                 """ }}
                 
                 // UPVALS
@@ -147,7 +154,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_up = ${dcl.idc(upv)};
                             assert(ceu_hold_chk_set_col(ceu_acc.Dyn, ceu_up).type != CEU_VALUE_ERROR);
                             ceu_gc_inc(ceu_up);
-                            ((CEU_Clo_Upvs_$n*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
+                            ((CEU_Clo_Upvs_$id*)ceu_acc.Dyn->Clo.upvs.buf)->${idc} = ceu_up;
                         }
                         """   // TODO: use this.body (ups.ups[this]?) to not confuse with args
                     }.joinToString("\n")
@@ -468,7 +475,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_FLEET) {
                             ceu_thus_fleet_${blk.n} = 1;
                             CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
-                            assert(CEU5(ceu_acc.type==CEU_VALUE_EXE_TASK_IN ||) ret_$N.type == CEU_VALUE_NIL && "TODO-02");
+                            assert((CEU5(ceu_acc.type==CEU_VALUE_EXE_TASK_IN ||) ret_$N.type==CEU_VALUE_NIL) && "TODO-02");
                         }
                     """ },{ """ 
                         CEU_ASSERT(
