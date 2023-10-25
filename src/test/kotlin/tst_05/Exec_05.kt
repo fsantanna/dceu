@@ -303,7 +303,7 @@ class Exec_05 {
             val x
             detrack(nil) thus { x => nil }
         """)
-        assert(out == "anon : (lin 3, col 36) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 33) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun cc_03_detrack() {
@@ -355,7 +355,7 @@ class Exec_05 {
                 detrack(nil) thus { it => yield(nil) thus { it => nil } }
             }
         """)
-        assert(out == ("anon : (lin 3, col 67) : declaration error : variable \"it\" is already declared\n")) { out }
+        assert(out == ("anon : (lin 3, col 61) : declaration error : variable \"it\" is already declared\n")) { out }
     }
     @Test
     fun cc_07_detrack_err2() {
@@ -364,7 +364,7 @@ class Exec_05 {
                 detrack(nil) thus { yy => yield(nil) thus { xx => nil } }
             }
         """)
-        assert(out == ("anon : (lin 3, col 46) : yield error : unexpected enclosing thus\n")) { out }
+        assert(out == ("anon : (lin 3, col 43) : yield error : unexpected enclosing thus\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
@@ -375,7 +375,7 @@ class Exec_05 {
             val v = detrack(x) thus { it => set it = 10 }
             println(v)
         """)
-        assert(out == ("anon : (lin 5, col 48) : set error : destination is immutable\n")) { out }
+        assert(out == ("anon : (lin 5, col 45) : set error : destination is immutable\n")) { out }
     }
     @Test
     fun cc_09_detrack() {
@@ -719,7 +719,7 @@ class Exec_05 {
             println(detrack(x) thus { it => pub(it) })      ;; expose (ok, global func)
         """)
         //assert(out == "nil\n") { out }
-        assert(out == " v  anon : (lin 9, col 52) : pub error : expected task\n") { out }
+        assert(out == " v  anon : (lin 9, col 49) : pub error : expected task\n") { out }
     }
     @Test
     fun fg_03_detrack_pub() {
@@ -837,7 +837,7 @@ class Exec_05 {
                 yield(nil) thus { it => nil}
             }
             val ts = tasks()
-            val t = catch { as it=>true} in {
+            val t = catch { it=>true} in {
                 spawn T() in ts
                 do {
                     val t = next(ts)
@@ -876,7 +876,7 @@ class Exec_05 {
                 yield(nil) thus { it => nil }
             }
             val ts = tasks()
-            catch {as it=>true} in {
+            catch { it=>true} in {
                 spawn T() in ts
                 do {
                     val t = next(ts)
@@ -1156,7 +1156,7 @@ class Exec_05 {
             var t = spawn T()
             var x = track(t)
             spawn( task () {
-                catch { as err=>err==:par-or } in {
+                catch { err=>err==:par-or } in {
                     spawn( task () {
                         yield(nil) thus { it => it==t }
                         throw(:par-or)

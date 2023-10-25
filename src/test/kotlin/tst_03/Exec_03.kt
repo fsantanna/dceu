@@ -52,7 +52,7 @@ class Exec_03 {
                 yield(nil) thus { it => set it = nil }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 44) : set error : destination is immutable\n") { out }
+        assert(out == "anon : (lin 3, col 41) : set error : destination is immutable\n") { out }
     }
     @Test
     fun aa_06_yield_err() {
@@ -61,7 +61,7 @@ class Exec_03 {
                 yield(nil) thus { it => yield(nil) thus { x => nil } }
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 44) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
     }
 
     // COROUTINE
@@ -338,7 +338,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 3, col 41) : declaration error : data :T is not declared\n") { out }
+        assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
     }
 
     // MEM vs STACK
@@ -777,7 +777,7 @@ class Exec_03 {
             set co = coroutine(coro (x) {
                 throw(:e2)
             })
-            catch {as it=>:e2} in {
+            catch { it=>:e2} in {
                 resume co(1)
                 println(99)
             }
@@ -793,7 +793,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch {as it=>:e2} in {
+            catch { it=>:e2} in {
                 resume co()
                 println(1)
                 resume co()
@@ -808,7 +808,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch {as it => :e1} in {
+                catch { it => :e1} in {
                     yield(nil) ;;thus { it => nil }
                     throw(:e1)
                 }
@@ -816,7 +816,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch {as it=>:e2} in {
+            catch { it=>:e2} in {
                 resume co()
                 resume co()
                 resume co()
@@ -830,7 +830,7 @@ class Exec_03 {
     fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
-                catch { as it => do {
+                catch { it => do {
                     yield(nil) thus { it => nil }
                 } } in
                 {
@@ -838,21 +838,21 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 42) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 39) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun hh_05_throw() {
         val out = test(
             """
             val CO = coro () {
-                catch { as it => false } in {
+                catch { it => false } in {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }
             val co = coroutine(CO)
             resume co()
-            catch {as it=>true}in{
+            catch { it=>true}in{
                 throw(nil)
             }
             println(:ok)
@@ -935,7 +935,7 @@ class Exec_03 {
             resume co()
             resume co([])
         """,)
-        assert(out == "anon : (lin 3, col 38) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 35) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun jj_04_it_data() {
@@ -964,7 +964,7 @@ class Exec_03 {
             }
         """,)
         //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
-        assert(out == "anon : (lin 4, col 42) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 39) : declaration error : variable \"x\" is already declared\n") { out }
     }
 
     // INDEX / TUPLE / VECTOR / DICT
@@ -1289,7 +1289,7 @@ class Exec_03 {
     fun nn_02_catch() {
         val out = test("""
             coro () {
-                catch { as it => do {
+                catch { it => do {
                     yield(nil) thus { x => nil }
                 } } in
                 {

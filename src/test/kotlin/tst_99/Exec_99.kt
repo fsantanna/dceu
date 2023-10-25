@@ -453,9 +453,9 @@ class Exec_99 {
             }
             var t = spawn T ()
             var x = track(t)
-            detrack(x) { println(:1) }
+            detrack(x) as { println(:1) }
             broadcast( nil )
-            detrack(x) { println(999) }
+            detrack(x) as { println(999) }
             println(:2)
         """)
         assert(out == ":1\n:2\n") { out }
@@ -892,7 +892,7 @@ class Exec_99 {
         val out = test("""
             $IS
             task T () {
-                await() { as it => it is? :x }
+                await() as { it => it is? :x }
                 println(1)
             }
             spawn T()
@@ -907,7 +907,7 @@ class Exec_99 {
             $IS
             spawn task {
                 println(0)
-                await { (it/=nil) and (it[:type]==:x) }
+                await as { (it/=nil) and (it[:type]==:x) }
                 println(99)
             }
             do {
@@ -971,7 +971,7 @@ class Exec_99 {
         val out = test("""
             spawn task {
                 loop {
-                    await {
+                    await as {
                         println(it)
                     }
                 }
@@ -984,10 +984,10 @@ class Exec_99 {
     fun kk_07_await() {
         val out = test("""
             spawn task {
-                await {
+                await as {
                     println(it)
                 }
-                await {                    
+                await as {
                     println(it)
                 }
             }

@@ -484,7 +484,7 @@ class Exec_04 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            catch {as it=>:xxx}in{
+            catch { it=>:xxx}in{
                 spawn (task () {
                     yield(nil) ;;thus { it => nil }
                 })()
@@ -704,7 +704,7 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch { as it => (do { println(it) ; true }) } in {
+            catch { it => (do { println(it) ; true }) } in {
                 ;;func () {
                     broadcast ([])
                 ;;}()
@@ -736,7 +736,7 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch {as it=> it==:e1 }in {  ;; catch 1st (yes catch)
+                catch { it=> it==:e1 }in {  ;; catch 1st (yes catch)
                     spawn (task () {
                         yield(nil) ;;thus { it => nil }
                         println(222)
@@ -746,7 +746,7 @@ class Exec_04 {
                 }
                 println(333)
             }) ()
-            catch {as it => true} in {   ;; catch 2nd (no catch)
+            catch { it => true} in {   ;; catch 2nd (no catch)
                 println(111)
                 broadcast(nil)
                 println(444)
@@ -765,12 +765,12 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch {as it=>false} in {
+                catch { it=>false} in {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }) ()
-            catch {as it=>true} in {
+            catch { it=>true} in {
                 throw(nil)
             }
             println(:ok)
@@ -965,7 +965,7 @@ class Exec_04 {
             println(:1)
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
-            val e = catch {as it=>true} in {
+            val e = catch { it=>true} in {
                 ;;func () {
                     println(:2)
                     broadcast ([20])
@@ -2205,7 +2205,7 @@ class Exec_04 {
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
-            catch { as it => it==:1 } in {
+            catch { it => it==:1 } in {
                 ;;func () {
                     println(1)
                     broadcast(1)
@@ -2253,7 +2253,7 @@ class Exec_04 {
         val out = test("""
             var co
             set co = spawn (task () {
-                catch { as it => :e1 } in {
+                catch { it => :e1 } in {
                     coroutine (coro () {
                         yield(nil) ;;thus { it => nil }
                         throw(:e1)
@@ -2266,7 +2266,7 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })()
-            catch { as it => :e2 } in {
+            catch { it => :e2 } in {
                 broadcast(nil)
                 broadcast(nil)
                 println(99)
@@ -2281,7 +2281,7 @@ class Exec_04 {
             """
             var T
             set T = task () {
-                catch { as it => it==:e1 } in {
+                catch { it => it==:e1 } in {
                     spawn( task () {
                         yield(nil) ;;thus { it => nil }
                         throw(:e1)
@@ -2294,7 +2294,7 @@ class Exec_04 {
                 println(:no)
             }
             spawn (task () {
-                catch { as it => :e2 } in {
+                catch { it => :e2 } in {
                     spawn T()
                     loop { yield(nil) } ;;thus { it => nil }
                 }
@@ -2302,7 +2302,7 @@ class Exec_04 {
                 throw(:e3)
                 println(:no)
             }) ()
-            catch { as it => :e3 } in {
+            catch { it => :e3 } in {
                 broadcast(nil)
                 println(:no)
             }
@@ -2671,7 +2671,7 @@ class Exec_04 {
         val out = test(
             """
             println(1)
-            catch {as it => it==:ok} in {
+            catch { it => it==:ok} in {
                 println(2)
                 spawn (task () {
                     println(3)

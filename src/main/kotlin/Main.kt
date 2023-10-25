@@ -9,7 +9,7 @@ var CEU = 1
     // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref
-    // 5: tasks, track, detrack
+    // 5: tasks, track, detrack as
     // TODO: export, copy, underscore, self (coro/task)
     // 99: empty blocks, not/and/or, is/is-not?/in?/in-not?, func dcl
     //     if id-tag, if => =>, ifs

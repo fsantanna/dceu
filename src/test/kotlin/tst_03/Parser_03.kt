@@ -90,7 +90,7 @@ class Parser_03 {
         val l = lexer("""
             yield
             (1) thus
-            { as it => nil }
+            { it => nil }
         """.trimIndent())
         val parser = Parser(l)
         val e = parser.expr()

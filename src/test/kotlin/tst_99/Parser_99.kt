@@ -385,22 +385,22 @@ class Parser_99 {
         val l = lexer("yield() thus { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((yield(nil)) thus { it =>\n" +
+        assert(e.tostr() == "((yield(nil)) thus { ceu_11 =>\n" +
                 "nil\n" +
                 "})\n") { e.tostr() }
     }
     @Test
     fun ff_03_catch() {
-        val l = lexer("catch {} in {}")
+        val l = lexer("catch as {} in {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch { as it => nil } in {\n" +
+        assert(e.tostr() == "catch { it => nil } in {\n" +
                 "nil\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun ff_04_detrack() {
-        val l = lexer("detrack(nil) { x }")
+        val l = lexer("detrack(nil) as { x }")
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "((detrack(nil)) thus { it =>\n" +
@@ -612,7 +612,7 @@ class Parser_99 {
     fun jj_00_await_err() {
         val l = lexer("await")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"{\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected \"(\" : have end of file")
     }
     @Test
     fun jj_01_await() {
@@ -620,8 +620,8 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_7 =>\n" +
-                "ceu_7\n" +
+                "(break if ((yield(nil)) thus { ceu_5 =>\n" +
+                "ceu_5\n" +
                 "})\n" +
                 ")\n" +
                 "}") { e.tostr() }
@@ -632,15 +632,15 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
-                "is'(ceu_9,x)\n" +
+                "(break if ((yield(nil)) thus { ceu_5 =>\n" +
+                "is'(ceu_5,x)\n" +
                 "})\n" +
                 ")\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun jj_03_await() {
-        val l = lexer("await { it }")
+        val l = lexer("await as { it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
@@ -652,16 +652,16 @@ class Parser_99 {
     }
     @Test
     fun jj_04_await() {
-        val l = lexer("await(:X) { as x:X => x.x>2 }")
+        val l = lexer("await(:X) as { x:X => x.x>2 }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { x :X =>\n" +
-                "((is'(x,:X)) thus { ceu_66 =>\n" +
-                "if ceu_66 {\n" +
+                "((is'(x,:X)) thus { ceu_68 =>\n" +
+                "if ceu_68 {\n" +
                 "{{>}}(x[:x],2)\n" +
                 "} else {\n" +
-                "ceu_66\n" +
+                "ceu_68\n" +
                 "}\n" +
                 "})\n" +
                 "\n" +
@@ -695,36 +695,26 @@ class Parser_99 {
     fun kk_01_watching() {
         val l = lexer("watching")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \")\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"(\" : have end of file")
     }
     @Test
     fun kk_02_watching() {
         val l = lexer("watching(x)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \")\" : have end of file")
+        assert(trap { parser.expr() } == "TODO")
     }
     @Test
     fun kk_03_watching() {
-        val l = lexer("watching() { nil }")
+        val l = lexer("watching() as { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
-                "is'(ceu_9,x)\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        assert(e.tostr() == "TODO") { e.tostr() }
     }
     @Test
     fun kk_04_watching() {
-        val l = lexer("watching {} { nil }")
+        val l = lexer("watching as {} { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_9 =>\n" +
-                "is'(ceu_9,x)\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        assert(e.tostr() == "TODO") { e.tostr() }
     }
 }

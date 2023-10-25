@@ -166,18 +166,21 @@ class Parser (lexer_: Lexer)
                 when {
                     (e !is Expr.Acc) -> {
                         val id_tag = Pair(Tk.Id("it", tk0.pos, 0), null)
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
+                        val es = if (this.acceptFix("}")) emptyList() else {
+                            val x = this.exprs()
+                            this.acceptFix_err("}")
+                            x
+                        }
                         Pair(id_tag, listOf(e)+es)
                     }
-                    this.checkEnu("Tag") -> {
+                    this.acceptEnu("Tag") -> {
                         val id_tag = Pair(e.tk as Tk.Id, this.tk0 as Tk.Tag)
-                        this.checkFix_err("=>")
+                        this.acceptFix_err("=>")
                         val es = this.exprs()
                         this.acceptFix_err("}")
                         Pair(id_tag, es)
                     }
-                    this.checkFix("=>") -> {
+                    this.acceptFix("=>") -> {
                         val id_tag = Pair(e.tk as Tk.Id, null)
                         val es = this.exprs()
                         this.acceptFix_err("}")
@@ -185,8 +188,11 @@ class Parser (lexer_: Lexer)
                     }
                     else -> {
                         val id_tag = Pair(Tk.Id("it", tk0.pos, 0), null)
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
+                        val es = if (this.acceptFix("}")) emptyList() else {
+                            val x = this.exprs()
+                            this.acceptFix_err("}")
+                            x
+                        }
                         Pair(id_tag, listOf(e)+es)
                     }
                 }
@@ -268,18 +274,17 @@ class Parser (lexer_: Lexer)
     fun await (tk0: Tk): Expr.Loop {
         val n = N
         val pre0 = tk0.pos.pre()
-        val evt = if (!this.checkFix("(")) null else {
-            this.expr_in_parens(true)
+        val evt = when {
+            this.checkFix("(") -> this.expr_in_parens(true)
+            !this.checkFix("as") -> err_expected(this.tk1, "\"(\"") as Expr
+            else -> null
         }
-        val xas = if (!this.checkFix("as")) null else {
+        val xas = if (!this.acceptFix("as")) null else {
             lambda(n)
         }
         val (id,tag) = (xas?.first) ?: Pair(Tk.Id("ceu_$n", tk0.pos, 0),null)
-        if (evt==null && xas==null) {
-            err_expected(this.tk1, "\"(\"")
-        }
         val cnd = when {
-            (evt == null) -> xas!!.second.tostr()
+            (evt == null) -> xas?.second?.tostr() ?: id.str
             (xas == null) -> "(${id.str} is? ${evt.tostr()})"
             else -> "((${id.str} is? ${evt.tostr()}) and ${xas.second.tostr()})"
         }
@@ -535,6 +540,7 @@ class Parser (lexer_: Lexer)
                 if (CEU<99 || !this.checkFix("as")) {
                     ret
                 } else {
+                    this.acceptFix_err("as")
                     val (id_tag,es) = lambda(N)
                     val (id,tag) = id_tag
                     this.nest("""
@@ -673,7 +679,6 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
                 val tk0 = this.tk0
-                val pre0 = tk0.pos.pre()
                 if (this.checkFix("spawn")) {
                     val spw = this.expr()
                     spw as Expr.Spawn

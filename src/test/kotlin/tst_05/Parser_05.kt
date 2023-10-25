@@ -72,21 +72,21 @@ class Parser_05 {
         val out = test("""
             detrack(1) thus { 1 }
         """)
-        assert(out == "anon : (lin 2, col 34) : expected identifier : have \"1\"\n") { out }
+        assert(out == "anon : (lin 2, col 31) : expected identifier : have \"1\"\n") { out }
     }
     @Test
     fun bb_04_as() {
         val out = test("""
             detrack(1) thus { x }
         """)
-        assert(out == "anon : (lin 2, col 36) : expected \"=>\" : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 33) : expected \"=>\" : have \"}\"\n") { out }
     }
     @Test
     fun bb_05_as() {
         val out = test("""
             detrack(1) thus { x => }
         """)
-        assert(out == "anon : (lin 2, col 39) : expected expression : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 36) : expected expression : have \"}\"\n") { out }
     }
     @Test
     fun bb_06_as() {
@@ -98,9 +98,9 @@ class Parser_05 {
     @Test
     fun bb_07_as() {
         val out = test("""
-            catch { as x => 1 } {nil}
+            catch { x => 1 } {nil}
         """)
-        assert(out == "anon : (lin 2, col 33) : expected \"in\" : have \"{\"\n") { out }
+        assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
     }
 
     // TRACK
