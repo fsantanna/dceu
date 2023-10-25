@@ -5,7 +5,7 @@ import java.io.Reader
 import java.util.*
 
 var CEU = 1
-    // 1: dyn-lex, thus, as, =>
+    // 1: dyn-lex, thus, { x => ... }
     // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref
