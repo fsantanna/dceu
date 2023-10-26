@@ -788,6 +788,15 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "f(10,20)") { e.tostr() }
     }
+    @Test
+    fun oo_08_method() {
+        val l = lexer("(func() {}) <- 20")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(func () {\n" +
+                "nil\n" +
+                "})(20)") { e.tostr() }
+    }
 
     // PIPE
 
@@ -848,5 +857,21 @@ class Parser_99 {
         val l = lexer("x.1.2")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 3) : index error : ambiguous dot : use brackets")
+    }
+
+    // CONSTRUCTOR
+
+    @Test
+    fun uu_01_cons() {
+        val l = lexer(":T []")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "tags([],:T,true)") { e.tostr() }
+    }
+    @Test
+    fun uu_02_cons_err() {
+        val l = lexer(":T 2")
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 1, col 1) : expression error : innocuous expression")
     }
 }

@@ -1209,6 +1209,13 @@ class Exec_99 {
         assert(out == "[nil,[10]]\t[10]\t10\n") { out }
     }
 
+    // CONSTRUCTOR
+
+    @Test
+    fun uu_01_cons() {
+        val out = test("println(:T [])")
+        assert(out == ":T []\n") { out }
+    }
 
     // PRELUDE
 

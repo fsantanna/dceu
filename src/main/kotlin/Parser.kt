@@ -311,15 +311,15 @@ class Parser (lexer_: Lexer)
                 ${f.clo.tostr(true)}($args)
                 """
             }
-            (f is Expr.Proto) -> {
+            /*(f is Expr.Proto) -> {
                 assert(f.args.size <= 1)
                 val a = f.args.getOrNull(0)
                 """
-                ${e.tostr(true)} thus { as ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} => 
+                ${e.tostr(true)} thus { ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} => 
                     ${f.blk.es.tostr(true)}
                 }
                 """
-            }
+            }*/
             else -> "${f.tostr(true)}(${e.tostr(true)})}"
         })
     }
@@ -915,6 +915,17 @@ class Parser (lexer_: Lexer)
     }
     fun expr_2_pre (): Expr {
         return when {
+            (CEU>=99) && this.acceptEnu("Tag") -> {
+                if (this.checkFix("[")) {
+                    val tk0 = this.tk0
+                    val tup = this.expr_prim()
+                    this.nest("""
+                            ${tk0.pos.pre()}tags(${tup.tostr(true)}, ${tk0.str}, true)
+                        """)
+                } else {
+                    Expr.Tag(this.tk0 as Tk.Tag)
+                }
+            }
             this.acceptEnu("Op") -> {
                 val op = this.tk0 as Tk.Op
                 val e = this.expr_2_pre()
