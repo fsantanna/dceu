@@ -695,26 +695,45 @@ class Parser_99 {
     fun kk_01_watching() {
         val l = lexer("watching")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected \"(\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected expression : have end of file")
     }
     @Test
-    fun kk_02_watching() {
+    fun kk_02_watching_err() {
         val l = lexer("watching(x)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "TODO")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
     }
     @Test
-    fun kk_03_watching() {
+    fun kk_03_watching_err() {
+        val l = lexer("watching as {}")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : expected \"{\" : have end of file")
+    }
+    @Test
+    fun kk_04_watching_err() {
         val l = lexer("watching() as { nil }")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "TODO") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 22) : expected \"{\" : have end of file")
     }
     @Test
-    fun kk_04_watching() {
-        val l = lexer("watching as {} { nil }")
+    fun kk_05_watching() {
+        val l = lexer("watching as {} { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "TODO") { e.tostr() }
+        assert(e.tostr().contains("(break if (((({{==}}(status(ceu_0_85),:terminated))")) { e.tostr() }
+    }
+    @Test
+    fun kk_06_watching() {
+        val l = lexer("watching() as {x=>nil} { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr().contains("(break if ((yield(nil)) thus { x =>")) { e.tostr() }
+    }
+    @Test
+    fun kk_07_watching() {
+        val l = lexer("watching :E { nil }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr().contains("is'(ceu_5,:E)")) { e.tostr() }
     }
 }

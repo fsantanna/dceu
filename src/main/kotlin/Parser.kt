@@ -138,10 +138,12 @@ class Parser (lexer_: Lexer)
         return true
     }
 
-    fun expr_in_parens(opt: Boolean = false): Expr? {
-        this.acceptFix_err("(")
-        val e = if (opt && this.checkFix(")")) null else this.expr()
-        this.acceptFix_err(")")
+    fun expr_in_parens(opt_arg: Boolean = false, opt_par: Boolean = false): Expr? {
+        val par = if (opt_par) this.acceptFix("(") else this.acceptFix_err("(")
+        val e = if (opt_arg && this.checkFix(")")) null else this.expr()
+        if (par) {
+            this.acceptFix_err(")")
+        }
         return e
     }
 
@@ -271,11 +273,11 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun await (tk0: Tk): Expr.Loop {
+    fun await (tk0: Tk, opt_par: Boolean = false): Expr.Loop {
         val n = N
         val pre0 = tk0.pos.pre()
         val evt = when {
-            this.checkFix("(") -> this.expr_in_parens(true)
+            (this.checkFix("(") || !this.checkFix("as")) -> this.expr_in_parens(true, opt_par)
             !this.checkFix("as") -> err_expected(this.tk1, "\"(\"") as Expr
             else -> null
         }
@@ -778,7 +780,7 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("watching")) -> {
                 val tk0 = this.tk0
                 val pre0 = tk0.pos.pre()
-                val awt = await(tk0)
+                val awt = await(tk0, true)
                 val body = this.block()
                 this.nest("""
                     ${pre0}par-or {

@@ -1035,18 +1035,24 @@ class Exec_99 {
     @Test
     fun ll_01_watching() {
         val out = test("""
+            $IS
             spawn task {
                 watching 1 {
-                    defer { println(2) }
-                    yield()
-                    println(1)
+                    defer { println(:z) }
+                    println(:x)
+                    ${AWAIT()}
+                    println(:y)
+                    ${AWAIT()}
+                    println(999)
                 }
-                println(:ok)
+                println(:A)
             }
+            println(1)
             broadcast (nil)
-            println(0)
+            println(2)
             broadcast (1)
+            println(3)
         """)
-        assert(out == "0\n1\n2\n:ok\n") { out }
+        assert(out == ":x\n1\n:y\n2\n:z\n:A\n3\n") { out }
     }
 }
