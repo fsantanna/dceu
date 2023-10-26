@@ -826,7 +826,7 @@ class Parser (lexer_: Lexer)
     // expr_1_bin : a + b
     // expr_2_pre : -a    :T [...]
     // expr_3_met : v->f    f<-v
-    // expr_4_suf : v[0]    v.x    v.(:T).x    f()    f \{...}    v thus {...}
+    // expr_4_suf : v[0]    v.x    v.1    v.(:T).x    f()    f \{...}    v thus {...}
     // expr_prim
 
     fun expr_4_suf (xe: Expr? = null): Expr {
@@ -845,9 +845,19 @@ class Parser (lexer_: Lexer)
                     this.acceptFix_err("]")
                     Expr.Index(e.tk, e, idx)
                 }
-                "." -> {
-                    this.acceptEnu_err("Id")
-                    Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':'+this.tk0.str,this.tk0.pos)))
+                "." -> when {
+                    (CEU>=99 && this.acceptEnu("Num")) -> {
+                        val num = this.tk0 as Tk.Num
+                        if (num.str.contains('.')) {
+                            err(num, "index error : ambiguous dot : use brackets")
+                        }
+                        Expr.Index(e.tk, e, Expr.Num(num))
+                    }
+                    (CEU>=99 && this.acceptFix("(")) -> {
+                        TODO()
+                    }
+                    this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
+                    else -> error("impossible case")
                 }
                 "(" -> {
                     val args = list0(")",",") {

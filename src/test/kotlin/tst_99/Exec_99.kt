@@ -1097,4 +1097,28 @@ class Exec_99 {
         """)
         assert(out == "30\n") { out }
     }
+
+    // TUPLE DOT
+
+    @Test
+    fun pp_01_dots() {
+        val out = test(
+            """
+            val x = [nil,[10]]
+            println(x, x.1, x.1[0])
+        """
+        )
+        assert(out == "[nil,[10]]\t[10]\t10\n") { out }
+    }
+
+
+    // PRELUDE
+
+    @Test
+    fun xx_01_ok() {
+        val out = test("""
+            println(:ok)
+        """, true)
+        assert(out == "30\n") { out }
+    }
 }

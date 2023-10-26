@@ -961,26 +961,6 @@ class TXExec {
         assert(out == "[0,1]\n[1,2]\n[2,3]\n") { out }
     }
     @Test
-    fun tupl20_dots() {
-        val out = ceu.all(
-            """
-            val x = [[10]]
-            println(x, x.0, x.0.0)
-        """
-        )
-        assert(out == "anon : (lin 3, col 31) : index error : ambiguous dot : use brackets") { out }
-    }
-    @Test
-    fun tupl21_dots() {
-        val out = ceu.all(
-            """
-            val x = [[10]]
-            println(x, x.0, x.0[0])
-        """
-        )
-        assert(out == "[[10]]\t[10]\t10\n") { out }
-    }
-    @Test
     fun dict22_iter_it() {
         val out = all("""
             loop in @[x=1, y=2, z=3] {
