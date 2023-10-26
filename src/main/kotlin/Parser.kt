@@ -396,7 +396,34 @@ class Parser (lexer_: Lexer)
                 val cnd = this.expr()
                 Expr.Break(tk0, cnd, e)
             }
-            this.acceptFix("loop") -> Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
+            this.acceptFix("loop") -> {
+                if (CEU<99 || this.checkFix("{")) {
+                    return Expr.Loop(this.tk0 as Tk.Fix, Expr.Do(this.tk0, this.block().es))
+                }
+
+                val xid = this.acceptEnu("Id")
+                val (id,tag) = if (!xid) Pair("it","") else {
+                    Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
+                }
+                this.acceptFix_err("in")
+                val iter = this.expr()
+                val blk = this.block()
+
+                this.nest("""
+                    do {
+                        val ceu_$N = iter(${iter.tostr(true)})
+                        loop {
+                            break if ceu_$N[0](ceu_$N) thus { $id $tag =>
+                                if ($id == nil) {
+                                    true
+                                } else {
+                                    ${blk.es.tostr(true)}
+                                }
+                            }
+                        }
+                    }
+                """)
+            }
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val dcl = if (CEU>=99 && this.acceptEnu("Id")) {

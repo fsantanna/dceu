@@ -211,9 +211,7 @@ func next (v, ...) {
 
 func in' (v, xs) {
     loop x in iter(xs) {
-    } until x == v {
-    } --> \{
-        to-bool(it)
+        break if (x == v)
     }
 }
 

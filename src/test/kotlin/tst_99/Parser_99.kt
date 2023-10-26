@@ -371,6 +371,28 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
     }
 
+    // LOOP / ITER
+
+    @Test
+    fun ef_01_iter() {
+        val l = lexer("loop x in f { x }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_14 = iter(f))\n" +
+                "loop {\n" +
+                "(break if ((ceu_14[0](ceu_14)) thus { x =>\n" +
+                "if {{==}}(x,nil) {\n" +
+                "true\n" +
+                "} else {\n" +
+                "x\n" +
+                "}\n" +
+                "})\n" +
+                ")\n" +
+                "}\n" +
+                "}") { e.tostr() }
+    }
+
     // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test

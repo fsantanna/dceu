@@ -356,6 +356,29 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
 
+    // LOOP / ITER
+
+    @Test
+    fun fg_01_iter() {
+        val out = test("""
+            $PLUS
+            func iter (v) { v }
+            func f (t) {
+                if t.1 == t.2 {
+                    nil
+                } else {
+                    set t.1 = t.1 + 1
+                    t.1
+                }
+            }
+            val it = [f, 0, 5]
+            loop v in it {
+                println(v)
+            }
+        """)
+        assert(out == "1\n2\n3\n4\n5\n") { out }
+    }
+
     // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test

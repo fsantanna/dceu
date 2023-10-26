@@ -1960,28 +1960,6 @@ class TXExec {
     // LOOP / ITERATOR
 
     @Test
-    fun nn_01_iter() {
-        val out = all("""
-            func f (t) {
-                if t.1 == 5 {
-                    nil
-                } else {
-                    set t.1 = t.1 + 1
-                    t.1 - 1
-                }
-            }
-            do {
-                val it = [f, 0]
-                loop {
-                    val i = it.0(it)
-                } until (i == nil) {
-                    println(i)
-                }
-            }
-        """, true)
-        assert(out == "0\n1\n2\n3\n4\n") { out }
-    }
-    @Test
     fun nn_02_iter() {
         val out = all("""
             func f (t) {
