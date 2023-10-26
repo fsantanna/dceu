@@ -619,6 +619,15 @@ class Parser (lexer_: Lexer)
             }
             this.checkFix("(")      -> this.expr_in_parens()!!
 
+            (CEU>=99 && this.acceptFix("\\")) -> {
+                val (id_tag,es) = lambda(N)
+                val (id,tag) = id_tag
+                return this.nest("""
+                    (func (${id.str} ${tag.cond{it.str}}) {
+                        ${es.tostr(true)}
+                    })
+                """)
+            }
             (CEU>=99 && this.acceptFix("ifs")) -> {
                 val (x,v) = if (this.checkFix("{")) {
                     Pair("ceu_$N", null)

@@ -174,6 +174,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     }
                 }
                 (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
+                (CEU>=99 && x=='\\') -> yield(Tk.Fix(x.toString(), pos))
                 (x == '.') -> {
                     val (n1,x1) = read2()
                     if (x1 == '.') {

@@ -1121,10 +1121,85 @@ class Exec_99 {
         assert(out == "10\n") { out }
     }
 
+    // LAMBDA
+
+    @Test
+    fun pp_01_lambda () {
+        val out = test("""
+            println(\{ it })
+        """)
+        assert(out.contains("func: 0x")) { out }
+    }
+    @Test
+    fun pp_02_lambda () {
+        val out = test("""
+            $PLUS
+            println(\{x=>x+x}(2))
+        """)
+        assert(out.contains("4\n")) { out }
+    }
+    @Test
+    fun pp_03_lambda () {
+        val out = test("""
+            println(\{x=>x}(1))
+        """)
+        assert(out.contains("1\n")) { out }
+    }
+    @Test
+    fun pp_04_lambda () {
+        val out = test(
+            """
+            println(\{ it }(10))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun pp_05_lambda () {
+        val out = test(
+            """
+            func f (g) {
+                g(10)
+            }
+            println(f <- \{ it })
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun pp_06_it_it () {
+        val out = test(
+            """
+            val x = \{ \{ it }(10) }()    ;; it1/it2
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun pp_07_lambda_call () {
+        val out = test("""
+            func f (v,g) {
+                g(v)
+            }
+            val v = f(5) <- \{ it }
+            println(v)
+        """)
+        assert(out == "5\n") { out }
+    }
+    @Test
+    fun pp_08_lambda_call () {
+        val out = test("""
+            func f (g) {
+                g()
+            }
+            val v = f( \{ 10 } )
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // TUPLE DOT
 
     @Test
-    fun pp_01_dots() {
+    fun tt_01_dots() {
         val out = test(
             """
             val x = [nil,[10]]

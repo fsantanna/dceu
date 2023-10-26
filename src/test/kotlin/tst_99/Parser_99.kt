@@ -813,17 +813,38 @@ class Parser_99 {
         assert(e.tostr() == "f(10,20)") { e.tostr() }
     }
 
+    // LAMBDA
+
+    @Test
+    fun pp_01_lambda() {
+        val l = lexer("\\{}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(func (ceu_5) {\n" +
+                "nil\n" +
+                "})") { e.tostr() }
+    }
+    @Test
+    fun pp_02_lambda() {
+        val l = lexer("\\{it}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(func (it) {\n" +
+                "it\n" +
+                "})") { e.tostr() }
+    }
+
     // TUPLE DOT
 
     @Test
-    fun pp_01_dot() {
+    fun tt_01_dot() {
         val l = lexer("x.1")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "x[1]") { e.tostr() }
     }
     @Test
-    fun pp_02_dot_err() {
+    fun tt_02_dot_err() {
         val l = lexer("x.1.2")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 3) : index error : ambiguous dot : use brackets")
