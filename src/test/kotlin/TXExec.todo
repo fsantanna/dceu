@@ -273,19 +273,6 @@ class TXExec {
         assert(out == "true\n") { out }
     }
 
-    // METHODS
-
-    @Test
-    fun oo_04_method() {
-        val out = test("""
-            func g (v) { v }
-            func f (v) { g }
-            val v = 10-->f->g
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-
     // ASSERT
 
     @Test

@@ -962,22 +962,33 @@ class Parser (lexer_: Lexer)
         )
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
-        return this.expr_1_bin()
-        /*
         val e = if (xe != null) xe else this.expr_1_bin()
-        val ok = this.acceptFix("thus")
+        val ok = (CEU>=99 && (/*this.acceptFix("where")) ||*/ this.acceptFix("-->") || this.acceptFix("<--")))
         if (!ok) {
             return e
         }
-        val tk0 = this.tk0 as Tk.Fix
         if (xop!=null && xop!=this.tk0.str) {
             err(this.tk0, "sufix operation error : expected surrounding parentheses")
         }
         val op = this.tk0
         return when (op.str) {
+            /*
+            "where" -> {
+                val body = this.block()
+                this.expr_0_out(op.str,
+                    this.nest("""
+                        ${op.pos.pre()}export [] {
+                            ${body.es.tostr(true)}
+                            ${e.tostr(true)}
+                        }
+                    """)
+                )
+            }
+             */
+            "-->" -> this.expr_0_out(op.str, method(this.expr_1_bin(), e, true))
+            "<--" -> method(e, this.expr_0_out(op.str), false)
             else -> error("impossible case")
         }
-         */
     }
 
     fun expr (): Expr {

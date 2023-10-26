@@ -781,6 +781,37 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "f(10,20)") { e.tostr() }
     }
+    @Test
+    fun oo_07_method() {
+        val l = lexer("(10->f)<-20")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10,20)") { e.tostr() }
+    }
+
+    // PIPE
+
+    @Test
+    fun op_01_pipe() {
+        val l = lexer("10-->f()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10)") { e.tostr() }
+    }
+    @Test
+    fun op_02_pipe() {
+        val l = lexer("10-->f->g")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "g(10,f)") { e.tostr() }
+    }
+    @Test
+    fun op_03_pipe() {
+        val l = lexer("10-->(f<--20)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10,20)") { e.tostr() }
+    }
 
     // TUPLE DOT
 

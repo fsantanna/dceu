@@ -243,7 +243,7 @@ class Lexer_01 {
 
     @Test
     fun ff_01_ops() {
-        val l = lexer("{{-}} {{+}} {{x}} {{*/}} -> ( + ({{==}})")
+        val l = lexer("{{-}} {{+}} {{x}} {{*/}} -> <- --> <-- ( + ({{==}})")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Id  && it.str == "{{-}}" })
         assert(tks.next().let { it is Tk.Id  && it.str == "{{+}}" })
@@ -252,6 +252,9 @@ class Lexer_01 {
         //assert(tks.next().let { it is Tk.Fix && it.str == "}" })
         assert(tks.next().let { it is Tk.Id  && it.str == "{{*/}}" })
         assert(tks.next().let { it is Tk.Op  && it.str == "->" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "<-" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "-->" })
+        assert(tks.next().let { it is Tk.Op  && it.str == "<--" })
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
         assert(tks.next().let { it is Tk.Op  && it.str == "+" })
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })

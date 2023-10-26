@@ -1098,6 +1098,29 @@ class Exec_99 {
         assert(out == "30\n") { out }
     }
 
+    // PIPE
+
+    @Test
+    fun pp_01_pipe() {
+        val out = test("""
+            $PLUS
+            func f (v,x) { v+x }
+            val v = 10-->f(20)
+            println(v)
+        """)
+        assert(out == "30\n") { out }
+    }
+    @Test
+    fun op_02_pipe() {
+        val out = test("""
+            func g (v) { v }
+            func f (v) { g }
+            val v = 10-->f->g
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // TUPLE DOT
 
     @Test

@@ -209,8 +209,10 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     when {
                         (op == "=") -> yield(Tk.Fix(op, pos))
                         (op == "=>") -> yield(Tk.Fix(op, pos))
-                        (CEU>=99 && op=="->") -> yield(Tk.Fix(op, pos))
-                        (CEU>=99 && op=="<-") -> yield(Tk.Fix(op, pos))
+                        (CEU>=99 && op=="->")  -> yield(Tk.Fix(op, pos))
+                        (CEU>=99 && op=="<-")  -> yield(Tk.Fix(op, pos))
+                        (CEU>=99 && op=="-->") -> yield(Tk.Fix(op, pos))
+                        (CEU>=99 && op=="<--") -> yield(Tk.Fix(op, pos))
                         else -> yield(Tk.Op(op, pos))
                     }
                 }
