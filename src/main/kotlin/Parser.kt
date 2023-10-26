@@ -299,6 +299,31 @@ class Parser (lexer_: Lexer)
         """) as Expr.Loop
     }
 
+    fun method (f: Expr, e: Expr, pre: Boolean): Expr {
+        return this.nest(when {
+            (f is Expr.Call)  -> {
+                val args = if (pre) {
+                    e.tostr(true) + f.args.map { "," + it.tostr(true) }.joinToString("")
+                } else {
+                    f.args.map { it.tostr(true) + "," }.joinToString("") + e.tostr(true)
+                }
+                """
+                ${f.clo.tostr(true)}($args)
+                """
+            }
+            (f is Expr.Proto) -> {
+                assert(f.args.size <= 1)
+                val a = f.args.getOrNull(0)
+                """
+                ${e.tostr(true)} thus { as ${a?.first?.str ?: "it"} ${a?.second?.str ?: ""} => 
+                    ${f.blk.es.tostr(true)}
+                }
+                """
+            }
+            else -> "${f.tostr(true)}(${e.tostr(true)})}"
+        })
+    }
+
     fun expr_prim (): Expr {
         return when {
             this.acceptFix("do") -> Expr.Do(this.tk0, this.block().es)
@@ -856,7 +881,18 @@ class Parser (lexer_: Lexer)
     }
     fun expr_3_met (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_4_suf()
-        return e
+        val ok = (CEU>=99) && (this.acceptFix("->") || this.acceptFix("<-"))
+        if (!ok) {
+            return e
+        }
+        if (xop!=null && xop!=this.tk0.str) {
+            err(this.tk0, "sufix operation error : expected surrounding parentheses")
+        }
+        return when (this.tk0.str) {
+            "->" -> this.expr_3_met(this.tk0.str, method(this.expr_4_suf(), e, true))
+            "<-" -> method(e, this.expr_3_met(this.tk0.str, this.expr_4_suf()), false)
+            else -> error("impossible case")
+        }
     }
     fun expr_2_pre (): Expr {
         return when {

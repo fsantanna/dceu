@@ -1055,4 +1055,46 @@ class Exec_99 {
         """)
         assert(out == ":x\n1\n:y\n2\n:z\n:A\n3\n") { out }
     }
+
+    // METHODS
+
+    @Test
+    fun oo_01_method() {
+        val out = test("""
+            func f (v) { v }
+            val v = 10->f()
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_02_method() {
+        val out = test("""
+            func f (v) { 10 }
+            func g (v) { v }
+            val v = 99->f()->g()
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_03_method() {
+        val out = test("""
+            func f (v) { 10 }
+            func g (v) { v }
+            val v = 99->f->g
+            println(v)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oo_04_method() {
+        val out = test("""
+            $PLUS
+            func f (v,x) { v+x }
+            val v = 10->f(20)
+            println(v)
+        """)
+        assert(out == "30\n") { out }
+    }
 }

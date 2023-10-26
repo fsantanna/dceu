@@ -736,4 +736,50 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr().contains("is'(ceu_5,:E)")) { e.tostr() }
     }
+
+    // METHODS
+
+    @Test
+    fun oo_01_method() {
+        val l = lexer("10->f()")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10)") { e.tostr() }
+    }
+    @Test
+    fun oo_02_method() {
+        val l = lexer("10->f")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10)") { e.tostr() }
+    }
+    @Test
+    fun oo_03_method() {
+        val l = lexer("10->f(20)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10,20)") { e.tostr() }
+    }
+    @Test
+    fun oo_04_method() {
+        val l = lexer("f() <- 10")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10)") { e.tostr() }
+    }
+    @Test
+    fun oo_05_method() {
+        val l = lexer("f<-10")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10)") { e.tostr() }
+    }
+    @Test
+    fun oo_06_method() {
+        val l = lexer("f(10)<-(20)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "f(10,20)") { e.tostr() }
+    }
+
 }

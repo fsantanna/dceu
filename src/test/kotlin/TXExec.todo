@@ -276,52 +276,14 @@ class TXExec {
     // METHODS
 
     @Test
-    fun jj_01_method() {
-        val out = ceu.all("""
-            func f (v) { v }
-            val v = 10->f()
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun jj_02_method() {
-        val out = ceu.all("""
-            func f (v) { 10 }
-            func g (v) { v }
-            val v = 99->f()->g()
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun jj_03_method() {
-        val out = ceu.all("""
-            func f (v) { 10 }
-            func g (v) { v }
-            val v = 99->f->g
-            println(v)
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun jj_04_method() {
-        val out = ceu.all("""
+    fun oo_04_method() {
+        val out = test("""
             func g (v) { v }
             func f (v) { g }
             val v = 10-->f->g
             println(v)
         """)
         assert(out == "10\n") { out }
-    }
-    @Test
-    fun jj_05_method() {
-        val out = ceu.all("""
-            func f (v,x) { v+x }
-            val v = 10->f(20)
-            println(v)
-        """, true)
-        assert(out == "30\n") { out }
     }
 
     // ASSERT
