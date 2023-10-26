@@ -7,7 +7,7 @@ fun lexer (str: String): Lexer {
     return Lexer(listOf(Pair(Triple("anon",1,1), str.reader())))
 }
 
-class Lexer_04 {
+class Lexer_05 {
     @Test
     fun aa_01_ids() {
         val l =
