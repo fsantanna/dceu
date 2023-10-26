@@ -1271,6 +1271,21 @@ class Exec_03 {
         """)
         assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro\n") { out }
     }
+    @Test
+    fun mm_11_nst() {
+        val out = test("""
+            val T = coro (t) {
+                var ang
+                val C2 = coro () {
+                    set ang = 10
+                }
+                resume (coroutine(C2)) ()
+                println(ang)
+            }
+            resume (coroutine(T)) ()
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // YIELD / ENCLOSING / ERROR
 

@@ -12,8 +12,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             if (nst == 0) {
                 "(ceu_mem->${pre}_${this.n})"
             } else {
-                val fup = ups.first(this) { it is Expr.Proto }!!
-                "(((CEU_Clo_Mem_${fup.n}*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->${pre}_${this.n})"
+                val fup = (ups.first(this) { it is Expr.Proto }!! as Expr.Proto).idc()
+                "(((CEU_Clo_Mem_$fup*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->${pre}_${this.n})"
             }
         } else {
             "ceu_${pre}_${this.n}"
@@ -31,12 +31,21 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 if (nst == 0) {
                     "(ceu_mem->$idc)"
                 } else {
-                    val fup = ups.first(this) { it is Expr.Proto }!!
-                    "(((CEU_Clo_Mem_${fup.n}*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->$idc)"
+                    val fup = (ups.first(this) { it is Expr.Proto }!! as Expr.Proto).idc()
+                    "(((CEU_Clo_Mem_$fup*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->$idc)"
                 }
             }
             else -> {
                 this.id.str.idc()
+            }
+        }
+    }
+    fun Expr.Proto.idc (): String {
+        return ups.pub[this].let {
+            when {
+                (it !is Expr.Dcl) -> this.n.toString()
+                (it.src != this) -> error("bug found") as String
+                else -> it.id.str.idc()
             }
         }
     }
@@ -68,13 +77,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
                 val mem = Mem(vars, clos, sta, defers)
-                val id = ups.pub[this].let {
-                    when {
-                        (it !is Expr.Dcl) -> this.n
-                        (it.src != this) -> error("bug found")
-                        else -> it.id.str.idc()
-                    }
-                }
+                val id = this.idc()
 
                 val pres = Pair(""" // UPVS | ${this.dump()}
                     ${clos.protos_refs[this].cond { """

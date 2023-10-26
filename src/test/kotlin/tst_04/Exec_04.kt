@@ -1171,6 +1171,30 @@ class Exec_04 {
         """, true)
         assert(out == "[1]\n") { out }
     }
+    @Test
+    fun dh_06_set() {
+        val out = test("""
+            var ang = 0
+            loop {
+                ang
+            }
+        """)
+        assert(out == "anon : (lin 4, col 17) : loop error : innocuous last expression\n") { out }
+    }
+    @Test
+    fun dh_07_nst() {
+        val out = test("""
+            val T = task (t) {
+                var ang = 0
+                spawn (task () {
+                    set ang = 10
+                })()
+                println(ang)
+            }
+            spawn T()
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // STATUS
 
