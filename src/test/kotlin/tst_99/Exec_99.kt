@@ -1335,7 +1335,7 @@ class Exec_99 {
             set v = #[10]
             println(v[-1+1])
         """)
-        assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"") { out }
+        assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"\n") { out }
     }
 
     // PRELUDE
