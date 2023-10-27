@@ -42,30 +42,6 @@ class TXParser {
         assert(out == "anon : (lin 2, col 17) : call error : expected function\n:error\n") { out }
     }
 
-    // ITER
-
-    @Ignore // N ids vary
-    @Test
-    fun loop01_n() {
-        val l = lexer("""
-            loop i in [0 -> n), :step +1 {
-            }
-        """)
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == """
-            do {
-            var ceu_step_27 = 1
-            var i = {{+}}(0,0)
-            var ceu_limit_27 = n
-            loop until {{==}}(i,ceu_limit_27) {
-            nil
-            set i = {{+}}(i,ceu_step_27)
-            }
-            }
-            """.trimIndent()) { e.tostr() }
-    }
-
     // POLY
     /*
     @Test

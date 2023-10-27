@@ -438,23 +438,69 @@ class Parser (lexer_: Lexer)
                     Pair(this.tk0.str, if (this.acceptEnu("Tag")) this.tk0.str else "")
                 }
                 this.acceptFix_err("in")
-                val iter = this.expr()
-                val blk = this.block()
 
-                this.nest("""
-                    do {
-                        val ceu_$N = iter(${iter.tostr(true)})
-                        loop {
-                            break if ceu_$N[0](ceu_$N) thus { $id $tag =>
-                                if ($id == nil) {
-                                    true
-                                } else {
+                when {
+                    (this.acceptFix("{") || this.acceptFix("}")) -> {
+                        // [x -> y]
+                        val tkA = this.tk0 as Tk.Fix
+                        val eA = this.expr()
+                        this.acceptFix_err("=>")
+                        val eB = this.expr()
+                        (this.acceptFix("{") || this.acceptFix_err("}"))
+                        val tkB = this.tk0 as Tk.Fix
+
+                        // :step +z
+                        val (op, step) = if (this.acceptTag(":step")) {
+                            (this.acceptOp("-") || acceptOp_err("+"))
+                            Pair(this.tk0.str, this.expr())
+                        } else {
+                            Pair("+", null)
+                        }
+
+                        val blk = this.block()
+
+                        val cmp = when {
+                            (tkB.str == "}" && op == "+") -> ">"
+                            (tkB.str == "{" && op == "+") -> ">="
+                            (tkB.str == "}" && op == "-") -> "<"
+                            (tkB.str == "{" && op == "-") -> "<="
+                            else -> error("impossible case")
+                        }
+
+                        this.nest("""
+                            do {
+                                val ceu_ste_$N = ${if (step == null) 1 else step.tostr(true)}
+                                var $id $tag = ${eA.tostr(true)} $op (
+                                    ${if (tkA.str == "{") 0 else "ceu_ste_$N"}
+                                )
+                                val ceu_lim_$N = ${eB.tostr(true)}
+                                loop {
+                                    until $id $cmp ceu_lim_$N
                                     ${blk.es.tostr(true)}
+                                    set $id = $id $op ceu_ste_$N
+                                }                                
+                            }
+                        """)
+                    }
+                    else -> {
+                        val iter = this.expr()
+                        val blk = this.block()
+                        this.nest("""
+                            do {
+                                val ceu_$N = iter(${iter.tostr(true)})
+                                loop {
+                                    break if ceu_$N[0](ceu_$N) thus { $id $tag =>
+                                        if ($id == nil) {
+                                            true
+                                        } else {
+                                            ${blk.es.tostr(true)}
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        """)
                     }
-                """)
+                }
             }
             this.acceptFix("func") || (CEU>=3 && this.acceptFix("coro")) || (CEU>=4 && this.acceptFix("task")) -> {
                 val tk0 = this.tk0 as Tk.Fix

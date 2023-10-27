@@ -1801,15 +1801,6 @@ class TXExec {
         assert(out == "0\n1\n2\n3\n") { out }
     }
     @Test
-    fun loop_01_num() {
-        val out = all("""
-            loop i in {0 => 1} {
-                println(i)
-            }
-        """, true)
-        assert(out == "0\n1\n") { out }
-    }
-    @Test
     fun loop_02_num() {
         val out = all("""
             println(:0)

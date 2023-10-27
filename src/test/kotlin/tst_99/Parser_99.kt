@@ -432,6 +432,28 @@ class Parser_99 {
                 "(break if {{==}}(x,1))\n" +
                 "}") { e.tostr() }
     }
+    @Test
+    fun ef_04_numeric() {
+        val l = lexer("""
+            loop i in {0 => n{ :step +x {
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == """
+            do {
+            (val ceu_ste_23 = x)
+            (var i = {{+}}(0,0))
+            (val ceu_lim_23 = n)
+            loop {
+            (break(nil) if {{>=}}(i,ceu_lim_23))
+            nil
+            (set i = {{+}}(i,ceu_ste_23))
+            }
+            }
+            """.trimIndent()) { e.tostr() }
+    }
+
 
     // AS / YIELD / CATCH / DETRACK / THUS
 

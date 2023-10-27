@@ -173,8 +173,8 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                         break
                     }
                 }
-                (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
                 (CEU>=99 && x=='\\') -> yield(Tk.Fix(x.toString(), pos))
+                (x in listOf('}','(',')','[',']',',','\$')) -> yield(Tk.Fix(x.toString(), pos))
                 (x == '.') -> {
                     val (n1,x1) = read2()
                     if (x1 == '.') {
@@ -239,7 +239,7 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                 }
                 (x == ':') -> {
                     // no '_' b/c of C ids: X.Y -> X_Y
-                    val tag = x + read2While2 { x,y -> x.isLetterOrDigit() || ((x=='.' || x=='-') && y.isLetter()) }
+                    val tag = x + read2While2 { x, y -> x.isLetterOrDigit() || ((x == '.' || x == '-') && y.isLetter()) }
                     if (tag.length < 2) {
                         err(pos, "tag error : expected identifier")
                     }
