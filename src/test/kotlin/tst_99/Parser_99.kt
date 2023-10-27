@@ -838,7 +838,7 @@ class Parser_99 {
                 "})(20)") { e.tostr() }
     }
 
-    // PIPE
+    // PIPE / WHERE
 
     @Test
     fun op_01_pipe() {
@@ -860,6 +860,29 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "f(10,20)") { e.tostr() }
+    }
+    @Test
+    fun op_04_pipe_where_err() {
+        val l = lexer("10+1 --> f where { }")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 12) : sufix operation error : expected surrounding parentheses")
+    }
+    @Test
+    fun op_05_where() {
+        val l = lexer("10+1 where { }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "export [] {\n" +
+                "nil\n" +
+                "{{+}}(10,1)\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun todo_col_op_06_where() {
+        val l = lexer("spawn T(v) where {nil}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn error : expected call")
     }
 
     // LAMBDA

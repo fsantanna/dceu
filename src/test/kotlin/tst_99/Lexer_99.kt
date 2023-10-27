@@ -40,13 +40,14 @@ class Lexer_99 {
     @Test
     fun aa_03_cmds() {
         val l =
-            lexer("ifs resume-yield-all await watching par par-and par-or with")
+            lexer("ifs resume-yield-all await watching par where par-and par-or with")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "ifs" })
         assert(tks.next().let { it is Tk.Fix && it.str == "resume-yield-all" })
         assert(tks.next().let { it is Tk.Fix && it.str == "await" })
         assert(tks.next().let { it is Tk.Fix && it.str == "watching" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "where" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-and" })
         assert(tks.next().let { it is Tk.Fix && it.str == "par-or" })
         assert(tks.next().let { it is Tk.Fix && it.str == "with" })

@@ -1138,7 +1138,7 @@ class Exec_99 {
     // PIPE
 
     @Test
-    fun pp_01_pipe() {
+    fun op_01_pipe() {
         val out = test("""
             $PLUS
             func f (v,x) { v+x }
@@ -1156,6 +1156,115 @@ class Exec_99 {
             println(v)
         """)
         assert(out == "10\n") { out }
+    }
+
+    // WHERE
+
+    @Test
+    fun oq_01_where() {
+        val out = test(
+            """
+                $PLUS
+            println(x) where {
+                val x = 1
+            }
+            val z = (y + 10) where {
+                val y = 20
+            }
+            println(z)
+        """)
+        assert(out == "1\n30\n") { out }
+    }
+    @Test
+    fun oq_02_where() {
+        val out = test(
+            """
+            task T (v) {
+                println(v)
+            }
+            val t = (spawn T(v)) where { val v = 10 }
+        """)
+        assert(out == "10\n") { out }
+        //assert(out == "anon : (lin 5, col 34) : set error : incompatible scopes\n") { out }
+    }
+    @Test
+    fun oq_03_where() {
+        val out = test(
+            """
+            coro T (v) {
+                println(v)
+            }
+            (val t = spawn T(v)) where { val v = 10 }
+            println(t)
+        """)
+        assert(out == "anon : (lin 6, col 21) : access error : variable \"t\" is not declared\n") { out }
+    }
+    @Test
+    fun op_04_where() {
+        val out = test(
+            """
+            $PLUS
+            val z = y + 10 where {
+                val y = 20
+            }
+            println(z)
+        """)
+        //assert(out == "anon : (lin 2, col 21) : access error : variable \"y\" is not declared") { out }
+        assert(out == "30\n") { out }
+    }
+    @Test
+    fun op_05_where() {
+        val out = test("""
+            val x = y
+                where {
+                    val y = 10
+                }
+            println(x)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun oq_06_where() {
+        val out = test(
+            """
+            task T (v) {
+                println(v)
+            }
+            val t = (spawn T(v)) where { val v = 10 }
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun op_07_where() {
+        val out = test(
+            """
+            task T (v) {
+                println(v)
+            }
+            val t = (spawn T(v)) where {
+                val v = 10
+            }
+            println(type(t))
+        """)
+        assert(out == "10\n:exe-task\n") { out }
+    }
+    @Test
+    fun todo_iter_op_08_where() {
+        val out = test(
+            """
+            task T (v) {
+                println(v)
+                yield()
+            }
+            val ts = tasks()
+            (spawn T(v) in ts) where {
+                val v = 10
+            }
+            loop t in :tasks ts {
+                println(type(t))
+            }
+        """)
+        assert(out == "10\n:x-track\n") { out }
     }
 
     // LAMBDA
@@ -1286,7 +1395,7 @@ class Exec_99 {
         assert(out == "#[1]\n") { out }
     }
     @Test
-    fun vv_04_ppp_push_err() {
+    fun todo_COL_vv_04_ppp_push_err() {
         val out = test("""
             $PLUS
             val v = #[]

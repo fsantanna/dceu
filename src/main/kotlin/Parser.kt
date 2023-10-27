@@ -1079,7 +1079,7 @@ class Parser (lexer_: Lexer)
     }
     fun expr_0_out (xop: String? = null, xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_1_bin()
-        val ok = (CEU>=99 && (/*this.acceptFix("where")) ||*/ this.acceptFix("-->") || this.acceptFix("<--")))
+        val ok = (CEU>=99 && (this.acceptFix("where")) || this.acceptFix("-->") || this.acceptFix("<--"))
         if (!ok) {
             return e
         }
@@ -1088,7 +1088,6 @@ class Parser (lexer_: Lexer)
         }
         val op = this.tk0
         return when (op.str) {
-            /*
             "where" -> {
                 val body = this.block()
                 this.expr_0_out(op.str,
@@ -1100,7 +1099,6 @@ class Parser (lexer_: Lexer)
                     """)
                 )
             }
-             */
             "-->" -> this.expr_0_out(op.str, method(this.expr_1_bin(), e, true))
             "<--" -> method(e, this.expr_0_out(op.str), false)
             else -> error("impossible case")
