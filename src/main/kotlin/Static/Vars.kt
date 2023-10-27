@@ -152,6 +152,15 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
 
                 this.blk.traverse()
             }
+            is Expr.Export -> {
+                val size = dcls.size
+                this.blk.traverse()
+                for (i in dcls.size-1 downTo size) {
+                    if (!this.ids.contains(dcls[i].id.str)) {
+                        dcls.removeAt(i)
+                    }
+                }
+            }
             is Expr.Do     -> {
                 blk_to_dcls[this] = mutableListOf()
                 val size = dcls.size    // restore this size after nested block
@@ -197,8 +206,11 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 // nest into expressions
                 this.es.forEach { it.traverse() }
 
-                repeat(dcls.size - size) {
-                    dcls.removeLast()
+                // do not remove ids listed in outer export
+                if (ups.pub[this] !is Expr.Export) {
+                    repeat(dcls.size - size) {
+                        dcls.removeLast()
+                    }
                 }
             }
             is Expr.Dcl    -> {
@@ -213,7 +225,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 dcl_to_blk[this] = blk
                 blk_to_dcls[blk]!!.add(this)
 
-                val bup = ups.first_block(this)
+                //val bup = ups.first_block(this)
+                val bup = ups.first(this) {
+                    it is Expr.Do && !ups.pub[it].let { it is Expr.Export && it.ids.any { it == this.id.str } }
+                }!! as Expr.Do
                 when {
                     (this.id.upv == 2) -> {
                         err(tk, "var error : cannot declare an upref")

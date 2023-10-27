@@ -25,6 +25,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             }.joinToString(",")
             "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
+        is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {
             when (this.tk.str) {
                 "do" -> "do {\n" + this.es.tostr(pre) + "}"

@@ -76,7 +76,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
                 val code = this.blk.code()
-                val mem = Mem(vars, clos, sta, defers)
+                val mem = Mem(ups, vars, clos, sta, defers)
                 val id = this.idc()
 
                 val pres = Pair(""" // UPVS | ${this.dump()}
@@ -171,6 +171,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     pos
                 }
             }
+            is Expr.Export -> this.blk.es.map { it.code() }.joinToString("")   // skip do{}
             is Expr.Do -> {
                 val body = this.es.map { it.code() }.joinToString("")   // before defers[this] check
                 val _blkc = this.idc("_block")

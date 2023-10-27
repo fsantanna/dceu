@@ -3,7 +3,7 @@ package dceu
 val union = "union"
 //val union = "struct"
 
-class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
+class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableMap<Expr.Do, Triple<MutableList<Int>,String,String>>) {
     fun pub (e: Expr.Do): String {
         return e.mem()
     }
@@ -33,8 +33,8 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
             is Expr.Index  -> this.col.coexists() || this.idx.coexists()
             is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
-            is Expr.Proto, is Expr.Do, is Expr.Loop, is Expr.Enum, is Expr.Data, is Expr.Pass -> false
-            is Expr.Defer -> false
+            is Expr.Proto, is Expr.Export, is Expr.Do,   is Expr.Loop  -> false
+            is Expr.Enum,  is Expr.Data,   is Expr.Pass, is Expr.Defer -> false
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         }
     }
@@ -56,14 +56,18 @@ class Mem (val vars: Vars, val clos: Clos, val sta: Static, val defers: MutableM
 
     fun Expr.mem (): String {
         return when (this) {
+            is Expr.Export -> this.blk.mem()
             is Expr.Do -> {
+                val inexp = ups.pub[this] is Expr.Export
                 if (!this.ismem(sta,clos)) "" else {
                     """
                     struct { // BLOCK
-                        ${(!sta.void(this)).cond { """
+                        ${(!sta.void(this) && !inexp).cond { """
                             CEU_Block _block_$n;
                         """ }}
-                        CEU_Block* block_$n;
+                        ${(!inexp).cond { """
+                            CEU_Block* block_$n;
+                        """ }}
                         ${vars.blk_to_dcls[this]!!.map { """
                             CEU_Value ${it.id.str.idc(it.n)};
                         """ }.joinToString("") }

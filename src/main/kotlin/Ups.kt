@@ -33,10 +33,10 @@ class Ups (outer: Expr.Do) {
         return this.first(e,cnd) == null
     }
     fun first_block (e: Expr): Expr.Do? {
-        return this.first(e) { it is Expr.Do } as Expr.Do?
+        return this.first(e) { it is Expr.Do && this.pub[it] !is Expr.Export } as Expr.Do?
     }
     fun first_proto_or_block (e: Expr): Expr? {
-        return this.first(e) { it is Expr.Proto || (it is Expr.Do) }
+        return this.first(e) { it is Expr.Proto || (it is Expr.Do && this.pub[it] !is Expr.Export) }
     }
     fun first_task_real (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str=="task" && it.tag?.str!=":void" } as Expr.Proto?
@@ -51,6 +51,7 @@ class Ups (outer: Expr.Do) {
         }
         return when (this) {
             is Expr.Proto  -> this.map(listOf(this.blk))
+            is Expr.Export -> this.map(listOf(this.blk))
             is Expr.Do     -> this.map(this.es)
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))

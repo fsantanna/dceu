@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 1
+var CEU = 6
     // 1: dyn-lex, thus, { x => ... }
     // 2: defer, throw/catch
     // 3: coro, yield, resume
@@ -53,6 +53,8 @@ val KEYWORDS: SortedSet<String> = (
         "broadcast", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
         "as", "detrack",
+    )) + (if (CEU < 6) setOf() else setOf(
+        "export",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "ifs", "par", "par-and", "par-or",
         "resume-yield-all", "watching", "with"
@@ -117,8 +119,9 @@ sealed class Tk (val str: String, val pos: Pos) {
 
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val tag: Tk.Tag?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val blk: Expr.Do): Expr(N++, tk_)
+    data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
     data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
-    data class Dcl(val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
+    data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
     data class Loop   (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
