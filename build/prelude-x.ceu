@@ -211,7 +211,7 @@ func next (v, ...) {
 
 func in' (v, xs) {
     loop x in iter(xs) {
-        break if (x == v)
+       until (x == v)
     }
 }
 
@@ -232,14 +232,14 @@ func :rec {{===}} (v1,v2) {
         func equals-tuple-vector (v1, v2) {
             (#v1 == #v2) and not (
                 loop x in iter(v1,:all) {
-                    until (v2[x.0] =/= x.1)
+                    while (v2[x.0] === x.1)
                 }
             )
         }
         func contains-dict? (v1, v2) {
             not (
                 loop x in iter(v1,:all) {
-                    until (v2[x.0] =/= x.1)
+                    while (v2[x.0] === x.1)
                 }
             )
         }
