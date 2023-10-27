@@ -57,7 +57,8 @@ val KEYWORDS: SortedSet<String> = (
         "export",
     )) + (if (CEU < 99) setOf() else setOf(
         "await", "ifs", "par", "par-and", "par-or",
-        "resume-yield-all", "watching", "with", "where"
+        "resume-yield-all", "until", "watching",
+        "with", "where", "while"
     ))
 ).toSortedSet()
 

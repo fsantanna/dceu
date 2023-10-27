@@ -389,7 +389,7 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 4, col 21) : case error : expected ifs condition")
     }
 
-    // LOOP / ITER
+    // LOOP / ITER / WHILE / UNTIL
 
     @Test
     fun ef_01_iter() {
@@ -408,6 +408,28 @@ class Parser_99 {
                 "})\n" +
                 ")\n" +
                 "}\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ef_02_while() {
+        val l = lexer("loop { while (i<10) }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "(break if if {{<}}(i,10) {\n" +
+                "false\n" +
+                "} else {\n" +
+                "true\n" +
+                "})\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun ef_03_until() {
+        val l = lexer("loop { until (x==1) }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "(break if {{==}}(x,1))\n" +
                 "}") { e.tostr() }
     }
 

@@ -685,6 +685,13 @@ class Parser (lexer_: Lexer)
             }
             this.checkFix("(")      -> this.expr_in_parens()!!
 
+            (CEU>=99 && (this.acceptFix("while") || this.acceptFix("until"))) -> {
+                val tk0 = this.tk0 as Tk.Fix
+                val cnd = this.expr().let { if (tk0.str=="until") it else {
+                    this.nest("not ${it.tostr(true)}")
+                } }
+                Expr.Break(tk0, cnd, null)
+            }
             (CEU>=99 && this.acceptFix("\\")) -> {
                 val (id_tag,es) = lambda(N)
                 val (id,tag) = id_tag
