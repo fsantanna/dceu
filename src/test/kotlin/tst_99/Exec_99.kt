@@ -231,7 +231,7 @@ class Exec_99 {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
 
-    // FUNC / DCL
+    // FUNC / DCL / :REC
 
     @Test
     fun cc_01_func() {
@@ -242,6 +242,20 @@ class Exec_99 {
             println(f(10))
         """)
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun cc_02_func() {
+        val out = test("""
+            $PLUS
+            func :rec f (v) {
+                if v /= 0 {
+                    println(v)
+                    f(v - 1)
+                }
+            }
+            f(3)
+        """)
+        assert(out == "3\n2\n1\n") { out }
     }
 
     // IF / ID-TAG

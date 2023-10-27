@@ -155,7 +155,7 @@ class Parser_99 {
         assert(e.tostr() == "is'(a,b)\nis-not'(c,d)\nin'(e,f)\nin-not'(g,h)\n") { e.tostr() }
     }
 
-    // FUNC / DCL
+    // FUNC / DCL / REC
 
     @Test
     fun cc_01_func() {
@@ -163,6 +163,24 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.exprs()
         assert(e.tostr() == "(val f = (func () {\nnil\n}))\n") { e.tostr() }
+    }
+    @Test
+    fun cc_02_func_rec_err() {
+        val l = lexer("func :rec () {}")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected identifier : have \"(\"")
+    }
+    @Test
+    fun cc_03_func_rec() {
+        val l = lexer("func :rec f () {}")
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "export [f] {\n" +
+                "(var f)\n" +
+                "(set f = (func () {\n" +
+                "nil\n" +
+                "}))\n" +
+                "}\n") { e.tostr() }
     }
 
     // IF / ID-TAG
