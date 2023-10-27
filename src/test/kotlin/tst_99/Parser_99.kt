@@ -1042,4 +1042,24 @@ class Parser_99 {
                 "(set ceu_14[{{#}}(ceu_14)] = 1)\n" +
                 "})\n") { e.tostr() }
     }
+
+    // DATA
+
+    @Test
+    fun xx_01_data() {
+        val l = lexer("""
+            data :A = [] {
+                :B = [] {
+                    :C = []
+                }
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "do {\n" +
+                "(data :A = [])\n" +
+                "(data :A.B = [])\n" +
+                "(data :A.B.C = [])\n" +
+                "}") { e.tostr() }
+    }
 }

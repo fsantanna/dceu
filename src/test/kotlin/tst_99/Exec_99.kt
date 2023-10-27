@@ -1491,10 +1491,25 @@ class Exec_99 {
         assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"\n") { out }
     }
 
+    // DATA
+
+    @Test
+    fun xx_01_data_string_to_tag() {
+        val out = test("""
+            data :A = [] {
+                :B = [] {
+                    :C = []
+                }
+            }
+            println(string-to-tag(":A"), string-to-tag(":A.B"), string-to-tag(":A.B.C"))
+        """, true)
+        assert(out == ":A\t:A.B\t:A.B.C\n") { out }
+    }
+
     // PRELUDE
 
     @Test
-    fun xx_01_ok() {
+    fun zz_01_ok() {
         val out = test("""
             println(:ok)
         """, true)

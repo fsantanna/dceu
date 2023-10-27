@@ -565,7 +565,22 @@ class Parser (lexer_: Lexer)
                             Pair(id, tp)
                         }
                         this.acceptFix_err("]")
-                        listOf(Expr.Data(tag, ids))
+                        listOf(Expr.Data(tag, ids)) + when {
+                            (CEU < 99) -> emptyList()
+                            !this.acceptFix("{") -> emptyList()
+                            else -> {
+                                val ll = mutableListOf<Expr.Data>()
+                                while (true) {
+                                    val l = one(tag)
+                                    if (l.isEmpty()) {
+                                        break
+                                    }
+                                    ll.addAll(l)
+                                }
+                                this.acceptFix_err("}")
+                                ll
+                            }
+                        }
                     }
                 }
                 val l = one(null)
