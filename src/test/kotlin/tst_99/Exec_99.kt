@@ -393,7 +393,28 @@ class Exec_99 {
         assert(out == "1\n2\n3\n4\n5\n") { out }
     }
     @Test
-    fun fg_02_num() {
+    fun fg_02_iter() {
+        val out = test("""
+            $PLUS
+            func iter (v) { v }
+            func f (t) {
+                if t.1 == t.2 {
+                    nil
+                } else {
+                    set t.1 = t.1 + 1
+                    t.1
+                }
+            }
+            val it = [f, 0, 5]
+            loop v in it {
+                println(v)
+                break if true
+            }
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun fh_02_num() {
         val out = test("""
             loop i in {0 => 1} {
                 println(i)
@@ -1475,11 +1496,8 @@ class Exec_99 {
     @Test
     fun xx_01_ok() {
         val out = test("""
-            loop x in [| 1 => 20 [| {
-                ...
-            }
             println(:ok)
         """, true)
-        assert(out == "30\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }

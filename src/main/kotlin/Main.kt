@@ -10,12 +10,8 @@ var CEU = 6
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref
     // 5: tasks, track, detrack as
-    // TODO: export, copy, underscore, self (coro/task)
-    // 99: empty blocks, not/and/or, is/is-not?/in?/in-not?, func dcl
-    //     if id-tag, if => =>, ifs
-    //     yield/catch/detrack empty arg/block,
-    //     resume-yield-all, await
-    //     spawn coro/task, par/par-and/par-or
+    // 6: export
+    // TODO: copy, underscore, self (coro/task)
 
 // search in tests output for
 //  definitely|Invalid read|Invalid write|uninitialised|uninitialized
