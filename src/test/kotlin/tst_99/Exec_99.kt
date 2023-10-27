@@ -1240,6 +1240,104 @@ class Exec_99 {
         assert(out == ":T []\n") { out }
     }
 
+    // PPP: PEEK, PUSH, POP
+
+    @Test
+    fun vv_01_ppp_peek() {
+        val out = test("""
+            $PLUS
+            val v = #[1]
+            set v[=] = 10
+            println(v)
+        """)
+        assert(out == "#[10]\n") { out }
+    }
+    @Test
+    fun vv_02_ppp_peek() {
+        val out = test("""
+            $PLUS
+            val v = #[10]
+            println(v[=])
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun vv_03_ppp_push() {
+        val out = test("""
+            $PLUS
+            val v = #[]
+            set v[+] = 1
+            println(v)
+        """)
+        assert(out == "#[1]\n") { out }
+    }
+    @Test
+    fun vv_04_ppp_push_err() {
+        val out = test("""
+            $PLUS
+            val v = #[]
+            v[+]
+        """,)
+        assert(out == "anon : (lin 4, col 41) : index error : out of bounds\n" +
+                ":error\n") { out }
+    }
+    @Test
+    fun vv_05_ppp_pop() {
+        val out = test("""
+            $PLUS
+            var v = #[1]
+            var x = v[-]
+            println(#v, x)
+        """)
+        assert(out == "0\t1\n") { out }
+    }
+    @Test
+    fun vv_06_ppp_pop_err() {
+        val out = test("""
+            $PLUS
+            val v = #[1]
+            set v[-] = 10   ;; cannot set v[-]
+            println(v)
+        """)
+        assert(out == ("anon : (lin 4, col 13) : set error : expected assignable destination\n")) { out }
+    }
+    @Test
+    fun vv_07_ppp() {
+        val out = test("""
+            $PLUS
+            var v
+            set v = #[]
+            set v[+] = 1
+            set v[+] = 2
+            set v[=] = 20
+            set v[+] = 3
+            println(#v, v[=])
+            val x = v[-]
+            println(#v, v[=], x)
+        """)
+        assert(out == "3\t3\n2\t20\t3\n") { out }
+    }
+    @Test
+    fun vv_08_ppp_debug() {
+        val out = test("""
+            $PLUS
+            var v
+            set v = #[10]
+            println(v[#v - 1])
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun vv_09_ppp_debug() {
+        val out = test("""
+            $PLUS
+            var v
+            set v = #[10]
+            println(v[-1+1])
+        """)
+        assert(out == "anon : (lin 5, col 24) : expected \"]\" : have \"1\"") { out }
+    }
+
     // PRELUDE
 
     @Test

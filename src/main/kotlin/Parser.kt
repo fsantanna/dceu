@@ -343,10 +343,29 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (!dst.is_lval()) {
-                    err(tk0, "set error : expected assignable destination")
+                if (CEU>=99 && dst is Expr.Do && dst.tk.str=="thus") {
+                    val c = dst.es[dst.es.size-2] as Expr.Nat
+                    val dcl = dst.es[0] as Expr.Dcl
+                    when (c.tk.str) {
+                        "/* = */" -> this.nest("""
+                            ${dcl.src!!.tostr(true)} thus { ${dcl.id.str} =>
+                                set ${dcl.id.str}[#${dcl.id.str}-1] = ${src.tostr(true)}
+                            }
+                        """)
+                        "/* + */" -> this.nest("""
+                            ${dcl.src!!.tostr(true)} thus { ${dcl.id.str} =>
+                                set ${dcl.id.str}[#${dcl.id.str}] = ${src.tostr(true)}
+                            }
+                        """)
+                        "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr
+                        else -> error("impossible case")
+                    }
+                } else {
+                    if (!dst.is_lval()) {
+                        err(tk0, "set error : expected assignable destination")
+                    }
+                    Expr.Set(tk0, dst, src)
                 }
-                Expr.Set(tk0, dst, /*null,*/ src)
             }
             this.acceptFix("if") -> {
                 val tk0 = this.tk0 as Tk.Fix
@@ -877,9 +896,39 @@ class Parser (lexer_: Lexer)
         return this.expr_4_suf(
             when (this.tk0.str) {
                 "[" -> {
-                    val idx = this.expr()
-                    this.acceptFix_err("]")
-                    Expr.Index(e.tk, e, idx)
+                    val xop = (CEU>=99 && (this.acceptFix("=") || this.acceptOp("+") || this.acceptOp("-")))
+                    if (!xop) {
+                        val idx = this.expr()
+                        this.acceptFix_err("]")
+                        Expr.Index(e.tk, e, idx)
+                    } else {
+                        val ret = when (this.tk0.str) {
+                            "=" -> this.nest("""
+                                ${e.tostr(true)} thus { ceu_$N =>
+                                    `/* = */`
+                                    ceu_$N[#ceu_$N-1]
+                                }
+                            """)
+                            "+" -> this.nest("""
+                                ${e.tostr(true)} thus { ceu_$N =>
+                                    `/* + */`
+                                    ceu_$N[#ceu_$N]
+                                }
+                            """)
+                            "-" -> this.nest("""
+                                ${e.tostr(true)} thus { ceu_x_$N =>
+                                    `/* - */`
+                                    ceu_x_$N[#ceu_x_$N-1] thus { ceu_y_$N =>
+                                        set ceu_x_$N[#ceu_x_$N-1] = nil
+                                        ceu_y_$N
+                                    }
+                                }
+                            """)
+                            else -> error("impossible case")
+                        }
+                        this.acceptFix_err("]")
+                        ret
+                    }
                 }
                 "." -> when {
                     (CEU>=99 && this.acceptEnu("Num")) -> {

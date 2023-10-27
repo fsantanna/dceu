@@ -23,7 +23,6 @@ class Lexer_99 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
-
     @Test
     fun aa_02_ops() {
         val l = lexer("{{not}} not -> --> <-- <- \\")

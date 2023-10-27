@@ -175,6 +175,9 @@ val PLUS = """
     val {{+}} = func (v1, v2) {
         `:number (${D}v1.Number + ${D}v2.Number)`
     }    
+    val {{-}} = func (v1, v2) {
+        `:number (${D}v1.Number - ${D}v2.Number)`
+    }    
 """.replace("\n", " ")
 fun OR (v1:String, v2:String): String {
     N++

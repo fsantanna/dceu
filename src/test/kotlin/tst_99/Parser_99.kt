@@ -896,4 +896,65 @@ class Parser_99 {
         val parser = Parser(l)
         assert(trap { parser.exprs() } == "anon : (lin 1, col 1) : expression error : innocuous expression")
     }
+
+    // PPP: PEEK, PUSH, POP
+
+    @Test
+    fun vv_01_ppp() {
+        val l = lexer("x.0[=]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((x[0]) thus { ceu_12 =>\n" +
+                "``` /* = */```\n" +
+                "ceu_12[{{-}}({{#}}(ceu_12),1)]\n" +
+                "})\n") { e.tostr() }
+    }
+    @Test
+    fun vv_02_ppp() {
+        val l = lexer("set x.y[=] = 10")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((x[:y]) thus { ceu_14 =>\n" +
+                "(set ceu_14[{{-}}({{#}}(ceu_14),1)] = 10)\n" +
+                "})\n") { e.tostr() }
+    }
+    @Test
+    fun vv_03_ppp() {
+        val l = lexer("x()[-]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((x()) thus { ceu_x_11 =>\n" +
+                "``` /* - */```\n" +
+                "((ceu_x_11[{{-}}({{#}}(ceu_x_11),1)]) thus { ceu_y_11 =>\n" +
+                "(set ceu_x_11[{{-}}({{#}}(ceu_x_11),1)] = nil)\n" +
+                "ceu_y_11\n" +
+                "})\n" +
+                "\n" +
+                "})\n") { e.tostr() }
+    }
+    @Test
+    fun vv_04_ppp() {
+        val l = lexer("set x.0[-] = 1")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 1) : set error : expected assignable destination")
+    }
+    @Test
+    fun vv_05_ppp() {
+        val l = lexer("t[+]")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((t) thus { ceu_8 =>\n" +
+                "``` /* + */```\n" +
+                "ceu_8[{{#}}(ceu_8)]\n" +
+                "})\n") { e.tostr() }
+    }
+    @Test
+    fun vv_06_ppp() {
+        val l = lexer("set t.x[+] = 1")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((t[:x]) thus { ceu_14 =>\n" +
+                "(set ceu_14[{{#}}(ceu_14)] = 1)\n" +
+                "})\n") { e.tostr() }
+    }
 }
