@@ -1008,11 +1008,11 @@ class Exec_01 {
             set t[:x] = 1
             set t[:y] = 2
             var k
-            set k = next(t)
+            set k = next-dict(t)
             println(k, t[k])
-            set k = next(t,k)
+            set k = next-dict(t,k)
             println(k, t[k])
-            set k = next(t,k)
+            set k = next-dict(t,k)
             println(k, t[k])
         """
         )
@@ -1031,11 +1031,11 @@ class Exec_01 {
             set t[:a] = 10
             set t[:b] = 20
             set t[:c] = 30
-            var k = next(t)
+            var k = next-dict(t)
             loop {
                 break if (k == nil)
                 println(k, t[k])
-                set k = next(t,k)
+                set k = next-dict(t,k)
             }
         """
         )
@@ -1044,9 +1044,9 @@ class Exec_01 {
     @Test
     fun de_04_next() {
         val out = test("""
-            next(nil)
+            next-dict(nil)
         """)
-        assert(out == "anon : (lin 2, col 13) : next(nil) : next error : expected collection\n") { out }
+        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected collection\n") { out }
     }
 
 

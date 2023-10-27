@@ -1538,7 +1538,7 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_Value _ceu_next_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value _ceu_next_dash_dict_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value col = args[0];
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
@@ -1581,11 +1581,11 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
                 default:
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected collection"} };
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-dict error : expected collection"} };
             }                    
         }        
-        CEU_Value ceu_next_f (CEU_Frame* frame, int n, CEU_Value args[]) {
-            CEU_Value ret = _ceu_next_f_(frame, n, args);
+        CEU_Value ceu_next_dash_dict_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_next_dash_dict_f_(frame, n, args);
             ceu_gc_chk_args(n, args);
             return ret;
         }
@@ -2216,9 +2216,9 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_error_f, {0,NULL}
         };
-        CEU_Clo ceu_next = { 
+        CEU_Clo ceu_next_dash_dict = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_next_f, {0,NULL}
+            &_ceu_frame_, ceu_next_dash_dict_f, {0,NULL}
         };
         CEU_Clo ceu_print = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
@@ -2299,7 +2299,7 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
         CEU_Value id_error                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
-        CEU_Value id_next                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next}                    };
+        CEU_Value id_next_dash_dict          = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dash_dict}                    };
         CEU_Value id_print                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
         CEU_Value id_println                 = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_println}                 };
         CEU_Value id_tags                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tags}                    };

@@ -41,6 +41,12 @@ class Lexer_01 {
         assert(tks.next().str == "@")
         assert(tks.next().str == "1")
     }
+    @Test
+    fun aa_03_syms_err() {
+        val l = lexer(":")
+        val tks = l.lex().iterator()
+        assert(trap { tks.next() } == "anon : (lin 1, col 1) : tag error : expected identifier")
+    }
 
     @Test
     fun bb_01_ids() {
@@ -260,7 +266,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Fix && it.str == "(" })
         assert(tks.next().let { it is Tk.Id  && it.str == "{{==}}" })
         assert(tks.next().let { it is Tk.Fix && it.str == ")" })
-        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==41 })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==52 })
     }
     @Test
     fun ff_02_ops() {
