@@ -250,6 +250,26 @@ func :rec {{=/=}} (v1,v2) {
     not (v1 === v2)
 }
 
+;; COPY
+
+func :rec copy (v) {
+    ifs type(v) {
+        :tuple {
+            val ret = tuple(#v)
+            var i=0
+            loop {
+                until i == #v
+                set ret[i] = copy(v[i])
+                set i = i + 1
+            }
+            drop(ret)
+        }
+        else {
+            throw(:TODO)
+        }
+    }
+}
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -324,7 +344,7 @@ func to-tracks (...) {
                 set ret[+] = track(v)
             }
             is? :x-tasks {
-                loop i in :tasks v {
+                loop i in v {
                     set ret[+] = drop(i)
                 }
             }
