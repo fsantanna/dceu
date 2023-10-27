@@ -244,7 +244,7 @@ class Exec_05 {
             val y = do {
                 spawn T () in ts
                 println()
-                drop(next(ts))
+                drop(next-tasks(ts))
             }
             println(y)
         """)
@@ -257,7 +257,7 @@ class Exec_05 {
             val y = do {
                 val ts = tasks()
                 spawn T () in ts
-                drop(next(ts))
+                drop(next-tasks(ts))
             }
             println(y)
         """)
@@ -385,7 +385,7 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val x = next(ts)
+            val x = next-tasks(ts)
             ;;dump(x)
             broadcast(nil)
             println(detrack(x) ;;;thus { it => 99 };;;)
@@ -455,7 +455,7 @@ class Exec_05 {
             val f = func () {
                 broadcast(nil)
             }
-            val x = next(ts)
+            val x = next-tasks(ts)
             detrack(x) thus { it =>
                 f()                     ;; cannot broadcast
                 println(status(it))
@@ -551,7 +551,7 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val t = next(ts)
+            val t = next-tasks(ts)
             println(pub(detrack(t)))
         """)
         assert(out.contains("[10]\n")) { out }
@@ -599,7 +599,7 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val x = next(ts)
+            val x = next-tasks(ts)
             val t = detrack(x)
             broadcast(nil)
             println(status(t))
@@ -658,7 +658,7 @@ class Exec_05 {
             val x = do {
                 val ts = tasks()
                 spawn T() in ts 
-                next(ts)
+                next-tasks(ts)
             }
         """)
         assert(out == " v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n") { out }
@@ -672,7 +672,7 @@ class Exec_05 {
             val ts = tasks()
             val x = do {
                 spawn T() in ts
-                next(ts)
+                next-tasks(ts)
             }
             println(detrack(x))
         """)
@@ -748,7 +748,7 @@ class Exec_05 {
                     nil
                 }
                 spawn (T) () in ts
-                val trk = next(ts)
+                val trk = next-tasks(ts)
                 val p = detrack(trk)
                 println(:pub, pub(p))
                 p
@@ -804,7 +804,7 @@ class Exec_05 {
                 }
             }
             do {
-                val xx1 = next(ts)
+                val xx1 = next-tasks(ts)
                 f(pub(detrack(xx1))) ;;thus { it => f(pub(it)) }
             }
             println(:ok)
@@ -823,7 +823,7 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val x = next(ts)
+            val x = next-tasks(ts)
             f(pub(detrack(x))) ;; thus { t => f(pub(t)) }
             println(:ok)
         """)
@@ -840,7 +840,7 @@ class Exec_05 {
             val t = catch { it=>true} in {
                 spawn T() in ts
                 do {
-                    val t = next(ts)
+                    val t = next-tasks(ts)
                     throw(drop(t))
                 }
             }
@@ -859,7 +859,7 @@ class Exec_05 {
                 val ts = tasks()
                 spawn T() in ts
                 do {
-                    val t = next(ts)
+                    val t = next-tasks(ts)
                     throw(drop(t))
                     nil
                 }
@@ -879,7 +879,7 @@ class Exec_05 {
             catch { it=>true} in {
                 spawn T() in ts
                 do {
-                    val t = next(ts)
+                    val t = next-tasks(ts)
                     throw(drop(t))
                 }
             }
@@ -897,14 +897,14 @@ class Exec_05 {
                 yield(nil) thus { it => nil }
             }
             val ts = tasks()
-            println(next(ts))
-            println(next(ts, nil))
-            println(next(ts, :err))
+            println(next-tasks(ts))
+            println(next-tasks(ts, nil))
+            println(next-tasks(ts, :err))
         """
         )
         assert(out == "nil\n" +
                 "nil\n" +
-                " v  anon : (lin 8, col 21) : next(ts,:err) : next error : expected task-in-pool track\n") { out }
+                " v  anon : (lin 8, col 21) : next-tasks(ts,:err) : next-tasks error : expected task-in-pool track\n") { out }
     }
     @Test
     fun hh_02_next() {
@@ -915,9 +915,9 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             spawn T() in ts
-            val x1 = next(ts)
-            val x2 = next(ts, x1)
-            val x3 = next(ts, x2)
+            val x1 = next-tasks(ts)
+            val x2 = next-tasks(ts, x1)
+            val x3 = next-tasks(ts, x2)
             println(x1 /= nil)
             println(x2 /= nil)
             println(x1 /= x2)
@@ -935,12 +935,12 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val x = next(ts)
+            val x = next-tasks(ts)
             broadcast(nil)
-            next(ts, x)
+            next-tasks(ts, x)
         """
         )
-        assert(out == " v  anon : (lin 9, col 13) : next(ts,x) : next error : expected task-in-pool track\n") { out }
+        assert(out == " v  anon : (lin 9, col 13) : next-tasks(ts,x) : next-tasks error : expected task-in-pool track\n") { out }
     }
     @Test
     fun hh_04_next() {
@@ -951,13 +951,13 @@ class Exec_05 {
             val ts = tasks()
             spawn T(1) in ts
             spawn T(2) in ts
-            val x1 = next(ts)
-            val x2 = next(ts, x1)
+            val x1 = next-tasks(ts)
+            val x2 = next-tasks(ts, x1)
             broadcast(1)
-            next(ts, x1)
+            next-tasks(ts, x1)
         """
         )
-        assert(out == " v  anon : (lin 11, col 13) : next(ts,x1) : next error : expected task-in-pool track\n") { out }
+        assert(out == " v  anon : (lin 11, col 13) : next-tasks(ts,x1) : next-tasks error : expected task-in-pool track\n") { out }
     }
     @Test
     fun hh_05_next() {
@@ -968,7 +968,7 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T(10) in ts
-            val x1 = next(ts)
+            val x1 = next-tasks(ts)
             val v = detrack(x1) thus { it => println(pub(it)) ; pub(it) }
             println(v)
         """
@@ -1021,7 +1021,7 @@ class Exec_05 {
                     val vec = #[]
                     var t = nil
                     loop {
-                        set t = next(ts,t)
+                        set t = next-tasks(ts,t)
                         break if t==nil
                         set vec[#vec] = t
                     }
@@ -1043,7 +1043,7 @@ class Exec_05 {
             var ts = tasks()
             spawn T(1) in ts
             do {
-                val t = next(ts)
+                val t = next-tasks(ts)
                 set x = track(t)
             }
         """)
@@ -1063,7 +1063,7 @@ class Exec_05 {
                 set ts = tasks()
                 spawn T(1) in ts
                 do {
-                    val t = next(ts)
+                    val t = next-tasks(ts)
                     set x = t       ;; err: escope 
                 }
             }
@@ -1081,7 +1081,7 @@ class Exec_05 {
             var ts = tasks()
             spawn T(1) in ts
             val x = do {
-                val t = next(ts)
+                val t = next-tasks(ts)
                 detrack(t)
             }
             println(x)

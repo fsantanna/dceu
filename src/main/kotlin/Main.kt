@@ -106,7 +106,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast"
 )) + (if (CEU < 5) setOf() else setOf(
-    "tasks", "track"
+    "next-tasks", "tasks", "track"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {

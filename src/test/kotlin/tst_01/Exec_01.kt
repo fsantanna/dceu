@@ -1046,7 +1046,7 @@ class Exec_01 {
         val out = test("""
             next-dict(nil)
         """)
-        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected collection\n") { out }
+        assert(out == "anon : (lin 2, col 13) : next-dict(nil) : next-dict error : expected dict\n") { out }
     }
 
 

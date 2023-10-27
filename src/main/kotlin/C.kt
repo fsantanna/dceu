@@ -1538,58 +1538,67 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_Value _ceu_next_dash_dict_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value _ceu_next_dash_dict_f_ (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
-            CEU_Value col = args[0];
+            CEU_Value dict = args[0];
+            if (dict.type != CEU_VALUE_DICT) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-dict error : expected dict"} };
+            }
             CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
-            switch (col.type) {
-                case CEU_VALUE_DICT: {
-                    if (key.type == CEU_VALUE_NIL) {
-                        return (*col.Dyn->Dict.buf)[0][0];
-                    }
-                    for (int i=0; i<col.Dyn->Dict.max-1; i++) {     // -1: last element has no next
-                        CEU_Value args[] = { key, (*col.Dyn->Dict.buf)[i][0] };
-                        CEU_Value ret = _ceu_op_equals_equals_f_(NULL, 2, args);
-                        assert(ret.type != CEU_VALUE_ERROR);
-                        if (ret.Bool) {
-                            return (*col.Dyn->Dict.buf)[i+1][0];
-                        }
-                    }
-                    return (CEU_Value) { CEU_VALUE_NIL };
+            if (key.type == CEU_VALUE_NIL) {
+                return (*dict.Dyn->Dict.buf)[0][0];
+            }
+            for (int i=0; i<dict.Dyn->Dict.max-1; i++) {     // -1: last element has no next
+                CEU_Value args[] = { key, (*dict.Dyn->Dict.buf)[i][0] };
+                CEU_Value ret = _ceu_op_equals_equals_f_(NULL, 2, args);
+                assert(ret.type != CEU_VALUE_ERROR);
+                if (ret.Bool) {
+                    return (*dict.Dyn->Dict.buf)[i+1][0];
                 }
-        #if CEU >= 5
-                case CEU_VALUE_TASKS: {
-                    CEU_Dyn* nxt = NULL;
-                    switch (key.type) {
-                        case CEU_VALUE_NIL:
-                            nxt = col.Dyn->Tasks.dyns.first;
-                            break;
-                        case CEU_VALUE_TRACK:
-                            if (key.Dyn->Track.task==NULL || key.Dyn->Track.task->type!=CEU_VALUE_EXE_TASK_IN) {
-                                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task-in-pool track"} };
-                            }
-                            nxt = key.Dyn->Track.task->hld.next;
-                            break;
-                        default:
-                            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next error : expected task-in-pool track"} };
-                    }
-                    if (nxt == NULL) {
-                        return (CEU_Value) { CEU_VALUE_NIL };
-                    } else {
-                        return ceu_create_track(frame->up_block, &nxt->Exe_Task);
-                    }
-                }
-        #endif
-                default:
-                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-dict error : expected collection"} };
-            }                    
-        }        
+            }
+            return (CEU_Value) { CEU_VALUE_NIL };
+        }
         CEU_Value ceu_next_dash_dict_f (CEU_Frame* frame, int n, CEU_Value args[]) {
             CEU_Value ret = _ceu_next_dash_dict_f_(frame, n, args);
             ceu_gc_chk_args(n, args);
             return ret;
         }
-
+        
+    #if CEU >= 5
+        CEU_Value _ceu_next_dash_tasks_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n==1 || n==2);
+            CEU_Value tsks = args[0];
+            if (tsks.type != CEU_VALUE_TASKS) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-tasks error : expected tasks"} };
+            }
+            CEU_Value key = (n == 1) ? ((CEU_Value) { CEU_VALUE_NIL }) : args[1];
+            CEU_Dyn* nxt = NULL;
+            switch (key.type) {
+                case CEU_VALUE_NIL:
+                    nxt = tsks.Dyn->Tasks.dyns.first;
+                    break;
+                case CEU_VALUE_TRACK:
+                    if (key.Dyn->Track.task==NULL || key.Dyn->Track.task->type!=CEU_VALUE_EXE_TASK_IN) {
+                        return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-tasks error : expected task-in-pool track"} };
+                    }
+                    nxt = key.Dyn->Track.task->hld.next;
+                    break;
+                default:
+                    return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-tasks error : expected task-in-pool track"} };
+            }
+            if (nxt == NULL) {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            } else {
+                return ceu_create_track(frame->up_block, &nxt->Exe_Task);
+            }
+        }
+        CEU_Value ceu_next_dash_tasks_f (CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_next_dash_tasks_f_(frame, n, args);
+            ceu_gc_chk_args(n, args);
+            return ret;
+        }
+    #endif
+    
         int ceu_dict_key_to_index (CEU_Dict* col, CEU_Value key, int* idx) {
             *idx = -1;
             for (int i=0; i<col->max; i++) {
@@ -2295,6 +2304,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_track_f, {0,NULL}
         };
+        CEU_Clo ceu_next_dash_tasks = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
+            &_ceu_frame_, ceu_next_dash_tasks_f, {0,NULL}
+        };
         #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
@@ -2324,6 +2337,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
         CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
+        CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dash_tasks}         };
         #endif
     """ +
     """ // MAIN
