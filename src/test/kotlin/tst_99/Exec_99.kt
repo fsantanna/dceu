@@ -1156,6 +1156,7 @@ class Exec_99 {
     fun km_03_every() {
         val out = test("""
             ${XAWAIT}
+            data :X = []
             spawn task {
                 par {
                     every :X {
