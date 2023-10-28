@@ -275,9 +275,14 @@ class Parser (lexer_: Lexer)
             (xas == null) -> "await'(${id.str}, ${evt.tostr()})"
             else -> "await'(${id.str},${evt.tostr()}) and ${xas.second.tostr()}"
         }
+        val xtag = when {
+            (tag != null) -> tag.str
+            (evt is Expr.Tag) -> evt.tk.str
+            else -> ""
+        }
         return this.nest("""
             ${pre0}loop {
-                ${pre0}break if (${pre0}yield() thus { ${id.str} ${tag.cond{it.str}} =>
+                ${pre0}break if (${pre0}yield() thus { ${id.str} $xtag =>
                     ${pre0}$cnd
                 })
             }
@@ -850,11 +855,25 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=99 && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
-                val awt = await(tk0, true)
+                val evt = this.expr()
+                val (xas,es) = lambda(N)
+                val (id,tag) = xas
+                val xtag = when {
+                    (tag != null) -> tag.str
+                    (evt is Expr.Tag) -> evt.tk.str
+                    else -> ""
+                }
+
                 this.nest("""
                     ${pre0}loop {
-                        ${pre0}${awt.tostr()}
-                        ${this.block().es.tostr(true)}
+                        until yield() thus { ${id.str} $xtag =>
+                            if await'(${id.str}, ${evt.tostr(true)}) {
+                                loop {
+                                    ${es.tostr(true)}
+                                    break(nil) if true
+                                }
+                            }
+                        }
                     }
                 """)//.let { println(it); it })
             }

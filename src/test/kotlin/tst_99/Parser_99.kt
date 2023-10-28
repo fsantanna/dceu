@@ -734,16 +734,16 @@ class Parser_99 {
     }
     @Test
     fun jj_04_await() {
-        val l = lexer("await(:X) as { x:X => x.x>2 }")
+        val l = lexer("await(:X) as { x => x.x>2 }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { x :X =>\n" +
-                "((await'(x,:X)) thus { ceu_58 =>\n" +
-                "if ceu_58 {\n" +
+                "((await'(x,:X)) thus { ceu_57 =>\n" +
+                "if ceu_57 {\n" +
                 "{{>}}(x[:x],2)\n" +
                 "} else {\n" +
-                "ceu_58\n" +
+                "ceu_57\n" +
                 "}\n" +
                 "})\n" +
                 "\n" +
@@ -779,13 +779,55 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
+                "(break if ((yield(nil)) thus { ceu_7 :X =>\n" +
+                "if await'(ceu_7,:X) {\n" +
                 "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_5 =>\n" +
-                "await'(ceu_5,:X)\n" +
+                "nil\n" +
+                "(break(nil) if true)\n" +
+                "}\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
                 "})\n" +
                 ")\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun jk_02_every() {
+        val l = lexer("every :X { x => println(x) }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "(break if ((yield(nil)) thus { x :X =>\n" +
+                "if await'(x,:X) {\n" +
+                "loop {\n" +
+                "println(x)\n" +
+                "(break(nil) if true)\n" +
                 "}\n" +
+                "} else {\n" +
                 "nil\n" +
+                "}\n" +
+                "})\n" +
+                ")\n" +
+                "}") { e.tostr() }
+    }
+    @Test
+    fun jk_03_every() {
+        val l = lexer("every :X { until true }")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "(break if ((yield(nil)) thus { it :X =>\n" +
+                "if await'(it,:X) {\n" +
+                "loop {\n" +
+                "(break if true)\n" +
+                "(break(nil) if true)\n" +
+                "}\n" +
+                "} else {\n" +
+                "nil\n" +
+                "}\n" +
+                "})\n" +
+                ")\n" +
                 "}") { e.tostr() }
     }
 

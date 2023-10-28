@@ -991,6 +991,7 @@ class Exec_99 {
     fun kk_03_await() {
         val out = test("""
             $XAWAIT
+            data :x = []
             spawn task {
                 println(0)
                 await(:x)
@@ -1010,6 +1011,7 @@ class Exec_99 {
     fun kk_04_await() {
         val out = test("""
             $XAWAIT
+            data :x = []
             spawn task {
                 println(0)
                 await(:x)
