@@ -399,14 +399,9 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(val ceu_14 = iter(f))\n" +
                 "loop {\n" +
-                "(break if ((ceu_14[0](ceu_14)) thus { x =>\n" +
-                "if {{==}}(x,nil) {\n" +
-                "true\n" +
-                "} else {\n" +
+                "(val x = ceu_14[0](ceu_14))\n" +
+                "(break if {{==}}(x,nil))\n" +
                 "x\n" +
-                "}\n" +
-                "})\n" +
-                ")\n" +
                 "}\n" +
                 "}") { e.tostr() }
     }
@@ -450,8 +445,7 @@ class Parser_99 {
             nil
             (set i = {{+}}(i,ceu_ste_23))
             }
-            }
-            """.trimIndent()) { e.tostr() }
+            }""".trimIndent()) { e.tostr() }
     }
 
 
@@ -717,7 +711,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { ceu_5 =>\n" +
-                "is'(ceu_5,x)\n" +
+                "await'(ceu_5,x)\n" +
                 "})\n" +
                 ")\n" +
                 "}") { e.tostr() }
@@ -773,6 +767,24 @@ class Parser_99 {
                 "}") { e.tostr() }
     }
 
+    // EVERY
+
+    @Test
+    fun jk_01_every() {
+        val l = lexer("every :X {}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "loop {\n" +
+                "loop {\n" +
+                "(break if ((yield(nil)) thus { ceu_5 =>\n" +
+                "await'(ceu_5,:X)\n" +
+                "})\n" +
+                ")\n" +
+                "}\n" +
+                "nil\n" +
+                "}") { e.tostr() }
+    }
+
     // WATCHING
 
     @Test
@@ -818,7 +830,7 @@ class Parser_99 {
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr().contains("is'(ceu_5,:E)")) { e.tostr() }
+        assert(e.tostr().contains("await'(ceu_5,:E)")) { e.tostr() }
     }
 
     // METHODS
@@ -948,6 +960,22 @@ class Parser_99 {
         assert(e.tostr() == "(func (it) {\n" +
                 "it\n" +
                 "})") { e.tostr() }
+    }
+    @Test
+    fun pp_03_lambda() {
+        val l = lexer("\\{:X => it}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(func (it :X) {\n" +
+                "it\n" +
+                "})") { e.tostr() }
+    }
+    @Test
+    fun todo_LIN_COL_pp_04_lambda_err() {
+        val l = lexer("\\{v :X}")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "anon : (lin X, col Y) : expression error : innocuous expression\n") { e.tostr() }
     }
 
     // TUPLE DOT

@@ -990,7 +990,7 @@ class Exec_99 {
     @Test
     fun kk_03_await() {
         val out = test("""
-            $IS
+            $XAWAIT
             spawn task {
                 println(0)
                 await(:x)
@@ -1009,7 +1009,7 @@ class Exec_99 {
     @Test
     fun kk_04_await() {
         val out = test("""
-            $IS
+            $XAWAIT
             spawn task {
                 println(0)
                 await(:x)
@@ -1063,6 +1063,21 @@ class Exec_99 {
         """)
         assert(out == ":1\n:2\n") { out }
     }
+    @Test
+    fun kk_08_await() {
+        val out = test("""
+            $XAWAIT
+            spawn task {
+                await as {it==2}
+                println(2)
+                await as {it==1}
+                println(1)
+            }
+            broadcast (1)
+            broadcast (2)
+        """)
+        assert(out == "2\n") { out }
+    }
 
     // AWAIT / TASK
 
@@ -1097,14 +1112,69 @@ class Exec_99 {
         assert(out == "[2]\n") { out }
     }
 
+    // EVERY
+
+    @Test
+    fun km_01_every() {
+        val out = test(
+            """
+            ${XAWAIT}
+            task T () {
+                println(:1)
+                every true {
+                    until true
+                    throw(999)
+                }
+                println(:2)
+            }
+            spawn T()
+            broadcast (nil)
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
+    @Test
+    fun km_02_every() {
+        val out = test(
+            """
+            ${XAWAIT}
+            task T () {
+                println(:1)
+                every true {
+                    until false
+                    println(:xxx)
+                } while false
+                println(:2)
+            }
+            spawn T()
+            broadcast (nil)
+        """)
+        assert(out == ":1\n:xxx\n:2\n") { out }
+    }
+    @Test
+    fun km_0X_every() {
+        val out = test("""
+            ${XAWAIT}
+            spawn task {
+                par {
+                    every :X {
+                    }
+                } with {
+                    every false { }
+                }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+
     // WATCHING
 
     @Test
     fun ll_01_watching() {
         val out = test("""
-            $IS
+            ${XAWAIT}
             spawn task {
-                watching 1 {
+                watching as {it==1} {
                     defer { println(:z) }
                     println(:x)
                     ${AWAIT()}

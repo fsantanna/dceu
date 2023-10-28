@@ -18,6 +18,7 @@ class Parser (lexer_: Lexer)
     }
 
     fun nest (inp: String): Expr {
+        //println("-=-=-")
         //println(inp)
         val top = lexer.stack.first()
         val inps = listOf(Pair(Triple(top.file,this.tk0.pos.lin,this.tk0.pos.col), inp.reader()))
@@ -165,39 +166,24 @@ class Parser (lexer_: Lexer)
             }
             else -> {
                 val e = this.expr()
-                when {
-                    (e !is Expr.Acc) -> {
-                        val id_tag = Pair(Tk.Id("it", tk0.pos, 0), null)
-                        val es = if (this.acceptFix("}")) emptyList() else {
-                            val x = this.exprs()
-                            this.acceptFix_err("}")
-                            x
-                        }
-                        Pair(id_tag, listOf(e)+es)
+                val isacc = (e is Expr.Acc)
+                val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
+                val tag = this.tk0
+                val isarr = (isacc || istag) && this.acceptFix("=>")
+                println(listOf(this.tk0,this.tk1))
+                val (es,id_tag) = when {
+                    !isarr -> {
+                        val xes = if (this.checkFix("}")) emptyList() else this.exprs()
+                        val etag = if (istag) listOf(Expr.Tag(tag as Tk.Tag)) else emptyList()
+                        Pair(listOf(e)+etag+xes, Pair(Tk.Id("it", tk0.pos, 0), null))
                     }
-                    this.acceptEnu("Tag") -> {
-                        val id_tag = Pair(e.tk as Tk.Id, this.tk0 as Tk.Tag)
-                        this.acceptFix_err("=>")
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
-                        Pair(id_tag, es)
-                    }
-                    this.acceptFix("=>") -> {
-                        val id_tag = Pair(e.tk as Tk.Id, null)
-                        val es = this.exprs()
-                        this.acceptFix_err("}")
-                        Pair(id_tag, es)
-                    }
-                    else -> {
-                        val id_tag = Pair(Tk.Id("it", tk0.pos, 0), null)
-                        val es = if (this.acceptFix("}")) emptyList() else {
-                            val x = this.exprs()
-                            this.acceptFix_err("}")
-                            x
-                        }
-                        Pair(id_tag, listOf(e)+es)
-                    }
+                    (isacc && istag)  -> Pair(this.exprs(), Pair(e.tk as Tk.Id, tag as Tk.Tag))
+                    (isacc && !istag) -> Pair(this.exprs(), Pair(e.tk as Tk.Id, null))
+                    (!isacc && istag) -> Pair(this.exprs(), Pair(Tk.Id("it", tk0.pos, 0), tag as Tk.Tag))
+                    else -> error("impossible case")
                 }
+                this.acceptFix_err("}")
+                Pair(id_tag, es)
             }
         }
     }
@@ -287,8 +273,8 @@ class Parser (lexer_: Lexer)
         val (id,tag) = (xas?.first) ?: Pair(Tk.Id("ceu_$n", tk0.pos, 0),null)
         val cnd = when {
             (evt == null) -> xas?.second?.tostr() ?: id.str
-            (xas == null) -> "(${id.str} is? ${evt.tostr()})"
-            else -> "((${id.str} is? ${evt.tostr()}) and ${xas.second.tostr()})"
+            (xas == null) -> "await'(${id.str}, ${evt.tostr()})"
+            else -> "await'(${id.str},${evt.tostr()}) and ${xas.second.tostr()}"
         }
         return this.nest("""
             ${pre0}loop {
@@ -862,6 +848,16 @@ class Parser (lexer_: Lexer)
                     """)
                 }
                 return await(tk0)
+            }
+            (CEU>=99 && this.acceptFix("every")) -> {
+                val pre0 = this.tk0.pos.pre()
+                val awt = await(tk0, true)
+                this.nest("""
+                    ${pre0}loop {
+                        ${pre0}${awt.tostr()}
+                        ${this.block().es.tostr(true)}
+                    }
+                """)//.let { println(it); it })
             }
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()

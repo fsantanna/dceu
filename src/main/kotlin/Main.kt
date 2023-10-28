@@ -52,7 +52,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 6) setOf() else setOf(
         "export",
     )) + (if (CEU < 99) setOf() else setOf(
-        "await", "ifs", "par", "par-and", "par-or",
+        "await", "every", "ifs", "par", "par-and", "par-or",
         "resume-yield-all", "until", "watching",
         "with", "where", "while"
     ))
@@ -208,6 +208,17 @@ val IS = """
             else => false
         }
     }
+""".replace("\n", " ")
+val XAWAIT = """
+$IS
+func await' (evt, cnd) {
+    ifs {
+        (type(cnd) == :tag)      { evt is? cnd }
+        (type(cnd) == :exe-task) { status(cnd) == :terminated }
+        (type(cnd) == :track)    { detrack(cnd) == nil }
+        else { cnd }
+    }
+}    
 """.replace("\n", " ")
 
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {

@@ -20,8 +20,8 @@ func is-not' (v1,v2) {
 
 ;; ARITHMETIC
 
-;;export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
-;;{
+export [{{+}}, {{-}}, {{*}}, {{**}}, {{/}}, {{//}}, {{%}}]
+{
     func {{+}} (v1, v2) {
         if (v1 is-not? :number) or (v2 is-not? :number) {
             throw(:error)
@@ -71,11 +71,11 @@ func is-not' (v1,v2) {
         }
         `:number fmod($v1.Number, $v2.Number)`
     }
-;;}
+}
 
 ;; RELATIONAL:  >=  >  <=  <
 
-;;export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
+export [{{>}}, {{<}}, {{>=}}, {{<=}}] {
     func {{>}} (v1,v2) {
         ifs {
             (v1 is? :tag)    and (v2 is? :tag)    => `:bool ($v1.Tag    > $v2.Tag)`
@@ -95,7 +95,7 @@ func is-not' (v1,v2) {
     func {{<=}} (v1,v2) {
         (v1 == v2) or (v1 < v2)
     }
-;;}
+}
 
 ;; ASSERT
 
@@ -137,7 +137,7 @@ func between (min_max, v) {
 
 data :Iterator = [f,s,tp,i]
 
-;;export [iter] {
+export [iter] {
     func iter-tuple (itr :Iterator) {
         val i = itr.i
         if i >= #itr.s {
@@ -196,7 +196,7 @@ data :Iterator = [f,s,tp,i]
             is? :x-coro   => :Iterator [iter-xcoro, v]
         }
     }
-;;}
+}
 
 func next (v, ...) {
     ifs v {
@@ -414,4 +414,15 @@ func math-cos (v) {
 
 func math-floor (v) {
     `:number floor($v.Number)`
+}
+
+;; AWAIT
+
+func await' (evt, cnd) {
+    ifs {
+        (type(cnd) == :tag)      => (evt is? cnd)
+        (type(cnd) == :exe-task) => (status(cnd) == :terminated)
+        (type(cnd) == :track)    => (detrack(cnd) == nil)
+        else => cnd
+    }
 }

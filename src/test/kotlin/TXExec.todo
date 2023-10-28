@@ -389,21 +389,6 @@ class TXExec {
         assert(out == "1\n") { out }
     }
     @Test
-    fun par_every8() {
-        val out = all("""
-            spawn {
-                par {
-                    every 500:ms {
-                    }
-                } with {
-                    every true { }
-                }
-            }
-            println(1)
-        """, true)
-        assert(out == "1\n") { out }
-    }
-    @Test
     fun par_tasks9() {
         val out = all("""
             spawn task () {
@@ -656,38 +641,6 @@ class TXExec {
 
     // EVERY
 
-    @Test
-    fun every_01() {
-        val out = ceu.all(
-            """
-            task T () {
-                println(:1)
-                every true until true {
-                    throw(999)
-                }
-                println(:2)
-            }
-            spawn T()
-            broadcast nil
-        """)
-        assert(out == ":1\n:2\n") { out }
-    }
-    @Test
-    fun every_02() {
-        val out = ceu.all(
-            """
-            task T () {
-                println(:1)
-                every true until false {
-                    println(:xxx)
-                } while false
-                println(:2)
-            }
-            spawn T()
-            broadcast nil
-        """)
-        assert(out == ":1\n:xxx\n:2\n") { out }
-    }
 
     // TUPLE / VECTOR / DICT / STRING
 
