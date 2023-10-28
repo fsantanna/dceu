@@ -170,7 +170,6 @@ class Parser (lexer_: Lexer)
                 val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
                 val tag = this.tk0
                 val isarr = (isacc || istag) && this.acceptFix("=>")
-                println(listOf(this.tk0,this.tk1))
                 val (es,id_tag) = when {
                     !isarr -> {
                         val xes = if (this.checkFix("}")) emptyList() else this.exprs()

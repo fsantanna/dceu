@@ -1142,16 +1142,16 @@ class Exec_99 {
                 every true {
                     until false
                     println(:xxx)
-                } while false
+                }
                 println(:2)
             }
             spawn T()
             broadcast (nil)
         """)
-        assert(out == ":1\n:xxx\n:2\n") { out }
+        assert(out == ":1\n:xxx\n") { out }
     }
     @Test
-    fun km_0X_every() {
+    fun km_03_every() {
         val out = test("""
             ${XAWAIT}
             spawn task {

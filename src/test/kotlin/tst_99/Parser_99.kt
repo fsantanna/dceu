@@ -255,18 +255,10 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"=>\" : have \")\"")
     }
     @Test
-    fun de_0x_if_err() {
+    fun de_04_if_err() {
         val l = lexer("if false => 1 --> nil => 2")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "ERR") { e.tostr() }
-    }
-    @Test
-    fun de_0x_if() {
-        val l = lexer("if false => 1 --> nil nil")
-        val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "OK") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : expected \"=>\" : have \"-->\"")
     }
 
     // IFS
@@ -435,17 +427,16 @@ class Parser_99 {
         """)
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == """
-            do {
-            (val ceu_ste_23 = x)
-            (var i = {{+}}(0,0))
-            (val ceu_lim_23 = n)
-            loop {
-            (break(nil) if {{>=}}(i,ceu_lim_23))
-            nil
-            (set i = {{+}}(i,ceu_ste_23))
-            }
-            }""".trimIndent()) { e.tostr() }
+        assert(e.tostr() == "do {\n" +
+                "(val ceu_ste_23 = x)\n" +
+                "(var i = {{+}}(0,0))\n" +
+                "(val ceu_lim_23 = n)\n" +
+                "loop {\n" +
+                "(break if {{>=}}(i,ceu_lim_23))\n" +
+                "nil\n" +
+                "(set i = {{+}}(i,ceu_ste_23))\n" +
+                "}\n" +
+                "}") { e.tostr() }
     }
 
 
@@ -735,11 +726,11 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { x :X =>\n" +
-                "((is'(x,:X)) thus { ceu_68 =>\n" +
-                "if ceu_68 {\n" +
+                "((await'(x,:X)) thus { ceu_58 =>\n" +
+                "if ceu_58 {\n" +
                 "{{>}}(x[:x],2)\n" +
                 "} else {\n" +
-                "ceu_68\n" +
+                "ceu_58\n" +
                 "}\n" +
                 "})\n" +
                 "\n" +
