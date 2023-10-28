@@ -680,7 +680,7 @@ class Parser (lexer_: Lexer)
                     val (id,tag) = id_tag
                     this.nest("""
                         ${tk0.pos.pre()}${ret.tostr(true)} thus { ${id.str} ${tag.cond{it.str}} =>
-                            if it {
+                            if ${id.str} {
                                 ${es.tostr(true)}
                             }
                         }
