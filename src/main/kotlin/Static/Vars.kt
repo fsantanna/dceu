@@ -166,40 +166,25 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val size = dcls.size    // restore this size after nested block
 
                 // func (a,b,...) { ... }
-                val up = ups.pub[this]
-                when {
-                    (up is Expr.Proto) -> {
-                        up.args.forEach { (id, tag) ->
-                            val dcl1 = Expr.Dcl(
-                                Tk.Fix("val", this.tk.pos),
-                                id, /*false,*/  tag, true, null
-                            )
-                            val dcl2 = Expr.Dcl(
-                                Tk.Fix("val", this.tk.pos),
-                                Tk.Id("_${id.str}_", id.pos, id.upv),
-                                /*false,*/
-                                null, false, null
-                            )
-                            dcls.add(dcl1)
-                            dcls.add(dcl2)
-                            dcl_to_blk[dcl1] = this
-                            dcl_to_blk[dcl2] = this
-                            blk_to_dcls[this]!!.add(dcl1)
-                            blk_to_dcls[this]!!.add(dcl2)
-                        }
-                    }
-                    (up is Expr.Catch && up.cnd == this) -> {
-                        if (dcls.any { up.it.first.str == it.id.str }) {
-                            err(up.it.first, "declaration error : variable \"${up.it.first.str}\" is already declared")
-                        }
-                        val dcl = Expr.Dcl(
+                val proto = ups.pub[this]
+                if (proto is Expr.Proto) {
+                    proto.args.forEach { (id, tag) ->
+                        val dcl1 = Expr.Dcl(
                             Tk.Fix("val", this.tk.pos),
-                            up.it.first,
-                            /*false,*/  up.it.second, true, null
+                            id, /*false,*/  tag, true, null
                         )
-                        dcls.add(dcl)
-                        dcl_to_blk[dcl] = this
-                        blk_to_dcls[this]!!.add(dcl)
+                        val dcl2 = Expr.Dcl(
+                            Tk.Fix("val", this.tk.pos),
+                            Tk.Id("_${id.str}_", id.pos, id.upv),
+                            /*false,*/
+                            null, false, null
+                        )
+                        dcls.add(dcl1)
+                        dcls.add(dcl2)
+                        dcl_to_blk[dcl1] = this
+                        dcl_to_blk[dcl2] = this
+                        blk_to_dcls[this]!!.add(dcl1)
+                        blk_to_dcls[this]!!.add(dcl2)
                     }
                 }
 
@@ -270,14 +255,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Pass   -> this.e.traverse()
             is Expr.Drop   -> this.e.traverse()
 
-            is Expr.Catch  -> {
-                val tag = this.it.second
-                if (tag!=null && !datas.containsKey(tag.str)) {
-                    err(tag, "declaration error : data ${tag.str} is not declared")
-                }
-                this.cnd.traverse()
-                this.blk.traverse()
-            }
+            is Expr.Catch  -> { this.cnd.traverse() ; this.blk.traverse() }
             is Expr.Defer  -> this.blk.traverse()
 
             is Expr.Yield  -> this.arg.traverse()

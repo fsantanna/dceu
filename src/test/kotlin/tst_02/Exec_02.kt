@@ -81,9 +81,7 @@ class Exec_02 {
     @Test
     fun jj_00_0_err() {
         val out = test("""
-            catch { it :T =>
-                it[0]
-            } in {
+            catch (it => it[0]) in {
                 nil
             }
         """)
@@ -283,7 +281,7 @@ class Exec_02 {
     @Test
     fun jj_14_blocks() {
         val out = test("""
-            val v = catch { it=>true} in {
+            val v = catch (it => true) in {
                 do {
                     throw(:x)
                 }

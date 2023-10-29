@@ -19,17 +19,17 @@ class Parser_02 {
 
     @Test
     fun bb_01_throw_catch() {
-        val l = lexer("catch { it=>1} in { throw(1) }")
+        val l = lexer("catch ( it=>1) in { throw(1) }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "catch { it => 1 } in {\nthrow(1)\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch (it => 1) in {\nthrow(1)\n}\n") { e.tostr() }
     }
     @Test
     fun bb_02_throw_catch() {
-        val l = lexer("catch { it :T=>it[0]} in { nil }")
+        val l = lexer("catch ( it :T=>it[0]) in { nil }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "catch { it :T => it[0] } in {\nnil\n}\n") { e.tostr() }
+        assert(e.tostr() == "catch (it :T => it[0]) in {\nnil\n}\n") { e.tostr() }
     }
 
     // IT / AS
@@ -44,35 +44,35 @@ class Parser_02 {
     @Test
     fun cc_02_as() {
         val out = test("""
-            catch { 1 }
+            catch ( 1 )
         """)
         assert(out == "anon : (lin 2, col 21) : expected identifier : have \"1\"\n") { out }
     }
     @Test
     fun cc_03_as() {
         val out = test("""
-            catch { x }
+            catch ( x )
         """)
-        assert(out == "anon : (lin 2, col 23) : expected \"=>\" : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 23) : expected \"=>\" : have \")\"\n") { out }
     }
     @Test
     fun cc_04_as() {
         val out = test("""
-            catch { x => }
+            catch ( x => )
         """)
-        assert(out == "anon : (lin 2, col 26) : expected expression : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 26) : expected expression : have \")\"\n") { out }
     }
     @Test
     fun cc_05_as() {
         val out = test("""
-            catch { x => 1
+            catch ( x => 1
         """)
-        assert(out == "anon : (lin 3, col 9) : expected \"}\" : have end of file\n") { out }
+        assert(out == "anon : (lin 3, col 9) : expected \")\" : have end of file\n") { out }
     }
     @Test
     fun cc_06_as() {
         val out = test("""
-            catch { x => 1 } {nil}
+            catch ( x => 1 ) {nil}
         """)
         assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
     }

@@ -611,11 +611,12 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val (id,tag,cnd) =  this.id_tag_cnd(N, tk0, true)
                 this.acceptFix_err("in")
-                Expr.Catch (
-                    tk0, id_tag,
-                    Expr.Do(Tk.Fix("do",this.tk0.pos), cnd),
-                    this.block()
-                )
+                val xcnd = this.nest("""
+                    `:ceu ceu_acc` thus { ${id.str} ${tag.cond{it.str}} =>
+                        ${cnd!!.tostr(true)}
+                     }
+                """)
+                Expr.Catch(tk0, xcnd as Expr.Do, this.block())
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 

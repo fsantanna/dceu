@@ -51,7 +51,12 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Pass   -> "(pass " + this.e.tostr(pre) + ")"
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
-        is Expr.Catch  -> "catch { " + this.it.first.str + this.it.second.cond { " "+it.str }+ " => " + this.cnd.es[0].tostr(pre) + " } in " + this.blk.tostr(pre)
+        is Expr.Catch  -> {
+            val cnd = (this.cnd.es[0] as Expr.Dcl).let {
+                it.id.str + it.tag.cond { " " + it.str } + " => " + this.cnd.es[1].tostr(pre)
+            }
+            "catch (" + cnd + ") in " + this.blk.tostr(pre)
+        }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 
         is Expr.Yield  -> "yield(" + this.arg.tostr(pre) + ")"
