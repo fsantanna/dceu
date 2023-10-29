@@ -148,6 +148,42 @@ class Parser (lexer_: Lexer)
         return e
     }
 
+    fun id_tag_cnd (n:Int, tk0: Tk, opt_par: Boolean): Triple<Tk.Id,Tk.Tag?,Expr?> {
+        // x :X => ... x ...
+        // :X => ... it ...
+        // :X
+        // ... it ...
+        val par = (opt_par && this.acceptFix("(")) or this.acceptFix_err(")")
+        return if (CEU < 99) {
+            val (id,tag) = this.id_tag()
+            this.acceptFix_err("=>")
+            val es = this.expr()
+            this.acceptFix_err("")
+            Triple(id, tag, es)
+        } else {
+            val e = this.expr()
+            val isacc = (e is Expr.Acc)
+            val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
+            val tag = this.tk0
+            val isarr = (isacc || istag) && ((isacc && istag && this.acceptFix_err("=>"))) || this.acceptFix("=>"))
+            val ret = when {
+                ( isacc &&  istag &&  isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, this.expr())
+                ( isacc &&  istag && !isarr) -> error("impossible case")
+                ( isacc && !istag &&  isarr) -> Triple(e.tk as Tk.Id, null, this.expr())
+                ( isacc && !istag && !isarr) -> Triple(Tk.Id("it",tk0.pos,0), null, e)
+                (!isacc &&  istag &&  isarr) -> Triple(Tk.Id("ceu_$N",tk0.pos,0), tag as Tk.Tag, this.expr())
+                (!isacc &&  istag && !isarr) -> Triple(Tk.Id("ceu_$N",tk0.pos,0), tag as Tk.Tag, null)
+                (!isacc && !istag &&  isarr) -> error("impossible case")
+                (!isacc && !istag && !isarr) -> error("impossible case")
+                else -> error("impossible case")
+            }
+            if (par) {
+                this.acceptFix_err(")")
+            }
+            ret
+        }
+    }
+
     fun lambda (n:Int): Pair<Pair<Tk.Id,Tk.Tag?>,List<Expr>> {
         this.acceptFix_err("{")
         val tk0 = this.tk0
@@ -261,28 +297,17 @@ class Parser (lexer_: Lexer)
     fun await (tk0: Tk, opt_par: Boolean = false): Expr.Loop {
         val n = N
         val pre0 = tk0.pos.pre()
-        val evt = when {
-            (this.checkFix("(") || !this.checkFix("as")) -> this.expr_in_parens(true, opt_par)
-            !this.checkFix("as") -> err_expected(this.tk1, "\"(\"") as Expr
-            else -> null
-        }
-        val xas = if (!this.acceptFix("as")) null else {
-            lambda(n)
-        }
-        val (id,tag) = (xas?.first) ?: Pair(Tk.Id("ceu_$n", tk0.pos, 0),null)
-        val cnd = when {
-            (evt == null) -> xas?.second?.tostr() ?: id.str
-            (xas == null) -> "await'(${id.str}, ${evt.tostr()})"
-            else -> "await'(${id.str},${evt.tostr()}) and ${xas.second.tostr()}"
-        }
-        val xtag = when {
-            (tag != null) -> tag.str
-            (evt is Expr.Tag) -> evt.tk.str
-            else -> ""
+        val (id,tag,cnd) =  this.id_tag_cnd(n, tk0, opt_par)
+        val xcnd = when {
+            (tag!=null && cnd!=null) -> "await'(${id.str},${tag.str}) and ${cnd.tostr()}"
+            (tag==null && cnd!=null) -> cnd.tostr(true)
+            (tag!=null && cnd==null) -> "await'(${id.str},${tag.str}"
+            (tag==null && cnd==null) -> error("impossible case")
+            else -> error("impossible case")
         }
         return this.nest("""
             ${pre0}loop {
-                ${pre0}break if (${pre0}yield() thus { ${id.str} $xtag =>
+                ${pre0}break if (${pre0}yield() thus { ${id.str} ${tag.cond{it.str}} =>
                     ${pre0}$cnd
                 })
             }
@@ -584,7 +609,7 @@ class Parser (lexer_: Lexer)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val (id_tag, cnd) = lambda(N)
+                val (id,tag,cnd) =  this.id_tag_cnd(N, tk0, true)
                 this.acceptFix_err("in")
                 Expr.Catch (
                     tk0, id_tag,
@@ -856,7 +881,7 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("every")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val evt = this.expr()
-                val (xas,es) = lambda(N)
+                val (xas,es) = this.id_tag_cnd(N)
                 val (id,tag) = xas
                 val xtag = when {
                     (tag != null) -> tag.str
