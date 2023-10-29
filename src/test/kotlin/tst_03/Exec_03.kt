@@ -777,7 +777,7 @@ class Exec_03 {
             set co = coroutine(coro (x) {
                 throw(:e2)
             })
-            catch { it=>:e2} in {
+            catch ( it=>:e2) in {
                 resume co(1)
                 println(99)
             }
@@ -793,7 +793,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch { it=>:e2} in {
+            catch ( it=>:e2) in {
                 resume co()
                 println(1)
                 resume co()
@@ -808,7 +808,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch { it => :e1} in {
+                catch ( it => :e1) in {
                     yield(nil) ;;thus { it => nil }
                     throw(:e1)
                 }
@@ -816,7 +816,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch { it=>:e2} in {
+            catch ( it=>:e2) in {
                 resume co()
                 resume co()
                 resume co()
@@ -830,9 +830,9 @@ class Exec_03 {
     fun hh_04_catch_yield_err() {
         val out = test("""
             coro () {
-                catch { it => do {
+                catch ( it => do {
                     yield(nil) thus { it => nil }
-                } } in
+                } ) in
                 {
                     throw(:e1)
                 }
@@ -845,14 +845,14 @@ class Exec_03 {
         val out = test(
             """
             val CO = coro () {
-                catch { it => false } in {
+                catch ( it => false ) in {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }
             val co = coroutine(CO)
             resume co()
-            catch { it=>true}in{
+            catch ( it=>true)in{
                 throw(nil)
             }
             println(:ok)
@@ -1304,9 +1304,9 @@ class Exec_03 {
     fun nn_02_catch() {
         val out = test("""
             coro () {
-                catch { it => do {
+                catch ( it => do {
                     yield(nil) thus { x => nil }
-                } } in
+                } ) in
                 {
                     throw(:e1)
                 }

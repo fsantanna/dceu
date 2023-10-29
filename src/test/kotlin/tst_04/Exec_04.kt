@@ -484,14 +484,14 @@ class Exec_04 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            catch { it=>:xxx}in{
+            catch ( it=>:xxx}in{
                 spawn (task () {
                     yield(nil) ;;thus { it => nil }
                 })()
                 spawn (task () {
                     throw(:xxx)
                 })()
-            }
+            )
             println(10)
         """)
         assert(out == "10\n") { out }
@@ -704,11 +704,11 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch { it => (do { println(it) ; true }) } in {
+            catch ( it => (do { println(it) ; true }) } in {
                 ;;func () {
                     broadcast ([])
                 ;;}()
-            }
+            )
         """)
         assert(out == "[]\n") { out }
         //assert(out == "declaration error : cannot hold event reference\n") { out }
@@ -736,21 +736,21 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch { it=> it==:e1 }in {  ;; catch 1st (yes catch)
+                catch ( it=> it==:e1 }in {  ;; catch 1st (yes catch)
                     spawn (task () {
                         yield(nil) ;;thus { it => nil }
                         println(222)
                         throw(:e1)                  ;; throw
                     }) ()
                     loop { yield(nil) } ;;thus { it => nil }
-                }
+                )
                 println(333)
             }) ()
-            catch { it => true} in {   ;; catch 2nd (no catch)
+            catch ( it => true) in {   ;; catch 2nd (no catch)
                 println(111)
                 broadcast(nil)
                 println(444)
-            }
+            )
             println(:END)
         """
         )
@@ -765,12 +765,12 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch { it=>false} in {
+                catch ( it=>false) in {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)
             }) ()
-            catch { it=>true} in {
+            catch ( it=>true) in {
                 throw(nil)
             }
             println(:ok)
@@ -965,7 +965,7 @@ class Exec_04 {
             println(:1)
             var co1 = spawn (tk) (10)
             var co2 = spawn (tk) (10)
-            val e = catch { it=>true} in {
+            val e = catch ( it=>true) in {
                 ;;func () {
                     println(:2)
                     broadcast ([20])
@@ -2229,7 +2229,7 @@ class Exec_04 {
             }
             var co1 = spawn tk ()
             var co2 = spawn tk ()
-            catch { it => it==:1 } in {
+            catch ( it => it==:1 ) in {
                 ;;func () {
                     println(1)
                     broadcast(1)
@@ -2277,7 +2277,7 @@ class Exec_04 {
         val out = test("""
             var co
             set co = spawn (task () {
-                catch { it => :e1 } in {
+                catch ( it => :e1 ) in {
                     coroutine (coro () {
                         yield(nil) ;;thus { it => nil }
                         throw(:e1)
@@ -2290,7 +2290,7 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })()
-            catch { it => :e2 } in {
+            catch ( it => :e2 ) in {
                 broadcast(nil)
                 broadcast(nil)
                 println(99)
@@ -2305,7 +2305,7 @@ class Exec_04 {
             """
             var T
             set T = task () {
-                catch { it => it==:e1 } in {
+                catch ( it => it==:e1 ) in {
                     spawn( task () {
                         yield(nil) ;;thus { it => nil }
                         throw(:e1)
@@ -2318,7 +2318,7 @@ class Exec_04 {
                 println(:no)
             }
             spawn (task () {
-                catch { it => :e2 } in {
+                catch ( it => :e2 ) in {
                     spawn T()
                     loop { yield(nil) } ;;thus { it => nil }
                 }
@@ -2326,7 +2326,7 @@ class Exec_04 {
                 throw(:e3)
                 println(:no)
             }) ()
-            catch { it => :e3 } in {
+            catch ( it => :e3 ) in {
                 broadcast(nil)
                 println(:no)
             }
@@ -2695,7 +2695,7 @@ class Exec_04 {
         val out = test(
             """
             println(1)
-            catch { it => it==:ok} in {
+            catch ( it => it==:ok) in {
                 println(2)
                 spawn (task () {
                     println(3)

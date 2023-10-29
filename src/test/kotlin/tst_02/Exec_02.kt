@@ -79,9 +79,9 @@ class Exec_02 {
 
 
     @Test
-    fun jj_00_0_err() {
+    fun todo_COL_jj_00_0_err() {
         val out = test("""
-            catch (it => it[0]) in {
+            catch (it :T => it[0]) in {
                 nil
             }
         """)
@@ -90,7 +90,7 @@ class Exec_02 {
     @Test
     fun jj_00_catch_err() {
         val out = test("""
-            val err = catch { it => set it=nil } in {
+            val err = catch ( it => set it=nil ) in {
                 throw(:x)
             }
         """)
@@ -99,7 +99,7 @@ class Exec_02 {
     @Test
     fun jj_01_catch() {
         val out = test("""
-            val err = catch { v => v==:x } in {
+            val err = catch ( v => v==:x ) in {
                 throw(:x)
                 println(9)
             }
@@ -110,7 +110,7 @@ class Exec_02 {
     @Test
     fun jj_02_catch_err() {
         val out = test("""
-            catch {it=>it==:x} in {
+            catch (it=>it==:x) in {
                 throw(:y)
                 println(9)
             }
@@ -126,7 +126,7 @@ class Exec_02 {
                 throw(:y)
                 println(9)
             }
-            catch {it=>it==:x} in {
+            catch (it=>it==:x) in {
                 f()
                 println(9)
             }
@@ -141,14 +141,14 @@ class Exec_02 {
         val out = test("""
             var f
             set f = func () {
-                catch {it => it==:xxx} in {
+                catch (it => it==:xxx) in {
                     throw(:yyy)
                     println(91)
                 }
                 println(9)
             }
-            catch {it => it==:yyy} in {
-                catch {it2 => it2==:xxx} in {
+            catch (it => it==:yyy) in {
+                catch (it2 => it2==:xxx) in {
                     f()
                     println(92)
                 }
@@ -161,7 +161,7 @@ class Exec_02 {
     @Test
     fun jj_05_catch_valgrind() {
         val out = test("""
-            catch {it=> it==:x} in {
+            catch (it=> it==:x) in {
                 throw([])
                 println(9)
             }
@@ -174,10 +174,10 @@ class Exec_02 {
     @Test
     fun jj_06_catch() {
         val out = test("""
-            catch { it=>it==:e1} in {
-                catch { it=>it==:e2} in {
-                    catch { it=>it==:e3} in {
-                        catch { it => it==:e4 } in {
+            catch ( it=>it==:e1) in {
+                catch ( it=>it==:e2) in {
+                    catch ( it=>it==:e3) in {
+                        catch ( it => it==:e4 ) in {
                             println(1)
                             throw(:e3)
                             println(99)
@@ -197,7 +197,7 @@ class Exec_02 {
     @Test
     fun jj_07_catch_err() {
         val out = test("""
-            catch { it => true } in {
+            catch ( it => true ) in {
                 throw(:y)
                 println(9)
             }
@@ -210,9 +210,9 @@ class Exec_02 {
     fun jj_08_catch() {
         val out = test(
             """
-            catch { it => it==do {
+            catch ( it => it==do {
                 :x
-            } } in {
+            } ) in {
                 throw(:x)
                 println(9)
             }
@@ -225,7 +225,7 @@ class Exec_02 {
     fun jj_09_catch() {
         val out = test(
             """
-            catch { it => false} in {
+            catch ( it => false) in {
                 throw(:xxx)
                 println(9)
             }
@@ -238,7 +238,7 @@ class Exec_02 {
     @Test
     fun jj_10_catch() {
         val out = test("""
-            catch { it => it==[] } in {
+            catch ( it => it==[] ) in {
                 throw([])
                 println(9)
             }
@@ -250,7 +250,7 @@ class Exec_02 {
     @Test
     fun jj_11_catch() {
         val out = test("""
-            catch { it => it==[]} in {
+            catch ( it => it==[]) in {
                 val xxx = []
                 throw(xxx)
             }
@@ -261,7 +261,7 @@ class Exec_02 {
     @Test
     fun jj_12_catch() {
         val out = test("""
-            val t = catch { it=>true} in {
+            val t = catch ( it=>true) in {
                 val xxx = []
                 throw(drop(xxx))
             }
@@ -272,7 +272,7 @@ class Exec_02 {
     @Test
     fun todo_jj_13_throw_catch_condition() {
         val out = test("""
-            catch { it => throw(2)} in {
+            catch ( it => throw(2)) in {
                 throw(1)
             }
         """)
@@ -295,7 +295,7 @@ class Exec_02 {
     fun jj_13_catch_dcl_err() {
         val out = test("""
             val x
-            catch { x => true} in {
+            catch ( x => true) in {
                 nil
             }
         """)
@@ -305,7 +305,7 @@ class Exec_02 {
     fun jj_14_catch_data() {
         val out = test("""
             data :X = [x]
-            catch { x:X => x.x==10 } in {
+            catch ( x:X => x.x==10 ) in {
                 throw([10])
             }
             println(:ok)
@@ -316,10 +316,10 @@ class Exec_02 {
     fun jj_15_catch_set() {
         val out = test("""
             var x
-            catch { it =>
+            catch ( it =>
                 set x = it
                 it[0]==:x
-            } in {
+            ) in {
                 throw([:x])
                 println(9)
             }
@@ -364,7 +364,7 @@ class Exec_02 {
     @Test
     fun todo_pp_01_throw_defer() {
         val out = test("""
-            catch { it => true} in {
+            catch ( it => true) in {
                 defer {
                     throw(nil)
                 }
@@ -434,12 +434,12 @@ class Exec_02 {
     fun todo_zz_01() {
         val out = test("""
             do {
-                catch { it =>  ;; err is binded to x and is being moved up
+                catch ( it =>  ;; err is binded to x and is being moved up
                     var x
                     set x = it
                     println(it) `/* ZZZZ */`
                     false
-                } in {
+                ) in {
                     throw([:x])
                     println(9)
                 }

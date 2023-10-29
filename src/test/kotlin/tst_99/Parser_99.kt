@@ -460,10 +460,10 @@ class Parser_99 {
     }
     @Test
     fun ff_03_catch() {
-        val l = lexer("catch {} in {}")
+        val l = lexer("catch () in {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch { ceu_5 => nil } in {\n" +
+        assert(e.tostr() == "catch ( ceu_5 => nil ) in {\n" +
                 "nil\n" +
                 "}") { e.tostr() }
     }

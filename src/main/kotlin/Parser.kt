@@ -613,7 +613,7 @@ class Parser (lexer_: Lexer)
                 val (id,tag,cnd) =  this.id_tag_cnd(N, tk0, true)
                 this.acceptFix_err("in")
                 val xcnd = this.nest("""
-                    `:ceu ceu_acc` thus { ${id.str} ${tag.cond{it.str}} =>
+                    `:ceu ceu_acc.Dyn->Throw.val` thus { ${id.str} ${tag.cond{it.str}} =>
                         ${cnd!!.tostr(true)}
                      }
                 """)

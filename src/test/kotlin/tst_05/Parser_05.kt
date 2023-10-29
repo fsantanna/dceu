@@ -98,7 +98,7 @@ class Parser_05 {
     @Test
     fun bb_07_as() {
         val out = test("""
-            catch { x => 1 } {nil}
+            catch ( x => 1 ) {nil}
         """)
         assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
     }

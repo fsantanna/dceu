@@ -21,6 +21,11 @@ fun Coder.main (tags: Tags): String {
         #define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
         
         #define COMMA ,
+        #if CEU >= 2
+        #define CEU2(x) x
+        #else
+        #define CEU2(x)
+        #endif
         #if CEU >= 3
         #define CEU3(x) x
         #else
@@ -1209,6 +1214,18 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.type = CEU_HOLD_FLEET;
 
             switch (src.type) {
+        #if 0
+                case CEU_VALUE_THROW:
+                    CEU_Value ret1 = _ceu_drop_(dyn->Throw.val);
+                    if (ret1.type == CEU_VALUE_ERROR) {
+                        return ret1;
+                    }
+                    CEU_Value ret2 = _ceu_drop_(dyn->Throw.stk);
+                    if (ret2.type == CEU_VALUE_ERROR) {
+                        return ret;
+                    }
+                    break;
+        #endif
                 case CEU_VALUE_CLO_FUNC:
         #if CEU >= 3
                 case CEU_VALUE_CLO_CORO:
