@@ -153,19 +153,19 @@ class Parser (lexer_: Lexer)
         // :X => ... it ...
         // :X
         // ... it ...
-        val par = (opt_par && this.acceptFix("(")) or this.acceptFix_err(")")
+        val par = (opt_par && this.acceptFix("(")) || this.acceptFix_err("(")
         return if (CEU < 99) {
             val (id,tag) = this.id_tag()
             this.acceptFix_err("=>")
             val es = this.expr()
-            this.acceptFix_err("")
+            this.acceptFix_err(")")
             Triple(id, tag, es)
         } else {
             val e = this.expr()
             val isacc = (e is Expr.Acc)
             val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
             val tag = this.tk0
-            val isarr = (isacc || istag) && ((isacc && istag && this.acceptFix_err("=>"))) || this.acceptFix("=>"))
+            val isarr = (isacc || istag) && ((isacc && istag && this.acceptFix_err("=>")) || this.acceptFix("=>"))
             val ret = when {
                 ( isacc &&  istag &&  isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, this.expr())
                 ( isacc &&  istag && !isarr) -> error("impossible case")
@@ -300,8 +300,9 @@ class Parser (lexer_: Lexer)
         val (id,tag,cnd) =  this.id_tag_cnd(n, tk0, opt_par)
         val xcnd = when {
             (tag!=null && cnd!=null) -> "await'(${id.str},${tag.str}) and ${cnd.tostr()}"
+            (tag!=null && cnd==null) -> "await'(${id.str},${tag.str})"
+            (tag==null && cnd is Expr.Acc) -> "await'(${id.str},${cnd.tostr(true)})"
             (tag==null && cnd!=null) -> cnd.tostr(true)
-            (tag!=null && cnd==null) -> "await'(${id.str},${tag.str}"
             (tag==null && cnd==null) -> error("impossible case")
             else -> error("impossible case")
         }
@@ -880,26 +881,14 @@ class Parser (lexer_: Lexer)
                 return await(tk0)
             }
             (CEU>=99 && this.acceptFix("every")) -> {
-                val pre0 = this.tk0.pos.pre()
-                val evt = this.expr()
-                val (xas,es) = this.id_tag_cnd(N)
-                val (id,tag) = xas
-                val xtag = when {
-                    (tag != null) -> tag.str
-                    (evt is Expr.Tag) -> evt.tk.str
-                    else -> ""
-                }
-
+                val tk0 = this.tk0
+                val pre0 = tk0.pos.pre()
+                val awt = await(tk0, true)
+                val blk = this.block()
                 this.nest("""
                     ${pre0}loop {
-                        until yield() thus { ${id.str} $xtag =>
-                            if await'(${id.str}, ${evt.tostr(true)}) {
-                                loop {
-                                    ${es.tostr(true)}
-                                    break(nil) if true
-                                }
-                            }
-                        }
+                        ${awt.tostr()}
+                        ${blk.es.tostr(true)}
                     }
                 """)//.let { println(it); it })
             }

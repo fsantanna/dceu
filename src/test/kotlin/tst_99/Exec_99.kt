@@ -959,7 +959,7 @@ class Exec_99 {
         val out = test("""
             $IS
             task T () {
-                await() as { it => it is? :x }
+                await(it => it is? :x)
                 println(1)
             }
             spawn T()
