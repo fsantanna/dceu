@@ -80,7 +80,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
         is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
-    }.let { if (pre) /*this.tk.pos.pre()+*/it else it }
+    }.let { if (pre) this.tk.pos.pre()+it else it }
 }
 
 fun List<Expr>.tostr (pre: Boolean=false): String {

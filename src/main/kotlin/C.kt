@@ -1214,7 +1214,7 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.type = CEU_HOLD_FLEET;
 
             switch (src.type) {
-        #if 0
+        #if 0 //CEU >= 2
                 case CEU_VALUE_THROW:
                     CEU_Value ret1 = _ceu_drop_(dyn->Throw.val);
                     if (ret1.type == CEU_VALUE_ERROR) {
@@ -1222,7 +1222,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     CEU_Value ret2 = _ceu_drop_(dyn->Throw.stk);
                     if (ret2.type == CEU_VALUE_ERROR) {
-                        return ret;
+                        return ret2;
                     }
                     break;
         #endif

@@ -79,13 +79,13 @@ class Exec_02 {
 
 
     @Test
-    fun todo_COL_jj_00_0_err() {
+    fun jj_00_0_err() {
         val out = test("""
             catch (it :T => it[0]) in {
                 nil
             }
         """)
-        assert(out == "anon : (lin 2, col 24) : declaration error : data :T is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 23) : declaration error : data :T is not declared\n") { out }
     }
     @Test
     fun jj_00_catch_err() {
@@ -94,7 +94,7 @@ class Exec_02 {
                 throw(:x)
             }
         """)
-        assert(out == "anon : (lin 2, col 37) : set error : destination is immutable\n") { out }
+        assert(out == "anon : (lin 2, col 38) : set error : destination is immutable\n") { out }
     }
     @Test
     fun jj_01_catch() {
@@ -316,10 +316,10 @@ class Exec_02 {
     fun jj_15_catch_set() {
         val out = test("""
             var x
-            catch ( it =>
+            catch ( it => do {
                 set x = it
                 it[0]==:x
-            ) in {
+            }) in {
                 throw([:x])
                 println(9)
             }
