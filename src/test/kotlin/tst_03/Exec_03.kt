@@ -838,7 +838,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 39) : declaration error : variable \"it\" is already declared\n") { out }
+        assert(out == "anon : (lin 4, col 40) : declaration error : variable \"it\" is already declared\n") { out }
     }
     @Test
     fun hh_05_throw() {

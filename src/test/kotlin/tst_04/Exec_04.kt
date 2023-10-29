@@ -484,14 +484,14 @@ class Exec_04 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            catch ( it=>:xxx}in{
+            catch ( it=>:xxx)in{
                 spawn (task () {
                     yield(nil) ;;thus { it => nil }
                 })()
                 spawn (task () {
                     throw(:xxx)
                 })()
-            )
+            }
             println(10)
         """)
         assert(out == "10\n") { out }
@@ -704,11 +704,11 @@ class Exec_04 {
                 println(e)                
             }
             spawn T(10)
-            catch ( it => (do { println(it) ; true }) } in {
+            catch ( it => (do { println(it) ; true }) ) in {
                 ;;func () {
                     broadcast ([])
                 ;;}()
-            )
+            }
         """)
         assert(out == "[]\n") { out }
         //assert(out == "declaration error : cannot hold event reference\n") { out }
@@ -736,21 +736,21 @@ class Exec_04 {
         val out = test(
             """
             spawn (task () {
-                catch ( it=> it==:e1 }in {  ;; catch 1st (yes catch)
+                catch ( it=> it==:e1 )in {  ;; catch 1st (yes catch)
                     spawn (task () {
                         yield(nil) ;;thus { it => nil }
                         println(222)
                         throw(:e1)                  ;; throw
                     }) ()
                     loop { yield(nil) } ;;thus { it => nil }
-                )
+                }
                 println(333)
             }) ()
             catch ( it => true) in {   ;; catch 2nd (no catch)
                 println(111)
                 broadcast(nil)
                 println(444)
-            )
+            }
             println(:END)
         """
         )
