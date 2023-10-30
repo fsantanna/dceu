@@ -46,13 +46,11 @@ class Parser_99 {
         val l = lexer("1 or 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((1) thus { ceu_5 =>\n" +
-                "if ceu_5 {\n" +
-                "ceu_5\n" +
+        assert(e.tostr() == "if 1 {\n" +
+                "1\n" +
                 "} else {\n" +
                 "2\n" +
-                "}\n" +
-                "})\n") { e.tostr() }
+                "}") { e.tostr() }
     }
     @Test
     fun bb_02_bin_and() {
@@ -60,13 +58,11 @@ class Parser_99 {
         val l = lexer("1 and 2")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "((1) thus { ceu_5 =>\n" +
-                "if ceu_5 {\n" +
+        assert(e.tostr() == "if 1 {\n" +
                 "2\n" +
                 "} else {\n" +
-                "ceu_5\n" +
-                "}\n" +
-                "})\n") { e.tostr() }
+                "1\n" +
+                "}") { e.tostr() }
     }
     @Test
     fun bb_03_not() {
@@ -115,27 +111,27 @@ class Parser_99 {
     @Test
     fun bb_06_pre() {
         val l = lexer("""
-            a or ((b or c) or d)
+            `a` or ((`b` or `c`) or `d`)
         """)
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == """
-            ((a) thus { ceu_5 =>
+            ((```  a```) thus { ceu_5 =>
             if ceu_5 {
             ceu_5
             } else {
-            ((((b) thus { ceu_10 =>
+            ((((```    b```) thus { ceu_10 =>
             if ceu_10 {
             ceu_10
             } else {
-            c
+            ```    c```
             }
             })
             ) thus { ceu_45 =>
             if ceu_45 {
             ceu_45
             } else {
-            d
+            ```   d```
             }
             })
             

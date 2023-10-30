@@ -32,6 +32,14 @@ fun Expr.is_innocuous (): Boolean {
     }
 }
 
+// expr is already evaluated to minimum form (and/or no expand to thus)
+fun Expr.is_evaled (): Boolean {
+    return when (this) {
+        is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Num -> true
+        else -> false
+    }
+}
+
 fun Expr.is_lval (): Boolean {
     return when (this) {
         is Expr.Acc -> true

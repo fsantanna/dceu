@@ -1141,24 +1141,49 @@ class Parser (lexer_: Lexer)
         val e2 = this.expr_2_pre()
         return this.expr_1_bin(op.str,
             when (op.str) {
-                "and" -> this.nest("""
-                    ((${e1.tostr(true)}) thus { ceu_${e1.n} =>
-                        if ceu_${e1.n} {
-                            ${e2.tostr(true)}
-                        } else {
-                            ceu_${e1.n}
-                        }
-                    })
-                """)
-                "or" -> this.nest("""
-                    ((${e1.tostr(true)}) thus { ceu_${e1.n} =>  
-                        if ceu_${e1.n} {
-                            ceu_${e1.n}
-                        } else {
-                            ${e2.tostr(true)}
-                        }
-                    })
-                """)
+                "and" -> {
+                    if (e1.is_evaled()) {
+                        this.nest("""
+                            if ${e1.tostr(true)} {
+                                ${e2.tostr(true)}
+                            } else {
+                                ${e1.tostr(true)}
+                            }
+                    """)
+                    } else {
+                        this.nest("""
+                        ((${e1.tostr(true)}) thus { ceu_${e1.n} =>
+                            if ceu_${e1.n} {
+                                ${e2.tostr(true)}
+                            } else {
+                                ceu_${e1.n}
+                            }
+                        })
+                    """)
+                    }
+                }
+                "or" -> {
+                    if (e1.is_evaled()) {
+                        this.nest("""
+                            if ${e1.tostr(true)} {
+                                ${e1.tostr(true)}
+                            } else {
+                                ${e2.tostr(true)}
+                            }
+                        })
+                    """)
+                    } else {
+                        this.nest("""
+                        ((${e1.tostr(true)}) thus { ceu_${e1.n} =>  
+                            if ceu_${e1.n} {
+                                ceu_${e1.n}
+                            } else {
+                                ${e2.tostr(true)}
+                            }
+                        })
+                    """)
+                    }
+                }
                 "is?" -> this.nest("is'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 "is-not?" -> this.nest("is-not'(${e1.tostr(true)}, ${e2.tostr(true)})")
                 "in?" -> this.nest("in'(${e1.tostr(true)}, ${e2.tostr(true)})")
