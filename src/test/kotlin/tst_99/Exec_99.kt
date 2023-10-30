@@ -974,7 +974,7 @@ class Exec_99 {
             $IS
             spawn task {
                 println(0)
-                await as { (it/=nil) and (it[:type]==:x) }
+                await ( (it/=nil) and (it[:type]==:x) )
                 println(99)
             }
             do {
@@ -1040,7 +1040,7 @@ class Exec_99 {
         val out = test("""
             spawn task {
                 loop {
-                    await as {
+                    await {
                         println(it)
                     }
                 }

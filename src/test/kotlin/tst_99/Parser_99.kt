@@ -459,8 +459,8 @@ class Parser_99 {
         val l = lexer("catch () in {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch ( ceu_5 => nil ) in {\n" +
-                "nil\n" +
+        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
+                "\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -699,7 +699,11 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { ceu_5 =>\n" +
+                "if ceu_5 {\n" +
                 "ceu_5\n" +
+                "} else {\n" +
+                "true\n" +
+                "}\n" +
                 "})\n" +
                 ")\n" +
                 "}") { e.tostr() }
@@ -718,7 +722,7 @@ class Parser_99 {
     }
     @Test
     fun jj_03_await() {
-        val l = lexer("await as { it }")
+        val l = lexer("await { it }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
