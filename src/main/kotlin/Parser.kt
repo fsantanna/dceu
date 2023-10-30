@@ -157,9 +157,9 @@ class Parser (lexer_: Lexer)
         // :Y                   ;; (null, tag,  null)
         // z                    ;; (null, null, exp)
         val par = when {
-            opt_par && this.acceptFix("(") -> true
-            opt_par && this.checkFix("{") -> false
-            else -> this.acceptFix_err("(")
+            !opt_par -> this.acceptFix_err("(")
+            this.checkFix("{") -> false
+            else -> this.acceptFix("(")
         }
         return when {
             (CEU < 99) -> {
@@ -308,7 +308,7 @@ class Parser (lexer_: Lexer)
         }
     }
 
-    fun await (tk0: Tk, opt_par: Boolean): ((String?) -> Expr.Loop) {
+    fun await (type: String): Expr {
         // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
         // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
         // (x :Y)               ;; error                ;; error
@@ -319,27 +319,63 @@ class Parser (lexer_: Lexer)
         // z                    ;; (null, null, exp)    ;; (it :_ => z)
 
         val n = N
+        val tk0 = this.tk0
         val pre0 = tk0.pos.pre()
+        val opt_par = (type != "await") || this.checkFix("{")
         val (id,tag,cnd) =  this.id_tag_cnd__catch_await(opt_par)
+
+        val cnt = when (type) {
+            "await"    -> if (!this.checkFix("{")) null else this.block().es
+            "every"    -> { this.checkFix_err("{") ; this.block().es }
+            "watching" -> null
+            else -> error("impossible case)")
+        }
+
         val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
-        val (xceu,xit) = Pair(Tk.Id("ceu_$n",tk0.pos,0),Tk.Id("it",tk0.pos,0))
+        val xit = Tk.Id("it",tk0.pos,0)
+        val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
         val (xid,xtag,xcnd) = when {
-            (!a && !b && !c) -> Triple(xceu, null, "(${xceu.str} or true)")
+            (!a && !b && !c) -> Triple(xno, null, "(${xno.str} or true)")
             ( a &&  b &&  c) -> Triple(id!!, tag, "(await'(${id!!.str},${tag!!.str}) and ${cnd!!.tostr(true)})")
             ( a && !b &&  c) -> Triple(id!!, null, cnd!!.tostr(true))
             (!a &&  b &&  c) -> Triple(xit, tag, "(await'(it,${tag!!.str}) and ${cnd!!.tostr(true)})")
-            (!a &&  b && !c) -> Triple(xceu, tag, "(await'(ceu_$n,${tag!!.str}) and (ceu_$n or true))")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xceu, null, "await'(ceu_$n,${cnd!!.tostr(true)})")
+            (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) and (${xno.str} or true))")
+            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "await'(ceu_$n,${cnd!!.tostr(true)})")
             (!a && !b && c) -> Triple(xit, null, cnd!!.tostr(true))
             else -> error("impossible case")
         }
-        return { cnt -> this.nest("""
-            ${pre0}loop {
-                ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
-                    ${pre0}$xcnd ${cnt.cond { "and (do { $it } or true)" }}
-                })
-            }
-        """) as Expr.Loop }
+
+        return this.nest(when (type) {
+            "await" -> """
+                ${pre0}loop {
+                    ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                        ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
+                    })
+                }
+            """
+            "every" -> """
+                ${pre0}loop {
+                    ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                        ${pre0}$xcnd and loop {
+                             ${cnt!!.tostr(true)}
+                             break (false) if true
+                        }
+                    })
+                }
+            """
+            "watching" -> """
+                ${pre0}par-or {
+                    ${pre0}loop {
+                        ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                            ${pre0}$xcnd
+                        })
+                    }
+                } with {
+                    ${this.block().es.tostr(true)}
+                }
+            """
+            else -> error("impossible case")
+        })
     }
 
     fun method (f: Expr, e: Expr, pre: Boolean): Expr {
@@ -888,7 +924,6 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
-                val tk0 = this.tk0
                 if (this.checkFix("spawn")) {
                     val spw = this.expr()
                     spw as Expr.Spawn
@@ -905,26 +940,9 @@ class Parser (lexer_: Lexer)
                         }
                     """)
                 }
-                val op = this.checkFix("{")
-                val f = await(tk0, op)
-                return if (op) {
-                    f(this.block().es.tostr(true))
-                } else {
-                    f(null)
-                }
+                await("await")
             }
-            (CEU>=99 && this.acceptFix("every")) -> {
-                val tk0 = this.tk0
-                val pre0 = tk0.pos.pre()
-                val awt = await(tk0, true)
-                val blk = this.block()
-                this.nest("""
-                    ${pre0}loop {
-                        ${awt(null).tostr()}
-                        ${blk.es.tostr(true)}
-                    }
-                """)//.let { println(it); it })
-            }
+            (CEU>=99 && this.acceptFix("every")) -> await("every")
             (CEU>=99 && this.acceptFix("par")) -> {
                 val pre0 = this.tk0.pos.pre()
                 val pars = mutableListOf(this.block())
@@ -1003,19 +1021,7 @@ class Parser (lexer_: Lexer)
                     }
                 """)
             }
-            (CEU>=99 && this.acceptFix("watching")) -> {
-                val tk0 = this.tk0
-                val pre0 = tk0.pos.pre()
-                val awt = await(tk0, true)
-                val body = this.block()
-                this.nest("""
-                    ${pre0}par-or {
-                        ${pre0}${awt(null).tostr()}
-                    } with {
-                        ${body.es.tostr(true)}
-                    }
-                """)//.let { println(it.tostr()); it }
-            }
+            (CEU>=99 && this.acceptFix("watching")) -> await("watching")
             else -> {
                 err_expected(this.tk1, "expression")
                 error("unreachable")

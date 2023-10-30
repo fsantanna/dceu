@@ -1053,10 +1053,10 @@ class Exec_99 {
     fun kk_07_await() {
         val out = test("""
             spawn task {
-                await as {
+                await {
                     println(it)
                 }
-                await as {
+                await {
                     println(it)
                 }
             }
@@ -1070,9 +1070,9 @@ class Exec_99 {
         val out = test("""
             $XAWAIT
             spawn task {
-                await as {it==2}
+                await (it==2)
                 println(2)
-                await as {it==1}
+                await (it==1)
                 println(1)
             }
             broadcast (1)
@@ -1162,7 +1162,7 @@ class Exec_99 {
                     every :X {
                     }
                 } with {
-                    every false { }
+                    ;;every false { }
                 }
             }
             println(:ok)
@@ -1177,7 +1177,7 @@ class Exec_99 {
         val out = test("""
             ${XAWAIT}
             spawn task {
-                watching as {it==1} {
+                watching (it==1) {
                     defer { println(:z) }
                     println(:x)
                     ${AWAIT()}
