@@ -148,7 +148,7 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun id_tag_cnd__catch_await (opt_par: Boolean): Triple<Tk.Id?,Tk.Tag?,Expr?> {
+    fun id_tag_cnd__catch_await (): Triple<Tk.Id?,Tk.Tag?,Expr?> {
         // ()                   ;; (null, null, null)
         // (x :Y => z)          ;; (id,   tag,  exp)
         // (x :Y)               ;; error
@@ -156,11 +156,7 @@ class Parser (lexer_: Lexer)
         // :Y => z              ;; (null, tag,  exp)
         // :Y                   ;; (null, tag,  null)
         // z                    ;; (null, null, exp)
-        val par = when {
-            !opt_par -> this.acceptFix_err("(")
-            this.checkFix("{") -> false
-            else -> this.acceptFix("(")
-        }
+        val par = this.acceptFix("(")
         return when {
             (CEU < 99) -> {
                 val (id,tag) = this.id_tag()
@@ -321,8 +317,11 @@ class Parser (lexer_: Lexer)
         val n = N
         val tk0 = this.tk0
         val pre0 = tk0.pos.pre()
-        val opt_par = (type != "await") || this.checkFix("{")
-        val (id,tag,cnd) =  this.id_tag_cnd__catch_await(opt_par)
+        val par = this.checkFix("(")
+        val (id,tag,cnd) =  this.id_tag_cnd__catch_await()
+        if (!par) {
+            this.checkFix_err("{")
+        }
 
         val cnt = when (type) {
             "await"    -> if (!this.checkFix("{")) null else this.block().es
@@ -334,13 +333,15 @@ class Parser (lexer_: Lexer)
         val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
         val xit = Tk.Id("it",tk0.pos,0)
         val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
+        println(cnd?.tostr(true))
+        println(listOf(a,b,c))
         val (xid,xtag,xcnd) = when {
-            (!a && !b && !c) -> Triple(xno, null, "(${xno.str} or true)")
+            (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
             ( a &&  b &&  c) -> Triple(id!!, tag, "(await'(${id!!.str},${tag!!.str}) and ${cnd!!.tostr(true)})")
-            ( a && !b &&  c) -> Triple(id!!, null, cnd!!.tostr(true))
+            ( a && !b &&  c) -> Triple(id!!, null, "(${cnd!!.tostr(true)} ${(cnt==null).cond{"and (${id.str} or true)"}})")
             (!a &&  b &&  c) -> Triple(xit, tag, "(await'(it,${tag!!.str}) and ${cnd!!.tostr(true)})")
-            (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) and (${xno.str} or true))")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "await'(ceu_$n,${cnd!!.tostr(true)})")
+            (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${(cnt==null).cond{"and (${xno.str} or true)"}})")
+            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(${xno.str},${cnd!!.tostr(true)}) ${(cnt==null).cond{"and (${xno.str} or true)"}})")
             (!a && !b && c) -> Triple(xit, null, cnd!!.tostr(true))
             else -> error("impossible case")
         }
@@ -672,8 +673,16 @@ class Parser (lexer_: Lexer)
             this.acceptFix("drop") -> Expr.Drop(this.tk0 as Tk.Fix, this.expr_in_parens()!!)
 
             (CEU>=2 && this.acceptFix("catch")) -> {
+                // ()                   ;; (null, null, null)   ;; (_  :_ => (_ or true))
+                // (x :Y => z)          ;; (id,   tag,  exp)    ;; (x  :Y => chk(:Y) and z)
+                // (x :Y)               ;; error                ;; error
+                // (x => z)             ;; (id,   null, exp)    ;; (x  :_ => z)
+                // :Y => z              ;; (null, tag,  exp)    ;; (it :Y => chk(:Y) and z)
+                // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
+                // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
+                // z                    ;; (null, null, exp)    ;; (it :_ => z)
                 val tk0 = this.tk0 as Tk.Fix
-                val (id,tag,cnd) =  this.id_tag_cnd__catch_await(true)
+                val (id,tag,cnd) =  this.id_tag_cnd__catch_await()
                 this.acceptFix_err("in")
                 val xcnd = this.nest("""
                     `:ceu ceu_acc` thus { ${id!!.pos.pre()+id!!.str} ${tag.cond{it.pos.pre()+it.str}} =>
@@ -924,6 +933,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("await")) -> {
+                val tk0 = this.tk0
                 if (this.checkFix("spawn")) {
                     val spw = this.expr()
                     spw as Expr.Spawn
