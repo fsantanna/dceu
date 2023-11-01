@@ -777,7 +777,7 @@ class Exec_03 {
             set co = coroutine(coro (x) {
                 throw(:e2)
             })
-            catch ( it=>:e2) in {
+            catch ( it=>:e2) {
                 resume co(1)
                 println(99)
             }
@@ -793,7 +793,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch ( it=>:e2) in {
+            catch ( it=>:e2) {
                 resume co()
                 println(1)
                 resume co()
@@ -808,7 +808,7 @@ class Exec_03 {
         val out = test("""
             var co
             set co = coroutine (coro () {
-                catch ( it => :e1) in {
+                catch ( it => :e1) {
                     yield(nil) ;;thus { it => nil }
                     throw(:e1)
                 }
@@ -816,7 +816,7 @@ class Exec_03 {
                 yield(nil) ;;thus { it => nil }
                 throw(:e2)
             })
-            catch ( it=>:e2) in {
+            catch ( it=>:e2) {
                 resume co()
                 resume co()
                 resume co()
@@ -845,7 +845,7 @@ class Exec_03 {
         val out = test(
             """
             val CO = coro () {
-                catch ( it => false ) in {
+                catch ( it => false ) {
                     yield(nil) ;;thus { it => nil }
                 }
                 println(999)

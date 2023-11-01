@@ -837,7 +837,7 @@ class Exec_05 {
                 yield(nil) thus { it => nil}
             }
             val ts = tasks()
-            val t = catch ( it=>true) in {
+            val t = catch ( it=>true) {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
@@ -876,7 +876,7 @@ class Exec_05 {
                 yield(nil) thus { it => nil }
             }
             val ts = tasks()
-            catch ( it=>true) in {
+            catch ( it=>true) {
                 spawn T() in ts
                 do {
                     val t = next-tasks(ts)
@@ -1156,7 +1156,7 @@ class Exec_05 {
             var t = spawn T()
             var x = track(t)
             spawn( task () {
-                catch ( err=>err==:par-or ) in {
+                catch ( err=>err==:par-or ) {
                     spawn( task () {
                         yield(nil) thus { it => it==t }
                         throw(:par-or)

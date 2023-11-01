@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 6
+var CEU = 1
     // 1: dyn-lex, thus, { x => ... }
     // 2: defer, throw/catch
     // 3: coro, yield, resume
@@ -42,11 +42,11 @@ val KEYWORDS: SortedSet<String> = (
         "loop", "nil", "pass", "set",
         "thus", "true", "val", "var",
     ) + (if (CEU < 2) setOf() else setOf (
-        "catch", "defer", "in",
+        "catch", "defer",
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
-        "broadcast", "pub", "spawn", "task", "toggle",
+        "broadcast", "in", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
         "as", "detrack",
     )) + (if (CEU < 6) setOf() else setOf(

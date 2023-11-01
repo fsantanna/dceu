@@ -16,9 +16,9 @@ syn keyword Statement   as break data do drop else
 syn keyword Statement   enum false func if
 syn keyword Statement   loop nil pass set
 syn keyword Statement   thus true val var
-syn keyword Statement   catch defer in
+syn keyword Statement   catch defer
 syn keyword Statement   coro resume yield
-syn keyword Statement   broadcast pub spawn task toggle
+syn keyword Statement   broadcast in pub spawn task toggle
 syn keyword Statement   detrack
 syn keyword Statement   ifs resume-yield-all
 
