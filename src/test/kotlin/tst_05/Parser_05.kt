@@ -100,7 +100,8 @@ class Parser_05 {
         val out = test("""
             catch ( x => 1 ) {nil}
         """)
-        assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
+        //assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
+        assert(out == "") { out }
     }
 
     // TRACK

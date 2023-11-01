@@ -73,7 +73,9 @@ class Parser_02 {
     fun cc_06_as() {
         val out = test("""
             catch ( x => 1 ) {nil}
+            println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
+        //assert(out == "anon : (lin 2, col 27) : expected \"in\" : have \"{\"\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }

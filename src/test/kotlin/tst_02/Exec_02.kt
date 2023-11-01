@@ -256,7 +256,7 @@ class Exec_02 {
             }
             println(1)
         """)
-        assert(out == " v  anon : (lin 2, col 38) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 2, col 35) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun jj_12_catch() {

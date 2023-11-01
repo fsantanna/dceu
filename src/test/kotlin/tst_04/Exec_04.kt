@@ -484,7 +484,7 @@ class Exec_04 {
     @Test
     fun ee_01_throw() {
         val out = test("""
-            catch ( it=>:xxx)in{
+            catch ( it=>:xxx){
                 spawn (task () {
                     yield(nil) ;;thus { it => nil }
                 })()

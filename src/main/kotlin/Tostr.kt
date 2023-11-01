@@ -55,7 +55,7 @@ fun Expr.tostr (pre: Boolean = false): String {
             val cnd = (this.cnd.es[0] as Expr.Dcl).let {
                 it.id.str + it.tag.cond { " " + it.str } + " => " + this.cnd.es[1].tostr(pre)
             }
-            "catch (" + cnd + ") in " + this.blk.tostr(pre)
+            "catch (" + cnd + ") " + this.blk.tostr(pre)
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)
 

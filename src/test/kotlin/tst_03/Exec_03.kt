@@ -832,7 +832,7 @@ class Exec_03 {
             coro () {
                 catch ( it => do {
                     yield(nil) thus { it => nil }
-                } ) in
+                } )
                 {
                     throw(:e1)
                 }
@@ -852,7 +852,7 @@ class Exec_03 {
             }
             val co = coroutine(CO)
             resume co()
-            catch ( it=>true)in{
+            catch ( it=>true){
                 throw(nil)
             }
             println(:ok)
@@ -1306,7 +1306,7 @@ class Exec_03 {
             coro () {
                 catch ( it => do {
                     yield(nil) thus { x => nil }
-                } ) in
+                } )
                 {
                     throw(:e1)
                 }
