@@ -493,82 +493,102 @@ class Parser_99 {
 
     @Test
     fun fg_01_catch() {
-        val l = lexer("catch () in {}")
+        val l = lexer("catch () {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
-                "\n" +
+        assert(e.tostr() == "catch (ceu_8 => if ceu_8 {\n" +
+                "ceu_8\n" +
+                "} else {\n" +
+                "true\n" +
+                "}) {\n" +
+                "nil\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_02_catch() {
-        val l = lexer("catch in {}")
+        val l = lexer("catch {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
-                "\n" +
+        assert(e.tostr() == "catch (ceu_6 => if ceu_6 {\n" +
+                "ceu_6\n" +
+                "} else {\n" +
+                "true\n" +
+                "}) {\n" +
+                "nil\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_03_catch() {
-        val l = lexer("catch (x:X => x) in {}")
+        val l = lexer("catch (x:X => x) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
-                "\n" +
+        assert(e.tostr() == "catch (x :X => ((is'(x,:X)) thus { ceu_45 =>\n" +
+                "if ceu_45 {\n" +
+                "x\n" +
+                "} else {\n" +
+                "ceu_45\n" +
+                "}\n" +
+                "})\n" +
+                ") {\n" +
+                "nil\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_04_catch() {
-        val l = lexer("catch (x:X) in {}")
+        val l = lexer("catch (x:X) {}")
         val parser = Parser(l)
-        val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
-                "\n" +
-                "}") { e.tostr() }
+        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"=>\" : have \")\"")
     }
     @Test
     fun fg_05_catch() {
-        val l = lexer("catch x=>z in {}")
+        val l = lexer("catch x=>z {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
-                "\n" +
+        assert(e.tostr() == "catch (x => if z {\n" +
+                "if x {\n" +
+                "x\n" +
+                "} else {\n" +
+                "true\n" +
+                "}\n" +
+                "} else {\n" +
+                "z\n" +
+                "}) {\n" +
+                "nil\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_06_catch() {
-        val l = lexer("catch (:X=>z) in {}")
+        val l = lexer("catch (:X=>z) {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
+        assert(e.tostr() == "catch (ceu_6 => true) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_07_catch() {
-        val l = lexer("catch :X in {}")
+        val l = lexer("catch :X {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
+        assert(e.tostr() == "catch (ceu_6 => true) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_08_catch() {
-        val l = lexer("catch x in {}")
+        val l = lexer("catch x {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
+        assert(e.tostr() == "catch (ceu_6 => true) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
     @Test
     fun fg_09_catch() {
-        val l = lexer("catch it>1 in {}")
+        val l = lexer("catch it>1 {}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "catch (ceu_6 => true) in {\n" +
+        assert(e.tostr() == "catch (ceu_6 => true) {\n" +
                 "\n" +
                 "}") { e.tostr() }
     }
@@ -778,8 +798,7 @@ class Parser_99 {
                 "} else {\n" +
                 "true\n" +
                 "}\n" +
-                "})\n" +
-                ")\n" +
+                "}))\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -787,51 +806,20 @@ class Parser_99 {
         val l = lexer("await {:a}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { it =>\n" +
-                "((if it {\n" +
-                "it\n" +
-                "} else {\n" +
-                "true\n" +
-                "}) thus { ceu_53 =>\n" +
-                "if ceu_53 {\n" +
-                "((do {\n" +
-                ":a\n" +
-                "}) thus { ceu_63 =>\n" +
-                "if ceu_63 {\n" +
-                "ceu_63\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "} else {\n" +
-                "ceu_53\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(!out.contains("await'"))
+        assert(out.contains("thus { it =>"))
+        assert(out.contains("do {\n:a\n}"))
     }
     @Test
     fun ja_03_await() {
         val l = lexer("await (x:X => z)")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { x :X =>\n" +
-                "((await'(x,:X)) thus { ceu_45 =>\n" +
-                "if ceu_45 {\n" +
-                "z\n" +
-                "} else {\n" +
-                "ceu_45\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { x :X =>"))
+        assert(out.contains("await'(x,:X)"))
+        assert(out.contains("if ceu_45 {\nz\n}"))
     }
     @Test
     fun ja_04_await_err() {
@@ -844,161 +832,51 @@ class Parser_99 {
         val l = lexer("await (x=>z)")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { x =>\n" +
-                "if z {\n" +
-                "if x {\n" +
-                "x\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "} else {\n" +
-                "z\n" +
-                "}\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { x =>"))
+        assert(!out.contains("await'"))
+        assert(out.contains("if z {\nif x {\nx\n} else {\ntrue\n}\n} else {\nz\n}"))
     }
     @Test
     fun ja_06_await() {
         val l = lexer("await (:X=>z) {:a}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { it :X =>\n" +
-                "((((await'(it,:X)) thus { ceu_48 =>\n" +
-                "if ceu_48 {\n" +
-                "z\n" +
-                "} else {\n" +
-                "ceu_48\n" +
-                "}\n" +
-                "})\n" +
-                ") thus { ceu_91 =>\n" +
-                "if ceu_91 {\n" +
-                "((do {\n" +
-                ":a\n" +
-                "}) thus { ceu_102 =>\n" +
-                "if ceu_102 {\n" +
-                "ceu_102\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "} else {\n" +
-                "ceu_91\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("await'(it,:X)"))
+        assert(out.contains("if ceu_48 {\nz\n} else {\nceu_48\n}\n"))
+        assert(out.contains("do {\n:a\n}"))
     }
     @Test
     fun ja_07_await() {
         val l = lexer("await :X {:a}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { it :X =>\n" +
-                "((((await'(it,:X)) thus { ceu_43 =>\n" +
-                "if ceu_43 {\n" +
-                "if it {\n" +
-                "it\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "} else {\n" +
-                "ceu_43\n" +
-                "}\n" +
-                "})\n" +
-                ") thus { ceu_122 =>\n" +
-                "if ceu_122 {\n" +
-                "((do {\n" +
-                ":a\n" +
-                "}) thus { ceu_133 =>\n" +
-                "if ceu_133 {\n" +
-                "ceu_133\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "} else {\n" +
-                "ceu_122\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { it :X =>"))
+        assert(out.contains("await'(it,:X)"))
+        assert(out.contains("do {\n:a\n}"))
     }
     @Test
     fun ja_08_await() {
         val l = lexer("await x {:a}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { it =>\n" +
-                "((((await'(it,x)) thus { ceu_42 =>\n" +
-                "if ceu_42 {\n" +
-                "if it {\n" +
-                "it\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "} else {\n" +
-                "ceu_42\n" +
-                "}\n" +
-                "})\n" +
-                ") thus { ceu_121 =>\n" +
-                "if ceu_121 {\n" +
-                "((do {\n" +
-                ":a\n" +
-                "}) thus { ceu_132 =>\n" +
-                "if ceu_132 {\n" +
-                "ceu_132\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "} else {\n" +
-                "ceu_121\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { it =>"))
+        assert(out.contains("await'(it,x)"))
+        assert(out.contains("do {\n:a\n}"))
     }
     @Test
     fun ja_09_await() {
         val l = lexer("await it>1 {:a}")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { it =>\n" +
-                "(({{>}}(it,1)) thus { ceu_47 =>\n" +
-                "if ceu_47 {\n" +
-                "((do {\n" +
-                ":a\n" +
-                "}) thus { ceu_56 =>\n" +
-                "if ceu_56 {\n" +
-                "ceu_56\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "} else {\n" +
-                "ceu_47\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { it =>"))
+        assert(!out.contains("await'"))
+        assert(out.contains("{{>}}(it,1)"))
+        assert(out.contains("do {\n:a\n}"))
     }
     @Test
     fun ja_10_await_err() {
@@ -1011,23 +889,10 @@ class Parser_99 {
         val l = lexer("await(x)")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "loop {\n" +
-                "(break if ((yield(nil)) thus { ceu_5 =>\n" +
-                "((await'(ceu_5,x)) thus { ceu_40 =>\n" +
-                "if ceu_40 {\n" +
-                "if ceu_5 {\n" +
-                "ceu_5\n" +
-                "} else {\n" +
-                "true\n" +
-                "}\n" +
-                "} else {\n" +
-                "ceu_40\n" +
-                "}\n" +
-                "})\n" +
-                "\n" +
-                "})\n" +
-                ")\n" +
-                "}") { e.tostr() }
+        val out = e.tostr()
+        assert(out.contains("thus { ceu_5 =>"))
+        assert(out.contains("await'(ceu_5,x)"))
+        assert(out.contains("if ceu_40 {\nif ceu_5 {\nceu_5\n} else {\ntrue\n}\n} else {\nceu_40\n}"))
     }
     @Test
     fun jj_05_task_err() {

@@ -65,7 +65,7 @@ class Parser_05 {
         val e = parser.exprs()
         assert(e.tostr() == "((detrack(1)) thus { it =>\n" +
                 "nil\n" +
-                "})\n\n") { e.tostr() }
+                "})\n") { e.tostr() }
     }
     @Test
     fun bb_03_as() {

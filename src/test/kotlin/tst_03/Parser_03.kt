@@ -59,7 +59,6 @@ class Parser_03 {
             ((yield(2)) thus { it =>
             nil
             })
-            
             }))
             coroutine(t)
             (set v = (resume (a)(1)))
@@ -95,7 +94,7 @@ class Parser_03 {
         val parser = Parser(l)
         val e = parser.expr()
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
-        assert(e.tostr() == "((yield(1)) thus { it =>\nnil\n})\n") { e.tostr() }
+        assert(e.tostr() == "((yield(1)) thus { it =>\nnil\n})") { e.tostr() }
     }
     @Test
     fun bb_06_resume_() {

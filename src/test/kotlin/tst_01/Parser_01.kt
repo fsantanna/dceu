@@ -510,7 +510,7 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "((1) thus { it =>\nnil\n})\n\n") { e.tostr() }
+        assert(e.tostr() == "((1) thus { it =>\nnil\n})\n") { e.tostr() }
     }
     @Test
     fun oo_05_thus_thus() {
@@ -522,10 +522,9 @@ class Parser_01 {
         val e = parser.exprs()
         assert(e.tostr() == "((((1) thus { it =>\n" +
                 "2\n" +
-                "})\n" +
-                ") thus { it =>\n" +
+                "})) thus { it =>\n" +
                 "3\n" +
-                "})\n\n") { e.tostr() }
+                "})\n") { e.tostr() }
     }
 
     // FUNC

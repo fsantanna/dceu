@@ -34,7 +34,6 @@ class Parser_04 {
             ((yield(2)) thus { it =>
             nil
             })
-            
             }))
             coroutine(t)
             (set v = (resume (a)(1)))
