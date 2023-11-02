@@ -176,10 +176,10 @@ class Parser (lexer_: Lexer)
                 val isacc = (e is Expr.Acc)
                 val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
                 val tag = this.tk0
-                val isarr = (isacc || istag) && ((isacc && istag && this.acceptFix_err("=>")) || this.acceptFix("=>"))
+                val isarr = (isacc || istag) && this.acceptFix("=>")
                 val ret = when {
                     ( isacc &&  istag &&  isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, this.expr())
-                    ( isacc &&  istag && !isarr) -> error("impossible case")
+                    ( isacc &&  istag && !isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, null)
                     ( isacc && !istag &&  isarr) -> Triple(e.tk as Tk.Id, null, this.expr())
                     (!isacc &&  istag &&  isarr) -> Triple(null, tag as Tk.Tag, this.expr())
                     (!isacc &&  istag && !isarr) -> Triple(null, tag as Tk.Tag, null)
@@ -331,6 +331,9 @@ class Parser (lexer_: Lexer)
         }
 
         val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
+        if (a && b && !c && cnt==null) {
+            err(id!!, "await error : innocuous identifier")
+        }
         val xit = Tk.Id("it",tk0.pos,0)
         val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
         val scnd = cnd?.tostr(true)
@@ -340,6 +343,7 @@ class Parser (lexer_: Lexer)
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
             ( a &&  b &&  c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str}) and $scnd ${scnt(id)})")
+            ( a &&  b && !c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str} ${scnt(id)}))")
             ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${scnt(id)})")
             (!a &&  b &&  c) -> Triple(xit, tag, "(await'(${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
             (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${scnt(xno)})")
