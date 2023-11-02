@@ -523,7 +523,7 @@ class Parser_99 {
     fun fg_04_catch() {
         val l = lexer("catch (x:X) {}")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 11) : expected \"=>\" : have \")\"")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : catch error : innocuous identifier")
     }
     @Test
     fun fg_05_catch() {
@@ -980,26 +980,35 @@ class Parser_99 {
     fun kk_03_watching_err() {
         val l = lexer("watching {}")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 15) : expected \"{\" : have end of file")
+        val e = parser.expr()
+        val out = e.tostr()
+        assert(!out.contains("await'"))
+        assert(out.contains("thus { ceu_5 =>"))
+        assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
     fun kk_04_watching_err() {
-        val l = lexer("watching() as { nil }")
+        val l = lexer("watching(nil)")
         val parser = Parser(l)
-        assert(trap { parser.expr() } == "anon : (lin 1, col 22) : expected \"{\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"{\" : have end of file")
     }
     @Test
     fun kk_05_watching() {
-        val l = lexer("watching {} { }")
+        val l = lexer("watching () { }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr().contains("(break if (((({{==}}(status(ceu_0_85),:terminated))")) { e.tostr() }
+        val out = e.tostr()
+        assert(!out.contains("await'"))
+        assert(out.contains("thus { ceu_5 =>"))
+        assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
     fun kk_06_watching() {
-        val l = lexer("watching() {x=>nil} { nil }")
+        val l = lexer("watching (x=>y) { z }")
         val parser = Parser(l)
         val e = parser.expr()
+        val out = e.tostr()
+        assert(!out.contains("await'"))
         assert(e.tostr().contains("(break if ((yield(nil)) thus { x =>")) { e.tostr() }
     }
     @Test

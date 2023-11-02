@@ -694,6 +694,9 @@ class Parser (lexer_: Lexer)
                 if (CEU < 99) {
                     assert(a && c)
                 }
+                if (a && b && !c) {
+                    err(id!!, "catch error : innocuous identifier")
+                }
 
                 val xit = Tk.Id("it",tk0.pos,0)
                 val xno = Tk.Id("ceu_$N",tk0.pos,0)
