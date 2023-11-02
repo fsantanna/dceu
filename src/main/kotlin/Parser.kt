@@ -333,16 +333,18 @@ class Parser (lexer_: Lexer)
         val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
         val xit = Tk.Id("it",tk0.pos,0)
         val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
-        println(cnd?.tostr(true))
-        println(listOf(a,b,c))
+        val scnd = cnd?.tostr(true)
+        fun scnt (id: Tk.Id): String {
+            return (cnt==null).cond { "and (${id.str} or true)" }
+        }
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
-            ( a &&  b &&  c) -> Triple(id!!, tag, "(await'(${id!!.str},${tag!!.str}) and ${cnd!!.tostr(true)})")
-            ( a && !b &&  c) -> Triple(id!!, null, "(${cnd!!.tostr(true)} ${(cnt==null).cond{"and (${id.str} or true)"}})")
-            (!a &&  b &&  c) -> Triple(xit, tag, "(await'(it,${tag!!.str}) and ${cnd!!.tostr(true)})")
-            (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${(cnt==null).cond{"and (${xno.str} or true)"}})")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(${xno.str},${cnd!!.tostr(true)}) ${(cnt==null).cond{"and (${xno.str} or true)"}})")
-            (!a && !b && c) -> Triple(xit, null, cnd!!.tostr(true))
+            ( a &&  b &&  c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str}) and $scnd ${scnt(id)})")
+            ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${scnt(id)})")
+            (!a &&  b &&  c) -> Triple(xit, tag, "(await'(${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
+            (!a &&  b && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${scnt(xno)})")
+            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(${xno.str},$scnd) ${scnt(xno)})")
+            (!a && !b && c) -> Triple(xit, null, "($scnd ${scnt(xit)})")
             else -> error("impossible case")
         }
 
@@ -683,13 +685,34 @@ class Parser (lexer_: Lexer)
                 // z                    ;; (null, null, exp)    ;; (it :_ => z)
                 val tk0 = this.tk0 as Tk.Fix
                 val (id,tag,cnd) =  this.id_tag_cnd__catch_await()
-                this.acceptFix_err("in")
-                val xcnd = this.nest("""
-                    `:ceu ceu_acc` thus { ${id!!.pos.pre()+id!!.str} ${tag.cond{it.pos.pre()+it.str}} =>
-                        ${cnd!!.tostr(true)}
+
+                val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
+                if (CEU < 99) {
+                    assert(a && c)
+                }
+
+                val xit = Tk.Id("it",tk0.pos,0)
+                val xno = Tk.Id("ceu_$N",tk0.pos,0)
+                val scnd = cnd?.tostr(true)
+                val (xid,xtag,xcnd) = when {
+                    (CEU < 99)       -> Triple(id!!, tag, scnd)
+                    (!a && !b && !c) -> Triple(xno, null, "true")
+                    ( a &&  b &&  c) -> Triple(id!!, tag, "((${id.str} is? ${tag!!.str}) and $scnd)")
+                    ( a && !b &&  c) -> Triple(id!!, null, scnd)
+                    (!a &&  b &&  c) -> Triple(xit, tag, "(($xit is? ${tag!!.str}) and $scnd)")
+                    (!a &&  b && !c) -> Triple(xno, tag, "(${xno.str} is? ${tag!!.str})")
+                    (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(${xno.str} is? $scnd)")
+                    (!a && !b && c) -> Triple(xit, null, scnd)
+                    else -> error("impossible case")
+                }
+
+                val xxcnd = this.nest("""
+                    `:ceu ceu_acc` thus { ${xid.pos.pre()+xid.str} ${xtag.cond{it.pos.pre()+it.str}} =>
+                        $xcnd
                      }
                 """)
-                Expr.Catch(tk0, xcnd as Expr.Do, this.block())
+
+                Expr.Catch(tk0, xxcnd as Expr.Do, this.block())
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 

@@ -216,7 +216,7 @@ func await' (evt, cnd) {
         (type(cnd) == :tag)      { evt is? cnd }
         (type(cnd) == :exe-task) { status(cnd) == :terminated }
         (type(cnd) == :track)    { detrack(cnd) == nil }
-        else { cnd }
+        else { false }
     }
 }    
 """.replace("\n", " ")
