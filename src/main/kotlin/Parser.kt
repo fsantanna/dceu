@@ -165,7 +165,7 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("=>")
                 val es = this.expr()
                 this.acceptFix_err(")")
-                Triple(id, Pair(null,tag), es)
+                Triple(id, tag, es)
             }
             this.checkFix("{") -> {
                 Triple(null, null, null)
@@ -198,16 +198,16 @@ class Parser (lexer_: Lexer)
                 }
 
                 val isacc = (e2 is Expr.Acc)
-                val istag = (e2 is Expr.Tag || e2 is List<*> || (isacc && this.acceptEnu("Tag")))
-                val tag = this.tk0
-                val isarr = (isacc || istag) && this.acceptFix("=>")
+                val istagclk = (e2 is Expr.Tag || e2 is List<*> || (isacc && this.acceptEnu("Tag")))
+                val tag_clk = if (e2 is Expr.Tag) this.tk0 as Tk.Tag else e2
+                val isarr = (isacc || istagclk) && this.acceptFix("=>")
                 val ret = when {
-                    ( isacc &&  istag &&  isarr) -> Triple(e1.tk as Tk.Id, Pair(null,tag as Tk.Tag), this.expr())
-                    ( isacc &&  istag && !isarr) -> Triple(e1.tk as Tk.Id, Pair(null, tag as Tk.Tag), null)
-                    ( isacc && !istag &&  isarr) -> Triple(e1.tk as Tk.Id, null, this.expr())
-                    (!isacc &&  istag &&  isarr) -> Triple(null, Pair(null, tag as Tk.Tag), this.expr())
-                    (!isacc &&  istag && !isarr) -> Triple(null, Pair(null, tag as Tk.Tag), null)
-                    (          !istag && !isarr) -> Triple(null, null, e1)
+                    ( isacc &&  istagclk &&  isarr) -> Triple(e1.tk as Tk.Id, tag_clk, this.expr())
+                    ( isacc &&  istagclk && !isarr) -> Triple(e1.tk as Tk.Id, tag_clk, null)
+                    ( isacc && !istagclk &&  isarr) -> Triple(e1.tk as Tk.Id, null, this.expr())
+                    (!isacc &&  istagclk &&  isarr) -> Triple(null, tag_clk, this.expr())
+                    (!isacc &&  istagclk && !isarr) -> Triple(null, tag_clk, null)
+                    (          !istagclk && !isarr) -> Triple(null, null, e1)
                     else -> error("impossible case")
                 }
 
@@ -750,7 +750,7 @@ class Parser (lexer_: Lexer)
                     err((tag_clk as Clock)[0].second.tk, "catch error : invalid condition")
                 }
 
-                val tag = tag_clk as Tk.Tag?
+                val tag = if (tag_clk == null) null else (tag_clk as Tk.Tag)
                 val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
                 if (CEU < 99) {
                     assert(a && c)
