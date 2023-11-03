@@ -34,7 +34,7 @@ syn keyword Statement   native copy it export
 syn keyword Statement   is is-not
 syn keyword Statement   where until while thus
 syn keyword Statement   not and or
-syn keyword Statement   await every par par-and par-or awaiting with
+syn keyword Statement   await every par par-and par-or watching with
 
 syn keyword cTodo contained TODO FIXME XXX
 

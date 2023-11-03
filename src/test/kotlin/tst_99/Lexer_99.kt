@@ -56,4 +56,22 @@ class Lexer_99 {
         assert(tks.next() is Tk.Eof)
         assert(!tks.hasNext())
     }
+
+    @Test
+    fun bb_clk() {
+        val l = lexer("1:h x :min 30:s (1) :ms")
+        val tks = l.lex().iterator()
+        assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":h" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "x" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":min" })
+        assert(tks.next().let { it is Tk.Num && it.str == "30" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":s" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "(" })
+        assert(tks.next().let { it is Tk.Num && it.str == "1" })
+        assert(tks.next().let { it is Tk.Fix && it.str == ")" })
+        assert(tks.next().let { it is Tk.Tag && it.str == ":ms" })
+        assert(tks.next() is Tk.Eof)
+        assert(!tks.hasNext())
+    }
 }

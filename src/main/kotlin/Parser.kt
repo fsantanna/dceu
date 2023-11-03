@@ -148,7 +148,7 @@ class Parser (lexer_: Lexer)
         return e
     }
 
-    fun id_tag_cnd__catch_await (): Triple<Tk.Id?,Tk.Tag?,Expr?> {
+    fun id_tag_cnd__clock__catch_await (): Triple<Tk.Id?,Tk.Tag?,Pair<List<Pair<Expr,Tk.Tag>>?,Expr?>?> {
         // ()                   ;; (null, null, null)
         // (x :Y => z)          ;; (id,   tag,  exp)
         // (x :Y)               ;; error
@@ -163,29 +163,52 @@ class Parser (lexer_: Lexer)
                 this.acceptFix_err("=>")
                 val es = this.expr()
                 this.acceptFix_err(")")
-                Triple(id, tag, es)
+                Triple(id, tag, Pair(null, es))
             }
             this.checkFix("{") -> {
-                Triple(null, null, null)
+                Triple(null, null, Pair(null,null))
             }
             (par && this.acceptFix(")")) -> {
-                Triple(null, null, null)
+                Triple(null, null, Pair(null,null))
             }
             else -> {
+                fun f (x: Expr): List<Pair<Expr,Tk.Tag>> {
+                    return if (listOf(":h",":min",":s",":ms").none { this.acceptTag(it) }) {
+                        emptyList()
+                    } else {
+                        val uni = this.tk0 as Tk.Tag
+                        val nxt = if (this.checkFix("{") || (par && this.checkFix(")"))) {
+                            emptyList()
+                        } else {
+                            f(this.expr())
+                        }
+                        listOf(Pair(x,uni)) + nxt
+                    }
+                }
+
                 val e = this.expr()
-                val isacc = (e is Expr.Acc)
-                val istag = (e is Expr.Tag || isacc && this.acceptEnu("Tag"))
+                val (clk,exp) = f(e).let {
+                    if (it.isEmpty()) {
+                        Pair(null, e)
+                    } else {
+                        Pair(it, null)
+                    }
+                }
+
+                val isacc = (exp is Expr.Acc)
+                val istag = (exp is Expr.Tag || isacc && this.acceptEnu("Tag"))
                 val tag = this.tk0
                 val isarr = (isacc || istag) && this.acceptFix("=>")
                 val ret = when {
-                    ( isacc &&  istag &&  isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, this.expr())
+                    ( isacc &&  istag &&  isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, Pair(null,this.expr()))
                     ( isacc &&  istag && !isarr) -> Triple(e.tk as Tk.Id, tag as Tk.Tag, null)
-                    ( isacc && !istag &&  isarr) -> Triple(e.tk as Tk.Id, null, this.expr())
-                    (!isacc &&  istag &&  isarr) -> Triple(null, tag as Tk.Tag, this.expr())
+                    ( isacc && !istag &&  isarr) -> Triple(e.tk as Tk.Id, null, Pair(null,this.expr()))
+                    (!isacc &&  istag &&  isarr) -> Triple(null, tag as Tk.Tag, Pair(null,this.expr()))
                     (!isacc &&  istag && !isarr) -> Triple(null, tag as Tk.Tag, null)
-                    (          !istag && !isarr) -> Triple(null, null, e)
+                    (          !istag && !isarr) -> Triple(null, null, Pair(null,e))
                     else -> error("impossible case")
                 }
+
                 if (par) {
                     this.acceptFix_err(")")
                 }
@@ -318,7 +341,33 @@ class Parser (lexer_: Lexer)
         val tk0 = this.tk0
         val pre0 = tk0.pos.pre()
         val par = this.checkFix("(")
-        val (id,tag,cnd) =  this.id_tag_cnd__catch_await()
+        val (clk,xxx) = this.id_tag_cnd__clock__catch_await()
+        val (id, tag, cnd) = when {
+            (xxx != null) -> xxx
+            (clk != null) -> {
+                Triple(null,null,this.nest("""
+                    do {
+                        var ceu_$N = ${clk.map { (e,tag) ->
+                            val s = e.tostr(true)
+                            "(" + when (tag.str) {
+                                ":h"   -> "($s * ${1000*60*60})"
+                                ":min" -> "($s * ${1000*60})"
+                                ":s"   -> "($s * ${1000})"
+                                ":ms"  -> "($s * ${1})"
+                                else   -> error("impossible case")
+                            }
+                        }.joinToString("+") + (")").repeat(clk.size)}
+                        loop {
+                            until ceu_$N <= 0
+                            await(:clock) {
+                                set ceu_$N = ceu_$N - it[0]
+                            }
+                        }
+                    }
+                """))
+            }
+            else -> error("impossible case")
+        }
         if (!par) {
             this.checkFix_err("{")
         }
@@ -687,9 +736,14 @@ class Parser (lexer_: Lexer)
                 // :Y                   ;; (null, tag,  null)   ;; (_  :Y => chk(:Y) and (_ or true))
                 // z                    ;; (null, null, Acc)    ;; (_  :_ => chk(z))
                 // z                    ;; (null, null, exp)    ;; (it :_ => z)
-                val tk0 = this.tk0 as Tk.Fix
-                val (id,tag,cnd) =  this.id_tag_cnd__catch_await()
 
+                val tk0 = this.tk0 as Tk.Fix
+                val (clk,xxx) = this.id_tag_cnd__clock__catch_await()
+                if (clk != null) {
+                    err(clk[0].first.tk, "catch error : invalid condition")
+                }
+
+                val (id,tag,cnd) = xxx!!
                 val (a,b,c) = Triple(id!=null, tag!=null, cnd!=null)
                 if (CEU < 99) {
                     assert(a && c)

@@ -487,6 +487,12 @@ class Parser_99 {
     // CATCH
 
     @Test
+    fun fg_00_catch_err() {
+        val l = lexer("catch x:s {}")
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
+    }
+    @Test
     fun fg_01_catch() {
         val l = lexer("catch () {}")
         val parser = Parser(l)
@@ -756,7 +762,7 @@ class Parser_99 {
     // AWAIT
 
     @Test
-    fun jj_00_await_err() {
+    fun ja_00_await_err() {
         val l = lexer("await")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 6) : expected expression : have end of file")
@@ -870,7 +876,7 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col 8) : expected \"{\" : have end of file")
     }
     @Test
-    fun jj_11_await() {
+    fun ja_11_await() {
         val l = lexer("await(x)")
         val parser = Parser(l)
         val e = parser.expr()
@@ -880,13 +886,13 @@ class Parser_99 {
         assert(out.contains("if ceu_40 {\nif ceu_5 {\nceu_5\n} else {\ntrue\n}\n} else {\nceu_40\n}"))
     }
     @Test
-    fun jj_05_task_err() {
+    fun ja_05_task_err() {
         val l = lexer("await spawn T() in ts")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 1) : await error : expected non-pool spawn")
     }
     @Test
-    fun jj_06_task() {
+    fun ja_06_task() {
         val l = lexer("await spawn T()")
         val parser = Parser(l)
         val e = parser.expr()
@@ -902,7 +908,7 @@ class Parser_99 {
     // EVERY
 
     @Test
-    fun jk_01_every() {
+    fun jb_01_every() {
         val l = lexer("every :X {}")
         val parser = Parser(l)
         val e = parser.expr()
@@ -922,7 +928,7 @@ class Parser_99 {
                 "}") { e.tostr() }
     }
     @Test
-    fun jk_02_every() {
+    fun jb_02_every() {
         val l = lexer("every (x:X) { println(x) }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -942,7 +948,7 @@ class Parser_99 {
                 "}") { e.tostr() }
     }
     @Test
-    fun jk_03_every() {
+    fun jb_03_every() {
         val l = lexer("every :X { until true }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -965,19 +971,19 @@ class Parser_99 {
     // WATCHING
 
     @Test
-    fun kk_01_watching() {
+    fun jc_01_watching() {
         val l = lexer("watching")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 9) : expected expression : have end of file")
     }
     @Test
-    fun kk_02_watching_err() {
+    fun jc_02_watching_err() {
         val l = lexer("watching(x)")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
     }
     @Test
-    fun kk_03_watching_err() {
+    fun jc_03_watching_err() {
         val l = lexer("watching {}")
         val parser = Parser(l)
         val e = parser.expr()
@@ -987,13 +993,13 @@ class Parser_99 {
         assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
-    fun kk_04_watching_err() {
+    fun jc_04_watching_err() {
         val l = lexer("watching(nil)")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 14) : expected \"{\" : have end of file")
     }
     @Test
-    fun kk_05_watching() {
+    fun jc_05_watching() {
         val l = lexer("watching () { }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -1003,7 +1009,7 @@ class Parser_99 {
         assert(out.contains("if ceu_5 {\nceu_5\n} else {\ntrue\n}"))
     }
     @Test
-    fun kk_06_watching() {
+    fun jc_06_watching() {
         val l = lexer("watching (x=>y) { z }")
         val parser = Parser(l)
         val e = parser.expr()
@@ -1012,11 +1018,26 @@ class Parser_99 {
         assert(e.tostr().contains("(break if ((yield(nil)) thus { x =>")) { e.tostr() }
     }
     @Test
-    fun kk_07_watching() {
+    fun jc_07_watching() {
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr().contains("await'(ceu_5,:E)")) { e.tostr() }
+    }
+
+    // CLOCK
+
+    @Test
+    fun jd_01_clock() {
+        val l = lexer("await (1:h 10:min 30:s 239:s)")
+        val parser = Parser(l)
+        val e = parser.expr()
+        val out = e.tostr()
+        println(out)
+        assert(out.contains("thus { it =>"))
+        assert(!out.contains("await'"))
+        assert(out.contains("{{>}}(it,1)"))
+        assert(out.contains("do {\n:a\n}"))
     }
 
     // METHODS

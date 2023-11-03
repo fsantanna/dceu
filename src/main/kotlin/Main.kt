@@ -89,7 +89,9 @@ val TAGS = listOf (
     ":rec",
 )) + listOf(
     ":ceu",
-)
+) + (if (CEU < 99) listOf() else listOf(
+    ":h", ":min", ":s", ":ms",
+))
 
 val GLOBALS = setOf (
     "dump", "error", "next-dict", "print", "println",
