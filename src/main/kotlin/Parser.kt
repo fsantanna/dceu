@@ -182,7 +182,15 @@ class Parser (lexer_: Lexer)
                         val nxt = if (this.checkFix("{") || (par && this.checkFix(")"))) {
                             emptyList()
                         } else {
-                            f(this.expr())
+                            this.acceptEnu_err("Tag")
+                            val s = this.tk0.str.drop(1)
+                            val n = s.toIntOrNull()
+                            val e = if (n != null) {
+                                Expr.Num(Tk.Num(s, this.tk0.pos))
+                            } else {
+                                Expr.Acc(Tk.Id(s, this.tk0.pos, 0))
+                            }
+                            f(e)
                         }
                         listOf(Pair(uni,x)) + nxt
                     }
@@ -193,6 +201,7 @@ class Parser (lexer_: Lexer)
                     if (it.isEmpty()) {
                         e1
                     } else {
+                        //println(it)
                         it
                     }
                 }
@@ -360,34 +369,11 @@ class Parser (lexer_: Lexer)
             else -> error("impossible case)")
         }
 
-        fun fclk (clk: Clock): Expr.Do {
-            return this.nest("""
-                do {
-                    var ceu_$N = ${clk.map { (tag,e) ->
-                        val s = e.tostr(true)
-                        "(" + when (tag.str) {
-                            ":h"   -> "($s * ${1000*60*60})"
-                            ":min" -> "($s * ${1000*60})"
-                            ":s"   -> "($s * ${1000})"
-                            ":ms"  -> "($s * ${1})"
-                            else   -> error("impossible case")
-                        }
-                    }.joinToString("+") + (")").repeat(clk.size)}
-                    loop {
-                        until ceu_$N <= 0
-                        await(:clock) {
-                            set ceu_$N = ceu_$N - it[0]
-                        }
-                    }
-                }
-                """) as Expr.Do
-        }
-
         val (a,b,c) = Triple(id!=null, tag_clk!=null, cnd!=null)
         val (x,y) = Pair(tag_clk is Tk.Tag, tag_clk is List<*>)
         //println(listOf(a,b,c,x,y,tag_clk))
         val tag = if (x) tag_clk as Tk.Tag else null
-        val clk1 = Tk.Tag(":clock", tk0.pos)
+        val clk1 = Tk.Tag(":Clock", tk0.pos)
         val clk2 = if (y) tag_clk as Clock else null
         if (a && b && !c && cnt==null) {
             err(id!!, "await error : innocuous identifier")
@@ -395,9 +381,33 @@ class Parser (lexer_: Lexer)
         val xit = Tk.Id("it",tk0.pos,0)
         val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
         val scnd = cnd?.tostr(true)
+
         fun scnt (id: Tk.Id): String {
             return (cnt==null).cond { "and (${id.str} or true)" }
         }
+
+        fun fclk (id: String): String {
+            return """do {
+                    println(ceu_clk_$n, $id)
+                    set ceu_clk_$n = ceu_clk_$n - $id.ms
+                    if (ceu_clk_$n <= 0) {
+                        set ceu_clk_$n = ${clk2!!.map { (tag,e) ->
+                            val s = e.tostr(true)
+                            "(" + when (tag.str) {
+                                ":h"   -> "($s * ${1000*60*60})"
+                                ":min" -> "($s * ${1000*60})"
+                                ":s"   -> "($s * ${1000})"
+                                ":ms"  -> "($s * ${1})"
+                                else   -> error("impossible case")
+                            }
+                        }.joinToString("+") + (")").repeat(clk2!!.size)}
+                        true
+                    } else {
+                        false
+                    }
+                }"""
+        }
+
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
             ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${scnt(id)})")
@@ -407,10 +417,10 @@ class Parser (lexer_: Lexer)
             ( a &&  x && !c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str} ${scnt(id)}))")
             (!a &&  x &&  c) -> Triple(xit, tag, "(await'(${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
             (!a &&  x && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${scnt(xno)})")
-            ( a &&  y &&  c) -> Triple(id!!, clk1, "(${fclk(clk2!!)} and $scnd ${scnt(id)})")
-            ( a &&  y && !c) -> Triple(id!!, clk1, "(${fclk(clk2!!)} ${scnt(id)}))")
-            (!a &&  y &&  c) -> Triple(xit, clk1, "(${fclk(clk2!!)} and $scnd ${scnt(xit)})")
-            (!a &&  y && !c) -> Triple(xno, clk1, "(${fclk(clk2!!)} ${scnt(xno)})")
+            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${fclk(id!!.str)} and $scnd ${scnt(id)})")
+            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${fclk(id!!.str)} ${scnt(id)}))")
+            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(${xit.str},:Clock) and ${fclk(xit.str)} and $scnd ${scnt(xit)})")
+            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(${xno.str},:Clock) and ${fclk(xno.str)} ${scnt(xno)})")
             else -> error("impossible case")
         }
 
@@ -421,7 +431,7 @@ class Parser (lexer_: Lexer)
                         ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
                     })
                 }
-            """
+            """ //.let { println(it);it }
             "every" -> """
                 ${pre0}loop {
                     ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
@@ -444,7 +454,12 @@ class Parser (lexer_: Lexer)
                 }
             """
             else -> error("impossible case")
-        })
+        }.let {
+            if (!y) it else """do {
+                    var ceu_clk_$n = 0
+                    $it
+                }"""
+        }) //.let { println(it);it })
     }
 
     fun method (f: Expr, e: Expr, pre: Boolean): Expr {

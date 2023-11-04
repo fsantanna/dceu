@@ -1170,6 +1170,56 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
 
+    // CLOCK
+
+    @Test
+    fun km_00_clock_err() {
+        val out = test("""
+            spawn task {
+                await :2:ms
+            }
+        """)
+        assert(out == "TODO - move to parser") { out }
+    }
+    @Test
+    fun km_01_clock() {
+        val out = test("""
+            $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
+            data :Clock = [ms]
+            spawn task {
+                await (:123:ms)
+                println(:ok)
+            }
+            println(:0)
+            broadcast(:Clock [1])
+            println(:1)
+            broadcast(:Clock [1])
+            println(:2)
+        """)
+        assert(out == ":0\n1\n:ok\n2\n") { out }
+    }
+    @Test
+    fun km_02_clock() {
+        val out = test("""
+            $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
+            data :Clock = [ms]
+            spawn task {
+                val x = 10
+                every :(x):ms {
+                    println(x)
+                    set x = x - 1
+                }
+                println(:ok)
+            }
+            println(:0)
+            broadcast(:Clock [1])
+            println(:1)
+            broadcast(:Clock [1])
+            println(:2)
+        """)
+        assert(out == ":0\n1\n:ok\n2\n") { out }
+    }
+
     // WATCHING
 
     @Test

@@ -1,3 +1,5 @@
+data :Clock = [ms]
+
 ;; is', is-not'
 
 func to-bool (v) {
