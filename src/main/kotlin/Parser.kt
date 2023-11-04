@@ -174,54 +174,62 @@ class Parser (lexer_: Lexer)
                 Triple(null, null, null)
             }
             else -> {
-                fun f (x: Expr): Clock {
-                    return if (listOf(":h",":min",":s",":ms").none { this.acceptTag(it) }) {
-                        emptyList()
-                    } else {
-                        val uni = this.tk0 as Tk.Tag
-                        val nxt = if (this.checkFix("{") || (par && this.checkFix(")"))) {
-                            emptyList()
-                        } else {
-                            this.acceptEnu_err("Tag")
-                            val s = this.tk0.str.drop(1)
+                fun fclk (): Any {  // (Either Expr Clock)
+                    val e = this.expr()
+
+                    fun isuni (): Boolean {
+                        return listOf(":h",":min",":s",":ms").any { this.acceptTag(it) }
+                    }
+
+                    fun aux (tag: Tk.Tag): Clock {
+                        val e = let {
+                            val s = tag.str.drop(1)
                             val n = s.toIntOrNull()
-                            val e = if (n != null) {
-                                Expr.Num(Tk.Num(s, this.tk0.pos))
+                            if (n != null) {
+                                Expr.Num(Tk.Num(s, tag.pos))
                             } else {
-                                Expr.Acc(Tk.Id(s, this.tk0.pos, 0))
+                                Expr.Acc(Tk.Id(s, tag.pos, 0))
                             }
-                            f(e)
                         }
-                        listOf(Pair(uni,x)) + nxt
+                        val uni = this.tk0 as Tk.Tag
+                        val ret = listOf(Pair(uni,e))
+                        return if (this.checkFix("{") || (par && this.checkFix(")"))) {
+                            ret
+                        } else {
+                            this.acceptEnu_err("Tag")   // expr
+                            val tag = this.tk0 as Tk.Tag
+                            if (!isuni()) {                 // unit
+                                error("TODO")
+                            }
+                            ret + aux(tag)
+                        }
+                    }
+
+                    return when {
+                        (e !is Expr.Tag) -> e
+                        !isuni() -> e
+                        else -> aux(e.tk as Tk.Tag)
                     }
                 }
 
-                val e1 = this.expr()
-                val e2 = f(e1).let {
-                    if (it.isEmpty()) {
-                        e1
-                    } else {
-                        //println(it)
-                        it
-                    }
-                }
-
-                val isacc = (e2 is Expr.Acc)
+                val e = fclk()
+                //println(e)
+                val isacc = (e is Expr.Acc)
                 val (istag,tag_clk) = when {
-                    (e2 is Expr.Tag) -> Pair(true, e2.tk as Tk.Tag)
-                    (e2 is List<*>) -> Pair(true, e2)
+                    (e is Expr.Tag) -> Pair(true, e.tk as Tk.Tag)
+                    (e is List<*>) -> Pair(true, e)
                     (isacc && this.acceptEnu("Tag")) -> Pair(true, this.tk0 as Tk.Tag)
                     else -> Pair(false, null)
                 }
                 val isarr = (isacc || istag) && this.acceptFix("=>")
                 //println(listOf(isacc, istag, isarr, e2))
                 val ret = when {
-                    ( isacc &&  istag &&  isarr) -> Triple(e1.tk as Tk.Id, tag_clk, this.expr())
-                    ( isacc &&  istag && !isarr) -> Triple(e1.tk as Tk.Id, tag_clk, null)
-                    ( isacc && !istag &&  isarr) -> Triple(e1.tk as Tk.Id, null, this.expr())
+                    ( isacc &&  istag &&  isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, tag_clk, this.expr())
+                    ( isacc &&  istag && !isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, tag_clk, null)
+                    ( isacc && !istag &&  isarr) -> Triple((e as Expr.Acc).tk as Tk.Id, null, this.expr())
                     (!isacc &&  istag &&  isarr) -> Triple(null, tag_clk, this.expr())
                     (!isacc &&  istag && !isarr) -> Triple(null, tag_clk, null)
-                    (          !istag && !isarr) -> Triple(null, null, e1)
+                    (          !istag && !isarr) -> Triple(null, null, e as Expr)
                     else -> error("impossible case")
                 }
 
@@ -386,27 +394,27 @@ class Parser (lexer_: Lexer)
             return (cnt==null).cond { "and (${id.str} or true)" }
         }
 
-        fun fclk (id: String): String {
-            return """do {
-                    println(ceu_clk_$n, $id)
-                    set ceu_clk_$n = ceu_clk_$n - $id.ms
-                    if (ceu_clk_$n <= 0) {
-                        set ceu_clk_$n = ${clk2!!.map { (tag,e) ->
-                            val s = e.tostr(true)
-                            "(" + when (tag.str) {
-                                ":h"   -> "($s * ${1000*60*60})"
-                                ":min" -> "($s * ${1000*60})"
-                                ":s"   -> "($s * ${1000})"
-                                ":ms"  -> "($s * ${1})"
-                                else   -> error("impossible case")
-                            }
-                        }.joinToString("+") + (")").repeat(clk2!!.size)}
-                        true
-                    } else {
-                        false
+        val (kdcl,kchk) = Pair (
+            """
+                var ceu_clk_$n = ${clk2!!.map { (tag,e) ->
+                    val s = e.tostr(true)
+                    "(" + when (tag.str) {
+                        ":h"   -> "($s * ${1000*60*60})"
+                        ":min" -> "($s * ${1000*60})"
+                        ":s"   -> "($s * ${1000})"
+                        ":ms"  -> "($s * ${1})"
+                        else   -> error("impossible case")
                     }
+                }.joinToString("+") + (")").repeat(clk2!!.size)}
+            """,
+            { id: String ->
+                """do {
+                    ;;println(:AWAKE, $id, ceu_clk_$n)
+                    set ceu_clk_$n = ceu_clk_$n - $id.ms
+                    (ceu_clk_$n <= 0)
                 }"""
-        }
+            }
+        )
 
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
@@ -417,10 +425,10 @@ class Parser (lexer_: Lexer)
             ( a &&  x && !c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str} ${scnt(id)}))")
             (!a &&  x &&  c) -> Triple(xit, tag, "(await'(${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
             (!a &&  x && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${scnt(xno)})")
-            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${fclk(id!!.str)} and $scnd ${scnt(id)})")
-            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${fclk(id!!.str)} ${scnt(id)}))")
-            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(${xit.str},:Clock) and ${fclk(xit.str)} and $scnd ${scnt(xit)})")
-            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(${xno.str},:Clock) and ${fclk(xno.str)} ${scnt(xno)})")
+            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${scnt(id)})")
+            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${kchk(id!!.str)} ${scnt(id)}))")
+            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${scnt(xit)})")
+            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(${xno.str},:Clock) and ${kchk(xno.str)} ${scnt(xno)})")
             else -> error("impossible case")
         }
 
@@ -455,10 +463,12 @@ class Parser (lexer_: Lexer)
             """
             else -> error("impossible case")
         }.let {
-            if (!y) it else """do {
-                    var ceu_clk_$n = 0
+            if (!y) it else """
+                do {
+                    $kdcl
                     $it
-                }"""
+                }
+            """
         }) //.let { println(it);it })
     }
 

@@ -1187,7 +1187,7 @@ class Exec_99 {
             $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
             data :Clock = [ms]
             spawn task {
-                await (:123:ms)
+                await (:2:ms)
                 println(:ok)
             }
             println(:0)
@@ -1196,7 +1196,7 @@ class Exec_99 {
             broadcast(:Clock [1])
             println(:2)
         """)
-        assert(out == ":0\n1\n:ok\n2\n") { out }
+        assert(out == ":0\n:1\n:ok\n:2\n") { out }
     }
     @Test
     fun km_02_clock() {

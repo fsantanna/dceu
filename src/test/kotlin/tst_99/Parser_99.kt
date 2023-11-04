@@ -487,8 +487,15 @@ class Parser_99 {
     // CATCH
 
     @Test
-    fun fg_00_catch_err() {
+    fun fg_00_a_catch_err() {
         val l = lexer("catch x:s {}")
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
+        assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : innocuous identifier")
+    }
+    @Test
+    fun fg_00_b_catch_err() {
+        val l = lexer("catch :x:s {}")
         val parser = Parser(l)
         assert(trap { parser.expr() } == "anon : (lin 1, col 7) : catch error : invalid condition")
     }
@@ -1029,11 +1036,11 @@ class Parser_99 {
 
     @Test
     fun jd_01_clock() {
-        val l = lexer("await (1:h 10:min 30:s 239:s)")
+        val l = lexer("await (:1:h :10:min :30:s :239:s)")
         val parser = Parser(l)
         val e = parser.expr()
         val out = e.tostr()
-        println(out)
+        //println(out)
         assert(out.contains("thus { it =>"))
         assert(!out.contains("await'"))
         assert(out.contains("{{>}}(it,1)"))
