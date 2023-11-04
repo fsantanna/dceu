@@ -1173,15 +1173,6 @@ class Exec_99 {
     // CLOCK
 
     @Test
-    fun km_00_clock_err() {
-        val out = test("""
-            spawn task {
-                await :2:ms
-            }
-        """)
-        assert(out == "TODO - move to parser") { out }
-    }
-    @Test
     fun km_01_clock() {
         val out = test("""
             $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT

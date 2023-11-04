@@ -395,7 +395,7 @@ class Parser (lexer_: Lexer)
         }
 
         val (kdcl,kchk) = Pair (
-            """
+            { """
                 var ceu_clk_$n = ${clk2!!.map { (tag,e) ->
                     val s = e.tostr(true)
                     "(" + when (tag.str) {
@@ -406,7 +406,7 @@ class Parser (lexer_: Lexer)
                         else   -> error("impossible case")
                     }
                 }.joinToString("+") + (")").repeat(clk2!!.size)}
-            """,
+            """ },
             { id: String ->
                 """do {
                     ;;println(:AWAKE, $id, ceu_clk_$n)
@@ -465,7 +465,7 @@ class Parser (lexer_: Lexer)
         }.let {
             if (!y) it else """
                 do {
-                    $kdcl
+                    ${kdcl()}
                     $it
                 }
             """

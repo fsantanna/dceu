@@ -1035,16 +1035,27 @@ class Parser_99 {
     // CLOCK
 
     @Test
-    fun jd_01_clock() {
+    fun jd_01_clock_err() {
+        val l = lexer("""
+            spawn task {
+                await :2:ms
+            }
+        """)
+        val parser = Parser(l)
+        //assert(trap { parser.expr() } == "anon : (lin 1, col 12) : expected \"{\" : have end of file")
+        assert(trap { parser.expr() } == "anon : (lin 4, col 13) : expected tag : have \"}\"")
+    }
+    @Test
+    fun jd_02_clock() {
         val l = lexer("await (:1:h :10:min :30:s :239:s)")
         val parser = Parser(l)
         val e = parser.expr()
         val out = e.tostr()
         //println(out)
-        assert(out.contains("thus { it =>"))
-        assert(!out.contains("await'"))
-        assert(out.contains("{{>}}(it,1)"))
-        assert(out.contains("do {\n:a\n}"))
+        assert(out.contains("var ceu_clk_5 = {{+}}({{*}}(1,3600000),{{+}}({{*}}(10,60000),{{+}}({{*}}(30,1000),{{*}}(239,1000)))))"))
+        assert(out.contains("thus { ceu_5 :Clock =>"))
+        assert(out.contains("await'(ceu_5,:Clock)"))
+        assert(out.contains("{{<=}}(ceu_clk_5,0)"))
     }
 
     // METHODS
