@@ -990,7 +990,7 @@ class Exec_99 {
     @Test
     fun kk_03_await() {
         val out = test("""
-            $XAWAIT
+            $IS ; $XAWAIT
             data :x = []
             spawn task {
                 println(0)
@@ -1010,7 +1010,7 @@ class Exec_99 {
     @Test
     fun kk_04_await() {
         val out = test("""
-            $XAWAIT
+            $IS ; $XAWAIT
             data :x = []
             spawn task {
                 println(0)
@@ -1068,7 +1068,7 @@ class Exec_99 {
     @Test
     fun kk_08_await() {
         val out = test("""
-            $XAWAIT
+            $IS ; $XAWAIT
             spawn task {
                 await (it==2)
                 println(2)
@@ -1120,7 +1120,7 @@ class Exec_99 {
     fun km_01_every() {
         val out = test(
             """
-            ${XAWAIT}
+            $IS ; $XAWAIT
             task T () {
                 println(:1)
                 every true {
@@ -1138,7 +1138,7 @@ class Exec_99 {
     fun km_02_every() {
         val out = test(
             """
-            ${XAWAIT}
+            $IS ; $XAWAIT
             task T () {
                 println(:1)
                 every true {
@@ -1155,7 +1155,7 @@ class Exec_99 {
     @Test
     fun km_03_every() {
         val out = test("""
-            ${XAWAIT}
+            $IS ; $XAWAIT
             data :X = []
             spawn task {
                 par {
@@ -1175,7 +1175,7 @@ class Exec_99 {
     @Test
     fun ll_01_watching() {
         val out = test("""
-            ${XAWAIT}
+            $IS ; $XAWAIT
             spawn task {
                 watching (it==1) {
                     defer { println(:z) }

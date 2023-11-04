@@ -175,54 +175,6 @@ fun exec (cmd: String): Pair<Boolean,String> {
     return exec(cmd.split(' '))
 }
 
-val PLUS = """
-    val {{+}} = func (v1, v2) {
-        `:number (${D}v1.Number + ${D}v2.Number)`
-    }    
-    val {{-}} = func (v1, v2) {
-        `:number (${D}v1.Number - ${D}v2.Number)`
-    }    
-""".replace("\n", " ")
-fun OR (v1:String, v2:String): String {
-    N++
-    return "($v1 thus { it_$N => if it_$N { it_$N } else { $v2 } })"
-}
-fun AND (v1:String, v2:String): String {
-    N++
-    return "(($v1) thus { it_$N => if it_$N { $v2 } else { $v1 } })"
-}
-fun AWAIT (v:String="(type(it) /= :exe-task)"): String {
-    return """
-        loop {
-            break if yield(nil) thus { it =>
-                ${AND(v, OR("it","true"))}
-            }
-        }
-    """.replace("\n", " ")
-}
-val IS = """
-    func is' (v1,v2) {
-        ifs {
-            (v1 == v2)         { true  }
-            (type(v2) /= :tag) { false }
-            (type(v1) == v2)   { true  }
-            tags(v1,v2)        { true  }
-            else => false
-        }
-    }
-""".replace("\n", " ")
-val XAWAIT = """
-$IS
-func await' (evt, cnd) {
-    ifs {
-        (type(cnd) == :tag)      { evt is? cnd }
-        (type(cnd) == :exe-task) { status(cnd) == :terminated }
-        (type(cnd) == :track)    { detrack(cnd) == nil }
-        else { false }
-    }
-}    
-""".replace("\n", " ")
-
 fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, out: String, args: List<String>): String {
     if (verbose) {
         System.err.println("... parsing ...")
@@ -237,7 +189,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
         }
         return e.message!! + "\n"
     }
-    //println(es.tostr(true))
+    //println(es.tostr())
     //println(es)
     val c = try {
         if (verbose) {
