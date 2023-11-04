@@ -238,21 +238,15 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                     }
                 }
                 (x == ':') -> {
-                    val (n1,x1) = read2()
-                    if (CEU>=99 && x1=='(') {
-                        yield(Tk.Fix(":(", pos))
-                    } else {
-                        unread2(n1)
-                        val tag = // no '_' b/c of C ids: X.Y -> X_Y
-                            x + read2While2 { a,b -> a.isLetterOrDigit() || ((a=='.' || a=='-') && b.isLetter()) }
-                        if (tag.length < 2) {
-                            err(pos, "tag error : expected identifier")
-                        }
-                        if (tag.count { it == '.' } > 3) {
-                            err(pos, "tag error : excess of '.' : max hierarchy of 4")
-                        }
-                        yield(Tk.Tag(tag, pos))
+                    val tag = // no '_' b/c of C ids: X.Y -> X_Y
+                        x + read2While2 { a,b -> a.isLetterOrDigit() || ((a=='.' || a=='-') && b.isLetter()) }
+                    if (tag.length < 2) {
+                        err(pos, "tag error : expected identifier")
                     }
+                    if (tag.count { it == '.' } > 3) {
+                        err(pos, "tag error : excess of '.' : max hierarchy of 4")
+                    }
+                    yield(Tk.Tag(tag, pos))
                 }
                 (x.isLetter() || x=='_') -> {
                     val id = x + read2While2 { x,y -> x.isLetterOrDigit() || x in listOf('_','\'','?','!') || (x=='-' && y.isLetter()) }
