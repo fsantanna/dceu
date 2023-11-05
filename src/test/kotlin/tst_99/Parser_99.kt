@@ -1166,6 +1166,18 @@ class Parser_99 {
         assert(trap { parser.expr() } == "anon : (lin 1, col XX) : spawn error : expected call")
     }
 
+    // CAST
+
+    @Test
+    fun oq_01_cast() {
+        val l = lexer("v.(:X).x")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "((v) thus { ceu_8 :X =>\n" +
+                "ceu_8[:x]\n" +
+                "})") { e.tostr() }
+    }
+
     // LAMBDA
 
     @Test

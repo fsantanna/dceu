@@ -1224,7 +1224,16 @@ class Parser (lexer_: Lexer)
                         Expr.Index(e.tk, e, Expr.Num(num))
                     }
                     (CEU>=99 && this.acceptFix("(")) -> {
-                        TODO()
+                        val n = N
+                        this.acceptEnu_err("Tag")
+                        val tag = this.tk0
+                        this.acceptFix_err(")")
+                        val acc = Expr.Acc(Tk.Id("ceu_$n",e.tk.pos,0))
+                        this.nest("""
+                            ${e.tostr(true)} thus { ceu_$n ${tag.str} =>
+                                ${this.expr_4_suf(acc).tostr(true)}
+                            }
+                        """) //.let { println(it);it })
                     }
                     this.acceptEnu_err("Id") -> Expr.Index(e.tk, e, Expr.Tag(Tk.Tag(':' + this.tk0.str, this.tk0.pos)))
                     else -> error("impossible case")

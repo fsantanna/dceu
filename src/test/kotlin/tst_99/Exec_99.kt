@@ -1307,6 +1307,18 @@ class Exec_99 {
         assert(out == "10\n") { out }
     }
 
+    // CAST
+
+    @Test
+    fun oq_01_cast() {
+        val out = test("""
+            data :X = [x]
+            val t = [[10]]
+            println(t[0].(:X).x)
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // WHERE
 
     @Test
