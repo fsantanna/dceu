@@ -345,6 +345,18 @@ class Exec_99 {
         assert(out == "anon : (lin 4, col 17) : declaration error : variable \"it\" is already declared\n") { out }
 
     }
+    @Test
+    fun ee_04_it() {
+        val out = test("""
+            val it = 10
+            println(__it)
+            do {
+                val it = 99
+            }            
+        """)
+        assert(out == "10\n") { out }
+
+    }
 
     // IFS
 
@@ -449,6 +461,20 @@ class Exec_99 {
             }
         """)
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun fg_03_iter() {
+        val out = test("""
+            task T () {
+                await()
+            }
+            val ts = tasks()
+            spawn T() in ts
+            loop t in ts {
+                println(t)
+            }
+        """, true)
+        assert(out.contains("track: 0x")) { out }
     }
     @Test
     fun fh_02_num() {
@@ -1116,6 +1142,22 @@ class Exec_99 {
             broadcast (2)
         """)
         assert(out == "2\n") { out }
+    }
+    @Test
+    fun kk_09_await_it() {
+        val out = test("""
+            $IS $XAWAIT
+            data :X = []
+            spawn task {
+                await :X {
+                    nil thus {
+                        println(it)
+                    }
+                }
+            }
+            broadcast(:X [])
+        """)
+        assert(out == "nil\n") { out }
     }
 
     // AWAIT / TASK

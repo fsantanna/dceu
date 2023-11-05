@@ -407,7 +407,7 @@ class Parser (lexer_: Lexer)
         val kdcl = { "var ceu_clk_$n = ${kexp()}" }
         val kchk = { id: String -> """do {
             ;;println(:AWAKE, $id, ceu_clk_$n)
-            set ceu_clk_$n = ceu_clk_$n - $id.ms
+            set ceu_clk_$n = ceu_clk_$n - __$id.ms
             if (ceu_clk_$n > 0) {
                 false
             } else {
@@ -419,16 +419,16 @@ class Parser (lexer_: Lexer)
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
             ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${scnt(id)})")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(${xno.str},$scnd) ${scnt(xno)})")
+            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(__${xno.str},$scnd) ${scnt(xno)})")
             (!a && !b &&  c) -> Triple(xit, null, "($scnd ${scnt(xit)})")
-            ( a &&  x &&  c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str}) and $scnd ${scnt(id)})")
-            ( a &&  x && !c) -> Triple(id!!, tag, "(await'(${id.str},${tag!!.str} ${scnt(id)}))")
-            (!a &&  x &&  c) -> Triple(xit, tag, "(await'(${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
-            (!a &&  x && !c) -> Triple(xno, tag, "(await'(${xno.str},${tag!!.str}) ${scnt(xno)})")
-            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${scnt(id)})")
-            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(${id!!.str},:Clock) and ${kchk(id!!.str)} ${scnt(id)}))")
-            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${scnt(xit)})")
-            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(${xno.str},:Clock) and ${kchk(xno.str)} ${scnt(xno)})")
+            ( a &&  x &&  c) -> Triple(id!!, tag, "(await'(__${id.str},${tag!!.str}) and $scnd ${scnt(id)})")
+            ( a &&  x && !c) -> Triple(id!!, tag, "(await'(__${id.str},${tag!!.str} ${scnt(id)}))")
+            (!a &&  x &&  c) -> Triple(xit, tag, "(await'(__${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
+            (!a &&  x && !c) -> Triple(xno, tag, "(await'(__${xno.str},${tag!!.str}) ${scnt(xno)})")
+            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(__${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${scnt(id)})")
+            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(__${id!!.str},:Clock) and ${kchk(id!!.str)} ${scnt(id)}))")
+            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(__${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${scnt(xit)})")
+            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(__${xno.str},:Clock) and ${kchk(xno.str)} ${scnt(xno)})")
             else -> error("impossible case")
         }
 
@@ -915,7 +915,14 @@ class Parser (lexer_: Lexer)
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)
-            this.acceptEnu("Id")   -> Expr.Acc(this.tk0 as Tk.Id)
+            this.acceptEnu("Id")   -> when {
+                (CEU < 99) -> Expr.Acc(this.tk0 as Tk.Id)
+                (this.tk0.str.take(2) != "__") -> Expr.Acc(this.tk0 as Tk.Id)
+                else -> this.tk0.let {
+                    it as Tk.Id
+                    Expr.Acc(it.copy(str_=it.str.drop(2)), true)
+                }
+            }
             this.acceptEnu("Tag")  -> Expr.Tag(this.tk0 as Tk.Tag)
             this.acceptFix("nil")   -> Expr.Nil(this.tk0 as Tk.Fix)
             this.acceptFix("false") -> Expr.Bool(this.tk0 as Tk.Fix)

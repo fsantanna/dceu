@@ -333,9 +333,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (CEU >= 99) {
                     val prv = uses[dcl]
                     when (prv) {
-                        null -> uses[dcl] = this
                         is Expr.Dcl -> err(prv.tk, "declaration error : variable \"${prv.id.str}\" is already declared")
-                        else -> {}
+                        is Expr.Acc -> {}
+                        else -> {
+                            if (!this.ign) {
+                                uses[dcl] = this        // ignore __acc
+                            }
+                        }
                     }
                 }
             }

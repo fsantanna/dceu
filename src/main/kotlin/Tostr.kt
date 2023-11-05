@@ -69,7 +69,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 
         is Expr.Nat    -> "```" + (this.tk_.tag ?: "") + " " + this.tk.str + "```"
-        is Expr.Acc    -> this.tk_.tostr()
+        is Expr.Acc    -> this.ign.cond { "__" } + this.tk_.tostr()
         is Expr.Nil    -> this.tk.str
         is Expr.Tag    -> this.tk.str
         is Expr.Bool   -> this.tk.str

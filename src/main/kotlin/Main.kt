@@ -145,7 +145,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)
-    data class Acc    (val tk_: Tk.Id): Expr(N++, tk_)
+    data class Acc    (val tk_: Tk.Id, val ign: Boolean=false): Expr(N++, tk_)
     data class Nil    (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Tag    (val tk_: Tk.Tag): Expr(N++, tk_)
     data class Bool   (val tk_: Tk.Fix): Expr(N++, tk_)

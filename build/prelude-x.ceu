@@ -187,6 +187,11 @@ export [iter] {
         itr.f(itr)
     }
 
+    func iter-tasks (itr :Iterator) {
+        set itr.i = next-tasks(itr.s,itr.i)
+        itr.i
+    }
+
     func iter (v, tp) {
         ifs v {
             is? :Iterator => v
@@ -196,6 +201,7 @@ export [iter] {
             is? :func     => :Iterator [v]
             is? :coro     => :Iterator [iter-coro, v]
             is? :x-coro   => :Iterator [iter-xcoro, v]
+            is? :tasks    => :Iterator [iter-tasks, v, nil, nil]
         }
     }
 }
@@ -204,7 +210,7 @@ func next (v, ...) {
     ifs v {
         is? :x-coro   => resume v(...)
         is? :dict     => next-dict(v, ...)
-        is? :Iterator => v.0(v)
+        is? :Iterator => v.f(v)
         else          => throw(:error)
     }
 }
