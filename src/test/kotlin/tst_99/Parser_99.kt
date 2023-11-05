@@ -1055,7 +1055,7 @@ class Parser_99 {
         assert(out.contains("var ceu_clk_5 = {{+}}({{*}}(1,3600000),{{+}}({{*}}(10,60000),{{+}}({{*}}(30,1000),{{*}}(239,1000)))))"))
         assert(out.contains("thus { ceu_5 :Clock =>"))
         assert(out.contains("await'(ceu_5,:Clock)"))
-        assert(out.contains("{{<=}}(ceu_clk_5,0)"))
+        assert(out.contains("{{>}}(ceu_clk_5,0)")) { out }
     }
 
     // METHODS

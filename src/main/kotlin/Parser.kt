@@ -394,27 +394,27 @@ class Parser (lexer_: Lexer)
             return (cnt==null).cond { "and (${id.str} or true)" }
         }
 
-        val (kdcl,kchk) = Pair (
-            { """
-                var ceu_clk_$n = ${clk2!!.map { (tag,e) ->
-                    val s = e.tostr(true)
-                    "(" + when (tag.str) {
-                        ":h"   -> "($s * ${1000*60*60})"
-                        ":min" -> "($s * ${1000*60})"
-                        ":s"   -> "($s * ${1000})"
-                        ":ms"  -> "($s * ${1})"
-                        else   -> error("impossible case")
-                    }
-                }.joinToString("+") + (")").repeat(clk2!!.size)}
-            """ },
-            { id: String ->
-                """do {
-                    ;;println(:AWAKE, $id, ceu_clk_$n)
-                    set ceu_clk_$n = ceu_clk_$n - $id.ms
-                    (ceu_clk_$n <= 0)
-                }"""
+        val kexp = { clk2!!.map { (tag,e) ->
+            val s = e.tostr(true)
+            "(" + when (tag.str) {
+                ":h"   -> "($s * ${1000*60*60})"
+                ":min" -> "($s * ${1000*60})"
+                ":s"   -> "($s * ${1000})"
+                ":ms"  -> "($s * ${1})"
+                else   -> error("impossible case")
             }
-        )
+        }.joinToString("+") + (")").repeat(clk2!!.size) }
+        val kdcl = { "var ceu_clk_$n = ${kexp()}" }
+        val kchk = { id: String -> """do {
+            ;;println(:AWAKE, $id, ceu_clk_$n)
+            set ceu_clk_$n = ceu_clk_$n - $id.ms
+            if (ceu_clk_$n > 0) {
+                false
+            } else {
+                set ceu_clk_$n = ${kexp()}
+                true
+            }
+        }""" }
 
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
@@ -1177,6 +1177,7 @@ class Parser (lexer_: Lexer)
         if (!ok) {
             return e
         }
+
         return this.expr_4_suf(
             when (this.tk0.str) {
                 "[" -> {

@@ -1195,20 +1195,25 @@ class Exec_99 {
             $IS ; $PLUS ; $MULT ; $COMP ; $XAWAIT
             data :Clock = [ms]
             spawn task {
-                val x = 10
-                every :(x):ms {
-                    println(x)
+                var x = 10
+                every :x:ms {
+                    println(:x, x)
                     set x = x - 1
                 }
                 println(:ok)
             }
             println(:0)
-            broadcast(:Clock [1])
+            broadcast(:Clock [5])
+            broadcast(:Clock [5])
             println(:1)
-            broadcast(:Clock [1])
+            broadcast(:Clock [5])
+            broadcast(:Clock [5])
             println(:2)
+            broadcast(:Clock [5])
+            broadcast(:Clock [5])
+            println(:3)
         """)
-        assert(out == ":0\n1\n:ok\n2\n") { out }
+        assert(out == ":0\n:x\t10\n:1\n:x\t9\n:2\n:x\t8\n:3\n") { out }
     }
 
     // WATCHING
