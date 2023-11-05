@@ -1146,7 +1146,7 @@ class Exec_99 {
     @Test
     fun kk_09_await_it() {
         val out = test("""
-            $IS $XAWAIT
+            $IS ; $XAWAIT
             data :X = []
             spawn task {
                 await :X {
@@ -1158,6 +1158,20 @@ class Exec_99 {
             broadcast(:X [])
         """)
         assert(out == "nil\n") { out }
+    }
+    @Test
+    fun kk_10_await_escape() {
+        val out = test("""
+            $IS ; $XAWAIT
+            spawn task {
+                println(await(true))
+            }
+            do {
+                val e = []
+                broadcast(e)
+            }
+        """)
+        assert(out == "true\n") { out }
     }
 
     // AWAIT / TASK

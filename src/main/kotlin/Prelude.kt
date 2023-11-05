@@ -70,13 +70,19 @@ val IS = """
 """.replace("\n", " ")
 
 val XAWAIT = """
-func await' (evt, cnd) {
+func await-chk (evt, cnd) {
     ifs {
         (type(cnd) == :tag)      { evt is? cnd }
         (type(cnd) == :exe-task) { status(cnd) == :terminated }
         (type(cnd) == :track)    { detrack(cnd) == nil }
         else { false }
     }
-}    
+}
+
+func await-ret (evt) {
+    `:bool ${D}evt.type>=CEU_VALUE_DYNAMIC` or
+    `:bool ceu_as_bool(${D}evt)`            or
+    evt
+}
 """.replace("\n", " ")
 

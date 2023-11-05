@@ -390,8 +390,8 @@ class Parser (lexer_: Lexer)
         val xno = if (cnt != null) xit else Tk.Id("ceu_$n",tk0.pos,0)
         val scnd = cnd?.tostr(true)
 
-        fun scnt (id: Tk.Id): String {
-            return (cnt==null).cond { "and (${id.str} or true)" }
+        fun sret (id: Tk.Id): String {
+            return (cnt==null).cond { "and await-ret(${id.str})" }
         }
 
         val kexp = { clk2!!.map { (tag,e) ->
@@ -418,17 +418,17 @@ class Parser (lexer_: Lexer)
 
         val (xid,xtag,xcnd) = when {
             (!a && !b && !c) -> Triple(xno, null, (cnt==null).cond2({"(${xno.str} or true)"},{"true"}))
-            ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${scnt(id)})")
-            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await'(__${xno.str},$scnd) ${scnt(xno)})")
-            (!a && !b &&  c) -> Triple(xit, null, "($scnd ${scnt(xit)})")
-            ( a &&  x &&  c) -> Triple(id!!, tag, "(await'(__${id.str},${tag!!.str}) and $scnd ${scnt(id)})")
-            ( a &&  x && !c) -> Triple(id!!, tag, "(await'(__${id.str},${tag!!.str} ${scnt(id)}))")
-            (!a &&  x &&  c) -> Triple(xit, tag, "(await'(__${xit.str},${tag!!.str}) and $scnd ${scnt(xit)})")
-            (!a &&  x && !c) -> Triple(xno, tag, "(await'(__${xno.str},${tag!!.str}) ${scnt(xno)})")
-            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await'(__${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${scnt(id)})")
-            ( a &&  y && !c) -> Triple(id!!, clk1, "(await'(__${id!!.str},:Clock) and ${kchk(id!!.str)} ${scnt(id)}))")
-            (!a &&  y &&  c) -> Triple(xit, clk1, "(await'(__${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${scnt(xit)})")
-            (!a &&  y && !c) -> Triple(xno, clk1, "(await'(__${xno.str},:Clock) and ${kchk(xno.str)} ${scnt(xno)})")
+            ( a && !b &&  c) -> Triple(id!!, null, "($scnd ${sret(id)})")
+            (!a && !b && cnd is Expr.Acc) -> Triple(xno, null, "(await-chk(__${xno.str},$scnd) ${sret(xno)})")
+            (!a && !b &&  c) -> Triple(xit, null, "($scnd ${sret(xit)})")
+            ( a &&  x &&  c) -> Triple(id!!, tag, "(await-chk(__${id.str},${tag!!.str}) and $scnd ${sret(id)})")
+            ( a &&  x && !c) -> Triple(id!!, tag, "(await-chk(__${id.str},${tag!!.str} ${sret(id)}))")
+            (!a &&  x &&  c) -> Triple(xit, tag, "(await-chk(__${xit.str},${tag!!.str}) and $scnd ${sret(xit)})")
+            (!a &&  x && !c) -> Triple(xno, tag, "(await-chk(__${xno.str},${tag!!.str}) ${sret(xno)})")
+            ( a &&  y &&  c) -> Triple(id!!, clk1, "(await-chk(__${id!!.str},:Clock) and ${kchk(id!!.str)} and $scnd ${sret(id)})")
+            ( a &&  y && !c) -> Triple(id!!, clk1, "(await-chk(__${id!!.str},:Clock) and ${kchk(id!!.str)} ${sret(id)}))")
+            (!a &&  y &&  c) -> Triple(xit, clk1, "(await-chk(__${xit.str},:Clock) and ${kchk(xit.str)} and $scnd ${sret(xit)})")
+            (!a &&  y && !c) -> Triple(xno, clk1, "(await-chk(__${xno.str},:Clock) and ${kchk(xno.str)} ${sret(xno)})")
             else -> error("impossible case")
         }
 
