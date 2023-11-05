@@ -309,6 +309,43 @@ class Exec_99 {
         assert(out == "10\n") { out }
     }
 
+    // IT / HIDE
+
+    @Test
+    fun ee_01_it() {
+        val out = test("""
+            val it
+            do {
+                val it = 10
+                println(it)
+            }            
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun ee_02_it() {
+        val out = test("""
+            val it
+            println(it)
+            do {
+                val it = 10
+            }            
+        """)
+        assert(out == "anon : (lin 5, col 17) : declaration error : variable \"it\" is already declared\n") { out }
+    }
+    @Test
+    fun ee_03_it() {
+        val out = test("""
+            val it
+            do {
+                val it = 10
+            }            
+            println(it)
+        """)
+        assert(out == "anon : (lin 4, col 17) : declaration error : variable \"it\" is already declared\n") { out }
+
+    }
+
     // IFS
 
     @Test

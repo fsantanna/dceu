@@ -42,6 +42,10 @@ fun String.idc (n: Int? = null): String {
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
+    private val uses: MutableMap<Expr.Dcl,Expr> = mutableMapOf()
+        // Acc = previous use
+        // Dcl = previous hide without previous use
+
     private val dcls: MutableList<Expr.Dcl> = GLOBALS.map {
         Expr.Dcl (
             Tk.Fix("val", outer.tk.pos),
@@ -201,7 +205,13 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
             is Expr.Dcl    -> {
                 this.src?.traverse()
 
-                if (dcls.any { this.id.str == it.id.str }) {
+                val prv = dcls.firstOrNull { this.id.str == it.id.str }
+                if (prv==null || (CEU>=99 && prv.id.str=="it" && uses[prv]==null)) {
+                    // ok
+                    if (CEU>=99 && prv!=null) {
+                        uses[prv] = this // found new dcl w/o uses of prv dcl
+                    }
+                } else {
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
                 }
 
@@ -316,7 +326,19 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                     Pair(set, str)
                 }
             }
-            is Expr.Acc    -> acc_to_dcl[this] = find(this, this.tk.str, this.tk_.upv)
+            is Expr.Acc    -> {
+                val dcl = find(this, this.tk.str, this.tk_.upv)
+                acc_to_dcl[this] = dcl
+
+                if (CEU >= 99) {
+                    val prv = uses[dcl]
+                    when (prv) {
+                        null -> uses[dcl] = this
+                        is Expr.Dcl -> err(prv.tk, "declaration error : variable \"${prv.id.str}\" is already declared")
+                        else -> {}
+                    }
+                }
+            }
             is Expr.Nil    -> {}
             is Expr.Tag    -> {}
             is Expr.Bool   -> {}
