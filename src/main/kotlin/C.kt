@@ -782,7 +782,7 @@ fun Coder.main (tags: Tags): String {
         //  - calls (ceu_gc_dec) to decrement dyn childs
         //  - calls (ceu_dyn_rem_free_chk) to free dyn
         
-        void ceu_gc_dec_rec (CEU_Dyn* dyn) {
+        void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk) {
             //assert(dyn->Any.refs == 0);
             switch (dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
@@ -793,31 +793,31 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        ceu_gc_dec(dyn->Clo.upvs.buf[i], 0);
+                        ceu_gc_dec(dyn->Clo.upvs.buf[i], chk);
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        ceu_gc_dec(dyn->Tuple.buf[i], 0);
+                        ceu_gc_dec(dyn->Tuple.buf[i], chk);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_gc_dec(ret, 0);
+                        ceu_gc_dec(ret, chk);
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        ceu_gc_dec((*dyn->Dict.buf)[i][0], 0);
-                        ceu_gc_dec((*dyn->Dict.buf)[i][1], 0);
+                        ceu_gc_dec((*dyn->Dict.buf)[i][0], chk);
+                        ceu_gc_dec((*dyn->Dict.buf)[i][1], chk);
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    ceu_gc_dec(dyn->Throw.val, 0);
-                    ceu_gc_dec(dyn->Throw.stk, 0);
+                    ceu_gc_dec(dyn->Throw.val, chk);
+                    ceu_gc_dec(dyn->Throw.stk, chk);
                     break;
             #endif
         #if CEU >= 3
@@ -828,7 +828,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), 0);
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), chk);
                     break;
         #endif
         #if CEU >= 5
@@ -847,7 +847,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_chk (CEU_Value v) {
             if (v.type > CEU_VALUE_DYNAMIC) {
                 if (v.Dyn->Any.refs == 0) {
-                    ceu_gc_dec_rec(v.Dyn);
+                    ceu_gc_dec_rec(v.Dyn, 1);
                     ceu_dyn_rem_free_chk(v.Dyn);
                     ceu_gc_count++;
                 }
@@ -888,7 +888,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Dyn* cur = dyns->first;
                 while (cur != NULL) {
         //ceu_dump_value(ceu_dyn_to_val(cur));
-                    ceu_gc_dec_rec(cur);
+                    ceu_gc_dec_rec(cur, 0);
                     cur = cur->Any.hld.next;
                 }
             }

@@ -1739,4 +1739,15 @@ class Exec_99 {
         """, true)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_02_tasks() {
+        val out = test("""
+            val ts = tasks()
+            loop in {1=>10} {
+                dump(ts)
+                pass [ts]
+            }
+        """, true)
+        assert(out == "false\n") { out }
+    }
 }

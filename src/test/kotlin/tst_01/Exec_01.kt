@@ -724,6 +724,17 @@ class Exec_01 {
         assert(out == "nil\tnil\t[[1]]\n") { out }
     }
     @Test
+    fun cm_05x() {
+        val out = test(
+            """
+            val t1 = [1]
+            val t2 = [t1]
+            println(t2)
+        """
+        )
+        assert(out == "[[1]]\n") { out }
+    }
+    @Test
     fun cc_07_global() {
         val out = test("""
             val e = func () {nil}
@@ -4280,6 +4291,26 @@ class Exec_01 {
         """
         )
         assert(out == "1\n") { out }
+    }
+    @Test
+    fun gc16_grow() {
+        val out = test("""
+            val t = []
+            do {
+                val x = [t]
+                nil
+            }
+            do {
+                val x = [t]
+                nil
+            }
+            do {
+                val x = [t]
+                nil
+            }
+            dump(t)
+        """)
+        assert(out.contains("refs  = 1")) { out }
     }
 
     // MISC

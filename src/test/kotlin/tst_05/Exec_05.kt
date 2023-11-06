@@ -127,6 +127,13 @@ class Exec_05 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun aa_10_tasks() {
+        val out = test("""
+            println(tasks() == nil)
+        """)
+        assert(out == "false\n") { out }
+    }
 
     // TRACK
 
