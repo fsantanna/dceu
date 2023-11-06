@@ -444,7 +444,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free
-                    ${(!isvoid).cond { "ceu_gc_decs(&$blkc->dn.dyns);" }}
+                    ${(!isvoid).cond { "ceu_gc_dyns(&$blkc->dn.dyns);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {
