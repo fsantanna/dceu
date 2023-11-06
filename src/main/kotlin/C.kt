@@ -165,7 +165,7 @@ fun Coder.main (tags: Tags): String {
 
         #define _CEU_Dyn_                   \
             CEU_VALUE type;                 \
-            uint8_t refs;                   \
+            int8_t refs;                    \
             struct CEU_Tags_List* tags;     \
             union CEU_Dyn* tofree;          \
             struct {                        \
@@ -310,12 +310,13 @@ fun Coder.main (tags: Tags): String {
         char* ceu_tag_to_string (int tag);
         int ceu_type_to_size (int type);
                 
+        void ceu_dyn_rem_free_chk (CEU_Dyn* dyn);
         void ceu_dyn_rem_free (CEU_Dyn* dyn);
         void ceu_dyn_free (CEU_Dyn* dyn);
-        void ceu_dyns_free (CEU_Dyns* dyns);
         
         void ceu_gc_inc (CEU_Value v);
         void ceu_gc_dec (CEU_Value v, int chk);
+        void ceu_gc_decs (CEU_Dyns* dyns);
         void ceu_gc_chk_args (int n, CEU_Value args[]);
         
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
@@ -471,7 +472,7 @@ fun Coder.main (tags: Tags): String {
                 exit(0);
             }
             CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
-            ceu_dyns_free(&blk->dn.dyns);
+            ceu_gc_decs(&blk->dn.dyns);
             return ceu_exit(up);
         }
         void _ceu_error_ (CEU_Block* blk, char* pre, CEU_Value err) {
@@ -761,7 +762,28 @@ fun Coder.main (tags: Tags): String {
         #define ceu_debug_add(x)
         #define ceu_debug_rem(x)
     #endif
+    
+        // void ceu_dyn_rem_free_chk (CEU_Dyn* dyn)
+        //  - called from ceu_gc_dec
+        //  - called from TASK_IN termination
+        //  - calls (ceu_hold_rem)
+        //  - calls (ceu_dyn_free)
+        
+        // void ceu_gc_dec (CEU_Value v, int chk)
+        //  - calls (v.Dyn->refs--)
+        //  - chk arg: do not reclaim drops and returns to outer
+        //  - calls (ceu_gc_chk) to check if v.Dyn->refs==0
+        
+        // void ceu_gc_chk (CEU_Value v)
+        //  - calls (ceu_gc_free) if v.Dyn->refs==0
+        
+        // void ceu_gc_free (CEU_Dyn* dyn)
+        //  - called when dyn->refs==0
+        //  - calls (ceu_gc_dec) to decrement dyn childs
+        //  - calls (ceu_dyn_rem_free_chk) to free dyn
+        
         void ceu_gc_free (CEU_Dyn* dyn) {
+            assert(dyn->Any.refs == 0);
             switch (dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
         #if CEU >= 3
@@ -813,13 +835,15 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_TRACK:
                     // dyn->Track.task is a weak reference
                     break;
+                case CEU_VALUE_TASKS:
+                    assert(0 && "TODO: tasks should never reach refs==0");
         #endif
                 default:
                     assert(0);
                     break;
             }
             ceu_gc_count++;
-            ceu_dyn_rem_free(dyn);
+            ceu_dyn_rem_free_chk(dyn);
         }
         
         void ceu_gc_chk (CEU_Value v) {
@@ -841,17 +865,33 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_inc (CEU_Value new) {
             if (new.type > CEU_VALUE_DYNAMIC) {
+                assert(new.Dyn->Any.refs < 100);
                 new.Dyn->Any.refs++;
             }
         }
         
         void ceu_gc_dec (CEU_Value old, int chk) {
             if (old.type > CEU_VALUE_DYNAMIC) {
-                old.Dyn->Any.refs--;
-                if (chk) {
-                    ceu_gc_chk(old);
+                if (0 && old.Dyn->Any.refs < 0) {
+                    // break cycle
+                } else {
+                    old.Dyn->Any.refs--;
+                    if (chk) {
+                        ceu_gc_chk(old);
+                    }
                 }
             }
+        }
+
+        void ceu_gc_decs (CEU_Dyns* dyns) {
+            while (dyns->first != NULL) {
+                CEU_Value v = ceu_dyn_to_val(dyns->first);
+                //ceu_dump_value(v);
+                ceu_gc_dec(v, 1);   // no chk b/c of fleeting vals with refs==0
+                //ceu_gc_chk(v);      // chk after to release remaining fleeting and cycles
+            }
+            assert(dyns->first == NULL);
+            assert(dyns->last  == NULL);
         }
 
         void ceu_gc_inc_args (int n, CEU_Value args[]) {
@@ -880,13 +920,13 @@ fun Coder.main (tags: Tags): String {
         void ceu_dyn_rem_free_chk (CEU_Dyn* dyn) {
             ceu_hold_rem(dyn);
         #if CEU >= 4
-            if ((ceu_istask_dyn(dyn) CEU5(|| dyn->Any.type==CEU_VALUE_TASKS))&& ceu_tofree_n>0) {
+            if ((ceu_istask_dyn(dyn) CEU5(|| dyn->Any.type==CEU_VALUE_TASKS)) && ceu_tofree_n>0) {
                 dyn->Any.tofree = ceu_tofree_dyn;
                 ceu_tofree_dyn = dyn;
             } else
         #endif
             {
-                ceu_dyn_rem_free(dyn);
+                ceu_dyn_free(dyn);
             }
         }
         
@@ -936,6 +976,9 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
                 case CEU_VALUE_EXE_CORO:
+                    if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                        dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    }
                     free(dyn->Exe.mem);
                     break;
         #endif
@@ -944,35 +987,14 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
+                    if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                        dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    }
                     free(dyn->Exe_Task.mem);
                     break;
         #endif
         #if CEU >= 5
-                case CEU_VALUE_TASKS:
-                    ceu_dyns_free(&dyn->Tasks.dyns);
-                    break;
-                case CEU_VALUE_TRACK:
-                    break;
-        #endif
-                default:
-                    assert(0 && "bug found");
-            }
-            ceu_debug_rem(dyn->Any.type);
-            free(dyn);
-        }
-        
-        void ceu_dyns_free (CEU_Dyns* dyns) {
-            #if CEU >= 3
-            // first finalize EXE
-            CEU_Dyn* dyn = dyns->first;
-            while (dyn != NULL) {
-                if (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn))) { 
-                    if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
-                        dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
-                    }
-                }
-                #if CEU >= 5
-                if (dyn->Any.type == CEU_VALUE_TASKS) {
+                case CEU_VALUE_TASKS: {
                     CEU_Dyn* cur = dyn->Tasks.dyns.first;
                     while (cur != NULL) {
                         CEU_Dyn* nxt = cur->Any.hld.next;
@@ -981,22 +1003,17 @@ fun Coder.main (tags: Tags): String {
                         }
                         cur = nxt;
                     }
+                    ceu_gc_decs(&dyn->Tasks.dyns);
+                    break;
                 }
-                #endif
-                dyn = dyn->Any.hld.next;
+                case CEU_VALUE_TRACK:
+                    break;
+        #endif
+                default:
+                    assert(0 && "bug found");
             }
-            #endif
-            // then free mem
-            {
-                CEU_Dyn* dyn = dyns->first;
-                while (dyn != NULL) {
-                    CEU_Dyn* old = dyn;
-                    dyn = old->Any.hld.next;
-                    ceu_dyn_rem_free_chk(old);
-                }
-                dyns->first = NULL;
-                dyns->last  = NULL;
-            }
+            ceu_debug_rem(dyn->Any.type);
+            free(dyn);
         }
     """ +
     """ // HOLD / DROP
@@ -1595,7 +1612,9 @@ fun Coder.main (tags: Tags): String {
                     nxt = tsks.Dyn->Tasks.dyns.first;
                     break;
                 case CEU_VALUE_TRACK:
-                    if (key.Dyn->Track.task==NULL || key.Dyn->Track.task->type!=CEU_VALUE_EXE_TASK_IN) {
+                    if (key.Dyn->Track.task==NULL) {
+                        return (CEU_Value) { CEU_VALUE_NIL };
+                    } else if (key.Dyn->Track.task->type != CEU_VALUE_EXE_TASK_IN) {
                         return (CEU_Value) { CEU_VALUE_ERROR, {.Error="next-tasks error : expected task-in-pool track"} };
                     }
                     nxt = key.Dyn->Track.task->hld.next;
