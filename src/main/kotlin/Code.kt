@@ -310,7 +310,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             {
                                                 CEU_ASSERT(
                                                     $blkc,
-                                                    ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
+                                                    ceu_hold_chk_set(0, $blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
                                                     "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
                                                 );
                                             }
@@ -355,7 +355,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(f_b!=null && !isvoid).cond {
                         val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
                         """
-                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
+                        CEU_Value ceu_err_$n = ceu_hold_chk_set(0, $up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
                         if (ceu_err_$n.type == CEU_VALUE_ERROR) {
                         #if CEU <= 1
                             // free from this block
@@ -483,14 +483,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #endif
                         if (ceu_acc.type>CEU_VALUE_DYNAMIC /*CEU2(&& ceu_acc.type!=CEU_VALUE_THROW)*/ && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_FLEET) {
                             ceu_thus_fleet_${blk.n} = 1;
-                            CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
+                            CEU_Value ret_$N = ceu_hold_chk_set(0, $bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
                             //ceu_dump_value(ret_$N);
                             assert((CEU5(ceu_acc.type==CEU_VALUE_EXE_TASK_IN ||) ret_$N.type==CEU_VALUE_NIL) && "TODO-02");
                         }
                     """ },{ """ 
                         CEU_ASSERT(
                             $bupc,
-                            ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
+                            ceu_hold_chk_set(0, $bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
                     """ })
@@ -708,7 +708,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // PUB - SET | ${this.dump()}
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set(0, ceu_block_up_block($bupc), CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
@@ -814,7 +814,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - SET
                             CEU_ASSERT(
                                 $bupc,
-                                ceu_hold_chk_set(${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
+                                ceu_hold_chk_set(0, ${vblk.idc("block",nst)}, CEU_HOLD_MUTAB, $src, 0, "set error"),
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
