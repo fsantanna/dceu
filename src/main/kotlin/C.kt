@@ -1149,7 +1149,9 @@ fun Coder.main (tags: Tags): String {
         #endif
                 } else if (!force) {
                     // raises error but moves anyway to prevent dangling pointer
-                    ceu_hold_chk_set(1, dst_blk, dst_type, src, nest, pre);
+                    if (ceu_block_is_up_dn(dst_blk,src_blk)) {
+                        ceu_hold_chk_set(1, dst_blk, dst_type, src, nest, pre);
+                    }
                     strncpy(msg, pre, 256);
                     strcat(msg, " : cannot copy reference out");
                     return (CEU_Value) { CEU_VALUE_ERROR, {.Error=msg} };
