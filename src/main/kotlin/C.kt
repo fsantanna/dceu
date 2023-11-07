@@ -1148,6 +1148,7 @@ fun Coder.main (tags: Tags): String {
             }
             
             #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (ret.type==CEU_VALUE_ERROR) { return ret; } }
+            #define CEU_CHECK_ERROR_RETURN_2(x,y) { CEU_Value ret1=x, ret2=y; if (ret1.type==CEU_VALUE_ERROR) { return ret1; }; if (ret2.type==CEU_VALUE_ERROR) { return ret2; } }
 
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
@@ -1170,14 +1171,18 @@ fun Coder.main (tags: Tags): String {
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<src.Dyn->Dict.max; i++) {
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(force, dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre));
-                        CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(force, dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre));
+                        CEU_CHECK_ERROR_RETURN_2 (
+                            ceu_hold_chk_set(force, dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][0], 1, pre),
+                            ceu_hold_chk_set(force, dst_blk, dst_type, (*src.Dyn->Dict.buf)[i][1], 1, pre)
+                        );
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(force, dst_blk, dst_type, src.Dyn->Throw.val, 1, pre));
-                    CEU_CHECK_ERROR_RETURN(ceu_hold_chk_set(force, dst_blk, dst_type, src.Dyn->Throw.stk, 1, pre));
+                    CEU_CHECK_ERROR_RETURN_2 (
+                        ceu_hold_chk_set(force, dst_blk, dst_type, src.Dyn->Throw.val, 1, pre),
+                        ceu_hold_chk_set(force, dst_blk, dst_type, src.Dyn->Throw.stk, 1, pre)
+                    );
                     break;
             #endif
         #if CEU >= 3
