@@ -988,8 +988,17 @@ fun Coder.main (tags: Tags): String {
         void ceu_dyn_exe_kill (CEU_Dyn* dyn) {
             assert(ceu_isexe_dyn(dyn));
             if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
-                dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                CEU_Value ret;
+    #if CEU >= 4
+                if (ceu_istask_dyn(dyn)) {
+                    ret = ceu_bcast_task(dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                } else
+    #endif
+                {
+                    ret = dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                }
             }
+            assert(!CEU_ISERR(ret) && "TODO: error on exe kill")
         }
     #endif
 
@@ -1038,7 +1047,7 @@ fun Coder.main (tags: Tags): String {
         
         #if CEU >= 5
                 case CEU_VALUE_TASKS:
-                    ceu_gc_dyns(&dyn->Tasks.dyns);
+                    assert(dyn->Tasks.dyns.first==NULL && dyn->Tasks.dyns.last==NULL);
                     break;
                 case CEU_VALUE_TRACK:
                     break;
