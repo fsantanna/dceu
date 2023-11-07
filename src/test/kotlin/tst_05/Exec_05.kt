@@ -944,10 +944,11 @@ class Exec_05 {
             spawn T() in ts
             val x = next-tasks(ts)
             broadcast(nil)
-            next-tasks(ts, x)
+            println(next-tasks(ts, x))
         """
         )
-        assert(out == " v  anon : (lin 9, col 13) : next-tasks(ts,x) : next-tasks error : expected task-in-pool track\n") { out }
+        //assert(out == " v  anon : (lin 9, col 13) : next-tasks(ts,x) : next-tasks error : expected task-in-pool track\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun hh_04_next() {
@@ -961,10 +962,11 @@ class Exec_05 {
             val x1 = next-tasks(ts)
             val x2 = next-tasks(ts, x1)
             broadcast(1)
-            next-tasks(ts, x1)
+            println(next-tasks(ts, x1))
         """
         )
-        assert(out == " v  anon : (lin 11, col 13) : next-tasks(ts,x1) : next-tasks error : expected task-in-pool track\n") { out }
+        //assert(out == " v  anon : (lin 11, col 13) : next-tasks(ts,x1) : next-tasks error : expected task-in-pool track\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun hh_05_next() {

@@ -836,7 +836,9 @@ fun Coder.main (tags: Tags): String {
                     // dyn->Track.task is a weak reference
                     break;
                 case CEU_VALUE_TASKS:
-                    assert(0 && "TODO: tasks should never reach refs==0");
+                    //assert(0 && "TODO: tasks should never reach refs==0");
+                    // no problem if coming from 
+                    break;
         #endif
                 default:
                     assert(0);
@@ -847,6 +849,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_chk (CEU_Value v) {
             if (v.type > CEU_VALUE_DYNAMIC) {
                 if (v.Dyn->Any.refs == 0) {
+                    assert(CEU5(v.Dyn->Any.type!=CEU_VALUE_TASKS &&) "TODO: tasks should never reach refs==0");
                     ceu_gc_dec_rec(v.Dyn, 1);
                     ceu_dyn_rem_free_chk(v.Dyn);
                     ceu_gc_count++;
@@ -892,6 +895,20 @@ fun Coder.main (tags: Tags): String {
                     cur = cur->Any.hld.next;
                 }
             }
+        #if CEU >= 3
+            {
+                CEU_Dyn* cur = dyns->first;
+                while (cur != NULL) {
+                    CEU_VALUE tp = cur->Any.type;
+                    if (tp==CEU_VALUE_EXE_CORO CEU4(|| tp==CEU_VALUE_EXE_TASK) CEU5(|| tp==CEU_VALUE_EXE_TASK_IN)) {
+                        if (cur->Exe.status < CEU_EXE_STATUS_TERMINATED) {
+                            cur->Exe.frame.clo->proto(&cur->Exe.frame, CEU_ARG_ABORT, NULL);
+                        }
+                    }
+                    cur = cur->Any.hld.next;
+                }
+            }
+        #endif
             {
                 CEU_Dyn* cur = dyns->first;
                 while (cur != NULL) {
