@@ -443,7 +443,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #endif
                         """
                     }}
-                    // block free
+                    // block free | ${this.dump()}
                     ${(!isvoid).cond { "ceu_gc_dyns(&$blkc->dn.dyns);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
