@@ -350,6 +350,9 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 2
         CEU_Value ceu_pointer_dash_to_dash_string_f (CEU_Frame* frame, int n, CEU_Value args[]);
         #endif
+        #if CEU >= 3
+        int ceu_isexe_dyn (CEU_Dyn* dyn);
+        #endif
         #if CEU >= 4
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
         int ceu_istask_dyn (CEU_Dyn* dyn);
@@ -900,18 +903,21 @@ fun Coder.main (tags: Tags): String {
             }
         #if CEU >= 3
             {
-                CEU_Dyn* cur = dyns->first;
-                while (cur != NULL) {
-        #if CEU >= 5
-                    if (cur->Any.type == CEU_VALUE_TASKS) {
-                        ceu_gc_dyns(&cur->Tasks.dyns);
-                    } else
-        #endif
-                    if (ceu_isexe_dyn(cur)) {
-                        ceu_dyn_exe_kill(cur);
+                void aux (CEU_Dyns* _dyns_) {
+                    CEU_Dyn* cur = _dyns_->first;
+                    while (cur != NULL) {
+            #if CEU >= 5
+                        if (cur->Any.type == CEU_VALUE_TASKS) {
+                            aux(&cur->Tasks.dyns);
+                        } else
+            #endif
+                        if (ceu_isexe_dyn(cur)) {
+                            ceu_dyn_exe_kill(cur);
+                        }
+                        cur = cur->Any.hld.next;
                     }
-                    cur = cur->Any.hld.next;
                 }
+                aux(dyns);
             }
         #endif
             {
@@ -2256,8 +2262,8 @@ fun Coder.main (tags: Tags): String {
             ceu_gc_chk_args(n, args);
             return ret;
         }
-        int ceu_isexe (CEU_Value val) {
-            return (cur.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_val(val)));
+        int ceu_isexe_dyn (CEU_Dyn* dyn) {
+            return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
         }
         #endif
     """ +
