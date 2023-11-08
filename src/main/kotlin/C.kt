@@ -1118,9 +1118,11 @@ fun Coder.main (tags: Tags): String {
                 ceu_hold_chg(src.Dyn, dst_blk CEU5(COMMA &dst_blk->dn.dyns));
             }
             
-            #define CEU_CHECK_ERROR_RETURN(v) { CEU_Value ret=v; if (ret.type==CEU_VALUE_ERROR) { return ret; } }
-            #define CEU_CHECK_ERROR_RETURN_2(x,y) { CEU_Value ret1=x, ret2=y; if (ret1.type==CEU_VALUE_ERROR) { return ret1; }; if (ret2.type==CEU_VALUE_ERROR) { return ret2; } }
+            #define CEU_CHECK_ERROR_RETURN(v) { ret=v; if (ret.type==CEU_VALUE_ERROR) { goto __ERR__; } }
+            #define CEU_CHECK_ERROR_RETURN_2(x,y) { CEU_Value ret1=x, ret2=y; if (ret1.type==CEU_VALUE_ERROR) { ret=ret1; goto __ERR__; }; if (ret2.type==CEU_VALUE_ERROR) { ret=ret2; goto __ERR__; } }
 
+            CEU_Value ret = { CEU_VALUE_NIL };
+            
             switch (src.Dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
         #if CEU >= 3
@@ -1170,7 +1172,16 @@ fun Coder.main (tags: Tags): String {
                 default:
                     break; // not applicable
             }
-            return (CEU_Value) { CEU_VALUE_NIL };
+            
+            if (0) {
+        __ERR__:
+                // return to orignal block to match failed child blocks
+                if (dst_blk != src_blk) {
+                    ceu_hold_chg(src.Dyn, src_blk CEU5(COMMA &dst_blk->dn.dyns));
+                }
+            }
+            
+            return ret;
         }
         
         CEU_Value ceu_hold_chk_set_col (CEU_Dyn* col, CEU_Value v) {
