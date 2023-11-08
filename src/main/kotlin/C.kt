@@ -774,6 +774,7 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_exit (CEU_Block* blk) {
             if (blk == NULL) {
+                ceu_gc_collect();
                 exit(0);
             }
             CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;

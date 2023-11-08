@@ -291,11 +291,9 @@ class Exec_01 {
     }
     @Test
     fun cc_index_err1() {
-        val out = test(
-            """
+        val out = test("""
             println(1[1])
-        """.trimIndent()
-        )
+        """.trimIndent())
         assert(out == "anon : (lin 1, col 9) : index error : expected collection\n") { out }
     }
     @Test
