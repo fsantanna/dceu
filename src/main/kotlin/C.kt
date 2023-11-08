@@ -349,6 +349,60 @@ fun Coder.main (tags: Tags): String {
         int ceu_istask_val (CEU_Value val);
         #endif
     """ +
+    """ // DUMPS
+        void ceu_dump_frame (CEU_Frame* frame) {
+            printf(">>> FRAME: %p\n", frame);
+            printf("    up_block = %p\n", frame->up_block);
+            printf("    clo      = %p\n", frame->clo);
+        #if CEU >= 4
+            printf("    exe      = %p\n", frame->exe);
+        #endif
+        }
+        void ceu_dump_value (CEU_Value v) {
+            puts(">>>>>>>>>>>");
+            ceu_print1(NULL, v);
+            puts(" <<<");
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                printf("    dyn   = %p\n", v.Dyn);
+                printf("    refs  = %d\n", v.Dyn->Any.refs);
+                printf("    hold  = %d\n", v.Dyn->Any.hld.type);
+                printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
+                printf("    next  = %p\n", v.Dyn->Any.hld.next);
+                printf("    ----\n");
+                switch (v.type) {
+            #if CEU >= 4
+                    case CEU_VALUE_EXE_TASK:
+                        printf("    status = %d\n", v.Dyn->Exe_Task.status);
+                        printf("    pub    = %d\n", v.Dyn->Exe_Task.pub.type);
+                        break;
+            #endif
+            #if CEU >= 5
+                    case CEU_VALUE_TASKS:
+                        printf("    first  = %p\n", v.Dyn->Tasks.dyns.first);
+                        printf("    last   = %p\n", v.Dyn->Tasks.dyns.last);
+                        break;
+                    case CEU_VALUE_TRACK:
+                        printf("    task   = %p\n", v.Dyn->Track.task);
+                        break;
+            #endif
+                    default:
+                        puts("TODO");
+                }
+            }
+            puts("<<<<<<<<<<<");
+        }        
+        void ceu_dump_block (CEU_Block* blk) {
+            printf(">>> BLOCK: %p\n", blk);
+            printf("    istop = %d\n", blk->istop);
+            printf("    up    = %p\n", blk->up.frame);
+            CEU_Dyn* cur = blk->dn.dyns.first;
+            while (cur != NULL) {
+                ceu_dump_value(ceu_dyn_to_val(cur));
+                CEU_Dyn* old = cur;
+                cur = old->Any.hld.next;
+            }
+        }
+    """ +
     """ // TAGS
         ${ tags.pub.values.let {
             fun f1 (l: List<List<String>>): List<Pair<String, List<List<String>>>> {
@@ -740,60 +794,6 @@ fun Coder.main (tags: Tags): String {
             assert(n==1 && args[0].type==CEU_VALUE_TAG);
             return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
         }        
-    """ +
-    """ // DUMPS
-        void ceu_dump_frame (CEU_Frame* frame) {
-            printf(">>> FRAME: %p\n", frame);
-            printf("    up_block = %p\n", frame->up_block);
-            printf("    clo      = %p\n", frame->clo);
-        #if CEU >= 4
-            printf("    exe      = %p\n", frame->exe);
-        #endif
-        }
-        void ceu_dump_value (CEU_Value v) {
-            puts(">>>>>>>>>>>");
-            ceu_print1(NULL, v);
-            puts(" <<<");
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                printf("    dyn   = %p\n", v.Dyn);
-                printf("    refs  = %d\n", v.Dyn->Any.refs);
-                printf("    hold  = %d\n", v.Dyn->Any.hld.type);
-                printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
-                printf("    next  = %p\n", v.Dyn->Any.hld.next);
-                printf("    ----\n");
-                switch (v.type) {
-            #if CEU >= 4
-                    case CEU_VALUE_EXE_TASK:
-                        printf("    status = %d\n", v.Dyn->Exe_Task.status);
-                        printf("    pub    = %d\n", v.Dyn->Exe_Task.pub.type);
-                        break;
-            #endif
-            #if CEU >= 5
-                    case CEU_VALUE_TASKS:
-                        printf("    first  = %p\n", v.Dyn->Tasks.dyns.first);
-                        printf("    last   = %p\n", v.Dyn->Tasks.dyns.last);
-                        break;
-                    case CEU_VALUE_TRACK:
-                        printf("    task   = %p\n", v.Dyn->Track.task);
-                        break;
-            #endif
-                    default:
-                        puts("TODO");
-                }
-            }
-            puts("<<<<<<<<<<<");
-        }        
-        void ceu_dump_block (CEU_Block* blk) {
-            printf(">>> BLOCK: %p\n", blk);
-            printf("    istop = %d\n", blk->istop);
-            printf("    up    = %p\n", blk->up.frame);
-            CEU_Dyn* cur = blk->dn.dyns.first;
-            while (cur != NULL) {
-                ceu_dump_value(ceu_dyn_to_val(cur));
-                CEU_Dyn* old = cur;
-                cur = old->Any.hld.next;
-            }
-        }
     """ +
     """ // IMPLS
         CEU_Value ceu_dyn_to_val (CEU_Dyn* dyn) {
