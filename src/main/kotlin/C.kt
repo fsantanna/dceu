@@ -354,6 +354,7 @@ fun Coder.main (tags: Tags): String {
         int ceu_isexe_dyn (CEU_Dyn* dyn);
         #endif
         #if CEU >= 4
+        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, int n, CEU_Value args[]);
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
         int ceu_istask_dyn (CEU_Dyn* dyn);
         int ceu_istask_val (CEU_Value val);
@@ -991,14 +992,14 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret;
     #if CEU >= 4
                 if (ceu_istask_dyn(dyn)) {
-                    ret = ceu_bcast_task(dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                    ret = ceu_bcast_task(&dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
                 {
                     ret = dyn->Exe.frame.clo->proto(&dyn->Exe.frame, CEU_ARG_ABORT, NULL);
                 }
+                assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
             }
-            assert(!CEU_ISERR(ret) && "TODO: error on exe kill")
         }
     #endif
 
@@ -1401,48 +1402,55 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         
-        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, CEU_Value evt) {
+        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
-            if (task->status == CEU_EXE_STATUS_TOGGLED) {
-                return ret;
-            }
-            if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
-                ret = ceu_bcast_blocks(task->dn_block, evt);
-            }
-            if (task->status != CEU_EXE_STATUS_YIELDED) {
-                return ret;
-            }
-            if (CEU_ISERR(ret)) {
-                ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
+            if (n == CEU_ARG_ABORT) {
+                ret = task->frame.clo->proto(&task->frame, CEU_ARG_ABORT, NULL);
+                goto __FREE__;
+            } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
+                // nothing else todo
             } else {
-                ret = task->frame.clo->proto(&task->frame, 1, &evt);
-                if (task->status == CEU_EXE_STATUS_TERMINATED) {
-                    task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
-                    if (!CEU_ISERR(ret)) {      // bcast
-                        CEU_Exe_Task* up_task = ceu_task_up_task(task);
-                        CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
-                        if (up_task != NULL) {
-                            // enclosing coro of enclosing block
-                            ret = ceu_bcast_task(up_task, evt2);
-                        } else { 
-                            // enclosing block
-                            ret = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
-                        }
-                        /* TODO: stack trace for error on task termination
-                        do {
-                            CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
-                        } while (0);
-                        */
-                    }
-    #if CEU >= 5
-                    if (task->type == CEU_VALUE_EXE_TASK_IN) {
-                        ceu_dyn_rem_free_chk((CEU_Dyn*)task);
-                        if (!CEU_ISERR(ret)) {
-                            ret = (CEU_Value) { CEU_VALUE_NIL };
-                        }
-                    }
-    #endif
+                if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
+                    ret = ceu_bcast_blocks(task->dn_block, args[0]);
                 }
+                if (CEU_ISERR(ret)) {
+                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
+                } else if (task->status != CEU_EXE_STATUS_YIELDED) {
+                    // nothing else todo
+                } else {
+                    ret = task->frame.clo->proto(&task->frame, n, args);
+                    if (task->status == CEU_EXE_STATUS_TERMINATED) {
+                        task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
+                        if (!CEU_ISERR(ret)) {      // bcast
+                            CEU_Exe_Task* up_task = ceu_task_up_task(task);
+                            CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
+                            if (up_task != NULL) {
+                                // enclosing coro of enclosing block
+                                ret = ceu_bcast_task(up_task, 1, &evt2);
+                            } else { 
+                                // enclosing block
+                                ret = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                            }
+                            /* TODO: stack trace for error on task termination
+                            do {
+                                CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
+                            } while (0);
+                            */
+                            goto __FREE__;
+                        }
+                    }
+                }
+            }
+            if (0) {
+        __FREE__:  // from CEU_ARG_ABORT or normal resume
+    #if CEU >= 5
+                if (task->type == CEU_VALUE_EXE_TASK_IN) {
+                    ceu_dyn_rem_free_chk((CEU_Dyn*)task);
+                    if (!CEU_ISERR(ret)) {
+                        ret = (CEU_Value) { CEU_VALUE_NIL };
+                    }
+                }
+    #endif
             }
             return ret;
         }
@@ -1456,7 +1464,7 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_EXE_TASK_IN:
         #endif
                     {
-                        CEU_Value ret = ceu_bcast_task(&dyn->Exe_Task, evt); 
+                        CEU_Value ret = ceu_bcast_task(&dyn->Exe_Task, 1, &evt); 
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
@@ -1521,7 +1529,7 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
                 if (ceu_istask_val(tsk)) {
-                    ret = ceu_bcast_task(&tsk.Dyn->Exe_Task, evt);
+                    ret = ceu_bcast_task(&tsk.Dyn->Exe_Task, 1, &evt);
                 } else {
                     ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
                 }
