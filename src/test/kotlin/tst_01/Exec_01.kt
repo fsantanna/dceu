@@ -4109,8 +4109,8 @@ class Exec_01 {
             println(`:number CEU_GC_COUNT`)
         """
         )
-        //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "0\n") { out }
     }
     @Test
     fun gc1() {
@@ -4216,8 +4216,8 @@ class Exec_01 {
             println(`:number CEU_GC_COUNT`)
         """
         )
-        //assert(out == "0\n1\n") { out }
-        assert(out == "0\n0\n") { out }
+        assert(out == "0\n1\n") { out }
+        //assert(out == "0\n0\n") { out }
     }
     @Test
     fun gc9_err() {

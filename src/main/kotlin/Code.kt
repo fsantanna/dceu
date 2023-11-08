@@ -371,7 +371,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // dcls gc-dec
                     ${dcls.map { """
-                        ceu_gc_dec($it, 1);
+                        // free below b/c of
+                        //   - pending refs defers
+                        //   - drop w/ multiple refs
+                        ceu_gc_dec($it, 0);
                     """ }.joinToString("")}
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond {

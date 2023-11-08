@@ -2397,6 +2397,7 @@ fun Coder.main (tags: Tags): String {
             assert(CEU_TAG_nil == CEU_VALUE_NIL);
             CEU_Value ceu_acc;
             ${this.code}
+            ceu_gc_collect();
             return 0;
         }
     """)
