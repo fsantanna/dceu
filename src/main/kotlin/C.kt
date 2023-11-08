@@ -614,9 +614,11 @@ fun Coder.main (tags: Tags): String {
                 aux(dyn);
             }
         #endif
-            ceu_hold_rem(dyn);
-            dyn->Any.tofree = CEU_GC_TOFREE;
-            CEU_GC_TOFREE = dyn;
+            if (dyn->Any.hld.block != NULL) {   // do not free twice
+                ceu_hold_rem(dyn);
+                dyn->Any.tofree = CEU_GC_TOFREE;
+                CEU_GC_TOFREE = dyn;
+            }
         }
 
         void ceu_gc_dec_rec (CEU_Dyn* dyn) {
@@ -1028,8 +1030,9 @@ fun Coder.main (tags: Tags): String {
             if (dyn->Any.hld.next != NULL) {
                 dyn->Any.hld.next->Any.hld.prev = dyn->Any.hld.prev;
             }
-            dyn->Any.hld.prev = NULL;
-            dyn->Any.hld.next = NULL;
+            dyn->Any.hld.block = NULL;
+            dyn->Any.hld.prev  = NULL;
+            dyn->Any.hld.next  = NULL;
         }
         void ceu_hold_chg (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
             ceu_hold_rem(dyn);
