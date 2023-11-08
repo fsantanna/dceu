@@ -2001,7 +2001,7 @@ class Exec_04 {
     fun oo_01_gc_bcast() {
         val out = test("""
             broadcast([])
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """)
         assert(out == "1\n") { out }
         //assert(out == "0\n") { out }
@@ -2021,7 +2021,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast ([])
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """)
         //assert(out == "0\n") { out }
         assert(out == "1\n") { out }
@@ -2044,7 +2044,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast( [])
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """)
         assert(out == "1\n") { out }
         //assert(out == "0\n") { out }
@@ -2069,7 +2069,7 @@ class Exec_04 {
             }
             var co = spawn tk ()
             broadcast ([] )
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """)
         assert(out == "1\n") { out }
         //assert(out == "0\n") { out }
@@ -2550,7 +2550,7 @@ class Exec_04 {
             }
             var t2 = spawn T2()
             broadcast ([])
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
             """
         )
         //assert(out == "0\n") { out }

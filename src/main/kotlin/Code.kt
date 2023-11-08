@@ -371,14 +371,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }}
                     // dcls gc-dec
                     ${dcls.map { """
-                        //if ($it.type > CEU_VALUE_DYNAMIC) { // required b/c check below
-                        //    CEU_Block* ceu_blk = CEU_HLD_BLOCK($it.Dyn);
-                        //    if ($blkc != ceu_blk) {
-                                // if same block - free below w/ nested exes - b/c of pending refs defers
-                                // TODO: also b/c of drop w/ multiple refs
-                                ceu_gc_dec($it, 0);
-                        //    }
-                        //}
+                        ceu_gc_dec($it, 1);
                     """ }.joinToString("")}
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond {
@@ -444,7 +437,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free | ${this.dump()}
-                    ${(!isvoid).cond { "ceu_gc_dyns(&$blkc->dn.dyns);" }}
+                    ${(!isvoid).cond { "ceu_gc_rem_all(&$blkc->dn.dyns);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {

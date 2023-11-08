@@ -2638,7 +2638,7 @@ class Exec_01 {
                 println(...)
             }
             f(1,2,3)
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "1\t2\t3\n1\n") { out }
@@ -3580,7 +3580,7 @@ class Exec_01 {
                 println(ts)
             }
             f(tags(t))
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
@@ -4106,7 +4106,7 @@ class Exec_01 {
                 val xxx = []    ;; gc'd by block
                 nil
             }
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         //assert(out == "1\n") { out }
@@ -4118,7 +4118,7 @@ class Exec_01 {
             """
             var xxx = []
             set xxx = []
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "1\n") { out }
@@ -4129,7 +4129,7 @@ class Exec_01 {
             """
             pass []  ;; not checked
             pass []  ;; not checked
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         //assert(out == "2\n") { out }
@@ -4144,7 +4144,7 @@ class Exec_01 {
             set x[0] = y
             set x = nil
             set y = nil
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "0\n") { out }
@@ -4156,9 +4156,9 @@ class Exec_01 {
             var x = []
             var y = [x]
             set x = nil
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
             set y = nil
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "0\n2\n") { out }
@@ -4172,7 +4172,7 @@ class Exec_01 {
                 var y = x
             }
             set x = nil
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "1\n") { out }
@@ -4183,7 +4183,7 @@ class Exec_01 {
             """
             var x = [[],[]]
             set x = nil
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "3\n") { out }
@@ -4196,7 +4196,7 @@ class Exec_01 {
                 v
             }
             #( #[ f([1]) ] )
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "2\n") { out }
@@ -4211,9 +4211,9 @@ class Exec_01 {
                     val ins = [1,2,3]
                     drop(ins)
                 }   ;; gc'd by block
-                println(`:number ceu_gc_count`)
+                println(`:number CEU_GC_COUNT`)
             }
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         //assert(out == "0\n1\n") { out }
@@ -4245,9 +4245,9 @@ class Exec_01 {
                     drop(v)
                 }
                 ;; [] not captured, should be checked 
-                println(`:number ceu_gc_count`)
+                println(`:number CEU_GC_COUNT`)
             }
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """, true
         )
         //assert(out == "1\n1\n") { out }
@@ -4262,7 +4262,7 @@ class Exec_01 {
             }
             f([])   ;; v is not captured
             ;; [] not captured, should be checked 
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
@@ -4274,7 +4274,7 @@ class Exec_01 {
         val out = test(
             """
             println([]) ;; println does ~not~ check
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "[]\n1\n") { out }
@@ -4287,7 +4287,7 @@ class Exec_01 {
                 nil
             }
             f([])
-            println(`:number ceu_gc_count`)
+            println(`:number CEU_GC_COUNT`)
         """
         )
         assert(out == "1\n") { out }
