@@ -436,6 +436,262 @@ fun Coder.main (tags: Tags): String {
             """
         }}
     """ +
+    """ // GC
+    #if 0
+        int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        void ceu_debug_add (int type) {
+            CEU_DEBUG_TYPE[type]++;
+            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+        }
+        void ceu_debug_rem (int type) {
+            CEU_DEBUG_TYPE[type]--;
+            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+        }
+    #else
+        #define ceu_debug_add(x)
+        #define ceu_debug_rem(x)
+    #endif
+    
+        // void ceu_dyn_rem_free_chk (CEU_Dyn* dyn)
+        //  - called from ceu_gc_dec
+        //  - called from TASK_IN termination
+        //  - calls (ceu_hold_rem)
+        //  - calls (ceu_dyn_free)
+        
+        // void ceu_gc_dec (CEU_Value v, int chk)
+        //  - calls (v.Dyn->refs--)
+        //  - chk arg: do not reclaim drops and returns to outer
+        //  - calls (ceu_gc_rem_chk) to check if v.Dyn->refs==0
+        
+        // void ceu_gc_rem_chk (CEU_Value v)
+        //  - calls (ceu_gc_dec_rec) if v.Dyn->refs==0
+        
+        // void ceu_gc_dec_rec (CEU_Dyn* dyn)
+        //  - called when dyn->refs==0
+        //  - calls (ceu_gc_dec) to decrement dyn childs
+        //  - calls (ceu_dyn_rem_free_chk) to free dyn
+        
+        int CEU_GC_COUNT = 0;
+        CEU_Dyn* CEU_GC_TOFREE = NULL;
+        
+        void ceu_gc_dec_rec (CEU_Dyn* dyn);
+        void ceu_gc_rem (CEU_Dyn* dyn);
+        
+        void ceu_gc_rem_chk (CEU_Value v) {
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                if (v.Dyn->Any.refs == 0) {
+                    ceu_gc_dec_rec(v.Dyn);
+                    ceu_gc_rem(v.Dyn);
+                    CEU_GC_COUNT++;
+                }
+            }
+        }
+        
+        void ceu_gc_dec (CEU_Value v, int chk) {
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                //assert(v.Dyn->Any.refs > 0);
+                v.Dyn->Any.refs--;
+                if (chk) {
+                    ceu_gc_rem_chk(v);
+                }
+            }
+        }
+
+        void ceu_gc_inc (CEU_Value v) {
+            if (v.type > CEU_VALUE_DYNAMIC) {
+                assert(v.Dyn->Any.refs < 255);
+                v.Dyn->Any.refs++;
+            }
+        }
+        
+        ///
+
+        void ceu_gc_rem_all (CEU_Dyns* dyns) {
+            {
+                CEU_Dyn* cur = dyns->first;
+                while (cur != NULL) {
+                    ceu_gc_dec_rec(cur);        // decrement refs to outer scopes
+                    cur = cur->Any.hld.next;
+                }
+            }
+            {
+                CEU_Dyn* cur = dyns->first;
+                while (cur != NULL) {
+                    CEU_Dyn* nxt = cur->Any.hld.next;
+                    ceu_gc_rem(cur);            // regardless of refs>0 (b/c of cycles)
+                    cur = nxt;
+                }
+            }
+            assert(dyns->first == NULL);
+            assert(dyns->last  == NULL);
+        }
+
+        void ceu_gc_inc_args (int n, CEU_Value args[]) {
+            for (int i=0; i<n; i++) {
+                ceu_gc_inc(args[i]);
+            }
+        }
+        
+        void ceu_gc_rem_chk_args (int n, CEU_Value args[]) {
+            for (int i=0; i<n; i++) {
+                ceu_gc_rem_chk(args[i]);
+            }
+        }
+        
+        ///
+        
+        void ceu_gc_rem (CEU_Dyn* dyn) {
+        #if CEU >= 3
+            {
+                void aux (CEU_Dyn* _dyn_) {
+                    if (ceu_isexe_dyn(_dyn_)) {
+                        ceu_dyn_exe_kill(_dyn_);
+                    }
+        #if CEU >= 5
+                    else if (_dyn_->Any.type == CEU_VALUE_TASKS) {
+                        CEU_Dyn* cur = _dyn_->Tasks.dyns.first;
+                        while (cur != NULL) {
+                            ceu_dyn_exe_kill(cur);
+                            cur = cur->Any.hld.next;
+                        }
+                    }
+        #endif
+                }
+                aux(dyn);
+            }
+        #endif
+            ceu_hold_rem(dyn);
+            dyn->Any.tofree = CEU_GC_TOFREE;
+            CEU_GC_TOFREE = dyn;
+        }
+
+        void ceu_gc_dec_rec (CEU_Dyn* dyn) {
+            //assert(dyn->Any.refs == 0);
+            switch (dyn->Any.type) {
+                case CEU_VALUE_CLO_FUNC:
+        #if CEU >= 3
+                case CEU_VALUE_CLO_CORO:
+        #endif
+        #if CEU >= 4
+                case CEU_VALUE_CLO_TASK:
+        #endif
+                    for (int i=0; i<dyn->Clo.upvs.its; i++) {
+                        ceu_gc_dec(dyn->Clo.upvs.buf[i], 1);
+                    }
+                    break;
+                case CEU_VALUE_TUPLE:
+                    for (int i=0; i<dyn->Tuple.its; i++) {
+                        ceu_gc_dec(dyn->Tuple.buf[i], 1);
+                    }
+                    break;
+                case CEU_VALUE_VECTOR:
+                    for (int i=0; i<dyn->Vector.its; i++) {
+                        CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
+                        assert(ret.type != CEU_VALUE_ERROR);
+                        ceu_gc_dec(ret, 1);
+                    }
+                    break;
+                case CEU_VALUE_DICT:
+                    for (int i=0; i<dyn->Dict.max; i++) {
+                        ceu_gc_dec((*dyn->Dict.buf)[i][0], 1);
+                        ceu_gc_dec((*dyn->Dict.buf)[i][1], 1);
+                    }
+                    break;
+            #if CEU >= 2
+                case CEU_VALUE_THROW:
+                    ceu_gc_dec(dyn->Throw.val, 1);
+                    ceu_gc_dec(dyn->Throw.stk, 1);
+                    break;
+            #endif
+        #if CEU >= 3
+                case CEU_VALUE_EXE_CORO:
+        #if CEU >= 4
+                case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_EXE_TASK_IN:
+        #endif
+                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), 1);
+                    break;
+        #endif
+        #if CEU >= 5
+                case CEU_VALUE_TRACK:
+                    // dyn->Track.task is a weak reference
+                    break;
+                case CEU_VALUE_TASKS:
+                    //assert(0 && "TODO: tasks should never reach refs==0");
+                    break;
+        #endif
+                default:
+                    assert(0);
+                    break;
+            }
+        }
+        
+        void ceu_gc_collect (void) {
+            void aux (CEU_Dyn* dyn) {
+                while (dyn->Any.tags != NULL) {
+                    CEU_Tags_List* tag = dyn->Any.tags;
+                    dyn->Any.tags = tag->next;
+                    free(tag);
+                }
+                switch (dyn->Any.type) {
+                    case CEU_VALUE_CLO_FUNC:
+        #if CEU >= 3
+                    case CEU_VALUE_CLO_CORO:
+        #endif
+        #if CEU >= 4
+                    case CEU_VALUE_CLO_TASK:
+        #endif
+                        free(dyn->Clo.upvs.buf);
+                        break;
+                    case CEU_VALUE_TUPLE:       // buf w/ dyn
+                        break;
+                    case CEU_VALUE_VECTOR:
+                        free(dyn->Vector.buf);
+                        break;
+                    case CEU_VALUE_DICT:
+                        free(dyn->Dict.buf);
+                        break;
+        #if CEU >= 2
+                    case CEU_VALUE_THROW:
+                        break;
+        #endif
+            
+        #if CEU >= 3
+                    case CEU_VALUE_EXE_CORO: {
+        #if CEU >= 4
+                    case CEU_VALUE_EXE_TASK:
+        #endif
+        #if CEU >= 5
+                    case CEU_VALUE_EXE_TASK_IN:
+        #endif
+                        free(dyn->Exe.mem);
+                        break;
+                    }
+        #endif
+            
+        #if CEU >= 5
+                    case CEU_VALUE_TASKS:
+                        //assert(dyn->Tasks.dyns.first==NULL && dyn->Tasks.dyns.last==NULL);
+                        break;
+                    case CEU_VALUE_TRACK:
+                        break;
+        #endif
+                    default:
+                        assert(0 && "bug found");
+                }
+                ceu_debug_rem(dyn->Any.type);
+                free(dyn);
+            }
+            
+            while (CEU_GC_TOFREE != NULL) {
+                CEU_Dyn* nxt = CEU_GC_TOFREE->Any.tofree;
+                aux(CEU_GC_TOFREE);
+                CEU_GC_TOFREE = nxt;
+            }
+        }        
+    """ +
     """ // EXIT / ERROR / ASSERT
         #if CEU <= 1
         #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
@@ -741,254 +997,6 @@ fun Coder.main (tags: Tags): String {
             return ceu_block_up_task(task->frame.up_block);
         }        
     #endif
-    """ +
-    """ // GC
-    #if 0
-        int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-        void ceu_debug_add (int type) {
-            CEU_DEBUG_TYPE[type]++;
-            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
-        }
-        void ceu_debug_rem (int type) {
-            CEU_DEBUG_TYPE[type]--;
-            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
-        }
-    #else
-        #define ceu_debug_add(x)
-        #define ceu_debug_rem(x)
-    #endif
-    
-        // void ceu_dyn_rem_free_chk (CEU_Dyn* dyn)
-        //  - called from ceu_gc_dec
-        //  - called from TASK_IN termination
-        //  - calls (ceu_hold_rem)
-        //  - calls (ceu_dyn_free)
-        
-        // void ceu_gc_dec (CEU_Value v, int chk)
-        //  - calls (v.Dyn->refs--)
-        //  - chk arg: do not reclaim drops and returns to outer
-        //  - calls (ceu_gc_rem_chk) to check if v.Dyn->refs==0
-        
-        // void ceu_gc_rem_chk (CEU_Value v)
-        //  - calls (ceu_gc_dec_rec) if v.Dyn->refs==0
-        
-        // void ceu_gc_dec_rec (CEU_Dyn* dyn)
-        //  - called when dyn->refs==0
-        //  - calls (ceu_gc_dec) to decrement dyn childs
-        //  - calls (ceu_dyn_rem_free_chk) to free dyn
-        
-        int CEU_GC_COUNT = 0;
-        CEU_Dyn* CEU_GC_TOFREE = NULL;
-        
-        void ceu_gc_dec_rec (CEU_Dyn* dyn) {
-            //assert(dyn->Any.refs == 0);
-            switch (dyn->Any.type) {
-                case CEU_VALUE_CLO_FUNC:
-        #if CEU >= 3
-                case CEU_VALUE_CLO_CORO:
-        #endif
-        #if CEU >= 4
-                case CEU_VALUE_CLO_TASK:
-        #endif
-                    for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        ceu_gc_dec(dyn->Clo.upvs.buf[i], 1);
-                    }
-                    break;
-                case CEU_VALUE_TUPLE:
-                    for (int i=0; i<dyn->Tuple.its; i++) {
-                        ceu_gc_dec(dyn->Tuple.buf[i], 1);
-                    }
-                    break;
-                case CEU_VALUE_VECTOR:
-                    for (int i=0; i<dyn->Vector.its; i++) {
-                        CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
-                        assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_gc_dec(ret, 1);
-                    }
-                    break;
-                case CEU_VALUE_DICT:
-                    for (int i=0; i<dyn->Dict.max; i++) {
-                        ceu_gc_dec((*dyn->Dict.buf)[i][0], 1);
-                        ceu_gc_dec((*dyn->Dict.buf)[i][1], 1);
-                    }
-                    break;
-            #if CEU >= 2
-                case CEU_VALUE_THROW:
-                    ceu_gc_dec(dyn->Throw.val, 1);
-                    ceu_gc_dec(dyn->Throw.stk, 1);
-                    break;
-            #endif
-        #if CEU >= 3
-                case CEU_VALUE_EXE_CORO:
-        #if CEU >= 4
-                case CEU_VALUE_EXE_TASK:
-        #endif
-        #if CEU >= 5
-                case CEU_VALUE_EXE_TASK_IN:
-        #endif
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), 1);
-                    break;
-        #endif
-        #if CEU >= 5
-                case CEU_VALUE_TRACK:
-                    // dyn->Track.task is a weak reference
-                    break;
-                case CEU_VALUE_TASKS:
-                    //assert(0 && "TODO: tasks should never reach refs==0");
-                    break;
-        #endif
-                default:
-                    assert(0);
-                    break;
-            }
-        }
-        
-        void ceu_gc_inc (CEU_Value v) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                assert(v.Dyn->Any.refs < 255);
-                v.Dyn->Any.refs++;
-            }
-        }
-        
-        void ceu_gc_rem_chk (CEU_Value v) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                if (v.Dyn->Any.refs == 0) {
-                    ceu_gc_dec_rec(v.Dyn);
-                    ceu_gc_rem(v.Dyn);
-                    CEU_GC_COUNT++;
-                }
-            }
-        }
-
-        void ceu_gc_dec (CEU_Value v, int chk) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                //assert(v.Dyn->Any.refs > 0);
-                v.Dyn->Any.refs--;
-                if (chk) {
-                    ceu_gc_rem_chk(v);
-                }
-            }
-        }
-
-        void ceu_gc_rem_all (CEU_Dyns* dyns) {
-            {
-                CEU_Dyn* cur = dyns->first;
-                while (cur != NULL) {
-                    ceu_gc_dec_rec(cur);        // decrement refs to outer scopes
-                    cur = cur->Any.hld.next;
-                }
-            }
-            {
-                CEU_Dyn* cur = dyns->first;
-                while (cur != NULL) {
-                    CEU_Dyn* nxt = cur->Any.hld.next;
-                    ceu_gc_rem(cur);            // regardless of refs>0 (b/c of cycles)
-                    cur = nxt;
-                }
-            }
-            assert(dyns->first == NULL);
-            assert(dyns->last  == NULL);
-        }
-
-        void ceu_gc_inc_args (int n, CEU_Value args[]) {
-            for (int i=0; i<n; i++) {
-                ceu_gc_inc(args[i]);
-            }
-        }
-        void ceu_gc_rem_chk_args (int n, CEU_Value args[]) {
-            for (int i=0; i<n; i++) {
-                ceu_gc_rem_chk(args[i]);
-            }
-        }
-        
-        void ceu_gc_rem (CEU_Dyn* dyn) {
-        #if CEU >= 3
-            {
-                void aux (CEU_Dyn* _dyn_) {
-                    if (ceu_isexe_dyn(_dyn_)) {
-                        ceu_dyn_exe_kill(_dyn_);
-                    }
-        #if CEU >= 5
-                    else if (_dyn_->Any.type == CEU_VALUE_TASKS) {
-                        CEU_Dyn* cur = _dyn_->Tasks.dyns.first;
-                        while (cur != NULL) {
-                            ceu_dyn_exe_kill(cur);
-                            cur = cur->Any.hld.next;
-                        }
-                    }
-        #endif
-                }
-                aux(dyn);
-            }
-        #endif
-            ceu_hold_rem(dyn);
-            dyn->Any.tofree = CEU_GC_TOFREE;
-            CEU_GC_TOFREE = dyn;
-        }
-
-        void ceu_gc_collect (void) {
-            void aux (CEU_Dyn* dyn) {
-                while (dyn->Any.tags != NULL) {
-                    CEU_Tags_List* tag = dyn->Any.tags;
-                    dyn->Any.tags = tag->next;
-                    free(tag);
-                }
-                switch (dyn->Any.type) {
-                    case CEU_VALUE_CLO_FUNC:
-        #if CEU >= 3
-                    case CEU_VALUE_CLO_CORO:
-        #endif
-        #if CEU >= 4
-                    case CEU_VALUE_CLO_TASK:
-        #endif
-                        free(dyn->Clo.upvs.buf);
-                        break;
-                    case CEU_VALUE_TUPLE:       // buf w/ dyn
-                        break;
-                    case CEU_VALUE_VECTOR:
-                        free(dyn->Vector.buf);
-                        break;
-                    case CEU_VALUE_DICT:
-                        free(dyn->Dict.buf);
-                        break;
-        #if CEU >= 2
-                    case CEU_VALUE_THROW:
-                        break;
-        #endif
-            
-        #if CEU >= 3
-                    case CEU_VALUE_EXE_CORO: {
-        #if CEU >= 4
-                    case CEU_VALUE_EXE_TASK:
-        #endif
-        #if CEU >= 5
-                    case CEU_VALUE_EXE_TASK_IN:
-        #endif
-                        free(dyn->Exe.mem);
-                        break;
-                    }
-        #endif
-            
-        #if CEU >= 5
-                    case CEU_VALUE_TASKS:
-                        //assert(dyn->Tasks.dyns.first==NULL && dyn->Tasks.dyns.last==NULL);
-                        break;
-                    case CEU_VALUE_TRACK:
-                        break;
-        #endif
-                    default:
-                        assert(0 && "bug found");
-                }
-                ceu_debug_rem(dyn->Any.type);
-                free(dyn);
-            }
-            
-            while (CEU_GC_TOFREE != NULL) {
-                CEU_Dyn* nxt = CEU_GC_TOFREE->Any.tofree;
-                aux(CEU_GC_TOFREE);
-                CEU_GC_TOFREE = nxt;
-            }
-        }        
     """ +
     """ // HOLD / DROP
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
