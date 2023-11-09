@@ -570,6 +570,9 @@ class Exec_05 {
     fun ee_01_throw() {
         val out = test("""
             val T = task () {
+                defer {
+                    println(:ok)
+                }
                 spawn( task () {
                     yield(nil) thus { it => nil }
                     throw(:error)
@@ -1245,6 +1248,29 @@ class Exec_05 {
             println(pub(detrack(y)))
         """)
         assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot move track outside its task scope\n") { out }
+    }
+    @Test
+    fun op_08_track_throw() {
+        val out = test("""
+            val T = task () {
+                defer {
+                    println(:ok)
+                }
+                spawn( task () {
+                    yield(nil) thus { it => nil }
+                    throw(:error)
+                })()
+                yield(nil) thus { it => nil }
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val t = next(ts0
+            broadcast(nil)
+            println(t, detrack(t) as { println(it) })
+        """)
+        assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
+                " |  anon : (lin 5, col 21) : throw(:error)\n" +
+                " v  throw error : :error\n") { out }
     }
 
     // ZZ / ALL

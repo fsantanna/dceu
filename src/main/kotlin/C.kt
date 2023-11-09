@@ -1366,6 +1366,8 @@ fun Coder.main (tags: Tags): String {
                     ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status != CEU_EXE_STATUS_YIELDED) {
                     // nothing else todo
+                    //printf(">>> %d\n", task->status);
+                    //assert(0 && "TODO");
                 } else {
                     ret = task->frame.clo->proto(&task->frame, n, args);
                     if (task->status == CEU_EXE_STATUS_TERMINATED) {
@@ -1385,8 +1387,8 @@ fun Coder.main (tags: Tags): String {
                                 CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
                             } while (0);
                             */
-                            goto __FREE__;
                         }
+                        goto __FREE__;
                     }
                 }
             }
