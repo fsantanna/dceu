@@ -1822,7 +1822,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun mm_04_self() {
+    fun BUG_mm_04_self() {
         val out = test("""
             do {
                 spawn (task () {
@@ -2526,7 +2526,7 @@ class Exec_04 {
                 " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun zz_17_bcast() {
+    fun BUG_zz_17_bcast() {
         val out = test(
             """
             var T1 = task () {

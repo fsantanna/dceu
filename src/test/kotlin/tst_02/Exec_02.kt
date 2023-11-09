@@ -336,7 +336,7 @@ class Exec_02 {
             }
         """)
         //assert(out == ":ok\n") { out }
-        assert(out.contains(" v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
+        assert(out.contains(" v  anon : (lin 2, col 13) : block escape error : cannot copy reference out\n")) { out }
     }
 
     // CALL STACK

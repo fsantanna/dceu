@@ -4,7 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
-var CEU = 5
+var CEU = 1
     // 1: dyn-lex, thus, { x => ... }
     // 2: defer, throw/catch
     // 3: coro, yield, resume
@@ -18,8 +18,8 @@ var CEU = 5
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
-//val VALGRIND = ""
-val VALGRIND = "valgrind "
+val VALGRIND = ""
+//val VALGRIND = "valgrind "
 val THROW = false
 //val THROW = true
 

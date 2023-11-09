@@ -1251,7 +1251,7 @@ class Exec_05 {
         assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot move track outside its task scope\n") { out }
     }
     @Test
-    fun op_08_track_throw() {
+    fun BUG_op_08_track_throw() {
         val out = test("""
             val T = task () {
                 defer {

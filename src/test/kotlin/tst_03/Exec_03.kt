@@ -1114,7 +1114,7 @@ class Exec_03 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun ll_02_kill() {
+    fun BUG_ll_02_kill() {
         val out = test("""
             val t = []
             resume coroutine(coro () {
