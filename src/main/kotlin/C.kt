@@ -51,6 +51,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         typedef enum CEU_HOLD {
+            CEU_HOLD_FREED = -1,    // collected
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
@@ -614,11 +615,11 @@ fun Coder.main (tags: Tags): String {
                 aux(dyn);
             }
         #endif
-            if (dyn->Any.hld.block != NULL) {   // do not free twice
-                ceu_hold_rem(dyn);
-                dyn->Any.tofree = CEU_GC_TOFREE;
-                CEU_GC_TOFREE = dyn;
-            }
+            assert(dyn->Any.hld.type!=CEU_HOLD_FREED && "TODO: double free");
+            dyn->Any.hld.type = CEU_HOLD_FREED;
+            dyn->Any.tofree = CEU_GC_TOFREE;
+            CEU_GC_TOFREE = dyn;
+            ceu_hold_rem(dyn);
         }
 
         void ceu_gc_dec_rec (CEU_Dyn* dyn) {
@@ -1180,7 +1181,7 @@ fun Coder.main (tags: Tags): String {
         __ERR__:
                 // return to orignal block to match failed child blocks
                 if (dst_blk != src_blk) {
-                    ceu_hold_chg(src.Dyn, src_blk CEU5(COMMA &dst_blk->dn.dyns));
+                    ceu_hold_chg(src.Dyn, src_blk CEU5(COMMA &src_blk->dn.dyns));
                 }
             }
             

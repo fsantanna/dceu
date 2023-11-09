@@ -866,7 +866,7 @@ class Exec_05 {
             val T = task () {
                 yield(nil) thus { it=>nil }
             }
-            val t = do {
+            val x = do {
                 val ts = tasks()
                 spawn T() in ts
                 do {
@@ -875,7 +875,7 @@ class Exec_05 {
                     nil
                 }
             }
-            println(t)
+            println(x)
         """)
         //assert(out == ":ok\n") { out }
         assert(out.contains(" v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
@@ -1265,9 +1265,12 @@ class Exec_05 {
             }
             val ts = tasks()
             spawn T() in ts
-            val t = next(ts0
-            broadcast(nil)
-            println(t, detrack(t) as { println(it) })
+            val t = next-tasks(ts)
+            catch (it=>true) {
+                broadcast(nil)
+            }
+            `ceu_gc_collect();`
+            detrack(t) thus { it => println(it) }
         """)
         assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +

@@ -77,7 +77,6 @@ class Exec_02 {
 
     // THROW / CATCH
 
-
     @Test
     fun jj_00_0_err() {
         val out = test("""
@@ -326,6 +325,18 @@ class Exec_02 {
             println(x)
         """)
         assert(out == "[:x]\n") { out }
+    }
+    @Test
+    fun jj_17_throw_immut_err() {
+        val out = test("""
+            do {
+                val t = @[]
+                throw(t)
+                nil
+            }
+        """)
+        //assert(out == ":ok\n") { out }
+        assert(out.contains(" v  anon : (lin 5, col 21) : block escape error : cannot move track outside its task scope\n")) { out }
     }
 
     // CALL STACK
