@@ -582,8 +582,9 @@ class Exec_05 {
             spawn T() in tasks()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
-                " |  anon : (lin 5, col 21) : throw(:error)\n" +
+        assert(out == ":ok\n" +
+                " |  anon : (lin 13, col 13) : broadcast(nil)\n" +
+                " |  anon : (lin 8, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
 
@@ -1173,9 +1174,9 @@ class Exec_05 {
                         yield(nil) thus { it => it==t }
                         throw(:par-or)
                     }) ()
-                    println(pub(detrack(x))[0])
+                    println(detrack(x) thus { it => pub(it)[0] })
                     broadcast(nil) in t
-                    println(pub(detrack(x))[0])
+                    println(detrack(x) thus { it => pub(it)[0] })
                     broadcast(:evt) in t
                     println(999)
                 }
