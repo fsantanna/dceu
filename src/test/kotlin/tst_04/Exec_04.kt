@@ -2526,12 +2526,12 @@ class Exec_04 {
                 " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
-    fun BUG_zz_17_bcast() {
+    fun zz_17_bcast() {
         val out = test(
             """
             var T1 = task () {
                 yield(nil) thus { it => nil}
-                spawn( task () {
+                spawn( task () {                ;; GC = task
                     val evt = yield(nil) thus { it => it}
                     println(:1)
                     var v = evt
@@ -2549,12 +2549,12 @@ class Exec_04 {
                 }
             }
             var t2 = spawn T2()
-            broadcast ([])
+            broadcast ([])                      ;; GC = []
             println(`:number CEU_GC_COUNT`)
             """
         )
         //assert(out == "0\n") { out }
-        assert(out == "1\n") { out }
+        assert(out == "2\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +

@@ -534,7 +534,9 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_rem_chk (CEU_Value v) {
             if (v.type > CEU_VALUE_DYNAMIC) {
-                if (v.Dyn->Any.refs == 0) {
+                if (v.Dyn->Any.refs==0 && v.Dyn->Any.hld.type!=CEU_HOLD_FREED) {
+                    //ceu_dump_value(ceu_dyn_to_val(v.Dyn));
+                    //assert(v.Dyn->Any.hld.type != CEU_HOLD_FREED);
                     ceu_gc_dec_rec(v.Dyn);
                     ceu_gc_rem(v.Dyn);
                     CEU_GC_COUNT++;
