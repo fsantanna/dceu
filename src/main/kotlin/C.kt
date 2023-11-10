@@ -615,11 +615,13 @@ fun Coder.main (tags: Tags): String {
                 aux(dyn);
             }
         #endif
-            assert(dyn->Any.hld.type!=CEU_HOLD_FREED && "TODO: double free");
-            dyn->Any.hld.type = CEU_HOLD_FREED;
-            dyn->Any.tofree = CEU_GC_TOFREE;
-            CEU_GC_TOFREE = dyn;
-            ceu_hold_rem(dyn);
+            //assert(dyn->Any.hld.type!=CEU_HOLD_FREED && "TODO: double free");
+            if (dyn->Any.hld.type != CEU_HOLD_FREED) {
+                dyn->Any.hld.type = CEU_HOLD_FREED;
+                dyn->Any.tofree = CEU_GC_TOFREE;
+                CEU_GC_TOFREE = dyn;
+                ceu_hold_rem(dyn);
+            }
         }
 
         void ceu_gc_dec_rec (CEU_Dyn* dyn) {
