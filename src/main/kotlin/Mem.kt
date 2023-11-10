@@ -14,7 +14,9 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
             is Expr.Set    -> this.dst.coexists() || this.src.coexists()
             is Expr.If     -> this.cnd.coexists()
             is Expr.Drop   -> this.e.coexists()
-            is Expr.Break -> this.cnd.coexists() || (this.e?.coexists() ?: false)
+            is Expr.Break  -> this.cnd.coexists() || (this.e?.coexists() ?: false)
+            is Expr.Loop   -> this.blk.coexists()
+            is Expr.Pass   -> this.e.coexists()
 
             is Expr.Catch  -> this.cnd.coexists()
 
@@ -33,8 +35,8 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
             is Expr.Index  -> this.col.coexists() || this.idx.coexists()
             is Expr.Call   -> this.clo.coexists() || this.args.any { it.coexists() }
 
-            is Expr.Proto, is Expr.Export, is Expr.Do,   is Expr.Loop  -> false
-            is Expr.Enum,  is Expr.Data,   is Expr.Pass, is Expr.Defer -> false
+            is Expr.Proto, is Expr.Export, is Expr.Do  -> false
+            is Expr.Enum,  is Expr.Data,   is Expr.Defer -> false
             is Expr.Nat, is Expr.Acc, is Expr.Nil, is Expr.Tag, is Expr.Bool, is Expr.Char, is Expr.Num -> false
         }
     }
@@ -46,7 +48,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
     fun List<Expr>.seq (i: Int): String {
         return (i != this.size).cond {
             """
-            ${this[i].union_or_struct()} { // SEQ
+            ${this[i].union_or_struct()} { // SEQ | ${this[i].dump()}
                 ${this[i].mem()}
                 ${this.seq(i+1)}
             };
@@ -61,7 +63,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
                 val inexp = ups.pub[this] is Expr.Export
                 if (!this.ismem(sta,clos)) "" else {
                     """
-                    struct { // BLOCK
+                    struct { // BLOCK | ${this.dump()}
                         ${(!sta.void(this) && !inexp).cond { """
                             CEU_Block _block_$n;
                         """ }}

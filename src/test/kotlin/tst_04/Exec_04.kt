@@ -1822,7 +1822,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun BUG_mm_04_self() {
+    fun mm_04_self() {
         val out = test("""
             do {
                 spawn (task () {

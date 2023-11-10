@@ -1360,6 +1360,10 @@ fun Coder.main (tags: Tags): String {
                 return ret;
             }
             
+            // get up_task before awake b/c
+            // it crosses blocks that may not exist after awake
+            CEU_Exe_Task* up_task = ceu_task_up_task(task);
+            
             if (n == CEU_ARG_ABORT) {
                 ret = task->frame.clo->proto(&task->frame, CEU_ARG_ABORT, NULL);
             } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
@@ -1379,7 +1383,6 @@ fun Coder.main (tags: Tags): String {
             
             if (task->status == CEU_EXE_STATUS_TERMINATED) {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
-                CEU_Exe_Task* up_task = ceu_task_up_task(task);
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
                 if (up_task != NULL) {

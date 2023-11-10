@@ -196,6 +196,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 val ismem  = this.ismem(sta,clos)
                 val isvoid = sta.void(this)
+                //println(listOf(isvoid,this.tk))
                 val inexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
                 val istsk  = (f_b?.tk?.str == "task")
                 val isthus = (this.tk.str == "thus")
