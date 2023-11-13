@@ -1020,6 +1020,23 @@ class Exec_05 {
        """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun ii_03_self() {
+        val out = test("""
+            val T = task () {
+                spawn (task () {
+                    yield(nil)
+                }) ()
+                yield(nil)
+                nil
+            }
+            val ts = tasks()
+            spawn T() in ts
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
 
     // ORIGINAL
 

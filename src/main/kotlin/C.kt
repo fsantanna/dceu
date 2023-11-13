@@ -1360,31 +1360,35 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
+            } else if (n == CEU_ARG_ABORT) {
+                ret = task->frame.clo->proto(&task->frame, CEU_ARG_ABORT, NULL);
+                goto __CEU_FREE__;
+            } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
+                return ret;
             }
             
             // get up_task before awake b/c
             // it crosses blocks that may not exist after awake
             CEU_Exe_Task* up_task = ceu_task_up_task(task);
             
-            if (n == CEU_ARG_ABORT) {
-                ret = task->frame.clo->proto(&task->frame, CEU_ARG_ABORT, NULL);
-            } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
-                // nothing else todo
-            } else {
-                if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
-                    ret = ceu_bcast_blocks(task->dn_block, args[0]);
+            if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
+                ret = ceu_bcast_blocks(task->dn_block, args[0]);
+                if (task->status >= CEU_EXE_STATUS_TERMINATED) {
+                    return ret; // already terminated and released, return immediately
                 }
-                if (task->status==CEU_EXE_STATUS_YIELDED) { 
-                    if (CEU_ISERR(ret)) {
-                        ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
-                    } else if (task->status == CEU_EXE_STATUS_YIELDED) {
-                        ret = task->frame.clo->proto(&task->frame, n, args);
-                    }
+            }
+
+            if (task->status == CEU_EXE_STATUS_YIELDED) { 
+                if (CEU_ISERR(ret)) {
+                    ret = task->frame.clo->proto(&task->frame, CEU_ARG_ERROR, &ret);
+                } else if (task->status == CEU_EXE_STATUS_YIELDED) {
+                    ret = task->frame.clo->proto(&task->frame, n, args);
                 }
             }
             
-            // do not bcast aborted task b/c it would awake parents that
-            // actually need to respond/catch the error (not awake)
+            // do not bcast aborted task (only terminated) b/c
+            // it would awake parents that actually need to
+            // respond/catch the error (thus not awake)
             if (task->status == CEU_EXE_STATUS_TERMINATED) {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
@@ -1404,14 +1408,17 @@ fun Coder.main (tags: Tags): String {
                     CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
                 } while (0);
                 */
+                goto __CEU_FREE__;
             }
+
+            if (0) {
+        __CEU_FREE__:
     #if CEU >= 5
-            if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 if (task->type == CEU_VALUE_EXE_TASK_IN) {
                     ceu_gc_rem((CEU_Dyn*)task);
                 }
-            }
     #endif
+            }
             return ret;
         }
 

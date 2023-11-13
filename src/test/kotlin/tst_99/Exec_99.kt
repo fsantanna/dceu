@@ -1034,7 +1034,7 @@ class Exec_99 {
     @Test
     fun kk_02_await() {
         val out = test("""
-            $IS
+            $IS ; $XAWAIT
             spawn task {
                 println(0)
                 await ( (it/=nil) and (it[:type]==:x) )
@@ -1744,10 +1744,11 @@ class Exec_99 {
         val out = test("""
             val ts = tasks()
             loop in {1=>10} {
-                dump(ts)
+                ;;dump(ts)
                 pass [ts]
             }
+            println(:ok)
         """, true)
-        assert(out == "false\n") { out }
+        assert(out == ":ok\n") { out }
     }
 }
