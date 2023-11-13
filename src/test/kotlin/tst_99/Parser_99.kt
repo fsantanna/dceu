@@ -825,7 +825,7 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         assert(out.contains("thus { x :X =>"))
-        assert(out.contains("await-chk(x,:X)"))
+        assert(out.contains("await-chk(__x,:X)")) { out }
         assert(out.contains("if ceu_46 {\nz\n}"))
     }
     @Test
@@ -841,7 +841,7 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         assert(out.contains("thus { x :X =>"))
-        assert(out.contains("await-chk(x,:X)"))
+        assert(out.contains("await-chk(__x,:X)"))
         assert(out.contains("do {\nx\n}"))
     }
     @Test
@@ -852,7 +852,7 @@ class Parser_99 {
         val out = e.tostr()
         assert(out.contains("thus { x =>"))
         assert(!out.contains("await-chk"))
-        assert(out.contains("if z {\nif x {\nx\n} else {\ntrue\n}\n} else {\nz\n}"))
+        assert(out.contains("if z {\nawait-ret(x)\n} else {\nz\n}")) { out }
     }
     @Test
     fun ja_06_await() {
@@ -860,7 +860,7 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         val out = e.tostr()
-        assert(out.contains("await-chk(it,:X)")) { out }
+        assert(out.contains("await-chk(__it,:X)")) { out }
         assert(out.contains("if ceu_49 {\nz\n} else {\nceu_49\n}\n")) { out }
         assert(out.contains("do {\n:a\n}")) { out }
     }
@@ -871,7 +871,7 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         assert(out.contains("thus { it :X =>"))
-        assert(out.contains("await-chk(it,:X)"))
+        assert(out.contains("await-chk(__it,:X)"))
         assert(out.contains("do {\n:a\n}"))
     }
     @Test
@@ -881,7 +881,7 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         assert(out.contains("thus { it =>"))
-        assert(out.contains("await-chk(it,x)"))
+        assert(out.contains("await-chk(__it,x)"))
         assert(out.contains("do {\n:a\n}"))
     }
     @Test
@@ -908,8 +908,8 @@ class Parser_99 {
         val e = parser.expr()
         val out = e.tostr()
         assert(out.contains("thus { ceu_5 =>")) { out }
-        assert(out.contains("await-chk(ceu_5,x)")) { out }
-        assert(out.contains("if ceu_41 {\nif ceu_5 {\nceu_5\n} else {\ntrue\n}\n} else {\nceu_41\n}")) { out }
+        assert(out.contains("await-chk(__ceu_5,x)")) { out }
+        assert(out.contains("if ceu_41 {\nawait-ret(ceu_5)\n} else {\nceu_41\n}")) { out }
     }
     @Test
     fun ja_05_task_err() {
@@ -940,7 +940,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { it :X =>\n" +
-                "((await-chk(it,:X)) thus { ceu_44 =>\n" +
+                "((await-chk(__it,:X)) thus { ceu_44 =>\n" +
                 "if ceu_44 {\n" +
                 "loop {\n" +
                 "nil\n" +
@@ -960,7 +960,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { x :X =>\n" +
-                "((await-chk(x,:X)) thus { ceu_52 =>\n" +
+                "((await-chk(__x,:X)) thus { ceu_52 =>\n" +
                 "if ceu_52 {\n" +
                 "loop {\n" +
                 "println(x)\n" +
@@ -980,7 +980,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "loop {\n" +
                 "(break if ((yield(nil)) thus { it :X =>\n" +
-                "((await-chk(it,:X)) thus { ceu_46 =>\n" +
+                "((await-chk(__it,:X)) thus { ceu_46 =>\n" +
                 "if ceu_46 {\n" +
                 "loop {\n" +
                 "(break if true)\n" +
@@ -1048,7 +1048,7 @@ class Parser_99 {
         val l = lexer("watching :E { nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr().contains("await-chk(ceu_5,:E)")) { e.tostr() }
+        assert(e.tostr().contains("await-chk(__ceu_5,:E)")) { e.tostr() }
     }
 
     // CLOCK
@@ -1073,7 +1073,7 @@ class Parser_99 {
         //println(out)
         assert(out.contains("var ceu_clk_5 = {{+}}({{*}}(1,3600000),{{+}}({{*}}(10,60000),{{+}}({{*}}(30,1000),{{*}}(239,1000)))))"))
         assert(out.contains("thus { ceu_5 :Clock =>"))
-        assert(out.contains("await-chk(ceu_5,:Clock)"))
+        assert(out.contains("await-chk(__ceu_5,:Clock)"))
         assert(out.contains("{{>}}(ceu_clk_5,0)")) { out }
     }
 

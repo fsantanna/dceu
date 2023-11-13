@@ -1383,6 +1383,8 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             
+            // do not bcast aborted task b/c it would awake parents that
+            // actually need to respond/catch the error (not awake)
             if (task->status == CEU_EXE_STATUS_TERMINATED) {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);

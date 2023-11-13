@@ -1020,7 +1020,7 @@ class Exec_99 {
     @Test
     fun kk_01_await() {
         val out = test("""
-            $IS
+            $IS ; $XAWAIT
             task T () {
                 await(it => it is? :x)
                 println(1)
