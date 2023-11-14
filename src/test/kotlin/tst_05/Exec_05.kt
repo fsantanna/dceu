@@ -134,6 +134,22 @@ class Exec_05 {
         """)
         assert(out == "false\n") { out }
     }
+    @Test
+    fun aa_11_spawn() {
+        val out = test("""
+            $PLUS
+            val T = task (v) { nil }
+            val ts = tasks()
+            var x = 0
+            loop {
+                spawn T() in ts
+                set x = x + 1
+                break if x==500
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // TRACK
 

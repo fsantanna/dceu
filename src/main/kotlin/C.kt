@@ -1374,7 +1374,7 @@ fun Coder.main (tags: Tags): String {
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 ret = ceu_bcast_blocks(task->dn_block, args[0]);
                 if (task->status >= CEU_EXE_STATUS_TERMINATED) {
-                    return ret; // already terminated and released, return immediately
+                    return ret; // already terminated and released from inside
                 }
             }
 
@@ -1415,6 +1415,7 @@ fun Coder.main (tags: Tags): String {
         __CEU_FREE__:
     #if CEU >= 5
                 if (task->type == CEU_VALUE_EXE_TASK_IN) {
+                    ceu_gc_dec_rec((CEU_Dyn*)task);
                     ceu_gc_rem((CEU_Dyn*)task);
                 }
     #endif
