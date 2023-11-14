@@ -12,42 +12,6 @@ class TXExec {
     // IFS
 
     @Test
-    fun ff_07_ifs() {
-        val out = test("""
-            var x = ifs it=20 {
-                it is? 10 => false
-                true  => true
-                it is? 20 => false
-                else  => false
-            }
-            println(x)
-        """, true)
-        assert(out == "true\n") { out }
-    }
-    @Test
-    fun ff_08_ifs() {
-        val out = test("""
-            data :T = []
-            val x = ifs 10 {
-                true => :T []
-                is? 0 => nil
-            }
-            println(x)
-        """)
-        assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared") { out }
-    }
-    @Test
-    fun bb_ifs9() {
-        val out = all("""
-            var x = ifs it=20 {
-                it in? [1,20,1] => true
-                else  => false
-            }
-            println(x)
-        """, true)
-        assert(out == "true\n") { out }
-    }
-    @Test
     fun bb_ifs9x() {
         val out = all("""
             var x = ifs it=20 {

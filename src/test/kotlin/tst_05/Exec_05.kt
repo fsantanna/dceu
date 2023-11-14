@@ -1331,4 +1331,29 @@ class Exec_05 {
        """)
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun TODO_zz_02_all() {
+        val out = test("""
+            val iter-tasks = func (itr) {
+                set itr[2] = next-tasks(itr[1],itr[2])
+                itr[2]
+            }
+            val T = task () {
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn T(nil) in ts
+            val x = do {
+                val tt = [nil]
+                loop {
+                    set tt[0] = next-tasks(ts,tt[0])
+                    val t = tt[0]
+                    break(false) if {{==}}(t,nil)
+                    break(drop(t)) if true
+                }
+            }
+            println(x)
+       """)
+        assert(out == "nil\n") { out }
+    }
 }

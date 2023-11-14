@@ -418,6 +418,55 @@ class Exec_99 {
         """)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun TODO_ff_06_ifs_is() {
+        val out = test("""
+            val t = :X []
+            val x = ifs t {
+                :Y   => false
+                :X   => true
+                else => false
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun TODO_ff_07_ifs() {
+        val out = test("""
+            var x = ifs it=20 {
+                it is? 10 => false
+                true  => true
+                it is? 20 => false
+                else  => false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun TODO_08_ifs() {
+        val out = test("""
+            data :T = []
+            val x = ifs 10 {
+                true => :T []
+                is? 0 => nil
+            }
+            println(x)
+        """)
+        assert(out == "anon : (lin 5, col 21) : access error : variable \"is'\" is not declared\n") { out }
+    }
+    @Test
+    fun TODO_ff_09_ifs() {
+        val out = test("""
+            var x = ifs it=20 {
+                it in? [1,20,1] => true
+                else  => false
+            }
+            println(x)
+        """, true)
+        assert(out == "true\n") { out }
+    }
 
     // LOOP / ITER / NUMERIC FOR
 
@@ -529,7 +578,23 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
 
+    // TASKS / ITER / DROP
 
+    @Test
+    fun TODO_fj_01_iter() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = loop t in ts {
+                break(drop(t)) if true
+            }
+            println(x)
+        """, true)
+        assert(out.contains("track: 0x")) { out }
+    }
     // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test
@@ -1820,5 +1885,13 @@ class Exec_99 {
             println(:ok)
         """, true)
         assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun TODO_zz_03_in() {
+        val out = test("""
+            println(10 in? [1,2,3])
+            println(10 in? [1,10,3])
+        """, true)
+        assert(out == "false\ntrue\n") { out }
     }
 }
