@@ -1234,7 +1234,16 @@ fun Coder.main (tags: Tags): String {
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                 // only need to test at top-level ceu_drop_f
             }
-
+            
+            #if 0
+            // TODO: subsumed by "cannot move pending reference in":
+            // if dropping a ref'ed T, it becomes pending, then trying to assign/hold in
+            // another block would raise "cannot move pending reference in"
+            if (dyn->Any.refs > 1) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : multiple references"} };
+            }
+            #endif
+            
             dyn->Any.hld.type = CEU_HOLD_FLEET;
 
             switch (src.type) {

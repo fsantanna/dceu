@@ -794,6 +794,24 @@ class Exec_01 {
         assert(out == "[1,2,3]\n") { out }
     }
     @Test
+    fun cc_10_drop_multi_err_why() {
+        val out = test("""
+            val t = [1,[99],3]
+            do {
+                val y = do {
+                    val x = t[1]
+                    drop(x)
+                }
+                println(y)
+            }
+            `ceu_gc_collect();`
+            println("-=-=-=-=-=-=-=-=-")
+            println(t)
+        """)
+        //assert(out == "anon : (lin 5, col 22) : drop error : multiple references\n") { out }
+        assert(out == "anon : (lin 4, col 25) : block escape error : cannot move pending reference in\n") { out }
+    }
+    @Test
     fun cc_11_drop_deep() {
         val out = test("""
             do {
