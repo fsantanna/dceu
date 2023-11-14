@@ -1411,6 +1411,32 @@ class Exec_99 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun oq_02_cast() {
+        val out = test("""
+            data :X = [x]
+            val t = [[[10]]]
+            println(t[0].(:X).x)
+        """)
+        assert(out == "[10]\n") { out }
+    }
+    @Test
+    fun BUG_oq_03_cast() {
+        val out = test("""
+            data :X = [x]
+            task T () {
+                set pub() = [[[10]]]
+                yield()
+            }
+            val t = spawn T()
+            val x = track(t)
+            println(detrack(x) as {
+                pub(it).(:X)
+                nil
+            })
+        """)
+        assert(out == "[10]\n") { out }
+    }
 
     // WHERE
 
