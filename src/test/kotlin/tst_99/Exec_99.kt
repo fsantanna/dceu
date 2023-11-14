@@ -486,6 +486,50 @@ class Exec_99 {
         assert(out == "0\n1\n") { out }
     }
 
+    // LOOP / RET
+
+    @Test
+    fun fi_01_ret() {
+        val out = test("""
+            println(loop i in {0 => 1} {
+                nil
+            })
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun fi_02_ret() {
+        val out = test("""
+            println(loop i in {0 => 1} {
+                until 10
+            })
+        """, true)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun fi_03_ret() {
+        val out = test("""
+            val ts = tasks()
+            spawn ((task(){yield()})()) in ts
+            println(loop i in ts {
+                nil
+            })
+        """, true)
+        assert(out == "false\n") { out }
+    }
+    @Test
+    fun fi_04_ret() {
+        val out = test("""
+            val ts = tasks()
+            spawn ((task(){yield()})()) in ts
+            println(loop i in ts {
+                until true
+            })
+        """, true)
+        assert(out == "true\n") { out }
+    }
+
+
     // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test

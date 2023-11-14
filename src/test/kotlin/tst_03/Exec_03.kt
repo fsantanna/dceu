@@ -1116,7 +1116,7 @@ class Exec_03 {
     @Test
     fun ll_02_kill() {
         val out = test("""
-            val t = []
+            val t = @[]
             resume coroutine(coro () {
                 defer {
                     println(t)
@@ -1126,7 +1126,7 @@ class Exec_03 {
             }) ()
             println(:ok)
         """)
-        assert(out == ":ok\n[]\n") { out }
+        assert(out == ":ok\n@[]\n") { out }
     }
 
     // NESTED

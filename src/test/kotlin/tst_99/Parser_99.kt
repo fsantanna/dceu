@@ -383,7 +383,7 @@ class Parser_99 {
                 "(val ceu_14 = iter(f))\n" +
                 "loop {\n" +
                 "(val x = ceu_14[0](ceu_14))\n" +
-                "(break if {{==}}(x,nil))\n" +
+                "(break(false) if {{==}}(x,nil))\n" +
                 "x\n" +
                 "}\n" +
                 "}") { e.tostr() }
@@ -423,7 +423,7 @@ class Parser_99 {
                 "(var i = {{+}}(0,0))\n" +
                 "(val ceu_lim_23 = n)\n" +
                 "loop {\n" +
-                "(break if {{>=}}(i,ceu_lim_23))\n" +
+                "(break(false) if {{>=}}(i,ceu_lim_23))\n" +
                 "nil\n" +
                 "(set i = {{+}}(i,ceu_ste_23))\n" +
                 "}\n" +
@@ -442,7 +442,7 @@ class Parser_99 {
                 "(var it = {{+}}(1,0))\n" +
                 "(val ceu_lim_18 = 10)\n" +
                 "loop {\n" +
-                "(break if {{>}}(it,ceu_lim_18))\n" +
+                "(break(false) if {{>}}(it,ceu_lim_18))\n" +
                 "nil\n" +
                 "(set it = {{+}}(it,ceu_ste_18))\n" +
                 "}\n" +

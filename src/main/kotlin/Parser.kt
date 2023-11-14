@@ -648,7 +648,7 @@ class Parser (lexer_: Lexer)
                                 )
                                 val ceu_lim_$N = ${eB.tostr(true)}
                                 loop {
-                                    until $id $cmp ceu_lim_$N
+                                    break(false) if ($id $cmp ceu_lim_$N)
                                     ${blk.es.tostr(true)}
                                     set $id = $id $op ceu_ste_$N
                                 }                                
@@ -663,7 +663,7 @@ class Parser (lexer_: Lexer)
                                 val ceu_$N = iter(${iter.tostr(true)})
                                 loop {
                                     val $id $tag = ceu_$N[0](ceu_$N)
-                                    until ($id == nil)
+                                    break(false) if ($id == nil)
                                     ${blk.es.tostr(true)}
                                 }
                             }
