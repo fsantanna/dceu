@@ -1356,4 +1356,20 @@ class Exec_05 {
        """)
         assert(out == "nil\n") { out }
     }
+    @Test
+    fun TODO_zz_03_all() {
+        val out = test("""
+            val x = do {
+                val tt = [nil]
+                loop {
+                    set tt[0] = @[]
+                    val t = tt[0]
+                    break(false) if {{==}}(t,nil)
+                    break(drop(t)) if true
+                }
+            }
+            println(x)
+       """)
+        assert(out == "nil\n") { out }
+    }
 }

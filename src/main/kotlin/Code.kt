@@ -311,7 +311,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             {
                                                 CEU_ASSERT(
                                                     $blkc,
-                                                    ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
+                                                    ceu_hold_chk_set($blkc, CEU_HOLD_PASSD, $idc, 1, "argument error"),
                                                     "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
                                                 );
                                             }
@@ -380,11 +380,15 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond {
                         f_b as Expr.Proto
-                        f_b.args.map {
-                            val idc = vars.get(this, it.first.str).idc(0)
+                        f_b.args.map { arg ->
+                            val idc = vars.get(this, arg.first.str).idc(0)
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
+                                if ($idc.Dyn->Any.hld.type == CEU_HOLD_PASSD) {
+                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "TODO");
+                                    assert(ceu_err_$n.type == CEU_VALUE_NIL);
+                                }
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """

@@ -1534,18 +1534,31 @@ class Exec_99 {
         val out = test("""
             data :X = [x]
             task T () {
-                set pub() = [[[10]]]
+                set pub() = [10]
                 yield()
             }
             val t = spawn T()
-            val x = track(t)
-            println(detrack(x) as {
-                pub(it).(:X)
-                nil
-            })
+            pub(t).(:X)
+            nil
         """)
         assert(out == "[10]\n") { out }
     }
+    @Test
+    fun BUG_oq_04_cast() {
+        val out = test("""
+            data :X = [x]
+            val T = task () {
+                set pub() = [10]
+                yield(nil)
+            }
+            val t = spawn T(nil)
+            pub(t) thus { ceu_94 :X =>
+                ceu_94
+            }
+            nil
+         """)
+         assert(out == "[10]\n") { out }
+     }
 
     // WHERE
 

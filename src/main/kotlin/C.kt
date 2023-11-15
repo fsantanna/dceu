@@ -53,6 +53,7 @@ fun Coder.main (tags: Tags): String {
         typedef enum CEU_HOLD {
             CEU_HOLD_FREED = -1,    // collected
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
+            CEU_HOLD_PASSD,         // FLEED -> PASSD -> FLEET
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
             CEU_HOLD_MAX
