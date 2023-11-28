@@ -306,14 +306,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
                                             ${(!inexe).cond {
-                                                "if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type==CEU_HOLD_FLEET)"
+                                                "if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type<=CEU_HOLD_FLEET)"
                                             }}
                                             {
+                                        //printf(">>> %d\n", $idc.Dyn->Any.hld.type);
                                                 CEU_ASSERT(
                                                     $blkc,
-                                                    ceu_hold_chk_set($blkc, CEU_HOLD_PASSD, $idc, 1, "argument error"),
+                                                    ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type-1, $idc, 1, "argument error"),
+                                                    //ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
                                                     "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
                                                 );
+                                        //printf("<<< %d\n", $idc.Dyn->Any.hld.type);
                                             }
                                         }
                                         """
@@ -367,8 +370,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
-                                if ($idc.Dyn->Any.hld.type == CEU_HOLD_PASSD) {
-                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "TODO");
+                                if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
+                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
                                     assert(ceu_err_$n.type == CEU_VALUE_NIL);
                                 }
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));

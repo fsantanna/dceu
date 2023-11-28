@@ -235,7 +235,7 @@ class Exec_01 {
             val t = [[nil]]
             dump(t[0])
         """)
-        assert(out.contains("hold  = 2")) { out }
+        assert(out.contains("hold  = 1")) { out }
     }
 
     // SET
@@ -881,7 +881,8 @@ class Exec_01 {
             println(f([1]))
         """
         )
-        assert(out == "anon : (lin 3, col 22) : drop error : fleeting argument\n") { out }
+        //assert(out == "anon : (lin 3, col 22) : drop error : fleeting argument\n") { out }
+        assert(out == "[1]\n") { out }
     }
 
     // DICT
@@ -1986,9 +1987,9 @@ class Exec_01 {
             """
             val f = func (t) {
                 val x = []
-                ;;dump(t)
+                dump(x)
                 set t[0] = x
-                ;;dump(t)
+                dump(x)
                 t
             }
             println(f([nil]))
@@ -2114,6 +2115,7 @@ class Exec_01 {
     fun ll_05_nest() {
         val out = test("""
             var f = func (v) {  ;; (but they are in the same block)
+                ;;dump(v)
                 val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
@@ -2139,9 +2141,11 @@ class Exec_01 {
     fun ll_06_xxx() {
         val out = test("""
             val g = func (v) {
+                ;;dump(v)
                 println(v)
             }
             val f = func (v) {
+                ;;dump(v)
                 g(v)
             }
             f([1])
@@ -2155,7 +2159,9 @@ class Exec_01 {
                 println(v)
             }
             val f = func (v) {
+                ;;dump(v)
                 g(v)
+                ;;dump(v)
                 g(v)
             }
             f([1])
@@ -2620,7 +2626,17 @@ class Exec_01 {
         assert(out == "[]\n") { out }
     }
     @Test
-    fun nn_20_func() {
+    fun nn_20_func_err() {
+        val out = test("""
+            val f = func (v) {
+                nil
+            }
+            println(f([[nil]][0]))  ;; err
+        """)
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+    }
+    @Test
+    fun nn_21_func() {
         val out = test("""
             val f = func (v) {
                 1
@@ -2631,7 +2647,6 @@ class Exec_01 {
         """)
         assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
     }
-
 
     // FUNC / ARGS / DOTS / ...
 

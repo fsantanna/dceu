@@ -51,11 +51,11 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         typedef enum CEU_HOLD {
-            CEU_HOLD_FREED = -1,    // collected
+            CEU_HOLD_PASSD = -1,    // (+nest) FLEED -> PASSD -> FLEET
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
-            CEU_HOLD_PASSD,         // FLEED -> PASSD -> FLEET
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
+            CEU_HOLD_FREED = 126,   // collected
             CEU_HOLD_MAX
         } __attribute__ ((__packed__)) CEU_HOLD;
         _Static_assert(sizeof(CEU_HOLD) == 1, "bug found");
@@ -1072,10 +1072,10 @@ fun Coder.main (tags: Tags): String {
         #endif
 
             // dst <- src
-            if (dst_type==CEU_HOLD_FLEET && src_type==CEU_HOLD_PASSD) {
+            if (src_type<CEU_HOLD_FLEET && dst_type<=CEU_HOLD_FLEET) {
+        //printf(">A> %d -> %d\n", src_type, dst_type);
                 // always ok b/c only called by language rt on func return
-                src.Dyn->Any.hld.type = CEU_HOLD_FLEET; // force change bc FLEET<PASSD
-            } if (dst_blk == src_blk) {
+            } else if (dst_blk == src_blk) {
                 if (dst_type == src_type) {
                     // nothing is supposed to change
                     return (CEU_Value) { CEU_VALUE_NIL };
@@ -1123,7 +1123,12 @@ fun Coder.main (tags: Tags): String {
             }
             
             // change type
-            src.Dyn->Any.hld.type = MAX(src_type,dst_type);
+        //printf(">B> %d -> %d = %d\n", src_type, dst_type, src.Dyn->Any.hld.type);
+            if (src_type<CEU_HOLD_FLEET && dst_type<CEU_HOLD_FLEET) {
+                src.Dyn->Any.hld.type = dst_type;   // force FLEET->PASSD bc PASSD<FLEET
+            } else {
+                src.Dyn->Any.hld.type = MAX(src_type,dst_type);
+            }
             
             // change block
             if (dst_blk != src_blk) {
@@ -1235,9 +1240,12 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
-            } else if (dyn->Any.hld.type == CEU_HOLD_PASSD) {
+            } else if (dyn->Any.hld.type <= CEU_HOLD_PASSD) {
+                CEU_Value err = ceu_hold_chk_set(CEU_HLD_BLOCK(dyn), CEU_HOLD_FLEET, src, 1, "TODO");
+                assert(err.type == CEU_VALUE_NIL);
+                return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
                 // TODO: error b/c argument would become nil and value would not become PASSD->FLEET
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : fleeting argument"} };
+                //return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : fleeting argument"} };
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                 // only need to test at top-level ceu_drop_f
             }
