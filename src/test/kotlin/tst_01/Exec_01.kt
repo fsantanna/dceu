@@ -871,6 +871,18 @@ class Exec_01 {
         )
         assert(out == "true\n") { out }
     }
+    @Test
+    fun cc_15_drop_passd() {
+        val out = test(
+            """
+            val f = func (v) {
+                drop(v)
+            }
+            println(f([1]))
+        """
+        )
+        assert(out == "anon : (lin 3, col 22) : drop error : fleeting argument\n") { out }
+    }
 
     // DICT
 
@@ -2122,8 +2134,22 @@ class Exec_01 {
         """)
         assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
     }
+
     @Test
     fun ll_06_xxx() {
+        val out = test("""
+            val g = func (v) {
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+            }
+            f([1])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun ll_07_xxx() {
         val out = test("""
             val g = func (v) {
                 println(v)
@@ -2134,10 +2160,10 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        assert(out == "[1]\n[1]\n") { out }
     }
     @Test
-    fun ll_07_xxx() {
+    fun ll_08_xxx() {
         val out = test("""
             val g = func (v) {
                 val k = v
@@ -2149,7 +2175,7 @@ class Exec_01 {
             }
             f([1])
         """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        assert(out == "[1]\n[1]\n") { out }
     }
 
     // THUS / SCOPE / :FLEET / :fleet

@@ -1072,7 +1072,10 @@ fun Coder.main (tags: Tags): String {
         #endif
 
             // dst <- src
-            if (dst_blk == src_blk) {
+            if (dst_type==CEU_HOLD_FLEET && src_type==CEU_HOLD_PASSD) {
+                // always ok b/c only called by language rt on func return
+                src.Dyn->Any.hld.type = CEU_HOLD_FLEET; // force change bc FLEET<PASSD
+            } if (dst_blk == src_blk) {
                 if (dst_type == src_type) {
                     // nothing is supposed to change
                     return (CEU_Value) { CEU_VALUE_NIL };
@@ -1232,6 +1235,9 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
+            } else if (dyn->Any.hld.type == CEU_HOLD_PASSD) {
+                // TODO: error b/c argument would become nil and value would not become PASSD->FLEET
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : fleeting argument"} };
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                 // only need to test at top-level ceu_drop_f
             }

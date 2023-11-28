@@ -352,24 +352,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     ceu_acc = ceu_acc_$n;
                     
-                    // move up dynamic ceu_acc (return or error)
-                    ${(f_b!=null && !isvoid).cond {
-                        val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
-                        """
-                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
-                        if (ceu_err_$n.type == CEU_VALUE_ERROR) {
-                        #if CEU <= 1
-                            // free from this block
-                            CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
-                        #else
-                            do {
-                                // allocate throw on up
-                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
-                            } while (0);    // catch continue in CEU_ERROR
-                        #endif
-                        }
-                        """
-                    }}
                     // dcls gc-dec
                     ${dcls.map { """
                         // free below b/c of
@@ -394,6 +376,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                         }.joinToString("")
                     }}
+                    
                     // pub gc-dec
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
@@ -402,6 +385,28 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         ceu_frame->exe_task->pub = ceu_acc;
                     """ }}
+                    
+                    // move up dynamic ceu_acc (return or error)
+                    // after gc-dec b/c of PASSD -> FLEET
+                    ${(f_b!=null && !isvoid).cond {
+                    val up1 = if (f_b is Expr.Proto) "ceu_frame->up_block" else bupc
+                    """
+                        //ceu_dump_value(ceu_acc);
+                        CEU_Value ceu_err_$n = ceu_hold_chk_set($up1, CEU_HOLD_FLEET, ceu_acc, 0, "block escape error");
+                        if (ceu_err_$n.type == CEU_VALUE_ERROR) {
+                        #if CEU <= 1
+                            // free from this block
+                            CEU_ERROR($blkc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                        #else
+                            do {
+                                // allocate throw on up
+                                CEU_ERROR($up1, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", ceu_err_$n);
+                            } while (0);    // catch continue in CEU_ERROR
+                        #endif
+                        }
+                        """
+                }}
+                    
                     // unlink task.dn_block = me
                     // unlink up.dn.block = me
                     ${when {
@@ -414,6 +419,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         else -> ""
                     }}
+                    
                     // uncaught throw
                     ${(f_b == null).cond {
                         """
