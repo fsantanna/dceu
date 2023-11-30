@@ -2629,9 +2629,11 @@ class Exec_01 {
     fun nn_20_func_err() {
         val out = test("""
             val f = func (v) {
+                val x = v
                 nil
             }
             println(f([[nil]][0]))  ;; err
+            `ceu_gc_collect();`
         """)
         assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
     }
