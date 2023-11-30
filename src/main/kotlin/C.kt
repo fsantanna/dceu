@@ -1072,9 +1072,11 @@ fun Coder.main (tags: Tags): String {
         #endif
 
             // dst <- src
-            if (src_type<CEU_HOLD_FLEET && dst_type<=CEU_HOLD_FLEET) {
-        //printf(">A> %d -> %d\n", src_type, dst_type);
-                // always ok b/c only called by language rt on func return
+            if (src_type<CEU_HOLD_FLEET && dst_type<=CEU_HOLD_FLEET) {          // PASSD -> FLEET
+                // always ok b/c only called by language rt on func in/out
+            } else if (src_type<=CEU_HOLD_FLEET && dst_type<CEU_HOLD_FLEET) {   // FLEET -> PASSD
+                // always ok b/c only called by language rt on func in/out
+                src_type = dst_type; // force bc PASSD<FLEET
             } else if (dst_blk == src_blk) {
                 if (dst_type == src_type) {
                     // nothing is supposed to change
@@ -1123,12 +1125,8 @@ fun Coder.main (tags: Tags): String {
             }
             
             // change type
-        //printf(">B> %d -> %d = %d\n", src_type, dst_type, src.Dyn->Any.hld.type);
-            if (src_type<CEU_HOLD_FLEET && dst_type<CEU_HOLD_FLEET) {
-                src.Dyn->Any.hld.type = dst_type;   // force FLEET->PASSD bc PASSD<FLEET
-            } else {
-                src.Dyn->Any.hld.type = MAX(src_type,dst_type);
-            }
+            //printf(">B> %d -> %d = %d\n", src_type, dst_type, src.Dyn->Any.hld.type);
+            src.Dyn->Any.hld.type = MAX(src_type,dst_type);
             
             // change block
             if (dst_blk != src_blk) {

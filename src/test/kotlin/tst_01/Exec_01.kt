@@ -1987,9 +1987,9 @@ class Exec_01 {
             """
             val f = func (t) {
                 val x = []
-                dump(x)
+                ;;dump(x)
                 set t[0] = x
-                dump(x)
+                ;;dump(x)
                 t
             }
             println(f([nil]))
