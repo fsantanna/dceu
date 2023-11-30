@@ -305,10 +305,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            ${(!inexe).cond {
-                                                "if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type<=CEU_HOLD_FLEET)"
-                                            }}
-                                            {
+                                            if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type<=CEU_HOLD_FLEET) {
                                         //printf(">>> %d\n", $idc.Dyn->Any.hld.type);
                                                 CEU_ASSERT(
                                                     $blkc,
@@ -322,7 +319,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                     }.joinToString("")}
                                     ${dots.cond {
-                                        val idc = f_b.args.last()!!.first.str.idc()
+                                        val idc = f_b.args.last().first.str.idc()
                                         """
                                         int ceu_tup_n_$n = MAX(0,ceu_n-$args_n);
                                         $idc = ceu_create_tuple($blkc, ceu_tup_n_$n);
