@@ -305,15 +305,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         """
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
-                                            if ($idc.type>CEU_VALUE_DYNAMIC && $idc.Dyn->Any.hld.type<=CEU_HOLD_FLEET) {
-                                        //printf(">>> %d\n", $idc.Dyn->Any.hld.type);
-                                                CEU_ASSERT(
-                                                    $blkc,
-                                                    ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type-1, $idc, 1, "argument error"),
-                                                    //ceu_hold_chk_set($blkc, CEU_HOLD_FLEET, $idc, 1, "argument error"),
-                                                    "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
-                                                );
-                                        //printf("<<< %d\n", $idc.Dyn->Any.hld.type);
+                                            if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                                int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
+                                                                    ($idc.Dyn->Any.hld.type - 1);
+                                                // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
+                                                // [gg_02_scope] v -> coro/task
+                                                ${(!inexe).cond {"if (ceu_type_$n != CEU_HOLD_FLEET)"}} 
+                                                {
+                                                    CEU_ASSERT(
+                                                        $blkc,
+                                                        ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
+                                                        "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                                    );
+                                                }
                                             }
                                         }
                                         """
