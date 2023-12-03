@@ -467,6 +467,18 @@ class Exec_99 {
         """, true)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun todo_ff_10_ifs() {  // plain value omits ==
+        val out = test("""
+            var x = ifs 20 {
+                :no => false
+                10  => false
+                20  => true
+            }
+            println(x)
+        """)
+        assert(out == "true\n") { out }
+    }
 
     // LOOP / ITER / NUMERIC FOR
 
@@ -581,7 +593,7 @@ class Exec_99 {
     // TASKS / ITER / DROP
 
     @Test
-    fun TODO_fj_01_iter() {
+    fun fj_01_iter() {
         val out = test("""
             task T () {
                 yield()
@@ -593,8 +605,24 @@ class Exec_99 {
             }
             println(x)
         """, true)
+        assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out")) { out }
+    }
+    @Test
+    fun fj_02_iter() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = loop t in ts {
+                break(copy(t)) if true
+            }
+            println(x)
+        """, true)
         assert(out.contains("track: 0x")) { out }
     }
+
     // AS / YIELD / CATCH / DETRACK / THUS
 
     @Test

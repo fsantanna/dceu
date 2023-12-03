@@ -262,7 +262,7 @@ func :rec {{=/=}} (v1,v2) {
 
 func :rec copy (v) {
     ifs type(v) {
-        :tuple {
+        == :tuple {
             val ret = tuple(#v)
             var i=0
             loop {
@@ -271,6 +271,9 @@ func :rec copy (v) {
                 set i = i + 1
             }
             drop(ret)
+        }
+        == :track {
+            track(detrack(v))
         }
         else {
             throw(:TODO)
