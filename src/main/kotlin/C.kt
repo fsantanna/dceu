@@ -553,7 +553,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_dec (CEU_Value v, int chk) {
             if (
                 v.type > CEU_VALUE_DYNAMIC           &&
-                v.Dyn-Any.hld.type != CEU_HOLD_FREED &&
+                v.Dyn->Any.hld.type != CEU_HOLD_FREED &&
                 v.Dyn->Any.refs > 0
             ) {
                 v.Dyn->Any.refs--;
