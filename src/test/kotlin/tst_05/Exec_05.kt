@@ -777,7 +777,6 @@ class Exec_05 {
                 spawn (T) () in ts
                 val trk = next-tasks(ts)
                 val p = detrack(trk)
-                println(:pub, pub(p))
                 p
             }
             println(x)

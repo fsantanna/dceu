@@ -552,7 +552,7 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_dec (CEU_Value v, int chk) {
             if (
-                v.type > CEU_VALUE_DYNAMIC           &&
+                v.type > CEU_VALUE_DYNAMIC            &&
                 v.Dyn->Any.hld.type != CEU_HOLD_FREED &&
                 v.Dyn->Any.refs > 0
             ) {
@@ -581,11 +581,8 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             {
-                CEU_Dyn* cur = dyns->first;
-                while (cur != NULL) {
-                    CEU_Dyn* nxt = cur->Any.hld.next;
-                    ceu_gc_rem(cur);            // regardless of refs>0 (b/c of cycles)
-                    cur = nxt;
+                while (dyns->first != NULL) {
+                    ceu_gc_rem(dyns->first); // regardless of refs>0 (b/c of cycles)
                 }
             }
             assert(dyns->first == NULL);
