@@ -43,11 +43,11 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 5
-        #define CEU_HLD_BLOCK(dyn) ({ CEU_Block* blk=(dyn)->Any.hld.block; (dyn)->Any.type!=CEU_VALUE_EXE_TASK_IN ? blk : (((CEU_Tasks*)blk)->hld.block); }) 
-        #define CEU_HLD_DYNS(dyn) ((dyn)->Any.type == CEU_VALUE_EXE_TASK_IN ? (&((CEU_Tasks*)((dyn)->Any.hld.block))->dyns) : (&(dyn)->Any.hld.block->dn.dyns)) 
+        #define CEU_HLD_BLOCK(dyn) ({ CEU_Block* blk=(dyn)->Any.hld.block; (dyn)->Any.type!=CEU_VALUE_EXE_TASK_IN ? blk : ((CEU_Block*)((CEU_Tasks*)blk)->hld.block); }) 
+        #define CEU_HLD_DYNS(dyn) ((dyn)->Any.type == CEU_VALUE_EXE_TASK_IN ? (&((CEU_Tasks*)((dyn)->Any.hld.block))->dyns) : (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)) 
         #else
         #define CEU_HLD_BLOCK(dyn) ((dyn)->Any.hld.block)
-        #define CEU_HLD_DYNS(dyn) (&(dyn)->Any.hld.block->dn.dyns)
+        #define CEU_HLD_DYNS(dyn) (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)
         #endif
         
         typedef enum CEU_HOLD {
@@ -172,7 +172,7 @@ fun Coder.main (tags: Tags): String {
             union CEU_Dyn* tofree;          \
             struct {                        \
                 CEU_HOLD type;              \
-                CEU_Block* block;   /* tasks */ \
+                void* block;   /* block/tasks */ \
                 union CEU_Dyn* prev;        \
                 union CEU_Dyn* next;        \
             } hld;
@@ -366,6 +366,7 @@ fun Coder.main (tags: Tags): String {
             puts(" <<<");
             if (v.type > CEU_VALUE_DYNAMIC) {
                 printf("    dyn   = %p\n", v.Dyn);
+                printf("    type  = %d\n", v.type);
                 printf("    refs  = %d\n", v.Dyn->Any.refs);
                 printf("    hold  = %d\n", v.Dyn->Any.hld.type);
                 printf("    block = %p\n", CEU_HLD_BLOCK(v.Dyn));
@@ -374,6 +375,10 @@ fun Coder.main (tags: Tags): String {
                 switch (v.type) {
             #if CEU >= 4
                     case CEU_VALUE_EXE_TASK:
+            #if CEU >= 5
+                    case CEU_VALUE_EXE_TASK_IN:
+            #endif
+                        printf("    in     = %d\n", (v.type != CEU_VALUE_EXE_TASK));
                         printf("    status = %d\n", v.Dyn->Exe_Task.status);
                         printf("    pub    = %d\n", v.Dyn->Exe_Task.pub.type);
                         break;
@@ -546,8 +551,11 @@ fun Coder.main (tags: Tags): String {
         }
         
         void ceu_gc_dec (CEU_Value v, int chk) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                //assert(v.Dyn->Any.refs > 0);
+            if (
+                v.type > CEU_VALUE_DYNAMIC           &&
+                v.Dyn-Any.hld.type != CEU_HOLD_FREED &&
+                v.Dyn->Any.refs > 0
+            ) {
                 v.Dyn->Any.refs--;
                 if (chk) {
                     ceu_gc_rem_chk(v);
@@ -618,7 +626,7 @@ fun Coder.main (tags: Tags): String {
                 aux(dyn);
             }
         #endif
-            //assert(dyn->Any.hld.type!=CEU_HOLD_FREED && "TODO: double free");
+            assert(dyn->Any.hld.type!=CEU_HOLD_FREED && "TODO: double free");
             if (dyn->Any.hld.type != CEU_HOLD_FREED) {
                 dyn->Any.hld.type = CEU_HOLD_FREED;
                 dyn->Any.tofree = CEU_GC_TOFREE;
