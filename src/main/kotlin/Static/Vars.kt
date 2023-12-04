@@ -73,7 +73,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (dcl.tag == null) {
                     null
                 } else {
-                    Pair(null, this.datas[dcl.tag.str]!!)
+                    Pair(null, this.datas[dcl.tag.str])
                 }
             }
             is Expr.Pub -> {
@@ -234,7 +234,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 }
 
                 if (this.tag !=null && !datas.containsKey(this.tag.str)) {
-                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                    //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
             }
             is Expr.Set    -> {
