@@ -1343,6 +1343,20 @@ class Exec_99 {
         """)
         assert(out == "[2]\n") { out }
     }
+    @Test
+    fun kl_03_await_task() {
+        val out = test("""
+            spawn task {
+                val t = spawn task {
+                    println(:1)
+                }
+                await(t)
+                println(:2)
+            }
+            println(:3)
+        """, true)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
 
     // EVERY
 
