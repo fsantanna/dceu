@@ -605,7 +605,7 @@ class Exec_99 {
             }
             println(x)
         """, true)
-        assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out")) { out }
+        assert(out == (" v  anon : (lin 7, col 13) : declaration error : cannot copy reference out\n")) { out }
     }
     @Test
     fun fj_02_iter() {
@@ -1470,6 +1470,64 @@ class Exec_99 {
             println(3)
         """)
         assert(out == ":x\n1\n:y\n2\n:z\n:A\n3\n") { out }
+    }
+
+    // TOGGLE
+
+    @Test
+    fun mm_01_toggle() {
+        val out = test("""
+            task T (v) {
+                set pub() = v
+                toggle :Show {
+                    println(pub())
+                    every (it => (it is? :dict) and (it.sub==:draw)) {
+                        println(it.v)
+                    }
+                }
+            }
+            spawn T(0)
+            broadcast(@[(:sub,:draw),(:v,1)])
+            broadcast(:Show [false])
+            broadcast(@[(:sub,:draw),(:v,99)])
+            broadcast(:Show [true])
+            broadcast(@[(:sub,:draw),(:v,2)])
+        """, true)
+        assert(out == "0\n1\n2\n") { out }
+    }
+    @Test
+    fun mm_02_toggle() {
+        val out = test("""
+            task T (v) {
+                set pub() = v
+                toggle :Show {
+                    println(pub())
+                    every :draw {
+                        println(it.0)
+                    }
+                }
+            }
+            spawn T (0)
+            broadcast (tags([1],     :draw, true))
+            broadcast (tags([false], :Show, true))
+            broadcast (tags([99],    :draw, true))
+            broadcast (tags([true],  :Show, true))
+            broadcast (tags([2],     :draw, true))
+        """, true)
+        assert(out == "0\n1\n2\n") { out }
+    }
+    @Test
+    fun mm_03_toggle() {
+        val out = test("""
+            spawn task {
+                val x = toggle :Show {
+                    10
+                }
+                println(x)
+            }
+            println(:ok)
+        """, true)
+        assert(out == "10\n:ok\n") { out }
     }
 
     // METHODS

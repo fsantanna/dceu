@@ -1454,68 +1454,6 @@ class TXExec {
 
     // TOGGLE
 
-    @Test
-    fun toggle1_err() {
-        val out = all("""
-            toggle f() => {
-        """)
-        assert(out == "anon : (lin 2, col 27) : expected expression : have \"{\"") { out }
-    }
-    @Test
-    fun toggle2() {
-        val out = all("""
-            task T (v) {
-                set task.pub = v
-                toggle evt==:hide => evt==:show {
-                    println(task.pub)
-                    every (evt is? :dict) and (evt.sub==:draw) {
-                        println(evt.v)
-                    }
-                }
-            }
-            spawn T (0)
-            broadcast in :global, @[(:sub,:draw),(:v,1)]
-            broadcast in :global, :hide
-            broadcast in :global, @[(:sub,:draw),(:v,99)]
-            broadcast in :global, :show
-            broadcast in :global, @[(:sub,:draw),(:v,2)]
-        """, true)
-        assert(out == "0\n1\n2\n") { out }
-    }
-    @Test
-    fun toggle3() {
-        val out = all("""
-            task T (v) {
-                set task.pub = v
-                toggle :hide => :show {
-                    println(task.pub)
-                    every :draw {
-                        println(evt.0)
-                    }
-                }
-            }
-            spawn T (0)
-            broadcast in :global, tags([1], :draw, true)
-            broadcast in :global, tags([], :hide, true)
-            broadcast in :global, tags([99], :draw, true)
-            broadcast in :global, tags([], :show, true)
-            broadcast in :global, tags([2], :draw, true)
-        """, true)
-        assert(out == "0\n1\n2\n") { out }
-    }
-    @Test
-    fun toggle4_ret() {
-        val out = all("""
-            spawn {
-                val x = toggle evt==:hide => evt==:show {
-                    10
-                }
-                println(x)
-            }
-            println(:ok)
-        """)
-        assert(out == "10\n:ok\n") { out }
-    }
 
     // LOOP / BREAK / UNTIL
 

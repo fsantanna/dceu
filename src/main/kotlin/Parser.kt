@@ -431,6 +431,11 @@ class Parser (lexer_: Lexer)
             (!a &&  y && !c) -> Triple(xno, clk1, "(await-chk(__${xno.str},:Clock) and ${kchk(xno.str)} ${sret(xno)})")
             else -> error("impossible case")
         }
+        val xtask = (!a && !b && cnd is Expr.Acc).cond2({ """
+            ${cnd!!.tostr(true)} thus { (type(it)==:exe-task) and (status(it)==:terminated) }
+        """ },{
+            "false"
+        })
 
         return this.nest(when (type) {
             "await" -> """
@@ -463,7 +468,13 @@ class Parser (lexer_: Lexer)
             """
             else -> error("impossible case")
         }.let {
-            if (!y) it else """
+            if (!y) { """
+                if ($xtask) {
+                    ;; task terminated
+                } else {
+                    $it
+                }
+            """ } else """
                 do {
                     ${kdcl()}
                     $it
@@ -891,9 +902,30 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {
                 val tk0 = this.tk0 as Tk.Fix
-                val tsk = this.expr_prim()
-                val on = this.expr_in_parens()!!
-                Expr.Toggle(tk0, tsk, on)
+                if (CEU>=99 && this.acceptEnu("Tag")) {
+                    val tag = this.tk0 as Tk.Tag
+                    val blk = this.block()
+                    this.nest("""
+                        do {
+                            val task_$N = spawn task ;;{
+                                ${blk.tostr(true)}
+                            ;;}
+                            watching task_$N {
+                                loop {
+                                    await(${tag.str}) { not it }
+                                    toggle task_$N(false)
+                                    await(${tag.str}) { it }
+                                    toggle task_$N(true)
+                                }
+                            }
+                            pub(task_$N)
+                        }
+                    """)//.let { println(it.tostr()); it }
+                } else {
+                    val tsk = this.expr_prim()
+                    val on  = this.expr_in_parens()!!
+                    Expr.Toggle(tk0, tsk, on)
+                }
             }
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0
