@@ -2760,6 +2760,26 @@ class Exec_04 {
         """)
         assert(out == "10\n") { out }
     }
+    @Test
+    fun zz_28_segfault() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                do {
+                    spawn (task () {
+                        yield(nil)
+                    }) ()
+                    yield(nil)
+                    nil
+                }
+                broadcast([])
+            })()
+            broadcast(nil)
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ORIGINAL / DATA / EVT
 
