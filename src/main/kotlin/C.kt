@@ -1510,7 +1510,7 @@ fun Coder.main (tags: Tags): String {
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
 
-        CEU_Value ceu_broadcast_f (CEU4(int* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value ceu_broadcast_f (int* depth, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n >= 1);
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
@@ -1524,7 +1524,7 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Value ret;
             if (n == 1) {
-                ret = ceu_bcast_blocks(NULL, ceu_bcast_global(frame->up_block), evt);
+                ret = ceu_bcast_blocks(depth, ceu_bcast_global(frame->up_block), evt);
             } else {
                 CEU_Value tsk = args[1];
         #if CEU >= 5
@@ -1533,7 +1533,7 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
                 if (ceu_istask_val(tsk)) {
-                    ret = ceu_bcast_task(NULL, &tsk.Dyn->Exe_Task, 1, &evt);
+                    ret = ceu_bcast_task(depth, &tsk.Dyn->Exe_Task, 1, &evt);
                 } else {
                     ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
                 }
