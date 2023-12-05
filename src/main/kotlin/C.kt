@@ -346,7 +346,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_dyn_exe_kill (CEU_Dyn* dyn);
         #endif
         #if CEU >= 4
-        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, int n, CEU_Value args[]);
+        CEU_Value ceu_bcast_task (int* depth, CEU_Exe_Task* task, int n, CEU_Value args[]);
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
         int ceu_istask_dyn (CEU_Dyn* dyn);
         int ceu_istask_val (CEU_Value val);
@@ -1393,12 +1393,12 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
         
-        CEU_Value ceu_bcast_task (CEU_Exe_Task* task, int n, CEU_Value args[]) {
+        CEU_Value ceu_bcast_task (int* depth, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
-                ret = task->frame.clo->proto(NULL, &task->frame, CEU_ARG_ABORT, NULL);
+                ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ABORT, NULL);
                 goto __CEU_FREE__;
             } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
@@ -1417,9 +1417,9 @@ fun Coder.main (tags: Tags): String {
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
                 if (CEU_ISERR(ret)) {
-                    ret = task->frame.clo->proto(NULL, &task->frame, CEU_ARG_ERROR, &ret);
+                    ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
-                    ret = task->frame.clo->proto(NULL, &task->frame, n, args);
+                    ret = task->frame.clo->proto(depth, &task->frame, n, args);
                 }
             }
             
@@ -1432,7 +1432,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret2;
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
-                    ret2 = ceu_bcast_task(up_task, 1, &evt2);
+                    ret2 = ceu_bcast_task(depth, up_task, 1, &evt2);
                 } else { 
                     // enclosing block
                     ret2 = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
@@ -1460,7 +1460,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_bcast_dyns (CEU_Dyns* dyns, CEU_Value evt) {
+        CEU_Value ceu_bcast_dyns (int* depth, CEU_Dyns* dyns, CEU_Value evt) {
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
                 switch (dyn->Any.type) {
@@ -1469,7 +1469,7 @@ fun Coder.main (tags: Tags): String {
                     case CEU_VALUE_EXE_TASK_IN:
         #endif
                     {
-                        CEU_Value ret = ceu_bcast_task(&dyn->Exe_Task, 1, &evt); 
+                        CEU_Value ret = ceu_bcast_task(depth, &dyn->Exe_Task, 1, &evt); 
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
@@ -1480,7 +1480,7 @@ fun Coder.main (tags: Tags): String {
                     }
         #if CEU >= 5
                     case CEU_VALUE_TASKS: {
-                        CEU_Value ret = ceu_bcast_dyns(&dyn->Tasks.dyns, evt);
+                        CEU_Value ret = ceu_bcast_dyns(depth, &dyn->Tasks.dyns, evt);
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
@@ -1501,7 +1501,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                CEU_Value ret = ceu_bcast_dyns(&blk->dn.dyns, evt);
+                CEU_Value ret = ceu_bcast_dyns(NULL, &blk->dn.dyns, evt);
                 if (CEU_ISERR(ret)) {
                     return ret;
                 }
@@ -1533,7 +1533,7 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
                 if (ceu_istask_val(tsk)) {
-                    ret = ceu_bcast_task(&tsk.Dyn->Exe_Task, 1, &evt);
+                    ret = ceu_bcast_task(NULL, &tsk.Dyn->Exe_Task, 1, &evt);
                 } else {
                     ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
                 }
@@ -2293,7 +2293,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret;
     #if CEU >= 4
                 if (ceu_istask_dyn(dyn)) {
-                    ret = ceu_bcast_task(&dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                    ret = ceu_bcast_task(NULL, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
                 {

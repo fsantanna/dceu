@@ -1930,6 +1930,59 @@ class Exec_04 {
         assert(out == ":A\n:C\n:ok\n") { out }
     }
 
+    // NEW ABORTION
+
+    @Test
+    fun BUG_mn_01_abort() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                do {
+                    spawn (task () {
+                        yield(nil)
+                    }) ()
+                    yield(nil)
+                    nil
+                }
+                broadcast([])
+            })()
+            broadcast(nil)
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun todo_mn_02_global_abort() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                do {
+                    spawn (task () {
+                        yield(nil)
+                        broadcast(nil) in :global   ;; TODO
+                    }) ()
+                    yield(nil)
+                }
+                broadcast(nil)
+            })()
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun todo_mn_03_global_abort() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+            })()
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "10\n") { out }
+    }
+
     // TASK / VOID
 
     @Test
@@ -2849,26 +2902,6 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                 })
             }) ()
-        """)
-        assert(out == "10\n") { out }
-    }
-    @Test
-    fun zz_28_segfault() {
-        val out = test("""
-            spawn (task () {
-                yield(nil)
-                do {
-                    spawn (task () {
-                        yield(nil)
-                    }) ()
-                    yield(nil)
-                    nil
-                }
-                broadcast([])
-            })()
-            broadcast(nil)
-            broadcast(nil)
-            println(:ok)
         """)
         assert(out == "10\n") { out }
     }

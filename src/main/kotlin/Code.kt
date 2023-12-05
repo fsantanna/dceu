@@ -351,6 +351,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
+                    CEU4(*ceu_depth = _ceu_depth_($blkc);)
+                    
                     // defers execute
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
@@ -693,7 +695,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                 """ })}
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                ceu_acc = ceu_bcast_task(&ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(ceu_depth, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
