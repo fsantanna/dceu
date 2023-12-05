@@ -96,6 +96,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                 """, """ // FUNC | ${this.dump()}
                     CEU_Value ceu_clo_$id (
+                        CEU4(int* ceu_depth COMMA)
                         CEU_Frame* ceu_frame,
                         int ceu_n,
                         CEU_Value ceu_args[]
@@ -1090,6 +1091,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
                     ceu_acc = ceu_frame_$n.clo->proto (
+                        CEU4(ceu_depth COMMA)
                         &ceu_frame_$n,
                         ${this.args.let {
                             if (!has_dots) it.size.toString() else {

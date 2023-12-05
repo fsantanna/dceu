@@ -11,6 +11,14 @@ class Exec_04 {
     // TASK
 
     @Test
+    fun aa_00_func() {
+        val out = test("""
+            val F = func (v) { v }
+            println(F(10))
+        """)
+        assert(out == ("10\n")) { out }
+    }
+    @Test
     fun aa_01_task() {
         val out = test("""
             val T = task (v) { nil }
