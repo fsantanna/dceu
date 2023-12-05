@@ -1391,7 +1391,7 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt);
+        CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt);
         
         CEU_Value ceu_bcast_task (int* depth, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
@@ -1409,7 +1409,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Exe_Task* up_task = ceu_task_up_task(task);
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
-                ret = ceu_bcast_blocks(task->dn_block, args[0]);
+                ret = ceu_bcast_blocks(depth, task->dn_block, args[0]);
                 if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                     return ret; // already terminated and released from inside
                 }
@@ -1435,7 +1435,7 @@ fun Coder.main (tags: Tags): String {
                     ret2 = ceu_bcast_task(depth, up_task, 1, &evt2);
                 } else { 
                     // enclosing block
-                    ret2 = ceu_bcast_blocks(CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                    ret2 = ceu_bcast_blocks(depth, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                 }
                 if (!CEU_ISERR(ret)) {
                     ret = ret2;
@@ -1499,9 +1499,9 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
-        CEU_Value ceu_bcast_blocks (CEU_Block* blk, CEU_Value evt) {
+        CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                CEU_Value ret = ceu_bcast_dyns(NULL, &blk->dn.dyns, evt);
+                CEU_Value ret = ceu_bcast_dyns(depth, &blk->dn.dyns, evt);
                 if (CEU_ISERR(ret)) {
                     return ret;
                 }
@@ -1524,7 +1524,7 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Value ret;
             if (n == 1) {
-                ret = ceu_bcast_blocks(ceu_bcast_global(frame->up_block), evt);
+                ret = ceu_bcast_blocks(NULL, ceu_bcast_global(frame->up_block), evt);
             } else {
                 CEU_Value tsk = args[1];
         #if CEU >= 5
