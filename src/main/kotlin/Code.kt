@@ -220,11 +220,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         $_blkc = (CEU_Block) { $bf, $ptr, { CEU4(NULL COMMA) {NULL,NULL} } };
                         $blkc = &$_blkc;                                 
+                #ifdef CEU_DEBUG
+                        CEU_Block* ceu_block = &$_blkc;
+                #endif
                         """
                     }}
-                #ifdef CEU_DEBUG
-                    CEU_Block* ceu_block = ceu_block_$n;
-                #endif
                     // link task.dn_block = me
                     // link up.dn.block = me
                     ${when {
@@ -634,7 +634,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
-                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(&$coc.Dyn->Exe.frame, 1, &ceu_acc);
+                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(ceu_depth COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
                 """
             }
@@ -844,7 +844,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         { // ACC - DROP
                             CEU_Value ceu_$n = $idc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA {.exe=NULL}) };
-                            CEU_ASSERT($bupc, ceu_drop_f(&ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                             ceu_acc = ceu_$n;
@@ -1008,7 +1008,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA NULL) };
-                            CEU_ASSERT($bupc, ceu_drop_f(&ceu_frame_$n, 1, &ceu_val_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                            CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_val_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                             ceu_gc_dec(ceu_val_$n, 0);
                             
                             switch (ceu_col_$n.type) {
