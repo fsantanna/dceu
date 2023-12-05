@@ -221,6 +221,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $blkc = &$_blkc;                                 
                         """
                     }}
+                #ifdef CEU_DEBUG
+                    CEU_Block* ceu_block = ceu_block_$n;
+                #endif
                     // link task.dn_block = me
                     // link up.dn.block = me
                     ${when {

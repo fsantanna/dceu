@@ -986,6 +986,16 @@ fun Coder.main (tags: Tags): String {
         }
 
     #if CEU >= 4
+        int ceu_depth (CEU_Block* blk) {
+            if (blk->istop) {
+                return 1 + ceu_depth(blk->up.frame->up_block);
+            } else if (blk->up.block == NULL) {
+                return 0;
+            } else {
+                return 1 + ceu_depth(blk->up.block);
+            }
+        }
+
         CEU_Frame* ceu_block_up_frame (CEU_Block* blk) {
             if (blk->istop) {
                 return blk->up.frame;
