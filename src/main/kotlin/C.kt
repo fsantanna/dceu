@@ -2293,7 +2293,8 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret;
     #if CEU >= 4
                 if (ceu_istask_dyn(dyn)) {
-                    ret = ceu_bcast_task(NULL, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                    int depth;  // mock depth bc abortion cannot kill enclosing scope
+                    ret = ceu_bcast_task(&depth, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
                 {
