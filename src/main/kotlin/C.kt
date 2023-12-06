@@ -42,6 +42,10 @@ fun Coder.main (tags: Tags): String {
         #define CEU5(x)
         #endif
         
+        #if CEU >= 4
+        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(blk)) s
+        #endif
+        
         #if CEU >= 5
         #define CEU_HLD_BLOCK(dyn) ({ CEU_Block* blk=(dyn)->Any.hld.block; (dyn)->Any.type!=CEU_VALUE_EXE_TASK_IN ? blk : ((CEU_Block*)((CEU_Tasks*)blk)->hld.block); }) 
         #define CEU_HLD_DYNS(dyn) ((dyn)->Any.type == CEU_VALUE_EXE_TASK_IN ? (&((CEU_Tasks*)((dyn)->Any.hld.block))->dyns) : (&((CEU_Block*)(dyn)->Any.hld.block)->dn.dyns)) 
@@ -1410,6 +1414,7 @@ fun Coder.main (tags: Tags): String {
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 ret = ceu_bcast_blocks(depth, task->dn_block, args[0]);
+                CEU_CHECK_DEPTH(depth, task->frame.up_block, return ret);
                 if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                     return ret; // already terminated and released from inside
                 }
@@ -1422,6 +1427,7 @@ fun Coder.main (tags: Tags): String {
                     ret = task->frame.clo->proto(depth, &task->frame, n, args);
                 }
             }
+            CEU_CHECK_DEPTH(depth, task->frame.up_block, return ret);
             
             // do not bcast aborted task (only terminated) b/c
             // it would awake parents that actually need to
@@ -1460,7 +1466,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_bcast_dyns (int* depth, CEU_Dyns* dyns, CEU_Value evt) {
+        CEU_Value ceu_bcast_dyns (int* depth, CEU_Block* blk, CEU_Dyns* dyns, CEU_Value evt) {
             CEU_Dyn* dyn = dyns->first;
             while (dyn != NULL) {
                 switch (dyn->Any.type) {
@@ -1473,6 +1479,7 @@ fun Coder.main (tags: Tags): String {
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
+                        assert(dyn->Exe_Task.status != CEU_EXE_STATUS_ABORTED);
                         if (dyn->Exe_Task.status == CEU_EXE_STATUS_ABORTED) {
                             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
                         }
@@ -1480,7 +1487,7 @@ fun Coder.main (tags: Tags): String {
                     }
         #if CEU >= 5
                     case CEU_VALUE_TASKS: {
-                        CEU_Value ret = ceu_bcast_dyns(depth, &dyn->Tasks.dyns, evt);
+                        CEU_Value ret = ceu_bcast_dyns(depth, blk, &dyn->Tasks.dyns, evt);
                         if (CEU_ISERR(ret)) {
                             return ret;
                         }
@@ -1495,13 +1502,15 @@ fun Coder.main (tags: Tags): String {
                     default:
                         break; // not applicable
                 }
+                CEU_CHECK_DEPTH(depth, blk, return (CEU_Value) { CEU_VALUE_BOOL COMMA {.Bool=1} });
                 dyn = dyn->Any.hld.next;
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
         CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                CEU_Value ret = ceu_bcast_dyns(depth, &blk->dn.dyns, evt);
+                CEU_Value ret = ceu_bcast_dyns(depth, blk, &blk->dn.dyns, evt);
+                CEU_CHECK_DEPTH(depth, blk, return ret);
                 if (CEU_ISERR(ret)) {
                     return ret;
                 }

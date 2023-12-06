@@ -1103,6 +1103,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
+                    CEU_CHECK_DEPTH(ceu_depth, $bupc, continue);
                 } // CALL | ${this.dump()}
                 """
             }
