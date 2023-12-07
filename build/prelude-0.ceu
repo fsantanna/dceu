@@ -207,21 +207,34 @@ val to-tag = func (v) {
     }
 }
 
+;; TYPE-*
+
+val type-static? = func (v) {
+    to-number(v) < `:number CEU_VALUE_DYNAMIC`
+}
+val type-dynamic? = func (v) {
+    to-number(v) > `:number CEU_VALUE_DYNAMIC`
+}
+
 ;; COPY
 
 var copy
 set copy = func (v) {
-    if type(v) == :tuple {
-        val ret = tuple(#v)
-        var i=0
-        loop {
-            break if i == #v
-            set ret[i] = copy(v[i])
-            set i = i + 1
-        }
-        drop(ret)
-    } else {
+    if type-static?(type(v)) {
         v
+    } else {
+        if type(v) == :tuple {
+            val ret = tuple(#v)
+            var i=0
+            loop {
+                break if i == #v
+                set ret[i] = copy(v[i])
+                set i = i + 1
+            }
+            drop(ret)
+        } else {
+            error("TODO")
+        }
     }
 }
 

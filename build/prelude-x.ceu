@@ -258,29 +258,6 @@ func :rec {{=/=}} (v1,v2) {
     not (v1 === v2)
 }
 
-;; COPY
-
-func :rec copy (v) {
-    ifs type(v) {
-        == :tuple {
-            val ret = tuple(#v)
-            var i=0
-            loop {
-                until i == #v
-                set ret[i] = copy(v[i])
-                set i = i + 1
-            }
-            drop(ret)
-        }
-        == :track {
-            track(detrack(v))
-        }
-        else {
-            throw(:TODO)
-        }
-    }
-}
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TO-*
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -335,6 +312,40 @@ func to-tag (v) {
     ifs v {
         {{string?}} => string-to-tag(v)
         else        => v   ;; TODO
+    }
+}
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TYPE-*
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+func type-static? (v) {
+    to-number(v) < `:number CEU_VALUE_DYNAMIC`
+}
+func type-dynamic? (v) {
+    to-number(v) > `:number CEU_VALUE_DYNAMIC`
+}
+
+;; COPY
+
+func :rec copy (v) {
+    ifs type(v) {
+        {{type-static?}} {
+            v
+        }
+        == :tuple {
+            val ret = tuple(#v)
+            loop i in {0 => #v{ {
+                set ret[i] = copy(v[i])
+            }
+            drop(ret)
+        }
+        == :track {
+            track(detrack(v))
+        }
+        else {
+            throw(:TODO)
+        }
     }
 }
 

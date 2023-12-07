@@ -2007,4 +2007,15 @@ class Exec_99 {
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
+    // TYPE-*
+    @Test
+    fun zz_04_type() {
+        val out = test("""
+            println(type-static?(:number))
+            println(type-static?(type([])))
+            println(type-dynamic?(type(nil)))
+            println(type-dynamic?(:vector))
+        """, true)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
 }

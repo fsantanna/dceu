@@ -4672,6 +4672,19 @@ class Exec_01 {
         assert(out == "false\n") { out }
     }
 
+    // TYPE-*
+
+    @Test
+    fun qr_01_type() {
+        val out = test("""
+            println(type-static?(:number))
+            println(type-static?(type([])))
+            println(type-dynamic?(type(nil)))
+            println(type-dynamic?(:vector))
+        """, true)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+
     // ALL
 
     @Test
