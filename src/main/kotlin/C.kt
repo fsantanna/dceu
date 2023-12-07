@@ -43,7 +43,8 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 4
-        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(ceu_block_up_task(blk))) s
+        //#define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(ceu_block_up_task(blk))) s
+        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(ceu_block_up_task(blk))) { assert(0&&"XXX"); s; }
         #endif
         
         #if CEU >= 5
@@ -1013,8 +1014,20 @@ fun Coder.main (tags: Tags): String {
             }
         }
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task) {
-            return ceu_block_up_task(task->frame.up_block);
-        }        
+            CEU_Exe_Task* ret = ceu_block_up_task(task->frame.up_block);
+            assert(ret != task);
+            return ret;
+            //return ceu_block_up_task(task->frame.up_block);
+        }
+
+        int _ceu_depth_ (CEU_Exe_Task* tsk) {
+            int n = 0;
+            while (tsk != NULL) {
+                tsk = ceu_task_up_task(tsk);
+                n++;
+            }
+            return n;
+        }
     #endif
     """ +
     """ // HOLD / DROP
