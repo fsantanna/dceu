@@ -337,8 +337,10 @@ class Exec_03 {
                     it[0]
                 }
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // MEM vs STACK

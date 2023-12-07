@@ -2291,13 +2291,14 @@ fun Coder.main (tags: Tags): String {
             if (dyn->Exe.status < CEU_EXE_STATUS_TERMINATED) {
                 CEU_Value ret;
     #if CEU >= 4
+                int depth;  // mock depth bc abortion cannot kill enclosing scope
                 if (ceu_istask_dyn(dyn)) {
                     int depth;  // mock depth bc abortion cannot kill enclosing scope
                     ret = ceu_bcast_task(&depth, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
                 {
-                    ret = dyn->Exe.frame.clo->proto(NULL, &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    ret = dyn->Exe.frame.clo->proto(CEU4(&depth COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
                 }
                 assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
             }
