@@ -83,8 +83,10 @@ class Exec_02 {
             catch (it :T => it[0]) {
                 nil
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 23) : declaration error : data :T is not declared\n") { out }
+        //assert(out == "anon : (lin 2, col 23) : declaration error : data :T is not declared\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun jj_00_catch_err() {

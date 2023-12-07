@@ -75,6 +75,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
+                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val mem = Mem(ups, vars, clos, sta, defers)
                 val id = this.idc()
@@ -108,6 +109,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${isexe.cond { """
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
+                        ${istsk.cond { """
+                            // indicates that this level is ok
+                            *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
+                        """ }}
                         ${isexe.cond{"""
                             ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
                             switch (ceu_frame->exe->pc) {
@@ -122,6 +127,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ceu_frame->exe->status = (ceu_n==CEU_ARG_ABORT || CEU_ISERR(ceu_acc)) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
+                        ${istsk.cond { """
+                            // indicates that this level is aborted
+                            CEU4(*ceu_depth = _ceu_depth_(ceu_frame->exe_task) - 1;)
+                        """ }}                    
                         return ceu_acc;
                     }
                 """)
@@ -281,8 +290,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }}
                     
-                    CEU4(*ceu_depth = _ceu_depth_($blkc)+1;)
-
                     ${(CEU >= 2).cond { "do {" }}
                         // main args, func args
                         ${when {
@@ -352,9 +359,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """ }}                
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
-                    
-                    // indicates that this level is aborted
-                    CEU4(*ceu_depth = _ceu_depth_($blkc);)
                     
                     // defers execute
                     CEU_Value ceu_acc_$n = ceu_acc;
@@ -1106,7 +1110,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    CEU_CHECK_DEPTH(ceu_depth, $bupc, continue);
+                    CEU4(CEU_CHECK_DEPTH(ceu_depth, $bupc, continue));
                 } // CALL | ${this.dump()}
                 """
             }

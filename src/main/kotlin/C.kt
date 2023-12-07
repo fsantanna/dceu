@@ -43,7 +43,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 4
-        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) <= _ceu_depth_(blk)) s
+        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(ceu_block_up_task(blk))) s
         #endif
         
         #if CEU >= 5
@@ -991,16 +991,6 @@ fun Coder.main (tags: Tags): String {
         }
 
     #if CEU >= 4
-        int _ceu_depth_ (CEU_Block* blk) {
-            if (blk->istop) {
-                return 1 + _ceu_depth_(blk->up.frame->up_block);
-            } else if (blk->up.block == NULL) {
-                return 0;
-            } else {
-                return 1 + _ceu_depth_(blk->up.block);
-            }
-        }
-
         CEU_Frame* ceu_block_up_frame (CEU_Block* blk) {
             if (blk->istop) {
                 return blk->up.frame;
@@ -2343,7 +2333,7 @@ fun Coder.main (tags: Tags): String {
     """ // GLOBALS
         int CEU_BREAK = 0;
     #if CEU >= 4
-        int CEU_DEPTH = 255;
+        int CEU_DEPTH;
         int* ceu_depth = &CEU_DEPTH;
     #endif
         CEU_Block _ceu_block_ = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };

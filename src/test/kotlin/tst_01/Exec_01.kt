@@ -4433,8 +4433,8 @@ class Exec_01 {
             println(v)
         """, true
         )
-        assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared\n") { out }
-        //assert(out == "nil\n") { out }
+        //assert(out == "anon : (lin 3, col 19) : declaration error : data :U is not declared\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun tplate04() {

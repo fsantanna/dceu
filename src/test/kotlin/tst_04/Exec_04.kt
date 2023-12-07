@@ -52,25 +52,6 @@ class Exec_04 {
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
 
-    // DEPTH
-
-    @Test
-    fun ab_00_do() {
-        val out = test("""
-            println(`:number *ceu_depth`)
-            do {
-                println(:1)
-            }
-            println(`:number *ceu_depth`)
-            do {
-                println(:2)
-                println(:3)
-            }
-        """)
-        assert(out == ("10\n")) { out }
-    }
-
-
     // SPAWN
 
     @Test
@@ -1781,6 +1762,24 @@ class Exec_04 {
         """)
         assert(out == "anon : (lin 5, col 29) : access error : cannot access local across coro or task\n") { out }
     }
+    @Test
+    fun ll_07_task_up_task() {
+        val out = test("""
+            spawn (task () {
+                do {
+                    spawn (task () {
+                        yield(nil)
+                    }) ()
+                    yield(nil)
+                    nil
+                }
+                broadcast([])
+            })()
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // ABORTION
 
@@ -1961,7 +1960,7 @@ class Exec_04 {
             broadcast(nil)
             println(:ok)
         """)
-        assert(out == "10\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun todo_mn_02_global_abort() {
@@ -2158,19 +2157,20 @@ class Exec_04 {
             println(`:number _ceu_depth_(&_ceu_block_)`)
             println(`:number _ceu_depth_(ceu_block)`)
         """)
-        assert(out == "0\n1\n") { out }
+        assert(out == "0\n0\n") { out }
     }
     @Test
     fun op_02_depth() {
         val out = test("""
             println(`:number _ceu_depth_(&_ceu_block_)`)
-            println(`:number _ceu_depth_(ceu_block)`)
-            do {
-                val x
-                println(`:number _ceu_depth_(ceu_block)`)
-            }
+            spawn (task () {
+                do {
+                    val x
+                    println(`:number _ceu_depth_(ceu_block)`)
+                }
+            }) ()
         """)
-        assert(out == "0\n1\n2\n") { out }
+        assert(out == "0\n1\n") { out }
     }
     @Test
     fun op_03_depth() {
@@ -2232,6 +2232,48 @@ class Exec_04 {
             }
         """)
         assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
+    }
+    @Test
+    fun op_06_depth() {
+        val out = test("""
+            println(`:number *ceu_depth`)
+            do {
+                println(:1)
+            }
+            println(`:number *ceu_depth`)
+            do {
+                println(:2)
+                println(:3)
+            }
+        """)
+        assert(out == ("1\n:1\n0\n:2\n:3\n")) { out }
+    }
+    @Test
+    fun op_07_depth() {     // catch from nesting and broadcast
+        val out = test(
+            """
+            spawn (task () {
+                do {
+                    spawn (task () {
+                        yield(nil)
+                        println(:2)
+                    }) ()
+                    loop { yield(nil) } ;;thus { it => nil }
+                }
+                println(333)
+            }) ()
+            do {
+                println(:1)
+                broadcast(nil)
+                println(:3)
+            }
+            println(:END)
+        """
+        )
+        assert(out == ":1\n" +
+                ":2\n" +
+                ":3\n" +
+                ":END\n") { out }
     }
 
     // RETURN
