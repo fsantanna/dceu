@@ -281,6 +281,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }}
                     
+                    CEU4(*ceu_depth = _ceu_depth_($blkc)+1;)
+
                     ${(CEU >= 2).cond { "do {" }}
                         // main args, func args
                         ${when {
@@ -351,6 +353,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
+                    // indicates that this level is aborted
                     CEU4(*ceu_depth = _ceu_depth_($blkc);)
                     
                     // defers execute

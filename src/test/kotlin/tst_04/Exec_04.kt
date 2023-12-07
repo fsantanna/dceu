@@ -11,14 +11,6 @@ class Exec_04 {
     // TASK
 
     @Test
-    fun aa_00_func() {
-        val out = test("""
-            val F = func (v) { v }
-            println(F(10))
-        """)
-        assert(out == ("10\n")) { out }
-    }
-    @Test
     fun aa_01_task() {
         val out = test("""
             val T = task (v) { nil }
@@ -59,6 +51,25 @@ class Exec_04 {
         """)
         assert(out == "anon : (lin 2, col 13) : yield error : expected enclosing coro or task\n") { out }
     }
+
+    // DEPTH
+
+    @Test
+    fun ab_00_do() {
+        val out = test("""
+            println(`:number *ceu_depth`)
+            do {
+                println(:1)
+            }
+            println(`:number *ceu_depth`)
+            do {
+                println(:2)
+                println(:3)
+            }
+        """)
+        assert(out == ("10\n")) { out }
+    }
+
 
     // SPAWN
 

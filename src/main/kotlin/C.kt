@@ -43,7 +43,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 4
-        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) < _ceu_depth_(blk)) s
+        #define CEU_CHECK_DEPTH(depth,blk,s) if (*(depth) <= _ceu_depth_(blk)) s
         #endif
         
         #if CEU >= 5
@@ -1410,7 +1410,7 @@ fun Coder.main (tags: Tags): String {
             
             // get up_task before awake b/c
             // it crosses blocks that may not exist after awake
-            CEU_Exe_Task* up_task = ceu_task_up_task(task);
+            CEU_Exe_Task* up_task = ceu_task_up_task(task);         // TODO: no need to assign before?
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 ret = ceu_bcast_blocks(depth, task->dn_block, args[0]);
@@ -2343,7 +2343,7 @@ fun Coder.main (tags: Tags): String {
     """ // GLOBALS
         int CEU_BREAK = 0;
     #if CEU >= 4
-        int CEU_DEPTH;
+        int CEU_DEPTH = 255;
         int* ceu_depth = &CEU_DEPTH;
     #endif
         CEU_Block _ceu_block_ = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
