@@ -232,8 +232,9 @@ class Lexer (inps: List<Pair<Triple<String,Int,Int>,Reader>>, reset: Boolean=tru
                         when {
                             op in XOPERATORS            -> yield(Tk.Id(op, pos, 0))
                             op.all  { it in OPERATORS } -> yield(Tk.Id("{{$op}}", pos, 0))
-                            op.none { it in OPERATORS } -> yield(Tk.Op(op, pos, 0))
-                            else -> err(pos, "operator error : invalid identifier")
+                            //op.none { it in OPERATORS } -> yield(Tk.Op(op, pos, 0))
+                            //else -> err(pos, "operator error : invalid identifier")
+                            else -> yield(Tk.Op(op, pos, 0))    // bc of '-'
                         }
                     }
                 }

@@ -299,9 +299,12 @@ class Lexer_01 {
     }
     @Test
     fun ff_05_ops_err() {
-        val l = lexer("{{x=}}")
+        val l = lexer("{{x-1}} {{x=}}")
         val tks = l.lex().iterator()
-        assert(trap { tks.next() } == "anon : (lin 1, col 1) : operator error : invalid identifier")
+        assert(tks.next().let { it is Tk.Op && it.str == "x-1" })
+        assert(tks.next().let { it is Tk.Op && it.str == "x=" })
+        assert(tks.next().let { it is Tk.Eof && it.pos.lin==1 && it.pos.col==15 })
+        //assert(trap { tks.next() } == "anon : (lin 1, col 9) : operator error : invalid identifier")
     }
 
     @Test
