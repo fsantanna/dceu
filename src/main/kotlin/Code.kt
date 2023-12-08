@@ -749,7 +749,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 this.call.code() + """
                     ${ups.first(this) { it is Expr.Proto }.cond {
                         it as Expr.Proto
-                        assert(it.tk.str != "func") { "bug found" }
+                        //assert(it.tk.str != "func") { "bug found" }
                         """
                         if (ceu_frame->exe->status != CEU_EXE_STATUS_RESUMED) {
                             ceu_n = CEU_ARG_ABORT;
@@ -1099,6 +1099,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
+                    CEU4(int ceu_d_$n = CEU_DEPTH_GET_BLK($bupc);)
                     ceu_acc = ceu_frame_$n.clo->proto (
                         CEU4(ceu_depth COMMA)
                         &ceu_frame_$n,
@@ -1110,7 +1111,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    CEU4(CEU_CHECK_DEPTH(ceu_depth, $bupc, continue));
+                    CEU4(CEU_DEPTH_CHECK(ceu_depth, ceu_d_$n, continue));
                 } // CALL | ${this.dump()}
                 """
             }

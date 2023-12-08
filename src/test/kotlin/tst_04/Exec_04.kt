@@ -318,8 +318,8 @@ class Exec_04 {
             }
             println(1)
         """)
-        //assert(out == "1\n") { out }
-        assert(out == "anon : (lin 3, col 18) : broadcast error : unexpected enclosing func\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 3, col 18) : broadcast error : unexpected enclosing func\n") { out }
     }
     @Test
     fun dd_08_bcast() {
@@ -1778,7 +1778,7 @@ class Exec_04 {
             broadcast(nil)
             println(:ok)
         """)
-        assert(out == "10\n") { out }
+        assert(out == ":ok\n") { out }
     }
 
     // ABORTION
@@ -2154,19 +2154,19 @@ class Exec_04 {
     @Test
     fun op_01_depth() {
         val out = test("""
-            println(`:number _ceu_depth_(&_ceu_block_)`)
-            println(`:number _ceu_depth_(ceu_block)`)
+            println(`:number CEU_DEPTH_GET_BLK(&_ceu_block_)`)
+            println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
         """)
         assert(out == "0\n0\n") { out }
     }
     @Test
     fun op_02_depth() {
         val out = test("""
-            println(`:number _ceu_depth_(&_ceu_block_)`)
+            println(`:number CEU_DEPTH_GET_BLK(&_ceu_block_)`)
             spawn (task () {
                 do {
                     val x
-                    println(`:number _ceu_depth_(ceu_block)`)
+                    println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
                 }
             }) ()
         """)
@@ -2175,66 +2175,82 @@ class Exec_04 {
     @Test
     fun op_03_depth() {
         val out = test("""
-            println(`:number _ceu_depth_(&_ceu_block_)`)
+            println(`:number CEU_DEPTH_GET_BLK(&_ceu_block_)`)
             val f = func () {
-                println(`:number _ceu_depth_(ceu_block)`)
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
             }
-            println(`:number _ceu_depth_(ceu_block)`)
+            println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
             do {
                 val x
-                println(`:number _ceu_depth_(ceu_block)`)
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
                 f()
             }
         """)
-        assert(out == "0\n1\n2\n3\n") { out }
+        //assert(out == "0\n1\n2\n3\n") { out }
+        assert(out == "0\n0\n0\n0\n") { out }
     }
     @Test
     fun op_04_depth() {
         val out = test("""
             val f = func () {
-                println(`:number _ceu_depth_(ceu_block)`)
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
                 do {
                     val x
-                    println(`:number _ceu_depth_(ceu_block)`)
+                    println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
                 }
             }
-            println(`:number _ceu_depth_(&_ceu_block_)`)
-            println(`:number _ceu_depth_(ceu_block)`)
+            println(`:number CEU_DEPTH_GET_BLK(&_ceu_block_)`)
+            println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
             do {
                 val x
-                println(`:number _ceu_depth_(ceu_block)`)
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
                 f()
             }
         """)
-        assert(out == "0\n1\n2\n3\n4\n") { out }
+        //assert(out == "0\n1\n2\n3\n4\n") { out }
+        assert(out == "0\n0\n0\n0\n0\n") { out }
     }
     @Test
     fun op_05_depth() {
         val out = test("""
             val f = func () {
-                println(`:number _ceu_depth_(ceu_block)`)
-                do {
-                    val x
-                    println(`:number _ceu_depth_(ceu_block)`)
-                }
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
             }
-            println(`:number _ceu_depth_(&_ceu_block_)`)
-            println(`:number _ceu_depth_(ceu_block)`)
-            do {
-                val x
-                println(`:number _ceu_depth_(ceu_block)`)
-                spawn (task () {
-                    println(`:number _ceu_depth_(ceu_block)`)
-                    f()
-                    println(`:number _ceu_depth_(ceu_block)`)
-                }) ()
-                println(`:number _ceu_depth_(ceu_block)`)
-            }
+            spawn (task () {
+                f()
+            }) ()
         """)
-        assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
+        //assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
+        assert(out == "1\n") { out }
     }
     @Test
     fun op_06_depth() {
+        val out = test("""
+            val f = func () {
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+                do {
+                    val x
+                    println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+                }
+            }
+            println(`:number CEU_DEPTH_GET_BLK(&_ceu_block_)`)
+            println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+            do {
+                val x
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+                spawn (task () {
+                    println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+                    f()
+                    println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+                }) ()
+                println(`:number CEU_DEPTH_GET_BLK(ceu_block)`)
+            }
+        """)
+        //assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
+        assert(out == "0\n0\n0\n1\n1\n1\n1\n0\n") { out }
+    }
+    @Test
+    fun op_07_depth() {
         val out = test("""
             println(`:number *ceu_depth`)
             do {
@@ -2246,10 +2262,11 @@ class Exec_04 {
                 println(:3)
             }
         """)
-        assert(out == ("1\n:1\n0\n:2\n:3\n")) { out }
+        //assert(out == ("1\n:1\n0\n:2\n:3\n")) { out }
+        assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
     }
     @Test
-    fun op_07_depth() {     // catch from nesting and broadcast
+    fun op_08_depth() {     // catch from nesting and broadcast
         val out = test(
             """
             spawn (task () {

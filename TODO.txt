@@ -1,5 +1,11 @@
 # TODO
 
+- remove ABORTED
+- check all bcast
+- back with free
+- transofmar await em primitiva em CEU=4
+    - ver se simplifica o resto
+
 - DLEX
     - novo refactor de chk_set
     - func vs thus
