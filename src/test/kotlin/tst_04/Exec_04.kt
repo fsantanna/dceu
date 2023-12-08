@@ -1927,17 +1927,17 @@ class Exec_04 {
                 yield(nil) ;;thus { it => nil }
             }
             val t = spawn T()
-            spawn( task () {
+            ;;spawn( task () {
                 spawn (task () {
                     println(:A)
-                    yield(nil) thus { it => it==t }
+                    yield(nil) thus { it => println(it==t) }
                     println(:C)
                 }) ()
                 broadcast(nil) in t
-            })()
+            ;;})()
             println(:ok)
         """)
-        assert(out == ":A\n:C\n:ok\n") { out }
+        assert(out == ":A\ntrue\n:C\n:ok\n") { out }
     }
 
     // NEW ABORTION

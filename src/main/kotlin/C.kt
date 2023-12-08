@@ -1481,30 +1481,18 @@ fun Coder.main (tags: Tags): String {
             CEU_Dyn* dyn = dyns->first;
             int d = CEU_DEPTH_GET_BLK(blk);
             while (dyn != NULL) {
+                CEU_Value ret = { CEU_VALUE_NIL };
                 switch (dyn->Any.type) {
                     case CEU_VALUE_EXE_TASK:
         #if CEU >= 5
                     case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    {
-                        CEU_Value ret = ceu_bcast_task(depth, &dyn->Exe_Task, 1, &evt); 
-                        if (CEU_ISERR(ret)) {
-                            return ret;
-                        }
-                        assert(dyn->Exe_Task.status != CEU_EXE_STATUS_ABORTED);
-                        if (dyn->Exe_Task.status == CEU_EXE_STATUS_ABORTED) {
-                            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
-                        }
+                        ret = ceu_bcast_task(depth, &dyn->Exe_Task, 1, &evt); 
                         break;
-                    }
         #if CEU >= 5
-                    case CEU_VALUE_TASKS: {
-                        CEU_Value ret = ceu_bcast_dyns(depth, blk, &dyn->Tasks.dyns, evt);
-                        if (CEU_ISERR(ret)) {
-                            return ret;
-                        }
+                    case CEU_VALUE_TASKS:
+                        ret = ceu_bcast_dyns(depth, blk, &dyn->Tasks.dyns, evt);
                         break;
-                    }
                     case CEU_VALUE_TRACK:
                         if (ceu_istask_val(evt) && dyn->Track.task==(CEU_Exe_Task*)evt.Dyn) {
                             dyn->Track.task = NULL; // tracked coro is terminating
@@ -1515,6 +1503,9 @@ fun Coder.main (tags: Tags): String {
                         break; // not applicable
                 }
                 CEU_DEPTH_CHECK(depth, d, return (CEU_Value) { CEU_VALUE_BOOL COMMA {.Bool=1} });
+                if (CEU_ISERR(ret)) {
+                    return ret;
+                }
                 dyn = dyn->Any.hld.next;
             }
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
