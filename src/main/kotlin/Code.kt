@@ -745,20 +745,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     else -> "ceu_acc = ceu_acc.Dyn->Exe_Task.pub;\n"
                 }
             }
-            is Expr.Bcast -> {
-                this.call.code() + """
-                    ${ups.first(this) { it is Expr.Proto }.cond {
-                        it as Expr.Proto
-                        //assert(it.tk.str != "func") { "bug found" }
-                        """
-                        if (ceu_frame->exe->status != CEU_EXE_STATUS_RESUMED) {
-                            ceu_n = CEU_ARG_ABORT;
-                            continue;
-                        }
-                        """
-                    }}
-                """
-            }
             is Expr.Dtrack -> {
                 val bupc = ups.first_block(this)!!.idc("block")
                 """

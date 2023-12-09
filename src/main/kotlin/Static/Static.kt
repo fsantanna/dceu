@@ -122,7 +122,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     else -> {}
                 }
             }
-            is Expr.Bcast  -> this.call.traverse()
             is Expr.Dtrack -> this.tsk.traverse()
             is Expr.Toggle -> { this.tsk.traverse() ; this.on.traverse() }
 

@@ -468,7 +468,7 @@ class Exec_05 {
         assert(out.contains(":yielded\n")) { out }
     }
     @Test
-    fun todo_dd_03_detrack_err() {
+    fun BUG_dd_03_detrack_err() {
         val out = test("""
             val T = task () {
                 ${AWAIT()}

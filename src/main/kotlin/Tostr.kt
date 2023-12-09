@@ -64,7 +64,6 @@ fun Expr.tostr (pre: Boolean = false): String {
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.arg.tostr(pre) + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
-        is Expr.Bcast  -> "(broadcast(" + this.call.args[0].tostr(pre) + ")" + (if (this.call.args.size==1) "" else " in " + this.call.args[1].tostr(pre)) + ")"
         is Expr.Dtrack -> "detrack(" + this.tsk.tostr(pre) + ")"
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 
