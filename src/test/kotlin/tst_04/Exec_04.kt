@@ -1938,7 +1938,7 @@ class Exec_04 {
     fun BUG_mn_01_abort() {
         val out = test("""
             spawn (task () {
-                yield(nil)
+                ;;yield(nil)
                 do {
                     spawn (task () {
                         yield(nil)
@@ -1948,7 +1948,7 @@ class Exec_04 {
                 }
                 broadcast([])
             })()
-            broadcast(nil)
+            ;;broadcast(nil)
             broadcast(nil)
             println(:ok)
         """)
