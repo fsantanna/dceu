@@ -259,8 +259,8 @@ class Exec_04 {
             broadcast(3)
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        //assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
-        assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
+        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
+        //assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
     }
     @Test
     fun dd_05_bcast() {
@@ -353,8 +353,8 @@ class Exec_04 {
                  broadcast(3)
             }
         """)
-        assert(out == "2\n2\n") { out }
-        //assert(out.contains("2\nexe-task: 0x")) { out }
+        //assert(out == "2\n2\n") { out }
+        assert(out.contains("2\nexe-task: 0x")) { out }
     }
     @Test
     fun dd_10_bcast() {
@@ -560,23 +560,9 @@ class Exec_04 {
             spawn (task () {
                 nil
             })()
+            broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
-                " |  anon : (lin 4, col 17) : throw(:err)\n" +
-                " v  throw error : :err\n") { out }
-    }
-    @Test
-    fun ee_07_throw() {
-        val out = test("""
-            spawn (task () {
-                yield(nil) ;;thus { it => nil }
-                throw(:err)
-            })()
-            spawn (task () {
-                nil
-            })()
-        """)
-        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -593,6 +579,7 @@ class Exec_04 {
                 throw(:err)
             })()
             broadcast(nil)
+            ;;broadcast(nil)
         """)
         assert(out == " |  anon : (lin 11, col 13) : broadcast(nil)\n" +
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
@@ -649,11 +636,12 @@ class Exec_04 {
             }
             spawn T(10)
             spawn T(11)
-            ;;catch {
+            catch (it => true) {
                 ;;func () {
                     broadcast ([])
                 ;;}()
-            ;;}
+                broadcast ([])
+            }
         """)
         assert(out == "10\t[]\n" +
                 "11\t[]\n") { out }
@@ -789,9 +777,10 @@ class Exec_04 {
                 val e = yield(nil) ;;thus { it => it }
                 println(:ok, e)
             })()
-            spawn (task () {
+            val t = spawn (task () {
                 nil
             })()
+            broadcast(t)
         """)
         assert(out.contains(":ok\texe-task: 0x")) { out }
         //assert(out.contains(" |  anon : (lin 6, col 13) : spawn (task () { nil })(nil)\n" +
@@ -805,9 +794,10 @@ class Exec_04 {
                     println(:ok, it)
                 }
             })()
-            spawn (task () {
+            val t = spawn (task () {
                 nil
             })()
+            broadcast(t)
         """)
         assert(out.contains(":ok\texe-task: 0x")) { out }
     }
@@ -821,11 +811,12 @@ class Exec_04 {
                     println(:ok, it)
                 }
             })()
-            spawn (task () {
+            val t = spawn (task () {
                 yield(nil) ;;thus { it => nil }
                 println(:2)
             })()
             broadcast(nil)
+            broadcast(t)
         """)
         assert(out.contains(":1\n:2\n:ok\texe-task: 0x")) { out }
     }
