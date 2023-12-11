@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
                         ${istsk.cond { """
-                            // indicates that this level is ok
+                            // indicates that this level is ok (abortion on outer block termination)
                             *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
                         """ }}
                         ${isexe.cond{"""
@@ -127,10 +127,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     ceu_frame->exe->status = (ceu_n==CEU_ARG_ABORT || CEU_ISERR(ceu_acc)) ? CEU_EXE_STATUS_ABORTED : CEU_EXE_STATUS_TERMINATED;
                             }
                         """}}
-                        ${istsk.cond { """
-                            // indicates that this level is aborted
-                            CEU4(*ceu_depth = _ceu_depth_(ceu_frame->exe_task) - 1;)
-                        """ }}                    
                         return ceu_acc;
                     }
                 """)
@@ -208,6 +204,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val isvoid = sta.void(this)
                 //println(listOf(isvoid,this.tk))
                 val inexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+                val intsk  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }
                 val istsk  = (f_b?.tk?.str == "task")
                 val isthus = (this.tk.str == "thus")
 
@@ -360,6 +357,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
+                    ${intsk.cond { """
+                        // indicates that nested levels are aborted
+                        *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
+                        //printf(">>> no = %d\n", *ceu_depth);
+                    """ }}                    
+
                     // defers execute
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
@@ -468,7 +471,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free | ${this.dump()}
-                    ${(!isvoid).cond { "ceu_gc_rem_all(&$blkc->dn.dyns);" }}
+                    ${(!isvoid).cond { "ceu_gc_rem_all($blkc);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {

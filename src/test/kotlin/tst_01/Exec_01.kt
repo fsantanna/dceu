@@ -804,7 +804,7 @@ class Exec_01 {
                 }
                 println(y)
             }
-            `ceu_gc_collect();`
+            ;;`ceu_gc_collect();`
             println("-=-=-=-=-=-=-=-=-")
             println(t)
         """)
@@ -853,6 +853,16 @@ class Exec_01 {
             println(z[0][0] == z)
         """
         )
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun cc_13a_drop_cycle() {
+        val out = test("""
+            var x = [nil]
+            var y = [x]
+            set x[0] = y
+            println(x[0] == y[0][0])
+        """)
         assert(out == "true\n") { out }
     }
     @Test
@@ -2633,7 +2643,7 @@ class Exec_01 {
                 nil
             }
             println(f([[nil]][0]))  ;; err
-            `ceu_gc_collect();`
+            ;;`ceu_gc_collect();`
         """)
         assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
     }

@@ -626,7 +626,7 @@ class Exec_03 {
                         val v = []
                         resume t(v)
                     }
-                    `ceu_gc_collect();`
+                    ;;`ceu_gc_collect();`
                 }
             }
             resume t()

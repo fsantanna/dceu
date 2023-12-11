@@ -5,6 +5,7 @@
 - back with free
 - transofmar await em primitiva em CEU=4
     - ver se simplifica o resto
+- RT function for col set
 
 - DLEX
     - novo refactor de chk_set

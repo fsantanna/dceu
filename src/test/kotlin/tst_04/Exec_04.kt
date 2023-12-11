@@ -259,7 +259,8 @@ class Exec_04 {
             broadcast(3)
         """)
         //assert(out == "nil\n1\nnil\n1\nnil\n2\nnil\n2\n") { out }
-        assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
+        //assert(out.contains(":1\t1\n:2\t1\n:1\t2\n:2\texe-task: 0x")) { out }
+        assert(out == (":1\t1\n:2\t1\n:1\t2\n:2\t2\n")) { out }
     }
     @Test
     fun dd_05_bcast() {
@@ -352,8 +353,8 @@ class Exec_04 {
                  broadcast(3)
             }
         """)
-        //assert(out == "2\n2\n") { out }
-        assert(out.contains("2\nexe-task: 0x")) { out }
+        assert(out == "2\n2\n") { out }
+        //assert(out.contains("2\nexe-task: 0x")) { out }
     }
     @Test
     fun dd_10_bcast() {
