@@ -560,9 +560,12 @@ class Exec_04 {
             spawn (task () {
                 nil
             })()
-            broadcast(nil)
+            ;;broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
+        //        " |  anon : (lin 4, col 17) : throw(:err)\n" +
+        //        " v  throw error : :err\n") { out }
+        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }

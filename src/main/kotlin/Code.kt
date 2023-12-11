@@ -110,7 +110,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
                         """ }}
                         ${istsk.cond { """
-                            // indicates that this level is ok (abortion on outer block termination)
+                            // indicates that this level is alive
                             *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
                         """ }}
                         ${isexe.cond{"""
@@ -358,7 +358,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
                     ${intsk.cond { """
-                        // indicates that nested levels are aborted
+                        // indicates that this level is alive (nested levels are aborted)
                         *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
                         //printf(">>> no = %d\n", *ceu_depth);
                     """ }}                    
@@ -705,7 +705,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                 """ })}
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                ceu_acc = ceu_bcast_task(ceu_depth, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(NULL, ceu_depth, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
