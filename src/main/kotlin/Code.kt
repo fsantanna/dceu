@@ -75,7 +75,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Proto -> {
                 val blk = ups.first_block(this)!!
                 val isexe = (this.tk.str != "func")
-                val istsk = (this.tk.str == "task")
                 val code = this.blk.code()
                 val mem = Mem(ups, vars, clos, sta, defers)
                 val id = this.idc()
@@ -108,10 +107,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """ }}
                         ${isexe.cond { """
                             CEU_Clo_Mem_$id* ceu_mem = (CEU_Clo_Mem_$id*) ceu_frame->exe->mem;                    
-                        """ }}
-                        ${istsk.cond { """
-                            // indicates that this level is alive
-                            *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
                         """ }}
                         ${isexe.cond{"""
                             ceu_frame->exe->status = CEU_EXE_STATUS_RESUMED;
@@ -204,7 +199,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val isvoid = sta.void(this)
                 //println(listOf(isvoid,this.tk))
                 val inexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
-                val intsk  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str=="task" }
                 val istsk  = (f_b?.tk?.str == "task")
                 val isthus = (this.tk.str == "thus")
 
@@ -287,6 +281,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }}
                     
+                    ${(CEU >= 4).cond { """
+                        // indicates that this level is alive
+                        *ceu_depth = _ceu_depth_($blkc);
+                    """ }}
+                    
                     ${(CEU >= 2).cond { "do {" }}
                         // main args, func args
                         ${when {
@@ -357,9 +356,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
-                    ${intsk.cond { """
-                        // indicates that this level is alive (nested levels are aborted)
-                        *ceu_depth = _ceu_depth_(ceu_frame->exe_task);
+                    ${(CEU >= 4).cond { """
+                        // indicates that this level is aborted
+                        *ceu_depth = _ceu_depth_($blkc) - 1;
                         //printf(">>> no = %d\n", *ceu_depth);
                     """ }}                    
 
@@ -1088,7 +1087,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-                    CEU4(int ceu_d_$n = CEU_DEPTH_GET_BLK($bupc);)
+                    CEU4(int ceu_d_$n = _ceu_depth_($bupc);)
                     ceu_acc = ceu_frame_$n.clo->proto (
                         CEU4(ceu_depth COMMA)
                         &ceu_frame_$n,
@@ -1100,7 +1099,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    CEU4(CEU_DEPTH_CHECK(ceu_depth, ceu_d_$n, continue));
+                    CEU4(CEU_DEPTH_CHK(ceu_depth, ceu_d_$n, continue));
                 } // CALL | ${this.dump()}
                 """
             }
