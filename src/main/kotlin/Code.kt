@@ -198,7 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val ismem  = this.ismem(sta,clos)
                 val isvoid = sta.void(this)
                 //println(listOf(isvoid,this.tk))
-                val inexe  = ups.inexe(this)
+                val inexe  = ups.inexe(this, true)
                 val istsk  = (f_b?.tk?.str == "task")
                 val isthus = (this.tk.str == "thus")
 
@@ -1105,7 +1105,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                     ${(CEU >= 4).cond {
-                        val ret = if (ups.inexe(this)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"
+                        val ret = if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"
                         """
                         CEU_DEPTH_CHK(ceu_depth, ceu_d_$n, $ret;);                        
                         """

@@ -1862,6 +1862,26 @@ class Exec_04 {
         assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
     }
     @Test
+    fun mm_04a_self() {
+        val out = test("""
+            spawn (task () {
+                do {
+                    spawn (task () {
+                        yield(nil)
+                    }) ()
+                    yield(nil)
+                    nil
+                }
+                do {
+                    val y
+                    yield(nil)
+                }
+            }) ()
+            broadcast(nil)
+       """)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
     fun mm_05_defer() {
         val out = test("""
             task () {

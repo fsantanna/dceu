@@ -1460,7 +1460,7 @@ fun Coder.main (tags: Tags): String {
                 }
     #if CEU >= 5
                 if (task->type == CEU_VALUE_EXE_TASK_IN) {
-                    ceu_gc_dec_rec((CEU_Dyn*)task, NULL);
+                    ceu_gc_dec_rec((CEU_Dyn*)task, 1);
                     ceu_gc_rem((CEU_Dyn*)task);
                 }
     #endif
@@ -1490,7 +1490,7 @@ fun Coder.main (tags: Tags): String {
                     break;
     #if CEU >= 5
                 case CEU_VALUE_TASKS:
-                    ret = ceu_bcast_dyns(depth, cur->Tasks.dyns->first, evt);
+                    ret = ceu_bcast_dyns(depth, cur->Tasks.dyns.first, evt);
                     break;
                 case CEU_VALUE_TRACK:
                     if (ceu_istask_val(evt) && cur->Track.task==(CEU_Exe_Task*)evt.Dyn) {

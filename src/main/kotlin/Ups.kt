@@ -41,8 +41,12 @@ class Ups (outer: Expr.Do) {
     fun first_task_real (e: Expr): Expr.Proto? {
         return this.first(e) { it is Expr.Proto && it.tk.str=="task" && it.tag?.str!=":void" } as Expr.Proto?
     }
-    fun inexe (e: Expr): Boolean {
-        return this.any(e) { it is Expr.Proto && it.tk.str!="func" }
+    fun inexe (e: Expr, immediate: Boolean): Boolean {
+        return if (immediate) {
+            this.first(e) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+        } else {
+            this.any(e) { it is Expr.Proto && it.tk.str != "func" }
+        }
     }
 
     fun Expr.traverse (): Map<Expr,Expr> {

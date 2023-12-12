@@ -94,7 +94,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     .forEach { ylds.add(it as Expr.Do) }
                 this.arg.traverse()
                 when {
-                    !ups.inexe(this)
+                    !ups.inexe(this,true)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
