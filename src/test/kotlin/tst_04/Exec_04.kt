@@ -1878,21 +1878,26 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 val T = task () {
+                    println(:1)
                     yield(nil) ;;thus { it => nil }
+                    println(:a)
                     yield(nil) ;;thus { it => nil }
                 }
                 var t = spawn T()
                 spawn( task () {
+                    println(:2)
                     yield(nil) ;;thus { it => nil }
-                    broadcast(nil) in t
+                    println(:b)
+                    broadcast(nil) in t     ;; pending
                     println(999)
                 } )()
+                println(:3)
                 yield(nil) ;;thus { it => nil }
                 println(:ok)
             })()
             broadcast(nil)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == ":1\n:2\n:3\n:a\n:b\n:ok\n") { out }
     }
     @Test
     fun todo_xxx_remove_or_move_when_stack_overflow_resolved_in_previous_example() {
@@ -1986,6 +1991,22 @@ class Exec_04 {
             println(:ok)
         """)
         assert(out == "10\n") { out }
+    }
+
+    // ABORTION / DEFER
+
+    @Test
+    fun mo_01_defer() {
+        val out = test("""
+            coro () {
+                func () {
+                    defer {     ;; not allowed
+                        nil     ;; could access dyn val from aborted coro
+                    }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : defer error : unexpected func with enclosing coro or task\n") { out }
     }
 
     // TASK / VOID
@@ -2183,8 +2204,8 @@ class Exec_04 {
                 f()
             }
         """)
-        //assert(out == "0\n1\n2\n3\n") { out }
-        assert(out == "0\n0\n0\n0\n") { out }
+        assert(out == "0\n1\n2\n3\n") { out }
+        //assert(out == "0\n0\n0\n0\n") { out }
     }
     @Test
     fun op_04_depth() {
@@ -2204,8 +2225,8 @@ class Exec_04 {
                 f()
             }
         """)
-        //assert(out == "0\n1\n2\n3\n4\n") { out }
-        assert(out == "0\n0\n0\n0\n0\n") { out }
+        assert(out == "0\n1\n2\n3\n4\n") { out }
+        //assert(out == "0\n0\n0\n0\n0\n") { out }
     }
     @Test
     fun op_05_depth() {
@@ -2217,8 +2238,8 @@ class Exec_04 {
                 f()
             }) ()
         """)
-        //assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == "3\n") { out }
     }
     @Test
     fun op_06_depth() {
@@ -2243,8 +2264,8 @@ class Exec_04 {
                 println(`:number _ceu_depth_(ceu_block)`)
             }
         """)
-        //assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
-        assert(out == "0\n0\n0\n1\n1\n1\n1\n0\n") { out }
+        assert(out == "0\n1\n2\n3\n4\n5\n3\n2\n") { out }
+        //assert(out == "0\n0\n0\n1\n1\n1\n1\n0\n") { out }
     }
     @Test
     fun op_07_depth() {
@@ -2259,8 +2280,21 @@ class Exec_04 {
                 println(:3)
             }
         """)
-        //assert(out == ("1\n:1\n0\n:2\n:3\n")) { out }
-        assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
+        assert(out == ("1\n:1\n1\n:2\n:3\n")) { out }
+        //assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
+    }
+    @Test
+    fun op_07x_depth() {
+        val out = test("""
+            println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+            do {
+                println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+            }
+            println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+            println(:ok)
+        """)
+        assert(out == ("1\t1\n1\t1\n1\t1\n:ok\n")) { out }
+        //assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
     }
     @Test
     fun op_08_depth() {     // catch from nesting and broadcast

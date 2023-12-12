@@ -483,6 +483,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             continue;   // do not execute next statement, instead free up block
                         }
                     """ }}
+                    
+                    // after cleanup: exes should not be aborted during cleanup
+                    ${(CEU>=4 && !isvoid).cond { """
+                        // indicates that this level is aborted
+                        *ceu_depth = _ceu_depth_($blkc) - 1;
+                        //printf(">>> no = %d\n", *ceu_depth);
+                    """ }}
                 }
                 """
             }
@@ -1099,7 +1106,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
-                    CEU4(CEU_DEPTH_CHK(ceu_depth, ceu_d_$n, continue));
+                    ${(CEU >= 4).cond {
+                        val ret = if (ups.inexe(this)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"
+                        """
+                        CEU_DEPTH_CHK(ceu_depth, ceu_d_$n, $ret;);                        
+                        """
+                    }}
                 } // CALL | ${this.dump()}
                 """
             }

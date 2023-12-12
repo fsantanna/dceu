@@ -77,7 +77,16 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.cnd.traverse()
                 this.blk.traverse()
             }
-            is Expr.Defer  -> this.blk.traverse()
+            is Expr.Defer  -> {
+                val f = ups.first(this) { it is Expr.Proto && it.tk.str=="func" }
+                if (f != null) {
+                    val co = ups.any(f) { it is Expr.Proto && it.tk.str!="func" }
+                    if (co) {
+                        err(this.tk, "defer error : unexpected func with enclosing coro or task")
+                    }
+                }
+                this.blk.traverse()
+            }
 
             is Expr.Yield  -> {
                 ups.all_until(this) { it is Expr.Proto }
