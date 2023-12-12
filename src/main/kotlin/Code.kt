@@ -646,7 +646,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
+                int ceu_depth_$n = *ceu_depth;
                 ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(ceu_depth COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
+                *ceu_depth = MIN(*ceu_depth, ceu_depth_$n);
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
                 """
             }

@@ -1393,7 +1393,9 @@ fun Coder.main (tags: Tags): String {
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
+                int d = *depth;
                 ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ABORT, NULL);
+                *depth = MIN(*depth, d);
                 goto __CEU_FREE__;
             } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
@@ -1419,11 +1421,13 @@ fun Coder.main (tags: Tags): String {
             }
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
+                int d = *depth;
                 if (CEU_ISERR(ret)) {
                     ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
                     ret = task->frame.clo->proto(depth, &task->frame, n, args);
                 }
+                *depth = MIN(*depth, d);
             }
             CEU_DEPTH_CHK(depth, d, return ret);
             
@@ -2316,9 +2320,8 @@ fun Coder.main (tags: Tags): String {
             if (ceu_isexe_dyn(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
                 CEU_Value ret;
     #if CEU >= 4
-                int depth;  // mock depth bc abortion cannot kill enclosing scope
+                int depth = 0;  // mock depth bc abortion cannot kill enclosing scope
                 if (ceu_istask_dyn(dyn)) {
-                    int depth;  // mock depth bc abortion cannot kill enclosing scope
                     ret = ceu_bcast_task(NULL, &depth, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
@@ -2359,7 +2362,7 @@ fun Coder.main (tags: Tags): String {
     """ // GLOBALS
         int CEU_BREAK = 0;
     #if CEU >= 4
-        int CEU_DEPTH;
+        int CEU_DEPTH = 0;
         int* ceu_depth = &CEU_DEPTH;
     #endif
         CEU_Block _ceu_block_ = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };

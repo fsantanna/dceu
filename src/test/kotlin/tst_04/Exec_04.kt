@@ -267,10 +267,10 @@ class Exec_04 {
         val out = test("""
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
-                    yield(nil) ;;thus { it => nil }  ;; awakes from outer bcast
+                    yield(nil)              ;; awakes from outer bcast
                     println(2)
                 }) ()
-                yield(nil) ;;thus { it => nil }      ;; awakes from co2 termination
+                yield(nil)                  ;; awakes from co2 termination
                 println(1)
             }) ()
             broadcast(nil)
@@ -1878,8 +1878,9 @@ class Exec_04 {
                 }
             }) ()
             broadcast(nil)
+            println(:ok)
        """)
-        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_05_defer() {
