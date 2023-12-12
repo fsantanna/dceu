@@ -198,7 +198,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val ismem  = this.ismem(sta,clos)
                 val isvoid = sta.void(this)
                 //println(listOf(isvoid,this.tk))
-                val inexe  = ups.first(this) { it is Expr.Proto }.let { it!=null && it.tk.str!="func" }
+                val inexe  = ups.inexe(this)
                 val istsk  = (f_b?.tk?.str == "task")
                 val isthus = (this.tk.str == "thus")
 
@@ -281,7 +281,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                     }}
                     
-                    ${(CEU >= 4).cond { """
+                    ${(CEU>=4 && !isvoid).cond { """
                         // indicates that this level is alive
                         *ceu_depth = _ceu_depth_($blkc);
                     """ }}
@@ -356,12 +356,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
                     
-                    ${(CEU >= 4).cond { """
-                        // indicates that this level is aborted
-                        *ceu_depth = _ceu_depth_($blkc) - 1;
-                        //printf(">>> no = %d\n", *ceu_depth);
-                    """ }}                    
-
                     // defers execute
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
@@ -669,6 +663,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     return ceu_acc;
                 case $n: // YIELD ${this.dump()}
+                    ${(CEU >= 4).cond { """
+                        // indicates that this level is alive
+                        *ceu_depth = _ceu_depth_($bupc);
+                    """ }}
                     if (ceu_n == CEU_ARG_ABORT) {
                         ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
                         continue;
