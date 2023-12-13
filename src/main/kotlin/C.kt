@@ -1513,15 +1513,21 @@ fun Coder.main (tags: Tags): String {
             return ceu_bcast_dyns(depth, nxt, evt);
         }
         CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt) {
-            int d = _ceu_depth_(blk);
+            int old = *depth;
             while (blk != NULL) {
+                int new = _ceu_depth_(blk);
+                *depth = new;
+    //printf(">>>>>> [%d] %p\n", new, blk);
                 CEU_Value ret = ceu_bcast_dyns(depth, blk->dn.dyns.first, evt);
-                CEU_DEPTH_CHK(depth, d, return ret);
+    //printf("<<<<<< %p\n", blk);
+                CEU_DEPTH_CHK(depth, new, return ret);
                 if (CEU_ISERR(ret)) {
+                    *depth = old;
                     return ret;
                 }
                 blk = blk->dn.block;
             }
+            *depth = old;
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
 

@@ -268,14 +268,16 @@ class Exec_04 {
             var co1 = spawn (task () {
                 var co2 = spawn (task () {
                     yield(nil)              ;; awakes from outer bcast
-                    println(2)
+                    println(:2)
                 }) ()
                 yield(nil)                  ;; awakes from co2 termination
-                println(1)
+                println(:1)
             }) ()
+            ;;`printf(">>> %d\n", CEU_DEPTH);`
+            println(:bcast)
             broadcast(nil)
         """)
-        assert(out == "2\n1\n") { out }
+        assert(out == ":bcast\n:2\n:1\n") { out }
     }
     @Test
     fun dd_05x_bcast() {
