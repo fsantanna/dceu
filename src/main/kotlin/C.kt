@@ -1482,6 +1482,7 @@ fun Coder.main (tags: Tags): String {
             }
             
             int d = _ceu_depth_(CEU_HLD_BLOCK(cur));
+    //printf(">>> [%d] %p %p\n", d, CEU_HLD_BLOCK(cur), cur);
             CEU_Value ret = { CEU_VALUE_NIL };
             CEU_Dyn* nxt = cur->Any.hld.next;
             
@@ -1509,6 +1510,7 @@ fun Coder.main (tags: Tags): String {
             if (CEU_ISERR(ret)) {
                 return ret;
             }
+    //printf(">>> [%d < %d] %p -> %p\n", *depth,d, cur,nxt);
             CEU_DEPTH_CHK(depth, d, return (CEU_Value) { CEU_VALUE_BOOL COMMA {.Bool=1} });
             return ceu_bcast_dyns(depth, nxt, evt);
         }
@@ -1522,12 +1524,12 @@ fun Coder.main (tags: Tags): String {
     //printf("<<<<<< %p\n", blk);
                 CEU_DEPTH_CHK(depth, new, return ret);
                 if (CEU_ISERR(ret)) {
-                    *depth = old;
+                    *depth = MIN(*depth, old);
                     return ret;
                 }
                 blk = blk->dn.block;
             }
-            *depth = old;
+            *depth = MIN(*depth, old);
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
 
