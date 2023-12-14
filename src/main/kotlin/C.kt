@@ -1409,8 +1409,10 @@ fun Coder.main (tags: Tags): String {
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 //if (!ceu_istask_val(args[0])) {     // do not awake sister tasks
+                    int d = *depth;
                     ret = ceu_bcast_blocks(depth, task->dn_block, args[0]);
                     CEU_DEPTH_CHK(depth, d, return ret);
+                    *depth = MIN(*depth, d);
 
                     // TODO: remove
                     if (task->status >= CEU_EXE_STATUS_TERMINATED) {
@@ -1438,6 +1440,7 @@ fun Coder.main (tags: Tags): String {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
+                int d = *depth;
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
                     ret2 = ceu_bcast_task(NULL, depth, up_task, 1, &evt2);
@@ -1449,6 +1452,7 @@ fun Coder.main (tags: Tags): String {
                     ret = ret2;
                 }
                 CEU_DEPTH_CHK(depth, d, return ret);
+                *depth = MIN(*depth, d);
                 /* TODO: stack trace for error on task termination
                 do {
                     CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
@@ -1506,6 +1510,7 @@ fun Coder.main (tags: Tags): String {
                 default:
                     break; // not applicable
             }
+            *depth = MIN(*depth, d);
             
             if (CEU_ISERR(ret)) {
                 return ret;
@@ -1522,6 +1527,7 @@ fun Coder.main (tags: Tags): String {
     //printf(">>>>>> [%d] %p\n", new, blk);
                 CEU_Value ret = ceu_bcast_dyns(depth, blk->dn.dyns.first, evt);
     //printf("<<<<<< %p\n", blk);
+    *depth = MIN(*depth, new);
                 CEU_DEPTH_CHK(depth, new, return ret);
                 if (CEU_ISERR(ret)) {
                     *depth = MIN(*depth, old);

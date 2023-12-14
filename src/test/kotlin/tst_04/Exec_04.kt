@@ -1867,6 +1867,7 @@ class Exec_04 {
     fun mm_04a_self() {
         val out = test("""
             spawn (task () {
+                println(:x, `:number _ceu_depth_(ceu_block)`)
                 do {
                     spawn (task () {
                         yield(nil)
@@ -1874,9 +1875,14 @@ class Exec_04 {
                     yield(nil)
                     nil
                 }
+                println(:y, `:number *ceu_depth`)
                 do {
-                    val y
-                    yield(nil)
+                    val x1
+                    do {
+                        val x2
+                        println(:z, `:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+                        yield(nil)
+                    }
                 }
             }) ()
             broadcast(nil)
