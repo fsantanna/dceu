@@ -43,8 +43,8 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         #if CEU >= 4
-        //#define CEU_DEPTH_CHK(depth,n,s) if (*(depth) < n) { assert(0&&"XXX"); s; }
-        #define CEU_DEPTH_CHK(depth,n,s) if (*(depth) < n) s
+        //#define CEU_DEPTH_CHK(min,me,s) if ((min) < (me)) { assert(0&&"XXX"); s; }
+        #define CEU_DEPTH_CHK(min,me,s) if ((min) < (me)) s
         #endif
         
         #if CEU >= 5
@@ -207,7 +207,7 @@ fun Coder.main (tags: Tags): String {
         } CEU_Dict;
         
         typedef CEU_Value (*CEU_Proto) (
-            CEU4(int* ceu_depth COMMA)
+            CEU4(int* ceu_dmin COMMA)
             struct CEU_Frame* frame,
             int n,
             struct CEU_Value args[]
@@ -351,7 +351,7 @@ fun Coder.main (tags: Tags): String {
         void ceu_dyn_exe_kill (CEU_Dyn* dyn);
         #endif
         #if CEU >= 4
-        CEU_Value ceu_bcast_task (CEU_Dyn** nxt, int* depth, CEU_Exe_Task* task, int n, CEU_Value args[]);
+        CEU_Value ceu_bcast_task (CEU_Dyn** nxt, int* dmin, CEU_Exe_Task* task, int n, CEU_Value args[]);
         CEU_Exe_Task* ceu_task_up_task (CEU_Exe_Task* task);
         int ceu_istask_dyn (CEU_Dyn* dyn);
         int ceu_istask_val (CEU_Value val);
@@ -995,7 +995,6 @@ fun Coder.main (tags: Tags): String {
         }
 
 
-#if 1
         int _ceu_depth_ (CEU_Block* blk) {
             if (blk->istop) {
                 return 1 + _ceu_depth_(blk->up.frame->up_block);
@@ -1005,16 +1004,6 @@ fun Coder.main (tags: Tags): String {
                 return 1 + _ceu_depth_(blk->up.block);
             }
         }
-#else
-        int _ceu_depth_ (CEU_Exe_Task* tsk) {
-            int n = 0;
-            while (tsk != NULL) {
-                tsk = ceu_task_up_task(tsk);
-                n++;
-            }
-            return n;
-        }
-#endif
     #endif
     """ +
     """ // HOLD / DROP
@@ -1385,17 +1374,19 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt);
-        CEU_Value ceu_bcast_dyns (int* depth, CEU_Dyn* cur, CEU_Value evt);
+        CEU_Value ceu_bcast_blocks (int* dmin, CEU_Block* blk, CEU_Value evt);
+        CEU_Value ceu_bcast_dyns (int* dmin, CEU_Dyn* cur, CEU_Value evt);
         
-        CEU_Value ceu_bcast_task (CEU_Dyn** nxt, int* depth, CEU_Exe_Task* task, int n, CEU_Value args[]) {
+        CEU_Value ceu_bcast_task (CEU_Dyn** nxt, int* dmin, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
+            int dcur = _ceu_depth_(CEU_HLD_BLOCK((CEU_Dyn*)task));
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
-                int d = *depth;
-                ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ABORT, NULL);
-                *depth = MIN(*depth, d);
+                int dnxt = 255;
+                ret = task->frame.clo->proto(&dnxt, &task->frame, CEU_ARG_ABORT, NULL);
+                *dmin = MIN(*dmin, dnxt);
+                CEU_DEPTH_CHK(dnxt, dcur, return ret);
                 goto __CEU_FREE__;
             } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
@@ -1404,15 +1395,13 @@ fun Coder.main (tags: Tags): String {
             // get up_task before awake b/c
             // it crosses blocks that may not exist after awake
             CEU_Exe_Task* up_task = ceu_task_up_task(task);         // TODO: no need to assign before?
-            int d = _ceu_depth_(task->frame.up_block);
-//printf(">>> n=%d, active=%d\n", d, *depth);
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 //if (!ceu_istask_val(args[0])) {     // do not awake sister tasks
-                    int d = *depth;
-                    ret = ceu_bcast_blocks(depth, task->dn_block, args[0]);
-                    CEU_DEPTH_CHK(depth, d, return ret);
-                    *depth = MIN(*depth, d);
+                    int dnxt = 255;
+                    ret = ceu_bcast_blocks(&dnxt, task->dn_block, args[0]);
+                    *dmin = MIN(*dmin, dnxt);
+                    CEU_DEPTH_CHK(dnxt, dcur, return ret);
 
                     // TODO: remove
                     if (task->status >= CEU_EXE_STATUS_TERMINATED) {
@@ -1423,15 +1412,15 @@ fun Coder.main (tags: Tags): String {
             }
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
-                int d = *depth;
+                int dnxt = 255;
                 if (CEU_ISERR(ret)) {
-                    ret = task->frame.clo->proto(depth, &task->frame, CEU_ARG_ERROR, &ret);
+                    ret = task->frame.clo->proto(&dnxt, &task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
-                    ret = task->frame.clo->proto(depth, &task->frame, n, args);
+                    ret = task->frame.clo->proto(&dnxt, &task->frame, n, args);
                 }
-                *depth = MIN(*depth, d);
+                *dmin = MIN(*dmin, dnxt);
+                CEU_DEPTH_CHK(dnxt, dcur, return ret);
             }
-            CEU_DEPTH_CHK(depth, d, return ret);
             
             // do not bcast aborted task (only terminated) b/c
             // it would awake parents that actually need to
@@ -1440,19 +1429,19 @@ fun Coder.main (tags: Tags): String {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
-                int d = *depth;
+                int dnxt = 255;
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
-                    ret2 = ceu_bcast_task(NULL, depth, up_task, 1, &evt2);
+                    ret2 = ceu_bcast_task(NULL, &dnxt, up_task, 1, &evt2);
                 } else { 
                     // enclosing block
-                    ret2 = ceu_bcast_blocks(depth, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                    ret2 = ceu_bcast_blocks(&dnxt, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                 }
                 if (!CEU_ISERR(ret)) {
                     ret = ret2;
                 }
-                CEU_DEPTH_CHK(depth, d, return ret);
-                *depth = MIN(*depth, d);
+                *dmin = MIN(*dmin, dnxt);
+                CEU_DEPTH_CHK(dnxt, dcur, return ret);
                 /* TODO: stack trace for error on task termination
                 do {
                     CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
@@ -1480,26 +1469,27 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
 
-        CEU_Value ceu_bcast_dyns (int* depth, CEU_Dyn* cur, CEU_Value evt) {
+        CEU_Value ceu_bcast_dyns (int* dmin, CEU_Dyn* cur, CEU_Value evt) {
             if (cur == NULL) {
                 return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
             }
             
-            int d = _ceu_depth_(CEU_HLD_BLOCK(cur));
     //printf(">>> [%d] %p %p\n", d, CEU_HLD_BLOCK(cur), cur);
             CEU_Value ret = { CEU_VALUE_NIL };
             CEU_Dyn* nxt = cur->Any.hld.next;
+            int dnxt = 255;
+            int dcur = _ceu_depth_(CEU_HLD_BLOCK(cur));
             
             switch (cur->Any.type) {
                 case CEU_VALUE_EXE_TASK:
     #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
     #endif
-                    ret = ceu_bcast_task(&nxt, depth, &cur->Exe_Task, 1, &evt); 
+                    ret = ceu_bcast_task(&nxt, &dnxt, &cur->Exe_Task, 1, &evt); 
                     break;
     #if CEU >= 5
                 case CEU_VALUE_TASKS:
-                    ret = ceu_bcast_dyns(depth, cur->Tasks.dyns.first, evt);
+                    ret = ceu_bcast_dyns(&dnxt, cur->Tasks.dyns.first, evt);
                     break;
                 case CEU_VALUE_TRACK:
                     if (ceu_istask_val(evt) && cur->Track.task==(CEU_Exe_Task*)evt.Dyn) {
@@ -1510,36 +1500,30 @@ fun Coder.main (tags: Tags): String {
                 default:
                     break; // not applicable
             }
-            *depth = MIN(*depth, d);
+            *dmin = MIN(*dmin, dnxt);
+            CEU_DEPTH_CHK(dnxt, dcur, return ret);
             
             if (CEU_ISERR(ret)) {
                 return ret;
             }
-    //printf(">>> [%d < %d] %p -> %p\n", *depth,d, cur,nxt);
-            CEU_DEPTH_CHK(depth, d, return (CEU_Value) { CEU_VALUE_BOOL COMMA {.Bool=1} });
-            return ceu_bcast_dyns(depth, nxt, evt);
+            return ceu_bcast_dyns(&dnxt, nxt, evt);
         }
-        CEU_Value ceu_bcast_blocks (int* depth, CEU_Block* blk, CEU_Value evt) {
-            int old = *depth;
+        CEU_Value ceu_bcast_blocks (int* dmin, CEU_Block* blk, CEU_Value evt) {
             while (blk != NULL) {
-                int new = _ceu_depth_(blk);
-                *depth = new;
-    //printf(">>>>>> [%d] %p\n", new, blk);
-                CEU_Value ret = ceu_bcast_dyns(depth, blk->dn.dyns.first, evt);
-    //printf("<<<<<< %p\n", blk);
-    *depth = MIN(*depth, new);
-                CEU_DEPTH_CHK(depth, new, return ret);
+                int dnxt = 255;
+                int dcur = _ceu_depth_(blk);
+                CEU_Value ret = ceu_bcast_dyns(&dnxt, blk->dn.dyns.first, evt);
+                *dmin = MIN(*dmin, dnxt);
+                CEU_DEPTH_CHK(dnxt, dcur, return ret);
                 if (CEU_ISERR(ret)) {
-                    *depth = MIN(*depth, old);
                     return ret;
                 }
                 blk = blk->dn.block;
             }
-            *depth = MIN(*depth, old);
             return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
         }
 
-        CEU_Value ceu_broadcast_f (int* depth, CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value ceu_broadcast_f (int* dmin, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n >= 1);
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
@@ -1551,9 +1535,11 @@ fun Coder.main (tags: Tags): String {
                     assert(ret.type == CEU_VALUE_NIL && "TODO");
                 }
             }
+            int dnxt = 255;
+            int dcur = _ceu_depth_(frame->up_block);
             CEU_Value ret;
             if (n == 1) {
-                ret = ceu_bcast_blocks(depth, ceu_bcast_global(frame->up_block), evt);
+                ret = ceu_bcast_blocks(&dnxt, ceu_bcast_global(frame->up_block), evt);
             } else {
                 CEU_Value tsk = args[1];
         #if CEU >= 5
@@ -1562,7 +1548,7 @@ fun Coder.main (tags: Tags): String {
                 }
         #endif
                 if (ceu_istask_val(tsk)) {
-                    ret = ceu_bcast_task(NULL, depth, &tsk.Dyn->Exe_Task, 1, &evt);
+                    ret = ceu_bcast_task(NULL, &dnxt, &tsk.Dyn->Exe_Task, 1, &evt);
                 } else {
                     ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
                 }
@@ -1570,6 +1556,8 @@ fun Coder.main (tags: Tags): String {
             if (evt.type > CEU_VALUE_DYNAMIC) {
                 ceu_gc_dec(evt, 1);
             }
+            *dmin = MIN(*dmin, dnxt);
+            CEU_DEPTH_CHK(dnxt, dcur, return ret);
             return ret;
         }        
     #endif
@@ -2334,14 +2322,21 @@ fun Coder.main (tags: Tags): String {
             if (ceu_isexe_dyn(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
                 CEU_Value ret;
     #if CEU >= 4
-                int depth = 0;  // mock depth bc abortion cannot kill enclosing scope
+                int dnxt = 255;
                 if (ceu_istask_dyn(dyn)) {
-                    ret = ceu_bcast_task(NULL, &depth, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                    ret = ceu_bcast_task(NULL, &dnxt, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
     #endif
                 {
-                    ret = dyn->Exe.frame.clo->proto(CEU4(&depth COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    ret = dyn->Exe.frame.clo->proto(CEU4(&dnxt COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
                 }
+    #if CEU >= 4
+                // ceu_dyn_exe_kill is aborting outer scope:
+                //  - need to receive dmin
+                //  - need to "contaminate" the whole call chain
+                //printf(">>> %d >= %d\n", dnxt, _ceu_depth_(CEU_HLD_BLOCK(dyn)));
+                assert(dnxt >= _ceu_depth_(CEU_HLD_BLOCK(dyn))-1 && "TODO");
+    #endif
                 assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
             }
         }
@@ -2367,7 +2362,7 @@ fun Coder.main (tags: Tags): String {
             } else if (task.Dyn->Exe_Task.status >= CEU_EXE_STATUS_TERMINATED) {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="track error : expected unterminated task"} };
             }
-            //CEU_Block* blk = (ceu_depth(task->Dyn->up_dyns.dyns->up_block) > ceu_depth(frame->up_block)) ?
+            //CEU_Block* blk = (ceu_dmin(task->Dyn->up_dyns.dyns->up_block) > ceu_dmin(frame->up_block)) ?
             //    task->Dyn->up_dyns.dyns->up_block : frame->up_block;
             return ceu_create_track(frame->up_block, (CEU_Exe_Task*)task.Dyn);
         }
@@ -2376,8 +2371,8 @@ fun Coder.main (tags: Tags): String {
     """ // GLOBALS
         int CEU_BREAK = 0;
     #if CEU >= 4
-        int CEU_DEPTH = 0;
-        int* ceu_depth = &CEU_DEPTH;
+        int CEU_DEPTH = 255;
+        int* ceu_dmin = &CEU_DEPTH;
     #endif
         CEU_Block _ceu_block_ = { 0, {.block=NULL}, { CEU4(NULL COMMA) {NULL,NULL} } };
         CEU_Frame _ceu_frame_ = { &_ceu_block_, NULL CEU3(COMMA {.exe=NULL}) };

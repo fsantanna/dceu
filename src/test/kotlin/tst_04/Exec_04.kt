@@ -1867,7 +1867,7 @@ class Exec_04 {
     fun mm_04a_self() {
         val out = test("""
             spawn (task () {
-                println(:x, `:number _ceu_depth_(ceu_block)`)
+                ;;println(:x, `:number _ceu_depth_(ceu_block)`)
                 do {
                     spawn (task () {
                         yield(nil)
@@ -1875,12 +1875,12 @@ class Exec_04 {
                     yield(nil)
                     nil
                 }
-                println(:y, `:number *ceu_depth`)
+                ;;println(:y, `:number *ceu_dmin`)
                 do {
                     val x1
                     do {
                         val x2
-                        println(:z, `:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+                        ;;println(:z, `:number *ceu_dmin`, `:number _ceu_depth_(ceu_block)`)
                         yield(nil)
                     }
                 }
@@ -2299,30 +2299,30 @@ class Exec_04 {
     @Test
     fun op_07_depth() {
         val out = test("""
-            println(`:number *ceu_depth`)
+            println(`:number *ceu_dmin`)
             do {
                 println(:1)
             }
-            println(`:number *ceu_depth`)
+            println(`:number *ceu_dmin`)
             do {
                 println(:2)
                 println(:3)
             }
         """)
-        assert(out == ("1\n:1\n1\n:2\n:3\n")) { out }
+        assert(out == ("255\n:1\n255\n:2\n:3\n")) { out }
         //assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
     }
     @Test
     fun op_07x_depth() {
         val out = test("""
-            println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+            println(`:number *ceu_dmin`, `:number _ceu_depth_(ceu_block)`)
             do {
-                println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+                println(`:number *ceu_dmin`, `:number _ceu_depth_(ceu_block)`)
             }
-            println(`:number *ceu_depth`, `:number _ceu_depth_(ceu_block)`)
+            println(`:number *ceu_dmin`, `:number _ceu_depth_(ceu_block)`)
             println(:ok)
         """)
-        assert(out == ("1\t1\n1\t1\n1\t1\n:ok\n")) { out }
+        assert(out == ("255\t1\n255\t1\n255\t1\n:ok\n")) { out }
         //assert(out == ("0\n:1\n0\n:2\n:3\n")) { out }
     }
     @Test
