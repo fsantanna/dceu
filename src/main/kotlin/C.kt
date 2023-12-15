@@ -2312,8 +2312,9 @@ fun Coder.main (tags: Tags): String {
             if (dyn->Any.type == CEU_VALUE_TASKS) {
                 CEU_Dyn* cur = dyn->Tasks.dyns.first;
                 while (cur != NULL) {
-                    ceu_dyn_exe_kill(cur);
-                    cur = cur->Any.hld.next;
+                    CEU_Dyn* nxt = cur->Any.hld.next;
+                    ceu_dyn_exe_kill(cur);  // TODO: should pass/check dmin  
+                    cur = nxt;
                 }
                 return;
             }
@@ -2323,6 +2324,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret;
     #if CEU >= 4
                 int dnxt = 255;
+                int dcur = _ceu_depth_(CEU_HLD_BLOCK(dyn));
                 if (ceu_istask_dyn(dyn)) {
                     ret = ceu_bcast_task(NULL, &dnxt, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                 } else
@@ -2335,7 +2337,7 @@ fun Coder.main (tags: Tags): String {
                 //  - need to receive dmin
                 //  - need to "contaminate" the whole call chain
                 //printf(">>> %d >= %d\n", dnxt, _ceu_depth_(CEU_HLD_BLOCK(dyn)));
-                assert(dnxt >= _ceu_depth_(CEU_HLD_BLOCK(dyn))-1 && "TODO");
+                assert(dnxt >= dcur-1 && "TODO");
     #endif
                 assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
             }
