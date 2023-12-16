@@ -1380,11 +1380,13 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_bcast_task (CEU_Dyn** nxt, int* dmin, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
             int dcur = _ceu_depth_(CEU_HLD_BLOCK((CEU_Dyn*)task));
+            //spc(); printf("> TSK > [%d] %p\n", dcur, task);
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
                 int dnxt = 255;
                 ret = task->frame.clo->proto(&dnxt, &task->frame, CEU_ARG_ABORT, NULL);
+                //spc(); printf("< TSK < [%d] %p - %d < %d\n", dcur, task, dnxt, dcur);
                 *dmin = MIN(*dmin, dnxt);
                 CEU_DEPTH_CHK(dnxt, dcur, return ret);
                 goto __CEU_FREE__;
@@ -1400,6 +1402,7 @@ fun Coder.main (tags: Tags): String {
                 //if (!ceu_istask_val(args[0])) {     // do not awake sister tasks
                     int dnxt = 255;
                     ret = ceu_bcast_blocks(&dnxt, task->dn_block, args[0]);
+                    //spc(); printf("< TSK < [%d] %p - %d < %d\n", dcur, task, dnxt, dcur);
                     *dmin = MIN(*dmin, dnxt);
                     CEU_DEPTH_CHK(dnxt, dcur, return ret);
 
@@ -1418,6 +1421,7 @@ fun Coder.main (tags: Tags): String {
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
                     ret = task->frame.clo->proto(&dnxt, &task->frame, n, args);
                 }
+                //spc(); printf("< TSK < [%d] %p - %d < %d\n", dcur, task, dnxt, dcur);
                 *dmin = MIN(*dmin, dnxt);
                 CEU_DEPTH_CHK(dnxt, dcur, return ret);
             }
@@ -1440,6 +1444,7 @@ fun Coder.main (tags: Tags): String {
                 if (!CEU_ISERR(ret)) {
                     ret = ret2;
                 }
+                //spc(); printf("< TSK < [%d] %p - %d < %d\n", dcur, task, dnxt, dcur);
                 *dmin = MIN(*dmin, dnxt);
                 CEU_DEPTH_CHK(dnxt, dcur, return ret);
                 /* TODO: stack trace for error on task termination
@@ -1473,12 +1478,11 @@ fun Coder.main (tags: Tags): String {
             if (cur == NULL) {
                 return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
             }
-            
-    //printf(">>> [%d] %p %p\n", d, CEU_HLD_BLOCK(cur), cur);
             CEU_Value ret = { CEU_VALUE_NIL };
             CEU_Dyn* nxt = cur->Any.hld.next;
             int dnxt = 255;
             int dcur = _ceu_depth_(CEU_HLD_BLOCK(cur));
+            //spc(); printf("> DYN > [%d] %p\n", dcur, cur);
             
             switch (cur->Any.type) {
                 case CEU_VALUE_EXE_TASK:
@@ -1500,27 +1504,29 @@ fun Coder.main (tags: Tags): String {
                 default:
                     break; // not applicable
             }
+            //spc(); printf("< DYN < [%d] %p - %d < %d\n", dcur, cur, dnxt, dcur);
             *dmin = MIN(*dmin, dnxt);
             CEU_DEPTH_CHK(dnxt, dcur, return ret);
-            
             if (CEU_ISERR(ret)) {
                 return ret;
             }
-            return ceu_bcast_dyns(&dnxt, nxt, evt);
+            return ceu_bcast_dyns(dmin, nxt, evt);
         }
-        CEU_Value ceu_bcast_blocks (int* dmin, CEU_Block* blk, CEU_Value evt) {
-            while (blk != NULL) {
-                int dnxt = 255;
-                int dcur = _ceu_depth_(blk);
-                CEU_Value ret = ceu_bcast_dyns(&dnxt, blk->dn.dyns.first, evt);
-                *dmin = MIN(*dmin, dnxt);
-                CEU_DEPTH_CHK(dnxt, dcur, return ret);
-                if (CEU_ISERR(ret)) {
-                    return ret;
-                }
-                blk = blk->dn.block;
+        CEU_Value ceu_bcast_blocks (int* dmin, CEU_Block* cur, CEU_Value evt) {
+            if (cur == NULL) {
+                return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
             }
-            return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+            int dnxt = 255;
+            int dcur = _ceu_depth_(cur);
+            //spc(); printf("> BLK > [%d] %p\n", dcur, cur);
+            CEU_Value ret = ceu_bcast_dyns(&dnxt, cur->dn.dyns.first, evt);
+            //spc(); printf("< BLK < [%d] %p - %d < %d\n", dcur, cur, dnxt, dcur);
+            *dmin = MIN(*dmin, dnxt);
+            CEU_DEPTH_CHK(dnxt, dcur, return ret);
+            if (CEU_ISERR(ret)) {
+                return ret;
+            }
+            return ceu_bcast_blocks(dmin, cur->dn.block, evt);
         }
 
         CEU_Value ceu_broadcast_f (int* dmin, CEU_Frame* frame, int n, CEU_Value args[]) {

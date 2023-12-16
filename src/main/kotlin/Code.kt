@@ -476,7 +476,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     // after cleanup: exes should not be aborted during cleanup
                     ${(CEU>=4 && !isvoid).cond { """
                         // indicates that this level is aborted
-                        *ceu_dmin = _ceu_depth_($blkc) - 1;
+                        *ceu_dmin = MIN(*ceu_dmin, _ceu_depth_($blkc)-1);
                     """ }}
                 }
                 """
@@ -710,7 +710,18 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                 """ })}
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                ceu_acc = ceu_bcast_task(NULL, ceu_dmin, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ${(CEU >= 4).cond { """
+                    int ceu_dnxt_$n = 255;
+                    int ceu_dcur_$n = _ceu_depth_($bupc);
+                """ }}
+                ceu_acc = ceu_bcast_task(NULL, &ceu_dnxt_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ${(CEU >= 4).cond {
+                    val ret = if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"
+                    """
+                    *ceu_dmin = MIN(*ceu_dmin, ceu_dnxt_$n);
+                    CEU_DEPTH_CHK(ceu_dnxt_$n, ceu_dcur_$n, $ret;);                        
+                    """
+                }}
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };

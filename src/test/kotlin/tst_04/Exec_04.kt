@@ -1891,6 +1891,32 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
+    fun mm_04b_self() {
+        val out = test("""
+            spawn (task () {
+                do {
+                    spawn (task () {
+                        spawn (task () {
+                            yield(nil)
+                            println(:1)
+                        }) ()
+                        yield(nil)
+                        println(:2)
+                    }) ()
+                    yield(nil)
+                    println(:3)
+                }
+                println(:4)
+                yield(nil)
+                println(:5)
+            }) ()
+            println(:0)
+            broadcast(nil)
+            println(:6)
+       """)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
     fun mm_05_defer() {
         val out = test("""
             task () {
