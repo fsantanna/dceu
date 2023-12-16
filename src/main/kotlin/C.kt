@@ -124,6 +124,16 @@ fun Coder.main (tags: Tags): String {
         } CEU_EXE_STATUS;
         #endif
     """ +
+    """ // DEBUG / SPACES
+    #if 0
+        int SPC = 0;
+        void spc () {
+            for (int i=0; i<SPC; i++) {
+                printf("  ");
+            }
+        }
+    #endif
+    """ +
     """ // CEU_Frame, CEU_Block
         typedef struct CEU_Frame {          // call func / create task
             struct CEU_Block*    up_block;  // block enclosing this call/coroutine
@@ -995,6 +1005,11 @@ fun Coder.main (tags: Tags): String {
         }
 
 
+        // ignore all blocks outside tasks bc they cannot be aborted
+        // if we do not ignore, they could be aborted by blocks in task in alien scopes
+        // bc a bcast in nested block/funcs affect the outer task with alien block/funcs
+        // see ee_10_bcast_err2
+        
         int _ceu_depth_ (CEU_Block* blk) {
             if (blk->istop) {
                 return 1 + _ceu_depth_(blk->up.frame->up_block);
@@ -1511,7 +1526,9 @@ fun Coder.main (tags: Tags): String {
                 return ret;
             }
             return ceu_bcast_dyns(dmin, nxt, evt);
+            //return ceu_bcast_dyns(&dnxt, nxt, evt);
         }
+        
         CEU_Value ceu_bcast_blocks (int* dmin, CEU_Block* cur, CEU_Value evt) {
             if (cur == NULL) {
                 return (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
@@ -1527,6 +1544,7 @@ fun Coder.main (tags: Tags): String {
                 return ret;
             }
             return ceu_bcast_blocks(dmin, cur->dn.block, evt);
+            //return ceu_bcast_blocks(&dnxt, cur->dn.block, evt);
         }
 
         CEU_Value ceu_broadcast_f (int* dmin, CEU_Frame* frame, int n, CEU_Value args[]) {
@@ -1563,7 +1581,6 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(evt, 1);
             }
             *dmin = MIN(*dmin, dnxt);
-            CEU_DEPTH_CHK(dnxt, dcur, return ret);
             return ret;
         }        
     #endif

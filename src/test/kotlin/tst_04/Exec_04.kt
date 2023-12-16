@@ -1914,7 +1914,7 @@ class Exec_04 {
             broadcast(nil)
             println(:6)
        """)
-        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+        assert(out == ":0\n:1\n:2\n:3\n:4\n:5\n") { out }
     }
     @Test
     fun mm_05_defer() {
