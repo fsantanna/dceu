@@ -744,9 +744,16 @@ fun Coder.main (tags: Tags): String {
                 }
     #endif
     #if CEU >= 5
-                case CEU_VALUE_TASKS:
-                    //assert(dyn->Tasks.dyns.first==NULL && dyn->Tasks.dyns.last==NULL);
+                case CEU_VALUE_TASKS: {
+                    CEU_Dyn* cur = dyn->Tasks.dyns.first;
+                    CEU_Dyn* nxt = NULL;
+                    while (cur != NULL) {
+                        nxt = cur->Any.hld.next;
+                        ceu_gc_free(cur);
+                        cur = nxt;
+                    }
                     break;
+                }
                 case CEU_VALUE_TRACK:
                     break;
     #endif

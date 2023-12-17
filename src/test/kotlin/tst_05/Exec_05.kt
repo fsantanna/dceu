@@ -1022,12 +1022,42 @@ class Exec_05 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun ii_02_self() {
+    fun ii_02a_self() {
         val out = test("""
             spawn (task () {
                 val t = spawn( task () {
                     yield(nil) thus { it => nil }
                 }) () in tasks()
+                yield (nil) thus { it => nil }
+            } )()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ii_02b_self() {
+        val out = test("""
+            spawn (task () {
+                val ts = tasks()
+                val t = spawn( task () {
+                    yield(nil) thus { it => nil }
+                }) () in ts
+                yield (nil) thus { it => nil }
+            } )()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ii_02c_self() {
+        val out = test("""
+            val ts = tasks()
+            spawn (task () {
+                val t = spawn( task () {
+                    yield(nil) thus { it => nil }
+                }) () in ts
                 yield (nil) thus { it => nil }
             } )()
             broadcast(nil)
