@@ -463,7 +463,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free | ${this.dump()}
-                    ${(!isvoid).cond { "ceu_gc_rem_all($blkc);" }}
+                    ${(!isvoid).cond { "ceu_gc_rem_all(CEU4(ceu_bstk COMMA) $blkc);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {

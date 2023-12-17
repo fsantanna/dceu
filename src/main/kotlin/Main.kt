@@ -14,7 +14,7 @@ var CEU = 1
     // TODO: copy, underscore, self (coro/task)
 
 // search in tests output for
-//  definitely|Invalid read|Invalid write|uninitialised|uninitialized
+//  definitely|Invalid read|Invalid write|uninitialised|uninitialized|free'd|alloc'd
 //  - definitely lost
 //  - Invalid read of size
 //  - uninitialised value
