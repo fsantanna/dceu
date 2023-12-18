@@ -151,6 +151,78 @@ class Exec_05 {
         assert(out == ":ok\n") { out }
     }
 
+    // TASKS / PROTO / SCOPE
+
+    @Test
+    fun ab_01_tasks_proto() {
+        val out = test("""
+            val ts = tasks()
+            do {
+                spawn(task () {
+                    nil
+                }) () in ts
+            }
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ab_02_tasks_proto_err() {
+        val out = test("""
+            val ts = tasks()
+            do {
+                val T = task () {
+                    nil
+                }
+                spawn T() in ts
+            }
+            println(:ok)
+       """)
+        assert(out == " v  anon : (lin 7, col 17) : spawn error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun ab_03_tasks_proto() {
+        val out = test("""
+            do {
+                val ts = tasks()
+                val T = task () {
+                    nil
+                }
+                spawn T() in ts
+            }
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ab_04_tasks_proto() {
+        val out = test("""
+            val T = task () {
+                nil
+            }
+            do {
+                val ts = tasks()
+                spawn T() in ts
+            }
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun ab_05_tasks_proto() {
+        val out = test("""
+            val ts = tasks()
+            spawn (task () {
+                spawn (task () {    ;; anon task is dropped to ts
+                    nil
+                }) () in ts
+                nil
+            })()
+            println(:ok)
+       """)
+        assert(out == ":ok\n") { out }
+    }
+
     // TRACK
 
     @Test
@@ -1331,7 +1403,7 @@ class Exec_05 {
             catch (it=>true) {
                 broadcast(nil)
             }
-            `ceu_gc_collect();`
+            ;;`ceu_gc_collect();`
             detrack(t) thus { it => println(it) }
         """)
         assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
