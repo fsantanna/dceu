@@ -1415,12 +1415,12 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_task (CEU_Dyn** nxt, CEU_Bstk* bstk, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
-            CEU_Bstk xstk = { CEU_HLD_BLOCK((CEU_Dyn*)task), 1, bstk };
+            CEU_Bstk xstk1 = { CEU_HLD_BLOCK((CEU_Dyn*)task), 1, bstk };
             if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
-                ret = task->frame.clo->proto(&xstk, &task->frame, CEU_ARG_ABORT, NULL);
-                if (!xstk.on) {
+                ret = task->frame.clo->proto(&xstk1, &task->frame, CEU_ARG_ABORT, NULL);
+                if (!xstk1.on) {
                     return ret;
                 }
                 goto __CEU_FREE__;
@@ -1434,8 +1434,13 @@ fun Coder.main (tags: Tags): String {
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
                 //if (!ceu_istask_val(args[0])) {     // do not awake sister tasks
-                    ret = ceu_bcast_blocks(&xstk, task->dn_block, args[0]);
-                    if (!xstk.on) {
+    #if CEU >= 5
+                    CEU_Bstk xstk2 = { task->dn_block, 1, &xstk1 };
+    #else
+                    #define xstk2 xstk1
+    #endif
+                    ret = ceu_bcast_blocks(&xstk2, task->dn_block, args[0]);
+                    if (!xstk2.on) {
                         return ret;
                     }
 
@@ -1449,11 +1454,11 @@ fun Coder.main (tags: Tags): String {
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
                 if (CEU_ISERR(ret)) {
-                    ret = task->frame.clo->proto(&xstk, &task->frame, CEU_ARG_ERROR, &ret);
+                    ret = task->frame.clo->proto(&xstk1, &task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
-                    ret = task->frame.clo->proto(&xstk, &task->frame, n, args);
+                    ret = task->frame.clo->proto(&xstk1, &task->frame, n, args);
                 }
-                if (!xstk.on) {
+                if (!xstk1.on) {
                     return ret;
                 }
             }
@@ -1467,15 +1472,15 @@ fun Coder.main (tags: Tags): String {
                 CEU_Value ret2;
                 if (up_task != NULL) {
                     // enclosing coro of enclosing block
-                    ret2 = ceu_bcast_task(NULL, &xstk, up_task, 1, &evt2);
+                    ret2 = ceu_bcast_task(NULL, &xstk1, up_task, 1, &evt2);
                 } else { 
                     // enclosing block
-                    ret2 = ceu_bcast_blocks(&xstk, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
+                    ret2 = ceu_bcast_blocks(&xstk1, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                 }
                 if (!CEU_ISERR(ret)) {
                     ret = ret2;
                 }
-                if (!xstk.on) {
+                if (!xstk1.on) {
                     return ret;
                 }
                 /* TODO: stack trace for error on task termination
