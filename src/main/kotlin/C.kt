@@ -1441,13 +1441,14 @@ fun Coder.main (tags: Tags): String {
     #endif
                     ret = ceu_bcast_blocks(&xstk2, task->dn_block, args[0]);
                     if (!xstk2.on) {
-                        return ret;
+                        goto __CEU_NXT__;   // still wants to see next dyn
                     }
 
                     // TODO: remove
                     if (task->status >= CEU_EXE_STATUS_TERMINATED) {
                         //assert(0 && "TODO");
-                        return ret; // already terminated and released from inside
+                        //return ret; // already terminated and released from inside
+                        goto __CEU_NXT__;   // still wants to see next dyn
                     }
                 //}
             }
@@ -1503,6 +1504,7 @@ fun Coder.main (tags: Tags): String {
                 }
     #endif
             } else {
+        __CEU_NXT__:
                 if (nxt != NULL) {
                     *nxt = task->hld.next;
                 }
