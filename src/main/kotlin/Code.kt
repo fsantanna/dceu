@@ -113,6 +113,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             switch (ceu_frame->exe->pc) {
                                 case 0:
                                     if (ceu_n == CEU_ARG_ABORT) {
+                                        ceu_frame->exe->status = CEU_EXE_STATUS_TERMINATED;
                                         return (CEU_Value) { CEU_VALUE_NIL };
                                     }
                         """}}

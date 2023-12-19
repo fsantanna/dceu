@@ -1424,27 +1424,19 @@ fun Coder.main (tags: Tags): String {
             CEU_Exe_Task* up_task = ceu_task_up_task(task);         // TODO: no need to assign before?
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
-                //if (!ceu_istask_val(args[0])) {     // do not awake sister tasks
     #if CEU >= 5
-                    CEU_Bstk xstk2 = { task->dn_block, 1, &xstk1 };
+                CEU_Bstk xstk2 = { task->dn_block, 1, &xstk1 };
     #else
-                    #define xstk2 xstk1
+                #define xstk2 xstk1
     #endif
-                    ret = ceu_bcast_blocks(&xstk2, task->dn_block, args[0]);
-                    if (!xstk1.on) {
-                        return ret;
-                    }
-                    if (!xstk2.on) {
-                        goto __CEU_NXT__;   // still wants to see next dyn
-                    }
-
-                    // TODO: remove
-                    if (task->status >= CEU_EXE_STATUS_TERMINATED) {
-                        //assert(0 && "TODO");
-                        //return ret; // already terminated and released from inside
-                        goto __CEU_NXT__;   // still wants to see next dyn
-                    }
-                //}
+                ret = ceu_bcast_blocks(&xstk2, task->dn_block, args[0]);
+                if (!xstk1.on) {
+                    return ret;
+                }
+                if (!xstk2.on) {
+                    //return ret;
+                    goto __CEU_NXT__;   // still wants to see next dyn
+                }
             }
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
@@ -1461,7 +1453,7 @@ fun Coder.main (tags: Tags): String {
             // do not bcast aborted task (only terminated) b/c
             // it would awake parents that actually need to
             // respond/catch the error (thus not awake)
-            if (task->status == CEU_EXE_STATUS_TERMINATED) {
+            if (ret.type!=CEU_VALUE_THROW && task->status==CEU_EXE_STATUS_TERMINATED) {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
@@ -1987,7 +1979,7 @@ fun Coder.main (tags: Tags): String {
             assert(ret != NULL);
 
             *ret = (CEU_Tasks) {
-                CEU_VALUE_TASKS, 1, NULL, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
+                CEU_VALUE_TASKS, 1, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 max, { NULL, NULL }
             };
             
@@ -1999,7 +1991,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Track* ret = malloc(sizeof(CEU_Track));
             assert(ret != NULL);
             *ret = (CEU_Track) {
-                CEU_VALUE_TRACK, 0, NULL, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
+                CEU_VALUE_TRACK, 0, NULL, { CEU_HOLD_FLEET, blk, NULL, NULL },
                 task
             };
             ceu_hold_add((CEU_Dyn*)ret, blk, &blk->dn.dyns);
