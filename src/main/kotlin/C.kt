@@ -60,8 +60,6 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
-            //
-            CEU_HOLD_FREED = 126,   // collected
             CEU_HOLD_MAX
         } __attribute__ ((__packed__)) CEU_HOLD;
         _Static_assert(sizeof(CEU_HOLD) == 1, "bug found");
@@ -566,7 +564,7 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_rem_chk (CEU_Value v) {
             if (v.type > CEU_VALUE_DYNAMIC) {
-                if (v.Dyn->Any.refs == 0 /**/  && v.Dyn->Any.hld.type!=CEU_HOLD_FREED) {
+                if (v.Dyn->Any.refs == 0) {
                     ceu_gc_dec_rec(v.Dyn, 1);
                     ceu_gc_rem(v.Dyn);
                     CEU_GC_COUNT++;
@@ -575,12 +573,7 @@ fun Coder.main (tags: Tags): String {
         }
         
         void ceu_gc_dec (CEU_Value v, int chk) {
-            if (
-                v.type > CEU_VALUE_DYNAMIC            &&
-                //
-                v.Dyn->Any.hld.type != CEU_HOLD_FREED &&
-                v.Dyn->Any.refs > 0
-            ) {
+            if (v.type>CEU_VALUE_DYNAMIC && v.Dyn->Any.refs>0) {
                 v.Dyn->Any.refs--;
                 if (chk) {
                     ceu_gc_rem_chk(v);
@@ -1440,6 +1433,9 @@ fun Coder.main (tags: Tags): String {
                     #define xstk2 xstk1
     #endif
                     ret = ceu_bcast_blocks(&xstk2, task->dn_block, args[0]);
+                    if (!xstk1.on) {
+                        return ret;
+                    }
                     if (!xstk2.on) {
                         goto __CEU_NXT__;   // still wants to see next dyn
                     }
