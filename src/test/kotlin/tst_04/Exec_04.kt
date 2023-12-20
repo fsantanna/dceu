@@ -519,7 +519,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -532,7 +532,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -548,7 +548,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -564,7 +564,7 @@ class Exec_04 {
             })()
             ;;broadcast(nil)
         """)
-        //assert(out == " |  anon : (lin 9, col 13) : broadcast(nil)\n" +
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil)\n" +
         //        " |  anon : (lin 4, col 17) : throw(:err)\n" +
         //        " v  throw error : :err\n") { out }
         assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
@@ -586,7 +586,7 @@ class Exec_04 {
             broadcast(nil)
             ;;broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -601,7 +601,7 @@ class Exec_04 {
             spawn T()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 8, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -626,7 +626,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 8, col 17) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 9, col 21) : broadcast []\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 9, col 21) : broadcast([])\n" +
+        //assert(out == " |  anon : (lin 9, col 21) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -652,7 +652,7 @@ class Exec_04 {
                 "11\t[]\n") { out }
         //assert(out == "[]\n") { out }
         //assert(out == "10\t[]\n" +
-        //        " |  anon : (lin 13, col 21) : broadcast([])\n" +
+        //        " |  anon : (lin 13, col 21) : broadcast'([])\n" +
         //        " v  anon : (lin 6, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -670,7 +670,7 @@ class Exec_04 {
             }
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 17) : broadcast([])\n" +
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'([])\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -687,7 +687,7 @@ class Exec_04 {
             }
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast(e)\n" +
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -721,7 +721,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast(nil)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -870,7 +870,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 7, col 13) : (func () { broadcast [] })()\n" +
         //        " |  anon : (lin 8, col 17) : broadcast []\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 8, col 17) : broadcast([])\n" +
+        //assert(out == " |  anon : (lin 8, col 17) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -905,10 +905,10 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
         //assert(out == " |  anon : (lin 9, col 13) : broadcast []\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot hold event reference\n") { out }
-        //assert(out == " |  anon : (lin 9, col 13) : broadcast([])\n" +
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[]\n" +
-        //        " |  anon : (lin 9, col 13) : broadcast([])\n" +
+        //        " |  anon : (lin 9, col 13) : broadcast'([])\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
         assert(out == "[]\n" +
                 "[]\n") { out }
@@ -1062,7 +1062,7 @@ class Exec_04 {
             }
         """)
         assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 14, col 33) : broadcast([])\n" +
+        //assert(out == " |  anon : (lin 14, col 33) : broadcast'([])\n" +
         //        " v  anon : (lin 6, col 30) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1086,7 +1086,7 @@ class Exec_04 {
             }
         """)
         assert(out == "[]\n") { out }
-        //assert(out == " |  anon : (lin 14, col 25) : broadcast([])\n" +
+        //assert(out == " |  anon : (lin 14, col 25) : broadcast'([])\n" +
         //        " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
@@ -1235,7 +1235,7 @@ class Exec_04 {
         val out = test("""
             broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast(nil,nil) : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : broadcast'(nil,nil) : expected task\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {
@@ -1295,7 +1295,7 @@ class Exec_04 {
         //assert(out == "anon : (lin 10, col 13) : broadcast move(e)\n" +
         //        "anon : (lin 4, col 17) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
-        //assert(out == " |  anon : (lin 12, col 13) : broadcast(drop(e))\n" +
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast'(drop(e))\n" +
         //        " v  anon : (lin 3, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -2746,7 +2746,7 @@ class Exec_04 {
         assert(out == "[]\n") { out }
         //assert(out == " |  anon : (lin 12, col 13) : broadcast e\n" +
         //        " v  anon : (lin 5, col 25) : resume error : incompatible scopes\n") { out }
-        //assert(out == " |  anon : (lin 12, col 13) : broadcast(e)\n" +
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast'(e)\n" +
         //        " v  anon : (lin 5, col 36) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -2777,9 +2777,9 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 25) : resume error : incompatible scopes\n") { out }
         //assert(out == " |  anon : (lin 9, col 17) : broadcast e\n" +
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : broadcast(e)\n" +
+        //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : broadcast(e)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -2825,7 +2825,7 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 14, col 21) : broadcast(e)\n" +
+        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e)\n" +
                 " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -2890,10 +2890,10 @@ class Exec_04 {
             spawn T()
             broadcast ([[1]])
         """)
-        //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 10, col 13) : broadcast'([[1]])\n" +
         //        " v  anon : (lin 7, col 30) : block escape error : cannot copy reference out\n") { out }
         assert(out == "[1]\n") { out }
-        //assert(out == " |  anon : (lin 10, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 10, col 13) : broadcast'([[1]])\n" +
         //        " |  anon : (lin 7, col 17) : f((yield(nil) thus { it => it }) )\n" +
         //        " v  anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
     }
@@ -2914,7 +2914,7 @@ class Exec_04 {
         assert(out == "[1]\n") { out }
         //assert(out == " |  anon : (lin 11, col 13) : broadcast [[1]]\n" +
         //        " v  anon : (lin 7, col 17) : declaration error : cannot hold event reference\n") { out }
-        //assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 11, col 13) : broadcast'([[1]])\n" +
         //        " v  anon : (lin 7, col 38) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -2932,7 +2932,7 @@ class Exec_04 {
             broadcast ([[1]])
         """)
         assert(out == "[1]\n") { out }
-        //assert(out == " |  anon : (lin 11, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 11, col 13) : broadcast'([[1]])\n" +
         //        " |  anon : (lin 8, col 44) : f(it)\n" +
         //        " v  anon : (lin 3, col 27) : declaration error : cannot move pending reference in\n") { out }
     }
@@ -2952,7 +2952,7 @@ class Exec_04 {
             broadcast ([[1]])
         """)
         assert(out == "[1]\n");
-        //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast'([[1]])\n" +
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
         //        " v  anon : (lin 4, col 21) : declaration error : cannot move pending reference in\n") { out }
     }
@@ -2973,7 +2973,7 @@ class Exec_04 {
             broadcast ([[1]])
         """)
         assert(out == "[1]\n")
-        //assert(out == " |  anon : (lin 12, col 13) : broadcast([[1]])\n" +
+        //assert(out == " |  anon : (lin 12, col 13) : broadcast'([[1]])\n" +
         //        " |  anon : (lin 9, col 44) : f(it)\n" +
         //        " |  anon : (lin 6, col 17) : g(v[0])\n" +
         //        " v  anon : (lin 3, col 31) : argument error : cannot move pending reference in\n") { out }

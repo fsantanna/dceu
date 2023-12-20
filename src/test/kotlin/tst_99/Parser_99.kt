@@ -672,6 +672,20 @@ class Parser_99 {
                 "nil\n" +
                 "})(nil)") { e.tostr() }
     }
+    @Test
+    fun hh_03_bcast_in() {
+        val l = lexer("""
+            spawn task {
+                broadcast(nil) in nil
+            }
+        """)
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "(spawn (task () :void {\n" +
+                "broadcast'(nil,nil)\n" +
+                "})(nil))") { e.tostr() }
+    }
+
 
     // PAR / PAR-OR
 

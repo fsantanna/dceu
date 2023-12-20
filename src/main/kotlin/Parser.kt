@@ -894,7 +894,7 @@ class Parser (lexer_: Lexer)
                     this.expr()
                 }
                 Expr.Call(tk0,
-                    Expr.Acc(Tk.Id("broadcast", tk0.pos, 0)),
+                    Expr.Acc(Tk.Id("broadcast'", tk0.pos, 0)),
                     listOf(evt) + listOfNotNull(xin)
                 )
             }
