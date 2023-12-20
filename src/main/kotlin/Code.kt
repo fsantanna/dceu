@@ -1111,8 +1111,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     );
                     ${(CEU >= 4).cond { """
                         if (!ceu_bstk_$n.on) {
-                            ${if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
-                        }
+                            ${if (ups.inexe(this,false)) """
+                                // exe body: return immediately bc already aborted/finalized from outside
+                                return (CEU_Value) { CEU_VALUE_NIL };
+                            """ else """
+                                // func body: escape block bc need to finalize
+                                continue;
+                            """}
                     """ }}
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 } // CALL | ${this.dump()}

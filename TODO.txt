@@ -1,11 +1,8 @@
 # TODO
 
-- remove ABORTED
-- check all bcast
-- back with free
-- transofmar await em primitiva em CEU=4
-    - ver se simplifica o resto
-- RT function for col set
+- broadcast inside detrack?
+    - broadcast(x,trk)
+- define function for col set / call instead of inline
 
 - DLEX
     - novo refactor de chk_set

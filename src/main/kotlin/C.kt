@@ -1569,7 +1569,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 CEU_Value tsk = args[1];
         #if CEU >= 5
-                if (tsk.type == CEU_VALUE_TRACK) {
+                if (tsk.type==CEU_VALUE_TRACK && tsk.Dyn->Track.task!=NULL) {
                     tsk = ceu_dyn_to_val((CEU_Dyn*)tsk.Dyn->Track.task);
                 }
         #endif
