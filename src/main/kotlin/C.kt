@@ -768,7 +768,7 @@ fun Coder.main (tags: Tags): String {
             } else {                                            \
                 ceu_acc = _ceu_throw_(blk, err);                \
             }                                                   \
-            CEU_Value ceu_str = ceu_pointer_to_string(blk,pre); \
+            CEU_Value ceu_str = _ceu_pointer_to_string_(blk,pre); \
             assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str).type != CEU_VALUE_ERROR); \
             continue;                                           \
         }
@@ -2290,7 +2290,7 @@ fun Coder.main (tags: Tags): String {
             return _ceu_throw_(frame->up_block, args[0]);
         }
 
-        CEU_Value ceu_pointer_to_string (CEU_Block* blk, const char* ptr) {
+        CEU_Value _ceu_pointer_to_string_ (CEU_Block* blk, const char* ptr) {
             CEU_Value str = ceu_create_vector(blk);
             int len = strlen(ptr);
             for (int i=0; i<len; i++) {
@@ -2303,7 +2303,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_pointer_to_string_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             assert(args[0].type == CEU_VALUE_POINTER);
-            return ceu_pointer_to_string(frame->up_block, args[0].Pointer);
+            return _ceu_pointer_to_string_(frame->up_block, args[0].Pointer);
         }
         #endif
     """ +
