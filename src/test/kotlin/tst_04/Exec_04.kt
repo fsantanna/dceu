@@ -3137,4 +3137,35 @@ class Exec_04 {
         """, true)
         assert(out == "20\n") { out }
     }
+
+    // EXTRA
+
+    @Test
+    fun z2_01_valgrind() {
+        val out = test("""
+            spawn (task () :void {
+                spawn (task () {
+                    yield(nil)
+                    yield(nil)
+                    yield(nil)
+                    println(1)
+                }) ()
+                spawn (task () {
+                    yield(nil)
+                    println(2)
+                }) ()
+                spawn (task () {
+                    yield(nil)
+                    yield(nil)
+                    println(3)
+                }) ()
+                yield(nil)
+                yield(nil)
+                println(:ok)
+            }) ()
+            broadcast(nil)
+        """)
+        assert(out == "20\n") { out }
+    }
+
 }

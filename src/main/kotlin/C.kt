@@ -1496,9 +1496,13 @@ fun Coder.main (tags: Tags): String {
             }
             switch (cur->Any.type) {
                 case CEU_VALUE_EXE_TASK: {
+                    if (cur->Exe_Task.status == CEU_EXE_STATUS_TERMINATED) {
+                        return ceu_bcast_dyns(bstk, cur->Any.hld.prev, evt);
+                    }
     #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
     #endif
+                    assert(cur->Exe_Task.status != CEU_EXE_STATUS_TERMINATED);
                     CEU_Bstk xstk = { cur->Exe_Task.dn_block, 1, bstk };
                     CEU_Value ret = ceu_bcast_dyns(&xstk, cur->Any.hld.prev, evt);
                     if (!bstk->on || !xstk.on) {
@@ -1506,7 +1510,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     if (CEU_ISERR(ret)) {
                         return ret;
-                    }                    
+                    }
                     return ceu_bcast_task(bstk, &cur->Exe_Task, 1, &evt);
                 }
     #if CEU >= 5

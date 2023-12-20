@@ -1049,6 +1049,31 @@ class Exec_99 {
         assert(out == "2\n3\n1\n:ok\n") { out }
     }
     @Test
+    fun jj_08a_parand() {
+        val out = test("""
+            spawn task {
+                par-and {
+                    yield()
+                    yield()
+                    yield()
+                    println(1)
+                } with {
+                    yield()
+                    println(2)
+                } with {
+                    yield()
+                    yield()
+                    println(3)
+                }
+                println(:ok)
+            }
+            broadcast(nil)
+            broadcast(nil)
+            broadcast(nil)
+        """)
+        assert(out == "2\n3\n1\n:ok\n") { out }
+    }
+    @Test
     fun jj_09_paror_defer() {
         val out = test("""
             spawn task {
