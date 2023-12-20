@@ -56,7 +56,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         typedef enum CEU_HOLD {
-            CEU_HOLD_PASSD = -1,    // (+nest) FLEED -> PASSD -> FLEET
+            CEU_HOLD_PASSD = -1,    // (+nest) FLEET -> PASSD -> FLEET
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
