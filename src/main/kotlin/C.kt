@@ -1500,7 +1500,7 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_EXE_TASK_IN:
     #endif
                     CEU_Bstk xstk = { cur->Exe_Task.dn_block, 1, bstk };
-                    CEU_Value ret = ceu_bcast_dyns(bstk, cur->Any.hld.prev, evt);
+                    CEU_Value ret = ceu_bcast_dyns(&xstk, cur->Any.hld.prev, evt);
                     if (!bstk->on || !xstk.on) {
                         return ret;
                     }
