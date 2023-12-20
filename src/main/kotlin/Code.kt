@@ -708,7 +708,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${(CEU >= 4).cond { """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
-                ceu_acc = ceu_bcast_task(NULL, &ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(&ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
                 ${(CEU >= 4).cond { """
                     if (!ceu_bstk_$n.on) {
                         ${if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
