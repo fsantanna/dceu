@@ -3148,16 +3148,16 @@ class Exec_04 {
                     yield(nil)
                     yield(nil)
                     yield(nil)
-                    println(1)
+                    println(:1)
                 }) ()
                 spawn (task () {
                     yield(nil)
-                    println(2)
+                    println(:2)
                 }) ()
                 spawn (task () {
                     yield(nil)
                     yield(nil)
-                    println(3)
+                    println(:3)
                 }) ()
                 yield(nil)
                 yield(nil)
@@ -3165,7 +3165,7 @@ class Exec_04 {
             }) ()
             broadcast(nil)
         """)
-        assert(out == "20\n") { out }
+        assert(out == ":2\n:3\n:1\n:ok\n") { out }
     }
 
 }
