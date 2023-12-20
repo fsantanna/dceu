@@ -359,7 +359,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value _ceu_op_equals_equals_f_ (CEU_Frame* _1, int n, CEU_Value args[]);
 
         #if CEU >= 2
-        CEU_Value ceu_pointer_dash_to_dash_string_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]);
+        CEU_Value ceu_pointer_to_string_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]);
         #endif
         #if CEU >= 3
         int ceu_isexe_dyn (CEU_Dyn* dyn);
@@ -941,7 +941,7 @@ fun Coder.main (tags: Tags): String {
             }
             assert(0 && "bug found");
         }
-        CEU_Value ceu_string_dash_to_dash_tag_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* _1, int n, CEU_Value args[]) {
+        CEU_Value ceu_string_to_tag_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value str = args[0];
             assert(str.type==CEU_VALUE_VECTOR && str.Dyn->Vector.unit==CEU_VALUE_CHAR);
@@ -1678,7 +1678,7 @@ fun Coder.main (tags: Tags): String {
             return vec;
         }
 
-        CEU_Value _ceu_next_dash_dict_f_ (CEU_Frame* _1, int n, CEU_Value args[]) {
+        CEU_Value _ceu_next_dict_f_ (CEU_Frame* _1, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value dict = args[0];
             if (dict.type != CEU_VALUE_DICT) {
@@ -1698,14 +1698,14 @@ fun Coder.main (tags: Tags): String {
             }
             return (CEU_Value) { CEU_VALUE_NIL };
         }
-        CEU_Value ceu_next_dash_dict_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
-            CEU_Value ret = _ceu_next_dash_dict_f_(frame, n, args);
+        CEU_Value ceu_next_dict_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_next_dict_f_(frame, n, args);
             ceu_gc_rem_chk_args(n, args);
             return ret;
         }
         
     #if CEU >= 5
-        CEU_Value _ceu_next_dash_tasks_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value _ceu_next_tasks_f_ (CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n==1 || n==2);
             CEU_Value tsks = args[0];
             if (tsks.type != CEU_VALUE_TASKS) {
@@ -1734,8 +1734,8 @@ fun Coder.main (tags: Tags): String {
                 return ceu_create_track(frame->up_block, &nxt->Exe_Task);
             }
         }
-        CEU_Value ceu_next_dash_tasks_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
-            CEU_Value ret = _ceu_next_dash_tasks_f_(frame, n, args);
+        CEU_Value ceu_next_tasks_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
+            CEU_Value ret = _ceu_next_tasks_f_(frame, n, args);
             ceu_gc_rem_chk_args(n, args);
             return ret;
         }
@@ -2300,7 +2300,7 @@ fun Coder.main (tags: Tags): String {
             return str;
         }
 
-        CEU_Value ceu_pointer_dash_to_dash_string_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value ceu_pointer_to_string_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             assert(args[0].type == CEU_VALUE_POINTER);
             return ceu_pointer_to_string(frame->up_block, args[0].Pointer);
@@ -2411,9 +2411,9 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_error_f, {0,NULL}
         };
-        CEU_Clo ceu_next_dash_dict = { 
+        CEU_Clo ceu_next_dict = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_next_dash_dict_f, {0,NULL}
+            &_ceu_frame_, ceu_next_dict_f, {0,NULL}
         };
         CEU_Clo ceu_print = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
@@ -2451,14 +2451,14 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_op_slash_equals_f, {0,NULL}
         };
-        CEU_Clo ceu_string_dash_to_dash_tag = { 
+        CEU_Clo ceu_string_to_tag = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_string_dash_to_dash_tag_f, {0,NULL}
+            &_ceu_frame_, ceu_string_to_tag_f, {0,NULL}
         };
         #if CEU >= 2
-        CEU_Clo ceu_pointer_dash_to_dash_string = { 
+        CEU_Clo ceu_pointer_to_string = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_pointer_dash_to_dash_string_f, {0,NULL}
+            &_ceu_frame_, ceu_pointer_to_string_f, {0,NULL}
         };
         CEU_Clo ceu_throw = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
@@ -2490,15 +2490,15 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
             &_ceu_frame_, ceu_track_f, {0,NULL}
         };
-        CEU_Clo ceu_next_dash_tasks = { 
+        CEU_Clo ceu_next_tasks = { 
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &_ceu_block_, NULL, NULL },
-            &_ceu_frame_, ceu_next_dash_tasks_f, {0,NULL}
+            &_ceu_frame_, ceu_next_tasks_f, {0,NULL}
         };
         #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
         CEU_Value id_error                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_error}                   };
-        CEU_Value id_next_dash_dict          = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dash_dict}                    };
+        CEU_Value id_next_dash_dict          = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dict}               };
         CEU_Value id_print                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_print}                   };
         CEU_Value id_println                 = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_println}                 };
         CEU_Value id_tags                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tags}                    };
@@ -2508,9 +2508,9 @@ fun Coder.main (tags: Tags): String {
         CEU_Value id_sup_question_           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_sup_question_}           };
         CEU_Value op_equals_equals           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_equals_equals}        };
         CEU_Value op_slash_equals            = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_op_slash_equals}         };
-        CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_string_dash_to_dash_tag} };
+        CEU_Value id_string_dash_to_dash_tag = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_string_to_tag}           };
         #if CEU >= 2
-        CEU_Value id_pointer_dash_to_dash_string = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pointer_dash_to_dash_string} };
+        CEU_Value id_pointer_dash_to_dash_string = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_pointer_to_string}   };
         CEU_Value id_throw                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_throw}                   };
         #endif
         #if CEU >= 3
@@ -2523,7 +2523,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
         CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
-        CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_dash_tasks}         };
+        CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_tasks}              };
         #endif
     """ +
     """ // MAIN
