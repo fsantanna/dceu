@@ -3,7 +3,7 @@ package dceu
 fun Coder.main (tags: Tags): String {
     return ("" +
     """ // INCLUDES / DEFINES / ENUMS
-        //#define CEU_DEBUG
+        #define CEU_DEBUG
         #define CEU $CEU
         #include <stdio.h>
         #include <stdlib.h>
@@ -1453,6 +1453,7 @@ fun Coder.main (tags: Tags): String {
             // do not bcast aborted task (only terminated) b/c
             // it would awake parents that actually need to
             // respond/catch the error (thus not awake)
+            assert(ret.type != CEU_VALUE_ERROR);    // TODO: chg below to CEU_ISERR? 
             if (ret.type!=CEU_VALUE_THROW && task->status==CEU_EXE_STATUS_TERMINATED) {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);

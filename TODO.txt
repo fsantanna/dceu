@@ -1,5 +1,18 @@
 # TODO
 
+- CEU_ARG_ABORT ignorar CEU_EXE_STATUS_RESUMED
+    - deixa ele proprio se limpar ao retornar, gerando um erro interno e desfazendo a pilha de blocos
+- BUG: checar bstk ao final de bloco
+    - criar teste
+        do {
+            do {
+                bcast+abort     // deve testar bstk e em seguida setar erro
+            } // TODO: deve checar aqui novamente e dar outro continue
+            acc err
+        }
+- transformar thus em anon func + call
+- stack de detracks
+
 - broadcast inside detrack?
     - broadcast(x,trk)
 - define function for col set / call instead of inline
