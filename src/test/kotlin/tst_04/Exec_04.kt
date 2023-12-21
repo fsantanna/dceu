@@ -1,7 +1,7 @@
 package tst_04
 
 import dceu.*
-import org.junit.BeforeClass
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
@@ -9,6 +9,11 @@ import org.junit.runners.MethodSorters
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Exec_04 {
     // TASK
+
+    @Before
+    fun init() {
+        DEBUG = false
+    }
 
     @Test
     fun aa_01_task() {
@@ -152,8 +157,8 @@ class Exec_04 {
         """)
         //assert(out == "anon : (lin 8, col 13) : f()\n" +
         //        "anon : (lin 5, col 29) : block escape error : incompatible scopes\n:error\n") { out }
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 6, col 17) : spawn error : unexpected enclosing func\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 6, col 17) : spawn error : unexpected enclosing func\n") { out }
     }
     @Test
     fun cc_04_scope() {
@@ -589,7 +594,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -602,7 +607,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 6, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -618,7 +623,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 5, col 21) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -634,7 +639,7 @@ class Exec_04 {
             })()
             ;;broadcast(nil)
         """)
-        //assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil)\n" +
+        //assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
         //        " |  anon : (lin 4, col 17) : throw(:err)\n" +
         //        " v  throw error : :err\n") { out }
         assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
@@ -656,7 +661,7 @@ class Exec_04 {
             broadcast(nil)
             ;;broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 11, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 11, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 9, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -671,7 +676,7 @@ class Exec_04 {
             spawn T()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 8, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 8, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -740,7 +745,7 @@ class Exec_04 {
             }
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 17) : broadcast'([])\n" +
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'([],:task)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -757,7 +762,7 @@ class Exec_04 {
             }
         """)
         //assert(out == "[]\n") { out }
-        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e)\n" +
+        assert(out == " |  anon : (lin 9, col 17) : broadcast'(e,:task)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -791,7 +796,7 @@ class Exec_04 {
             })()
             broadcast(nil)
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -1163,7 +1168,7 @@ class Exec_04 {
     // SCOPE / TUPLE / NEST
 
     @Test
-    fun todo_gh_01_set() {
+    fun gh_01_set() {
         val out = test("""
             spawn( task () {
                 var t = [1]
@@ -1305,7 +1310,7 @@ class Exec_04 {
         val out = test("""
             broadcast (nil) in nil
         """)
-        assert(out == " v  anon : (lin 2, col 13) : broadcast'(nil,nil) : expected task\n") { out }
+        assert(out == " v  anon : (lin 2, col 13) : broadcast'(nil,nil) : invalid target\n") { out }
     }
     @Test
     fun jj_02_bcast_in_task() {
@@ -2460,6 +2465,7 @@ class Exec_04 {
 
     @Test
     fun op_01_depth() {
+        DEBUG = true
         val out = test("""
             println(`:number ceu_depth(&CEU_BLOCK)`)
             println(`:number ceu_depth(ceu_block)`)
@@ -2469,6 +2475,7 @@ class Exec_04 {
     }
     @Test
     fun op_02_depth() {
+        DEBUG = true
         val out = test("""
             println(`:number ceu_depth(&CEU_BLOCK)`)
             spawn (task () {
@@ -2483,6 +2490,7 @@ class Exec_04 {
     }
     @Test
     fun op_03_depth() {
+        DEBUG = true
         val out = test("""
             println(`:number ceu_depth(&CEU_BLOCK)`)
             val f = func () {
@@ -2500,6 +2508,7 @@ class Exec_04 {
     }
     @Test
     fun op_04_depth() {
+        DEBUG = true
         val out = test("""
             val f = func () {
                 println(`:number ceu_depth(ceu_block)`)
@@ -2521,6 +2530,7 @@ class Exec_04 {
     }
     @Test
     fun op_05_depth() {
+        DEBUG = true
         val out = test("""
             val f = func () {
                 println(`:number ceu_depth(ceu_block)`)
@@ -2534,6 +2544,7 @@ class Exec_04 {
     }
     @Test
     fun op_06_depth() {
+        DEBUG = true
         val out = test("""
             val f = func () {
                 println(`:number ceu_depth(ceu_block)`)
@@ -2577,6 +2588,7 @@ class Exec_04 {
     }
     @Test
     fun op_07x_depth() {
+        DEBUG = true
         val out = test("""
             println(;;;`:number *ceu_dmin`,;;; `:number ceu_depth(ceu_block)`)
             do {
@@ -3015,7 +3027,7 @@ class Exec_04 {
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 13, col 25) : broadcast'(e)\n" +
+        assert(out == " |  anon : (lin 13, col 25) : broadcast'(e,:task)\n" +
                 " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
     }
     @Test
@@ -3061,7 +3073,7 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
-        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e)\n" +
+        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
                 " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -3337,7 +3349,7 @@ class Exec_04 {
     fun z1_03_data_pub_err() {
         val out = test("""
             task () :T { nil }
-        """, )
+        """)
         assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared\n") { out }
     }
     @Test

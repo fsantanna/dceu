@@ -4,6 +4,7 @@ import java.io.File
 import java.io.Reader
 import java.util.*
 
+var DEBUG = false
 var CEU = 1
     // 1: dyn-lex, thus, { x => ... }
     // 2: defer, throw/catch

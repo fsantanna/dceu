@@ -694,7 +694,7 @@ class Exec_05 {
             broadcast(nil)
         """)
         assert(out == ":ok\n" +
-                " |  anon : (lin 13, col 13) : broadcast'(nil)\n" +
+                " |  anon : (lin 13, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 8, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }
@@ -1429,7 +1429,7 @@ class Exec_05 {
             ;;`ceu_gc_collect();`
             detrack(t) thus { it => println(it) }
         """)
-        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil)\n" +
+        assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
                 " v  throw error : :error\n") { out }
     }

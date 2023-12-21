@@ -3,7 +3,7 @@ package dceu
 fun Coder.main (tags: Tags): String {
     return ("" +
     """ // INCLUDES / DEFINES / ENUMS
-        #define CEU_DEBUG
+        ${DEBUG.cond { "#define CEU_DEBUG" }}
         #define CEU $CEU
         #include <stdio.h>
         #include <stdlib.h>
