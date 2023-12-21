@@ -1,5 +1,6 @@
 # TODO
 
+- nao empilhar bstk que nao estaem task
 - CEU_ARG_ABORT ignorar CEU_EXE_STATUS_RESUMED
     - deixa ele proprio se limpar ao retornar, gerando um erro interno e desfazendo a pilha de blocos
 - BUG: checar bstk ao final de bloco

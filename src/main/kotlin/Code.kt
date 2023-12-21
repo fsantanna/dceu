@@ -180,12 +180,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val up = ups.pub[this]
                 val f_b = up?.let { ups.first_proto_or_block(it) }
                 val bupc = when {
-                    (up == null)        -> "(&_ceu_block_)"
+                    (up == null)        -> "(&CEU_BLOCK)"
                     (f_b is Expr.Proto) -> "NULL"
                     else                -> ups.first_block(up)!!.idc("block")
                 }
                 val (bf,ptr) = when {
-                    (f_b == null) -> Pair("1", "{.frame=&_ceu_frame_}")
+                    (f_b == null) -> Pair("1", "{.frame=&CEU_FRAME}")
                     (f_b is Expr.Proto) -> Pair("1", "{.frame=${if (f_b.tk.str=="func") "ceu_frame" else "&ceu_frame->exe->frame"}}")
                     else -> Pair("0", "{.block=$bupc}")
                 }
