@@ -30,7 +30,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> {
                 this.es.forEach { it.traverse() }
-                if (ups.inexe(this,false)) {
+                if (ups.inexe(this,true)) {
                     exes.add(this)
                 }
             }
