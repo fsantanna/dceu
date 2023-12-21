@@ -642,7 +642,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 ${this.arg.code()}
                 
-                ${inexeT.cond { """
+                ${(CEU>=4 && inexeT).cond { """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
                 
@@ -1123,7 +1123,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     
                     // call -> bcast -> outer abortion -> need to clean up from here
-                    ${inexeT.cond { """
+                    ${(CEU>=4 && inexeT).cond { """
                         if (ceu_n != CEU_ARG_ABORT) {
                             ceu_frame->exe->pc = $n;
                             case $n: // YIELD ${this.dump()}
@@ -1138,7 +1138,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
                     
                     ceu_acc = ceu_frame_$n.clo->proto (
-                        $bstk,
+                        CEU4($bstk COMMA)
                         &ceu_frame_$n,
                         ${this.args.let {
                             if (!has_dots) it.size.toString() else {

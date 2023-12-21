@@ -97,7 +97,7 @@ class Exec_05 {
         assert(out == "true\tfalse\n") { out }
     }
     @Test
-    fun todo_debug_gc_aa_09_gc() {
+    fun aa_09_gc() {
         val out = test("""
             val T = task () {
                 set pub() = []
@@ -149,6 +149,19 @@ class Exec_05 {
             println(:ok)
         """)
         assert(out == ":ok\n") { out }
+    }
+
+    // GC
+
+    @Test
+    fun ab_01_spawn() {
+        val out = test("""
+            val ts = tasks()
+            println(`:number CEU_GC_COUNT`)
+            spawn (task () { nil }) () in ts
+            println(`:number CEU_GC_COUNT`)
+        """)
+        assert(out == "0\n1\n") { out }
     }
 
     // TASKS / PROTO / SCOPE

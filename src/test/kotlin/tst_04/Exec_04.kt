@@ -2712,6 +2712,18 @@ class Exec_04 {
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
     }
+    @Test
+    fun oo_05_gc() {
+        val out = test(
+            """
+            spawn (task () {    // not gc'd b/c task remains in memory
+                nil             // see task in @ ab_01_spawn
+            }) ()
+            println(`:number CEU_GC_COUNT`)
+            """
+        )
+        assert(out == "0\n") { out }
+    }
 
     // DEPTH
 
@@ -3334,7 +3346,7 @@ class Exec_04 {
             """
             var T1 = task () {
                 yield(nil) thus { it => nil}
-                spawn( task () {                ;; GC = task
+                spawn( task () {                ;; GC = task (no more)
                     val evt = yield(nil) thus { it => it}
                     println(:1)
                     var v = evt
@@ -3357,7 +3369,8 @@ class Exec_04 {
             """
         )
         //assert(out == "0\n") { out }
-        assert(out == "2\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "2\n") { out }
         //assert(out == "anon : (lin 20, col 13) : broadcast []\n" +
         //        "anon : (lin 16, col 17) : declaration error : incompatible scopes\n" +
         //        ":2\n" +

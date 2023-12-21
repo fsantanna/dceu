@@ -346,7 +346,7 @@ class Exec_03 {
     // MEM vs STACK
 
     @Test
-    fun dd_01_stack() {
+    fun todo_dd_01_stack() {    // TODO: for now, all exes use mem
         val out = test("""
             val CO = coro (v1) {
                 val v2 = 2
