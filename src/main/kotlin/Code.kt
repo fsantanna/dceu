@@ -650,7 +650,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
-                        ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        ${if (inexeT) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
                     }
                 """ }}
 
@@ -718,6 +718,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
                 
                 ${inexeT.cond { """
+                    if (ceu_n != CEU_ARG_ABORT) {
+                        ceu_frame->exe->pc = $n;
+                        case $n: // YIELD ${this.dump()}
+                            if (ceu_n == CEU_ARG_ABORT) {
+                                ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
+                                continue;
+                            }
+                    }
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
 
@@ -725,7 +733,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
-                        ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        ${if (inexeT) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
                     }
                 """ }}
 
@@ -1133,10 +1141,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         $bstk,
                         &ceu_frame_$n,
                         ${this.args.let {
-                if (!has_dots) it.size.toString() else {
-                    "(" + (it.size-1) + " + ceu_dots_$n)"
-                }
-            }},
+                            if (!has_dots) it.size.toString() else {
+                                "(" + (it.size-1) + " + ceu_dots_$n)"
+                            }
+                        }},
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
                     
