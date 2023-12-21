@@ -540,7 +540,27 @@ class Exec_05 {
         assert(out.contains(":yielded\n")) { out }
     }
     @Test
-    fun BUG_dd_03_detrack_err() {
+    fun TODO_dd_03a_detrack_err() {
+        val out = test("""
+            val T = task () {
+                yield(nil)
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val x = next-tasks(ts)
+            detrack(x) thus { it =>
+                println(it)
+                broadcast(nil)
+                println(:xxx)
+            }
+            println(:ok)
+        """)
+        assert(out.contains("exe-task: 0x")) { out }
+        assert(!out.contains(":xxx")) { out }
+        assert(out.contains(":ok\n")) { out }
+    }
+    @Test
+    fun TODO_dd_03b_detrack_err() {
         val out = test("""
             val T = task () {
                 ${AWAIT()}
@@ -552,11 +572,14 @@ class Exec_05 {
             }
             val x = next-tasks(ts)
             detrack(x) thus { it =>
-                f()                     ;; cannot broadcast
+                println(it)
                 println(status(it))
+                println(:xxx)
             }
         """)
-        assert(out == ("anon : (lin 8, col 17) : broadcast error : unexpected enclosing func\n")) { out }
+        assert(out.contains("exe-task: 0x")) { out }
+        assert(!out.contains(":xxx")) { out }
+        assert(out.contains(":ok\n")) { out }
     }
     @Test
     fun dd_04_detrack_eq() {

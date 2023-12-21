@@ -642,8 +642,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                     ceu_acc = $coc.Dyn->Exe.frame.clo->proto(&ceu_bstk_$n, &$coc.Dyn->Exe.frame, 1, &ceu_acc);
                     if (!ceu_bstk_$n.on) {
-                        //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
-                        return (CEU_Value) { CEU_VALUE_NIL };
+                        ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
                     }
                 """ }, { """
                     ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(NULL COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
@@ -712,8 +711,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                     ceu_acc = ceu_bcast_task(&ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
                     if (!ceu_bstk_$n.on) {
-                        //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
-                        return (CEU_Value) { CEU_VALUE_NIL };
+                        ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
                     }                        
                 """ }, { """
                     ceu_acc = ceu_bcast_task(NULL, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);                    
@@ -1074,6 +1072,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     val (blk,dcl) = vars.get(dots as Expr.Acc)
                     dcl.idc(0)
                 }
+                val inexeT = ups.inexe(this,true)
+                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
+
                 """
                 { // CALL | ${this.dump()}
                     ${(!bup.ismem(sta,clos)).cond {
@@ -1099,35 +1100,38 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                     }
                     
-                    CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond2({ """
-                        CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                        ceu_acc = ceu_frame_$n.clo->proto (
-                            &ceu_bstk_$n,
-                            &ceu_frame_$n,
-                            ${this.args.let {
-                        if (!has_dots) it.size.toString() else {
-                            "(" + (it.size-1) + " + ceu_dots_$n)"
-                        }
-                    }},
-                            ${if (has_dots) "_ceu_args_$n" else argsc}
-                        );
-                        if (!ceu_bstk_$n.on) {
-                            //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
-                            return (CEU_Value) { CEU_VALUE_NIL };
-                        }
-                    """ }, { """
-                        ceu_acc = ceu_frame_$n.clo->proto (
-                            CEU4(NULL COMMA)
-                            &ceu_frame_$n,
-                            ${this.args.let {
-                                if (!has_dots) it.size.toString() else {
-                                    "(" + (it.size-1) + " + ceu_dots_$n)"
+                    // call -> bcast -> outer abortion -> need to clean up from here
+                    ${inexeT.cond { """
+                        if (ceu_n != CEU_ARG_ABORT) {
+                            ceu_frame->exe->pc = $n;
+                            case $n: // YIELD ${this.dump()}
+                                if (ceu_n == CEU_ARG_ABORT) {
+                                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
+                                    continue;
                                 }
-                            }},
-                            ${if (has_dots) "_ceu_args_$n" else argsc}
-                        );                        
-                    """ })}
+                        }
+                        CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
+                    """ }}
+                    
+                    CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
+                    
+                    ceu_acc = ceu_frame_$n.clo->proto (
+                        $bstk,
+                        &ceu_frame_$n,
+                        ${this.args.let {
+                if (!has_dots) it.size.toString() else {
+                    "(" + (it.size-1) + " + ceu_dots_$n)"
+                }
+            }},
+                        ${if (has_dots) "_ceu_args_$n" else argsc}
+                    );
+                    
+                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
+                        if (!$bstk->on) {
+                            ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        }
+                    """ }}
+                    
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 } // CALL | ${this.dump()}
                 """

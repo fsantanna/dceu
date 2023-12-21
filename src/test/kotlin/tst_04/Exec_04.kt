@@ -2107,31 +2107,197 @@ class Exec_04 {
         assert(out == "10\n") { out }
     }
     @Test
-    fun todo_mn_03_global_abort() {
+    fun mo_04_bcast_term() {
         val out = test("""
             spawn (task () {
+                val T = task () {
+                    println(:1)
+                    yield(nil)
+                    println(:a)
+                    yield(nil)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    println(:2)
+                    yield(nil)
+                    println(:b)
+                    broadcast(nil) in t
+                    println(999)
+                } )()
+                println(:3)
                 yield(nil)
+                println(:ok)
             })()
             broadcast(nil)
-            println(:ok)
         """)
-        assert(out == "10\n") { out }
+        assert(out == ":1\n:2\n:3\n:a\n:b\n:ok\n") { out }
+    }
+    @Test
+    fun mo_05_bcast_term() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:2)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil)
+                    do {
+                        println(:1)
+                        broadcast(nil) in t
+                        println(:no)
+                    }
+                    println(:no)
+                } )()
+                yield(nil)
+                println(:3)
+            })()
+            println(:0)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":0\n:1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun mo_06_bcast_term() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:2)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:ok)
+                        }
+                        println(:1)
+                        broadcast(nil) in t
+                        println(:no)
+                    }
+                    println(:no)
+                } )()
+                yield(nil)
+                println(:3)
+            })()
+            println(:0)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
+    }
+    @Test
+    fun BUG_mo_07_bcast_term() {
+        val out = test("""
+            spawn (task () {
+                val T = task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:2)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:ok)
+                        }
+                        println(:1)
+                        (func () {
+                            broadcast(nil) in t
+                        }) ()
+                        println(:no)
+                    }
+                    println(:no)
+                } )()
+                yield(nil)
+                println(:3)
+            })()
+            println(:0)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
+    }
+    @Test
+    fun mo_08_bcast_term() {
+        val out = test("""
+            val f = func (t) {
+                defer {
+                    println(:ok)
+                }
+                println(:1)
+                broadcast(nil) in t
+                println(:no)
+            }
+
+            spawn (task () {
+                val T = task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:2)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil)
+                    do {
+                        f(t)
+                        println(:no)
+                    }
+                    println(:no)
+                } )()
+                yield(nil)
+                println(:3)
+            })()
+            println(:0)
+            broadcast(nil)
+            println(:4)
+        """)
+        assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
     }
 
-    // ABORTION / DEFER
+    // ABORTION / GLOBAL BCAST
 
     @Test
-    fun mo_01_defer() {
+    fun mp_01_abort() {
         val out = test("""
-            coro () {
-                func () {
-                    defer {     ;; not allowed
-                        nil     ;; could access dyn val from aborted coro
-                    }
+            val f = func (t) {
+                defer {
+                    println(:ok)
                 }
+                println(:1)
+                broadcast(nil) in t
+                println(:no)
             }
+
+            spawn (task () {
+                val T = task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:2)
+                }
+                var t = spawn T()
+                spawn( task () {
+                    yield(nil)
+                    do {
+                        f(t)
+                        println(:no)
+                    }
+                    println(:no)
+                } )()
+                yield(nil)
+                println(:3)
+            })()
+            println(:0)
+            broadcast(nil)
+            println(:4)
         """)
-        assert(out == "anon : (lin 4, col 21) : defer error : unexpected func with enclosing coro or task\n") { out }
+        assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
     }
 
     // TASK / VOID
