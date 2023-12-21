@@ -118,10 +118,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.tsks?.traverse()
                 this.tsk.traverse()
                 this.arg.traverse()
+                /*
                 when {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)
                        -> err(this.tk, "spawn error : unexpected enclosing func")
                 }
+                 */
             }
             is Expr.Pub    -> {
                 this.tsk?.traverse()
