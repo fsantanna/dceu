@@ -4,6 +4,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
     val unused: MutableSet<Expr.Dcl> = mutableSetOf()
     val spws:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 spawn
     val ylds:   MutableSet<Expr.Do>  = mutableSetOf() // at least 1 yield (including subs) or nested coro/task
+    val exes:   MutableSet<Expr.Do>  = mutableSetOf() // TODO: all blocks in exes
 
     init {
         outer.traverse()
@@ -27,7 +28,12 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 this.blk.traverse()
             }
             is Expr.Export -> this.blk.traverse()
-            is Expr.Do     -> this.es.forEach { it.traverse() }
+            is Expr.Do     -> {
+                this.es.forEach { it.traverse() }
+                if (ups.inexe(this,false)) {
+                    exes.add(this)
+                }
+            }
             is Expr.Dcl    -> {
                 unused.add(this)
                 this.src?.traverse()
