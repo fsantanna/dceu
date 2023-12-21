@@ -151,6 +151,7 @@ class Exec_04 {
             var f
             set f = func () {
                 spawn t()
+                nil
             }
             f()
             println(:ok)
@@ -2271,38 +2272,289 @@ class Exec_04 {
     @Test
     fun mp_01_abort() {
         val out = test("""
-            val f = func (t) {
-                defer {
-                    println(:ok)
-                }
-                println(:1)
-                broadcast(nil) in t
-                println(:no)
-            }
-
             spawn (task () {
-                val T = task () {
-                    yield(nil)
-                    yield(nil)
-                    println(:2)
-                }
-                var t = spawn T()
-                spawn( task () {
+                spawn (task () {
                     yield(nil)
                     do {
-                        f(t)
-                        println(:no)
+                        defer {
+                            println(:3)
+                        }
+                        println(:1)
+                        broadcast(nil) in :global
+                        println(:999)
                     }
-                    println(:no)
-                } )()
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+    @Test
+    fun mp_02_abort() {
+        val out = test("""
+            val f = func () {
+                do {
+                    defer {
+                        println(:4)
+                    }
+                    println(:1)
+                    broadcast(nil) in :global
+                    println(:999)
+                }
+            }
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:3)
+                        }
+                        f()
+                        println(:999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun mp_03_abort() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:3)
+                        }
+                        println(:1)
+                        resume (coroutine (coro () {
+                            broadcast(nil) in :global
+                        })) ()
+                        println(:999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+    @Test
+    fun mp_04_abort() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:3)
+                        }
+                        println(:1)
+                        spawn (task () {
+                            broadcast(nil) in :global
+                        }) ()
+                        println(:999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+    @Test
+    fun mp_05_abort() {
+        val out = test("""
+            val f = func () {
+                do {
+                    defer {
+                        println(:4)
+                    }
+                    println(:1)
+                    resume (coroutine(coro () {
+                        broadcast(nil) in :global
+                    })) ()
+                    println(:y999)
+                }
+            }
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:3)
+                        }
+                        f()
+                        println(:x999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun mp_06_abort() {
+        val out = test("""
+            val f = func () {
+                do {
+                    defer {
+                        println(:4)
+                    }
+                    println(:1)
+                    spawn (task () {
+                        broadcast(nil) in :global
+                    }) ()
+                    println(:y999)
+                }
+            }
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        defer {
+                            println(:3)
+                        }
+                        f()
+                        println(:x999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n") { out }
+    }
+    @Test
+    fun mp_07_abort() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        resume (coroutine (coro () {
+                            do {
+                                defer {
+                                    println(:3)
+                                }
+                                println(:1)
+                                broadcast(nil) in :global
+                            }
+                        })) ()
+                        println(:999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+    @Test
+    fun mp_08_abort() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    do {
+                        spawn (task () {
+                            do {
+                                defer {
+                                    println(:3)
+                                }
+                                println(:1)
+                                broadcast(nil) in :global
+                            }
+                        }) ()
+                        println(:999)
+                    }
+                }) ()
+                yield(nil)
+                println(:2)
+            }) ()
+            broadcast(nil) in :global
+        """)
+        assert(out == ":1\n:2\n:3\n") { out }
+    }
+
+    // TASK / CORO / ABORT
+
+    @Test
+    fun mq_01_abort() {
+        val out = test("""
+            spawn (task () {
+                println(:1)
+                resume (coroutine (coro () {
+                    defer {
+                        println(:ok)
+                    }
+                    println(:2)
+                    yield(nil)
+                })) ()
+                println(:3)
+            }) ()
+        """)
+        assert(out == ":1\n:2\n:3\n:ok\n") { out }
+    }
+    @Test
+    fun mq_02_abort() {
+        val out = test("""
+            spawn (task () {
+                println(:1)
+                resume (coroutine (coro () {
+                    defer {
+                        println(:ok)
+                    }
+                    println(:2)
+                    yield(nil)
+                })) ()
                 yield(nil)
                 println(:3)
-            })()
-            println(:0)
+            }) ()
             broadcast(nil)
             println(:4)
         """)
-        assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
+        assert(out == ":1\n:2\n:3\n:ok\n:4\n") { out }
+    }
+    @Test
+    fun mq_03_abort() {
+        val out = test("""
+            spawn (task () {
+                println(:1)
+                spawn (task () {
+                    println(:2)
+                    yield(nil)
+                    println(:6)
+                    broadcast(nil) in :global
+                }) ()
+                resume (coroutine (coro () {
+                    defer {
+                        println(:ok)
+                    }
+                    println(:3)
+                    yield(nil)
+                })) ()
+                println(:4)
+                yield(nil)
+                println(:7)
+            }) ()
+            println(:5)
+            broadcast(nil)
+            println(:8)
+        """)
+        assert(out == ":1\n:2\n:3\n:4\n:5\n:6\n:7\n:ok\n:8\n") { out }
     }
 
     // TASK / VOID

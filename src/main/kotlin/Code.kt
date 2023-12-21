@@ -627,6 +627,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
                 val coc = this.idc("co")
+                val inexeT = ups.inexe(this,true)
+                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
+
                 """
                 ${this.co.code()}
                 ${(!bup.ismem(sta,clos)).cond {
@@ -638,17 +641,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond2({ """
+                
+                ${inexeT.cond { """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                    ceu_acc = $coc.Dyn->Exe.frame.clo->proto(&ceu_bstk_$n, &$coc.Dyn->Exe.frame, 1, &ceu_acc);
-                    if (!ceu_bstk_$n.on) {
+                """ }}
+                
+                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
+
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
+                    if (!$bstk->on) {
                         ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
                     }
-                """ }, { """
-                    ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(NULL COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
-                """ })}
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                 """ }}
+
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
                 """
             }
@@ -686,6 +691,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bupc = bup.idc("block")
                 val tsksc = this.idc("tsks")
                 val tskc = this.idc("tsk")
+                val inexeT = ups.inexe(this,true)
+                val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
+
                 """
                 ${(!bup.ismem(sta,clos)).cond {"""
                     ${this.tsks.cond { "CEU_Value $tsksc;" }}
@@ -706,17 +714,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }, { """
                     CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                 """ })}
+                
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                ${(ups.any(this) { it is Expr.Proto }).cond2({ """
+                
+                ${inexeT.cond { """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                    ceu_acc = ceu_bcast_task(&ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
-                    if (!ceu_bstk_$n.on) {
+                """ }}
+
+                ceu_acc = ceu_bcast_task($bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
+                    if (!$bstk->on) {
                         ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
-                    }                        
-                """ }, { """
-                    ceu_acc = ceu_bcast_task(NULL, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);                    
-                """})}
+                    }
+                """ }}
+
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
+                
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
                     }
