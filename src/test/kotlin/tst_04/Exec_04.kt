@@ -482,6 +482,76 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
 
+    // BCAST / ARGS
+
+    @Test
+    fun de_01_bcast() {
+        val out = test("""
+            broadcast(1) in nil
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : broadcast'(1,nil) : invalid target\n") { out }
+    }
+    @Test
+    fun de_02_bcast() {
+        val out = test("""
+            broadcast(1) in :x
+        """)
+        assert(out == " v  anon : (lin 2, col 13) : broadcast'(1,:x) : invalid target\n") { out }
+    }
+    @Test
+    fun de_03_bcast() {
+        val out = test("""
+            println(broadcast(1) in :global)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun de_04_bcast() {
+        val out = test("""
+            println(broadcast(1) in :task)
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun de_05_bcast() {
+        val out = test("""
+            val t = spawn (task () { nil }) ()
+            println(broadcast(1) in t)
+        """)
+        assert(out == "true\n") { out }
+    }
+
+    // BCAST / TARGETS
+
+    @Test
+    fun df_01_global() {
+        val out = test("""
+            spawn (task () {
+                val x = yield(nil)
+                println(:ok, x)
+            }) ()
+            spawn (task () {
+                broadcast(10) in :global
+            }) ()
+        """)
+        assert(out == ":ok\t10\n") { out }
+    }
+    @Test
+    fun df_02_non_global() {
+        val out = test("""
+            spawn (task () {
+                val x = yield(nil)
+                println(:ok, x)
+            }) ()
+            spawn (task () {
+                broadcast(10) in :task
+                println(:no)
+                broadcast(20) in :global
+            }) ()
+        """)
+        assert(out == ":no\n:ok\t20\n") { out }
+    }
+
     // THROW / CATCH
 
     @Test
@@ -1998,7 +2068,7 @@ class Exec_04 {
     // NEW ABORTION
 
     @Test
-    fun BUG_mn_01_abort() {
+    fun mo_01_abort() {
         val out = test("""
             spawn (task () {
                 ;;yield(nil)
@@ -2018,7 +2088,7 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun todo_mn_02_global_abort() {
+    fun todo_mo_02_global_abort() {
         val out = test("""
             spawn (task () {
                 yield(nil)
@@ -2225,7 +2295,7 @@ class Exec_04 {
     @Test
     fun op_01_depth() {
         val out = test("""
-            println(`:number ceu_depth(&_ceu_block_)`)
+            println(`:number ceu_depth(&CEU_BLOCK)`)
             println(`:number ceu_depth(ceu_block)`)
         """)
         //assert(out == "0\n0\n") { out }
@@ -2234,7 +2304,7 @@ class Exec_04 {
     @Test
     fun op_02_depth() {
         val out = test("""
-            println(`:number ceu_depth(&_ceu_block_)`)
+            println(`:number ceu_depth(&CEU_BLOCK)`)
             spawn (task () {
                 do {
                     val x
@@ -2248,7 +2318,7 @@ class Exec_04 {
     @Test
     fun op_03_depth() {
         val out = test("""
-            println(`:number ceu_depth(&_ceu_block_)`)
+            println(`:number ceu_depth(&CEU_BLOCK)`)
             val f = func () {
                 println(`:number ceu_depth(ceu_block)`)
             }
@@ -2272,7 +2342,7 @@ class Exec_04 {
                     println(`:number ceu_depth(ceu_block)`)
                 }
             }
-            println(`:number ceu_depth(&_ceu_block_)`)
+            println(`:number ceu_depth(&CEU_BLOCK)`)
             println(`:number ceu_depth(ceu_block)`)
             do {
                 val x
@@ -2306,7 +2376,7 @@ class Exec_04 {
                     println(`:number ceu_depth(ceu_block)`)
                 }
             }
-            println(`:number ceu_depth(&_ceu_block_)`)
+            println(`:number ceu_depth(&CEU_BLOCK)`)
             println(`:number ceu_depth(ceu_block)`)
             do {
                 val x

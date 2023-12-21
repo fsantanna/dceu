@@ -890,12 +890,14 @@ class Parser (lexer_: Lexer)
             (CEU>=4 && this.acceptFix("broadcast")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val evt = this.expr_in_parens()!!
-                val xin = if (!this.acceptFix("in")) null else {
+                val xin = if (this.acceptFix("in")) {
                     this.expr()
+                } else {
+                    Expr.Tag(Tk.Tag(":task",this.tk0.pos))
                 }
                 Expr.Call(tk0,
                     Expr.Acc(Tk.Id("broadcast'", tk0.pos, 0)),
-                    listOf(evt) + listOfNotNull(xin)
+                    listOf(evt,xin)
                 )
             }
             (CEU>=4 && this.acceptFix("toggle")) -> {

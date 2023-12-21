@@ -84,7 +84,7 @@ val TAGS = listOf (
 )) + (if (CEU < 3) listOf() else listOfNotNull(
     ":yielded", (if (CEU<4) null else ":toggled"), ":resumed", ":terminated"
 )) + (if (CEU < 4) listOf() else listOf(
-    ":void",
+    ":global", ":task", ":void"
 )) + (if (CEU < 6) listOf() else listOf(
     ":rec",
 )) + listOf(

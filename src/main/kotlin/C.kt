@@ -1393,17 +1393,17 @@ fun Coder.main (tags: Tags): String {
             return ceu_bstk_kill(bstk->up, me);
         }
         
-        CEU_Block* ceu_bcast_global (CEU_Block* blk) {
+        CEU_Block* ceu_bcast_outer (CEU_Block* blk) {
             if (blk->istop) {
                 if (blk->up.frame->clo == NULL) {
                     return blk;
                 } else if (blk->up.frame->clo->type == CEU_VALUE_CLO_FUNC) {
-                    return ceu_bcast_global(blk->up.frame->up_block);
+                    return ceu_bcast_outer(blk->up.frame->up_block);
                 } else {
                     return blk;     // outermost block in coro/task
                 }
             } else if (blk->up.block != NULL) {
-                return ceu_bcast_global(blk->up.block);
+                return ceu_bcast_outer(blk->up.block);
             } else {
                 return blk;         // global scope
             }
@@ -1561,7 +1561,7 @@ fun Coder.main (tags: Tags): String {
         }
 
         CEU_Value ceu_broadcast_f (CEU_Bstk* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
-            assert(n >= 1);
+            assert(n == 2);
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
                 ceu_gc_inc(evt); // save from nested gc_chk
@@ -1572,20 +1572,27 @@ fun Coder.main (tags: Tags): String {
                     assert(ret.type == CEU_VALUE_NIL && "TODO");
                 }
             }
+            CEU_Value xin = args[1];
             CEU_Value ret;
-            if (n == 1) {
-                ret = ceu_bcast_blocks(bstk, ceu_bcast_global(frame->up_block), evt);
+            if (xin.type == CEU_VALUE_TAG) {
+                if (xin.Tag == CEU_TAG_global) {
+                    ret = ceu_bcast_blocks(bstk, &CEU_BLOCK, evt);
+                } else if (xin.Tag == CEU_TAG_task) {
+                    ret = ceu_bcast_blocks(bstk, ceu_bcast_outer(frame->up_block), evt);
+                } else {
+                    ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid target"} };
+                }
             } else {
-                CEU_Value tsk = args[1];
         #if CEU >= 5
-                if (tsk.type==CEU_VALUE_TRACK && tsk.Dyn->Track.task!=NULL) {
-                    tsk = ceu_dyn_to_val((CEU_Dyn*)tsk.Dyn->Track.task);
+                // TODO: remove when detrack stack
+                if (xin.type==CEU_VALUE_TRACK && xin.Dyn->Track.task!=NULL) {
+                    xin = ceu_dyn_to_val((CEU_Dyn*)xin.Dyn->Track.task);
                 }
         #endif
-                if (ceu_istask_val(tsk)) {
-                    ret = ceu_bcast_task(bstk, &tsk.Dyn->Exe_Task, 1, &evt);
+                if (ceu_istask_val(xin)) {
+                    ret = ceu_bcast_task(bstk, &xin.Dyn->Exe_Task, 1, &evt);
                 } else {
-                    ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="expected task"} };
+                    ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid target"} };
                 }
             }
             if (evt.type > CEU_VALUE_DYNAMIC) {
