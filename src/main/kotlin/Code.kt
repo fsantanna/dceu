@@ -638,14 +638,17 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
                 }
                 ${this.arg.code()}
-                ${(CEU >= 4).cond { """
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond2({ """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                """ }}
-                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(&ceu_bstk_$n COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
-                ${(CEU >= 4).cond { """
+                    ceu_acc = $coc.Dyn->Exe.frame.clo->proto(&ceu_bstk_$n, &$coc.Dyn->Exe.frame, 1, &ceu_acc);
                     if (!ceu_bstk_$n.on) {
-                        ${if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
+                        return (CEU_Value) { CEU_VALUE_NIL };
                     }
+                """ }, { """
+                    ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4(NULL COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
+                """ })}
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                 """ }}
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
                 """
@@ -705,15 +708,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
                 """ })}
                 CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                ${(CEU >= 4).cond { """
+                ${(ups.any(this) { it is Expr.Proto }).cond2({ """
                     CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                """ }}
-                ceu_acc = ceu_bcast_task(&ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
-                ${(CEU >= 4).cond { """
+                    ceu_acc = ceu_bcast_task(&ceu_bstk_$n, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
                     if (!ceu_bstk_$n.on) {
-                        ${if (ups.inexe(this,false)) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
+                        return (CEU_Value) { CEU_VALUE_NIL };
                     }                        
-                """ }}
+                """ }, { """
+                    ceu_acc = ceu_bcast_task(NULL, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);                    
+                """})}
                 CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
@@ -1096,30 +1100,34 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
-                    ${(CEU >= 4).cond { """
+                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond2({ """
                         CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                    """ }}
-                    ceu_acc = ceu_frame_$n.clo->proto (
-                        CEU4(&ceu_bstk_$n COMMA)
-                        &ceu_frame_$n,
-                        ${this.args.let {
-                            if (!has_dots) it.size.toString() else {
-                                "(" + (it.size-1) + " + ceu_dots_$n)"
-                            }
-                        }},
-                        ${if (has_dots) "_ceu_args_$n" else argsc}
-                    );
-                    ${(CEU >= 4).cond { """
-                        if (!ceu_bstk_$n.on) {
-                            ${if (ups.inexe(this,false)) """
-                                // exe body: return immediately bc already aborted/finalized from outside
-                                return (CEU_Value) { CEU_VALUE_NIL };
-                            """ else """
-                                // func body: escape block bc need to finalize
-                                continue;
-                            """}
+                        ceu_acc = ceu_frame_$n.clo->proto (
+                            &ceu_bstk_$n,
+                            &ceu_frame_$n,
+                            ${this.args.let {
+                        if (!has_dots) it.size.toString() else {
+                            "(" + (it.size-1) + " + ceu_dots_$n)"
                         }
-                    """ }}
+                    }},
+                            ${if (has_dots) "_ceu_args_$n" else argsc}
+                        );
+                        if (!ceu_bstk_$n.on) {
+                            //ceu_acc = (CEU_Value) { CEU_VALUE_ERROR, {.Error="TODO: should never appear"} };
+                            return (CEU_Value) { CEU_VALUE_NIL };
+                        }
+                    """ }, { """
+                        ceu_acc = ceu_frame_$n.clo->proto (
+                            CEU4(NULL COMMA)
+                            &ceu_frame_$n,
+                            ${this.args.let {
+                                if (!has_dots) it.size.toString() else {
+                                    "(" + (it.size-1) + " + ceu_dots_$n)"
+                                }
+                            }},
+                            ${if (has_dots) "_ceu_args_$n" else argsc}
+                        );                        
+                    """ })}
                     CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 } // CALL | ${this.dump()}
                 """
