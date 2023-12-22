@@ -1414,7 +1414,17 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_bcast_task (CEU_Bstk* bstk, CEU_Exe_Task* task, int n, CEU_Value args[]) {
             CEU_Value ret = { CEU_VALUE_BOOL, {.Bool=1} };
-            CEU_Bstk xstk1 = { CEU_HLD_BLOCK((CEU_Dyn*)task), 1, bstk };
+
+            // up_task may be aborted
+            CEU_Exe_Task* up_task = ceu_task_up_task(task);
+            CEU_Bstk xstk0;
+            CEU_Bstk* xxstk0 = bstk;
+            if (up_task != NULL) {
+                xstk0 = (CEU_Bstk) { CEU_HLD_BLOCK((CEU_Dyn*)up_task), 1, bstk };
+                xxstk0 = &xstk0;
+            }
+
+            CEU_Bstk xstk1 = { CEU_HLD_BLOCK((CEU_Dyn*)task), 1, xxstk0 };
             if (task->status == CEU_EXE_STATUS_TERMINATED) {
                 return ret;
             } else if (n == CEU_ARG_ABORT) {
@@ -1426,10 +1436,6 @@ fun Coder.main (tags: Tags): String {
             } else if (task->status == CEU_EXE_STATUS_TOGGLED) {
                 return ret;
             }
-            
-            // get up_task before awake b/c
-            // it crosses blocks that may not exist after awake
-            CEU_Exe_Task* up_task = ceu_task_up_task(task);         // TODO: no need to assign before?
             
             if (task->status==CEU_EXE_STATUS_RESUMED || task->pc!=0) {    // not initial spawn
     #if CEU >= 5
@@ -1466,7 +1472,7 @@ fun Coder.main (tags: Tags): String {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
-                if (up_task != NULL) {
+                if (up_task!=NULL && xstk0.on) {
                     // enclosing coro of enclosing block
                     ret2 = ceu_bcast_task(&xstk1, up_task, 1, &evt2);
                 } else { 
