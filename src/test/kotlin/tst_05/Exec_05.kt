@@ -553,7 +553,7 @@ class Exec_05 {
         assert(out.contains(":yielded\n")) { out }
     }
     @Test
-    fun TODO_dd_03a_detrack_err() {
+    fun BUG_dd_03a_detrack_err() {
         val out = test("""
             val T = task () {
                 yield(nil)
@@ -563,8 +563,8 @@ class Exec_05 {
             val x = next-tasks(ts)
             detrack(x) thus { it =>
                 println(it)
-                broadcast(nil)
-                println(:xxx)
+                broadcast(nil)          ;; aborts it
+                println(status(it))     ;; dangling
             }
             println(:ok)
         """)
