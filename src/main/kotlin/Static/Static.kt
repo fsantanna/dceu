@@ -110,8 +110,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         }
                     }
                         -> err(this.tk, "yield error : unexpected enclosing catch")
-                    ups.any(this) { blk -> blk is Expr.Do && blk.tk.str=="thus" && !blk.es[0].let { it is Expr.Dcl && it.src==this } }
-                        -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
             }
             is Expr.Resume -> {

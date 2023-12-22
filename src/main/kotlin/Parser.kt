@@ -1210,7 +1210,7 @@ class Parser (lexer_: Lexer)
     fun expr_4_suf (xe: Expr? = null): Expr {
         val e = if (xe != null) xe else this.expr_prim()
         val ok = this.tk0.pos.isSameLine(this.tk1.pos) && (
-                    this.acceptFix("thus") || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
+                (CEU>=99 && this.acceptFix("thus")) || this.acceptFix("[") || this.acceptFix(".") || this.acceptFix("(")
                  )
         val op = this.tk0
         if (!ok) {

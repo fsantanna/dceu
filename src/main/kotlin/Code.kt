@@ -200,7 +200,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 //println(listOf(isvoid,this.tk))
                 val inexe  = ups.inexe(this, true)
                 val istsk  = (f_b?.tk?.str == "task")
-                val isthus = (this.tk.str == "thus")
 
                 """
                 { // BLOCK | ${this.dump()}
@@ -263,13 +262,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     // vars inits
                     ${dcls.map { """
-                        ${when {
-                            (up is Expr.Catch && up.cnd == this) -> """
-                                $it = ceu_err.Dyn->Throw.val;
-                                ceu_gc_inc($it);
-                            """
-                            else -> "$it = (CEU_Value) { CEU_VALUE_NIL };"
-                        }};
+                        $it = (CEU_Value) { CEU_VALUE_NIL };
                     """ }.joinToString("")}
                     // defers init
                     ${defers[this].cond { it.second }}
@@ -342,12 +335,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             else -> ""
                         }}
                         $body
-                        ${isthus.cond { """
-                            if (ceu_thus_fleet_${this.n}) {
-                                CEU_Value ret_$N = _ceu_drop_(${(this.es[0] as Expr.Dcl).idc(0)});
-                                assert(ret_$N.type == CEU_VALUE_NIL && "TODO-01");
-                            }
-                        """ }}                
                         ${(up is Expr.Loop).cond { "CEU_LOOP_STOP_${up!!.n}:" }}
                     ${(CEU >= 2).cond { "} while (0);" }}
 
@@ -484,7 +471,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val blk = ups.first_block(this)!!
                 val bupc = blk.idc("block")
                 val unused = false // TODO //sta.unused.contains(this) && (this.src is Expr.Closure)
-                val isthus = ups.pub[this].let { it is Expr.Do && it.tk.str=="thus" && it.es[0]==this }
 
                 if (this.id.upv==1 && clos.vars_refs.none { it.second==this }) {
                     err(this.tk, "var error : unreferenced upvar")
@@ -493,27 +479,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 // DCL | ${this.dump()}
                 ${(this.init && this.src !=null && !unused).cond {
-                    this.src!!.code() + isthus.cond2({ """
-                        int ceu_thus_fleet_${blk.n} = 0;
-                        #if CEU >= 2
-                        if (ceu_acc.type == CEU_VALUE_THROW) {
-                            ceu_acc = ceu_acc.Dyn->Throw.val;
-                        } else
-                        #endif
-                        if (ceu_acc.type>CEU_VALUE_DYNAMIC /*CEU2(&& ceu_acc.type!=CEU_VALUE_THROW)*/ && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_FLEET) {
-                            ceu_thus_fleet_${blk.n} = 1;
-                            CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
-                            assert(ret_$N.type==CEU_VALUE_NIL && "impossible case");
-                            //ceu_dump_value(ret_$N);
-                            assert((CEU5(ceu_acc.type==CEU_VALUE_EXE_TASK_IN ||) ret_$N.type==CEU_VALUE_NIL) && "TODO-02");
-                        }
-                    """ },{ """ 
+                    this.src!!.code() + """ 
                         CEU_ASSERT(
                             $bupc,
                             ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_acc, 0, "declaration error"),
                             "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                         );
-                    """ })
+                    """
                 }}
                 ${when {
                     !this.init -> ""

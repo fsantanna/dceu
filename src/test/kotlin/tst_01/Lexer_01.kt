@@ -56,7 +56,7 @@ class Lexer_01 {
         assert(tks.next().let { it is Tk.Id  && it.str == "status" })
         assert(tks.next().let { it is Tk.Fix && it.str == "if" })
         assert(tks.next().let { it is Tk.Id  && it.str == "aaa" })
-        assert(tks.next().let { it is Tk.Fix && it.str == "thus" })
+        assert(tks.next().let { it is Tk.Id  && it.str == "thus" })
         assert(tks.next().let { it is Tk.Id  && it.str == "throw" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Id  && it.str == "evt" })

@@ -29,11 +29,6 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Do     -> {
             when (this.tk.str) {
                 "do" -> "do {\n" + this.es.tostr(pre) + "}"
-                "thus" -> {
-                    val dcl = this.es[0] as Expr.Dcl
-                    val id_tag = dcl.id.tostr() + dcl.tag.cond{" "+it.str}
-                    "((${dcl.src!!.tostr(pre)}) thus { $id_tag =>\n${this.es.drop(1).tostr(pre)}})"
-                }
                 else -> "{\n" + this.es.tostr(pre) + "}"
             }
         }

@@ -39,12 +39,12 @@ val COMP = """
 
 fun OR (v1:String, v2:String): String {
     N++
-    return "($v1 thus { it_$N => if it_$N { it_$N } else { $v2 } })"
+    return "((func (it_$N) { if it_$N { it_$N } else { $v2 } }) ($v1))"
 }
 
 fun AND (v1:String, v2:String): String {
     N++
-    return "(($v1) thus { it_$N => if it_$N { $v2 } else { $v1 } })"
+    return "((func (it_$N) { if it_$N { $v2 } else { $v1 } }) ($v1))"
 }
 
 fun AWAIT (v:String="(type(it) /= :exe-task)"): String {

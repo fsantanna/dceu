@@ -2109,9 +2109,7 @@ class Exec_01 {
     fun ll_04_fleet_tuple_func_err() {
         val out = test("""
             var f = func (v) {
-                v[0] thus { it =>
-                    println(it)
-                }
+                println(v[0])
             }
             var g = func (v) {
                 val evt = v
@@ -2202,9 +2200,9 @@ class Exec_01 {
             """
             var x
             do {
-                [1,2,3] thus { a =>
+                (func (a) {
                     set x = a
-                }
+                }) ([1,2,3])
             }
             println(x)
         """
@@ -2218,24 +2216,24 @@ class Exec_01 {
             """
             var x
             do {
-                [1,2,3] thus { a =>
+                func (a) {
                     set x = drop(a)
-                }
+                } ([1,2,3])
             }
             println(x)
         """
         )
-        //assert(out == "[1,2,3]\n") { out }
-        assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
     }
     @Test
     fun mm_01_tmp_ok() {
         val out = test(
             """
             val x = do {
-                [1,2,3] thus { a =>
+                func (a) {
                     a
-                }
+                } ([1,2,3])
             }
             println(x)
         """
@@ -2247,9 +2245,9 @@ class Exec_01 {
     fun mm_02_thus_err() {
         val out = test("""
             var x
-            nil thus { it =>
+            func (it) {
                 set x = 10  ;; err
-            }
+            } (nil)
             println(x)
         """)
         //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
@@ -2259,10 +2257,10 @@ class Exec_01 {
     fun mm_03_thus_err() {
         val out = test("""
             var x
-            nil thus { it =>
+            func (it) {
                 set x = it  ;; err
                 println(x)
-            }
+            }(nil)
         """)
         //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
         assert(out == "nil\n") { out }
@@ -2271,10 +2269,10 @@ class Exec_01 {
     fun mm_04_tmp() {
         val out = test(
             """
-            [0] thus { x =>
+            func (x) {
                 set x[0] = []
                 println(x)
-            }
+            } ([0])
         """
         )
         assert(out == "[[]]\n") { out }
@@ -2283,9 +2281,9 @@ class Exec_01 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                [] thus { x =>
+                func (x) {
                     if x { x } else { [] }
-                }
+                } ([])
             }
             println(v)
         """)
@@ -2296,14 +2294,14 @@ class Exec_01 {
     fun mm_05_tmp_x() {
         val out = test("""
             val v = do {
-                [] thus { x =>
+                func (x) {
                     if x { drop(x) } else { [] }
-                }
+                } ([])
             }
             println(v)
         """)
-        //assert(out == "[]\n") { out }
-        assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
+        assert(out == "[]\n") { out }
+        //assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
     }
     @Test
     fun mm_06_tmp_err() {
