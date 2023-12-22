@@ -2231,11 +2231,11 @@ class Exec_04 {
         assert(out == ":0\n:1\n:2\n:3\n:ok\n:4\n") { out }
     }
     @Test
-    fun mo_08_bcast_term() {
+    fun BUG_mo_08_bcast_term() {
         val out = test("""
             val f = func (t) {
                 defer {
-                    println(:ok)
+                    println(:ok)    // TODO: aborted func does not execute defer
                 }
                 println(:1)
                 broadcast(nil) in t
@@ -2292,12 +2292,12 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n") { out }
     }
     @Test
-    fun mp_02_abort() {
+    fun BUG_mp_02_abort() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)
+                        println(:4)    // TODO: aborted func does not execute defer
                     }
                     println(:1)
                     broadcast(nil) in :global
@@ -2371,12 +2371,12 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n") { out }
     }
     @Test
-    fun mp_05_abort() {
+    fun BUG_mp_05_abort() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)
+                        println(:4)    // TODO: aborted func does not execute defer
                     }
                     println(:1)
                     resume (coroutine(coro () {
@@ -2404,12 +2404,12 @@ class Exec_04 {
         assert(out == ":1\n:2\n:3\n:4\n") { out }
     }
     @Test
-    fun mp_06_abort() {
+    fun BUG_mp_06_abort() {
         val out = test("""
             val f = func () {
                 do {
                     defer {
-                        println(:4)
+                        println(:4)    // TODO: aborted func does not execute defer
                     }
                     println(:1)
                     spawn (task () {
@@ -2716,8 +2716,8 @@ class Exec_04 {
     fun oo_05_gc() {
         val out = test(
             """
-            spawn (task () {    // not gc'd b/c task remains in memory
-                nil             // see task in @ ab_01_spawn
+            spawn (task () {    ;; not gc'd b/c task remains in memory
+                nil             ;; see task in @ ab_01_spawn
             }) ()
             println(`:number CEU_GC_COUNT`)
             """

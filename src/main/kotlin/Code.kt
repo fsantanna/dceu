@@ -650,7 +650,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
-                        ${if (inexeT) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
                     }
                 """ }}
 
@@ -733,7 +733,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
-                        ${if (inexeT) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                        return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
                     }
                 """ }}
 
@@ -1150,7 +1150,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                         if (!$bstk->on) {
-                            ${if (ups.any(this) { it is Expr.Proto && it.tk.str=="task"}) "return (CEU_Value) { CEU_VALUE_NIL }" else "continue"};
+                            return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
                         }
                     """ }}
                     
