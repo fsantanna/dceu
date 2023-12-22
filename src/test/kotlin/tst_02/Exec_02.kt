@@ -293,7 +293,7 @@ class Exec_02 {
         assert(out == ":x\n") { out }
     }
     @Test
-    fun jj_13_catch_dcl_err() {
+    fun BUG_jj_13_catch_dcl_err() {
         val out = test("""
             val x
             catch ( x => true) {

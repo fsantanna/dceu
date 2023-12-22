@@ -380,8 +380,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
                                 if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO: should never appear");
-                                    assert(ceu_err_$n.type == CEU_VALUE_NIL);
+                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
+                                    assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
                                 }
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
@@ -502,7 +502,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         #endif
                         if (ceu_acc.type>CEU_VALUE_DYNAMIC /*CEU2(&& ceu_acc.type!=CEU_VALUE_THROW)*/ && ceu_acc.Dyn->Any.hld.type==CEU_HOLD_FLEET) {
                             ceu_thus_fleet_${blk.n} = 1;
-                            CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO: should never appear");
+                            CEU_Value ret_$N = ceu_hold_chk_set($bupc, CEU_HOLD_IMMUT, ceu_acc, 0, "TODO");
+                            assert(ret_$N.type==CEU_VALUE_NIL && "impossible case");
                             //ceu_dump_value(ret_$N);
                             assert((CEU5(ceu_acc.type==CEU_VALUE_EXE_TASK_IN ||) ret_$N.type==CEU_VALUE_NIL) && "TODO-02");
                         }
@@ -570,7 +571,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Pass -> "// PASS | ${this.dump()}\n" + this.e.code()
             is Expr.Drop -> this.e.code()
 
-            is Expr.Catch -> """
+            is Expr.Catch -> {
+                val bupc = ups.first_block(this)!!.idc("block")
+                """
                 { // CATCH ${this.dump()}
                     do { // catch
                         ${this.blk.code()}
@@ -583,11 +586,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                     if (ceu_acc.type == CEU_VALUE_THROW) {
                         CEU_Value ceu_err = ceu_acc;
+                        {
+                            CEU_Value ret = ceu_hold_chk_set($bupc, CEU_HOLD_MUTAB, ceu_err, 0, "TODO");
+                            assert(ret.type==CEU_VALUE_NIL && "impossible case");
+                        }
                         do {
                             ${this.cnd.code()}
                         } while (0);
-                        assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in catch condition");
+                        assert(ceu_acc.type!=CEU_VALUE_THROW && "TODO: throw in catch condition");
                         if (!ceu_as_bool(ceu_acc)) {
+                            {
+                                CEU_Value ret = _ceu_drop_(ceu_err);
+                                assert(ret.type==CEU_VALUE_NIL && "impossible case");
+                            }
                             ceu_acc = ceu_err;
                             continue; // uncaught, rethrow
                         }
@@ -597,6 +608,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                 }
                 """
+            }
             is Expr.Defer -> {
                 val bup = ups.first_block(this)!!
                 val idc = this.idc("defer")

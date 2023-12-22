@@ -817,12 +817,12 @@ class Parser (lexer_: Lexer)
                 }
 
                 val xxcnd = this.nest("""
-                    `:ceu ceu_acc` thus { ${xid.pos.pre()+xid.str} ${xtag.cond{it.pos.pre()+it.str}} =>
+                    (func (${xid.pos.pre()+xid.str} ${xtag.cond{it.pos.pre()+it.str}}) {
                         $xcnd
-                     }
+                    }) (`:ceu ceu_acc.Dyn->Throw.val`)
                 """)
 
-                Expr.Catch(tk0, xxcnd as Expr.Do, this.block())
+                Expr.Catch(tk0, xxcnd as Expr.Call, this.block())
             }
             (CEU>=2 && this.acceptFix("defer")) -> Expr.Defer(this.tk0 as Tk.Fix, this.block())
 

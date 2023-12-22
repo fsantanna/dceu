@@ -1283,7 +1283,7 @@ fun Coder.main (tags: Tags): String {
             dyn->Any.hld.type = CEU_HOLD_FLEET;
 
             switch (src.type) {
-        #if 0 //CEU >= 2
+        #if CEU >= 2
                 case CEU_VALUE_THROW:
                     CEU_Value ret1 = _ceu_drop_(dyn->Throw.val);
                     if (ret1.type == CEU_VALUE_ERROR) {
