@@ -497,7 +497,7 @@ class Exec_99 {
         )
         //assert(out == "[1,2,3]\n") { out }
         //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 7, col 25) : (func (a) { (set x = a) })([1,2,3])\n" +
+        assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
                 " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test

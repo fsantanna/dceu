@@ -42,7 +42,8 @@ fun String.idc (n: Int? = null): String {
 class Vars (val outer: Expr.Do, val ups: Ups) {
     val datas = mutableMapOf<String,LData>()
 
-    private val uses: MutableMap<Expr.Dcl,Expr> = mutableMapOf()
+    // allow it to be redeclared as long as it is not accessed
+    private val it_uses: MutableMap<Expr.Dcl,Expr> = mutableMapOf()
         // Acc = previous use
         // Dcl = previous hide without previous use
 
@@ -148,12 +149,20 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
                     err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
-                this.args.forEach { (_,tag) ->
+                this.args.forEach { (id,tag) ->
+                    val prv = dcls.firstOrNull { id.str!="..." && id.str==it.id.str }
+                    if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
+                        // ok
+                        if (CEU>=99 && prv!=null) {
+                            it_uses[prv] = this // found new dcl w/o uses of prv dcl
+                        }
+                    } else {
+                        err(id, "declaration error : variable \"${id.str}\" is already declared")
+                    }
                     if (tag!=null && !datas.containsKey(tag.str)) {
                         err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
-
                 this.blk.traverse()
             }
             is Expr.Export -> {
@@ -206,10 +215,10 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 this.src?.traverse()
 
                 val prv = dcls.firstOrNull { this.id.str == it.id.str }
-                if (prv==null || (CEU>=99 && prv.id.str=="it" && uses[prv]==null)) {
+                if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
                     // ok
                     if (CEU>=99 && prv!=null) {
-                        uses[prv] = this // found new dcl w/o uses of prv dcl
+                        it_uses[prv] = this // found new dcl w/o uses of prv dcl
                     }
                 } else {
                     err(this.tk, "declaration error : variable \"${this.id.str}\" is already declared")
@@ -329,14 +338,14 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 val dcl = find(this, this.tk.str, this.tk_.upv)
                 acc_to_dcl[this] = dcl
 
-                if (CEU >= 99) {
-                    val prv = uses[dcl]
+                if (CEU>=99 && dcl.id.str=="it") {
+                    val prv = it_uses[dcl]
                     when (prv) {
                         is Expr.Dcl -> err(prv.tk, "declaration error : variable \"${prv.id.str}\" is already declared")
                         is Expr.Acc -> {}
                         else -> {
                             if (!this.ign) {
-                                uses[dcl] = this        // ignore __acc
+                                it_uses[dcl] = this        // ignore __acc
                             }
                         }
                     }
