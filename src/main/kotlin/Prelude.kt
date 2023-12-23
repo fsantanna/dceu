@@ -80,9 +80,8 @@ func await-chk (evt, cnd) {
 }
 
 func await-ret (evt) {
-    `:bool ${D}evt.type>=CEU_VALUE_DYNAMIC` or
-    `:bool ceu_as_bool(${D}evt)`            or
-    evt
+    val ok = `:bool ${D}evt.type>=CEU_VALUE_DYNAMIC || ceu_as_bool(${D}evt)`
+    ok  or evt
 }
 """.replace("\n", " ")
 

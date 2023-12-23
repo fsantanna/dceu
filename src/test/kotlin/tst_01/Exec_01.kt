@@ -2392,6 +2392,17 @@ class Exec_01 {
     // FUNC / CALL
 
     @Test
+    fun func0_err() {
+        val out = test(
+            """
+            val x
+            val f = func (x) { nil }
+            println(:no)
+        """
+        )
+        assert(out == "anon : (lin 3, col 27) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
     fun func1() {
         val out = test(
             """
@@ -3170,6 +3181,22 @@ class Exec_01 {
         """
         )
         assert(out == "10\n") { out }
+    }
+    @Test
+    fun native17() {
+        val out = test(
+            """
+            func () {
+                val x = 1
+                val y = `:number ${D}x.Number`
+                ```
+                    ${D}x.Number = 2;
+                ```
+                println(x,y)
+            }()
+        """
+        )
+        assert(out == "2\t1\n") { out }
     }
 
     // OPERATORS

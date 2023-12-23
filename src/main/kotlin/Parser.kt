@@ -540,21 +540,24 @@ class Parser (lexer_: Lexer)
                 }
                 this.acceptFix_err("=")
                 val src = this.expr()
-                if (CEU>=99 && dst is Expr.Do && dst.tk.str=="thus") {
-                    val c = dst.es[dst.es.size-2] as Expr.Nat
-                    val dcl = dst.es[0] as Expr.Dcl
+                //println(dst.tostr())
+                if (CEU>=99 && dst is Expr.Call && dst.clo is Expr.Proto) {
+                    assert(dst.args.size==1 && dst.clo.blk.es.size==2)
+                    val c = dst.clo.blk.es[0] as Expr.Nat
+                    //println(c)
+                    val (dcl,_) = dst.clo.args[0]
                     when (c.tk.str) {
-                        "/* = */" -> this.nest("""
-                            ${dcl.src!!.tostr(true)} thus { ${dcl.id.str} =>
-                                set ${dcl.id.str}[#${dcl.id.str}-1] = ${src.tostr(true)}
-                            }
+                        " /* = */" -> this.nest("""
+                            func (${dcl.str}) {
+                                set ${dcl.str}[#${dcl.str}-1] = ${src.tostr(true)}
+                            } (${dst.args.tostr()})
                         """)
-                        "/* + */" -> this.nest("""
-                            ${dcl.src!!.tostr(true)} thus { ${dcl.id.str} =>
-                                set ${dcl.id.str}[#${dcl.id.str}] = ${src.tostr(true)}
-                            }
+                        " /* + */" -> this.nest("""
+                            func (${dcl.str}) {
+                                set ${dcl.str}[#${dcl.str}] = ${src.tostr(true)}
+                            } (${dst.args.tostr()})
                         """)
-                        "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr
+                        " /* - */" -> err(tk0, "set error : expected assignable destination") as Expr
                         else -> error("impossible case")
                     }
                 } else {
@@ -1298,10 +1301,11 @@ class Parser (lexer_: Lexer)
                     }
                 }
                 "thus" -> {
+                    val tk1 = this.tk1
                     val (id_tag,es) = lambda(N)
                     val (id,tag) = id_tag
                     this.nest( """
-                        func (${id.str} ${tag.cond {it.str }}) {
+                        ${tk1.pos.pre()}func (${id.pos.pre()}${id.str} ${tag.cond {it.str}}) ${tk1.pos.pre()}{
                             ${es.tostr(true)}
                         } (${e.tostr(true)})
                     """)

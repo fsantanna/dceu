@@ -21,7 +21,7 @@ fun Expr.tostr (pre: Boolean = false): String {
     return when (this) {
         is Expr.Proto  -> {
             val args = this.args.map { (id,tag) ->
-                id.tostr() + tag.cond {" ${tag!!.str}"}
+                (if (pre) id.pos.pre() else "") + id.tostr() + tag.cond {" ${tag!!.str}"}
             }.joinToString(",")
             "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }

@@ -64,6 +64,23 @@ class Exec_03 {
         assert(out == "anon : (lin 3, col 47) : yield error : unexpected enclosing func\n") { out }
     }
 
+    // NATIVE
+
+    @Test
+    fun ab_01_native() {
+        val out = test("""
+            func () {
+                val x = 1
+                val y = `:number ${D}x.Number`
+                ```
+                    ${D}x.Number = 2;
+                ```
+                println(x,y)
+            }()
+        """)
+        assert(out == "2\t1\n") { out }
+    }
+
     // COROUTINE
 
     @Test
