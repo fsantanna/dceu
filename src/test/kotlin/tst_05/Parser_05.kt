@@ -51,47 +51,52 @@ class Parser_05 {
         """
         )
         val parser = Parser(l)
-        val e = parser.exprs()
-        assert(e.tostr() == "detrack(1)\n") { e.tostr() }
+        //val e = parser.exprs()
+        //assert(e.tostr() == "detrack(1)\n") { e.tostr() }
+        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
     }
     @Test
     fun bb_02_detrack_ok() {
         val l = tst_03.lexer(
             """
-            detrack(1) thus { it=> nil }
+            detrack(1) { it=> nil }
         """
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "((detrack(1)) thus { it =>\n" +
+        //assert(e.tostr() == "((detrack(1)) thus { it =>\n" +
+        //        "nil\n" +
+        //        "})\n") { e.tostr() }
+        assert(e.tostr() == "(detrack(1) {\n" +
+                "it =>\n" +
                 "nil\n" +
                 "})\n") { e.tostr() }
     }
     @Test
     fun bb_03_as() {
         val out = test("""
-            detrack(1) thus { 1 }
+            detrack(1) { 1 }
         """)
-        assert(out == "anon : (lin 2, col 31) : expected identifier : have \"1\"\n") { out }
+        assert(out == "anon : (lin 2, col 26) : expected identifier : have \"1\"\n") { out }
     }
     @Test
     fun bb_04_as() {
         val out = test("""
-            detrack(1) thus { x }
+            detrack(1) { x }
         """)
-        assert(out == "anon : (lin 2, col 33) : expected \"=>\" : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 28) : expected \"=>\" : have \"}\"\n") { out }
     }
     @Test
     fun bb_05_as() {
         val out = test("""
-            detrack(1) thus { x => }
+            detrack(1) { x => }
         """)
-        assert(out == "anon : (lin 2, col 36) : expected expression : have \"}\"\n") { out }
+        assert(out == "anon : (lin 2, col 31) : expected expression : have \"}\"\n") { out }
     }
     @Test
     fun bb_06_as() {
         val out = test("""
-            detrack(1) thus { x => 1
+            detrack(1) { x => 1
         """)
         assert(out == "anon : (lin 3, col 9) : expected \"}\" : have end of file\n") { out }
     }

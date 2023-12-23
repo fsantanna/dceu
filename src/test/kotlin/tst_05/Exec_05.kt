@@ -402,7 +402,7 @@ class Exec_05 {
     @Test
     fun cc_01_detrack() {
         val out = test("""
-            detrack(nil)
+            detrack(nil) { it => nil }
         """)
         assert(out == " v  anon : (lin 2, col 13) : detrack error : expected track value\n") { out }
     }
@@ -410,9 +410,9 @@ class Exec_05 {
     fun cc_02_detrack() {
         val out = test("""
             val x
-            detrack(nil) thus { x => nil }
+            detrack(nil) { x => nil }
         """)
-        assert(out == "anon : (lin 3, col 33) : declaration error : variable \"x\" is already declared\n") { out }
+        assert(out == "anon : (lin 3, col 28) : declaration error : variable \"x\" is already declared\n") { out }
     }
     @Test
     fun cc_03_detrack() {
@@ -420,7 +420,7 @@ class Exec_05 {
             val T = task () { nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(t) thus { it => 10 }
+            val v = detrack(t) { it => 10 }
             println(v)
         """)
         assert(out == (" v  anon : (lin 4, col 21) : track(t) : track error : expected unterminated task\n")) { out }
@@ -429,11 +429,11 @@ class Exec_05 {
     @Test
     fun cc_04_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            val v = detrack(x) ;;thus { it => 10 }
+            val v = detrack(x) { it => 10 }
             println(v)
         """)
         assert(out == ("nil\n")) { out }
@@ -441,10 +441,10 @@ class Exec_05 {
     @Test
     fun cc_05_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { it => 10 }
+            val v = detrack(x) { it => 10 }
             println(v)
         """)
         assert(out == ("10\n")) { out }
@@ -452,7 +452,7 @@ class Exec_05 {
     @Test
     fun cc_06_detrack_err() {
         val out = test("""
-            detrack(nil) thus { it => broadcast(nil) }
+            detrack(nil) { it => broadcast(nil) }
         """)
         //assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
         assert(out == (" v  anon : (lin 2, col 13) : detrack error : expected track value\n")) { out }
@@ -461,43 +461,43 @@ class Exec_05 {
     fun cc_07_detrack_err() {
         val out = test("""
             task () {
-                detrack(nil) thus { it => yield(nil) thus { it => nil } }
+                detrack(nil) { it => func(it) { nil } (yield(nil)) }
             }
         """)
-        assert(out == ("anon : (lin 3, col 61) : declaration error : variable \"it\" is already declared\n")) { out }
+        assert(out == ("anon : (lin 3, col 43) : declaration error : variable \"it\" is already declared\n")) { out }
     }
     @Test
     fun cc_07_detrack_err2() {
         val out = test("""
             task () {
-                detrack(nil) thus { yy => yield(nil) thus { xx => nil } }
+                detrack(nil) { yy => yield(nil) ; nil }
             }
         """)
-        assert(out == ("anon : (lin 3, col 43) : yield error : unexpected enclosing thus\n")) { out }
+        assert(out == ("anon : (lin 3, col 38) : yield error : unexpected enclosing func\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { it => set it = 10 }
+            val v = detrack(x) { it => set it = 10 }
             println(v)
         """)
-        assert(out == ("anon : (lin 5, col 45) : set error : destination is immutable\n")) { out }
+        assert(out == ("anon : (lin 5, col 40) : set error : destination is immutable\n")) { out }
     }
     @Test
     fun cc_09_detrack() {
         val out = test("""
             val T = task (v) {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
             ;;dump(x)
             broadcast(nil)
-            println(detrack(x) ;;;thus { it => 99 };;;)
+            println(detrack(x) { it => 99 })
         """
         )
         assert(out == "nil\n") { out }
@@ -511,7 +511,7 @@ class Exec_05 {
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            println(detrack(x) ;;;thus { it => 99 };;;)
+            println(detrack(x) { it => 99 })
             ;;dump(x)
         """
         )

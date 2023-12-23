@@ -75,7 +75,7 @@ class Ups (outer: Expr.Do) {
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.arg))
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
-            is Expr.Dtrack -> this.map(listOf(this.tsk))
+            is Expr.Dtrack -> this.map(listOf(this.tsk, this.blk))
             is Expr.Toggle -> this.map(listOf(this.tsk, this.on))
 
             is Expr.Nat    -> emptyMap()

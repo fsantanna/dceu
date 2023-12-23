@@ -931,22 +931,21 @@ class Parser (lexer_: Lexer)
                 }
             }
             (CEU>=5 && this.acceptFix("detrack")) -> {
-                val tk0 = this.tk0
-                val ret = Expr.Dtrack(tk0 as Tk.Fix, this.expr_in_parens()!!)
-                if (CEU<99 || !this.checkFix("as")) {
-                    ret
-                } else {
-                    this.acceptFix_err("as")
-                    val (id_tag,es) = lambda(N)
-                    val (id,tag) = id_tag
-                    this.nest("""
-                        ${tk0.pos.pre()}${ret.tostr(true)} thus { ${id.str} ${tag.cond{it.str}} =>
-                            if ${id.str} {
-                                ${es.tostr(true)}
-                            }
+                val tk0 = this.tk0 as Tk.Fix
+                val tsk = this.expr_in_parens()!!
+                //this.acceptFix_err("thus")
+                val (id_tag,es) = lambda(N)
+                val (id,tag) = id_tag
+                val blk = this.nest("""
+                    (func (${id.pos.pre()+id.str} ${tag.cond{it.pos.pre()+it.str}}) {
+                        if ${id.str} {
+                            ${es.tostr(true)}
+                        } else {
+                            nil
                         }
-                    """)
-                }
+                    }) (`:ceu ceu_acc`)
+                """)
+                return Expr.Dtrack(tk0, tsk, blk as Expr.Call)
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

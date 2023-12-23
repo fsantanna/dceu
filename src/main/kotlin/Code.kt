@@ -31,7 +31,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 if (nst == 0) {
                     "(ceu_mem->$idc)"
                 } else {
-                    val fup = (ups.first(this) { it is Expr.Proto }!! as Expr.Proto).idc()
+                    val fup = (ups.first(blk) { it is Expr.Proto }!! as Expr.Proto).idc()
                     "(((CEU_Clo_Mem_$fup*) ceu_frame ${"->clo->up_frame".repeat(nst)}->exe->mem)->$idc)"
                 }
             }
@@ -778,6 +778,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     } else {
                         ceu_acc = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
                     }
+                    ${this.blk.code()}
                 }
                 """
             }
@@ -1080,7 +1081,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
                 val inexeT = ups.inexe(this,true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
-
                 """
                 { // CALL | ${this.dump()}
                     ${(!bup.ismem(sta,clos)).cond {

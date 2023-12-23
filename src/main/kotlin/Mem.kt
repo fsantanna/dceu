@@ -25,7 +25,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
 
             is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.arg.coexists()
             is Expr.Pub    -> this.tsk?.coexists() ?: false
-            is Expr.Dtrack -> this.tsk.coexists()
+            is Expr.Dtrack -> this.tsk.coexists() || this.blk.coexists()
             is Expr.Toggle -> this.tsk.coexists() || this.on.coexists()
 
             is Expr.Tuple  -> this.args.any { it.coexists() }
@@ -138,7 +138,12 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
                 };
             """
             is Expr.Pub -> this.tsk?.mem() ?: ""
-            is Expr.Dtrack -> this.tsk.mem()
+            is Expr.Dtrack -> """
+                union { // DTRACK
+                    ${this.tsk.mem()}
+                    ${this.blk.mem()}
+                };
+            """
             is Expr.Toggle -> """
                 struct { // TOGGLE
                     CEU_Value tsk_${this.n};
