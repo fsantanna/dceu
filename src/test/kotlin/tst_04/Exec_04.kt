@@ -1539,8 +1539,10 @@ class Exec_04 {
             val T = task () :X {
                 nil
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+        //assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun kk_12_pub() {
@@ -3614,8 +3616,10 @@ class Exec_04 {
     fun z1_03_data_pub_err() {
         val out = test("""
             task () :T { nil }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared\n") { out }
+        //assert(out == "anon : (lin 2, col 21) : declaration error : data :T is not declared\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun z1_04_data_pub() {
