@@ -61,7 +61,7 @@ class Exec_03 {
                 func (it) { func (x) { nil } (yield(nil)) } (yield(nil))
             }) ()
         """)
-        assert(out == "anon : (lin 3, col 47) : yield error : expected enclosing coro\n") { out }
+        assert(out == "anon : (lin 3, col 47) : yield error : unexpected enclosing func\n") { out }
     }
 
     // COROUTINE
@@ -286,7 +286,7 @@ class Exec_03 {
                 }
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : expected enclosing coro\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
     }
     @Test
     fun cc_16_tags() {
@@ -340,7 +340,7 @@ class Exec_03 {
             }
             println(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        //assert(out == "anon : (lin 3, col 26) : declaration error : data :T is not declared\n") { out }
         assert(out == ":ok\n") { out }
     }
 
@@ -1301,19 +1301,20 @@ class Exec_03 {
     fun nn_01_yield() {
         val out = test("""
             coro () {
-                yield(nil) thus { x =>
-                    yield(nil) thus { y => nil }
-                }
+                func (x) {
+                    yield(nil) ;;thus { y => nil }
+                } (yield(nil))
             }
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
     }
     @Test
     fun nn_02_catch() {
         val out = test("""
             coro () {
                 catch ( it => do {
-                    yield(nil) thus { x => nil }
+                    yield(nil)
                 } )
                 {
                     throw(:e1)
@@ -1345,9 +1346,9 @@ class Exec_03 {
             resume coroutine (coro () {
                 val x
                 do {
-                    yield(nil) thus { it =>
+                    func (it) {
                         nil
-                    }
+                    }(yield(nil))
                 }
                 val y
             }) ()

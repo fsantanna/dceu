@@ -100,8 +100,6 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     .forEach { ylds.add(it as Expr.Do) }
                 this.arg.traverse()
                 when {
-                    !ups.inexe(this,true)
-                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                     ups.any(this) { defer -> (defer is Expr.Defer) }
                         -> err(this.tk, "yield error : unexpected enclosing defer")
                     ups.any(this) { cnd ->
@@ -110,6 +108,10 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         }
                     }
                         -> err(this.tk, "yield error : unexpected enclosing catch")
+                    ups.first(this) { it is Expr.Proto }.let { it?.tk?.str == "func" }
+                        -> err(this.tk, "yield error : unexpected enclosing func")
+                    !ups.inexe(this,true)
+                        -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
                 }
             }
             is Expr.Resume -> {

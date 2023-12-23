@@ -97,7 +97,7 @@ class Exec_04 {
     @Test
     fun bb_05_spawn() {
         val out = test("""
-            val T = task (v) { yield(nil) thus { it=>nil } }
+            val T = task (v) { yield(nil) ; nil }
             val t = spawn T()
             println(t)
         """)
@@ -122,7 +122,7 @@ class Exec_04 {
     fun cc_01_scope() {
         val out = test("""
             val x = do {
-                spawn (task() { yield(nil) thus { it=>nil } }) ()
+                spawn (task() { yield(nil) ; nil }) ()
             }
             println(2)
         """)
@@ -134,7 +134,7 @@ class Exec_04 {
         val out = test("""
             var t
             set t = task () {
-                yield(nil) thus { it=>nil }
+                yield(nil) ; nil
             }
             var co
             set co = if true { spawn t() } else { nil }
@@ -178,7 +178,7 @@ class Exec_04 {
         val out = test("""
             var T
             set T = task (v) {
-                yield(nil) thus { it=>nil } ;;println(v)
+                yield(nil) ; nil ;;println(v)
             }
             var t
             set t = do {
@@ -463,9 +463,9 @@ class Exec_04 {
     fun dd_16_tags() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it =>
+                func (it) {
                     println(tags(it,:X))
-                }
+                } (yield(nil))
             }
             spawn T()
             broadcast (tags([],:X,true))
@@ -871,9 +871,8 @@ class Exec_04 {
     fun ff_01_term() {
         val out = test("""
             spawn (task () {
-                yield(nil) thus { it =>
-                    println(:ok, it)
-                }
+                val x = yield(nil)
+                println(:ok, x)
             })()
             val t = spawn (task () {
                 nil
@@ -888,9 +887,8 @@ class Exec_04 {
             spawn (task () {
                 yield(nil) ;;thus { it => nil }
                 println(:1)
-                yield(nil) thus { it =>
-                    println(:ok, it)
-                }
+                val x = yield(nil)
+                println(:ok, x)
             })()
             val t = spawn (task () {
                 yield(nil) ;;thus { it => nil }
@@ -906,18 +904,17 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 val t = spawn (task () {
-                    yield(nil) thus { it =>
-                        println(:1, it)
-                    }
+                    val it = yield(nil)
+                    println(:1, it)
                 })()
                 println(:0)
-                yield(nil) thus { it =>
+                func (it) {
                     if (type(it) == :exe-task) {
                         println(:2, it == t)
                     } else {
                         nil
                     }
-                }
+                } (yield(nil))
             } )()
             broadcast(:a)
             broadcast (:b)
@@ -953,9 +950,8 @@ class Exec_04 {
     fun gg_02_scope() {
         val out = test("""
             val T = task (v) {
-                yield(nil) thus { it =>
-                    println(it)
-                }                                
+                val it = yield(nil)
+                println(it)
             }
             spawn T(10)
             ;;func () {
@@ -1008,10 +1004,10 @@ class Exec_04 {
             """
             val T = task () {
                 val e =
-                    yield(nil) thus { it =>
+                    func (it) {
                         type(it)
                         it
-                    }
+                    } (yield(nil))
                 println(e)                
             }
             spawn T()
@@ -1071,13 +1067,13 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
-                [0] thus { x =>
+                func (x) {
                     set x[0] = v[0]
                     println(x[0])
-                }
+                } ([0])
             }
             var T = task () {
-                yield(nil) thus { it=>f(it) }
+                f(yield(nil))
             }
             spawn T()
             broadcast ([[1]])
@@ -1091,7 +1087,7 @@ class Exec_04 {
                 println(v[0])
             }
             var T = task () {
-                yield(nil) thus { it => f(it) }
+                f(yield(nil))
             }
             spawn T()
             broadcast ([[1]])
@@ -1102,13 +1098,13 @@ class Exec_04 {
     fun gg_05_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                [0] thus { x =>
+                func (x) {
                     set x[0] = v[0]
                     println(x[0])
-                }
+                } ([0])
             }
             var T = task () {
-                yield(nil) thus { it => f(it) }
+                f(yield(nil))
             }
             spawn T()
             broadcast ([[1]])
@@ -1149,7 +1145,7 @@ class Exec_04 {
             }
             val T = task () {
                 do {
-                    f(yield(nil)thus { it => it})
+                    f(yield(nil))
                 }
             }
             spawn T()
@@ -1216,9 +1212,9 @@ class Exec_04 {
             spawn (task () {
                 var t = [1]
                 spawn( task () {
-                    yield(nil) thus { it =>
+                    func (it) {
                         set t = copy(it)
-                    }
+                    } (yield(nil))
                 }) ()
                 yield(nil) ;;thus { it => nil }
                 println(t)
@@ -1233,9 +1229,7 @@ class Exec_04 {
             spawn (task () {
                 var t = [1]
                 spawn( task () {
-                    set t = yield(nil) thus { it =>
-                        copy(it)
-                    }
+                    set t = copy(yield(nil))
                 }) ()
                 yield(nil) ;;thus { it => nil }
                 println(t)
@@ -1354,7 +1348,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                val evt = yield(nil) thus { it => it}
+                val evt = yield(nil) ;;thus { it => it}
                 do {
                     var v = evt
                     println(v)
@@ -1737,7 +1731,8 @@ class Exec_04 {
             }
             val T = task () {
                 set pub() = []
-                yield(nil) thus { it => nil }
+                yield(nil)
+                nil
             }
             val t = spawn T()
             f(pub(t))
@@ -1816,7 +1811,8 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     println(t)
                 }) ()
-                yield(nil) thus { it => nil }
+                yield(nil)
+                nil
             }) ()
             coroutine(coro () { nil })
             broadcast(nil)
@@ -1905,7 +1901,8 @@ class Exec_04 {
                 val t = spawn( task () {
                     yield(nil) ;;thus { it => nil }
                 }) ()
-                yield (nil) thus { it => nil }
+                yield (nil)
+                nil
             } )()
             broadcast(nil)
             println(:ok)
@@ -2061,7 +2058,7 @@ class Exec_04 {
             ;;spawn( task () {
                 spawn (task () {
                     println(:A)
-                    yield(nil) thus { it => println(it==t) }
+                    func (it) { println(it==t) } (yield(nil))
                     println(:C)
                 }) ()
                 broadcast(nil) in t
@@ -2645,12 +2642,12 @@ class Exec_04 {
     fun oo_02_gc_bcast() {
         val out = test("""
             var tk = task () {
-                yield(nil) thus { it =>
+                func (it) {
                     do {
                         val xxx = it
                         nil
                     }
-                }
+                } (yield(nil))
                 nil
                 ;;println(:out)
             }
@@ -2669,10 +2666,10 @@ class Exec_04 {
         val out = test("""
             var tk = task () {
                 do {
-                    yield(nil) thus { it =>
+                    func (it) {
                         var v = it
                         nil
-                    }
+                    } (yield(nil))
                 }
                 nil
                 ;;println(:out)
@@ -2692,12 +2689,12 @@ class Exec_04 {
         val out = test("""
             var tk = task () {
                 do {
-                    yield(nil) thus { it =>
+                    func (it) {
                         do {
                             var v = it
                             nil
                         }
-                    }
+                    } (yield(nil))
                 }
                 nil
                 ;;println(:out)
@@ -2918,7 +2915,7 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     10
                 } )()
-                yield (nil) thus { it => println(pub(it)) }
+                func (it) { println(pub(it)) } (yield (nil))
             } )()
             broadcast(nil)
             println(:ok)
@@ -3080,7 +3077,8 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     broadcast(nil)
                 }) ()
-                yield(nil) thus { it => nil }
+                yield(nil)
+                nil
             }) ()
             broadcast(nil)
             println(1)
@@ -3164,7 +3162,8 @@ class Exec_04 {
                     ;;println(:1)
                     broadcast(nil)
                 }) ()
-                yield(nil) thus { it => nil }
+                yield(nil)
+                nil
                 ;;println(:2)
             }) ()
             broadcast(nil)
@@ -3178,7 +3177,7 @@ class Exec_04 {
             """
             var tk
             set tk = task () {
-                yield(nil) thus { it => println(it)}
+                println(yield(nil))
                 nil
             }
             var co
@@ -3205,7 +3204,7 @@ class Exec_04 {
             """
             var tk
             set tk = task () {
-                yield(nil) thus { it => println(it) }
+                println(yield(nil))
                 nil
             }
             var co
@@ -3224,7 +3223,7 @@ class Exec_04 {
             """
             var T = task () {
                 do {
-                    yield(nil) thus { it => println(it) }
+                    println(yield(nil))
                 }
             }
             var t = spawn T()
@@ -3299,7 +3298,7 @@ class Exec_04 {
         val out = test(
             """
             var T = task () {
-                yield(nil) thus { it => println(it) }
+                println(yield(nil))
             }
             var t = spawn T()
             do {
@@ -3316,7 +3315,7 @@ class Exec_04 {
             """
             var T = task () {
                 var v =
-                yield(nil) thus { it => it}
+                func (it) { it} (yield(nil) )
                 println(v)
             }
             var t = spawn T()
@@ -3337,17 +3336,20 @@ class Exec_04 {
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
+                " |  anon : (lin 4, col 17) : (func (it) { it })(yield(nil))\n" +
+                " v  anon : (lin 4, col 27) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun zz_17_bcast() {
         val out = test(
             """
             var T1 = task () {
-                yield(nil) thus { it => nil}
+                yield(nil) ;;thus { it => nil}
                 spawn( task () {                ;; GC = task (no more)
-                    val evt = yield(nil) thus { it => it}
+                    val evt = yield(nil) ;;thus { it => it}
                     println(:1)
                     var v = evt
                 } )()
@@ -3355,8 +3357,8 @@ class Exec_04 {
             }
             var t1 = spawn T1()
             var T2 = task () {
-                yield(nil) thus { it => nil}
-                val evt = yield(nil) thus { it => nil}
+                yield(nil) ;;thus { it => nil}
+                val evt = yield(nil) ;;thus { it => nil}
                 ;;println(:2)
                 do {
                     var v = evt
@@ -3383,7 +3385,7 @@ class Exec_04 {
                 println(v)
             }
             var T = task () {
-                yield(nil) thus { it => fff(it)}
+                fff(yield(nil))
             }
             spawn T()
             broadcast ([1])
@@ -3398,7 +3400,7 @@ class Exec_04 {
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                f(yield(nil) thus { it => it})
+                f(yield(nil)) ;;thus { it => it})
             }
             spawn T()
             broadcast ([[1]])
@@ -3418,7 +3420,7 @@ class Exec_04 {
                 println(x)      ;; x will be freed and v would contain dangling pointer
             }
             var T = task () {
-                val evt = yield(nil) thus { it => it}   ;; NOT FLEETING (vs prv test)
+                val evt = yield(nil) ;;thus { it => it}   ;; NOT FLEETING (vs prv test)
                 f(evt)
             }
             spawn T()
@@ -3434,12 +3436,10 @@ class Exec_04 {
     fun zz_20_bcast_tuple_func_ok() {
         val out = test("""
             var f = func (v) {
-                v[0] thus { x =>
-                    println(x)
-                }
+                println(v[0])
             }
             var T = task () {
-                yield(nil) thus { it => f(it) }
+                f(yield(nil))
             }
             spawn T()
             broadcast ([[1]])
@@ -3453,13 +3453,13 @@ class Exec_04 {
     fun zz_20_bcast_tuple_func_no() {
         val out = test("""
             var f = func (v) {
-                v[0] thus { x =>
+                func (x) {
                     val y = x
                     println(y)
-                }
+                } (v[0])
             }
             var T = task () {
-                yield(nil) thus { it => f(it) }
+                f(yield(nil)) ;;thus { it => f(it) }
             }
             spawn T()
             broadcast ([[1]])
@@ -3480,7 +3480,7 @@ class Exec_04 {
                 g(v[0])
             }
             var T = task () {
-                yield(nil) thus { it => f(it) }
+                f(yield(nil)) ;;thus { it => f(it) }
             }
             spawn T()
             broadcast ([[1]])
@@ -3542,7 +3542,8 @@ class Exec_04 {
                     yield(nil) ;;thus { it => nil }
                     println(t)
                 }) ()
-                yield(nil) thus { it => nil }
+                yield(nil)
+                nil
             }) ()
             broadcast ([])
         """)
@@ -3553,9 +3554,8 @@ class Exec_04 {
         val out = test("""
             spawn (task () {
                 do {
-                    yield(nil) thus { it =>
-                        nil
-                    }
+                    yield(nil)
+                    nil
                 }
                 val y
             }) ()
@@ -3584,9 +3584,9 @@ class Exec_04 {
         val out = test("""
             data :E = [x,y]
             spawn (task () {
-                yield(nil) thus { it :E =>
+                func (it :E) {
                     println(it.x)
-                }
+                } (yield(nil))
             } )()
             broadcast (tags([10,20], :E, true))
         """)
@@ -3598,12 +3598,12 @@ class Exec_04 {
             data :E = [x,y]
             data :F = [i,j]
             spawn (task () {
-                yield(nil) thus { it :E =>
+                func (it :E) {
                     println(it.x)
-                }
-                yield(nil) thus { it :F =>
+                } (yield(nil))
+                func (it :F) {
                     println(it.j)
-                }
+                } (yield(nil))
             } )()
             broadcast (tags([10,20], :E, true))
             broadcast (tags([10,20], :F, true))
