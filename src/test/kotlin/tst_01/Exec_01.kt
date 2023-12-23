@@ -4670,9 +4670,11 @@ class Exec_01 {
         val out = test(
             """
             val f = func (x :X) { x.s }
+            println(f([]))
         """
         )
-        assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+        //assert(out == "anon : (lin 2, col 29) : declaration error : data :X is not declared\n") { out }
+        assert(out == "anon : (lin 2, col 35) : index error : expected number\n") { out }
     }
     @Test
     fun pp_20_tplate_func() {

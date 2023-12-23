@@ -716,8 +716,8 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        //assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        //assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_16_scope() {

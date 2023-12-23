@@ -147,7 +147,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
         when (this) {
             is Expr.Proto  -> {
                 if (this.tag!=null && this.tag.str!=":void" && !datas.containsKey(this.tag.str)) {
-                    err(this.tag, "declaration error : data ${this.tag.str} is not declared")
+                    //err(this.tag, "declaration error : data ${this.tag.str} is not declared")
                 }
                 this.args.forEach { (id,tag) ->
                     val prv = dcls.firstOrNull { id.str!="..." && id.str==it.id.str }
@@ -160,7 +160,7 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                         err(id, "declaration error : variable \"${id.str}\" is already declared")
                     }
                     if (tag!=null && !datas.containsKey(tag.str)) {
-                        err(tag, "declaration error : data ${tag.str} is not declared")
+                        //err(tag, "declaration error : data ${tag.str} is not declared")
                     }
                 }
                 this.blk.traverse()
