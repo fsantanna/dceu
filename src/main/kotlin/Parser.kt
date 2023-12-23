@@ -1300,8 +1300,11 @@ class Parser (lexer_: Lexer)
                 "thus" -> {
                     val (id_tag,es) = lambda(N)
                     val (id,tag) = id_tag
-                    val dcl = Expr.Dcl(Tk.Fix("val",id.pos), id, tag, true, e)
-                    Expr.Do(op, listOf(dcl) + es)
+                    this.nest( """
+                        func (${id.str} ${tag.cond {it.str }}) {
+                            ${es.tostr(true)}
+                        } (${e.tostr(true)})
+                    """)
                 }
                 else -> error("impossible case")
             }

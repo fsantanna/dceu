@@ -480,6 +480,487 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
 
+    // THUS / SCOPE / :FLEET / :fleet
+
+    @Test
+    fun mm_01_tmp() {
+        val out = test(
+            """
+            var x
+            do {
+                [1,2,3] thus { a =>
+                    set x = a
+                }
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_err() {
+        val out = test(
+            """
+            var x
+            do {
+                [1,2,3] thus { a =>
+                    set x = drop(a)
+                }
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 34) : drop error : value is not movable\n") { out }
+    }
+    @Test
+    fun mm_01_tmp_ok() {
+        val out = test(
+            """
+            val x = do {
+                [1,2,3] thus { a =>
+                    a
+                }
+            }
+            println(x)
+        """
+        )
+        assert(out == "[1,2,3]\n") { out }
+        //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_02_thus_err() {
+        val out = test("""
+            var x
+            nil thus { it =>
+                set x = 10  ;; err
+            }
+            println(x)
+        """)
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_03_thus_err() {
+        val out = test("""
+            var x
+            nil thus { it =>
+                set x = it  ;; err
+                println(x)
+            }
+        """)
+        //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
+        assert(out == "nil\n") { out }
+    }
+    @Test
+    fun mm_04_tmp() {
+        val out = test(
+            """
+            [0] thus { x =>
+                set x[0] = []
+                println(x)
+            }
+        """
+        )
+        assert(out == "[[]]\n") { out }
+    }
+    @Test
+    fun mm_05_tmp() {
+        val out = test("""
+            val v = do {
+                [] thus { x =>
+                    if x { x } else { [] }
+                }
+            }
+            println(v)
+        """)
+        //assert(out == "anon : (lin 3, col 20) : block escape error : cannot copy reference out\n") { out }
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun mm_05_tmp_x() {
+        val out = test("""
+            val v = do {
+                [] thus { x =>
+                    if x { drop(x) } else { [] }
+                }
+            }
+            println(v)
+        """)
+        //assert(out == "[]\n") { out }
+        assert(out == "anon : (lin 4, col 33) : drop error : value is not movable\n") { out }
+    }
+    @Test
+    fun mm_06_tmp_err() {
+        val out = test("""
+            val v = do {
+                val x = []
+                if x { x } else { [] }
+            }
+            println(v)
+        """)
+        assert(out == "anon : (lin 2, col 21) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_07_and_or() {
+        val out = test("""
+            val t = func () { println(:t) ; true  }
+            val f = func () { println(:f) ; false }
+            println(${AND("t()", "f()")})
+            println(${OR("t()", "f()")})
+            println(${AND("[]", "false")})
+            println(${OR("false", "[]")})
+        """)
+        assert(out == ":t\n:f\nfalse\n:t\ntrue\nfalse\n[]\n") { out }
+    }
+    @Test
+    fun mm_08_fleet_tuple_func_err() {
+        val out = test("""
+            var f = func (v) {
+                v[0] thus { it =>
+                    println(it)
+                }
+            }
+            var g = func (v) {
+                val evt = v
+                f(evt)
+            }
+            g([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun mm_09_yield_err() {
+        val out = test("""
+            resume (coro () {
+                yield(nil) thus { it => set it = nil }
+            }) ()
+        """)
+        assert(out == "anon : (lin 3, col 41) : set error : destination is immutable\n") { out }
+    }
+    @Test
+    fun mm_10_yield_err() {
+        val out = test("""
+            resume (coro () {
+                yield(nil) thus { it => yield(nil) thus { x => nil } }
+            }) ()
+        """)
+        assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
+    }
+    @Test
+    fun mm_11_resume_yield() {
+        val out = test("""
+            $PLUS
+            val CO = coro () {
+                yield(nil) thus { it => 
+                    println(it)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(10)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_12_resume_yield() {
+        val out = test("""
+            val CO = coro (v1) {
+                yield(v1) thus { x => x }
+            }
+            val co = coroutine(CO)
+            val v1 = resume co(10)
+            val v2 = resume co(v1)
+            println(v2)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_13_tags() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) thus { it =>
+                    println(tags(it,:X)) ;; drop(it)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(tags([],:X,true))
+        """)
+        assert(out == "true\n") { out }
+    }
+    @Test
+    fun mm_14_yield_as() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) thus { v =>
+                    println(v)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co(10)
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_15_yield_as() {
+        val out = test("""
+            coro () {
+                yield(nil) thus { it :T =>
+                    it[0]
+                }
+            }
+            println(:ok)
+        """)
+        //assert(out == "anon : (lin 3, col 38) : declaration error : data :T is not declared\n") { out }
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun mm_16_scope() {
+        val out = test("""
+            val T = coro () {
+                val v = yield(nil) thus { x => x }
+                yield(nil) ;;thus { it => nil }
+                println(v)                
+            }
+            val t = coroutine(T)
+            resume t()
+            do {
+                do {
+                    do {
+                        val v = []
+                        resume t(v)
+                    }
+                }
+            }
+            resume t()
+        """)
+        //assert(out == " |  anon : (lin 11, col 24) : t(v)\n" +
+        //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
+        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+                " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_17_catch_yield_err() {
+        val out = test("""
+            coro () {
+                catch ( it => do {
+                    yield(nil) thus { it => nil }
+                } )
+                {
+                    throw(:e1)
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 40) : declaration error : variable \"it\" is already declared\n") { out }
+    }
+    @Test
+    fun mm_18_it() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) thus { it =>
+                    println(:it, it)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co()
+        """,)
+        assert(out == ":it\tnil\n") { out }
+    }
+    @Test
+    fun mm_19_it() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) thus { x =>
+                    println(:it, x)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co([])
+        """,)
+        assert(out == ":it\t[]\n") { out }
+    }
+    @Test
+    fun mm_20_it_err() {
+        val out = test("""
+            val CO = coro (x) {
+                yield(nil) thus { x =>
+                    println(:it, x)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co([])
+        """,)
+        assert(out == "anon : (lin 3, col 35) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun mm_21_it_data() {
+        val out = test("""
+            data :X = [x]
+            val CO = coro () {
+                yield(nil) thus { x :X =>
+                    println(:it, x.x)
+                }
+            }
+            val co = coroutine(CO)
+            resume co()
+            resume co([10])
+        """,)
+        assert(out == ":it\t10\n") { out }
+    }
+    @Test
+    fun mm_22_it_it_err() {
+        val out = test("""
+            val CO = coro () {
+                yield(nil) thus { x =>
+                    yield(nil) thus { x =>
+                        x
+                    }
+                }
+            }
+        """,)
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing yield\n") thus { out }
+        assert(out == "anon : (lin 4, col 39) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
+    fun mm_23_scope() {
+        val out = test("""
+            val T = coro () {
+                val v = yield(nil) thus { it => 
+                    println(it)
+                    10
+                }
+                yield(nil) ;;thus { it => nil }
+                println(v)                
+            }
+            val t = coroutine(T)
+            resume t()
+            do {
+                val v = []
+                resume t(v)
+            }
+            resume t()
+        """)
+        assert(out == "[]\n10\n") { out }
+    }
+    @Test
+    fun mm_24_yield() {
+        val out = test("""
+            coro () {
+                yield(nil) thus { x =>
+                    yield(nil) thus { y => nil }
+                }
+            }
+        """)
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
+    }
+    @Test
+    fun mm_25_gc_bcast() {
+        val out = test("""
+            var tk = task () {
+                yield(nil) thus { it =>
+                    do {
+                        val xxx = it
+                        nil
+                    }
+                }
+                nil
+                ;;println(:out)
+            }
+            var co = spawn tk ()
+            broadcast ([])
+            println(`:number CEU_GC_COUNT`)
+        """)
+        //assert(out == "0\n") { out }
+        assert(out == "1\n") { out }
+        //assert(out == "anon : (lin 11, col 13) : broadcast []\n" +
+        //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
+        //        ":error\n") { out }
+    }
+    @Test
+    fun mm_26_term() {
+        val out = test("""
+            spawn( task () {
+                val t = spawn (task () {
+                    yield(nil) ;;thus { it => nil }
+                    10
+                } )()
+                yield (nil) thus { it => println(pub(it)) }
+            } )()
+            broadcast(nil)
+            println(:ok)
+       """)
+        assert(out == "10\n:ok\n") { out }
+    }
+    @Test
+    fun mm_27_bcast_err() {
+        val out = test(
+            """
+            var T = task () {
+                var v =
+                yield(nil) thus { it => it}
+                println(v)
+            }
+            var t = spawn T()
+            ;;println(:1111)
+            do {
+                val a
+                do {
+                    val b
+                    var e = []
+                    broadcast (e)
+                }
+            }
+            ;;println(:2222)
+            """
+        )
+        //assert(out == ":1\n:2\n1\n") { out }
+        //assert(out == " |  anon : (lin 11, col 17) : broadcast e\n" +
+        //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
+        //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 28) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun mm_28_data_await() {
+        val out = test("""
+            data :E = [x,y]
+            spawn (task () {
+                yield(nil) thus { it :E =>
+                    println(it.x)
+                }
+            } )()
+            broadcast (tags([10,20], :E, true))
+        """)
+        assert(out == "10\n") { out }
+    }
+    @Test
+    fun mm_29_data_await() {
+        val out = test("""
+            data :E = [x,y]
+            data :F = [i,j]
+            spawn (task () {
+                yield(nil) thus { it :E =>
+                    println(it.x)
+                }
+                yield(nil) thus { it :F =>
+                    println(it.j)
+                }
+            } )()
+            broadcast (tags([10,20], :E, true))
+            broadcast (tags([10,20], :F, true))
+        """)
+        assert(out == "10\n20\n") { out }
+    }
+
     // LOOP / ITER / NUMERIC FOR
 
     @Test
