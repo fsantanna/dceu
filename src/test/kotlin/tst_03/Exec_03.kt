@@ -1373,4 +1373,17 @@ class Exec_03 {
         """)
         assert(out == ":ok\n") { out }
     }
+    @Test
+    fun zz_03_nested() {
+        val out = test("""
+            val CO = coro (x) {
+                func () {
+                    x
+                }()
+            }
+            println(resume (coroutine(CO)) (10))
+        """
+        )
+        assert(out == "10\n") { out }
+    }
 }
