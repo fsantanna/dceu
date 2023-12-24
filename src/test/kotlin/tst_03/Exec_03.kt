@@ -757,8 +757,9 @@ class Exec_03 {
             }
             println(f(coroutine(C)))
         """)
-        assert(out == " |  anon : (lin 8, col 21) : f(coroutine(C))\n" +
-                " v  anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        //assert(out == " |  anon : (lin 8, col 21) : f(coroutine(C))\n" +
+        //        " v  anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+        assert(out == "nil\n") { out }
     }
     @Test
     fun gg_08_scope() {

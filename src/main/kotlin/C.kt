@@ -1084,7 +1084,7 @@ fun Coder.main (tags: Tags): String {
             CEU_HOLD   src_type = src.Dyn->Any.hld.type;
             
         #if CEU >= 5
-            if (src.type==CEU_VALUE_EXE_TASK_IN && dst_type!=CEU_HOLD_FLEET) {
+            if (src.type==CEU_VALUE_EXE_TASK_IN && dst_type>CEU_HOLD_FLEET) {
                 // unsafe to assign task-in to any variable of any scope
                 // (unless nested scope as FLEET in func/thus)
                 // b/c it is self-reclaimed which would generate dangling pointers:
@@ -1939,8 +1939,8 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
-            *ret = (CEU_Exe) {  // refs=1 b/c of ref in block for defers
-                type, 1, NULL, { hld_type, blk, NULL, NULL },
+            *ret = (CEU_Exe) {  // TODO: refs=0 to avoid "pending reference" // refs=1 b/c of ref in block for defers
+                type, 0, NULL, { hld_type, blk, NULL, NULL },
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, {.exe=ret} }, 0, mem
             };
             
@@ -1989,8 +1989,9 @@ fun Coder.main (tags: Tags): String {
             }
             if (tasks->max==0 || ceu_tasks_n(tasks)<tasks->max) {
                 CEU_Value ret = _ceu_create_exe_task_(CEU_VALUE_EXE_TASK_IN, CEU_HLD_BLOCK((CEU_Dyn*)tasks), clo, &tasks->dyns);
-                if (ret.type == CEU_VALUE_EXE_TASK_IN) {
-                    ret.Dyn->Any.hld.block = (CEU_Block*) tasks; // point to tasks (vs enclosing block)
+                if (ret.type != CEU_VALUE_ERROR) {
+                    ret.Dyn->Exe_Task.hld.type = tasks->hld.type; // TODO: not sure 
+                    ret.Dyn->Any.hld.block = (void*) tasks; // point to tasks (vs enclosing block)
                 }
                 return ret;
             } else {

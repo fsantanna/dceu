@@ -304,7 +304,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                             $idc = ceu_args[$i];
                                             if ($idc.type > CEU_VALUE_DYNAMIC) {
                                                 int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                                    ($idc.Dyn->Any.hld.type - 1);
+                                                                    ($idc.Dyn->Any.hld.type-1);
                                                 // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
                                                 // [gg_02_scope] v -> coro/task
                                                 ${(!inexe).cond {"if (ceu_type_$n != CEU_HOLD_FLEET)"}} 
@@ -574,9 +574,9 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             ceu_acc = ceu_err;
                             continue; // uncaught, rethrow
                         }
-                        ceu_gc_inc(ceu_err.Dyn->Throw.val);
-                        ceu_gc_dec(ceu_err, 1);
                         ceu_acc = ceu_err.Dyn->Throw.val;
+                        assert(ceu_err.Dyn->Throw.refs == 0);
+                        ceu_gc_rem(ceu_err.Dyn);
                     }
                 }
                 """
@@ -780,6 +780,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     }
                     ${this.blk.code()}
                 }
+                //CEU_Bstk ceu_dstk_$n = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };
                 """
             }
             is Expr.Toggle -> {
@@ -1131,6 +1132,12 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }},
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
+
+                    ${(CEU >= 5).cond { """
+                        //if (!ceu_dstk_on(ceu_dstk)) {
+                        //    return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                        //}
+                    """ }}
                     
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                         if (!$bstk->on) {

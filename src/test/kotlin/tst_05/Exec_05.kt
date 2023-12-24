@@ -523,10 +523,10 @@ class Exec_05 {
     @Test
     fun dd_01_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { it =>
+            val v = detrack(x) { it =>
                 println(:1, x)
                 println(:2, t)
                 println(:3, it)
@@ -545,10 +545,10 @@ class Exec_05 {
     @Test
     fun dd_02_detrack() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x)
+            val v = detrack(x) { it=>it }
             println(status(v))
         """)
         assert(out.contains(":yielded\n")) { out }
@@ -598,33 +598,35 @@ class Exec_05 {
     @Test
     fun dd_04_detrack_eq() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x)
-            println(v == v)
-            println(v == x)
+            detrack(x) { v =>
+                println(v == v)
+                println(v == x)
+            }
         """)
         assert(out == ("true\nfalse\n")) { out }
     }
     @Test
     fun dd_05_detrack_print() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x)
-            println(v)
+            detrack(x) { v =>
+                println(v)
+            }
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
     @Test
     fun dd_06_detrack_drop_err() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x) thus { it =>
+            val v = detrack(x) { it =>
                 drop(it)
             }
             println(v)
@@ -656,9 +658,10 @@ class Exec_05 {
             }
             val t = spawn T()
             val x = track(t)
-            val v = detrack(x)
-            val y = pub(v)
-            println(y)
+            detrack(x) { v =>
+                val y = pub(v)
+                println(y)
+            }
         """)
         assert(out == ("10\n")) { out }
     }
@@ -684,7 +687,7 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             val t = next-tasks(ts)
-            println(pub(detrack(t)))
+            detrack(t) { it => println(pub(it)) }
         """)
         assert(out.contains("[10]\n")) { out }
     }
@@ -736,7 +739,7 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
-            val t = detrack(x)
+            val t = detrack(x) { it=>it }
             broadcast(nil)
             println(status(t))
         """)
@@ -752,7 +755,7 @@ class Exec_05 {
             }
             val t = spawn T()
             val x = track(t)
-            println(detrack(x))
+            println(detrack(x) {it=>it})
         """)
         //assert(out == " v  anon : (lin 7, col 32) : block escape error : cannot copy reference out\n") { out }
         assert(out.contains("exe-task: 0x")) { out }
@@ -765,7 +768,7 @@ class Exec_05 {
             }
             val t = spawn T()
             val x = track(t)
-            println(detrack(x) thus { it =>
+            println(detrack(x) { it =>
                 val z = it
                 10
             })
@@ -810,7 +813,7 @@ class Exec_05 {
                 spawn T() in ts
                 next-tasks(ts)
             }
-            println(detrack(x))
+            detrack(x) { it => println(it) }
         """)
         assert(out.contains("exe-task: 0x")) { out }
     }
@@ -832,45 +835,47 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            println(detrack(x) thus { it => pub(it) })
+            println(detrack(x) { it => pub(it) })
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         //assert(out == "[10]\n") { out }
-        assert(out == " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+                " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun fg_02_detrack_pub() {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
             broadcast(nil)
-            println(detrack(x) thus { it => pub(it) })      ;; expose (ok, global func)
+            println(detrack(x) { it => pub(it) }) ;; expose (ok, global func)
         """)
-        //assert(out == "nil\n") { out }
-        assert(out == " v  anon : (lin 9, col 49) : pub error : expected task\n") { out }
+        assert(out == "nil\n") { out }
+        //assert(out == " v  anon : (lin 9, col 49) : pub error : expected task\n") { out }
     }
     @Test
     fun fg_03_detrack_pub() {
         val out = test("""
             val T = task () {
                 set pub() = [10]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            val v = detrack(x) thus { it => pub(it) }
+            val v = detrack(x) { it => pub(it) }
             broadcast(nil)
             println(v)
         """)
-        assert(out == " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+                " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
     }
     @Test
@@ -880,12 +885,12 @@ class Exec_05 {
                 val ts = tasks()
                 var T = task () {
                     set pub() = []
-                    yield(nil) thus { it => nil }
+                    yield(nil) ; nil
                     nil
                 }
                 spawn (T) () in ts
                 val trk = next-tasks(ts)
-                val p = detrack(trk)
+                val p = detrack(trk) { it => it }
                 p
             }
             println(x)
@@ -900,11 +905,11 @@ class Exec_05 {
             var T = task (t) {
                 set pub() = []
                 if t {
-                    val p = detrack(t) thus { it => pub(it) }
+                    val p = detrack(t) { it => pub(it) }
                 } else {
                     nil
                 }
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
                 nil
             }
             val t = spawn T ()
@@ -913,7 +918,8 @@ class Exec_05 {
         """)
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
-                " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
+                " |  anon : (lin 5, col 40) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+                " v  anon : (lin 5, col 47) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -926,7 +932,7 @@ class Exec_05 {
             }
             val T = task () {
                 set pub() = []
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val ts = tasks()
             do {
@@ -940,7 +946,7 @@ class Exec_05 {
             }
             do {
                 val xx1 = next-tasks(ts)
-                f(pub(detrack(xx1))) ;;thus { it => f(pub(it)) }
+                detrack(xx1) { it => f(pub(it)) }
             }
             println(:ok)
         """)
@@ -954,12 +960,12 @@ class Exec_05 {
             }
             val T = task () {
                 set pub() = []
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
-            f(pub(detrack(x))) ;; thus { t => f(pub(t)) }
+            detrack(x) { t => f(pub(t)) }
             println(:ok)
         """)
         assert(out == "[]\n:ok\n") { out }
@@ -969,7 +975,7 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 10
-                yield(nil) thus { it => nil}
+                yield(nil) ; nil
             }
             val ts = tasks()
             val t = catch ( it=>true) {
@@ -979,7 +985,7 @@ class Exec_05 {
                     throw(drop(t))
                 }
             }
-            println(pub(detrack(t)))
+            detrack(t) { it => println(pub(it)) }
         """)
         //assert(out == ":ok\n") { out }
         assert(out == "10\n") { out }
@@ -988,7 +994,7 @@ class Exec_05 {
     fun fg_08_throw_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it=>nil }
+                yield(nil) ; nil
             }
             val x = do {
                 val ts = tasks()
@@ -1008,7 +1014,7 @@ class Exec_05 {
     fun fg_09_throw_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val ts = tasks()
             catch ( it=>true) {
@@ -1106,12 +1112,13 @@ class Exec_05 {
             val ts = tasks()
             spawn T(10) in ts
             val x1 = next-tasks(ts)
-            val v = detrack(x1) thus { it => println(pub(it)) ; pub(it) }
+            val v = detrack(x1) { it => println(pub(it)) ; pub(it) }
             println(v)
         """
         )
         assert(out == "[10]\n" +
-                " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
+                " |  anon : (lin 9, col 33) : (func (it) { if it { println(pub(it)) pub(it)...)\n" +
+                " v  anon : (lin 9, col 40) : block escape error : cannot copy reference out\n") { out }
     }
 
     // ABORTION
@@ -1197,7 +1204,7 @@ class Exec_05 {
     @Test
     fun oo_01_tracks() {
         val out = test("""
-            val T = task () { yield(nil) thus { it => nil } }
+            val T = task () { yield(nil) ; nil }
             do {
                 val ts = tasks()
                 spawn T() in ts
@@ -1221,7 +1228,7 @@ class Exec_05 {
     fun oo_02_track_err() {
         val out = test("""
             var T = task (v) {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var x
             var ts = tasks()
@@ -1239,7 +1246,7 @@ class Exec_05 {
             var T
             set T = task (v) {
                 set pub() = [v]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var x
             do {
@@ -1260,13 +1267,13 @@ class Exec_05 {
     fun oo_04_track() {
         val out = test("""
             var T = task (v) {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var ts = tasks()
             spawn T(1) in ts
             val x = do {
                 val t = next-tasks(ts)
-                detrack(t)
+                detrack(t) { it => it }
             }
             println(x)
         """)
@@ -1280,15 +1287,15 @@ class Exec_05 {
     fun op_01_track() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
                 set pub() = 10
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var t = spawn T()
             var x = track(t)
-            println(pub(detrack(x))) 
+            detrack(x) { it => println(pub(it)) } 
             broadcast(nil)
-            println(pub(detrack(x))) 
+            detrack(x) { it => println(pub(it)) } 
         """)
         assert(out == "nil\n10\n") { out }
     }
@@ -1298,13 +1305,13 @@ class Exec_05 {
             var T
             set T = task () {
                 set pub() = [10]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var t = spawn T ()
             var x = track(t)
-            println(pub(detrack(x))[0])
+            detrack(x) { it => println(pub(it)[0]) }
             broadcast( nil )
-            println(detrack(x))
+            println(detrack(x) { it => 999 })
         """)
         assert(out == "10\nnil\n") { out }
     }
@@ -1314,7 +1321,7 @@ class Exec_05 {
             var T
             set T = task () {
                 set pub() = [10]
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             var x
             do {
@@ -1342,16 +1349,16 @@ class Exec_05 {
             spawn( task () {
                 catch ( err=>err==:par-or ) {
                     spawn( task () {
-                        yield(nil) thus { it => it==t }
+                        yield(nil) ;;thus { it => it==t }
                         throw(:par-or)
                     }) ()
-                    println(detrack(x) thus { it => pub(it)[0] })
+                    println(detrack(x) { it => pub(it)[0] })
                     broadcast(nil) in t
-                    println(detrack(x) thus { it => pub(it)[0] })
+                    println(detrack(x) { it => pub(it)[0] })
                     broadcast(:evt) in t
                     println(999)
                 }
-                println(detrack(x) thus { it => if it {999} else {nil} })
+                println(detrack(x) { it => if it {999} else {nil} })
             })()
             println(:ok)
         """)
@@ -1361,15 +1368,16 @@ class Exec_05 {
     fun op_05_detrack_err() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val t1 = spawn T()
             val r1 = track(t1)
-            val x1 = detrack(r1)
-            ;;println(t1, r1, x1, status(t1))
-            broadcast( nil )
-            ;;println(t1, r1, x1, status(t1))
-            println(status(t1))
+            detrack(r1) { x1 => 
+                ;;println(t1, r1, x1, status(t1))
+                broadcast( nil )
+                ;;println(t1, r1, x1, status(t1))
+                println(status(t1))
+            }
         """)
         assert(out == ":terminated\n") { out }
         //assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
@@ -1380,7 +1388,7 @@ class Exec_05 {
     fun op_06_track_scope() {
         val out = test("""
             val T = task () {
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val t = spawn T()
             val y = do {
@@ -1396,13 +1404,13 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 1
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val t = spawn T()
             val y = do {
                 track(t)
             }
-            println(pub(detrack(y)))
+            detrack(y) { it => println(pub(it)) }
         """)
         assert(out == "1\n") { out }
     }
@@ -1411,13 +1419,13 @@ class Exec_05 {
         val out = test("""
             val T = task () {
                 set pub() = 1
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val y = do {
                 val t = spawn T()
                 track(t)
             }
-            println(pub(detrack(y)))
+            detrack(y) { it => println(pub(it)) }
         """)
         assert(out == " v  anon : (lin 6, col 21) : block escape error : cannot move track outside its task scope\n") { out }
     }
@@ -1429,10 +1437,10 @@ class Exec_05 {
                     println(:ok)
                 }
                 spawn( task () {
-                    yield(nil) thus { it => nil }
+                    yield(nil) ; nil
                     throw(:error)
                 })()
-                yield(nil) thus { it => nil }
+                yield(nil) ; nil
             }
             val ts = tasks()
             spawn T() in ts
@@ -1441,7 +1449,7 @@ class Exec_05 {
                 broadcast(nil)
             }
             ;;`ceu_gc_collect();`
-            detrack(t) thus { it => println(it) }
+            detrack(t) { it => println(it) }
         """)
         assert(out == " |  anon : (lin 10, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 5, col 21) : throw(:error)\n" +
