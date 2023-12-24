@@ -934,19 +934,23 @@ class Parser (lexer_: Lexer)
                 val tk0 = this.tk0 as Tk.Fix
                 val tsk = this.expr_in_parens()!!
                 //this.acceptFix_err("thus")
-                val tk1 = this.tk1
-                val (id_tag,es) = lambda(N)
-                val (id,tag) = id_tag
-                val blk = this.nest("""
-                    (${tk1.pos.pre()}func (${id.pos.pre()+id.str} ${tag.cond{it.pos.pre()+it.str}}) {
-                        if ${id.str} {
-                            ${es.tostr(true)}
-                        } else {
-                            nil
-                        }
-                    }) (`:ceu ceu_acc`)
-                """)
-                return Expr.Dtrack(tk0, tsk, blk as Expr.Call)
+                return if (this.checkFix("{")) {
+                    val tk1 = this.tk1
+                    val (id_tag, es) = lambda(N)
+                    val (id, tag) = id_tag
+                    val blk = this.nest("""
+                        (${tk1.pos.pre()}func (${id.pos.pre() + id.str} ${tag.cond { it.pos.pre() + it.str }}) {
+                            if ${id.str} {
+                                ${es.tostr(true)}
+                            } else {
+                                nil
+                            }
+                        }) (${tk0.pos.pre()}detrack'(${tsk.tostr(true)}))
+                    """)
+                    Expr.Dtrack(tk0, blk as Expr.Call)
+                } else {
+                    this.nest("${tk0.pos.pre()}detrack''(${tsk.tostr(true)})")
+                }
             }
 
             this.acceptEnu("Nat")  -> Expr.Nat(this.tk0 as Tk.Nat)

@@ -45,15 +45,13 @@ class Parser_05 {
 
     @Test
     fun bb_01_detrack_err() {
-        val l = tst_03.lexer(
-            """
+        val l = tst_03.lexer("""
             detrack(1)
-        """
-        )
+        """)
         val parser = Parser(l)
-        //val e = parser.exprs()
-        //assert(e.tostr() == "detrack(1)\n") { e.tostr() }
-        assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
+        val e = parser.exprs()
+        assert(e.tostr() == "detrack''(1)\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
     }
     @Test
     fun bb_02_detrack_ok() {
@@ -107,6 +105,19 @@ class Parser_05 {
         """)
         //assert(out == "anon : (lin 2, col 30) : expected \"in\" : have \"{\"\n") { out }
         assert(out == "") { out }
+    }
+    @Test
+    fun bb_08_as() {
+        val l = tst_03.lexer("""
+            detrack(1) { x => 1 }
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "(detrack(1) {\n" +
+                "x =>\n" +
+                "1\n" +
+                "})\n") { e.tostr() }
+        //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")
     }
 
     // TRACK

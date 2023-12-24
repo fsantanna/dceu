@@ -60,11 +60,17 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.arg.tostr(pre) + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
         is Expr.Dtrack -> {
+            val tsk = this.blk.args.let {
+                assert(it.size == 1)
+                val x = it[0] as Expr.Call
+                assert(x.args.size == 1)
+                x.args[0]
+            }
             val clo = this.blk.clo as Expr.Proto
             val (tk,tag) = clo.args[0]
             val if_ = clo.blk.es[0] as Expr.If
             val blk = tk.str + tag.cond { " " + it.str } + " =>\n" + if_.t.es.tostr(pre)
-            "(detrack(" + this.tsk.tostr(pre) + ") {\n" + blk + "})"
+            "(detrack(" + tsk.tostr(pre) + ") {\n" + blk + "})"
         }
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 

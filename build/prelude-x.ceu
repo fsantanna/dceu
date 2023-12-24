@@ -342,7 +342,7 @@ func :rec copy (v) {
             drop(ret)
         }
         == :track {
-            track(detrack(v))
+            detrack(v) { track(it) }
         }
         else {
             throw(:TODO)
@@ -439,6 +439,11 @@ func math-floor (v) {
     `:number floor($v.Number)`
 }
 
+;; DETRACK
+
+func detrack'' (trk) {
+    not not detrack'(trk)
+}
 ;; AWAIT
 
 func await-chk (evt, cnd) {

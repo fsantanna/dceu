@@ -400,11 +400,21 @@ class Exec_05 {
     // DETRACK
 
     @Test
+    fun cc_00_detrack() {
+        val out = test("""
+            $DETRACK
+            detrack(nil)
+        """)
+        assert(out == " |  anon : (lin 3, col 13) : detrack''(nil)\n" +
+                " v  anon : (lin 2, col 58) : detrack'(trk) : detrack error : expected track value\n") { out }
+    }
+    @Test
     fun cc_01_detrack() {
         val out = test("""
+            $DETRACK
             detrack(nil) { it => nil }
         """)
-        assert(out == " v  anon : (lin 2, col 13) : detrack error : expected track value\n") { out }
+        assert(out == " v  anon : (lin 3, col 13) : detrack'(nil) : detrack error : expected track value\n") { out }
     }
     @Test
     fun cc_02_detrack() {
@@ -455,7 +465,7 @@ class Exec_05 {
             detrack(nil) { it => broadcast(nil) }
         """)
         //assert(out == ("anon : (lin 2, col 37) : broadcast error : unexpected enclosing detrack\n")) { out }
-        assert(out == (" v  anon : (lin 2, col 13) : detrack error : expected track value\n")) { out }
+        assert(out == (" v  anon : (lin 2, col 13) : detrack'(nil) : detrack error : expected track value\n")) { out }
     }
     @Test
     fun cc_07_detrack_err() {
@@ -489,6 +499,7 @@ class Exec_05 {
     @Test
     fun cc_09_detrack() {
         val out = test("""
+            $DETRACK
             val T = task (v) {
                 yield(nil) ; nil
             }
@@ -497,25 +508,26 @@ class Exec_05 {
             val x = next-tasks(ts)
             ;;dump(x)
             broadcast(nil)
-            println(detrack(x) { it => 99 })
+            println(detrack(x))
         """
         )
-        assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
     }
     @Test
     fun cc_10_detrack() {
         val out = test("""
+            $DETRACK
             val T = task (v) {
                 ${AWAIT("it == v")}
             }
             val t = spawn T()
             val x = track(t)
             broadcast(nil)
-            println(detrack(x) { it => 99 })
+            println(detrack(x))
             ;;dump(x)
         """
         )
-        assert(out == "nil\n") { out }
+        assert(out == "false\n") { out }
     }
 
     // DETRACK / ACCESS
@@ -1302,6 +1314,7 @@ class Exec_05 {
     @Test
     fun op_02_track() {
         val out = test("""
+            $DETRACK
             var T
             set T = task () {
                 set pub() = [10]
@@ -1310,10 +1323,11 @@ class Exec_05 {
             var t = spawn T ()
             var x = track(t)
             detrack(x) { it => println(pub(it)[0]) }
+            println(detrack(x))
             broadcast( nil )
             println(detrack(x) { it => 999 })
         """)
-        assert(out == "10\nnil\n") { out }
+        assert(out == "10\ntrue\nnil\n") { out }
     }
     @Test
     fun op_03_track_err() {

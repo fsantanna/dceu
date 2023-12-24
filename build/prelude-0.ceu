@@ -238,6 +238,16 @@ set copy = func (v) {
     }
 }
 
+;; DETRACK
+
+val detrack'' = func (trk) {
+    if detrack'(trk) {
+        true
+    } else {
+        false
+    }
+}
+
 ;; AWAIT
 ;;;
 val await = func (e) {

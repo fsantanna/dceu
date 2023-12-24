@@ -105,7 +105,7 @@ val GLOBALS = setOf (
 )) + (if (CEU < 4) setOf() else setOf(
     "broadcast'"
 )) + (if (CEU < 5) setOf() else setOf(
-    "next-tasks", "tasks", "track"
+    "detrack'", "next-tasks", "tasks", "track"
 ))
 
 sealed class Tk (val str: String, val pos: Pos) {
@@ -141,7 +141,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val arg: Expr): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
-    data class Dtrack (val tk_: Tk.Fix, val tsk: Expr, val blk: Expr.Call): Expr(N++, tk_)
+    data class Dtrack (val tk_: Tk.Fix, val blk: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)
 
     data class Nat    (val tk_: Tk.Nat): Expr(N++, tk_)

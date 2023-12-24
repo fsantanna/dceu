@@ -2402,7 +2402,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // TRACK
         #if CEU >= 5
-        CEU_Value ceu_track_f (CEU4(CEU_Bstk* _0 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
+        CEU_Value ceu_track_f (CEU_Bstk* _0, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 1);
             CEU_Value task = args[0];
             if (!ceu_istask_val(task)) {
@@ -2413,6 +2413,17 @@ fun Coder.main (tags: Tags): String {
             //CEU_Block* blk = (ceu_dmin(task->Dyn->up_dyns.dyns->up_block) > ceu_dmin(frame->up_block)) ?
             //    task->Dyn->up_dyns.dyns->up_block : frame->up_block;
             return ceu_create_track(frame->up_block, (CEU_Exe_Task*)task.Dyn);
+        }
+        CEU_Value ceu_detrack_f (CEU_Bstk* _0, CEU_Frame* frame, int n, CEU_Value args[]) {
+            assert(n == 1);
+            CEU_Value trk = args[0];
+            if (trk.type != CEU_VALUE_TRACK) {                
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
+            } else if (trk.Dyn->Track.task == NULL) {
+                return (CEU_Value) { CEU_VALUE_NIL };
+            } else {
+                return ceu_dyn_to_val((CEU_Dyn*)trk.Dyn->Track.task);
+            }
         }
         #endif
     """ +
@@ -2508,6 +2519,10 @@ fun Coder.main (tags: Tags): String {
             CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &CEU_BLOCK, NULL, NULL },
             &CEU_FRAME, ceu_next_tasks_f, {0,NULL}
         };
+        CEU_Clo ceu_detrack = { 
+            CEU_VALUE_CLO_FUNC, 1, NULL, { CEU_HOLD_MUTAB, &CEU_BLOCK, NULL, NULL },
+            &CEU_FRAME, ceu_detrack_f, {0,NULL}
+        };
         #endif
 
         CEU_Value id_dump                    = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_dump}                    };
@@ -2536,6 +2551,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 5
         CEU_Value id_tasks                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_tasks}                   };
+        CEU_Value id_detrack_plic_           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_detrack}                 };
         CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
         CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_tasks}              };
         #endif

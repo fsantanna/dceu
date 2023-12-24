@@ -69,6 +69,16 @@ val IS = """
     }
 """.replace("\n", " ")
 
+val DETRACK = """
+    val detrack'' = func (trk) {
+        if detrack'(trk) {
+            true
+        } else {
+            false
+        }
+    }    
+""".replace("\n", " ")
+
 val XAWAIT = """
 func await-chk (evt, cnd) {
     ifs {
