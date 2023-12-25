@@ -114,25 +114,25 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == """
-            ((```  a```) thus { ceu_5 =>
+            (func (ceu_5) {
             if ceu_5 {
             ceu_5
             } else {
-            ((((```    b```) thus { ceu_10 =>
+            (func (ceu_73) {
+            if ceu_73 {
+            ceu_73
+            } else {
+            ```d```
+            }
+            })((func (ceu_10) {
             if ceu_10 {
             ceu_10
             } else {
-            ```    c```
+            ```c```
             }
-            })) thus { ceu_45 =>
-            if ceu_45 {
-            ceu_45
-            } else {
-            ```   d```
+            })(```b```))
             }
-            })
-            }
-            })
+            })(```a```)
         """.trimIndent()) { e.tostr() }
     }
 
