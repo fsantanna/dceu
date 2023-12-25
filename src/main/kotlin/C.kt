@@ -569,29 +569,34 @@ fun Coder.main (tags: Tags): String {
         void ceu_gc_free (CEU_Dyn* dyn);
         
         void ceu_gc_rem_chk (CEU_Value v) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                if (v.Dyn->Any.refs == 0) {
-                    ceu_gc_dec_rec(v.Dyn, 1);
-                    ceu_gc_rem(v.Dyn);
-                    CEU_GC_COUNT++;
-                }
-            }
+            if (v.type < CEU_VALUE_DYNAMIC)
+                return;
+            if (v.Dyn->Any.refs > 0)
+                return;
+        #if CEU >= 5
+            assert(v.type != CEU_VALUE_EXE_TASK_IN);
+        #endif
+            ceu_gc_dec_rec(v.Dyn, 1);
+            ceu_gc_rem(v.Dyn);
+            CEU_GC_COUNT++;
         }
         
         void ceu_gc_dec (CEU_Value v, int chk) {
-            if (v.type>CEU_VALUE_DYNAMIC && v.Dyn->Any.refs>0) {
+            if (v.type < CEU_VALUE_DYNAMIC)
+                return;
+            if (v.Dyn->Any.refs > 0) {  // possible for uncaptured fleeting values on block termination
                 v.Dyn->Any.refs--;
-                if (chk) {
-                    ceu_gc_rem_chk(v);
-                }
+            }
+            if (chk) {
+                ceu_gc_rem_chk(v);
             }
         }
 
         void ceu_gc_inc (CEU_Value v) {
-            if (v.type > CEU_VALUE_DYNAMIC) {
-                assert(v.Dyn->Any.refs < 255);
-                v.Dyn->Any.refs++;
-            }
+            if (v.type < CEU_VALUE_DYNAMIC)
+                return;
+            assert(v.Dyn->Any.refs < 255);
+            v.Dyn->Any.refs++;
         }
         
         ///
@@ -1485,6 +1490,7 @@ fun Coder.main (tags: Tags): String {
                 if (!xstk1.on) {
                     return ret;
                 }
+                task->refs--;
                 /* TODO: stack trace for error on task termination
                 do {
                     CEU_ASSERT(BUPC, ceu_acc, "FILE : (lin LIN, col COL) : ERR");
@@ -1939,7 +1945,7 @@ fun Coder.main (tags: Tags): String {
             assert(mem != NULL);
             
             int hld_type = (clo.Dyn->Clo.hld.type <= CEU_HOLD_MUTAB) ? CEU_HOLD_FLEET : clo.Dyn->Clo.hld.type;
-            *ret = (CEU_Exe) {  // TODO: refs=0 to avoid "pending reference" // refs=1 b/c of ref in block for defers
+            *ret = (CEU_Exe) {
                 type, 0, NULL, { hld_type, blk, NULL, NULL },
                 CEU_EXE_STATUS_YIELDED, { blk, &clo.Dyn->Clo, {.exe=ret} }, 0, mem
             };
@@ -1956,6 +1962,7 @@ fun Coder.main (tags: Tags): String {
             }
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
             //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
+            ret.Dyn->Any.refs = 1;  // bc task is alive regardless of pointers
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;
