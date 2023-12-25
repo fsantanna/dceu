@@ -765,19 +765,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 }
             }
             is Expr.Dtrack -> {
-                val bupc = ups.first_block(this)!!.idc("block")
                 """
                 { // DTRACK ${this.dump()}
-                    ${this.tsk.code()}
-                    if (ceu_acc.type != CEU_VALUE_TRACK) {                
-                        CEU_Value err = { CEU_VALUE_ERROR, {.Error="detrack error : expected track value"} };
-                        CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
-                    }
-                    if (ceu_acc.Dyn->Track.task == NULL) {
-                        ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
-                    } else {
-                        ceu_acc = ceu_dyn_to_val((CEU_Dyn*)ceu_acc.Dyn->Track.task);
-                    }
                     ${this.blk.code()}
                 }
                 //CEU_Bstk ceu_dstk_$n = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };

@@ -2554,6 +2554,8 @@ fun Coder.main (tags: Tags): String {
         CEU_Value id_detrack_plic_           = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_detrack}                 };
         CEU_Value id_track                   = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_track}                   };
         CEU_Value id_next_dash_tasks         = (CEU_Value) { CEU_VALUE_CLO_FUNC, {.Dyn=(CEU_Dyn*)&ceu_next_tasks}              };
+        #else
+        CEU_Value id_detrack_plic_           = (CEU_Value) { CEU_VALUE_NIL };   // bc of detrack'' in prelude        
         #endif
     """ +
     """ // MAIN

@@ -595,6 +595,13 @@ class Parser_01 {
     // NATIVE
 
     @Test
+    fun native0() {
+        val l = lexer("`a`")
+        val parser = Parser(l)
+        val e = parser.expr()
+        assert(e.tostr() == "```a```") { e.tostr() }
+    }
+    @Test
     fun native1() {
         val l = lexer(
             """
@@ -606,7 +613,7 @@ class Parser_01 {
         val parser = Parser(l)
         val e = parser.expr_prim()
         assert(e is Expr.Nat)
-        assert(e.tostr() == "``` \n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
+        assert(e.tostr() == "```\n    printf(\"xxx\\n\");\n```") { "."+e.tostr()+"." }
     }
     @Test
     fun native2_err() {

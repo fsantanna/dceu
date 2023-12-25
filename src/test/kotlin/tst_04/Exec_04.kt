@@ -3684,5 +3684,23 @@ class Exec_04 {
         """)
         assert(out == ":2\n:3\n:1\n:ok\n") { out }
     }
+    @Test
+    fun z2_02_parand() {
+        val out = test("""
+            do {
+                spawn (task () {
+                    func (it) {
+                        false
+                    } (yield(nil))
+                    println(999)
+                }) (nil)
+                val x = spawn (task () {
+                    nil
+                }) (nil)
+                nil
+            }
+        """)
+        assert(out == "999\n") { out }
+    }
 
 }
