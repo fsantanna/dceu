@@ -547,17 +547,17 @@ class Parser (lexer_: Lexer)
                     //println(c)
                     val (dcl,_) = dst.clo.args[0]
                     when (c.tk.str) {
-                        " /* = */" -> this.nest("""
+                        "/* = */" -> this.nest("""
                             func (${dcl.str}) {
                                 set ${dcl.str}[#${dcl.str}-1] = ${src.tostr(true)}
                             } (${dst.args.tostr()})
                         """)
-                        " /* + */" -> this.nest("""
+                        "/* + */" -> this.nest("""
                             func (${dcl.str}) {
                                 set ${dcl.str}[#${dcl.str}] = ${src.tostr(true)}
                             } (${dst.args.tostr()})
                         """)
-                        " /* - */" -> err(tk0, "set error : expected assignable destination") as Expr
+                        "/* - */" -> err(tk0, "set error : expected assignable destination") as Expr
                         else -> error("impossible case")
                     }
                 } else {
