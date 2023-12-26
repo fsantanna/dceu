@@ -574,7 +574,7 @@ class Exec_05 {
             val ts = tasks()
             spawn T() in ts
             val x = next-tasks(ts)
-            detrack(x) thus { it =>
+            detrack(x) { it =>
                 println(it)
                 broadcast(nil)          ;; aborts it
                 println(status(it))     ;; dangling

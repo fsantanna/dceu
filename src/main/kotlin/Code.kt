@@ -96,7 +96,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     """ }}
                 """, """ // FUNC | ${this.dump()}
                     CEU_Value ceu_clo_$id (
-                        CEU4(CEU_Bstk* ceu_bstk COMMA)
+                        CEU5(CEU_Stack* ceu_dstk COMMA)
+                        CEU4(CEU_Stack* ceu_bstk COMMA)
                         CEU_Frame* ceu_frame,
                         int ceu_n,
                         CEU_Value ceu_args[]
@@ -339,7 +340,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${(CEU >= 2).cond { "} while (0);" }}
 
                     ${(CEU>=4 && !isvoid).cond { """
-                        ceu_bstk_kill(ceu_bstk, $blkc);
+                        ceu_stack_kill(ceu_bstk, $blkc);
                     """ }}
 
                     // defers execute
@@ -450,7 +451,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                     }}
                     // block free | ${this.dump()}
-                    ${(!isvoid).cond { "ceu_gc_rem_all(CEU4(ceu_bstk COMMA) $blkc);" }}
+                    ${(!isvoid).cond { "ceu_gc_rem_all(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) $blkc);" }}
                     // check error
                     ${(CEU>=2 && (f_b is Expr.Do)).cond { """
                         if (CEU_ISERR(ceu_acc)) {
@@ -627,7 +628,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 ${this.arg.code()}
                 
                 ${(CEU>=4 && inexeT).cond { """
-                    CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
+                    CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
                 
                 ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
@@ -710,10 +711,10 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 continue;
                             }
                     }
-                    CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
+                    CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
 
-                ceu_acc = ceu_bcast_task($bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
@@ -764,14 +765,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     else -> "ceu_acc = ceu_acc.Dyn->Exe_Task.pub;\n"
                 }
             }
-            is Expr.Dtrack -> {
-                """
-                { // DTRACK ${this.dump()}
-                    ${this.blk.code()}
-                }
-                //CEU_Bstk ceu_dstk_$n = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };
-                """
-            }
+            is Expr.Dtrack -> this.blk.code()
             is Expr.Toggle -> {
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
@@ -1106,12 +1100,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     continue;
                                 }
                         }
-                        CEU_Bstk ceu_bstk_$n = { $bupc, 1, ceu_bstk };
+                        CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                     """ }}
                     
                     CEU_Frame ceu_frame_$n = { $bupc, &ceu_acc.Dyn->Clo CEU3(COMMA {.exe=NULL}) };
                     
                     ceu_acc = ceu_frame_$n.clo->proto (
+                        CEU5(ceu_dstk COMMA)
                         CEU4($bstk COMMA)
                         &ceu_frame_$n,
                         ${this.args.let {
@@ -1122,15 +1117,14 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
 
-                    ${(CEU >= 5).cond { """
-                        //if (!ceu_dstk_on(ceu_dstk)) {
-                        //    return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
-                        //}
-                    """ }}
-                    
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
+                        ${(CEU >= 5).cond { """
+                            if (ceu_dstk_isoff(ceu_dstk)) {
+                                return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                            }
+                        """ }}                        
                         if (!$bstk->on) {
-                            return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                            return (CEU_Value) { CEU_VALUE_NIL };       // TODO: func may leak
                         }
                     """ }}
                     
