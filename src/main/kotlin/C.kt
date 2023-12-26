@@ -533,7 +533,7 @@ fun Coder.main (tags: Tags): String {
         }}
     """ +
     """ // EXIT / ERROR / ASSERT
-        #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(v)) && "TODO: double error"); (CEU_ISERR(err) ? err : v); })
+        #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(ceu)) && "TODO: double error"); (CEU_ISERR(err) ? err : ceu); })
         #if CEU <= 1
         #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
         #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
@@ -1584,6 +1584,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 2);
             if (CEU5(dstk==NULL ||) bstk==NULL) {
+                assert(0 && "TODO");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="cannot broadcast during abortion"} };
             }
             
@@ -2285,7 +2286,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         CEU_Value ceu_op_slash_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
-            CEU_Value ret = ceu_op_equals_equals_f(CEU4(_0 COMMA) CEU4(_1 COMMA) _2, n, args);
+            CEU_Value ret = ceu_op_equals_equals_f(CEU5(_0 COMMA) CEU4(_1 COMMA) _2, n, args);
             ret.Bool = !ret.Bool;
             return ret;
         }

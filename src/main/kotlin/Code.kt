@@ -347,7 +347,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
-                    ceu_acc = CEU_ERR_OR(ceu_acc_$n, ceu_acc);
+                    ceu_acc = CEU_ERR_OR(ceu_acc, ceu_acc_$n);
                     
                     // dcls gc-dec
                     ${dcls.map { """
