@@ -357,7 +357,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         // free below b/c of
                         //   - pending refs defers
                         //   - drop w/ multiple refs
-                        ceu_gc_dec($it, 0);
+                        ceu_gc_dec(CEU5(dstk COMMA) bstk $it, 0);
                     """ }.joinToString("")}
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
                     ${(f_b is Expr.Proto).cond {
@@ -371,7 +371,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
                                     assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
                                 }
-                                ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                                ceu_gc_dec(CEU5(dstk COMMA) bstk $idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """
                         }.joinToString("")
@@ -381,7 +381,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${istsk.cond { """
                         if (ceu_frame->exe_task->pub.type > CEU_VALUE_DYNAMIC) {
                             // do not check if it is returned back (this is not the case with locals created here)
-                            ceu_gc_dec(ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
+                            ceu_gc_dec(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) ceu_frame->exe_task->pub, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==ceu_frame->exe_task->pub.Dyn));
                         }
                         ceu_frame->exe_task->pub = ceu_acc;
                     """ }}
@@ -577,7 +577,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         ceu_acc = ceu_err.Dyn->Throw.val;
                         assert(ceu_err.Dyn->Throw.refs == 0);
-                        ceu_gc_rem(ceu_err.Dyn);
+                        ceu_gc_rem(CEU5(ceu_dstk COMMA) CEU4(ceu_bstk COMMA) ceu_err.Dyn);
                     }
                 }
                 """
@@ -756,7 +756,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
-                            ceu_gc_dec(ceu_acc.Dyn->Exe_Task.pub, 1);
+                            ceu_gc_dec(CEU5(dstk COMMA) bstk ceu_acc.Dyn->Exe_Task.pub, 1);
                             ceu_acc.Dyn->Exe_Task.pub = $src;
                         }                        
                         """
@@ -832,7 +832,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})"
                             );
                             ceu_gc_inc($src);
-                            ceu_gc_dec($idc, 1);
+                            ceu_gc_dec(CEU5(dstk COMMA) bstk $idc, 1);
                             $idc = $src;
                         }
                         """
@@ -844,7 +844,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_$n = $idc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA {.exe=NULL}) };
                             CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            ceu_gc_dec(ceu_$n, 0);
+                            ceu_gc_dec(CEU5(dstk COMMA) bstk ceu_$n, 0);
                             $idc = (CEU_Value) { CEU_VALUE_NIL };
                             ceu_acc = ceu_$n;
                         }
@@ -1008,7 +1008,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             CEU_Value ceu_val_$n = ceu_acc;
                             CEU_Frame ceu_frame_$n = { $bupc, NULL CEU3(COMMA NULL) };
                             CEU_ASSERT($bupc, ceu_drop_f(CEU4(NULL COMMA) &ceu_frame_$n, 1, &ceu_val_$n), "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                            ceu_gc_dec(ceu_val_$n, 0);
+                            ceu_gc_dec(CEU5(dstk COMMA) bstk ceu_val_$n, 0);
                             
                             switch (ceu_col_$n.type) {
                                 case CEU_VALUE_TUPLE:

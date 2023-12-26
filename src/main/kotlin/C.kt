@@ -568,11 +568,11 @@ fun Coder.main (tags: Tags): String {
         
         int CEU_GC_COUNT = 0;
         
-        void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk);
-        void ceu_gc_rem (CEU_Dyn* dyn);
+        void ceu_gc_dec_rec (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn, int chk);
+        void ceu_gc_rem (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn);
         void ceu_gc_free (CEU_Dyn* dyn);
         
-        void ceu_gc_rem_chk (CEU_Value v) {
+        void ceu_gc_rem_chk (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Value v) {
             if (v.type < CEU_VALUE_DYNAMIC)
                 return;
             if (v.Dyn->Any.refs > 0)
@@ -580,19 +580,19 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
             assert(v.type != CEU_VALUE_EXE_TASK_IN);
         #endif
-            ceu_gc_dec_rec(v.Dyn, 1);
-            ceu_gc_rem(v.Dyn);
+            ceu_gc_dec_rec(CEU5(_0 COMMA) CEU4(_1 COMMA) v.Dyn, 1);
+            ceu_gc_rem(CEU5(_0 COMMA) CEU4(_1 COMMA) v.Dyn);
             CEU_GC_COUNT++;
         }
         
-        void ceu_gc_dec (CEU_Value v, int chk) {
+        void ceu_gc_dec (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Value v, int chk) {
             if (v.type < CEU_VALUE_DYNAMIC)
                 return;
             if (v.Dyn->Any.refs > 0) {  // possible for uncaptured fleeting values on block termination
                 v.Dyn->Any.refs--;
             }
             if (chk) {
-                ceu_gc_rem_chk(v);
+                ceu_gc_rem_chk(CEU5(_0 COMMA) CEU4(_1 COMMA) v);
             }
         }
 
@@ -605,22 +605,22 @@ fun Coder.main (tags: Tags): String {
         
         ///
 
-        void ceu_gc_rem_all (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
+        void ceu_gc_rem_all (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Block* blk) {
             CEU_Dyns* dyns = &blk->dn.dyns;
             {
                 CEU_Dyn* cur = dyns->first;
                 while (cur != NULL) {
         #if CEU >= 3
-                    ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur);    // kill exes before gc all
+                    ceu_dyn_exe_kill(CEU5(_0 COMMA) CEU4(_1 COMMA) cur);    // kill exes before gc all
         #endif
-                    ceu_gc_dec_rec(cur, 0);         // dec refs to outer scopes
+                    ceu_gc_dec_rec(CEU5(_0 COMMA) CEU4(_1 COMMA) cur, 0);         // dec refs to outer scopes
                     cur = cur->Any.hld.next;
                 }
             }
             // free remaining
             {
                 while (dyns->first != NULL) {
-                    ceu_gc_rem(dyns->first);    // regardless of refs>0 (b/c of cycles)
+                    ceu_gc_rem(CEU5(_0 COMMA) CEU4(_1 COMMA) dyns->first);    // regardless of refs>0 (b/c of cycles)
                 }
             }
             assert(dyns->first == NULL);
@@ -633,23 +633,23 @@ fun Coder.main (tags: Tags): String {
             }
         }
         
-        void ceu_gc_rem_chk_args (int n, CEU_Value args[]) {
+        void ceu_gc_rem_chk_args (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) int n, CEU_Value args[]) {
             for (int i=0; i<n; i++) {
-                ceu_gc_rem_chk(args[i]);
+                ceu_gc_rem_chk(CEU5(dstk COMMA) CEU4(bstk COMMA) args[i]);
             }
         }
         
         ///
         
-        void ceu_gc_rem (CEU_Dyn* dyn) {
+        void ceu_gc_rem (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Dyn* dyn) {
         #if CEU >= 3
-            ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
+            ceu_dyn_exe_kill(CEU5(_0 COMMA) CEU4(_1 COMMA) dyn);
         #endif
             ceu_hold_rem(dyn);
             ceu_gc_free(dyn);
         }
 
-        void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk) {
+        void ceu_gc_dec_rec (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Dyn* dyn, int chk) {
             switch (dyn->Any.type) {
                 case CEU_VALUE_CLO_FUNC:
         #if CEU >= 3
@@ -659,31 +659,31 @@ fun Coder.main (tags: Tags): String {
                 case CEU_VALUE_CLO_TASK:
         #endif
                     for (int i=0; i<dyn->Clo.upvs.its; i++) {
-                        ceu_gc_dec(dyn->Clo.upvs.buf[i], chk);
+                        ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) dyn->Clo.upvs.buf[i], chk);
                     }
                     break;
                 case CEU_VALUE_TUPLE:
                     for (int i=0; i<dyn->Tuple.its; i++) {
-                        ceu_gc_dec(dyn->Tuple.buf[i], chk);
+                        ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) dyn->Tuple.buf[i], chk);
                     }
                     break;
                 case CEU_VALUE_VECTOR:
                     for (int i=0; i<dyn->Vector.its; i++) {
                         CEU_Value ret = ceu_vector_get(&dyn->Vector, i);
                         assert(ret.type != CEU_VALUE_ERROR);
-                        ceu_gc_dec(ret, 1);
+                        ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) ret, 1);
                     }
                     break;
                 case CEU_VALUE_DICT:
                     for (int i=0; i<dyn->Dict.max; i++) {
-                        ceu_gc_dec((*dyn->Dict.buf)[i][0], chk);
-                        ceu_gc_dec((*dyn->Dict.buf)[i][1], chk);
+                        ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) (*dyn->Dict.buf)[i][0], chk);
+                        ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) (*dyn->Dict.buf)[i][1], chk);
                     }
                     break;
             #if CEU >= 2
                 case CEU_VALUE_THROW:
-                    ceu_gc_dec(dyn->Throw.val, chk);
-                    ceu_gc_dec(dyn->Throw.stk, chk);
+                    ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) dyn->Throw.val, chk);
+                    ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) dyn->Throw.stk, chk);
                     break;
             #endif
         #if CEU >= 3
@@ -694,7 +694,7 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
                 case CEU_VALUE_EXE_TASK_IN:
         #endif
-                    ceu_gc_dec(ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), chk);
+                    ceu_gc_dec(CEU5(_0 COMMA) CEU4(_1 COMMA) ceu_dyn_to_val((CEU_Dyn*)dyn->Exe.frame.clo), chk);
                     break;
         #endif
         #if CEU >= 5
@@ -829,7 +829,7 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_dump_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
             assert(n == 1);
             ceu_dump_value(args[0]);
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return (CEU_Value) { CEU_VALUE_NIL };
         }
 
@@ -838,7 +838,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_type_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
             assert(n == 1 && "bug found");
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return (CEU_Value) { CEU_VALUE_TAG, {.Tag=args[0].type} };
         }
         CEU_Value ceu_sup_question__f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
@@ -858,7 +858,7 @@ fun Coder.main (tags: Tags): String {
             int sub2 = sub.Tag & 0x00FF0000;
             int sub3 = sub.Tag & 0xFF000000;
             
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return (CEU_Value) { CEU_VALUE_BOOL, { .Bool =
                 (sup0 == sub0) && ((sup1 == 0) || (
                     (sup1 == sub1) && ((sup2 == 0) || (
@@ -971,7 +971,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 cur = cur->next;
             }
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
     """ +
@@ -1386,7 +1386,7 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : value is not movable"} };
             }
             CEU_Value ret = _ceu_drop_(src);
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
     """ +
@@ -1510,8 +1510,8 @@ fun Coder.main (tags: Tags): String {
         __CEU_FREE__:
     #if CEU >= 5
                 if (task->type == CEU_VALUE_EXE_TASK_IN) {
-                    ceu_gc_dec_rec((CEU_Dyn*)task, 1);
-                    ceu_gc_rem((CEU_Dyn*)task);
+                    ceu_gc_dec_rec(CEU5(dstk COMMA) bstk, (CEU_Dyn*)task, 1);
+                    ceu_gc_rem(CEU5(dstk COMMA) bstk, (CEU_Dyn*)task);
                 }
     #endif
             }
@@ -1615,7 +1615,7 @@ fun Coder.main (tags: Tags): String {
                 }
             }
             if (evt.type > CEU_VALUE_DYNAMIC) {
-                ceu_gc_dec(evt, 1);
+                ceu_gc_dec(CEU5(dstk COMMA) bstk, evt, 1);
             }
             return ret;
         }        
@@ -1646,7 +1646,7 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_tuple_set (CEU_Tuple* tup, int i, CEU_Value v) {
             ceu_gc_inc(v);
-            ceu_gc_dec(tup->buf[i], 1);
+            ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) tup->buf[i], 1);
             CEU_Value ret = ceu_hold_chk_set_col((CEU_Dyn*)tup, v);
             if (ret.type != CEU_VALUE_ERROR) {
                 tup->buf[i] = v;
@@ -1669,7 +1669,7 @@ fun Coder.main (tags: Tags): String {
                 assert(i == vec->its-1);
                 CEU_Value ret = ceu_vector_get(vec, i);
                 assert(ret.type != CEU_VALUE_ERROR);
-                ceu_gc_dec(ret, 1);
+                ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) ret, 1);
                 vec->its--;
                 return ret;
             } else {
@@ -1696,7 +1696,7 @@ fun Coder.main (tags: Tags): String {
                     CEU_Value ret = ceu_vector_get(vec, i);
                     assert(ret.type != CEU_VALUE_ERROR);
                     ceu_gc_inc(v);
-                    ceu_gc_dec(ret, 1);
+                    ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) ret, 1);
                     assert(i < vec->its);
                 }
                 memcpy(vec->buf + i*sz, (char*)&v.Number, sz);
@@ -1735,7 +1735,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_next_dict_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
             CEU_Value ret = _ceu_next_dict_f_(frame, n, args);
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
         
@@ -1771,7 +1771,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_next_tasks_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n, CEU_Value args[]) {
             CEU_Value ret = _ceu_next_tasks_f_(frame, n, args);
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
     #endif
@@ -1822,8 +1822,8 @@ fun Coder.main (tags: Tags): String {
             CEU_Value vv = ceu_dict_get(col, key);
             
             if (val.type == CEU_VALUE_NIL) {
-                ceu_gc_dec(vv, 1);
-                ceu_gc_dec(key, 1);
+                ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) vv, 1);
+                ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) key, 1);
                 (*col->buf)[old][0] = (CEU_Value) { CEU_VALUE_NIL };
                 return (CEU_Value) { CEU_VALUE_NIL };
             } else {
@@ -1837,7 +1837,7 @@ fun Coder.main (tags: Tags): String {
                 }
 
                 ceu_gc_inc(val);
-                ceu_gc_dec(vv, 1);
+                ceu_gc_dec(CEU5(NULL COMMA) CEU4(NULL COMMA) vv, 1);
                 if (vv.type == CEU_VALUE_NIL) {
                     ceu_gc_inc(key);
                 }
@@ -2073,7 +2073,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_gc_rem(tup.Dyn);
+                ceu_gc_rem(CEU5(NULL COMMA) CEU4(NULL COMMA) tup.Dyn);
             }
             switch (v.type) {
                 case CEU_VALUE_NIL:
@@ -2206,7 +2206,7 @@ fun Coder.main (tags: Tags): String {
                 }
                 ceu_print1(_2, args[i]);
             }
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return (CEU_Value) { CEU_VALUE_NIL };
         }
         CEU_Value ceu_println_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
@@ -2275,7 +2275,7 @@ fun Coder.main (tags: Tags): String {
         }
         CEU_Value ceu_op_equals_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
             CEU_Value ret = _ceu_op_equals_equals_f_(_2, n, args);
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
         CEU_Value ceu_op_slash_equals_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
@@ -2295,7 +2295,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="length error : not a vector"} };
             }
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
     """ +
@@ -2372,7 +2372,7 @@ fun Coder.main (tags: Tags): String {
             } else {
                 ret = (CEU_Value) { CEU_VALUE_TAG, {.Tag=exe.Dyn->Exe.status + CEU_TAG_yielded - 1} };
             }
-            ceu_gc_rem_chk_args(n, args);
+            ceu_gc_rem_chk_args(CEU5(_0 COMMA) CEU4(_1 COMMA) n, args);
             return ret;
         }
         
