@@ -347,10 +347,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Value ceu_acc_$n = ceu_acc;
                     ceu_acc = (CEU_Value) { CEU_VALUE_NIL };
                     ${defers[this].cond { it.third }}
-                    if (ceu_acc_$n.type==CEU_VALUE_ERROR && ceu_acc.type==CEU_VALUE_ERROR) {
-                        assert(0 && "TODO: double throw in defer");
-                    }
-                    ceu_acc = ceu_acc_$n;
+                    ceu_acc = CEU_ERR_OR(ceu_acc_$n, ceu_acc);
                     
                     // dcls gc-dec
                     ${dcls.map { """
@@ -597,7 +594,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         do {
                             ${this.blk.code()}
                         } while (0);    // catch throw
-                        assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
+                        //assert(ceu_acc.type != CEU_VALUE_THROW && "TODO: throw in defer");
                     }
                 """
                 ns.add(n)
@@ -631,7 +628,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
                 
-                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
+                ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU5(ceu_dstk COMMA) CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {

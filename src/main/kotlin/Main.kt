@@ -6,7 +6,7 @@ import java.util.*
 
 var DEBUG = false
 var CEU = 1
-    // 1: dyn-lex, thus, { x => ... }
+    // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: coro, yield, resume
     // 4: task, pub, bcast, toggle, ref

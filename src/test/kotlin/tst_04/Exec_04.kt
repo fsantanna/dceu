@@ -1162,6 +1162,51 @@ class Exec_04 {
         //        " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
+    //
+
+    @Test
+    fun gh_01_coro_defer_bcast_err() {
+        val out = test("""
+            val f = func (v) {
+                broadcast(nil)
+            }
+            spawn (task () {
+                resume (coroutine(coro () {
+                    defer {
+                        f()
+                    }
+                    yield(nil)
+                })) ()
+                do {
+                    f(yield(nil))
+                }
+            }) ()
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun gh_02_coro_defer_spawn_err() {
+        val out = test("""
+            val f = func (v) {
+                spawn (task () {
+                    nil
+                }) ()
+            }
+            spawn (task () {
+                resume (coroutine(coro () {
+                    defer {
+                        f()
+                    }
+                    yield(nil)
+                })) ()
+                do {
+                    f(yield(nil))
+                }
+            }) ()
+        """)
+        assert(out == "[]\n") { out }
+    }
+
     // SCOPE / TUPLE / NEST
 
     @Test

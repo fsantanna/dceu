@@ -347,7 +347,8 @@ fun Coder.main (tags: Tags): String {
 
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns));
         void ceu_hold_rem (CEU_Dyn* dyn);
-        
+        void ceu_gc_rem_all (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk);
+
         CEU_Value ceu_create_tuple   (CEU_Block* hld, int n);
         CEU_Value ceu_create_vector  (CEU_Block* hld);
         CEU_Value ceu_create_dict    (CEU_Block* hld);
@@ -374,8 +375,8 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_pointer_to_string_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* frame, int n, CEU_Value args[]);
         #endif
         #if CEU >= 3
-        int ceu_isexe_dyn (CEU_Dyn* dyn);
-        void ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn);
+        int ceu_isexe (CEU_Dyn* dyn);
+        CEU_Value ceu_dyn_exe_kill (CEU_Dyn* dyn);
         #endif
         #if CEU >= 4
         CEU_Value ceu_bcast_task (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Exe_Task* task, int n, CEU_Value args[]);
@@ -531,6 +532,56 @@ fun Coder.main (tags: Tags): String {
             """
         }}
     """ +
+    """ // EXIT / ERROR / ASSERT
+        #define CEU_ERR_OR(err,v) ({ CEU_Value ceu=v; assert(!(CEU_ISERR(err) && CEU_ISERR(v)) && "TODO: double error"); (CEU_ISERR(err) ? err : v); })
+        #if CEU <= 1
+        #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
+        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
+        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
+        #else
+        #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
+        #define CEU_ERROR(blk,pre,err) {                       \
+            if (err.type == CEU_VALUE_THROW) {                  \
+                ceu_acc = err;                                  \
+            } else {                                            \
+                ceu_acc = _ceu_throw_(blk, err);                \
+            }                                                   \
+            CEU_Value ceu_str = _ceu_pointer_to_string_(blk,pre); \
+            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str).type != CEU_VALUE_ERROR); \
+            continue;                                           \
+        }
+        #define CEU_ASSERT(blk,err,pre) ({      \
+            CEU_Value ceu_err = err;            \
+            if (CEU_ISERR(ceu_err)) {           \
+                CEU_ERROR(blk,pre,ceu_err);     \
+            };                                  \
+            ceu_err;                            \
+        })
+        #endif
+
+        void ceu_exit (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
+            if (blk == NULL) {
+                exit(0);
+            }
+            CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
+            ceu_gc_rem_all(CEU5(dstk COMMA) CEU4(bstk COMMA) blk);
+            return ceu_exit(CEU5(dstk COMMA) CEU4(bstk COMMA) up);
+        }
+        void _ceu_error_ (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, char* pre, CEU_Value err) {
+            fprintf(stderr, "%s : %s\n", pre, err.Error);
+            ceu_exit(CEU5(bstk COMMA) CEU4(bstk COMMA) blk);
+        }
+        CEU_Value ceu_assert (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, CEU_Value err, char* pre) {
+            if (CEU_ISERR(err)) {
+                _ceu_error_(CEU5(dstk COMMA) CEU4(bstk COMMA) blk, pre, err);
+            }
+            return err;
+        }
+        CEU_Value ceu_error_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
+            assert(n==1 && args[0].type==CEU_VALUE_TAG);
+            return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
+        }        
+    """ +
     """ // GC
     #if 0
         int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -611,7 +662,8 @@ fun Coder.main (tags: Tags): String {
                 CEU_Dyn* cur = dyns->first;
                 while (cur != NULL) {
         #if CEU >= 3
-                    ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur);    // kill exes before gc all
+                    CEU_Value ret = ceu_dyn_exe_kill(cur);    // kill exes before gc all
+                    assert(!CEU_ISERR(ret) && "TODO: impossible case");
         #endif
                     ceu_gc_dec_rec(cur, 0);         // dec refs to outer scopes
                     cur = cur->Any.hld.next;
@@ -643,7 +695,8 @@ fun Coder.main (tags: Tags): String {
         
         void ceu_gc_rem (CEU_Dyn* dyn) {
         #if CEU >= 3
-            ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
+            CEU_Value ret = ceu_dyn_exe_kill(dyn);
+            assert(!CEU_ISERR(ret) && "TODO: impossible case");
         #endif
             ceu_hold_rem(dyn);
             ceu_gc_free(dyn);
@@ -770,55 +823,6 @@ fun Coder.main (tags: Tags): String {
             }
             ceu_debug_rem(dyn->Any.type);
             free(dyn);
-        }        
-    """ +
-    """ // EXIT / ERROR / ASSERT
-        #if CEU <= 1
-        #define CEU_ISERR(v) (v.type == CEU_VALUE_ERROR)
-        #define CEU_ERROR(blk,pre,err)  _ceu_error_(blk,pre,err)
-        #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
-        #else
-        #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
-        #define CEU_ERROR(blk,pre,err) {                       \
-            if (err.type == CEU_VALUE_THROW) {                  \
-                ceu_acc = err;                                  \
-            } else {                                            \
-                ceu_acc = _ceu_throw_(blk, err);                \
-            }                                                   \
-            CEU_Value ceu_str = _ceu_pointer_to_string_(blk,pre); \
-            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str).type != CEU_VALUE_ERROR); \
-            continue;                                           \
-        }
-        #define CEU_ASSERT(blk,err,pre) ({      \
-            CEU_Value ceu_err = err;            \
-            if (CEU_ISERR(ceu_err)) {           \
-                CEU_ERROR(blk,pre,ceu_err);     \
-            };                                  \
-            ceu_err;                            \
-        })
-        #endif
-
-        void ceu_exit (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk) {
-            if (blk == NULL) {
-                exit(0);
-            }
-            CEU_Block* up = (blk->istop) ? blk->up.frame->up_block : blk->up.block;
-            ceu_gc_rem_all(CEU5(dstk COMMA) CEU4(bstk COMMA) blk);
-            return ceu_exit(CEU5(dstk COMMA) CEU4(bstk COMMA) up);
-        }
-        void _ceu_error_ (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, char* pre, CEU_Value err) {
-            fprintf(stderr, "%s : %s\n", pre, err.Error);
-            ceu_exit(CEU5(bstk COMMA) CEU4(bstk COMMA) blk);
-        }
-        CEU_Value ceu_assert (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Block* blk, CEU_Value err, char* pre) {
-            if (CEU_ISERR(err)) {
-                _ceu_error_(CEU5(dstk COMMA) CEU4(bstk COMMA) blk, pre, err);
-            }
-            return err;
-        }
-        CEU_Value ceu_error_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
-            assert(n==1 && args[0].type==CEU_VALUE_TAG);
-            return (CEU_Value) { CEU_VALUE_ERROR, {.Error=ceu_tag_to_string(args[0].Tag)} };
         }        
     """ +
     """ // IMPLS
@@ -1488,9 +1492,7 @@ fun Coder.main (tags: Tags): String {
                     // enclosing block
                     ret2 = ceu_bcast_blocks(CEU5(dstk COMMA) &xstk1, CEU_HLD_BLOCK((CEU_Dyn*)task), evt2);
                 }
-                if (!CEU_ISERR(ret)) {
-                    ret = ret2;
-                }
+                ret = CEU_ERR_OR(ret, ret2);
                 if (!xstk1.on) {
                     return ret;
                 }
@@ -1581,6 +1583,10 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 2);
+            if (CEU5(dstk==NULL ||) bstk==NULL) {
+                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="cannot broadcast during abortion"} };
+            }
+            
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
                 ceu_gc_inc(evt); // save from nested gc_chk
@@ -2346,7 +2352,7 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // ISEXE / COROUTINE / STATUS / EXE_KILL
         #if CEU >= 3
-        int ceu_isexe_dyn (CEU_Dyn* dyn) {
+        int ceu_isexe (CEU_Dyn* dyn) {
             return (dyn->Any.type==CEU_VALUE_EXE_CORO CEU4(|| ceu_istask_dyn(dyn)));
         }
         
@@ -2376,31 +2382,35 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        void ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
+        CEU_Value ceu_dyn_exe_kill (CEU_Dyn* dyn) {
+            CEU_Value ret = { CEU_VALUE_NIL };
         #if CEU >= 5
             if (dyn->Any.type == CEU_VALUE_TASKS) {
                 CEU_Dyn* cur = dyn->Tasks.dyns.first;
                 while (cur != NULL) {
                     CEU_Dyn* nxt = cur->Any.hld.next;
-                    ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur);  
+                    ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(cur));  
                     cur = nxt;
                 }
-                return;
+                return ret;
             }
             else
         #endif
-            if (ceu_isexe_dyn(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
-                CEU_Value ret;
+            {
+                if (ceu_isexe(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
     #if CEU >= 4
-                if (ceu_istask_dyn(dyn)) {
-                    ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
-                } else
+                    if (ceu_istask_dyn(dyn)) {
+                        ret = ceu_bcast_task(CEU5(NULL COMMA) NULL, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                    } else
     #endif
-                {
-                    ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    {
+                        ret = dyn->Exe.frame.clo->proto(CEU5(NULL COMMA) CEU4(NULL COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                    }
+                    //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
+                    return ret;
                 }
-                assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
             }
+            return ret;
         }
         #endif
     """ +
