@@ -67,6 +67,10 @@ class Parser_05 {
         //        "})\n") { e.tostr() }
         assert(e.tostr() == "(detrack(1) {\n" +
                 "it =>\n" +
+                "```\n" +
+                "                                CEU_Stack ceu_dstk_15 = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };\n" +
+                "                                ceu_dstk = &ceu_dstk_15;\n" +
+                "                                ```\n" +
                 "nil\n" +
                 "})\n") { e.tostr() }
     }
@@ -115,6 +119,10 @@ class Parser_05 {
         val e = parser.exprs()
         assert(e.tostr() == "(detrack(1) {\n" +
                 "x =>\n" +
+                "```\n" +
+                "                                CEU_Stack ceu_dstk_15 = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };\n" +
+                "                                ceu_dstk = &ceu_dstk_15;\n" +
+                "                                ```\n" +
                 "1\n" +
                 "})\n") { e.tostr() }
         //assert(trap { parser.exprs() } == "anon : (lin 3, col 9) : expected \"{\" : have end of file")

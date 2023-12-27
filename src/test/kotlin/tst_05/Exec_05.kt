@@ -855,7 +855,7 @@ class Exec_05 {
         """)
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         //assert(out == "[10]\n") { out }
-        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
                 " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -886,7 +886,7 @@ class Exec_05 {
             broadcast(nil)
             println(v)
         """)
-        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+        assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
                 " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
     }
@@ -930,7 +930,7 @@ class Exec_05 {
         """)
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
-                " |  anon : (lin 5, col 40) : (func (it) { if it { pub(it) } else { nil } }...)\n" +
+                " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
                 " v  anon : (lin 5, col 47) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
@@ -1129,7 +1129,7 @@ class Exec_05 {
         """
         )
         assert(out == "[10]\n" +
-                " |  anon : (lin 9, col 33) : (func (it) { if it { println(pub(it)) pub(it)...)\n" +
+                " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
                 " v  anon : (lin 9, col 40) : block escape error : cannot copy reference out\n") { out }
     }
 
@@ -1388,12 +1388,14 @@ class Exec_05 {
             val r1 = track(t1)
             detrack(r1) { x1 => 
                 ;;println(t1, r1, x1, status(t1))
+                println(status(t1))
                 broadcast( nil )
                 ;;println(t1, r1, x1, status(t1))
-                println(status(t1))
+                println(status(t1)) ;; never reached
             }
+            println(:ok)
         """)
-        assert(out == ":terminated\n") { out }
+        assert(out == ":yielded\n:ok\n") { out }
         //assert(out == "anon : (lin 7, col 13) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
         //assert(out == " v  anon : (lin 7, col 34) : block escape error : cannot copy reference out\n") { out }

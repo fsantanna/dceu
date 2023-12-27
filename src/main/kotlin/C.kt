@@ -376,7 +376,7 @@ fun Coder.main (tags: Tags): String {
         #endif
         #if CEU >= 3
         int ceu_isexe (CEU_Dyn* dyn);
-        CEU_Value ceu_dyn_exe_kill (CEU_Dyn* dyn);
+        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn);
         #endif
         #if CEU >= 4
         CEU_Value ceu_bcast_task (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Exe_Task* task, int n, CEU_Value args[]);
@@ -662,7 +662,7 @@ fun Coder.main (tags: Tags): String {
                 CEU_Dyn* cur = dyns->first;
                 while (cur != NULL) {
         #if CEU >= 3
-                    CEU_Value ret = ceu_dyn_exe_kill(cur);    // kill exes before gc all
+                    CEU_Value ret = ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur);    // kill exes before gc all
                     assert(!CEU_ISERR(ret) && "TODO: impossible case");
         #endif
                     ceu_gc_dec_rec(cur, 0);         // dec refs to outer scopes
@@ -1583,8 +1583,9 @@ fun Coder.main (tags: Tags): String {
 
         CEU_Value ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 2);
-            if (CEU5(dstk==NULL ||) bstk==NULL) {
-                assert(0 && "TODO");
+            assert(bstk != NULL);
+            if (bstk!=&CEU_BSTK && bstk->up==NULL) {
+                //assert(0 && "TODO");
                 return (CEU_Value) { CEU_VALUE_ERROR, {.Error="cannot broadcast during abortion"} };
             }
             
@@ -2383,14 +2384,14 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        CEU_Value ceu_dyn_exe_kill (CEU_Dyn* dyn) {
+        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
             CEU_Value ret = { CEU_VALUE_NIL };
         #if CEU >= 5
             if (dyn->Any.type == CEU_VALUE_TASKS) {
                 CEU_Dyn* cur = dyn->Tasks.dyns.first;
                 while (cur != NULL) {
                     CEU_Dyn* nxt = cur->Any.hld.next;
-                    ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(cur));  
+                    ret = CEU_ERR_OR(ret, ceu_dyn_exe_kill(CEU5(dstk COMMA) CEU4(bstk COMMA) cur));  
                     cur = nxt;
                 }
                 return ret;
@@ -2401,11 +2402,11 @@ fun Coder.main (tags: Tags): String {
                 if (ceu_isexe(dyn) && dyn->Exe.status<CEU_EXE_STATUS_TERMINATED) {
     #if CEU >= 4
                     if (ceu_istask_dyn(dyn)) {
-                        ret = ceu_bcast_task(CEU5(NULL COMMA) NULL, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
+                        ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, &dyn->Exe_Task, CEU_ARG_ABORT, NULL);
                     } else
     #endif
                     {
-                        ret = dyn->Exe.frame.clo->proto(CEU5(NULL COMMA) CEU4(NULL COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
+                        ret = dyn->Exe.frame.clo->proto(CEU5(dstk COMMA) CEU4(bstk COMMA) &dyn->Exe.frame, CEU_ARG_ABORT, NULL);
                     }
                     //assert(!CEU_ISERR(ret) && "TODO: error on exe kill");
                     return ret;

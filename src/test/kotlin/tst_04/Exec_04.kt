@@ -1162,25 +1162,30 @@ class Exec_04 {
         //        " v  anon : (lin 7, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
-    //
+    // BCAST / DSTK,BSTK=NULL
 
     @Test
     fun gh_01_coro_defer_bcast_err() {
         val out = test("""
             val f = func (v) {
+                println(:4)
                 broadcast(nil)
+                println(:a)
             }
             spawn (task () {
-                resume (coroutine(coro () {
+                var x = coroutine(coro () {
+                    println(:1)
                     defer {
+                        println(:3)
                         f()
                     }
                     yield(nil)
-                })) ()
-                do {
-                    f(yield(nil))
-                }
+                })
+                resume x()
+                set x = nil
+                println(:2)
             }) ()
+            println(:b)
         """)
         assert(out == "[]\n") { out }
     }
