@@ -574,7 +574,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }
                         ceu_acc = ceu_err.Dyn->Throw.val;
                         assert(ceu_err.Dyn->Throw.refs == 0);
-                        ceu_gc_rem(ceu_err.Dyn, 1);
+                        ceu_gc_rem(ceu_err.Dyn, 0);
                     }
                 }
                 """
