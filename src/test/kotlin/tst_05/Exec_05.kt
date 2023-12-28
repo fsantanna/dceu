@@ -158,9 +158,9 @@ class Exec_05 {
     fun ab_01_spawn() {
         val out = test("""
             val ts = tasks()
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
             spawn (task () { nil }) () in ts
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """)
         assert(out == "0\n1\n") { out }
     }

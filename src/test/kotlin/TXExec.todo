@@ -1908,7 +1908,7 @@ class TXExec {
                     throw([])
                 }
             }
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
             println(:ok)
         """)
         assert(out == "anon : (lin 7, col 21) : throw([])\n" +
@@ -1926,7 +1926,7 @@ class TXExec {
                 }
                 println(9)
             }.0
-            println(`:number CEU_GC_COUNT`) ;; throw might be caught, so zero but no check
+            println(`:number CEU_GC.gc`) ;; throw might be caught, so zero but no check
             println(:x, x)
         """, true)
         assert(out == "0\n:x\t10\n") { out }

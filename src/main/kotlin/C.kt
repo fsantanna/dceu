@@ -386,6 +386,19 @@ fun Coder.main (tags: Tags): String {
         #endif
     """ +
     """ // DUMPS
+    #ifdef CEU_DEBUG
+        struct {
+            int alloc;
+            int free;
+            int gc;
+        } CEU_GC = { 0, 0, 0 };
+        
+        void ceu_dump_gc (void) {
+            printf(">>> GC");
+            printf("    alloc = %d\n", CEU_GC.alloc);
+            printf("    free  = %d\n", CEU_GC.free);
+            printf("    gc    = %d\n", CEU_GC.gc);
+        }
         void ceu_dump_frame (CEU_Frame* frame) {
             printf(">>> FRAME: %p\n", frame);
             printf("    up_block = %p\n", frame->up_block);
@@ -444,6 +457,7 @@ fun Coder.main (tags: Tags): String {
                 cur = old->Any.hld.next;
             }
         }
+    #endif
     """ +
     """ // TAGS
         ${ tags.pub.values.let {
@@ -616,8 +630,6 @@ fun Coder.main (tags: Tags): String {
         //  - called when dyn->refs==0
         //  - calls (ceu_gc_dec) to decrement dyn childs
         //  - calls (ceu_dyn_rem_free_chk) to free dyn
-        
-        int CEU_GC_COUNT = 0;
         
         void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk);
         void ceu_gc_rem (CEU_Dyn* dyn);
@@ -822,6 +834,9 @@ fun Coder.main (tags: Tags): String {
                     assert(0 && "bug found");
             }
             ceu_debug_rem(dyn->Any.type);
+        #ifdef CEU_DEBUG
+            CEU_GC.free++;
+        #endif
             free(dyn);
         }        
     """ +
@@ -832,9 +847,13 @@ fun Coder.main (tags: Tags): String {
         
         CEU_Value ceu_dump_f (CEU5(CEU_Stack* _0 COMMA) CEU4(CEU_Stack* _1 COMMA) CEU_Frame* _2, int n, CEU_Value args[]) {
             assert(n == 1);
+        #ifdef CEU_DEBUG
             ceu_dump_value(args[0]);
             ceu_gc_rem_chk_args(n, args);
             return (CEU_Value) { CEU_VALUE_NIL };
+        #else
+            return (CEU_Value) { CEU_VALUE_ERROR, {.Error="debug is off"} };
+        #endif
         }
 
         int ceu_as_bool (CEU_Value v) {
@@ -1046,6 +1065,9 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // HOLD / DROP
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
+        #ifdef CEU_DEBUG
+            CEU_GC.alloc++;
+        #endif
         #if CEU < 5
             CEU_Dyns* dyns = &blk->dn.dyns;
         #endif
