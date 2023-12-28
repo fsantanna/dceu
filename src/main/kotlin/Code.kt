@@ -677,6 +677,8 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
+                ceu_bstk_assert(ceu_bstk);
+
                 ${(!bup.ismem(sta,clos)).cond {"""
                     ${this.tsks.cond { "CEU_Value $tsksc;" }}
                     CEU_Value $tskc;

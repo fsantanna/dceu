@@ -1165,7 +1165,7 @@ class Exec_04 {
     // BCAST / DSTK,BSTK=NULL
 
     @Test
-    fun gh_01_coro_defer_bcast_err() {
+    fun todo_gh_01_coro_defer_bcast_err() {
         val out = test("""
             val f = func (v) {
                 println(:4)
@@ -1187,7 +1187,7 @@ class Exec_04 {
             }) ()
             println(:b)
         """)
-        assert(out == "[]\n") { out }
+        assert(out.contains(": Assertion `0 && \"TODO: cannot spawn or broadcast during abortion\"'")) { out }
     }
     @Test
     fun gh_02_coro_defer_spawn_err() {
@@ -1198,18 +1198,17 @@ class Exec_04 {
                 }) ()
             }
             spawn (task () {
-                resume (coroutine(coro () {
+                var x = coroutine(coro () {
                     defer {
                         f()
                     }
                     yield(nil)
-                })) ()
-                do {
-                    f(yield(nil))
-                }
+                })
+                resume x()
+                set x = nil
             }) ()
         """)
-        assert(out == "[]\n") { out }
+        assert(out.contains(": Assertion `0 && \"TODO: cannot spawn or broadcast during abortion\"'")) { out }
     }
 
     // SCOPE / TUPLE / NEST

@@ -1605,14 +1605,20 @@ fun Coder.main (tags: Tags): String {
             }
             return ceu_bcast_blocks(CEU5(dstk COMMA) bstk, cur->dn.block, evt);
         }
+        
+        void ceu_bstk_assert (CEU_Stack* bstk) {
+            if (bstk == NULL) {
+                assert(0 && "TODO: cannot spawn or broadcast during abortion");
+            } else if (bstk == &CEU_BSTK) {
+                // ok
+            } else {
+                ceu_bstk_assert(bstk->up);
+            }
+        }
 
         CEU_Value ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 2);
-            assert(bstk != NULL);
-            if (bstk!=&CEU_BSTK && bstk->up==NULL) {
-                //assert(0 && "TODO");
-                return (CEU_Value) { CEU_VALUE_ERROR, {.Error="cannot broadcast during abortion"} };
-            }
+            ceu_bstk_assert(bstk);
             
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
