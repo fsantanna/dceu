@@ -869,6 +869,7 @@ class Exec_99 {
     }
     @Test
     fun mm_25_gc_bcast() {
+        DEBUG = true
         val out = test("""
             var tk = task () {
                 yield(nil) thus { it =>

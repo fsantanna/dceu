@@ -2683,6 +2683,7 @@ class Exec_04 {
 
     @Test
     fun oo_01_gc_bcast() {
+        DEBUG = true
         val out = test("""
             broadcast([])
             println(`:number CEU_GC.gc`)
@@ -2692,6 +2693,7 @@ class Exec_04 {
     }
     @Test
     fun oo_02_gc_bcast() {
+        DEBUG = true
         val out = test("""
             var tk = task () {
                 func (it) {
@@ -2715,6 +2717,7 @@ class Exec_04 {
     }
     @Test
     fun oo_03_gc_bcast() {
+        DEBUG = true
         val out = test("""
             var tk = task () {
                 do {
@@ -2738,6 +2741,7 @@ class Exec_04 {
     }
     @Test
     fun oo_04_gc_bcast() {
+        DEBUG = true
         val out = test("""
             var tk = task () {
                 do {
@@ -2763,6 +2767,7 @@ class Exec_04 {
     }
     @Test
     fun oo_05_gc() {
+        DEBUG = true
         val out = test(
             """
             spawn (task () {    ;; not gc'd b/c task remains in memory
@@ -3396,6 +3401,7 @@ class Exec_04 {
     }
     @Test
     fun zz_17_bcast() {
+        DEBUG = true
         val out = test(
             """
             var T1 = task () {

@@ -231,6 +231,7 @@ class Exec_01 {
     }
     @Test
     fun bb_12_hold() {
+        DEBUG = true
         val out = test("""
             val t = [[nil]]
             dump(t[0])
@@ -2716,7 +2717,7 @@ class Exec_01 {
                 println(...)
             }
             f(1,2,3)
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "1\t2\t3\n1\n") { out }
@@ -3674,7 +3675,7 @@ class Exec_01 {
                 println(ts)
             }
             f(tags(t))
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "[:Z,:Y,:X]\n1\n") { out }
@@ -4194,43 +4195,60 @@ class Exec_01 {
 
     @Test
     fun gc0() {
+        DEBUG = true
         val out = test(
             """
             do {
                 val xxx = []    ;; gc'd by block
                 nil
             }
-            println(`:number CEU_GC_COUNT`)
+            `ceu_dump_gc();`
+            ;;println(`:number CEU_GC.gc`)
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == "0\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == ">>> GC    alloc = 3\n" +
+                "    free  = 1\n" +
+                "    gc    = 0\n") { out }
+
     }
     @Test
     fun gc1() {
+        DEBUG = true
         val out = test(
             """
             var xxx = []
             set xxx = []
-            println(`:number CEU_GC_COUNT`)
+            `ceu_dump_gc();`
+            ;;println(`:number CEU_GC.gc`)
         """
         )
-        assert(out == "1\n") { out }
+        //assert(out == "1\n") { out }
+        assert(out == ">>> GC    alloc = 4\n" +
+                "    free  = 1\n" +
+                "    gc    = 1\n") { out }
     }
     @Test
     fun gc2() {
+        DEBUG = true
         val out = test(
             """
             pass []  ;; not checked
             pass []  ;; not checked
-            println(`:number CEU_GC_COUNT`)
+            `ceu_dump_gc();`
+            ;;println(`:number CEU_GC.gc`)
         """
         )
         //assert(out == "2\n") { out }
-        assert(out == "0\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == ">>> GC    alloc = 4\n" +
+                "    free  = 0\n" +
+                "    gc    = 0\n") { out }
     }
     @Test
     fun gc3_cycle() {
+        DEBUG = true
         val out = test(
             """
             var x = [nil]
@@ -4238,27 +4256,33 @@ class Exec_01 {
             set x[0] = y
             set x = nil
             set y = nil
-            println(`:number CEU_GC_COUNT`)
+            `ceu_dump_gc();`
+            ;;println(`:number CEU_GC.gc`)
         """
         )
-        assert(out == "0\n") { out }
+        //assert(out == "0\n") { out }
+        assert(out == ">>> GC    alloc = 4\n" +
+                "    free  = 0\n" +
+                "    gc    = 0\n") { out }
     }
     @Test
     fun gc4() {
+        DEBUG = true
         val out = test(
             """
             var x = []
             var y = [x]
             set x = nil
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
             set y = nil
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "0\n2\n") { out }
     }
     @Test
     fun gc5() {
+        DEBUG = true
         val out = test(
             """
             var x = []
@@ -4266,31 +4290,33 @@ class Exec_01 {
                 var y = x
             }
             set x = nil
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "1\n") { out }
     }
     @Test
     fun gc6() {
+        DEBUG = true
         val out = test(
             """
             var x = [[],[]]
             set x = nil
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "3\n") { out }
     }
     @Test
     fun gc7() {
+        DEBUG = true
         val out = test(
             """
             var f = func (v) {
                 v
             }
             #( #[ f([1]) ] )
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "2\n") { out }
@@ -4298,6 +4324,7 @@ class Exec_01 {
     }
     @Test
     fun gc8() {
+        DEBUG = true
         val out = test(
             """
             do {
@@ -4305,13 +4332,15 @@ class Exec_01 {
                     val ins = [1,2,3]
                     drop(ins)
                 }   ;; gc'd by block
-                println(`:number CEU_GC_COUNT`)
+                println(`:number CEU_GC.gc`, `:number CEU_GC.free`)
             }
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`, `:number CEU_GC.free`)
         """
         )
         //assert(out == "0\n1\n") { out }
-        assert(out == "0\n0\n") { out }
+        //assert(out == "0\n0\n") { out }
+        assert(out == "0\t0\n" +
+                "0\t1\n") { out }
     }
     @Test
     fun gc9_err() {
@@ -4339,9 +4368,9 @@ class Exec_01 {
                     drop(v)
                 }
                 ;; [] not captured, should be checked 
-                println(`:number CEU_GC_COUNT`)
+                println(`:number CEU_GC.gc`)
             }
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """, true
         )
         //assert(out == "1\n1\n") { out }
@@ -4356,7 +4385,7 @@ class Exec_01 {
             }
             f([])   ;; v is not captured
             ;; [] not captured, should be checked 
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         //assert(out == "anon : (lin 7, col 21) : f([10])\nanon : (lin 3, col 30) : set error : incompatible scopes\n") { out }
@@ -4368,7 +4397,7 @@ class Exec_01 {
         val out = test(
             """
             println([]) ;; println does ~not~ check
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "[]\n1\n") { out }
@@ -4381,13 +4410,14 @@ class Exec_01 {
                 nil
             }
             f([])
-            println(`:number CEU_GC_COUNT`)
+            println(`:number CEU_GC.gc`)
         """
         )
         assert(out == "1\n") { out }
     }
     @Test
     fun gc16_grow() {
+        DEBUG = true
         val out = test("""
             val t = []
             do {

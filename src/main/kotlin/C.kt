@@ -632,7 +632,7 @@ fun Coder.main (tags: Tags): String {
         //  - calls (ceu_dyn_rem_free_chk) to free dyn
         
         void ceu_gc_dec_rec (CEU_Dyn* dyn, int chk);
-        void ceu_gc_rem (CEU_Dyn* dyn);
+        void ceu_gc_rem (CEU_Dyn* dyn, int chk);
         void ceu_gc_free (CEU_Dyn* dyn);
         
         void ceu_gc_rem_chk (CEU_Value v) {
@@ -643,9 +643,10 @@ fun Coder.main (tags: Tags): String {
         #if CEU >= 5
             assert(v.type != CEU_VALUE_EXE_TASK_IN);
         #endif
-            ceu_gc_dec_rec(v.Dyn, 1);
-            ceu_gc_rem(v.Dyn);
-            CEU_GC_COUNT++;
+            ceu_gc_rem(v.Dyn, 1);
+        #ifdef CEU_DEBUG
+            CEU_GC.gc++;
+        #endif
         }
         
         void ceu_gc_dec (CEU_Value v, int chk) {
@@ -684,7 +685,7 @@ fun Coder.main (tags: Tags): String {
             // free remaining
             {
                 while (dyns->first != NULL) {
-                    ceu_gc_rem(dyns->first);    // regardless of refs>0 (b/c of cycles)
+                    ceu_gc_rem(dyns->first, 0);    // regardless of refs>0 (b/c of cycles)
                 }
             }
             assert(dyns->first == NULL);
@@ -705,11 +706,14 @@ fun Coder.main (tags: Tags): String {
         
         ///
         
-        void ceu_gc_rem (CEU_Dyn* dyn) {
+        void ceu_gc_rem (CEU_Dyn* dyn, int rec) {
         #if CEU >= 3
-            CEU_Value ret = ceu_dyn_exe_kill(dyn);
+            CEU_Value ret = ceu_dyn_exe_kill(CEU5(NULL COMMA) CEU4(NULL COMMA) dyn);
             assert(!CEU_ISERR(ret) && "TODO: impossible case");
         #endif
+            if (rec) {
+                ceu_gc_dec_rec(dyn, 1);
+            }
             ceu_hold_rem(dyn);
             ceu_gc_free(dyn);
         }
@@ -1534,8 +1538,7 @@ fun Coder.main (tags: Tags): String {
         __CEU_FREE__:
     #if CEU >= 5
                 if (task->type == CEU_VALUE_EXE_TASK_IN) {
-                    ceu_gc_dec_rec((CEU_Dyn*)task, 1);
-                    ceu_gc_rem((CEU_Dyn*)task);
+                    ceu_gc_rem((CEU_Dyn*)task, 1);
                 }
     #endif
             }
@@ -2103,7 +2106,7 @@ fun Coder.main (tags: Tags): String {
                     }
                     printf(" ");
                 }
-                ceu_gc_rem(tup.Dyn);
+                ceu_gc_rem(tup.Dyn, 1);
             }
             switch (v.type) {
                 case CEU_VALUE_NIL:

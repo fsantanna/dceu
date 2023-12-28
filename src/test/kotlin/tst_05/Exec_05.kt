@@ -156,6 +156,7 @@ class Exec_05 {
 
     @Test
     fun ab_01_spawn() {
+        DEBUG = true
         val out = test("""
             val ts = tasks()
             println(`:number CEU_GC.gc`)
