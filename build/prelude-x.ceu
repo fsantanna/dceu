@@ -1,5 +1,9 @@
 data :Clock = [ms]
 
+func detrack'' (trk) {
+    not not detrack'(trk)
+}
+
 ;; is', is-not'
 
 func to-bool (v) {
@@ -439,11 +443,6 @@ func math-floor (v) {
     `:number floor($v.Number)`
 }
 
-;; DETRACK
-
-func detrack'' (trk) {
-    not not detrack'(trk)
-}
 ;; AWAIT
 
 func await-chk (evt, cnd) {

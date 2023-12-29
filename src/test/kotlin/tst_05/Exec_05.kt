@@ -317,6 +317,34 @@ class Exec_05 {
         //        ":error\n") { out }
         assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
     }
+    @Test
+    fun bb_07_track_up() {
+        DEBUG = true
+        val out = test("""
+            val T = task () { yield(nil);yield(nil) }
+            spawn (task () {
+                val ts = tasks()
+                spawn (task () {
+                    spawn (task () {
+                        spawn T() in ts
+                    }) ()
+                    nil
+                }) ()
+                do {
+                    val t = next-tasks(ts)
+                    do {
+                        dump(t)
+                        broadcast(nil) in :global
+                        dump(t)                    
+                    }
+                }
+            }) ()
+        """)
+        //assert(out.contains("terminated\nx-track: 0x")) { out }
+        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
+        //        ":error\n") { out }
+        assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
+    }
 
     // TRACK / DROP
 

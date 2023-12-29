@@ -1684,6 +1684,26 @@ class Exec_99 {
         """)
         assert(out == "2\n1\n1\n3\n3\n:ok\n") { out }
     }
+    @Test
+    fun jj_13_paror_dyn() {
+        val out = test("""
+            spawn task {
+                par-or {
+                    yield()
+                    yield()
+                } with {
+                    yield()
+                    yield()
+                }
+            }
+            do {
+                val now
+                broadcast([])
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // AWAIT
 
@@ -2540,7 +2560,9 @@ class Exec_99 {
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
+
     // TYPE-*
+
     @Test
     fun zz_04_type() {
         val out = test("""
@@ -2551,4 +2573,24 @@ class Exec_99 {
         """, true)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
+
+    @Test
+    fun BUG_zz_05_track_bcast() {
+        DEBUG = true
+        val out = test("""
+            $IS ; $DETRACK ; $XAWAIT
+            val B = task () {
+                yield(nil)
+            }
+            val bs = tasks(5)
+            spawn B() in bs
+            func () {
+                val b = next-tasks(bs,nil)
+                broadcast(nil) in b
+                next-tasks(bs,b)
+            } ()
+        """)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
+
 }

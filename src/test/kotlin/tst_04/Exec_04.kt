@@ -1163,6 +1163,9 @@ class Exec_04 {
     }
 
     // BCAST / DSTK,BSTK=NULL
+    // todo_*
+    //  - Option 1: should actually accept
+    //  - Option 2: should at least raise an exception and not panic program
 
     @Test
     fun todo_gh_01_coro_defer_bcast_err() {
@@ -1190,7 +1193,7 @@ class Exec_04 {
         assert(out.contains(": Assertion `0 && \"TODO: cannot spawn or broadcast during abortion\"'")) { out }
     }
     @Test
-    fun gh_02_coro_defer_spawn_err() {
+    fun todo_gh_02_coro_defer_spawn_err() {
         val out = test("""
             val f = func (v) {
                 spawn (task () {
@@ -3757,5 +3760,4 @@ class Exec_04 {
         """)
         assert(out == "999\n") { out }
     }
-
 }

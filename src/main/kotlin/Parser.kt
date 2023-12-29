@@ -1171,6 +1171,7 @@ class Parser (lexer_: Lexer)
                                 """}.joinToString("")} false ${")".repeat(pars.size)}
                             )
                             yield()
+                            nil
                         }
                     }
                 """)
