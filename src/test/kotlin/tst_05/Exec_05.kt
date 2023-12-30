@@ -285,7 +285,7 @@ class Exec_05 {
         assert(out == ("false\ttrue\n")) { out }
     }
     @Test
-    fun bb_05_bcast_in_task() {
+    fun bb_05_bcast_in_task_err() {
         val out = test("""
             val T = task (v) {
                 ${AWAIT()}
@@ -296,6 +296,23 @@ class Exec_05 {
             val x1 = track(t1)
             val t2 = spawn T (2)
             broadcast (nil) in x1
+        """)
+        assert(out == "1\n") { out }
+    }
+    @Test
+    fun bb_05_bcast_in_task() {
+        val out = test("""
+            val T = task (v) {
+                ${AWAIT()}
+                ;;yield(nil)
+                println(v)
+            }
+            val t1 = spawn T (1)
+            val x1 = track(t1)
+            val t2 = spawn T (2)
+            detrack(x1) { y1 =>
+                broadcast (nil) in y1
+            }
         """)
         assert(out == "1\n") { out }
     }

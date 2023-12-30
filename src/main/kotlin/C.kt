@@ -394,7 +394,7 @@ fun Coder.main (tags: Tags): String {
         } CEU_GC = { 0, 0, 0 };
         
         void ceu_dump_gc (void) {
-            printf(">>> GC");
+            printf(">>> GC: %d\n", CEU_GC.alloc - CEU_GC.free);
             printf("    alloc = %d\n", CEU_GC.alloc);
             printf("    free  = %d\n", CEU_GC.free);
             printf("    gc    = %d\n", CEU_GC.gc);
@@ -597,15 +597,21 @@ fun Coder.main (tags: Tags): String {
         }        
     """ +
     """ // GC
-    #if 0
+    #ifdef CEU_DEBUG
         int CEU_DEBUG_TYPE[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         void ceu_debug_add (int type) {
+        #ifdef CEU_DEBUG
+            CEU_GC.alloc++;
+        #endif
             CEU_DEBUG_TYPE[type]++;
-            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+            //printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
         }
         void ceu_debug_rem (int type) {
+        #ifdef CEU_DEBUG
+            CEU_GC.free++;
+        #endif
             CEU_DEBUG_TYPE[type]--;
-            printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
+            //printf(">>> type = %d | count = %d\n", type, CEU_DEBUG_TYPE[type]);
         }
     #else
         #define ceu_debug_add(x)
@@ -838,9 +844,6 @@ fun Coder.main (tags: Tags): String {
                     assert(0 && "bug found");
             }
             ceu_debug_rem(dyn->Any.type);
-        #ifdef CEU_DEBUG
-            CEU_GC.free++;
-        #endif
             free(dyn);
         }        
     """ +
@@ -1069,9 +1072,6 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // HOLD / DROP
         void ceu_hold_add (CEU_Dyn* dyn, CEU_Block* blk CEU5(COMMA CEU_Dyns* dyns)) {
-        #ifdef CEU_DEBUG
-            CEU_GC.alloc++;
-        #endif
         #if CEU < 5
             CEU_Dyns* dyns = &blk->dn.dyns;
         #endif
@@ -1641,12 +1641,6 @@ fun Coder.main (tags: Tags): String {
                     ret = (CEU_Value) { CEU_VALUE_ERROR, {.Error="invalid target"} };
                 }
             } else {
-        #if CEU >= 5
-                // TODO: remove when detrack stack
-                if (xin.type==CEU_VALUE_TRACK && xin.Dyn->Track.task!=NULL) {
-                    xin = ceu_dyn_to_val((CEU_Dyn*)xin.Dyn->Track.task);
-                }
-        #endif
                 if (ceu_istask_val(xin)) {
                     ret = ceu_bcast_task(CEU5(dstk COMMA) bstk, &xin.Dyn->Exe_Task, 1, &evt);
                 } else {
