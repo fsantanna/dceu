@@ -496,9 +496,9 @@ class Exec_99 {
         """
         )
         //assert(out == "[1,2,3]\n") { out }
-        //assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
-        assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
-                " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        assert(out == " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 4, col 30) : (func (a) { (set x = a) })([1,2,3])\n" +
+        //        " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
@@ -644,11 +644,13 @@ class Exec_99 {
     @Test
     fun mm_10_yield_err() {
         val out = test("""
-            resume (coro () {
+            resume (coroutine (coro () {
                 yield(nil) thus { it => yield(nil) thus { x => nil } }
-            }) ()
+            })) ()
+            println(:ok)
         """)
-        assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing func\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_11_resume_yield() {
@@ -743,11 +745,11 @@ class Exec_99 {
         //        " v  anon : (lin 3, col 25) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == " |  anon : (lin 13, col 25) : resume (t)(v)\n" +
         //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
-        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-        //        " v  anon : (lin 3, col 36) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
-                " |  anon : (lin 3, col 41) : (func (x) { x })(yield(nil))\n" +
                 " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
+        //assert(out == " |  anon : (lin 13, col 25) : (resume (t)(v))\n" +
+        //        " |  anon : (lin 3, col 41) : (func (x) { x })(yield(nil))\n" +
+        //        " v  anon : (lin 3, col 41) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_17_catch_yield_err() {
@@ -761,8 +763,24 @@ class Exec_99 {
                 }
             }
         """)
-        //assert(out == "anon : (lin 4, col 40) : declaration error : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 4, col 39) : declaration error : variable \"it\" is already declared\n") { out }
         assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
+    }
+    @Test
+    fun mm_17a_catch_yield_err() {
+        val out = test("""
+            coro () {
+                catch ( it => do {
+                    pass it
+                    yield(nil) thus { it => nil }
+                } )
+                {
+                    throw(:e1)
+                }
+            }
+        """)
+        assert(out == "anon : (lin 5, col 39) : declaration error : variable \"it\" is already declared\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing catch\n") { out }
     }
     @Test
     fun mm_18_it() {
@@ -864,8 +882,10 @@ class Exec_99 {
                     yield(nil) thus { y => nil }
                 }
             }
+            println(:ok)
         """)
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
+        assert(out == ":ok\n") { out }
     }
     @Test
     fun mm_25_gc_bcast() {
@@ -933,8 +953,10 @@ class Exec_99 {
         //        " v  anon : (lin 4, col 17) : resume error : cannot receive assigned reference\n") { out }
         //assert(out == "anon : (lin 11, col 39) : broadcast error : incompatible scopes\n" +
         //        ":error\n") { out }
+        //assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
+        //        " |  anon : (lin 4, col 33) : (func (it) { it })(yield(nil))\n" +
+        //        " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
         assert(out == " |  anon : (lin 14, col 21) : broadcast'(e,:task)\n" +
-                " |  anon : (lin 4, col 33) : (func (it) { it })(yield(nil))\n" +
                 " v  anon : (lin 4, col 33) : block escape error : cannot copy reference out\n") { out }
     }
     @Test

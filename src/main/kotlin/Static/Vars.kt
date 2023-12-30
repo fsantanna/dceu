@@ -178,26 +178,37 @@ class Vars (val outer: Expr.Do, val ups: Ups) {
                 blk_to_dcls[this] = mutableListOf()
                 val size = dcls.size    // restore this size after nested block
 
+                if (this.arg != null) {
+                    val (id,tag) = this.arg
+                    val prv = dcls.firstOrNull { id.str==it.id.str }
+                    if (prv==null || (CEU>=99 && prv.id.str=="it" && it_uses[prv]==null)) {
+                        // ok
+                        if (CEU>=99 && prv!=null) {
+                            it_uses[prv] = this // found new dcl w/o uses of prv dcl
+                        }
+                    } else {
+                        err(id, "declaration error : variable \"${id.str}\" is already declared")
+                    }
+                    val dcl = Expr.Dcl(
+                        Tk.Fix("val", this.tk.pos),
+                        id, /*false,*/  tag, true, null
+                    )
+                    dcls.add(dcl)
+                    dcl_to_blk[dcl] = this
+                    blk_to_dcls[this]!!.add(dcl)
+                }
+
                 // func (a,b,...) { ... }
                 val proto = ups.pub[this]
                 if (proto is Expr.Proto) {
                     proto.args.forEach { (id, tag) ->
-                        val dcl1 = Expr.Dcl(
+                        val dcl = Expr.Dcl(
                             Tk.Fix("val", this.tk.pos),
                             id, /*false,*/  tag, true, null
                         )
-                        val dcl2 = Expr.Dcl(
-                            Tk.Fix("val", this.tk.pos),
-                            Tk.Id("_${id.str}_", id.pos, id.upv),
-                            /*false,*/
-                            null, false, null
-                        )
-                        dcls.add(dcl1)
-                        dcls.add(dcl2)
-                        dcl_to_blk[dcl1] = this
-                        dcl_to_blk[dcl2] = this
-                        blk_to_dcls[this]!!.add(dcl1)
-                        blk_to_dcls[this]!!.add(dcl2)
+                        dcls.add(dcl)
+                        dcl_to_blk[dcl] = this
+                        blk_to_dcls[this]!!.add(dcl)
                     }
                 }
 

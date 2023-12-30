@@ -27,8 +27,12 @@ fun Expr.tostr (pre: Boolean = false): String {
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
         is Expr.Do     -> {
+            val x = this.arg.cond {
+                val (id,tag) = it
+                "(${(if (pre) id.pos.pre() else "")}${id.str}${tag.cond { " "+it.str }}) "
+            }
             when (this.tk.str) {
-                "do" -> "do {\n" + this.es.tostr(pre) + "}"
+                "do" -> "do $x{\n" + this.es.tostr(pre) + "}"
                 else -> "{\n" + this.es.tostr(pre) + "}"
             }
         }
@@ -47,9 +51,9 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 
         is Expr.Catch  -> {
-            val clo = this.cnd.clo as Expr.Proto
-            val (tk,tag) = clo.args[0]
-            val cnd = tk.str + tag.cond { " " + it.str } + " => " + clo.blk.es[0].tostr(pre)
+            val xdo = this.cnd.es[1] as Expr.Do
+            val (id,tag) = xdo.arg!!
+            val cnd = id.str + tag.cond { " " + it.str } + " => " + xdo.es[0].tostr(pre)
             "catch (" + cnd + ") " + this.blk.tostr(pre)
         }
         is Expr.Defer  -> "defer " + this.blk.tostr(pre)

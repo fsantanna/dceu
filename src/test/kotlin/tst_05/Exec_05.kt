@@ -321,6 +321,7 @@ class Exec_05 {
     fun bb_07_track_up() {
         DEBUG = true
         val out = test("""
+            $DETRACK
             val T = task () { yield(nil);yield(nil) }
             spawn (task () {
                 val ts = tasks()
@@ -333,17 +334,16 @@ class Exec_05 {
                 do {
                     val t = next-tasks(ts)
                     do {
-                        dump(t)
+                        ;;dump(t)
                         broadcast(nil) in :global
-                        dump(t)                    
+                        ;;dump(t)                    
                     }
+                    println(detrack(t))
                 }
             }) ()
+            println(:ok)
         """)
-        //assert(out.contains("terminated\nx-track: 0x")) { out }
-        //assert(out == "anon : (lin 7, col 21) : set error : incompatible scopes\n" +
-        //        ":error\n") { out }
-        assert(out == (" v  anon : (lin 7, col 21) : set error : cannot move track outside its task scope\n")) { out }
+        assert(out == ("false\n:ok\n")) { out }
     }
 
     // TRACK / DROP

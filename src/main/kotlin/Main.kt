@@ -122,7 +122,7 @@ sealed class Tk (val str: String, val pos: Pos) {
 sealed class Expr (val n: Int, val tk: Tk) {
     data class Proto  (val tk_: Tk.Fix, val tag: Tk.Tag?, val args: List<Pair<Tk.Id,Tk.Tag?>>, val blk: Expr.Do): Expr(N++, tk_)
     data class Export (val tk_: Tk.Fix, val ids: List<String>, val blk: Expr.Do) : Expr(N++, tk_)
-    data class Do     (val tk_: Tk, val es: List<Expr>) : Expr(N++, tk_)
+    data class Do     (val tk_: Tk, val arg: Pair<Tk.Id,Tk.Tag?>?, val es: List<Expr>) : Expr(N++, tk_)
     data class Dcl    (val tk_: Tk.Fix, val id: Tk.Id, /*val poly: Boolean,*/  val tag: Tk.Tag?, val init: Boolean, val src: Expr?):  Expr(N++, tk_)  // init b/c of iter var
     data class Set    (val tk_: Tk.Fix, val dst: Expr, /*val poly: Tk.Tag?,*/ val src: Expr): Expr(N++, tk_)
     data class If     (val tk_: Tk.Fix, val cnd: Expr, val t: Expr.Do, val f: Expr.Do): Expr(N++, tk_)
@@ -133,7 +133,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Pass   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
     data class Drop   (val tk_: Tk.Fix, val e: Expr): Expr(N++, tk_)
 
-    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Call, val blk: Expr.Do): Expr(N++, tk_)
+    data class Catch  (val tk_: Tk.Fix, val cnd: Expr.Do, val blk: Expr.Do): Expr(N++, tk_)
     data class Defer  (val tk_: Tk.Fix, val blk: Expr.Do): Expr(N++, tk_)
 
     data class Yield  (val tk_: Tk.Fix, val arg: Expr): Expr(N++, tk_)
@@ -196,7 +196,7 @@ fun all (verbose: Boolean, inps: List<Pair<Triple<String, Int, Int>, Reader>>, o
             System.err.println("... analysing ...")
         }
         //readLine()
-        val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), es)
+        val outer  = Expr.Do(Tk.Fix("", Pos("anon", 0, 0)), null, es)
         val ups    = Ups(outer)
         val tags   = Tags(outer)
         val vars   = Vars(outer, ups)

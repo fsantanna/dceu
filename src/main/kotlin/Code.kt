@@ -193,6 +193,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 val args = if (f_b !is Expr.Proto) emptySet() else f_b.args.map { it.first.str }.toSet()
                 val dcls = vars.blk_to_dcls[this]!!.filter { it.init }
                     .filter { !GLOBALS.contains(it.id.str) }
+                    .filter { !(this.arg!=null && this.arg.first.str==it.id.str) }
                     .filter { !(f_b is Expr.Proto && args.contains(it.id.str)) }
                     .map    { it.idc(0) }
 
@@ -243,15 +244,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             // main block varargs (...)
                             CEU_Value id__dot__dot__dot_;
                         """
+                        (this.arg != null) -> {
+                            (!ismem).cond {
+                                "CEU_Value ${this.arg.first.str.idc()};"
+                            }
+                        }
                         (f_b is Expr.Proto) -> {
                             (!ismem).cond {
                                 f_b.args.map { (id,_) ->
-                                    val idc = id.str.idc()
-                                    """
-                                    CEU_Value $idc;
-                                    CEU_Block* _${idc}_;
-                                    """
-                            }.joinToString("")}
+                                    "CEU_Value ${id.str.idc()};"
+                                }.joinToString("")}
                         }
                         else -> ""
                     }}
@@ -286,6 +288,24 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     assert(ceu_tuple_set(&id__dot__dot__dot_.Dyn->Tuple, i, vec).type != CEU_VALUE_ERROR);
                                 }
                             """
+                            (this.arg != null) -> {
+                                val idc = vars.get(this, this.arg.first.str).idc(0)
+                                """
+                                ceu_gc_inc(ceu_acc);
+                                $idc = ceu_acc;
+                                if ($idc.type > CEU_VALUE_DYNAMIC) {
+                                    int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
+                                                        ($idc.Dyn->Any.hld.type-1);
+                                    if (ceu_type_$n != CEU_HOLD_FLEET) {
+                                        CEU_ASSERT(
+                                            $blkc,
+                                            ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
+                                            "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
+                                        );
+                                    }
+                                }
+                                """
+                            }
                             (f_b is Expr.Proto) -> {
                                 val dots = (f_b.args.lastOrNull()?.first?.str == "...")
                                 val args_n = f_b.args.size - 1
@@ -332,7 +352,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                     """ }}
                                 }
                                 """
-                        }
+                            }
                             else -> ""
                         }}
                         $body
@@ -356,7 +376,23 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         //   - drop w/ multiple refs
                         ceu_gc_dec($it, 0);
                     """ }.joinToString("")}
+                    
                     // args gc-dec (cannot call ceu_gc_dec_args b/c of copy to ids)
+                    
+                    ${this.arg.cond { (id,_) ->
+                        val idc = vars.get(this, id.str).idc(0)
+                        """
+                        if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
+                            // do not check if they are returned back (this is not the case with locals created here)
+                            if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
+                                CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
+                                assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
+                            }
+                            ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
+                        }                    
+                        """
+                    }}
+                    
                     ${(f_b is Expr.Proto).cond {
                         f_b as Expr.Proto
                         f_b.args.map { arg ->

@@ -2196,30 +2196,39 @@ class Exec_01 {
     // THUS / SCOPE / :FLEET / :fleet
 
     @Test
+    fun mm_00_err() {
+        val out = test("""
+            val x
+            do (x) {
+                nil
+            }
+        """
+        )
+        assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
+    }
+    @Test
     fun mm_01_tmp() {
         val out = test(
             """
             var x
-            do {
-                (func (a) {
-                    set x = a
-                }) ([1,2,3])
+            pass [1,2,3]
+            do (a) {
+                set x = a
             }
             println(x)
         """
         )
         //assert(out == "[1,2,3]\n") { out }
-        assert(out == "anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
         val out = test(
             """
             var x
-            do {
-                func (a) {
-                    set x = drop(a)
-                } ([1,2,3])
+            pass [1,2,3]
+            do (a) {
+                set x = drop(a)
             }
             println(x)
         """
@@ -2232,9 +2241,10 @@ class Exec_01 {
         val out = test(
             """
             val x = do {
-                func (a) {
+                pass [1,2,3]
+                do (a) {
                     a
-                } ([1,2,3])
+                }
             }
             println(x)
         """
@@ -2246,9 +2256,10 @@ class Exec_01 {
     fun mm_02_thus_err() {
         val out = test("""
             var x
-            func (it) {
+            pass(nil)
+            do (it) {
                 set x = 10  ;; err
-            } (nil)
+            }
             println(x)
         """)
         //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
@@ -2258,10 +2269,11 @@ class Exec_01 {
     fun mm_03_thus_err() {
         val out = test("""
             var x
-            func (it) {
+            pass (nil)
+            do (it) {
                 set x = it  ;; err
                 println(x)
-            }(nil)
+            }
         """)
         //assert(out == "anon : (lin 4, col 17) : set error : destination across thus\n") { out }
         assert(out == "nil\n") { out }
@@ -2270,10 +2282,11 @@ class Exec_01 {
     fun mm_04_tmp() {
         val out = test(
             """
-            func (x) {
+            pass [0]
+            do (x) {
                 set x[0] = []
                 println(x)
-            } ([0])
+            }
         """
         )
         assert(out == "[[]]\n") { out }
@@ -2282,9 +2295,10 @@ class Exec_01 {
     fun mm_05_tmp() {
         val out = test("""
             val v = do {
-                func (x) {
+                pass ([])
+                do (x) {
                     if x { x } else { [] }
-                } ([])
+                }
             }
             println(v)
         """)
@@ -2295,9 +2309,10 @@ class Exec_01 {
     fun mm_05_tmp_x() {
         val out = test("""
             val v = do {
-                func (x) {
+                pass ([])
+                do (x) {
                     if x { drop(x) } else { [] }
-                } ([])
+                }
             }
             println(v)
         """)
