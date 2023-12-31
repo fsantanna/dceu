@@ -112,6 +112,8 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                         -> err(this.tk, "yield error : unexpected enclosing func")
                     !ups.inexe(this,true)
                         -> err(this.tk, "yield error : expected enclosing coro" + (if (CEU <= 3) "" else " or task"))
+                    ups.any(this) { it is Expr.Do && it.arg!=null }
+                    -> err(this.tk, "yield error : unexpected enclosing thus")
                 }
             }
             is Expr.Resume -> {

@@ -650,7 +650,8 @@ class Exec_99 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing func\n") { out }
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_11_resume_yield() {
@@ -885,7 +886,8 @@ class Exec_99 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
-        assert(out == ":ok\n") { out }
+        //assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_25_gc_bcast() {

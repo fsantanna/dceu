@@ -4223,7 +4223,8 @@ class Exec_01 {
         )
         //assert(out == "1\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC    alloc = 3\n" +
+        assert(out == ">>> GC: 2\n" +
+                "    alloc = 3\n" +
                 "    free  = 1\n" +
                 "    gc    = 0\n") { out }
 
@@ -4240,7 +4241,8 @@ class Exec_01 {
         """
         )
         //assert(out == "1\n") { out }
-        assert(out == ">>> GC    alloc = 4\n" +
+        assert(out == ">>> GC: 3\n" +
+                "    alloc = 4\n" +
                 "    free  = 1\n" +
                 "    gc    = 1\n") { out }
     }
@@ -4257,7 +4259,8 @@ class Exec_01 {
         )
         //assert(out == "2\n") { out }
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC    alloc = 4\n" +
+        assert(out == ">>> GC: 4\n" +
+                "    alloc = 4\n" +
                 "    free  = 0\n" +
                 "    gc    = 0\n") { out }
     }
@@ -4276,7 +4279,8 @@ class Exec_01 {
         """
         )
         //assert(out == "0\n") { out }
-        assert(out == ">>> GC    alloc = 4\n" +
+        assert(out == ">>> GC: 4\n" +
+                "    alloc = 4\n" +
                 "    free  = 0\n" +
                 "    gc    = 0\n") { out }
     }
