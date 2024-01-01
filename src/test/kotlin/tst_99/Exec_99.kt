@@ -1887,6 +1887,23 @@ class Exec_99 {
         """)
         assert(out == "true\n") { out }
     }
+    @Test
+    fun BUG_kk_11_await_thus_yield() {
+        val out = test("""
+            $IS ; $DETRACK ; $XAWAIT
+            spawn task {
+                await(:X) {
+                    yield()
+                }
+            }
+            do {
+                val e = :X []
+                broadcast(e)
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
 
     // AWAIT / TASK
 
@@ -1985,6 +2002,23 @@ class Exec_99 {
                 } with {
                     ;;every false { }
                 }
+            }
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun BUG_km_04_every() {
+        val out = test("""
+            $IS ; $DETRACK ; $XAWAIT
+            spawn task {
+                every true {
+                    yield()
+                }
+            }
+            do {
+                val e = :X []
+                broadcast(e)
             }
             println(:ok)
         """)
@@ -2616,5 +2650,28 @@ class Exec_99 {
         """)
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
-
+    @Test
+    fun BUG_zz_06_double_awake() {
+        DEBUG = true
+        val out = test("""
+            spawn task {
+                loop {
+            println(false)
+                    val t = spawn task {
+                        await(:X)
+                    }
+                    spawn task {
+                        loop {
+                            yield()
+                        }
+                    }
+                    await(t)
+            println(true)
+                    await(:X)
+                }
+            }
+            broadcast(true)
+        """)
+        assert(out == "true\nfalse\nfalse\ntrue\n") { out }
+    }
 }

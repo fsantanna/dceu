@@ -208,6 +208,42 @@ class Exec_04 {
         assert(out == ":ok\n") { out }
     }
 
+    // ALIEN SCOPE
+
+    @Test
+    fun cd_01_every() {
+        val out = test("""
+            spawn (task () :void {
+                (pass yield(nil))
+                do (it) {
+                    yield(nil)
+                }
+            }) (nil)
+            do {
+                val e = []
+                broadcast'(e,:task)
+            }
+            println(:ok)
+        """)
+        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+    }
+    @Test
+    fun cd_02_bcast_spawn_arg() {
+        val out = test("""
+            val T = task () {
+                val x = yield(nil)
+            }
+            spawn T() 
+            do {
+                val e = []
+                broadcast(e)
+            }
+            println(:ok)
+        """)
+        assert(out == " |  anon : (lin 8, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 3, col 17) : declaration error : cannot copy reference out\n") { out }
+    }
+
     // BROADCAST
 
     @Test
@@ -557,6 +593,34 @@ class Exec_04 {
         """)
         assert(out == ":no\n:ok\t20\n") { out }
     }
+    @Test
+    fun df_03_bcast_throw() {
+        DEBUG = true
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    yield(nil)
+                    yield(nil)
+                    println(:ok)
+                    throw(:XXX)
+                }) ()
+                spawn (task () {
+                    yield(nil)
+                    broadcast (nil) in :global
+                }) ()
+                loop {
+                    yield(nil)
+                }
+            }) ()            
+            broadcast(nil)
+        """)
+        assert(out == "ok\n" +
+                " |  anon : (lin 17, col 13) : broadcast'(nil,:task)\n" +
+                " |  anon : (lin 11, col 21) : broadcast'(nil,:global)\n" +
+                " |  anon : (lin 7, col 21) : throw(:XXX)\n" +
+                " v  throw error : :XXX\n") { out }
+    }
+
 
     // THROW / CATCH
 
