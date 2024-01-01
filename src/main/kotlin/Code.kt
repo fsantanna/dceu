@@ -665,14 +665,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }}
                 
                 ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU5(ceu_dstk COMMA) CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
+                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
                         return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
                     }
                 """ }}
-
-                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
                 """
             }
             is Expr.Yield -> {
@@ -750,14 +749,13 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }}
 
                 ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
 
                 ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                     if (!$bstk->on) {
                         return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
                     }
                 """ }}
-
-                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
@@ -1151,6 +1149,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }},
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
+                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
 
                     ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
                         ${(CEU >= 5).cond { """
@@ -1162,8 +1161,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             return (CEU_Value) { CEU_VALUE_NIL };       // TODO: func may leak
                         }
                     """ }}
-                    
-                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
                 } // CALL | ${this.dump()}
                 """
             }

@@ -1494,6 +1494,7 @@ fun Coder.main (tags: Tags): String {
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
                 if (CEU_ISERR(ret)) {
+                    // catch error from blocks above
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, CEU_ARG_ERROR, &ret);
                 } else if (task->status == CEU_EXE_STATUS_YIELDED) {
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, n, args);

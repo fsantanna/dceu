@@ -931,9 +931,9 @@ class Parser (lexer_: Lexer)
                             ;;}
                             watching task_$N {
                                 loop {
-                                    await(${tag.str}) { not it }
+                                    await(${tag.str} => not it)
                                     toggle task_$N(false)
-                                    await(${tag.str}) { it }
+                                    await(${tag.str} => not not it)
                                     toggle task_$N(true)
                                 }
                             }
