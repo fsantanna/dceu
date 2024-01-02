@@ -297,6 +297,21 @@ class Exec_05 {
             val t2 = spawn T (2)
             broadcast (nil) in x1
         """)
+        assert(out == " v  anon : (lin 10, col 13) : broadcast'(nil,x1) : invalid target\n") { out }
+    }
+    @Test
+    fun bb_05_bcast_in_task_ok() {
+        val out = test("""
+            val T = task (v) {
+                ${AWAIT()}
+                ;;yield(nil)
+                println(v)
+            }
+            val t1 = spawn T (1)
+            val x1 = track(t1)
+            val t2 = spawn T (2)
+            detrack(x1) { it => broadcast (nil) in it }
+        """)
         assert(out == "1\n") { out }
     }
     @Test

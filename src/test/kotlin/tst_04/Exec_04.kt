@@ -614,7 +614,7 @@ class Exec_04 {
             }) ()            
             broadcast(nil)
         """)
-        assert(out == "ok\n" +
+        assert(out == ":ok\n" +
                 " |  anon : (lin 17, col 13) : broadcast'(nil,:task)\n" +
                 " |  anon : (lin 11, col 21) : broadcast'(nil,:global)\n" +
                 " |  anon : (lin 7, col 21) : throw(:XXX)\n" +

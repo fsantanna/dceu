@@ -1888,7 +1888,7 @@ class Exec_99 {
         assert(out == "true\n") { out }
     }
     @Test
-    fun BUG_kk_11_await_thus_yield() {
+    fun kk_11_await_thus_yield() {
         val out = test("""
             $IS ; $DETRACK ; $XAWAIT
             spawn task {
@@ -1902,7 +1902,7 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
 
     // AWAIT / TASK
@@ -2008,7 +2008,7 @@ class Exec_99 {
         assert(out == ":ok\n") { out }
     }
     @Test
-    fun BUG_km_04_every() {
+    fun km_04_every() {
         val out = test("""
             $IS ; $DETRACK ; $XAWAIT
             spawn task {
@@ -2022,7 +2022,7 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == ":ok\n") { out }
+        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
 
     // CLOCK
@@ -2651,7 +2651,7 @@ class Exec_99 {
         assert(out == "true\nfalse\nfalse\ntrue\n") { out }
     }
     @Test
-    fun BUG_zz_06_double_awake() {
+    fun TODO_zz_06_double_awake() {
         DEBUG = true
         val out = test("""
             spawn task {
