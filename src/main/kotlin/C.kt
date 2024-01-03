@@ -554,15 +554,24 @@ fun Coder.main (tags: Tags): String {
         #define CEU_ASSERT(blk,err,pre) ceu_assert(blk,err,pre)
         #else
         #define CEU_ISERR(v) (v.type==CEU_VALUE_ERROR || v.type==CEU_VALUE_THROW)
-        #define CEU_ERROR(blk,pre,err) {                       \
-            if (err.type == CEU_VALUE_THROW) {                  \
-                ceu_acc = err;                                  \
-            } else {                                            \
-                ceu_acc = _ceu_throw_(blk, err);                \
-            }                                                   \
-            CEU_Value ceu_str = _ceu_pointer_to_string_(blk,pre); \
-            assert(ceu_vector_set(&ceu_acc.Dyn->Throw.stk.Dyn->Vector, ceu_acc.Dyn->Throw.stk.Dyn->Vector.its, ceu_str).type != CEU_VALUE_ERROR); \
-            continue;                                           \
+        #define CEU_ERROR_PUSH(pre,err) {                   \
+            assert(err.type == CEU_VALUE_THROW);            \
+            assert (                                        \
+                ceu_vector_set (                            \
+                    &err.Dyn->Throw.stk.Dyn->Vector,        \
+                    err.Dyn->Throw.stk.Dyn->Vector.its,     \
+                    _ceu_pointer_to_string_(CEU_HLD_BLOCK(err.Dyn),pre) \
+                ).type != CEU_VALUE_ERROR                   \
+            );                                              \
+        }
+        #define CEU_ERROR(blk,pre,err) {            \
+            if (err.type == CEU_VALUE_THROW) {      \
+                ceu_acc = err;                      \
+            } else {                                \
+                ceu_acc = _ceu_throw_(blk, err);    \
+            }                                       \
+            CEU_ERROR_PUSH(pre,ceu_acc);        \
+            continue;                               \
         }
         #define CEU_ASSERT(blk,err,pre) ({      \
             CEU_Value ceu_err = err;            \

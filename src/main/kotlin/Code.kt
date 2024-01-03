@@ -665,13 +665,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }}
                 
                 ceu_acc = $coc.Dyn->Exe.frame.clo->proto(CEU5(ceu_dstk COMMA) CEU4($bstk COMMA) &$coc.Dyn->Exe.frame, 1, &ceu_acc);
-                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");                
 
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
-                    if (!$bstk->on) {
-                        return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
+                    if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
+                        if (CEU_ISERR(ceu_acc)) {
+                            CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
+                        }
+                        return ceu_acc;       // TODO: func may leak
                     }
                 """ }}
+
+                CEU_ASSERT($bupc, ceu_acc, ceu_err_$n);                
                 """
             }
             is Expr.Yield -> {
@@ -749,14 +755,20 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """ }}
 
                 ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
-                CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
 
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
-                    if (!$bstk->on) {
-                        return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                
+                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
+                    if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
+                        if (CEU_ISERR(ceu_acc)) {
+                            CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
+                        }
+                        return ceu_acc;       // TODO: func may leak
                     }
                 """ }}
                 
+                CEU_ASSERT($bupc, ceu_acc, ceu_err_$n);
+
                 ${this.tsks.cond2({"""
                         ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
                     }
@@ -1149,18 +1161,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         }},
                         ${if (has_dots) "_ceu_args_$n" else argsc}
                     );
-                    CEU_ASSERT($bupc, ceu_acc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}");
 
-                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """
-                        ${(CEU >= 5).cond { """
-                            if (ceu_dstk_isoff(ceu_dstk)) {
-                                return (CEU_Value) { CEU_VALUE_NIL };   // TODO: func may leak
+                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                    
+                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
+                        if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
+                            if (CEU_ISERR(ceu_acc)) {
+                                CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
                             }
-                        """ }}                        
-                        if (!$bstk->on) {
-                            return (CEU_Value) { CEU_VALUE_NIL };       // TODO: func may leak
+                            return ceu_acc;       // TODO: func may leak
                         }
                     """ }}
+
+                    CEU_ASSERT($bupc, ceu_acc, ceu_err_$n);
                 } // CALL | ${this.dump()}
                 """
             }
