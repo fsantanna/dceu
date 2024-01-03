@@ -471,8 +471,6 @@ class Parser (lexer_: Lexer)
             if (!y) { """
                 if ($xtask) {
                     ;; task terminated
-                    yield() ;; nested block cannot awake enclosing task due to same event
-                    nil
                 } else {
                     $it
                 }
@@ -933,9 +931,9 @@ class Parser (lexer_: Lexer)
                             ;;}
                             watching task_$N {
                                 loop {
-                                    await(${tag.str} => not it)
+                                    await(${tag.str} => not it[0])
                                     toggle task_$N(false)
-                                    await(${tag.str} => not not it)
+                                    await(${tag.str} => it[0])
                                     toggle task_$N(true)
                                 }
                             }
@@ -1137,8 +1135,6 @@ class Parser (lexer_: Lexer)
                                 break (pub(ceu_$N)) if (status(ceu_$N) == :terminated)
                                 yield()
                             }
-                            yield() ;; nested block cannot awake enclosing task due to same event
-                            nil
                         }
                     """)
                 }
@@ -1193,8 +1189,6 @@ class Parser (lexer_: Lexer)
                             yield()
                             nil
                         }
-                        yield() ;; nested block cannot awake enclosing task due to same event
-                        nil
                     }
                 """)
             }
@@ -1223,7 +1217,6 @@ class Parser (lexer_: Lexer)
                             )
                             yield()
                         }
-                        yield() ;; nested block cannot awake enclosing task due to same event
                     }
                 """)
             }
