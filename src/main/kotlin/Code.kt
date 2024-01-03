@@ -685,8 +685,11 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """
                 { // YIELD ${this.dump()}
                     ${this.arg.code()}
-                    ceu_frame->exe->pc = $n;      // next resume
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
+                    ceu_frame->exe->pc = $n;      // next resume
+                    ${ups.first(this) { it is Expr.Proto }!!.let { it.tk.str=="task" }.cond { """
+                        ceu_frame->exe_task->time = CEU_TIME;
+                    """ }}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot receive assigned reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -754,7 +757,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
 
-                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
 
                 static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
                 
