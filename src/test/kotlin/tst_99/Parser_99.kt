@@ -1071,6 +1071,7 @@ class Parser_99 {
                 "}\n" +
                 "})\n" +
                 "}\n" +
+                "delay\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -1244,6 +1245,7 @@ class Parser_99 {
                 "}\n" +
                 "})\n" +
                 "}\n" +
+                "delay\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -1274,6 +1276,7 @@ class Parser_99 {
                 "}\n" +
                 "})\n" +
                 "}\n" +
+                "delay\n" +
                 "}") { e.tostr() }
     }
     @Test
@@ -1304,6 +1307,7 @@ class Parser_99 {
                 "}\n" +
                 "})\n" +
                 "}\n" +
+                "delay\n" +
                 "}") { e.tostr() }
     }
 

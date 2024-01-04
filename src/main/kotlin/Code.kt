@@ -754,7 +754,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
                 """ }}
 
-                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
+                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
 
                 static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
                 
@@ -777,7 +777,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """})}
                 """
             }
-            is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME;"
+            is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME_MAX;"
             is Expr.Pub -> {
                 val bupc = ups.first_block(this)!!.idc("block")
                 this.tsk.cond2({

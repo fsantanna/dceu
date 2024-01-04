@@ -511,7 +511,7 @@ class Exec_04 {
         val out = test("""
             val T = task (v) {
                 yield(nil)
-                ;;println(:time, `:number CEU_TIME`)
+                ;;println(:time, `:number CEU_TIME_MAX`)
                 val e = ${AWAIT()}
                 println(e)                
             }
