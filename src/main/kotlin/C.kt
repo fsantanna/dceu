@@ -316,8 +316,8 @@ fun Coder.main (tags: Tags): String {
     """ +
     """ // GLOBALS
         int CEU_TIME_N = 0;
-        uint32_t CEU_TIME_MIN = 0;
-        uint32_t CEU_TIME_MAX = 1;
+        uint8_t CEU_TIME_MIN = 0;
+        uint8_t CEU_TIME_MAX = 1;
         int CEU_BREAK = 0;
     #if CEU >= 4
         CEU_Stack CEU_BSTK = { NULL, 1, NULL };
@@ -1504,12 +1504,16 @@ fun Coder.main (tags: Tags): String {
                     return ret;
                 }
             }
+            
+            #define ceu_time_lt(tsk,now) \
+                (CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
+                    (tsk < now) : (tsk > now)
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
                 if (CEU_ISERR(ret)) {
                     // catch error from blocks above
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, CEU_ARG_ERROR, &ret);
-                } else if (task->time < now) {
+                } else if (ceu_time_lt(task->time,now)) {
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, n, args);
                 } else {
                     task->time = CEU_TIME_MIN;
@@ -1527,8 +1531,11 @@ fun Coder.main (tags: Tags): String {
                 task->hld.type = CEU_HOLD_MUTAB;    // TODO: copy ref to deep scope
                 CEU_Value evt2 = ceu_dyn_to_val((CEU_Dyn*)task);
                 CEU_Value ret2;
+
+                assert(CEU_TIME_N < 255);
                 CEU_TIME_N++;
-                uint32_t now = ++CEU_TIME_MAX;
+                uint8_t now = ++CEU_TIME_MAX;
+
                 if (up_task!=NULL && xstk0.on) {
                     // enclosing coro of enclosing block
                     ret2 = ceu_bcast_task(CEU5(dstk COMMA) &xstk1, now, up_task, 1, &evt2);
@@ -1641,8 +1648,10 @@ fun Coder.main (tags: Tags): String {
         CEU_Value ceu_broadcast_f (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Frame* frame, int n, CEU_Value args[]) {
             assert(n == 2);
             ceu_bstk_assert(bstk);
-            uint32_t now = ++CEU_TIME_MAX;
+
+            assert(CEU_TIME_N < 255);
             CEU_TIME_N++;
+            uint8_t now = ++CEU_TIME_MAX;
             
             CEU_Value evt = args[0];
             if (evt.type > CEU_VALUE_DYNAMIC) {
@@ -2032,7 +2041,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
             //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
             ret.Dyn->Any.refs = 1;  // bc task is alive regardless of pointers
-            ret.Dyn->Exe_Task.time = CEU_TIME_MIN;
+            ret.Dyn->Exe_Task.time = CEU_TIME_MAX - 1;
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;

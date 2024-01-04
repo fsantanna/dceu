@@ -170,6 +170,21 @@ class Exec_04 {
         """)
         assert(out == "2\n1\n3\n:ok\n") { out }
     }
+    @Test
+    fun bj_03_par() {
+        val out = test("""
+            spawn (task () {
+                spawn (task () {
+                    println(1)
+                }) ()
+                spawn (task () {
+                    println(2)
+                }) ()
+                println(3)
+            }) ()
+        """)
+        assert(out == "1\n2\n3\n") { out }
+    }
 
     // SCOPE
 
