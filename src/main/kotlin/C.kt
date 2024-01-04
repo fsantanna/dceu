@@ -2016,6 +2016,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
             //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
             ret.Dyn->Any.refs = 1;  // bc task is alive regardless of pointers
+            ret.Dyn->Exe_Task.time = CEU_TIME-1;
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;

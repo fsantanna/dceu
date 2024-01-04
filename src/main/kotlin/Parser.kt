@@ -468,18 +468,24 @@ class Parser (lexer_: Lexer)
             """
             else -> error("impossible case")
         }.let {
-            if (!y) { """
+            if (!y) {
+                """
                 if ($xtask) {
                     ;; task terminated
                 } else {
                     $it
+                    delay
                 }
-            """ } else """
+                """
+            } else {
+                """
                 do {
                     ${kdcl()}
                     $it
+                    delay
                 }
-            """
+                """
+            }
         }) //.let { println(it);it })
     }
 
@@ -901,6 +907,7 @@ class Parser (lexer_: Lexer)
                 val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
                 Expr.Spawn(tk0, tasks, call.clo, arg)
             }
+            (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tsk = this.expr_in_parens(true)
