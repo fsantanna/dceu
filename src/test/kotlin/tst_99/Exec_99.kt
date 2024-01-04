@@ -1905,6 +1905,23 @@ class Exec_99 {
         """)
         assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
+    @Test
+    fun kk_12_await_detrack() {
+        val out = test("""
+            $IS ; $DETRACK ; $XAWAIT
+            val t = spawn task {
+                yield()
+            }
+            val x = track(t)
+            spawn task {
+                await(x)
+                println(:1)
+            }
+            broadcast(nil)
+            println(:2)
+        """)
+        assert(out == ":1\n:2\n") { out }
+    }
 
     // AWAIT / TASK
 
