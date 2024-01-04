@@ -185,6 +185,30 @@ class Exec_04 {
         """)
         assert(out == "1\n2\n3\n") { out }
     }
+    @Test
+    fun bj_04_toggle() {
+        DEBUG = true
+        val out = test("""
+            $PLUS
+            var i = 0
+            loop {
+                broadcast(nil)
+                break if i == 254
+                set i = i + 1
+            }
+            val t = spawn (task () {
+                println(`:number CEU_TIME_MIN`)
+                yield(nil)
+                delay
+                println(:ok)
+            }) ()
+            toggle t (false)
+            broadcast(nil)
+            toggle t (true)
+            broadcast(nil)
+        """)
+        assert(out == "255\n:ok\n") { out }
+    }
 
     // SCOPE
 
