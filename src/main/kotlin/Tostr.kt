@@ -62,6 +62,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Resume -> "(resume (" + this.co.tostr(pre) + ")(" + this.arg.tostr(pre) + "))"
 
         is Expr.Spawn  -> "(spawn " + this.tsk.tostr(pre) + "(" + this.arg.tostr(pre) + ")" + this.tsks.cond { " in ${this.tsks!!.tostr(pre)}" } + ")"
+        is Expr.Delay  -> "delay"
         is Expr.Pub    -> "pub(" + (this.tsk?.tostr(pre) ?: "") + ")"
         is Expr.Dtrack -> {
             val tsk = this.blk.args.let {

@@ -919,6 +919,12 @@ class Parser (lexer_: Lexer)
                     listOf(evt,xin)
                 )
             }
+            (CEU>=4 && this.acceptFix("delay")) -> {
+                Expr.Call(this.tk0 as Tk.Fix,
+                    Expr.Acc(Tk.Id("delay'", this.tk0.pos, 0)),
+                    listOf()
+                )
+            }
             (CEU>=4 && this.acceptFix("toggle")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 if (CEU>=99 && this.acceptEnu("Tag")) {

@@ -87,6 +87,18 @@ class Parser_04 {
                 "})(nil))\n") { e.tostr() }
     }
 
+    // DELAY
+
+    @Test
+    fun bj_01_delay() {
+        val l = lexer("""
+            delay
+        """)
+        val parser = Parser(l)
+        val e = parser.exprs()
+        assert(e.tostr() == "delay\n") { e.tostr() }
+    }
+
     // BCAST
 
     @Test

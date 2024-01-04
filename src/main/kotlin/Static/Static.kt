@@ -133,6 +133,11 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 }
                  */
             }
+            is Expr.Delay  -> {
+                if (!ups.first(this) { it is Expr.Proto }.let { it?.tk?.str=="task" }) {
+                    err(this.tk, "delay error : expected enclosing task")
+                }
+            }
             is Expr.Pub    -> {
                 this.tsk?.traverse()
                 when {

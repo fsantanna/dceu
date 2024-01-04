@@ -687,9 +687,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                     ${this.arg.code()}
                     ceu_frame->exe->status = CEU_EXE_STATUS_YIELDED;
                     ceu_frame->exe->pc = $n;      // next resume
-                    ${ups.first(this) { it is Expr.Proto }!!.let { it.tk.str=="task" }.cond { """
-                        ceu_frame->exe_task->time = CEU_TIME;
-                    """ }}
                     if (ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn->Any.hld.type!=CEU_HOLD_FLEET) {
                         CEU_Value err = { CEU_VALUE_ERROR, {.Error="yield error : cannot receive assigned reference"} };
                         CEU_ERROR($bupc, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})", err);
@@ -780,6 +777,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                 """})}
                 """
             }
+            is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME;"
             is Expr.Pub -> {
                 val bupc = ups.first_block(this)!!.idc("block")
                 this.tsk.cond2({

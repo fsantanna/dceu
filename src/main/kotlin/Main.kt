@@ -9,7 +9,7 @@ var CEU = 1
     // 1: dyn-lex
     // 2: defer, throw/catch
     // 3: coro, yield, resume
-    // 4: task, pub, bcast, toggle, ref
+    // 4: task, pub, bcast, toggle, ref, delay
     // 5: tasks, track, detrack (lambda)
     // 6: export
     // TODO: copy, underscore, self (coro/task)
@@ -47,7 +47,7 @@ val KEYWORDS: SortedSet<String> = (
     )) + (if (CEU < 3) setOf() else setOf(
         "coro", "resume", "yield",
     )) + (if (CEU < 4) setOf() else setOf(
-        "broadcast", "in", "pub", "spawn", "task", "toggle",
+        "broadcast", "delay", "in", "pub", "spawn", "task", "toggle",
     )) + (if (CEU < 5) setOf() else setOf(
         "as", "detrack",
     )) + (if (CEU < 6) setOf() else setOf(
@@ -140,6 +140,7 @@ sealed class Expr (val n: Int, val tk: Tk) {
     data class Resume (val tk_: Tk.Fix, val co: Expr, val arg: Expr): Expr(N++, tk_)
 
     data class Spawn  (val tk_: Tk.Fix, val tsks: Expr?, val tsk: Expr, val arg: Expr): Expr(N++, tk_)
+    data class Delay  (val tk_: Tk.Fix): Expr(N++, tk_)
     data class Pub    (val tk_: Tk.Fix, val tsk: Expr?): Expr(N++, tk_)
     data class Dtrack (val tk_: Tk.Fix, val blk: Expr.Call): Expr(N++, tk_)
     data class Toggle (val tk_: Tk.Fix, val tsk: Expr, val on: Expr): Expr(N++, tk_)

@@ -1664,7 +1664,7 @@ fun Coder.main (tags: Tags): String {
                 ceu_gc_dec(evt, 1);
             }
             return ret;
-        }        
+        }
     #endif
     """ +
     """ // TUPLE / VECTOR / DICT

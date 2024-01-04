@@ -11,11 +11,12 @@ class Lexer_04 {
     @Test
     fun aa_01_ids() {
         val l =
-            lexer("task broadcast in tasks pub")
+            lexer("task broadcast in delay tasks pub")
         val tks = l.lex().iterator()
         assert(tks.next().let { it is Tk.Fix && it.str == "task" })
         assert(tks.next().let { it is Tk.Fix && it.str == "broadcast" })
         assert(tks.next().let { it is Tk.Fix && it.str == "in" })
+        assert(tks.next().let { it is Tk.Fix && it.str == "delay" })
         assert(tks.next().let { it is Tk.Id  && it.str == "tasks" })
         assert(tks.next().let { it is Tk.Fix && it.str == "pub" })
         assert(tks.next() is Tk.Eof)

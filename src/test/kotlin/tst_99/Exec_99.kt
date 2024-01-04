@@ -1561,6 +1561,7 @@ class Exec_99 {
             broadcast(nil)
         """)
         assert(out == "2\n3\n1\n:ok\n") { out }
+        //assert(out == "2\n1\n3\n:ok\n") { out }
     }
     @Test
     fun jj_08a_parand() {

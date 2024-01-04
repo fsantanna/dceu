@@ -104,6 +104,73 @@ class Exec_04 {
         assert(out.contains("exe-task: 0x")) { out }
     }
 
+    // DELAY
+
+    @Test
+    fun bj_01_delay_err() {
+        val out = test("""
+            task () {
+                func () {
+                    delay
+                }
+            }
+        """)
+        assert(out.contains("anon : (lin 4, col 21) : delay error : expected enclosing task\n")) { out }
+    }
+    @Test
+    fun bj_02_delay() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                yield(nil)
+                yield(nil)
+                println(1)
+            }) ()
+            spawn (task () {
+                yield(nil)
+                println(2)
+            }) ()
+            spawn (task () {
+                yield(nil)
+                yield(nil)
+                println(3)
+            }) ()
+            broadcast(nil)
+            broadcast(nil)
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "2\n3\n1\n:ok\n") { out }
+    }
+    @Test
+    fun bj_03_delay() {
+        val out = test("""
+            spawn (task () {
+                yield(nil)
+                delay
+                yield(nil)
+                delay
+                yield(nil)
+                println(1)
+            }) ()
+            spawn (task () {
+                yield(nil)
+                println(2)
+            }) ()
+            spawn (task () {
+                yield(nil)
+                delay
+                yield(nil)
+                println(3)
+            }) ()
+            broadcast(nil)
+            broadcast(nil)
+            broadcast(nil)
+            println(:ok)
+        """)
+        assert(out == "2\n1\n3\n:ok\n") { out }
+    }
+
     // SCOPE
 
     @Test
@@ -442,19 +509,21 @@ class Exec_04 {
     @Test
     fun dd_12_bcast() {
         val out = test("""
-            var tk
-            set tk = task (v) {
-                yield(nil) ;;thus { it => nil }
+            val T = task (v) {
+                yield(nil)
+                ;;println(:time, `:number CEU_TIME`)
                 val e = ${AWAIT()}
                 println(e)                
             }
-            var co1 = spawn tk ()
-            var co2 = spawn tk ()
-            ;;func () {
+            spawn T ()
+            spawn T ()
+            func () {
                  broadcast(1)
+                 ;;println(:aaa, 2)
                  broadcast(2)
+                 ;;println(:bbb, 3)
                  broadcast(3)
-            ;;}()
+            }()
         """)
         assert(out == "2\n2\n") { out }
     }

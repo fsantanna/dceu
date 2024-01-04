@@ -60,8 +60,8 @@ class Ups (outer: Expr.Do) {
             is Expr.Dcl    -> this.map(listOfNotNull(this.src))
             is Expr.Set    -> this.map(listOf(this.dst, this.src))
             is Expr.If     -> this.map(listOf(this.cnd, this.t, this.f))
-            is Expr.Loop  -> this.map(listOf(this.blk))
-            is Expr.Break -> this.map(listOfNotNull(this.cnd, this.e))
+            is Expr.Loop   -> this.map(listOf(this.blk))
+            is Expr.Break  -> this.map(listOfNotNull(this.cnd, this.e))
             is Expr.Enum   -> emptyMap()
             is Expr.Data   -> emptyMap()
             is Expr.Pass   -> this.map(listOf(this.e))
@@ -74,6 +74,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Resume -> this.map(listOf(this.co, this.arg))
 
             is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.arg))
+            is Expr.Delay  -> emptyMap()
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Dtrack -> this.map(listOf(this.blk))
             is Expr.Toggle -> this.map(listOf(this.tsk, this.on))
