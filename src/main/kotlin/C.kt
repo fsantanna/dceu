@@ -317,7 +317,7 @@ fun Coder.main (tags: Tags): String {
     """ // GLOBALS
         int CEU_TIME_N = 0;
         uint8_t CEU_TIME_MIN = 0;
-        uint8_t CEU_TIME_MAX = 1;
+        uint8_t CEU_TIME_MAX = 0;
         int CEU_BREAK = 0;
     #if CEU >= 4
         CEU_Stack CEU_BSTK = { NULL, 1, NULL };
@@ -1506,14 +1506,14 @@ fun Coder.main (tags: Tags): String {
             }
             
             #define ceu_time_lt(tsk,now) \
-                (CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
-                    (tsk < now) : (tsk > now)
+                ((CEU_TIME_MAX>=CEU_TIME_MIN || (tsk<CEU_TIME_MAX && now<CEU_TIME_MAX) || (tsk>CEU_TIME_MIN && now>CEU_TIME_MIN)) ? \
+                    (tsk < now) : (tsk > now))
 
             if (task->status == CEU_EXE_STATUS_YIELDED) { 
                 if (CEU_ISERR(ret)) {
                     // catch error from blocks above
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, CEU_ARG_ERROR, &ret);
-                } else if (ceu_time_lt(task->time,now)) {
+                } else if (task->pc==0 || ceu_time_lt(task->time,now)) {
                     ret = task->frame.clo->proto(CEU5(dstk COMMA) &xstk1, &task->frame, n, args);
                 } else {
                     task->time = CEU_TIME_MIN;
@@ -2041,7 +2041,7 @@ fun Coder.main (tags: Tags): String {
             CEU_Value ret = _ceu_create_exe_(type, sizeof(CEU_Exe_Task), blk, clo CEU5(COMMA dyns));
             //ret.Dyn->Exe_Task.hld.type = CEU_HOLD_MUTAB;
             ret.Dyn->Any.refs = 1;  // bc task is alive regardless of pointers
-            ret.Dyn->Exe_Task.time = CEU_TIME_MAX - 1;
+            ret.Dyn->Exe_Task.time = CEU_TIME_MAX;
             ret.Dyn->Exe_Task.dn_block = NULL;
             ret.Dyn->Exe_Task.pub = (CEU_Value) { CEU_VALUE_NIL };
             return ret;
