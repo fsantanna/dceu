@@ -2449,7 +2449,7 @@ fun Coder.main (tags: Tags): String {
             return ret;
         }
         
-        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU_Stack* bstk, CEU_Dyn* dyn) {
+        CEU_Value ceu_dyn_exe_kill (CEU5(CEU_Stack* dstk COMMA) CEU4(CEU_Stack* bstk COMMA) CEU_Dyn* dyn) {
             CEU_Value ret = { CEU_VALUE_NIL };
         #if CEU >= 5
             if (dyn->Any.type == CEU_VALUE_TASKS) {
