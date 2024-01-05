@@ -73,7 +73,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Yield  -> this.map(listOf(this.arg))
             is Expr.Resume -> this.map(listOf(this.co, this.arg))
 
-            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk, this.arg))
+            is Expr.Spawn  -> this.map(listOfNotNull(this.tsks, this.tsk) + this.args)
             is Expr.Delay  -> emptyMap()
             is Expr.Pub    -> this.map(listOfNotNull(this.tsk))
             is Expr.Dtrack -> this.map(listOf(this.blk))
@@ -90,7 +90,7 @@ class Ups (outer: Expr.Do) {
             is Expr.Vector -> this.map(this.args)
             is Expr.Dict   -> this.map(this.args.map { listOf(it.first,it.second) }.flatten())
             is Expr.Index  -> this.map(listOf(this.col, this.idx))
-            is Expr.Call   -> this.map(listOf(this.clo)+ this.args)
+            is Expr.Call   -> this.map(listOf(this.clo) + this.args)
         }
     }
 }

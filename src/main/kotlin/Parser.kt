@@ -898,14 +898,13 @@ class Parser (lexer_: Lexer)
                 }
                 when {
                     (call !is Expr.Call) -> err(tk1, "spawn error : expected call")
-                    (call.args.size > 1) -> err(tk1, "spawn error : invalid number of arguments")
+                    (call.args.lastOrNull().let { it is Expr.Acc && it.tk.str=="..." }) -> err(tk1, "spawn error : \"...\" is not allowed")
                 }
                 val tasks = if (CEU<5 || !this.acceptFix("in")) null else {
                     this.expr()
                 }
                 call as Expr.Call
-                val arg = call.args.getOrNull(0) ?: Expr.Nil(Tk.Fix("nil",tk1.pos))
-                Expr.Spawn(tk0, tasks, call.clo, arg)
+                Expr.Spawn(tk0, tasks, call.clo, call.args)
             }
             (CEU>=4 && this.acceptFix("delay")) -> Expr.Delay(this.tk0 as Tk.Fix)
             (CEU>=4 && this.acceptFix("pub")) -> {

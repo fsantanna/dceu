@@ -23,7 +23,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
             is Expr.Yield  -> this.arg.coexists()
             is Expr.Resume -> this.co.coexists() || this.arg.coexists()
 
-            is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.arg.coexists()
+            is Expr.Spawn  -> (this.tsks?.coexists() ?: false) || this.tsk.coexists() || this.args.any { it.coexists() }
             is Expr.Pub    -> this.tsk?.coexists() ?: false
             is Expr.Dtrack -> this.blk.coexists()
             is Expr.Toggle -> this.tsk.coexists() || this.on.coexists()
@@ -133,7 +133,7 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
                     $union {
                         ${this.tsks.cond { it.mem() }} 
                         ${this.tsk.mem()}
-                        ${this.arg.mem()}
+                        ${this.args.map { it.mem() }.joinToString("")}
                     };
                 };
             """

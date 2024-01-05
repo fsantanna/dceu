@@ -63,6 +63,7 @@ class Exec_04 {
     fun bb_01_spawn() {
         val out = test("""
             val T = task (v) { nil }
+            func () { nil } ()
             val t = spawn T()
             println(t)
         """)
@@ -3245,8 +3246,8 @@ class Exec_04 {
             }
             spawn T(1,2)
         """)
-        //assert(out == "1\t2\n") { out }
-        assert(out == "anon : (lin 6, col 19) : spawn error : invalid number of arguments\n") { out }
+        assert(out == "1\t2\n") { out }
+        //assert(out == "anon : (lin 6, col 19) : spawn error : invalid number of arguments\n") { out }
     }
     @Test
     fun zz_02_spawn_err() {

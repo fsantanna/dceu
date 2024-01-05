@@ -870,6 +870,15 @@ class Parser_99 {
             }
         """.trimIndent()) { e.tostr() }
     }
+    @Test
+    fun todo_gg_04_resume_err() {   // TODO: multi args should be allowed
+        val l = tst_03.lexer("""
+            resume-yield-all nil(1,2)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 2, col 30) : resume-yield-all error : invalid number of arguments")
+    }
+
 
     // SPAWN
 

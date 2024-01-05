@@ -49,7 +49,7 @@ class Parser_03 {
         //assert(trap { parser.expr() } == "anon : (lin 1, col 1) : yield error : line break before expression")
     }
     @Test
-    fun bb_06_resume_() {
+    fun bb_06_resume() {
         val l = lexer("""
             resume (f()) ()
         """)
@@ -66,5 +66,16 @@ class Parser_03 {
         val e = parser.expr()
         assert(e.tostr() == "yield(1)")
         //assert(trap { parser.expr() } == "anon : (lin 3, col 9) : expected \"thus\" : have end of file")
+    }
+
+    // MULTI ARGS
+
+    @Test
+    fun todo_cc_01_resume_err() {   // TODO: multi args should be allowed
+        val l = lexer("""
+            resume nil(1,2)
+        """.trimIndent())
+        val parser = Parser(l)
+        assert(trap { parser.expr() } == "anon : (lin 1, col 8) : resume error : invalid number of arguments")
     }
 }

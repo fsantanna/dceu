@@ -712,69 +712,80 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
             is Expr.Spawn -> {
                 val bup = ups.first_block(this)!!
                 val bupc = bup.idc("block")
+                val argsc = this.idc("args")
                 val tsksc = this.idc("tsks")
                 val tskc = this.idc("tsk")
                 val inexeT = ups.inexe(this,true)
                 val bstk = if (inexeT) "(&ceu_bstk_$n)" else "ceu_bstk"
 
                 """
-                ceu_bstk_assert(ceu_bstk);
+                { // SPAWN | ${this.dump()}
+                    ceu_bstk_assert(ceu_bstk);
+    
+                    ${(!bup.ismem(sta,clos)).cond {"""
+                        ${this.tsks.cond { "CEU_Value $tsksc;" }}
+                        CEU_Value $tskc;
+                    """ }}
+                    ${this.tsk.code()}
+                    $tskc = ceu_acc;
+                    
+                    ${(!bup.ismem(sta,clos)).cond {
+                        "CEU_Value ceu_args_$n[${this.args.size}];\n"
+                    }}
+                    ${this.args.mapIndexed { i,e -> """
+                        ${e.code()}
+                        $argsc[$i] = ceu_acc;
+                    """ }.joinToString("")}
 
-                ${(!bup.ismem(sta,clos)).cond {"""
-                    ${this.tsks.cond { "CEU_Value $tsksc;" }}
-                    CEU_Value $tskc;
-                """ }}
-                ${this.tsk.code()}
-                $tskc = ceu_acc;
-                ${this.arg.code()}
-                CEU_Value ceu_arg_$n = ceu_acc;                
-                ${this.tsks.cond2({ """
-                    ${it.code()}
-                    $tsksc = ceu_acc;
-                    CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, $tskc, &$tsksc.Dyn->Tasks);
-                    if (ceu_x_$n.type == CEU_VALUE_NIL) {
-                        ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
-                    } else {
-                        // ... below ...
-                """ }, { """
-                    CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
-                """ })}
-                
-                CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
-                
-                ${inexeT.cond { """
-                    if (ceu_n != CEU_ARG_ABORT) {
-                        ceu_frame->exe->pc = $n;
-                        case $n: // YIELD ${this.dump()}
-                            if (ceu_n == CEU_ARG_ABORT) {
-                                ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
-                                continue;
-                            }
-                    }
-                    CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
-                """ }}
-
-                ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, 1, &ceu_arg_$n);
-
-                static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
-                
-                ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
-                    if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
-                        if (CEU_ISERR(ceu_acc)) {
-                            CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
+                    ${this.tsks.cond2({ """
+                        ${it.code()}
+                        $tsksc = ceu_acc;
+                        CEU_Value ceu_x_$n = ceu_create_exe_task_in($bupc, $tskc, &$tsksc.Dyn->Tasks);
+                        if (ceu_x_$n.type == CEU_VALUE_NIL) {
+                            ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=0} };
+                        } else {
+                            // ... below ...
+                    """ }, { """
+                        CEU_Value ceu_x_$n = ceu_create_exe_task($bupc, $tskc);                    
+                    """ })}
+                    
+                    CEU_ASSERT($bupc, ceu_x_$n, "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col})");
+                    
+                    ${inexeT.cond { """
+                        if (ceu_n != CEU_ARG_ABORT) {
+                            ceu_frame->exe->pc = $n;
+                            case $n: // YIELD ${this.dump()}
+                                if (ceu_n == CEU_ARG_ABORT) {
+                                    ceu_acc = (CEU_Value) { CEU_VALUE_NIL }; // to be ignored in further move/checks
+                                    continue;
+                                }
                         }
-                        return ceu_acc;       // TODO: func may leak
-                    }
-                """ }}
-                
-                CEU_ASSERT($bupc, ceu_acc, ceu_err_$n);
-
-                ${this.tsks.cond2({"""
-                        ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
-                    }
-                """}, {"""
-                    ceu_acc = ceu_x_$n;
-                """})}
+                        CEU_Stack ceu_bstk_$n = { $bupc, 1, ceu_bstk };
+                    """ }}
+    
+                    // for some reason, gcc complains about args[0] for bcast_task(), but not for proto(), so we pass NULL here
+                    ceu_acc = ceu_bcast_task(CEU5(ceu_dstk COMMA) $bstk, CEU_TIME_MAX, &ceu_x_$n.Dyn->Exe_Task, ${this.args.size}, ${if (this.args.size>0) argsc else "NULL"});
+    
+                    static char* ceu_err_$n = "${this.tk.pos.file} : (lin ${this.tk.pos.lin}, col ${this.tk.pos.col}) : ${this.tostr(false).let { it.replace('\n',' ').replace('"','\'').let { str -> str.take(45).let { if (str.length<=45) it else it+"...)" }}}}";
+                    
+                    ${(CEU>=4 && ups.any(this) { it is Expr.Proto }).cond { """                        
+                        if (${(CEU >= 5).cond { "ceu_dstk_isoff(ceu_dstk) ||" }} !$bstk->on) {
+                            if (CEU_ISERR(ceu_acc)) {
+                                CEU_ERROR_PUSH(ceu_err_$n, ceu_acc);
+                            }
+                            return ceu_acc;       // TODO: func may leak
+                        }
+                    """ }}
+                    
+                    CEU_ASSERT($bupc, ceu_acc, ceu_err_$n);
+    
+                    ${this.tsks.cond2({"""
+                            ceu_acc = (CEU_Value) { CEU_VALUE_BOOL, {.Bool=1} };
+                        }
+                    """}, {"""
+                        ceu_acc = ceu_x_$n;
+                    """})}
+                } // SPAWN | ${this.dump()}
                 """
             }
             is Expr.Delay -> "ceu_frame->exe_task->time = CEU_TIME_MAX;"

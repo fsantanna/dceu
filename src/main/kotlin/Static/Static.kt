@@ -125,7 +125,7 @@ class Static (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                 spws.add(ups.first_block(this)!!)
                 this.tsks?.traverse()
                 this.tsk.traverse()
-                this.arg.traverse()
+                this.args.forEach { it.traverse() }
                 /*
                 when {
                     (ups.first(this) { f -> ((f is Expr.Proto) && f.tk.str == "func") } != null)

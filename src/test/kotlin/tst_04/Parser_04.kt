@@ -84,7 +84,15 @@ class Parser_04 {
         val e = parser.exprs()
         assert(e.tostr() == "(spawn (task () {\n" +
                 "nil\n" +
-                "})(nil))\n") { e.tostr() }
+                "})())\n") { e.tostr() }
+    }
+    @Test
+    fun todo_bb_06_spawn_dots_err() {   // TODO: ... should be allowed
+        val l = lexer("""
+            spawn T(...)
+        """)
+        val parser = Parser(l)
+        assert(trap { parser.exprs() } == "anon : (lin 2, col 19) : spawn error : \"...\" is not allowed")
     }
 
     // DELAY
