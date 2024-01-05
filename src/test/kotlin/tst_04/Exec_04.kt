@@ -210,6 +210,18 @@ class Exec_04 {
         """)
         assert(out == "255\n:ok\n") { out }
     }
+    @Test
+    fun bj_05_spawn_spawn() {
+        val out = test("""
+            spawn (task () {
+                spawn (task (v) {
+                    println(v)
+                }) (10)
+                nil
+            }) ()
+        """)
+        assert(out == "10\n") { out }
+    }
 
     // SCOPE
 
@@ -755,7 +767,7 @@ class Exec_04 {
                 throw(:err)
             })()
         """)
-        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { throw(:err) })(nil))\n" +
+        assert(out == " |  anon : (lin 2, col 13) : (spawn (task () { throw(:err) })())\n" +
                 " |  anon : (lin 3, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -816,7 +828,7 @@ class Exec_04 {
         //assert(out == " |  anon : (lin 9, col 13) : broadcast'(nil,:task)\n" +
         //        " |  anon : (lin 4, col 17) : throw(:err)\n" +
         //        " v  throw error : :err\n") { out }
-        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })(nil))\n" +
+        assert(out == " |  anon : (lin 6, col 13) : (spawn (task () { nil })())\n" +
                 " |  anon : (lin 4, col 17) : throw(:err)\n" +
                 " v  throw error : :err\n") { out }
     }
@@ -1650,7 +1662,7 @@ class Exec_04 {
             println(x)
         """)
         //assert(out == " v  anon : (lin 6, col 25) : pub error : expected active task\n") { out }
-        assert(out == " |  anon : (lin 5, col 21) : (spawn t(nil))\n" +
+        assert(out == " |  anon : (lin 5, col 21) : (spawn t())\n" +
                 " v  anon : (lin 2, col 29) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
@@ -1688,7 +1700,7 @@ class Exec_04 {
             }
             val t = spawn T()
         """)
-        assert(out == " |  anon : (lin 8, col 21) : (spawn T(nil))\n" +
+        assert(out == " |  anon : (lin 8, col 21) : (spawn T())\n" +
                 " v  anon : (lin 5, col 25) : set error : cannot copy reference out\n") { out }
     }
     @Test

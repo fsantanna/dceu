@@ -127,9 +127,10 @@ class Mem (val ups: Ups, val vars: Vars, val clos: Clos, val sta: Static, val de
             """
 
             is Expr.Spawn -> """
-                struct {
+                struct { // SPAWN | ${this.dump()}
                     ${this.tsks.cond { "CEU_Value tsks_${this.n};" }} 
                     CEU_Value tsk_${this.n}; 
+                    CEU_Value args_$n[${this.args.size}];
                     $union {
                         ${this.tsks.cond { it.mem() }} 
                         ${this.tsk.mem()}

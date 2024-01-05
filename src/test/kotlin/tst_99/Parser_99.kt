@@ -889,7 +889,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "(spawn (task () :void {\n" +
                 "nil\n" +
-                "})(nil))") { e.tostr() }
+                "})())") { e.tostr() }
     }
     @Test
     fun todo_hh_02_spawn_coro() {
@@ -898,7 +898,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "spawn (coro () {\n" +
                 "nil\n" +
-                "})(nil)") { e.tostr() }
+                "})()") { e.tostr() }
     }
     @Test
     fun hh_03_bcast_in() {
@@ -911,7 +911,7 @@ class Parser_99 {
         val e = parser.expr()
         assert(e.tostr() == "(spawn (task () :void {\n" +
                 "broadcast'(nil,nil)\n" +
-                "})(nil))") { e.tostr() }
+                "})())") { e.tostr() }
     }
 
 
@@ -925,10 +925,10 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(spawn (task () :void {\n" +
                 "nil\n" +
-                "})(nil))\n" +
+                "})())\n" +
                 "(spawn (task () :void {\n" +
                 "nil\n" +
-                "})(nil))\n" +
+                "})())\n" +
                 "loop {\n" +
                 "yield(nil)\n" +
                 "}\n" +
@@ -943,58 +943,58 @@ class Parser_99 {
             do {
             (val ceu_0_9 = (spawn (task () :void {
             nil
-            })(nil)))
+            })()))
             (val ceu_1_9 = (spawn (task () :void {
             nil
-            })(nil)))
+            })()))
             loop {
             (break if do {
             (pass do {
             (pass {{==}}(status(ceu_0_9),:terminated))
-            do (ceu_111) {
-            if ceu_111 {
+            do (ceu_107) {
+            if ceu_107 {
             do {
             (pass pub(ceu_0_9))
-            do (ceu_120) {
-            if ceu_120 {
-            ceu_120
+            do (ceu_116) {
+            if ceu_116 {
+            ceu_116
             } else {
             true
             }
             }
             }
             } else {
-            ceu_111
+            ceu_107
             }
             }
             })
-            do (ceu_363) {
-            if ceu_363 {
-            ceu_363
+            do (ceu_359) {
+            if ceu_359 {
+            ceu_359
             } else {
             do {
             (pass do {
             (pass {{==}}(status(ceu_1_9),:terminated))
-            do (ceu_382) {
-            if ceu_382 {
+            do (ceu_378) {
+            if ceu_378 {
             do {
             (pass pub(ceu_1_9))
-            do (ceu_391) {
-            if ceu_391 {
-            ceu_391
+            do (ceu_387) {
+            if ceu_387 {
+            ceu_387
             } else {
             true
             }
             }
             }
             } else {
-            ceu_382
+            ceu_378
             }
             }
             })
-            do (ceu_634) {
-            if ceu_634 {
-            ceu_634
+            do (ceu_630) {
+            if ceu_630 {
+            ceu_630
             } else {
             false
             }
@@ -1017,27 +1017,27 @@ class Parser_99 {
         assert(e.tostr() == "do {\n" +
                 "(val ceu_0_9 = (spawn (task () :void {\n" +
                 "nil\n" +
-                "})(nil)))\n" +
+                "})()))\n" +
                 "(val ceu_1_9 = (spawn (task () :void {\n" +
                 "nil\n" +
-                "})(nil)))\n" +
+                "})()))\n" +
                 "loop {\n" +
                 "(break(nil) if do {\n" +
                 "(pass {{==}}(status(ceu_0_9),:terminated))\n" +
-                "do (ceu_114) {\n" +
-                "if ceu_114 {\n" +
+                "do (ceu_110) {\n" +
+                "if ceu_110 {\n" +
                 "do {\n" +
                 "(pass {{==}}(status(ceu_1_9),:terminated))\n" +
-                "do (ceu_131) {\n" +
-                "if ceu_131 {\n" +
+                "do (ceu_127) {\n" +
+                "if ceu_127 {\n" +
                 "true\n" +
                 "} else {\n" +
-                "ceu_131\n" +
+                "ceu_127\n" +
                 "}\n" +
                 "}\n" +
                 "}\n" +
                 "} else {\n" +
-                "ceu_114\n" +
+                "ceu_110\n" +
                 "}\n" +
                 "}\n" +
                 "})\n" +
@@ -1216,9 +1216,9 @@ class Parser_99 {
         val parser = Parser(l)
         val e = parser.expr()
         assert(e.tostr() == "do {\n" +
-                "(val ceu_14 = (spawn T(nil)))\n" +
+                "(val ceu_12 = (spawn T()))\n" +
                 "loop {\n" +
-                "(break(pub(ceu_14)) if {{==}}(status(ceu_14),:terminated))\n" +
+                "(break(pub(ceu_12)) if {{==}}(status(ceu_12),:terminated))\n" +
                 "yield(nil)\n" +
                 "}\n" +
                 "}") { e.tostr() }

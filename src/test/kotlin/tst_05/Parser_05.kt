@@ -38,7 +38,7 @@ class Parser_05 {
         """)
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(spawn T(nil) in ts)\n") { e.tostr() }
+        assert(e.tostr() == "(spawn T() in ts)\n") { e.tostr() }
     }
 
     // DETRACK
