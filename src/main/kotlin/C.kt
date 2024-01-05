@@ -1595,7 +1595,7 @@ fun Coder.main (tags: Tags): String {
                     if (CEU_ISERR(ret)) {
                         return ret;
                     }
-                    return ceu_bcast_task(CEU5(dstk COMMA) bstk, now, &cur->Exe_Task, 1, evt);
+                    return ceu_bcast_task(CEU5(dstk COMMA) bstk, now, &cur->Exe_Task, (evt==NULL ? CEU_ARG_TOGGLE : 1), evt);
                 }
     #if CEU >= 5
                 case CEU_VALUE_TASKS: {
@@ -1610,7 +1610,7 @@ fun Coder.main (tags: Tags): String {
                     if (CEU_ISERR(ret)) {
                         return ret;
                     }                    
-                    if (ceu_istask_val(*evt) && cur->Track.task==(CEU_Exe_Task*)evt->Dyn) {
+                    if (evt!=NULL && ceu_istask_val(*evt) && cur->Track.task==(CEU_Exe_Task*)evt->Dyn) {
                         cur->Track.task = NULL; // tracked coro is terminating
                     }
                     return (CEU_Value) { CEU_VALUE_NIL };
