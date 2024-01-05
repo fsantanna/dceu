@@ -650,8 +650,8 @@ class Exec_99 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing func\n") { out }
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 3, col 41) : yield error : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_11_resume_yield() {
@@ -886,8 +886,8 @@ class Exec_99 {
             println(:ok)
         """)
         //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing func\n") { out }
-        //assert(out == ":ok\n") { out }
-        assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == ":ok\n") { out }
+        //assert(out == "anon : (lin 4, col 21) : yield error : unexpected enclosing thus\n") { out }
     }
     @Test
     fun mm_25_gc_bcast() {
@@ -1903,7 +1903,8 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 27) : argument error : cannot copy reference out\n") { out }
     }
     @Test
     fun kk_12_await_detrack() {
@@ -2040,7 +2041,9 @@ class Exec_99 {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 28) : argument error : cannot copy reference out\n") { out }
     }
 
     // CLOCK

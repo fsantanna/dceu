@@ -369,6 +369,7 @@ class Parser (lexer_: Lexer)
         if (!par) {
             this.checkFix_err("{")
         }
+        val open = this.tk1     // save token for error message below
 
         val cnt = when (type) {
             "await"    -> if (!this.checkFix("{")) null else this.block().es
@@ -440,14 +441,14 @@ class Parser (lexer_: Lexer)
         return this.nest(when (type) {
             "await" -> """
                 ${pre0}loop {
-                    ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                    ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         ${pre0}$xcnd ${cnt.cond { "and (do { ${it.tostr(true)} } or true)" }}
                     })
                 }
             """ //.let { println(it);it }
             "every" -> """
                 ${pre0}loop {
-                    ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                    ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                         ${pre0}$xcnd and loop {
                              ${cnt!!.tostr(true)}
                              break (false) if true
@@ -458,7 +459,7 @@ class Parser (lexer_: Lexer)
             "watching" -> """
                 ${pre0}par-or {
                     ${pre0}loop {
-                        ${pre0}break if (${pre0}yield() thus { ${xid.str} ${xtag.cond{it.str}} =>
+                        ${pre0}break if (${pre0}yield() thus { ${open.pos.pre()}${xid.str} ${xtag.cond{it.str}} =>
                             ${pre0}$xcnd
                         })
                     }
