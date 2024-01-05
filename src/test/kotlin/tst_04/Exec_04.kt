@@ -344,7 +344,9 @@ class Exec_04 {
             }
             println(:ok)
         """)
-        assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+        //assert(out == "anon : (lin 5, col 21) : yield error : unexpected enclosing thus\n") { out }
+        assert(out == " |  anon : (lin 10, col 17) : broadcast'(e,:task)\n" +
+                " v  anon : (lin 4, col 21) : argument error : cannot copy reference out\n") { out }
     }
     @Test
     fun cd_02_bcast_spawn_arg() {

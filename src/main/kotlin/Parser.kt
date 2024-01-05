@@ -1048,7 +1048,7 @@ class Parser (lexer_: Lexer)
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val (x,v) = if (this.checkFix("{")) {
+                val (idtag1,v) = if (this.checkFix("{")) {
                     Pair("ceu_$N", null)
                 } else {
                     val e = this.expr()
@@ -1074,9 +1074,9 @@ class Parser (lexer_: Lexer)
                             }
                             val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                             val call = if (e == null) {
-                                "$op($x)"
+                                "$op($idtag1)"
                             } else {
-                                "$op($x, ${e.tostr(true)})"
+                                "$op($idtag1, ${e.tostr(true)})"
                             }
                             Pair(null, this.nest(call))
                         }
@@ -1094,11 +1094,11 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { $x =>
+                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { $idtag1 =>
                     ${ifs.map { (xxx,blk) ->
-                        val (id_tag,cnd) = xxx
+                        val (idtag2,cnd) = xxx
                         """
-                        if ${id_tag.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
+                        if ${idtag2.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
                             ${blk.es.tostr(true)}
                         } else {
                         """}.joinToString("")}

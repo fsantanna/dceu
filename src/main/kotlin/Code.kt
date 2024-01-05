@@ -290,12 +290,19 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             (this.arg != null) -> {
                                 val idc = vars.get(this, this.arg.first.str).idc(0)
+                                val ylds = sta.ythus.contains(this)
                                 """
                                 ceu_gc_inc(ceu_acc);
                                 $idc = ceu_acc;
                                 if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                    int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                        ($idc.Dyn->Any.hld.type-1);
+                                    int ceu_type_$n =
+                                        ${ylds.cond2({ """
+                                            CEU_HOLD_MUTAB
+                                        """ }, { """
+                                            ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
+                                                ($idc.Dyn->Any.hld.type-1)
+                                        """ })}
+                                    ;
                                     if (ceu_type_$n != CEU_HOLD_FLEET) {
                                         CEU_ASSERT(
                                             $blkc,
