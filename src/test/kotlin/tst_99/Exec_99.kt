@@ -2643,6 +2643,20 @@ class Exec_99 {
         """, true)
         assert(out == "false\ntrue\n") { out }
     }
+    @Test
+    fun zz_04_to_tracks() {
+        val out = test("""
+            task T () {
+                yield()
+            }
+            val ts = tasks()
+            spawn T() in ts
+            val t = spawn T()
+            val xs = to-tracks(ts, t)
+            println(#xs, xs)
+        """, true)
+        assert(out.contains("2\t#[track: 0x")) { out }
+    }
 
     // TYPE-*
 
