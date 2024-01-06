@@ -543,8 +543,10 @@ class Exec_05 {
             task () {
                 detrack(nil) { yy => yield(nil) ; nil }
             }
+            println(:ok)
         """)
         assert(out == ("anon : (lin 3, col 38) : yield error : unexpected enclosing func\n")) { out }
+        //assert(out == (":ok\n")) { out }
     }
     @Test
     fun cc_08_detrack() {
@@ -917,7 +919,7 @@ class Exec_05 {
         //assert(out == "anon : (lin 12, col 23) : invalid pub : cannot expose dynamic \"pub\" field\n") { out }
         //assert(out == "[10]\n") { out }
         assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
     }
     @Test
     fun fg_02_detrack_pub() {
@@ -948,7 +950,7 @@ class Exec_05 {
             println(v)
         """)
         assert(out == " |  anon : (lin 8, col 32) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 8, col 39) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 8, col 32) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "[10]\n") { out }
     }
     @Test
@@ -992,7 +994,7 @@ class Exec_05 {
         //assert(out == ":ok\n") { out }
         assert(out == " |  anon : (lin 13, col 13) : (spawn T(track(t)))\n" +
                 " |  anon : (lin 5, col 40) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 5, col 47) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 5, col 40) : block escape error : cannot copy reference out\n") { out }
         //assert(out == "anon : (lin 13, col 19) : T(track(t))\n" +
         //        "anon : (lin 5, col 21) : declaration error : incompatible scopes\n" +
         //        ":error\n") { out }
@@ -1191,7 +1193,7 @@ class Exec_05 {
         )
         assert(out == "[10]\n" +
                 " |  anon : (lin 9, col 33) : (func (it) { if it { ```                     ...)\n" +
-                " v  anon : (lin 9, col 40) : block escape error : cannot copy reference out\n") { out }
+                " v  anon : (lin 9, col 33) : block escape error : cannot copy reference out\n") { out }
     }
 
     // ABORTION
@@ -1357,6 +1359,23 @@ class Exec_05 {
     // ORIGINAL / TRACK / DETRACK
 
     @Test
+    fun op_00_track() {
+        val out = test("""
+            $DETRACK
+            var T
+            set T = task () {
+                set pub() = [10]
+                yield(nil) ; nil
+            }
+            var t = spawn T ()
+            var x = track(t)
+            println(detrack(x))
+            broadcast( nil )
+            println(detrack(x))
+        """)
+        assert(out == "true\nfalse\n") { out }
+    }
+    @Test
     fun op_01_track() {
         val out = test("""
             val T = task () {
@@ -1389,6 +1408,21 @@ class Exec_05 {
             println(detrack(x) { it => 999 })
         """)
         assert(out == "10\ntrue\nnil\n") { out }
+    }
+    @Test
+    fun op_02x_track() {
+        val out = test("""
+            $DETRACK
+            val T = task () {
+                yield(nil)
+            }
+            var t = spawn T ()
+            val x = track(t)
+            println(detrack''(x))
+            detrack(x) { it => nil }
+            println(detrack''(x))
+        """)
+        assert(out == "true\ntrue\n") { out }
     }
     @Test
     fun op_03_track_err() {

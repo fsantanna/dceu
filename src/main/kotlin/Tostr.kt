@@ -14,19 +14,22 @@ fun Expr.dump (): String {
     }
 }
 
+fun Tk.fpre (pre: Boolean): String {
+    return if (pre) this.pos.pre() else ""
+}
+
+fun Tk.Id.tostr (): String {
+    return "^".repeat(this.upv) + this.str
+}
+
 fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
-    return this.first.pos.pre() + this.first.str + this.second.cond { " " + it.pos.pre() + it.str }
+    return this.first.fpre(pre) + this.first.tostr() + this.second.cond { " " + it.fpre(pre) + it.str }
 }
 
 fun Expr.tostr (pre: Boolean = false): String {
-    fun Tk.Id.tostr (): String {
-        return "^".repeat(this.upv) + this.str
-    }
     return when (this) {
         is Expr.Proto  -> {
-            val args = this.args.map { (id,tag) ->
-                (if (pre) id.pos.pre() else "") + id.tostr() + tag.cond {" ${tag!!.str}"}
-            }.joinToString(",")
+            val args = this.args.map { it.tostr(pre) }.joinToString(",")
             "(" + this.tk.str + " (" + args + ") " + this.tag.cond{ it.str+" " } + this.blk.tostr(pre) + ")"
         }
         is Expr.Export -> "export [" + this.ids.joinToString(",") + "] {\n" + this.blk.es.tostr(pre) + "}"
@@ -76,10 +79,12 @@ fun Expr.tostr (pre: Boolean = false): String {
                 x.args[0]
             }
             val clo = this.blk.clo as Expr.Proto
-            val (tk,tag) = clo.args[0]
-            val if_ = clo.blk.es[0] as Expr.If
-            val blk = tk.str + tag.cond { " " + it.str } + " =>\n" + if_.t.es.tostr(pre)
-            "(detrack(" + tsk.tostr(pre) + ") {\n" + blk + "})"
+            assert(clo.args.size == 1)
+            assert(clo.blk.es.size == 1)
+            val id_tag = clo.args[0]
+            val xif = clo.blk.es[0] as Expr.If
+            val blk = xif.t.let { assert(it.es.size > 1); it.es.drop(1) }
+            "(detrack(${tsk.tostr(pre)}) { ${id_tag.tostr(pre)} =>\n${blk.tostr(pre)}})"
         }
         is Expr.Toggle -> "(toggle ${this.tsk.tostr(pre)}(${this.on.tostr(pre)}))"
 
@@ -94,7 +99,10 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Vector -> "#[" + this.args.map { it.tostr(pre) }.joinToString(",") + "]"
         is Expr.Dict   -> "@[" + this.args.map { "(${it.first.tostr(pre)},${it.second.tostr(pre)})" }.joinToString(",") + "]"
         is Expr.Index  -> this.col.tostr(pre) + "[" + this.idx.tostr(pre) + "]"
-        is Expr.Call   -> this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
+        is Expr.Call   -> {
+            // TODO: collapse broadcast', detrack''
+            this.clo.tostr(pre) + "(" + this.args.map { it.tostr(pre) }.joinToString(",") + ")"
+        }
     }.let {
         when {
             !pre           -> it

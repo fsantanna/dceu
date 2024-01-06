@@ -962,14 +962,12 @@ class Parser (lexer_: Lexer)
             (CEU>=5 && this.acceptFix("detrack")) -> {
                 val tk0 = this.tk0 as Tk.Fix
                 val tsk = this.expr_in_parens()!!
-                //this.acceptFix_err("thus")
+                val tk1 = this.tk1
                 return if (this.checkFix("{")) {
-                    val tk1 = this.tk1
                     val (id_tag, es) = lambda(N)
-                    val (id, tag) = id_tag
                     val blk = this.nest("""
-                        (${tk1.pos.pre()}func (${id.pos.pre() + id.str} ${tag.cond { it.pos.pre() + it.str }}) {
-                            if ${id.str} {
+                        (${tk1.pos.pre()}func (${id_tag.tostr(true)}) ${tk1.pos.pre()}{
+                            ${tk1.pos.pre()}if ${id_tag.first.str} {
                                 ```
                                 CEU_Stack ceu_dstk_$N = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };
                                 ceu_dstk = &ceu_dstk_$N;
@@ -1042,7 +1040,7 @@ class Parser (lexer_: Lexer)
             (CEU>=99 && this.acceptFix("\\")) -> {
                 val (id_tag,es) = lambda(N)
                 return this.nest("""
-                    (func (${id_tag.tostr(true)}}) {
+                    (func (${id_tag.tostr(true)}) {
                         ${es.tostr(true)}
                     })
                 """)
