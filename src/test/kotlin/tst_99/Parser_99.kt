@@ -677,12 +677,7 @@ class Parser_99 {
         val l = lexer("detrack(nil) { x }")
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(detrack(nil) {\n" +
-                "it =>\n" +
-                "```\n" +
-                "                                CEU_Stack ceu_dstk_14 = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };\n" +
-                "                                ceu_dstk = &ceu_dstk_14;\n" +
-                "                                ```\n" +
+        assert(e.tostr() == "(detrack(nil) { it =>\n" +
                 "x\n" +
                 "})\n") { e.tostr() }
     }
@@ -703,12 +698,7 @@ class Parser_99 {
         val l = lexer("detrack(nil) { x1 => nil }")
         val parser = Parser(l)
         val e = parser.expr()
-        assert(e.tostr() == "(detrack(nil) {\n" +
-                "x1 =>\n" +
-                "```\n" +
-                "                                CEU_Stack ceu_dstk_16 = { &ceu_acc.Dyn->Exe_Task, 1, ceu_dstk };\n" +
-                "                                ceu_dstk = &ceu_dstk_16;\n" +
-                "                                ```\n" +
+        assert(e.tostr() == "(detrack(nil) { x1 =>\n" +
                 "nil\n" +
                 "})") { e.tostr() }
     }

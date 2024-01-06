@@ -829,6 +829,6 @@ class Parser_01 {
         )
         val parser = Parser(l)
         val e = parser.exprs()
-        assert(e.tostr() == "(data :U = [t:T])\n") { e.tostr() }
+        assert(e.tostr() == "(data :U = [t :T])\n") { e.tostr() }
     }
 }
