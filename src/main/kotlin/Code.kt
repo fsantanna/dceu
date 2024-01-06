@@ -295,14 +295,7 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                 ceu_gc_inc(ceu_acc);
                                 $idc = ceu_acc;
                                 if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                    int ceu_type_$n =
-                                        ${ylds.cond2({ """
-                                            CEU_HOLD_MUTAB
-                                        """ }, { """
-                                            ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                ($idc.Dyn->Any.hld.type-1)
-                                        """ })}
-                                    ;
+                                    int ceu_type_$n = ${ylds.cond2({ "CEU_HOLD_MUTAB" }, { "CEU_HOLD_FLEET" })};
                                     if (ceu_type_$n != CEU_HOLD_FLEET) {
                                         CEU_ASSERT(
                                             $blkc,
@@ -331,18 +324,16 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                                         if (ceu_n > $i) {
                                             $idc = ceu_args[$i];
                                             if ($idc.type > CEU_VALUE_DYNAMIC) {
-                                                int ceu_type_$n = ($idc.Dyn->Any.hld.type > CEU_HOLD_FLEET) ? CEU_HOLD_FLEET :
-                                                                    ($idc.Dyn->Any.hld.type-1);
+                                                int ceu_type_$n = CEU_HOLD_FLEET;
                                                 // must check CEU_HOLD_FLEET for parallel scopes, but only for exes:
                                                 // [gg_02_scope] v -> coro/task
-                                                ${(!inexe).cond {"if (ceu_type_$n != CEU_HOLD_FLEET)"}} 
-                                                {
+                                                ${(inexe).cond {"""
                                                     CEU_ASSERT(
                                                         $blkc,
                                                         ceu_hold_chk_set($blkc, ceu_type_$n, $idc, 1, "argument error"),
                                                         "${arg.first.pos.file} : (lin ${arg.first.pos.lin}, col ${arg.first.pos.col})"
                                                     );
-                                                }
+                                                """} 
                                             }
                                         }
                                         """
@@ -391,10 +382,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                         """
                         if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                             // do not check if they are returned back (this is not the case with locals created here)
-                            if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                                CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
-                                assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
-                            }
                             ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                         }                    
                         """
@@ -407,10 +394,6 @@ class Coder (val outer: Expr.Do, val ups: Ups, val vars: Vars, val clos: Clos, v
                             """
                             if ($idc.type > CEU_VALUE_DYNAMIC) { // required b/c check below
                                 // do not check if they are returned back (this is not the case with locals created here)
-                                if ($idc.Dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                                    CEU_Value ceu_err_$n = ceu_hold_chk_set($blkc, $idc.Dyn->Any.hld.type+1, $idc, 1, "TODO");
-                                    assert(ceu_err_$n.type==CEU_VALUE_NIL && "impossible case");
-                                }
                                 ceu_gc_dec($idc, !(ceu_acc.type>CEU_VALUE_DYNAMIC && ceu_acc.Dyn==$idc.Dyn));
                             }
                             """

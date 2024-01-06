@@ -896,6 +896,129 @@ class Exec_01 {
         assert(out == "[1]\n") { out }
     }
 
+    // PASSD
+
+    @Test
+    fun cd_01_passd() {
+        val out = test("""
+            val f = func (v) {
+                val g = func (v') {
+                    val x = v'
+                }
+                g(v)
+                println(v)
+            }
+            println(f([1]))
+        """)
+        //assert(out == "anon : (lin 3, col 22) : drop error : fleeting argument\n") { out }
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun cd_02_nest() {
+        val out = test("""
+            var f = func (v) {  ;; (but they are in the same block)
+                ;;dump(v)
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                println(x)      ;; x will be freed and v would contain dangling pointer
+            }
+            f([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+        //assert(out == "anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
+    }
+    @Test
+    fun cd_03_fleet_tuple_func_err() {
+        val out = test("""
+            var g = func (v) {
+                val v' = v
+                nil
+            }
+            g([[1]])
+            println(:ok)
+        """)
+        assert(out == ":ok\n") { out }
+    }
+    @Test
+    fun cd_04_fleet_tuple_func_err() {
+        val out = test("""
+            var f = func (v) {
+                println(v[0])
+            }
+            var g = func (v) {
+                val evt = v
+                f(evt)
+            }
+            g([[1]])
+        """)
+        assert(out == "[1]\n") { out }
+    }
+    @Test
+    fun cd_05_nest_err() {
+        val out = test("""
+            var f = func (v) {
+                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
+                ;;println(x)      ;; x will be freed and v would contain dangling pointer
+                v
+            }
+            f([[1]])
+        """)
+        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun cd_06_xxx() {
+        val out = test("""
+            val g = func (v) {
+                val k = v
+                println(v)
+            }
+            val f = func (v) {
+                g(v)
+                println(v)
+            }
+            f([1])
+        """)
+        assert(out == "[1]\n[1]\n") { out }
+    }
+    @Test
+    fun cd_07_tmp() {
+        val out = test(
+            """
+            var x
+            pass [1,2,3]
+            do (a) {
+                set x = a
+            }
+            println(x)
+        """
+        )
+        //assert(out == "[1,2,3]\n") { out }
+        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
+    }
+    @Test
+    fun cd_08_func_err() {
+        val out = test("""
+            val f = func (v) {
+                val x = v
+                nil
+            }
+            println(f([[nil]][0]))  ;; err
+            ;;`ceu_gc_collect();`
+        """)
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
+    }
+    @Test
+    fun cd_09_func() {
+        val out = test("""
+            val f = func (v) {
+                1
+            }
+            val t = [[nil]]
+            println(f(t[0]))        ;; 1
+            println(f([[nil]][0]))  ;; err
+        """)
+        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
+    }
+
     // DICT
 
     @Test
@@ -2095,58 +2218,6 @@ class Exec_01 {
         assert(out == "[1]\n") { out }
     }
     @Test
-    fun ll_03_fleet_tuple_func_err() {
-        val out = test("""
-            var g = func (v) {
-                val v' = v
-                nil
-            }
-            g([[1]])
-            println(:ok)
-        """)
-        assert(out == ":ok\n") { out }
-    }
-    @Test
-    fun ll_04_fleet_tuple_func_err() {
-        val out = test("""
-            var f = func (v) {
-                println(v[0])
-            }
-            var g = func (v) {
-                val evt = v
-                f(evt)
-            }
-            g([[1]])
-        """)
-        assert(out == "[1]\n") { out }
-    }
-    @Test
-    fun ll_05_nest() {
-        val out = test("""
-            var f = func (v) {  ;; (but they are in the same block)
-                ;;dump(v)
-                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
-                println(x)      ;; x will be freed and v would contain dangling pointer
-            }
-            f([[1]])
-        """)
-        assert(out == "[1]\n") { out }
-        //assert(out == "anon : (lin 3, col 17) : declaration error : cannot move pending reference in\n") { out }
-    }
-    @Test
-    fun ll_05_nest_err() {
-        val out = test("""
-            var f = func (v) {
-                val x = v[0]    ;; v also holds x, both are fleeting -> unsafe
-                ;;println(x)      ;; x will be freed and v would contain dangling pointer
-                v
-            }
-            f([[1]])
-        """)
-        assert(out == "anon : (lin 2, col 30) : block escape error : cannot copy reference out\n") { out }
-    }
-
-    @Test
     fun ll_06_xxx() {
         val out = test("""
             val g = func (v) {
@@ -2177,21 +2248,6 @@ class Exec_01 {
         """)
         assert(out == "[1]\n[1]\n") { out }
     }
-    @Test
-    fun ll_08_xxx() {
-        val out = test("""
-            val g = func (v) {
-                val k = v
-                println(v)
-            }
-            val f = func (v) {
-                g(v)
-                println(v)
-            }
-            f([1])
-        """)
-        assert(out == "[1]\n[1]\n") { out }
-    }
 
     // THUS / SCOPE / :FLEET / :fleet
 
@@ -2205,21 +2261,6 @@ class Exec_01 {
         """
         )
         assert(out == "anon : (lin 3, col 17) : declaration error : variable \"x\" is already declared\n") { out }
-    }
-    @Test
-    fun mm_01_tmp() {
-        val out = test(
-            """
-            var x
-            pass [1,2,3]
-            do (a) {
-                set x = a
-            }
-            println(x)
-        """
-        )
-        //assert(out == "[1,2,3]\n") { out }
-        assert(out == "anon : (lin 5, col 21) : set error : cannot copy reference out\n") { out }
     }
     @Test
     fun mm_01_tmp_err() {
@@ -2659,30 +2700,6 @@ class Exec_01 {
         }
         """)
         assert(out == "[]\n") { out }
-    }
-    @Test
-    fun nn_20_func_err() {
-        val out = test("""
-            val f = func (v) {
-                val x = v
-                nil
-            }
-            println(f([[nil]][0]))  ;; err
-            ;;`ceu_gc_collect();`
-        """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n") { out }
-    }
-    @Test
-    fun nn_21_func() {
-        val out = test("""
-            val f = func (v) {
-                1
-            }
-            val t = [[nil]]
-            println(f(t[0]))        ;; 1
-            println(f([[nil]][0]))  ;; err
-        """)
-        assert(out == "anon : (lin 2, col 27) : argument error : cannot move pending reference in\n1\n") { out }
     }
 
     // FUNC / ARGS / DOTS / ...

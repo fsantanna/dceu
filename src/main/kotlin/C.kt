@@ -56,7 +56,6 @@ fun Coder.main (tags: Tags): String {
         #endif
         
         typedef enum CEU_HOLD {
-            CEU_HOLD_PASSD = -1,    // (+nest) FLEET -> PASSD -> FLEET
             CEU_HOLD_FLEET = 0,     // not assigned, dst assigns
             CEU_HOLD_MUTAB,         // set and assignable to narrow 
             CEU_HOLD_IMMUT,         // set but not assignable (nested fun)
@@ -1314,12 +1313,6 @@ fun Coder.main (tags: Tags): String {
                 return (CEU_Value) { CEU_VALUE_NIL };       // do not drop globals
             } else if (dyn->Any.hld.type == CEU_HOLD_FLEET) {
                 return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
-            } else if (dyn->Any.hld.type <= CEU_HOLD_PASSD) {
-                CEU_Value err = ceu_hold_chk_set(CEU_HLD_BLOCK(dyn), CEU_HOLD_FLEET, src, 1, "TODO");
-                assert(err.type == CEU_VALUE_NIL);
-                return (CEU_Value) { CEU_VALUE_NIL };       // keep fleeting as is
-                // TODO: error b/c argument would become nil and value would not become PASSD->FLEET
-                //return (CEU_Value) { CEU_VALUE_ERROR, {.Error="drop error : fleeting argument"} };
             } else if (dyn->Any.hld.type == CEU_HOLD_IMMUT) {
                 // only need to test at top-level ceu_drop_f
             }
