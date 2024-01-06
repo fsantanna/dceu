@@ -3947,4 +3947,35 @@ class Exec_04 {
         """)
         assert(out == "999\n") { out }
     }
+    @Test
+    fun z2_03_nested_func() {
+        val out = test("""
+            val T = task (x) {
+                val f = func () {
+                    x
+                }
+                yield(nil)
+                println(f())
+            }
+            spawn T([])
+            broadcast(nil)
+        """)
+        assert(out == "[]\n") { out }
+    }
+    @Test
+    fun z2_04_nested_func() {
+        val out = test("""
+            val T = task (x) {
+                yield(nil)
+                val y = 10
+                val f = func () {
+                    y
+                }
+                println(f())
+            }
+            spawn T([])
+            broadcast(nil)
+        """)
+        assert(out == "10\n") { out }
+    }
 }

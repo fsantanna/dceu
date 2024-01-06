@@ -79,11 +79,14 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
                     // UPVS_PROTOS_NOCLOS
                     (blk!=outer && dcl.id.upv==0 && this.tk_.upv==0) -> {
                         // access to normal noglb w/o upval modifier
+                        val inexe = ups.inexe(blk, false)
                         ups.all_until(this) { it == blk }     // stop at enclosing declaration block
                             .filter { it is Expr.Proto }         // all crossing protos
                             .forEach {
                                 it as Expr.Proto
-                                protos_noclos.add(it)            // mark protos as noclos
+                                if (!inexe) {
+                                    protos_noclos.add(it)            // mark protos as noclos
+                                }
                                 if (it.tk.str != "func") {
                                     blks_nested.add(blk)         // mark dcl block with nested coro/task
                                 }
