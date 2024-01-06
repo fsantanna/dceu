@@ -14,6 +14,10 @@ fun Expr.dump (): String {
     }
 }
 
+fun Pair<Tk.Id,Tk.Tag?>.tostr (pre: Boolean = false): String {
+    return this.first.pos.pre() + this.first.str + this.second.cond { " " + it.pos.pre() + it.str }
+}
+
 fun Expr.tostr (pre: Boolean = false): String {
     fun Tk.Id.tostr (): String {
         return "^".repeat(this.upv) + this.str
@@ -46,7 +50,7 @@ fun Expr.tostr (pre: Boolean = false): String {
         is Expr.Enum   -> "enum {\n" + this.tags.map {
             (tag,e) -> tag.str + e.cond { " = " + "`" + it.str + "`" }
         }.joinToString(",\n") + "\n}"
-        is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.first.str + (it.second?.str ?: "") }.joinToString(",") + "])"
+        is Expr.Data   -> "(data " + this.tk.str + " = [" + this.ids.map { it.tostr() }.joinToString(",") + "])"
         is Expr.Pass   -> "(pass " + this.e.tostr(pre) + ")"
         is Expr.Drop   -> "drop(" + this.e.tostr(pre) + ")"
 

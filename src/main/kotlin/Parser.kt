@@ -616,7 +616,7 @@ class Parser (lexer_: Lexer)
                 } else {
                     val (id,tag) = id_tag
                     this.nest("""
-                        ((${cnd.tostr(true)}) thus { ${id.str} ${tag.cond{it.str}} =>
+                        ((${cnd.tostr(true)}) thus { ${id_tag.tostr(true)} =>
                             if ${id.str} {
                                 ${t.es.tostr(true)}
                             } else {
@@ -1041,15 +1041,14 @@ class Parser (lexer_: Lexer)
             }
             (CEU>=99 && this.acceptFix("\\")) -> {
                 val (id_tag,es) = lambda(N)
-                val (id,tag) = id_tag
                 return this.nest("""
-                    (func (${id.str} ${tag.cond{it.str}}) {
+                    (func (${id_tag.tostr(true)}}) {
                         ${es.tostr(true)}
                     })
                 """)
             }
             (CEU>=99 && this.acceptFix("ifs")) -> {
-                val (idtag1,v) = if (this.checkFix("{")) {
+                val (id1,v) = if (this.checkFix("{")) {
                     Pair("ceu_$N", null)
                 } else {
                     val e = this.expr()
@@ -1075,9 +1074,9 @@ class Parser (lexer_: Lexer)
                             }
                             val e = if (this.checkFix("=>") || this.checkFix("{")) null else this.expr()
                             val call = if (e == null) {
-                                "$op($idtag1)"
+                                "$op($id1)"
                             } else {
-                                "$op($idtag1, ${e.tostr(true)})"
+                                "$op($id1, ${e.tostr(true)})"
                             }
                             Pair(null, this.nest(call))
                         }
@@ -1095,11 +1094,11 @@ class Parser (lexer_: Lexer)
                 //ifs.forEach { println(it.first.third.tostr()) ; println(it.second.tostr()) }
                 this.acceptFix_err("}")
                 this.nest("""
-                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { $idtag1 =>
+                    ((${v.cond2({it.tostr(true)},{"nil"})}) thus { $id1 =>
                     ${ifs.map { (xxx,blk) ->
                         val (idtag2,cnd) = xxx
                         """
-                        if ${idtag2.cond{ (id,tag)-> "${id.str} ${tag?.str ?: ""} = "}} ${cnd.tostr(true)} {
+                        if ${idtag2.cond { "${it.tostr(true)} = "}} ${cnd.tostr(true)} {
                             ${blk.es.tostr(true)}
                         } else {
                         """}.joinToString("")}
@@ -1341,11 +1340,10 @@ class Parser (lexer_: Lexer)
                 "thus" -> {
                     val tk1 = this.tk1
                     val (id_tag,es) = lambda(N)
-                    val (id,tag) = id_tag
                     this.nest( """
                         do {
                             pass (${e.tostr(true)})
-                            ${tk1.pos.pre()}do (${id.pos.pre()}${id.str} ${tag.cond {it.str}}) {
+                            ${tk1.pos.pre()}do (${id_tag.tostr(true)}) {
                                 ${es.tostr(true)}
                             }
                         }
