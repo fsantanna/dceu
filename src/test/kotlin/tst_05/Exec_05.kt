@@ -709,6 +709,48 @@ class Exec_05 {
         assert(out.contains("exe-task: 0x")) { out }
         //assert(out == " v  anon : (lin 6, col 22) : drop error : value is not movable\n") { out }
     }
+    @Test
+    fun dd_07_detrack_nested() {
+        val out = test("""
+            spawn (task () {
+                val T = task () { yield(nil) ; nil }
+                val t = spawn T()
+                val x = track(t)
+                detrack(x) { it => println(it) }
+            }) ()
+        """)
+        assert(out.contains("exe-task: 0x")) { out }
+    }
+    @Test
+    fun dd_08_detrack_nested() {
+        val out = test("""
+            spawn (task () {
+                val z = 10
+                val T = task () { yield(nil) ; nil }
+                val t = spawn T()
+                val x = track(t)
+                detrack(x) { it => println(z, it) }
+            }) ()
+        """)
+        assert(out.contains("exe-task: 0x")) { out }
+    }
+    @Test
+    fun dd_09_detrack_nested() {
+        val out = test("""
+            spawn (task () {
+                val z = 10
+                val T = task () { yield(nil) ; nil }
+                val t = spawn T()
+                val x = track(t)
+                detrack(x) { it1 =>
+                    detrack(x) { it2 =>
+                        println(z, it1, it2)
+                    }
+                }
+            }) ()
+        """)
+        assert(out.contains("exe-task: 0x")) { out }
+    }
 
     // PUB
 

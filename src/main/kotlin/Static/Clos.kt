@@ -29,7 +29,13 @@ class Clos (val outer: Expr.Do, val ups: Ups, val vars: Vars) {
 
     fun Expr.traverse () {
         when (this) {
-            is Expr.Proto  -> this.blk.traverse()
+            is Expr.Proto  -> {
+                this.blk.traverse()
+                if (ups.any(this) { it is Expr.Dtrack }) {
+                    assert(this.tk.str == "func")
+                    protos_noclos.add(this)     // TODO: not sure if it is safe in all cases
+                }
+            }
             is Expr.Export -> this.blk.traverse()
             is Expr.Do     -> this.es.forEach { it.traverse() }
             is Expr.Dcl    -> this.src?.traverse()
